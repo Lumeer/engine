@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE htmlEntities [
+      <!ENTITY nbsp "&#xa0;">
+      ]>
+<!--suppress MavenModelInspection, XmlWrongRootElement -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>io.lumeer</groupId>
+   <artifactId>engine-parent</artifactId>
+   <version>1.0-SNAPSHOT</version>
+   <packaging>pom</packaging>
+   <name>Lumeer Engine parent</name>
+   <organization>
+      <name>Lumeer Community</name>
+      <url>https://www.lumeer.io</url>
+   </organization>
+   <description>A Modern Data Management Platform</description>
+   <url>https://www.lumeer.io</url>
+   <inceptionYear>2016</inceptionYear>
+   <scm>
+      <url>https://github.com/Lumeer/engine</url>
+      <connection>scm:git:git://github.com/Lumeer/engine.git</connection>
+      <developerConnection>scm:git:git@github.com:Lumeer/engine.git</developerConnection>
+      <tag>v1.0</tag>
+   </scm>
+   <developers>
+      <developer>
+         <name>Martin Večeřa</name>
+         <email>marvenec@gmail.com</email>
+      </developer>
+   </developers>
+   <contributors>
+      <contributor>
+         <name>Alica Kačengová</name>
+         <email>alica.kacengova@gmail.com</email>
+      </contributor>
+      <contributor>
+         <name>Denisa Dupláková</name>
+         <email>denisa.duplakova@gmail.com</email>
+      </contributor>
+      <contributor>
+         <name>Jan Kotrady</name>
+         <email>kotrady.johnny@gmail.com</email>
+      </contributor>
+      <contributor>
+         <name>Jakub Rodák</name>
+         <email>kubedo8@gmail.com</email>
+      </contributor>
+      <contributor>
+         <name>Matej Perejda</name>
+         <email>mat.per.vt@gmail.com</email>
+      </contributor>
+   </contributors>
+   <!--ciManagement>
+      <system>Jenkins</system>
+      <url>https://perfcake.ci.cloudbees.com/</url>
+   </ciManagement-->
+   <issueManagement>
+      <system>GitHub</system>
+      <url>https://github.com/Lumeer/engine/issues/</url>
+   </issueManagement>
+   <licenses>
+      <license>
+         <name>The Apache Software License, Version 2.0</name>
+         <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+         <distribution>repo</distribution>
+         <comments>A business-friendly OSS license</comments>
+      </license>
+   </licenses>
+   <distributionManagement>
+      <snapshotRepository>
+         <id>ossrh</id>
+         <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </snapshotRepository>
+      <repository>
+         <id>ossrh</id>
+         <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      </repository>
+   </distributionManagement>
+   <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+      <maven.assembly.plugin.version>2.6</maven.assembly.plugin.version>
+      <maven.clean.plugin.version>3.0.0</maven.clean.plugin.version>
+      <maven.jar.plugin.version>3.0.2</maven.jar.plugin.version>
+      <maven.site.plugin.version>3.5.1</maven.site.plugin.version>
+      <maven.checkstyle.plugin.version>2.17</maven.checkstyle.plugin.version>
+      <maven.compiler.plugin.version>3.5.1</maven.compiler.plugin.version>
+      <maven.license.plugin.version>1.9</maven.license.plugin.version>
+      <maven.release.plugin.version>2.5.3</maven.release.plugin.version>
+      <maven.findbugs.plugin.version>3.0.4</maven.findbugs.plugin.version>
+      <maven.project.info.reports.plugin.version>2.9</maven.project.info.reports.plugin.version>
+      <maven.exec.plugin.version>1.5.0</maven.exec.plugin.version>
+      <maven.source.plugin.version>3.0.1</maven.source.plugin.version>
+      <maven.javadoc.plugin.version>2.10.4</maven.javadoc.plugin.version>
+      <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
+      <maven.xml.plugin.version>1.0.1</maven.xml.plugin.version>
+      <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
+      <maven.dependency.plugin.version>2.10</maven.dependency.plugin.version>
+      <maven.pit.version>1.1.10</maven.pit.version>
+      <maven.plugin.plugin>3.4</maven.plugin.plugin>
+      <maven.war.plugin.version>2.6</maven.war.plugin.version>
+      <maven.wildfly.plugin.version>1.1.0.Alpha11</maven.wildfly.plugin.version>
+      <maven.versioneye>3.10.2</maven.versioneye>
+   </properties>
+   <modules>
+      <module>bom</module>
+      <module>api</module>
+      <module>war</module>
+   </modules>
+   <dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>io.lumeer</groupId>
+            <artifactId>engine-bom</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
+   <build>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-javadoc-plugin</artifactId>
+               <version>${maven.javadoc.plugin.version}</version>
+               <configuration>
+                  <windowtitle>${project.name} API Documentation (version ${project.version})</windowtitle>
+                  <doctitle>${project.name} API Documentation (version ${project.version})</doctitle>
+                  <show>public</show>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-release-plugin</artifactId>
+               <version>${maven.release.plugin.version}</version>
+               <configuration>
+                  <tagNameFormat>v@{project.version}</tagNameFormat>
+                  <pushChanges>false</pushChanges>
+                  <localCheckout>true</localCheckout>
+               </configuration>
+            </plugin>
+            <plugin>
+               <artifactId>maven-project-info-reports-plugin</artifactId>
+               <version>${maven.project.info.reports.plugin.version}</version>
+            </plugin>
+         </plugins>
+      </pluginManagement>
+   </build>
+   <profiles>
+      <profile>
+         <id>sign</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-gpg-plugin</artifactId>
+                  <version>${maven.gpg.plugin.version}</version>
+                  <executions>
+                     <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                           <goal>sign</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
+</project>
