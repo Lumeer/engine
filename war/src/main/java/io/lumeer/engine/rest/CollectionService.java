@@ -17,36 +17,45 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.api.data;
+package io.lumeer.engine.rest;
 
+import io.lumeer.engine.controller.CollectionFacade;
+
+import java.io.Serializable;
 import java.util.List;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 
 /**
- * Represents a data storage.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public interface DataStorage {
+@Path("collection")
+@RequestScoped
+public class CollectionService implements Serializable {
 
-   void createCollection(final String name);
+   private static final long serialVersionUID = 7581114783619845412L;
 
-   List<String> getAttributes(final String collectionName);
+   @Inject
+   private CollectionFacade collectionFacade;
 
-   List<String> getAttributeValues(final String collectionName, final String attributeName);
+   @Inject
+   @Named("userCollections")
+   private List<String> collections;
 
-   List<String> getCollections(final String searchString);
+   @PUT
+   @Path("/")
+   public void createCollection(final @QueryParam("name") String name) {
+      collectionFacade.createCollection(name);
+   }
 
-   List<String> getAllCollections();
-
-   void dropCollection(final String name);
-
-   void renameCollection(final String origName, final String newName);
-
-   void storeElement(final DataElement element);
-
-   void updateElement(final DataElement element);
-
-   void dropElement(final DataElement element);
-
-   List<DataElement> search(final String query, int page, int limit);
+   @GET
+   @Path("/")
+   public List<String> getAllCollections() {
+      return collections;
+   }
 }

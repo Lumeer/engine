@@ -1,15 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE htmlEntities [
+      <!ENTITY nbsp "&#xa0;">
+      ]>
+<!--suppress MavenModelInspection, XmlWrongRootElement -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>io.lumeer</groupId>
       <artifactId>engine-parent</artifactId>
       <version>1.0-SNAPSHOT</version>
    </parent>
-   <artifactId>engine-war</artifactId>
-   <packaging>war</packaging>
-   <name>Lumeer Engine WAR</name>
+   <artifactId>mongodb-storage</artifactId>
+   <packaging>jar</packaging>
+   <name>Lumeer MongoDB Storage</name>
    <organization>
       <name>Lumeer Community</name>
       <url>https://www.lumeer.io</url>
@@ -66,18 +69,13 @@
             <version>${wildfly.bom.version}</version>
             <type>pom</type>
             <scope>import</scope>
-         </dependency>
+         </dependency>         
       </dependencies>
    </dependencyManagement>
-
    <dependencies>
       <dependency>
          <groupId>io.lumeer</groupId>
          <artifactId>engine-api</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>io.lumeer</groupId>
-         <artifactId>mongodb-storage</artifactId>
       </dependency>
 
       <dependency>
@@ -100,10 +98,28 @@
          <artifactId>jboss-ejb-api_3.2_spec</artifactId>
          <scope>provided</scope>
       </dependency>
+
+
+      <!-- Logging -->
       <dependency>
-         <groupId>org.jboss.spec.javax.jms</groupId>
-         <artifactId>jboss-jms-api_2.0_spec</artifactId>
-         <scope>provided</scope>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-1.2-api</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-jul</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-log4j12</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
       </dependency>
 
       <!-- Test NG -->
@@ -113,20 +129,14 @@
          <scope>test</scope>
       </dependency>
 
+      <!-- Findbugs -->
       <dependency>
-         <groupId>org.jboss.arquillian.testng</groupId>
-         <artifactId>arquillian-testng-container</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.arquillian.protocol</groupId>
-         <artifactId>arquillian-protocol-servlet</artifactId>
-         <scope>test</scope>
+         <groupId>com.google.code.findbugs</groupId>
+         <artifactId>annotations</artifactId>
+         <scope>provided</scope>
       </dependency>
    </dependencies>
-
    <build>
-      <finalName>${project.artifactId}</finalName>
       <plugins>
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
@@ -163,11 +173,6 @@
             </configuration>
          </plugin>
          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>findbugs-maven-plugin</artifactId>
-            <version>${maven.findbugs.plugin.version}</version>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-site-plugin</artifactId>
             <version>${maven.site.plugin.version}</version>
@@ -200,6 +205,19 @@
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven.javadoc.plugin.version}</version>
+            <executions>
+               <execution>
+                  <id>attach-javadocs</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <version>${maven.gpg.plugin.version}</version>
          </plugin>
@@ -222,6 +240,7 @@
                <consoleOutput>true</consoleOutput>
                <failsOnError>false</failsOnError>
                <linkXRef>false</linkXRef>
+               <!--excludes>org/perfcake/model/*,org/perfcake/scenario/dsl/*</excludes-->
             </configuration>
             <dependencies>
                <dependency>
@@ -235,42 +254,22 @@
             <artifactId>maven-project-info-reports-plugin</artifactId>
             <version>${maven.project.info.reports.plugin.version}</version>
          </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>${maven.javadoc.plugin.version}</version>
-            <executions>
-               <execution>
-                  <id>attach-javadocs</id>
-                  <goals>
-                     <goal>jar</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>${maven.compiler.plugin.version}</version>
-            <configuration>
-               <source>${java.level}</source>
-               <target>${java.level}</target>
-            </configuration>
-         </plugin>
-         <plugin>
-            <artifactId>maven-war-plugin</artifactId>
-            <version>${maven.war.plugin.version}</version>
-            <configuration>
-               <failOnMissingWebXml>false</failOnMissingWebXml>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.wildfly.plugins</groupId>
-            <artifactId>wildfly-maven-plugin</artifactId>
-            <version>${maven.wildfly.plugin.version}</version>
-         </plugin>
       </plugins>
       <pluginManagement>
          <plugins>
+            <plugin>
+               <artifactId>maven-compiler-plugin</artifactId>
+               <version>${maven.compiler.plugin.version}</version>
+               <configuration>
+                  <source>${java.level}</source>
+                  <target>${java.level}</target>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-jar-plugin</artifactId>
+               <version>${maven.jar.plugin.version}</version>
+            </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-clean-plugin</artifactId>
@@ -317,60 +316,71 @@
          </plugins>
       </pluginManagement>
    </build>
-
+   <reporting>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-project-info-reports-plugin</artifactId>
+            <version>${maven.project.info.plugin.version}</version>
+            <configuration>
+               <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>${maven.findbugs.plugin.version}</version>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <version>${maven.checkstyle.plugin.version}</version>
+            <reportSets>
+               <reportSet>
+                  <reports>
+                     <report>checkstyle</report>
+                  </reports>
+               </reportSet>
+            </reportSets>
+            <configuration>
+               <configLocation>src/site/lumeer-check.xml</configLocation>
+               <encoding>UTF-8</encoding>
+               <consoleOutput>true</consoleOutput>
+               <failsOnError>false</failsOnError>
+               <linkXRef>false</linkXRef>
+            </configuration>
+         </plugin>
+      </plugins>
+   </reporting>
    <profiles>
       <profile>
-         <!-- The default profile skips all tests, though you can tune
-             it to run just unit tests based on a custom pattern -->
-         <!-- Seperate profiles are provided for running all tests, including
-             Arquillian tests that execute in the specified container -->
-         <id>default</id>
+         <id>basicTests</id>
          <activation>
             <activeByDefault>true</activeByDefault>
          </activation>
          <build>
             <plugins>
                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <version>${maven.surefire.plugin.version}</version>
                   <configuration>
-                     <skip>true</skip>
+                     <excludedGroups>ueber</excludedGroups>
                   </configuration>
                </plugin>
             </plugins>
          </build>
       </profile>
-
       <profile>
-         <!-- An optional Arquillian testing profile that executes tests
-             in your WildFly instance -->
-         <!-- This profile will start a new WildFly instance, and execute
-             the test, shutting it down when done -->
-         <!-- Run with: mvn clean test -Parq-wildfly-managed -->
-         <id>arq-wilfly-managed</id>
-         <dependencies>
-            <dependency>
-               <groupId>org.wildfly.arquillian</groupId>
-               <artifactId>wildfly-arquillian-container-managed</artifactId>
-               <scope>test</scope>
-            </dependency>
-         </dependencies>
+         <id>allTests</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
-
-      <profile>
-         <!-- An optional Arquillian testing profile that executes tests
-             in a remote WildFly instance -->
-         <!-- Run with: mvn clean test -Parq-wildfly-remote -->
-         <id>arq-wildfly-remote</id>
-         <dependencies>
-            <dependency>
-               <groupId>org.wildfly.arquillian</groupId>
-               <artifactId>wildfly-arquillian-container-remote</artifactId>
-               <scope>test</scope>
-            </dependency>
-         </dependencies>
-      </profile>
-
       <profile>
          <id>sign</id>
          <build>
@@ -391,6 +401,5 @@
             </plugins>
          </build>
       </profile>
-
    </profiles>
 </project>

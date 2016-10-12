@@ -51,10 +51,6 @@
          <email>mat.per.vt@gmail.com</email>
       </contributor>
    </contributors>
-   <!--ciManagement>
-      <system>Jenkins</system>
-      <url>https://perfcake.ci.cloudbees.com/</url>
-   </ciManagement-->
    <issueManagement>
       <system>GitHub</system>
       <url>https://github.com/Lumeer/engine/issues/</url>
@@ -107,6 +103,7 @@
       <module>bom</module>
       <module>api</module>
       <module>war</module>
+      <module>mongodb-storage</module>
    </modules>
    <dependencyManagement>
       <dependencies>

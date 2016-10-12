@@ -19,14 +19,24 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.api.data.DataElement;
-
 /**
+ * An event that occurs when there is an update to a collection.
+ *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class UpdateElement extends ElementEvent {
+public class CollectionEvent {
 
-   public UpdateElement(final DataElement element) {
-      super(element);
+   private String name;
+
+   public CollectionEvent(final String name) {
+      this.name = name;
+   }
+
+   public String getName() {
+      return name;
+   }
+
+   public void setName(final String name) {
+      this.name = name;
    }
 }
