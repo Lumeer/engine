@@ -25,28 +25,25 @@ import java.util.List;
  * Represents a data storage.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ *         <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 public interface DataStorage {
 
-   void createCollection(final String name);
-
-   List<String> getAttributes(final String collectionName);
-
-   List<String> getAttributeValues(final String collectionName, final String attributeName);
-
-   List<String> getCollections(final String searchString);
-
    List<String> getAllCollections();
 
-   void dropCollection(final String name);
+   void createCollection(final String collectionName);
 
-   void renameCollection(final String origName, final String newName);
+   void dropCollection(final String collectionName);
 
-   void storeElement(final DataElement element);
+   void createDocument(final String collectionName, final DataDocument document);
 
-   void updateElement(final DataElement element);
+   DataDocument readDocument(final String collectionName, final String documentId);
 
-   void dropElement(final DataElement element);
+   void updateDocument(final String collectionName, final DataDocument document);
 
-   List<DataElement> search(final String query, int page, int limit);
+   void dropDocument(final String collectionName, final String documentId);
+
+   List<DataDocument> search(final String query, int page, int limit);
+
 }

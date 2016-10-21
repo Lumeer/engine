@@ -47,7 +47,7 @@ public class CollectionFacade implements Serializable {
 
    @Produces
    @Named("userCollections")
-   public List<String> getCollections() {
+   public List<String> getAllCollections() {
       if (collections == null) {
          collections = dataStorage.getAllCollections(); // TODO: filter out metadata collections
       }
@@ -55,15 +55,48 @@ public class CollectionFacade implements Serializable {
       return collections;
    }
 
+   public void createCollection(final String collectionName) {
+      dataStorage.createCollection(collectionName);
+      // TODO: create metadata collection
+
+      collections = null;
+   }
+
+   public void dropCollection(final String collectionName) {
+
+   }
+
+   /*public List<CollectionMetadataElement> readCollectionMetadata(final String collectionName) {
+      return null;
+   }
+
+   public void updateCollectionMetadata(final String collectionName, final CollectionMetadataElement element) {
+
+   }*/
+
+   public void dropCollectionMetadata(final String collectionName) {
+
+   }
+
+   public List<String> getAttributeValues(final String collectionName, final String attributeName) {
+      return null;
+   }
+
+   public void addColumn(final String collectionName, final String columnName) {
+
+   }
+
+   public void renameColumn(final String collectionName, final String origName, final String newName) {
+
+   }
+
+   public void dropColumn(final String collectionName, final String columnName) {
+
+   }
+
    public void onCollectionEvent(@Observes(notifyObserver = Reception.IF_EXISTS) final CollectionEvent event) {
       // we do not care which collection got changed, we just invalidate our cache
       collections = null;
    }
 
-   public void createCollection(final String name) {
-      dataStorage.createCollection(name);
-      // TODO: create metadata collection
-
-      collections = null;
-   }
 }

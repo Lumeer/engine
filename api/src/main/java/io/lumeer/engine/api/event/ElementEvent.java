@@ -19,20 +19,20 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.api.data.DataElement;
+import io.lumeer.engine.api.data.DataDocument;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public abstract class ElementEvent {
 
-   private DataElement element;
+   private DataDocument element;
 
-   public ElementEvent(final DataElement element) {
+   public ElementEvent(final DataDocument element) {
       this.element = element;
    }
 
-   public DataElement getElement() {
+   public DataDocument getElement() {
       return element;
    }
 }

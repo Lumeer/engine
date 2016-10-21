@@ -19,14 +19,14 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.api.data.DataElement;
+import io.lumeer.engine.api.data.DataDocument;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class UpdateElement extends ElementEvent {
 
-   public UpdateElement(final DataElement element) {
+   public UpdateElement(final DataDocument element) {
       super(element);
    }
 }

@@ -19,7 +19,7 @@
  */
 package io.lumeer.mongodb;
 
-import io.lumeer.engine.api.data.DataElement;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import java.util.List;
@@ -38,57 +38,42 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void createCollection(final String name) {
-
-   }
-
-   @Override
-   public List<String> getAttributes(final String collectionName) {
-      return null;
-   }
-
-   @Override
-   public List<String> getAttributeValues(final String collectionName, final String attributeName) {
-      return null;
-   }
-
-   @Override
-   public List<String> getCollections(final String searchString) {
-      return null;
-   }
-
-   @Override
    public List<String> getAllCollections() {
       return null;
    }
 
    @Override
-   public void dropCollection(final String name) {
+   public void createCollection(final String collectionName) {
 
    }
 
    @Override
-   public void renameCollection(final String origName, final String newName) {
+   public void dropCollection(final String collectionName) {
 
    }
 
    @Override
-   public void storeElement(final DataElement element) {
+   public void createDocument(final String collectionName, final DataDocument document) {
 
    }
 
    @Override
-   public void updateElement(final DataElement element) {
+   public DataDocument readDocument(final String collectionName, final String documentId) {
+      return null;
+   }
+
+   @Override
+   public void updateDocument(final String collectionName, final DataDocument document) {
 
    }
 
    @Override
-   public void dropElement(final DataElement element) {
+   public void dropDocument(final String collectionName, final String documentId) {
 
    }
 
    @Override
-   public List<DataElement> search(final String query, final int page, final int limit) {
+   public List<DataDocument> search(final String query, final int page, final int limit) {
       return null;
    }
 }

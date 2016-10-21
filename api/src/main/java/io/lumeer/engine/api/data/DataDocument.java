@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class DataElement {
+public class DataDocument {
 
    /**
     * In what collection does this record belong.
