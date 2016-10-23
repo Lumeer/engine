@@ -22,6 +22,14 @@ package io.lumeer.mongodb;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Model;
@@ -32,48 +40,63 @@ import javax.enterprise.inject.Model;
 @Model
 public class MongoDbStorage implements DataStorage {
 
+   private MongoDatabase database;
+
    @PostConstruct
    public void connect() {
-      // connect to the database
+      MongoClient mongo = new MongoClient("localhost", 27017); // default connection
+      database = mongo.getDatabase("lumeer");
    }
 
    @Override
    public List<String> getAllCollections() {
-      return null;
+      return database.listCollectionNames().into(new ArrayList<>());
    }
 
    @Override
    public void createCollection(final String collectionName) {
-
+      database.createCollection(collectionName);
    }
 
    @Override
    public void dropCollection(final String collectionName) {
-
+      database.getCollection(collectionName).drop();
    }
 
    @Override
    public void createDocument(final String collectionName, final DataDocument document) {
-
+      Document doc = new Document();
+      doc.putAll(document);
+      database.getCollection(collectionName).insertOne(doc);
    }
 
    @Override
    public DataDocument readDocument(final String collectionName, final String documentId) {
-      return null;
+      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      Document document = database.getCollection(collectionName).find(filter).first();
+
+      DataDocument dataDocument = new DataDocument();
+      dataDocument.putAll(document);
+      return dataDocument;
    }
 
    @Override
    public void updateDocument(final String collectionName, final DataDocument document) {
-
+      String documentId = document.getString("_id");
+      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      BasicDBObject afterUpdateDocument = new BasicDBObject(document);
+      database.getCollection(collectionName).updateOne(filter, afterUpdateDocument);
    }
 
    @Override
    public void dropDocument(final String collectionName, final String documentId) {
-
+      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      database.getCollection(collectionName).deleteOne(filter);
    }
 
    @Override
    public List<DataDocument> search(final String query, final int page, final int limit) {
+      // TODO
       return null;
    }
 }
