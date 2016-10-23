@@ -36,11 +36,11 @@ public interface DataStorage {
 
    void dropCollection(final String collectionName);
 
-   void createDocument(final String collectionName, final DataDocument document);
+   String createDocument(final String collectionName, final DataDocument document);
 
    DataDocument readDocument(final String collectionName, final String documentId);
 
-   void updateDocument(final String collectionName, final DataDocument document);
+   void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId);
 
    void dropDocument(final String collectionName, final String documentId);
 

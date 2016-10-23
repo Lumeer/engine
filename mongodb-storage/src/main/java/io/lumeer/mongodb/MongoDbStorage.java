@@ -64,10 +64,11 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void createDocument(final String collectionName, final DataDocument document) {
+   public String createDocument(final String collectionName, final DataDocument document) {
       Document doc = new Document();
       doc.putAll(document);
       database.getCollection(collectionName).insertOne(doc);
+      return doc.getObjectId("_id").toString();
    }
 
    @Override
@@ -75,17 +76,21 @@ public class MongoDbStorage implements DataStorage {
       BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
       Document document = database.getCollection(collectionName).find(filter).first();
 
+      if (document == null) {
+         return null;
+      }
+
       DataDocument dataDocument = new DataDocument();
       dataDocument.putAll(document);
+      dataDocument.remove("_id");
       return dataDocument;
    }
 
    @Override
-   public void updateDocument(final String collectionName, final DataDocument document) {
-      String documentId = document.getString("_id");
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId) {
       BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
-      BasicDBObject afterUpdateDocument = new BasicDBObject(document);
-      database.getCollection(collectionName).updateOne(filter, afterUpdateDocument);
+      BasicDBObject updateBson = new BasicDBObject("$set",new BasicDBObject(updatedDocument) );
+      database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
    @Override
