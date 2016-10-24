@@ -46,4 +46,5 @@ public interface DataStorage {
 
    List<DataDocument> search(final String query, int page, int limit);
 
+   void renameAttribute(final String collectionName, final String oldName, final String newName);
 }

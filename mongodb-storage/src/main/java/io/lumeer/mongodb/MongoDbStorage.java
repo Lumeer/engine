@@ -25,7 +25,9 @@ import io.lumeer.engine.api.data.DataStorage;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Updates;
 
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -103,5 +105,10 @@ public class MongoDbStorage implements DataStorage {
    public List<DataDocument> search(final String query, final int page, final int limit) {
       // TODO
       return null;
+   }
+
+   @Override
+   public void renameAttribute(final String collectionName, final String oldName, final String newName) {
+      database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), Updates.rename(oldName, newName));
    }
 }
