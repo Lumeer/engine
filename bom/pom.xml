@@ -99,6 +99,8 @@
       <version.guava>19.0</version.guava>
       <version.byteman>3.0.6</version.byteman>
       <version.servo>0.12.10</version.servo>
+      <version.netty>4.1.6.Final</version.netty>
+      <version.mongo.driver>3.3.0</version.mongo.driver>
 
       <version.maven.plugin.api>3.3.9</version.maven.plugin.api>
       <version.maven.core>3.3.9</version.maven.core>
@@ -116,7 +118,6 @@
       <version.amq>5.14.0</version.amq>
       <version.arquillian-jacoco>1.0.0.Alpha8</version.arquillian-jacoco>
       <version.mockito>1.10.19</version.mockito>
-      <version.netty>4.1.4.Final</version.netty>
 
       <java.level>1.8</java.level>
    </properties>
@@ -233,6 +234,35 @@
             <artifactId>org.jacoco.core</artifactId>
             <version>${version.jacoco}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-dist</artifactId>
+            <version>${version.wildfly}</version>
+            <type>zip</type>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>${version.mongo.driver}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-buffer</artifactId>
+            <version>${version.netty}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>${version.netty}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>${version.netty}</version>
          </dependency>
 
          <!-- Vert.x -->

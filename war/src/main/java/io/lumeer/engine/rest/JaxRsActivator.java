@@ -17,7 +17,7 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package com.airfoillabs.license.rest;
+package io.lumeer.engine.rest;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
