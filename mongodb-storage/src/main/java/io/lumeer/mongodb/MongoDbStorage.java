@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 
 import org.bson.BsonDocument;
@@ -33,6 +34,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Model;
 
@@ -105,6 +107,19 @@ public class MongoDbStorage implements DataStorage {
    public List<DataDocument> search(final String query, final int page, final int limit) {
       // TODO
       return null;
+   }
+
+   public List<DataDocument> search(final String collectionName, final String filter, final String sort, final String lastId, final int limit) {
+      final List<DataDocument> result = new ArrayList<>();
+
+      database.getCollection(collectionName)
+              .find(Filters.and(Filters.gt("_id", lastId), BsonDocument.parse(filter)))
+              .sort(BsonDocument.parse(sort))
+              .limit(limit)
+              .into(new ArrayList<>())
+              .forEach(d -> result.add(new DataDocument(d)));
+
+      return result;
    }
 
    @Override

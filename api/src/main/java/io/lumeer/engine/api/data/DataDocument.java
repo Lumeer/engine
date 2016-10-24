@@ -21,6 +21,7 @@ package io.lumeer.engine.api.data;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Represents a single data record.
@@ -28,6 +29,14 @@ import java.util.LinkedHashMap;
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 public class DataDocument extends LinkedHashMap<String, Object> {
+
+   public DataDocument() {
+      super(); // this is done automatically, but looks better than an empty constructor body ;-)
+   }
+
+   public DataDocument(final Map<String, Object> data) {
+      super(data);
+   }
 
    /**
     * Gets the value of the given key as an Integer.
