@@ -29,6 +29,10 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * Tests the collection service while deployed on the application server.
@@ -50,5 +54,10 @@ public class CollectionServiceTest extends Arquillian {
    @Test
    public void testRegister() throws Exception {
       Assert.assertNotNull(collectionService);
+   }
+
+   public void testRestClient() throws Exception {
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target("http://localhost:8080").path("/lumeer-engine/rest/collections/").request(MediaType.APPLICATION_JSON_TYPE).buildGet().invoke();
    }
 }
