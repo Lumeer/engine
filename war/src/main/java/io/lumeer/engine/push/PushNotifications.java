@@ -36,14 +36,13 @@ import javax.websocket.server.ServerEndpoint;
 
 /**
  * Push notification client. Can interact with browser clients.
+ * Sample client is in https://github.com/Lumeer/lumeer.github.io/blob/master/push.html
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @ServerEndpoint("/push/{channel}")
 @Stateless
 public class PushNotifications {
-
-   private Logger log = Logger.getLogger(PushNotifications.class.getName());
 
    private Set<Session> sessions = new ConcurrentSet<>();
 
@@ -57,35 +56,16 @@ public class PushNotifications {
 
    @OnMessage
    public String receiveMessage(String message, Session session) {
-      log.info("Received : "+ message + ", session:" + session.getId());
-      return "Response from the server";
+      return "";
    }
 
    @OnOpen
    public void open(Session session) {
       sessions.add(session);
-      log.info(session.getRequestURI().toString());
-      log.info(session.getId());
-      /*log.info("Open session:" + session.getId());
-      final Session s = session;
-      mes.execute(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               for (int i=0;i<3;i++) {
-                  Thread.sleep(1000);
-                  s.getBasicRemote().sendText("Message from server");
-               }
-            } catch (InterruptedException | IOException e) {
-               e.printStackTrace();
-            }
-         }
-      });*/
    }
 
    @OnClose
    public void close(Session session, CloseReason c) {
       sessions.remove(session);
-      log.info("Closing:" + session.getId());
    }
 }
