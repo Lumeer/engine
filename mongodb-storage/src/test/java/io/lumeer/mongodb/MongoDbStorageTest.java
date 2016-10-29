@@ -20,9 +20,12 @@ package io.lumeer.mongodb;/*
 
 import io.lumeer.engine.api.data.DataDocument;
 
+import org.bson.Document;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
@@ -94,6 +97,7 @@ public class MongoDbStorageTest {
 
       DataDocument readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
       changeDummyDocumentValues(readedDocument);
+      readedDocument.remove("_id");
 
       mongoDbStorage.updateDocument(DUMMY_COLLECTION1, readedDocument, documentId);
       DataDocument readedAfterInsDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
@@ -126,7 +130,23 @@ public class MongoDbStorageTest {
 
    @Test
    public void testSearch() throws Exception {
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
 
+      for (int i = 0; i < 1000; i++) {
+         DataDocument insertedDocument = createDummyDocument();
+         mongoDbStorage.createDocument(DUMMY_COLLECTION1, insertedDocument);
+      }
+
+      List<DataDocument> searchDocuments = mongoDbStorage.search(DUMMY_COLLECTION1, null, null, 100, 100);
+
+      Assert.assertEquals(searchDocuments.size(), 100);
+
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+   }
+
+   @Test
+   public void testRawSearch() throws Exception {
+      // TODO
    }
 
    private DataDocument createDummyDocument() {
@@ -136,7 +156,7 @@ public class MongoDbStorageTest {
       return dataDocument;
    }
 
-   private void changeDummyDocumentValues(DataDocument readedDocument){
+   private void changeDummyDocumentValues(DataDocument readedDocument) {
       readedDocument.replace(DUMMY_KEY1, DUMMY_CHANGED_VALUE1);
       readedDocument.replace(DUMMY_KEY2, DUMMY_CHANGED_VALUE2);
    }

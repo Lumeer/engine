@@ -24,8 +24,9 @@ import io.lumeer.engine.api.data.DataStorage;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 
 import org.bson.BsonDocument;
@@ -34,12 +35,12 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Model;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 @Model
 public class MongoDbStorage implements DataStorage {
@@ -68,9 +69,8 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public String createDocument(final String collectionName, final DataDocument document) {
-      Document doc = new Document();
-      doc.putAll(document);
+   public String createDocument(final String collectionName, final DataDocument dataDocument) {
+      Document doc = new Document(dataDocument);
       database.getCollection(collectionName).insertOne(doc);
       return doc.getObjectId("_id").toString();
    }
@@ -84,16 +84,13 @@ public class MongoDbStorage implements DataStorage {
          return null;
       }
 
-      DataDocument dataDocument = new DataDocument();
-      dataDocument.putAll(document);
-      dataDocument.remove("_id");
-      return dataDocument;
+      return new DataDocument(document);
    }
 
    @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId) {
       BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
-      BasicDBObject updateBson = new BasicDBObject("$set",new BasicDBObject(updatedDocument) );
+      BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
@@ -104,26 +101,29 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public List<DataDocument> search(final String query, final int page, final int limit) {
+   public void renameAttribute(final String collectionName, final String oldName, final String newName) {
+      database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), Updates.rename(oldName, newName));
+   }
+
+   @Override
+   public List<DataDocument> search(final String query) {
       // TODO
       return null;
    }
 
-   public List<DataDocument> search(final String collectionName, final String filter, final String sort, final String lastId, final int limit) {
+   @Override
+   public List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit) {
       final List<DataDocument> result = new ArrayList<>();
 
-      database.getCollection(collectionName)
-              .find(Filters.and(Filters.gt("_id", lastId), BsonDocument.parse(filter)))
-              .sort(BsonDocument.parse(sort))
-              .limit(limit)
-              .into(new ArrayList<>())
-              .forEach(d -> result.add(new DataDocument(d)));
+      MongoCollection<Document> collection = database.getCollection(collectionName);
+      FindIterable<Document> documents = filter != null ? collection.find(BsonDocument.parse(filter)) : collection.find();
+      documents.sort(sort != null ? BsonDocument.parse(sort) : null)
+               .skip(skip)
+               .limit(limit)
+               .into(new ArrayList<>())
+               .forEach(d -> result.add(new DataDocument(d)));
 
       return result;
    }
 
-   @Override
-   public void renameAttribute(final String collectionName, final String oldName, final String newName) {
-      database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), Updates.rename(oldName, newName));
-   }
 }

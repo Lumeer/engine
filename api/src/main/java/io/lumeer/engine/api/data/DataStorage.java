@@ -44,7 +44,10 @@ public interface DataStorage {
 
    void dropDocument(final String collectionName, final String documentId);
 
-   List<DataDocument> search(final String query, int page, int limit);
-
    void renameAttribute(final String collectionName, final String oldName, final String newName);
+
+   List<DataDocument> search(final String query);
+
+   List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit);
+
 }
