@@ -46,9 +46,6 @@ public class PushNotifications {
 
    private Set<Session> sessions = new ConcurrentSet<>();
 
-   @Resource
-   private ManagedExecutorService mes;
-
    @Produces
    public Set<Session> getSessions() {
       return sessions;
