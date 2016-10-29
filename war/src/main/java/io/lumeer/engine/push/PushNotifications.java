@@ -22,10 +22,7 @@ package io.lumeer.engine.push;
 import io.netty.util.internal.ConcurrentSet;
 
 import java.util.Set;
-import java.util.logging.Logger;
-import javax.annotation.Resource;
 import javax.ejb.Stateless;
-import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.inject.Produces;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
