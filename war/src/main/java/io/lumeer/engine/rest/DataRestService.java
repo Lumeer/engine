@@ -23,6 +23,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.UpdateElement;
 import io.lumeer.engine.api.task.SearchTask;
+import io.lumeer.engine.push.PushService;
 import io.lumeer.engine.util.JmsService;
 
 import java.util.List;
@@ -55,6 +56,9 @@ public class DataRestService {
    @Inject
    private JmsService jmsService;
 
+   @Inject
+   private PushService pushService;
+
    /**
     * Sample get request handler.
     *
@@ -70,6 +74,15 @@ public class DataRestService {
       jmsService.enqueueTask(new SearchTask("search for green keys")); // this is how we send a jms message
 
       return null;
+   }
+
+   /**
+    * Broadcasts a push notification to browsers.
+    */
+   @GET
+   @Path("/broadcast")
+   public void broadcast() {
+      pushService.publishMessage("chat", "Hello everyone, this is Lumeer speaking!");
    }
 
 }
