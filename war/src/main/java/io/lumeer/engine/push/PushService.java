@@ -45,7 +45,9 @@ public class PushService {
    public void publishMessage(final String channel, final String message) {
       sessions.forEach(session -> {
          try {
-            session.getBasicRemote().sendText(message);
+            if (channel == null || channel.isEmpty() || session.getRequestURI().toString().endsWith(channel)) {
+               session.getBasicRemote().sendText(message);
+            }
          } catch (IOException e) {
             log.log(Level.FINE, "Unable to send push notification: ", e);
          }

@@ -49,17 +49,17 @@ public class PushNotifications {
    }
 
    @OnMessage
-   public String receiveMessage(String message, Session session) {
+   public String receiveMessage(final String message, final Session session) {
       return "";
    }
 
    @OnOpen
-   public void open(Session session) {
+   public void open(final Session session) {
       sessions.add(session);
    }
 
    @OnClose
-   public void close(Session session, CloseReason c) {
+   public void close(final Session session, final CloseReason c) {
       sessions.remove(session);
    }
 }
