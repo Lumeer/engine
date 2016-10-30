@@ -44,6 +44,11 @@ import javax.websocket.Session;
 @ApplicationScoped
 public class PushService {
 
+   /**
+    * WebSocket session header that carries the authentication token.
+    */
+   public static final String LUMEER_AUTH_HEADER = "lumeer.auth";
+
    @Inject
    private PushNotifications pushNotifications;
 
@@ -76,15 +81,22 @@ public class PushService {
       return observedObjects;
    }
 
+   /**
+    * Sends push-notification message to WebSocket clients listening on the given channel.
+    *
+    * @param channel
+    *       Channel suffix to send to or empty to send to all channels.
+    * @param message
+    *       The message to be sent.
+    */
    public void publishMessage(final String channel, final String message) {
-      log.info("sessions: " + sessions);
-      log.info("hash " + sessions.hashCode());
-
       sessions.forEach(session -> {
          try {
             log.info(session.getRequestURI().toString());
             if (channel == null || channel.isEmpty() || session.getRequestURI().toString().endsWith(channel)) {
-               session.getBasicRemote().sendText(message);
+               if (session.getUserProperties().containsKey(LUMEER_AUTH_HEADER)) {
+                  session.getBasicRemote().sendText(message);
+               }
             }
          } catch (IOException e) {
             log.log(Level.FINE, "Unable to send push notification: ", e);
@@ -92,11 +104,21 @@ public class PushService {
       });
    }
 
+   /**
+    * Sends push-notification message to WebSocket clients listening on the given channel.
+    *
+    * @param channel
+    *       Channel suffix to send to or empty to send to all channels.
+    * @param message
+    *       The message to be sent.
+    */
    public void publishMessage(final String channel, final Object message) {
       sessions.forEach(session -> {
          try {
             if (channel == null || channel.isEmpty() || session.getRequestURI().toString().endsWith(channel)) {
-               session.getBasicRemote().sendObject(message);
+               if (session.getUserProperties().containsKey(LUMEER_AUTH_HEADER)) {
+                  session.getBasicRemote().sendObject(message);
+               }
             }
          } catch (IOException | EncodeException e) {
             log.log(Level.FINE, "Unable to send push notification: ", e);

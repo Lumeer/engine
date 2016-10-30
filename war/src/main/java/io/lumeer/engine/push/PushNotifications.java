@@ -41,11 +41,6 @@ import javax.websocket.server.ServerEndpoint;
 @Stateless
 public class PushNotifications {
 
-   /**
-    * WebSocket session header that carries the authentication token.
-    */
-   public static final String LUMEER_AUTH_HEADER = "lumeer.auth";
-
    @Inject
    private PushService pushService;
 
@@ -56,14 +51,14 @@ public class PushNotifications {
             final String token = message.substring(5);
 
             if (pushService.getTokens().containsKey(token)) {
-               session.getUserProperties().put(LUMEER_AUTH_HEADER, token);
+               session.getUserProperties().put(PushService.LUMEER_AUTH_HEADER, token);
 
                return "authenticated";
             }
          }
 
          // all other services need an authenticated client
-         if (session.getUserProperties().containsKey(LUMEER_AUTH_HEADER)) {
+         if (session.getUserProperties().containsKey(PushService.LUMEER_AUTH_HEADER)) {
             if (message.startsWith("observe ")) {
                final String objectId = message.substring(8);
                pushService.getObservedObjects().computeIfAbsent(objectId, k -> new ConcurrentSet<>()).add(session);
@@ -89,15 +84,12 @@ public class PushNotifications {
    @OnOpen
    public void open(final Session session) {
       pushService.getSessions().add(session);
-      System.out.println("Adding " + session.getId());
-      System.out.println(pushService.getSessions().hashCode());
    }
 
    @OnClose
    public void close(final Session session, final CloseReason c) {
-      System.out.println("Removing " + session.getId());
       // remove token from authenticated tokens
-      final String token = (String) session.getUserProperties().get(LUMEER_AUTH_HEADER);
+      final String token = (String) session.getUserProperties().get(PushService.LUMEER_AUTH_HEADER);
       if (token != null && !token.isEmpty()) {
          pushService.getTokens().remove(token);
       }
