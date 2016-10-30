@@ -130,11 +130,21 @@
          <artifactId>atmosphere-annotations</artifactId>
       </dependency-->
 
+      <!-- Groovy -->
+      <dependency>
+         <groupId>org.codehaus.groovy</groupId>
+         <artifactId>groovy-all</artifactId>
+      </dependency>
+
       <!-- Test NG -->
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.assertj</groupId>
+         <artifactId>assertj-core</artifactId>
       </dependency>
 
       <dependency>
