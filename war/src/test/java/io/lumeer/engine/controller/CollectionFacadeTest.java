@@ -1,4 +1,4 @@
-package io.lumeer.engine.controller;/*
+/*
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
@@ -17,8 +17,7 @@ package io.lumeer.engine.controller;/*
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-
-import io.lumeer.engine.api.data.DataStorage;
+package io.lumeer.engine.controller;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -27,9 +26,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
