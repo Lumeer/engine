@@ -19,7 +19,10 @@
  */
 package io.lumeer.engine.util;
 
+import io.lumeer.engine.push.PushNotifications;
+
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 

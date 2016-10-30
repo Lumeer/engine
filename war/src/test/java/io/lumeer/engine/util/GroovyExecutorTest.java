@@ -21,6 +21,8 @@ package io.lumeer.engine.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lumeer.engine.api.data.DataDocument;
+
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -78,4 +80,14 @@ public class GroovyExecutorTest {
       assertThat(vars2).containsEntry("i", 43);
    }
 
+   @Test
+   public void passingDataDocumentTest() {
+      final Map<String, Object> vars = new HashMap<>();
+      vars.put("dd", new DataDocument());
+
+      // verifies that we can pass our own objects in and out
+      GroovyExecutor.evaluateScript("dd.put('myDbl', 3.14157d)", vars);
+
+      assertThat(((DataDocument) vars.get("dd")).getDouble("myDbl")).isEqualTo(3.14157d);
+   }
 }

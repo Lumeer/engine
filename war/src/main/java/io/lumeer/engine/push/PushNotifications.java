@@ -23,7 +23,7 @@ import io.netty.util.internal.ConcurrentSet;
 
 import java.util.Set;
 import javax.ejb.Stateless;
-import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
@@ -41,25 +41,71 @@ import javax.websocket.server.ServerEndpoint;
 @Stateless
 public class PushNotifications {
 
-   private Set<Session> sessions = new ConcurrentSet<>();
+   /**
+    * WebSocket session header that carries the authentication token.
+    */
+   public static final String LUMEER_AUTH_HEADER = "lumeer.auth";
 
-   @Produces
-   public Set<Session> getSessions() {
-      return sessions;
-   }
+   @Inject
+   private PushService pushService;
 
    @OnMessage
    public String receiveMessage(final String message, final Session session) {
+      if (message != null) {
+         if (message.startsWith("auth ")) {
+            final String token = message.substring(5);
+
+            if (pushService.getTokens().containsKey(token)) {
+               session.getUserProperties().put(LUMEER_AUTH_HEADER, token);
+
+               return "authenticated";
+            }
+         }
+
+         // all other services need an authenticated client
+         if (session.getUserProperties().containsKey(LUMEER_AUTH_HEADER)) {
+            if (message.startsWith("observe ")) {
+               final String objectId = message.substring(8);
+               pushService.getObservedObjects().computeIfAbsent(objectId, k -> new ConcurrentSet<>()).add(session);
+
+               return "observing";
+            }
+
+            if (message.startsWith("unobserve ")) {
+               final String objectId = message.substring(10);
+               final Set<Session> sessions = pushService.getObservedObjects().get(objectId);
+               if (sessions != null) {
+                  sessions.remove(session);
+               }
+
+               return "not observing";
+            }
+         }
+      }
+
       return "";
    }
 
    @OnOpen
    public void open(final Session session) {
-      sessions.add(session);
+      pushService.getSessions().add(session);
+      System.out.println("Adding " + session.getId());
+      System.out.println(pushService.getSessions().hashCode());
    }
 
    @OnClose
    public void close(final Session session, final CloseReason c) {
-      sessions.remove(session);
+      System.out.println("Removing " + session.getId());
+      // remove token from authenticated tokens
+      final String token = (String) session.getUserProperties().get(LUMEER_AUTH_HEADER);
+      if (token != null && !token.isEmpty()) {
+         pushService.getTokens().remove(token);
+      }
+
+      // un-register all observations
+      pushService.getObservedObjects().forEach((k, v) -> v.remove(session));
+
+      // delete the session
+      pushService.getSessions().remove(session);
    }
 }

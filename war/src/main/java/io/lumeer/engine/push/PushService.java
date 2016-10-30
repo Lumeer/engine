@@ -19,11 +19,19 @@
  */
 package io.lumeer.engine.push;
 
+import io.lumeer.engine.api.event.ElementEvent;
+
+import io.netty.util.internal.ConcurrentSet;
+
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.Reception;
 import javax.inject.Inject;
 import javax.websocket.EncodeException;
 import javax.websocket.Session;
@@ -37,14 +45,44 @@ import javax.websocket.Session;
 public class PushService {
 
    @Inject
-   private Set<Session> sessions;
+   private PushNotifications pushNotifications;
 
    @Inject
    private Logger log;
+   /**
+    * Currently opened sessions with clients.
+    */
+   private Set<Session> sessions = new ConcurrentSet<>();
+
+   /**
+    * Authentication tokens of clients authenticated via HTTP.
+    */
+   private Map<String, Long> tokens = new ConcurrentHashMap<>();
+
+   /**
+    * Clients registered to observe given objects.
+    */
+   private Map<String, Set<Session>> observedObjects = new ConcurrentHashMap<>();
+
+   public Set<Session> getSessions() {
+      return sessions;
+   }
+
+   public Map<String, Long> getTokens() {
+      return tokens;
+   }
+
+   public Map<String, Set<Session>> getObservedObjects() {
+      return observedObjects;
+   }
 
    public void publishMessage(final String channel, final String message) {
+      log.info("sessions: " + sessions);
+      log.info("hash " + sessions.hashCode());
+
       sessions.forEach(session -> {
          try {
+            log.info(session.getRequestURI().toString());
             if (channel == null || channel.isEmpty() || session.getRequestURI().toString().endsWith(channel)) {
                session.getBasicRemote().sendText(message);
             }
@@ -64,5 +102,25 @@ public class PushService {
             log.log(Level.FINE, "Unable to send push notification: ", e);
          }
       });
+   }
+
+   /**
+    * Notifies all WebSocket clients observing given document.
+    *
+    * @param event
+    *       The document event with information about change.
+    */
+   public void onDocumentEvent(@Observes(notifyObserver = Reception.ALWAYS) final ElementEvent event) {
+      final String objectId = event.getElement().get("_id").toString();
+
+      if (objectId != null && !objectId.isEmpty() && observedObjects.containsKey(objectId)) {
+         observedObjects.get(objectId).forEach(session -> {
+            try {
+               session.getBasicRemote().sendObject(event);
+            } catch (IOException | EncodeException e) {
+               log.log(Level.SEVERE, "Unable to notify WebSocket client: ", e);
+            }
+         });
+      }
    }
 }
