@@ -105,12 +105,46 @@
          <artifactId>jboss-jms-api_2.0_spec</artifactId>
          <scope>provided</scope>
       </dependency>
+      <dependency>
+         <groupId>org.jboss.spec.javax.websocket</groupId>
+         <artifactId>jboss-websocket-api_1.1_spec</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.spec.javax.enterprise.concurrent</groupId>
+         <artifactId>jboss-concurrency-api_1.0_spec</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.spec.javax.servlet</groupId>
+         <artifactId>jboss-servlet-api_3.1_spec</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <!-- Push notifications -->
+      <!--dependency>
+         <groupId>org.atmosphere</groupId>
+         <artifactId>atmosphere-runtime</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.atmosphere</groupId>
+         <artifactId>atmosphere-annotations</artifactId>
+      </dependency-->
+
+      <!-- Groovy -->
+      <dependency>
+         <groupId>org.codehaus.groovy</groupId>
+         <artifactId>groovy-all</artifactId>
+      </dependency>
 
       <!-- Test NG -->
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.assertj</groupId>
+         <artifactId>assertj-core</artifactId>
       </dependency>
 
       <dependency>
