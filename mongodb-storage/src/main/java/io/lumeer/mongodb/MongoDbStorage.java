@@ -28,7 +28,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Updates;
-
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -41,9 +40,13 @@ import javax.enterprise.inject.Model;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ *         <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @Model
 public class MongoDbStorage implements DataStorage {
+
+   private final String CURSOR_KEY = "cursor";
+   private final String FIRST_BATCH_KEY = "firstBatch";
 
    private MongoDatabase database;
 
@@ -107,8 +110,13 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public List<DataDocument> search(final String query) {
-      // TODO
-      return null;
+      final List<DataDocument> result = new ArrayList<>();
+
+      Document cursor = (Document) database.runCommand(BsonDocument.parse(query)).get(CURSOR_KEY);
+
+      ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> result.add(new DataDocument(d)));
+
+      return result;
    }
 
    @Override

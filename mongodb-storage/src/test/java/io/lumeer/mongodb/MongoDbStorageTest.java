@@ -20,7 +20,6 @@ package io.lumeer.mongodb;/*
 
 import io.lumeer.engine.api.data.DataDocument;
 
-import org.bson.Document;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -146,7 +145,20 @@ public class MongoDbStorageTest {
 
    @Test
    public void testRawSearch() throws Exception {
-      // TODO
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
+
+      for (int i = 0; i < 1000; i++) {
+         DataDocument insertedDocument = createDummyDocument();
+         mongoDbStorage.createDocument(DUMMY_COLLECTION1, insertedDocument);
+      }
+
+      // query form: https://docs.mongodb.com/v3.2/reference/command/find/#definition
+      String query = "{find: \"" + DUMMY_COLLECTION1 + "\"}";
+      List<DataDocument> searchDocuments = mongoDbStorage.search(query);
+
+      Assert.assertEquals(searchDocuments.size(), 101);
+
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }
 
    private DataDocument createDummyDocument() {
