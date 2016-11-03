@@ -99,26 +99,8 @@ public class CollectionFacade implements Serializable {
       dataStorage.dropCollection(METADATA_PREXIF + collectionName.toLowerCase());
    }
 
-   public Set<Object> getAttributeValues(final String collectionName, final String attributeName) {
-      Set<Object> attributeValues = new HashSet<Object>();
-
-      // TODO: resolve column type (if available in collection metadata)
-
-      int page = 1;
-      List<DataDocument> documents = queryFromDb(collectionName, page, PAGE_SIZE);
-      while (attributeValues.size() < PAGE_SIZE || documents.size() == 0) {
-         for (DataDocument document : documents) {
-            if (attributeValues.size() > PAGE_SIZE) {
-               break;
-            }
-            for (String key : document.keySet()) {
-               attributeValues.add(document.get(key)); // TODO: we should in some way use DataStorage to give us distinct values
-            }
-         }
-         page++;
-         documents = queryFromDb(collectionName, page, PAGE_SIZE);
-      }
-      return attributeValues;
+   public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
+      return dataStorage.getAttributeValues(collectionName, attributeName);
    }
 
    public void addColumn(final String collectionName, final String columnName) {

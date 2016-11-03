@@ -23,18 +23,28 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Model;
 
 /**
@@ -49,11 +59,19 @@ public class MongoDbStorage implements DataStorage {
    private final String FIRST_BATCH_KEY = "firstBatch";
 
    private MongoDatabase database;
+   private MongoClient mongoClient;
 
    @PostConstruct
    public void connect() {
-      MongoClient mongo = new MongoClient("localhost", 27017); // default connection
-      database = mongo.getDatabase("lumeer");
+      mongoClient = new MongoClient("localhost", 27017); // default connection
+      database = mongoClient.getDatabase("lumeer");
+   }
+
+   @PreDestroy
+   public void disconnect() {
+      if (mongoClient != null) {
+         mongoClient.close();
+      }
    }
 
    @Override
@@ -108,6 +126,27 @@ public class MongoDbStorage implements DataStorage {
       database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), Updates.rename(oldName, newName));
    }
 
+   @Override
+   public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
+      // define grouping by out attributeName
+      final Document group = new Document("$group", new Document("_id", "$" + attributeName));
+      // sort by id
+      final Document sort = new Document("$sort", new Document("_id", 1));
+      // limit...
+      final Document limit = new Document("$limit", 100);
+      // this projection adds attribute with desired name, and hides _id attribute
+      final Document project = new Document("$project", new Document(attributeName, "$_id").append("_id", 0));
+
+      AggregateIterable<Document> aggregate = database.getCollection(collectionName).aggregate(Arrays.asList(group, sort, limit, project));
+      Set<String> attributeValues = new HashSet<>();
+      for (Document doc : aggregate) {
+         // there is only one column with name "attributeName"
+         attributeValues.add(doc.get(attributeName).toString());
+      }
+      return attributeValues;
+   }
+
+   @SuppressWarnings("unchecked")
    @Override
    public List<DataDocument> search(final String query) {
       final List<DataDocument> result = new ArrayList<>();

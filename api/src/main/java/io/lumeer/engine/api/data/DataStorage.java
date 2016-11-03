@@ -20,6 +20,7 @@
 package io.lumeer.engine.api.data;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a data storage.
@@ -45,6 +46,8 @@ public interface DataStorage {
    void dropDocument(final String collectionName, final String documentId);
 
    void renameAttribute(final String collectionName, final String oldName, final String newName);
+
+   Set<String> getAttributeValues(final String collectionName, final String attributeName);
 
    List<DataDocument> search(final String query);
 

@@ -25,6 +25,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
@@ -157,6 +158,45 @@ public class MongoDbStorageTest {
       List<DataDocument> searchDocuments = mongoDbStorage.search(query);
 
       Assert.assertEquals(searchDocuments.size(), 101);
+
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+   }
+
+   @Test
+   public void testRenameAttribute() throws Exception {
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
+
+      DataDocument insertedDocument = createDummyDocument();
+      String id = mongoDbStorage.createDocument(DUMMY_COLLECTION1, insertedDocument);
+
+      String changedAttr = "changed_" + DUMMY_KEY1;
+      mongoDbStorage.renameAttribute(DUMMY_COLLECTION1, DUMMY_KEY1, changedAttr);
+
+      DataDocument document = mongoDbStorage.readDocument(DUMMY_COLLECTION1, id);
+      Assert.assertEquals(document.containsKey(DUMMY_KEY1), false);
+      Assert.assertEquals(document.containsKey(changedAttr), true);
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+   }
+
+   @Test
+   public void testGetAttributeValues() throws Exception {
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
+
+      int numDummyKey1 = 150;
+      int numDummyKey2 = 10;
+      for (int i = 0; i < numDummyKey1; i++) {
+         DataDocument dataDocument = new DataDocument();
+         dataDocument.put(DUMMY_KEY1, i);
+         dataDocument.put(DUMMY_KEY2, i % numDummyKey2);
+         mongoDbStorage.createDocument(DUMMY_COLLECTION1, dataDocument);
+      }
+
+      Set<String> attributeValues1 = mongoDbStorage.getAttributeValues(DUMMY_COLLECTION1, DUMMY_KEY1);
+      Assert.assertEquals(attributeValues1.size(), Math.min(numDummyKey1, 100));
+
+      Set<String> attributeValues2 = mongoDbStorage.getAttributeValues(DUMMY_COLLECTION1, DUMMY_KEY2);
+      Assert.assertEquals(attributeValues2.size(),  Math.min(numDummyKey2, 100));
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }
