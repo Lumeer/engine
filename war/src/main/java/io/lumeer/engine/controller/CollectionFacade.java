@@ -47,7 +47,8 @@ public class CollectionFacade implements Serializable {
 
    private static final long serialVersionUID = 8967474543742743308L;
 
-   private final String METADATA_PREXIF = "metadata_";
+   private final String METADATA_PREXIF = "metadata_"; // TODO: adjust to metadata name rules, or solve by calling a method from MetadataFacade
+   private final int PAGE_SIZE = 100;
 
    @Inject
    // @Named("mongoDbStorage") // we have only one implementation, so mongo is automatically injected
@@ -64,7 +65,7 @@ public class CollectionFacade implements Serializable {
 
          // filters out metadata collections
          for (String collection : collectionsAll) {
-            if (!collection.startsWith(METADATA_PREXIF)) {
+            if (!collection.startsWith(METADATA_PREXIF)) { // TODO: maybe use MetadataFacade to decide
                collections.add(collection);
             }
          }
@@ -88,12 +89,10 @@ public class CollectionFacade implements Serializable {
    }
 
    public List<CollectionMetadataElement> readCollectionMetadata(final String collectionName) {
-      //TODO
       return null;
    }
 
    public void updateCollectionMetadata(final String collectionName, final CollectionMetadataElement element) {
-      //TODO
    }
 
    public void dropCollectionMetadata(final String collectionName) {
@@ -103,34 +102,46 @@ public class CollectionFacade implements Serializable {
    public Set<Object> getAttributeValues(final String collectionName, final String attributeName) {
       Set<Object> attributeValues = new HashSet<Object>();
 
-      //TODO: Iterate over documents in the collection
-      DataDocument document = dataStorage.readDocument(collectionName, null);
+      // TODO: resolve column type (if available in collection metadata)
 
-      for (String key : document.keySet()) {
-
-         if (key.equals(attributeName) && attributeValues.size() < 100) {
-            attributeValues.add(document.get(key));
+      int page = 1;
+      List<DataDocument> documents = queryFromDb(collectionName, page, PAGE_SIZE);
+      while (attributeValues.size() < PAGE_SIZE || documents.size() == 0) {
+         for (DataDocument document : documents) {
+            if (attributeValues.size() > PAGE_SIZE) {
+               break;
+            }
+            for (String key : document.keySet()) {
+               attributeValues.add(document.get(key)); // TODO: we should in some way use DataStorage to give us distinct values
+            }
          }
+         page++;
+         documents = queryFromDb(collectionName, page, PAGE_SIZE);
       }
-
       return attributeValues;
    }
 
    public void addColumn(final String collectionName, final String columnName) {
-      //TODO
+      // we add column with blank value to all documents
+      // use MetadataFacade + change all documents
    }
 
    public void renameColumn(final String collectionName, final String origName, final String newName) {
-      //TODO
+      // use MetadataFacade + change all documents
    }
 
    public void dropColumn(final String collectionName, final String columnName) {
-      //TODO
+      // use MetadataFacade + change all documents
    }
 
    public void onCollectionEvent(@Observes(notifyObserver = Reception.IF_EXISTS) final CollectionEvent event) {
       // we do not care which collection got changed, we just invalidate our cache
       collections = null;
+   }
+
+   // method used to query something from DB without any sort or filter
+   private List<DataDocument> queryFromDb(String collectionName, int page, int limit) {
+      return dataStorage.search(collectionName, "", "", (page - 1) * limit, limit);
    }
 
 }
