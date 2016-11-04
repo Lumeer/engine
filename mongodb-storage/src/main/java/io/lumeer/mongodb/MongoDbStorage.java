@@ -23,19 +23,14 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
-import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -55,16 +50,20 @@ import javax.enterprise.inject.Model;
 @Model
 public class MongoDbStorage implements DataStorage {
 
+   private final String HOST = "localhost";
+   private final String DATABASE_NAME = "lumeer";
    private final String CURSOR_KEY = "cursor";
    private final String FIRST_BATCH_KEY = "firstBatch";
+
+   private final int PORT = 27017;
 
    private MongoDatabase database;
    private MongoClient mongoClient;
 
    @PostConstruct
    public void connect() {
-      mongoClient = new MongoClient("localhost", 27017); // default connection
-      database = mongoClient.getDatabase("lumeer");
+      mongoClient = new MongoClient(HOST, PORT); // default connection
+      database = mongoClient.getDatabase(DATABASE_NAME);
    }
 
    @PreDestroy
@@ -130,8 +129,8 @@ public class MongoDbStorage implements DataStorage {
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
       // define grouping by out attributeName
       final Document group = new Document("$group", new Document("_id", "$" + attributeName));
-      // sort by id
-      final Document sort = new Document("$sort", new Document("_id", 1));
+      // sorting by id, descending, from the newest entry to oldest one
+      final Document sort = new Document("$sort", new Document("_id", -1));
       // limit...
       final Document limit = new Document("$limit", 100);
       // this projection adds attribute with desired name, and hides _id attribute

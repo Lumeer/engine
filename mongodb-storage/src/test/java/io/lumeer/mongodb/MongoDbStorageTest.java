@@ -157,6 +157,7 @@ public class MongoDbStorageTest {
       String query = "{find: \"" + DUMMY_COLLECTION1 + "\"}";
       List<DataDocument> searchDocuments = mongoDbStorage.search(query);
 
+      // search() method returns 101 entries due to it is a default value of "batchSize" query key
       Assert.assertEquals(searchDocuments.size(), 101);
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);

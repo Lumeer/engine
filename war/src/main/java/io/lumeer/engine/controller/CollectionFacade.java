@@ -19,14 +19,13 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.data.CollectionMetadataElement;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.CollectionEvent;
-import io.lumeer.engine.api.data.CollectionMetadataElement;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
@@ -48,6 +47,7 @@ public class CollectionFacade implements Serializable {
    private static final long serialVersionUID = 8967474543742743308L;
 
    private final String METADATA_PREXIF = "metadata_"; // TODO: adjust to metadata name rules, or solve by calling a method from MetadataFacade
+
    private final int PAGE_SIZE = 100;
 
    @Inject
