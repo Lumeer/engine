@@ -158,9 +158,9 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-          <groupId>org.wildfly.arquillian</groupId>
-          <artifactId>wildfly-arquillian-container-managed</artifactId>
-          <scope>test</scope>
+         <groupId>org.wildfly.arquillian</groupId>
+         <artifactId>wildfly-arquillian-container-managed</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.wildfly</groupId>
@@ -183,7 +183,7 @@
                <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
                <processStartTag>-----------------------------------------------------------------------\</processStartTag>
                <processEndTag>-----------------------------------------------------------------------/</processEndTag>
-               <sectionDelimiter> 
+               <sectionDelimiter>
                </sectionDelimiter>
                <organizationName>the original author or authors.</organizationName>
                <licenseName>apache_v2</licenseName>

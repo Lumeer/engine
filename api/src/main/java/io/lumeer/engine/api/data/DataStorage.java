@@ -150,14 +150,14 @@ public interface DataStorage {
    void renameAttribute(final String collectionName, final String oldName, final String newName);
 
    /**
-    * Remove attribute from.
+    * Removes given attribute from existing document specified by its id.
     *
     * @param collectionName
     *       the name of the collection where the given attribute should be removed
     * @param documentId
     *       the id of document from which attribute will be removed
     * @param attributeName
-    *       the name of an attribute
+    *       the name of an attribute to remove
     */
    void removeAttribute(final String collectionName, final String documentId, final String attributeName);
 

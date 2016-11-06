@@ -19,6 +19,9 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -28,6 +31,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -47,8 +51,17 @@ public class CollectionFacadeTest extends Arquillian {
    private final String DUMMY_COLLECTION1 = "testCollection1".toLowerCase(); // CollectionFacade converts names to lower case
    private final String DUMMY_COLLECTION2 = "testCollection2".toLowerCase();
 
+   private final String DUMMY_KEY1 = "key1";
+   private final String DUMMY_KEY2 = "key2";
+   private final String DUMMY_VALUE1 = "param1";
+   private final String DUMMY_VALUE2 = "param2";
+   private final String DUMMY_NEW_KEY = "newKey";
+
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private DataStorage dataStorage;
 
    @Test
    public void testGetAllCollections() throws Exception {
@@ -88,22 +101,60 @@ public class CollectionFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testAddColumn() throws Exception {
+   public void testAddAndDropColumn() throws Exception {
+      collectionFacade.createCollection(DUMMY_COLLECTION1);
 
+      fillDatabaseDummyEntries(DUMMY_COLLECTION1);
+
+      collectionFacade.addColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
+      Assert.assertEquals(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY), true);
+
+      collectionFacade.dropColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
+      Assert.assertEquals(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY), false);
+
+      collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
 
    @Test
    public void testRenameColumn() throws Exception {
+      collectionFacade.createCollection(DUMMY_COLLECTION1);
 
-   }
+      fillDatabaseDummyEntries(DUMMY_COLLECTION1);
 
-   @Test
-   public void testDropColumn() throws Exception {
+      collectionFacade.renameColumn(DUMMY_COLLECTION1, DUMMY_KEY1, DUMMY_NEW_KEY);
+      Assert.assertEquals(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY), true);
 
+      collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
 
    @Test
    public void testOnCollectionEvent() throws Exception {
 
+   }
+
+   private DataDocument createDummyDocument() {
+      DataDocument dataDocument = new DataDocument();
+      dataDocument.put(DUMMY_KEY1, DUMMY_VALUE1);
+      dataDocument.put(DUMMY_KEY2, DUMMY_VALUE2);
+
+      return dataDocument;
+   }
+
+   private void fillDatabaseDummyEntries(String collectionName) {
+      for (int i = 0; i < 100; i++) {
+         DataDocument insertedDocument = createDummyDocument();
+         dataStorage.createDocument(collectionName, insertedDocument);
+      }
+   }
+
+   private boolean isEveryDocumentFilledByNewColumn(String collection, String columnName) {
+      List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
+
+      for (DataDocument document : documents) {
+         if (!document.keySet().contains(columnName)) {
+            return false;
+         }
+      }
+      return true;
    }
 }
