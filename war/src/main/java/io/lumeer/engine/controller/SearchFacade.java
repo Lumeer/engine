@@ -28,7 +28,7 @@ import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák/a>
+ * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 
 @SessionScoped

@@ -105,7 +105,7 @@ public class VersionFacade implements Serializable {
     *       document, which will be stored in shadow collection
     *       and then updated in new collection to new version.
     *       After that it is possible to change data and save it
-    * @return
+    * @return hmm
     */
    public int newDocumentVersion(String collectionName, DataDocument document){
       createMetadata(document);
@@ -133,7 +133,7 @@ public class VersionFacade implements Serializable {
     *       document to back and change version
     * @param toVersion
     *       create new version with this integer. Not check if this version exists!
-    * @return
+    * @return hmm
     */
    public int newDocumentVersion(String collectionName, DataDocument document, int toVersion){
       createShadow(collectionName);
