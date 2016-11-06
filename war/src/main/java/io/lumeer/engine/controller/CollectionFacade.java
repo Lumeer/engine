@@ -46,13 +46,14 @@ public class CollectionFacade implements Serializable {
 
    private static final long serialVersionUID = 8967474543742743308L;
 
-   private final String METADATA_PREXIF = "metadata_"; // TODO: adjust to metadata name rules, or solve by calling a method from MetadataFacade
-
    private final int PAGE_SIZE = 100;
 
    @Inject
    // @Named("mongoDbStorage") // we have only one implementation, so mongo is automatically injected
    private DataStorage dataStorage;
+
+   @Inject
+   private MetadataFacade metadataFacade;
 
    private List<String> collections;
 
@@ -70,7 +71,7 @@ public class CollectionFacade implements Serializable {
 
          // filters out metadata collections
          for (String collection : collectionsAll) {
-            if (!collection.startsWith(METADATA_PREXIF)) { // TODO: maybe use MetadataFacade to decide
+            if (!metadataFacade.isMetadataCollection(collection)) {
                collections.add(collection);
             }
          }
@@ -85,9 +86,10 @@ public class CollectionFacade implements Serializable {
     *       the name of the collection to create
     */
    public void createCollection(final String collectionName) {
-      // TODO: Do we suppose that REST service takes care of special characters in collection name? If not, we should do that here.
-      dataStorage.createCollection(collectionName.toLowerCase());
-      dataStorage.createCollection(METADATA_PREXIF + collectionName.toLowerCase()); // creates metadata collection
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+      dataStorage.createCollection(internalCollectionName);
+      dataStorage.createCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName)); // creates metadata collection
+      metadataFacade.setOriginalCollectionName(collectionName);
 
       collections = null;
    }
@@ -95,11 +97,12 @@ public class CollectionFacade implements Serializable {
    /**
     * Drops the collection including its metadata collection with the specified name.
     *
-    * @param collectionName
+    * @param collectionName the name of the collection to update
     */
    public void dropCollection(final String collectionName) {
-      dataStorage.dropCollection(collectionName);
-      dataStorage.dropCollection(METADATA_PREXIF + collectionName.toLowerCase()); // removes metadata collection
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+      dataStorage.dropCollection(internalCollectionName);
+      dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName)); // removes metadata collection
 
       collections = null;
    }
@@ -114,7 +117,8 @@ public class CollectionFacade implements Serializable {
    }
 
    public void dropCollectionMetadata(final String collectionName) {
-      dataStorage.dropCollection(METADATA_PREXIF + collectionName.toLowerCase());
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+      dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName));
    }
 
    /**
