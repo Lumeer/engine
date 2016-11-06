@@ -56,8 +56,6 @@ public class CollectionFacade implements Serializable {
 
    private List<String> collections;
 
-   private MetadataFacade metadataFacade = new MetadataFacade();
-
    /**
     * Returns a List object of collection names in the database except of metadata collections.
     *
