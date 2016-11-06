@@ -28,6 +28,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -45,11 +46,102 @@ public class MetadataFacadeTest extends Arquillian {
    @Inject
    private MetadataFacade metadataFacade;
 
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   private String testCollectionInternalName = "collection.collection1";
+   private String testCollectionRealName = "Collection_1";
+
    @Test
-   public void testCollectionNameToInternalForm() throws Exception {
+   public void testCollectionInternalNameToInternalForm() throws Exception {
       String originalName = "čťH-%/e&äll o1";
-      String userId = "23";
-      String newName = "_collection-hello1-23";
-      Assert.assertEquals(metadataFacade.collectionNameToInternalForm(originalName, userId), newName);
+      String newName = "collection.hello1";
+      Assert.assertEquals(metadataFacade.collectionNameToInternalForm(originalName), newName);
+   }
+
+   @Test
+   public void testViewNameToInternalForm() throws Exception {
+      String originalName = "čťH-%/e&äll o1";
+      String newName = "view.hello1";
+      Assert.assertEquals(metadataFacade.viewNameToInternalForm(originalName), newName);
+   }
+
+   @Test
+   public void testGetCollectionColumnsInfo() {
+      collectionFacade.createCollection(testCollectionRealName);
+      String name = "column 1";
+      String type = "int";
+      metadataFacade.addCollectionColumn(testCollectionInternalName, name, type);
+
+      Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
+      collectionFacade.dropCollection(testCollectionRealName);
+
+      Assert.assertEquals(columnsInfo.size(), 1);
+      Assert.assertTrue(columnsInfo.containsKey(name));
+      Assert.assertTrue(columnsInfo.containsValue(type));
+   }
+
+   @Test
+   public void testAddCollectionColumnNew() {
+      collectionFacade.createCollection(testCollectionRealName);
+      boolean add = metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+      collectionFacade.dropCollection(testCollectionRealName);
+
+      Assert.assertTrue(add);
+   }
+
+   @Test
+   public void testAddCollectionColumnExisting() {
+      collectionFacade.createCollection(testCollectionRealName);
+      metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+      boolean add = metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+      collectionFacade.dropCollection(testCollectionRealName);
+
+      Assert.assertFalse(add);
+   }
+
+   // @Test
+   // public void testRenameCollectionColumn() {
+   //    collectionFacade.createCollection(testCollectionRealName);
+   //    metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+   //    boolean rename = metadataFacade.renameCollectionColumn(testCollectionInternalName, "column 1", "column 2");
+   //    Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
+   //    collectionFacade.dropCollection(testCollectionRealName);
+
+   //    Assert.assertTrue(columnsInfo.containsKey("column 2"));
+   //    Assert.assertTrue(rename);
+   // }
+
+   // @Test
+   // public void testRetypeCollectionColumn() {
+   //    collectionFacade.createCollection(testCollectionRealName);
+   //    metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+   //    boolean retype = metadataFacade.retypeCollectionColumn(testCollectionInternalName, "column 1", "double");
+   //    Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
+   //    collectionFacade.dropCollection(testCollectionRealName);
+
+   //    Assert.assertTrue(columnsInfo.containsValue("double"));
+   //    Assert.assertTrue(retype);
+   // }
+
+   // @Test
+   // public void testDropCollectionColumn() {
+   //    collectionFacade.createCollection(testCollectionRealName);
+   //    metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+   //    boolean drop = metadataFacade.dropCollectionColumn(testCollectionInternalName, "column 1");
+   //    Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
+   //    collectionFacade.dropCollection(testCollectionRealName);
+
+   //    Assert.assertTrue(columnsInfo.isEmpty());
+   //    Assert.assertTrue(drop);
+   // }
+
+   @Test
+   public void testGetOriginalCollectionName() {
+      collectionFacade.createCollection(testCollectionRealName);
+      String internalName = metadataFacade.collectionNameToInternalForm(testCollectionRealName);
+      String realName = metadataFacade.getOriginalCollectionName(internalName);
+      collectionFacade.dropCollection(testCollectionRealName);
+      Assert.assertEquals(testCollectionRealName, realName);
    }
 }

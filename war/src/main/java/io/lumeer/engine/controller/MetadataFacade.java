@@ -19,58 +19,62 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
+
 import java.io.Serializable;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 public class MetadataFacade implements Serializable {
 
+   @Inject
+   private DataStorage dataStorage;
+
    // table name prefixes, column names and other constants used in metadata
 
-   public final String META_TYPE_COLUMN_NAME = "meta-type";
+   public final String META_TYPE_KEY = "meta-type";
 
    // ------------------------------------------------------------
    // ACCESS RIGHTS GENERALLY
    // ------------------------------------------------------------
-   public final String CREATE_DATE_COLUMN = "create-date";
-   public final String UPDATE_DATE_COLUMN = "update-date";
-   public final String CREATE_BY_USER_COLUMN = "creator-user";
-   public final String UPDATED_BY_USER_COLUMN = "update-user";
-   public final String ACCESS_RIGHTS_COLUMN = "rights";
+   public final String CREATE_DATE_KEY = "create-date";
+   public final String UPDATE_DATE_KEY = "update-date";
+   public final String CREATE_BY_USER_KEY = "creator-user";
+   public final String UPDATED_BY_USER_KEY = "update-user";
+   public final String ACCESS_RIGHTS_KEY = "rights";
 
    // ------------------------------------------------------------
    // COLLECTION METADATA
    // ------------------------------------------------------------
-   public final String COLLECTION_METADATA_PREFIX = "_meta-";
-   public final String META_TYPE_VALUE_FOR_COLLECTION_COLUMNS = "columns";
-   public final String NAME_OF_COLUMN_WITH_ALL_COLLECTION_COLUMNS_INFO = "columns";
-   public final String NAME_OF_COLUMN_WITH_COLLECTION_COLUMN_NAME = "name";
-   public final String NAME_OF_COLUMN_WITH_COLLECTION_COLUMN_TYPE = "type";
+   public final String COLLECTION_METADATA_PREFIX = "meta.";
+   public final String COLLECTION_COLUMNS_META_TYPE_VALUE = "columns";
+   public final String COLLECTION_COLUMN_NAME_KEY = "name";
+   public final String COLLECTION_COLUMN_TYPE_KEY = "type";
    // column types according to DataDocument methods, empty is default and is considered String
    // TODO: What about nested columns? Should we return them as a string?
-   public final String[] COLUMN_TYPES = { "int", "long", "double", "boolean", "date", "" };
-   public final String META_TYPE_VALUE_FOR_COLLECTION_NAME = "name";
-   public final String NAME_OF_COLUMN_WITH_COLLECTION_NAME = "name";
-   public final String COLLECTION_NAME_PREFIX = "_collection-";
+   public final String[] COLLECTION_COLUMN_TYPE_VALUES = { "int", "long", "double", "boolean", "date", "" };
+   public final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
+   public final String COLLECTION_REAL_NAME_KEY = "name";
+   public final String COLLECTION_NAME_PREFIX = "collection.";
    // TODO: access rights
 
    // example of collection metadata structure:
    // -------------------------------------
    // {
-   // “meta-type” : “columns”,
-   // “columns” : [
-   //    {
-   //    “name” : “column1”,
-   //    “type” : “int”
-   //    },
-   //   {
-   //    “name” : “column2”,
-   //    “type” : “”
-   //   }
-   //  ]
+   //  “meta-type” : “columns”,
+   //  “name” : “column1”,
+   //  “type” : “int”
+   // },
+   // {
+   //  “meta-type” : “columns”,
+   //  “name” : “column2”,
+   //  “type” : “”
    // },
    // {
    // “meta-type” : “name”,
@@ -80,12 +84,12 @@ public class MetadataFacade implements Serializable {
    // ------------------------------------------------------------
    // DOCUMENT METADATA
    // ------------------------------------------------------------
-   public final String DOCUMENT_METADATA_PREFIX = "_meta-";
-   public final String DOCUMENT_CREATE_DATE_COLUMN = DOCUMENT_METADATA_PREFIX + CREATE_DATE_COLUMN;
-   public final String DOCUMENT_UPDATE_DATE_COLUMN = DOCUMENT_METADATA_PREFIX + UPDATE_DATE_COLUMN;
-   public final String DOCUMENT_CREATE_BY_USER_COLUMN = DOCUMENT_METADATA_PREFIX + CREATE_BY_USER_COLUMN;
-   public final String DOCUMENT_UPDATED_BY_USER_COLUMN = DOCUMENT_METADATA_PREFIX + UPDATED_BY_USER_COLUMN;
-   public final String DOCUMENT_RIGHTS_COLUMN = DOCUMENT_METADATA_PREFIX + ACCESS_RIGHTS_COLUMN;
+   public final String DOCUMENT_METADATA_PREFIX = "meta-";
+   public final String DOCUMENT_CREATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + CREATE_DATE_KEY;
+   public final String DOCUMENT_UPDATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + UPDATE_DATE_KEY;
+   public final String DOCUMENT_CREATE_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + CREATE_BY_USER_KEY;
+   public final String DOCUMENT_UPDATED_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + UPDATED_BY_USER_KEY;
+   public final String DOCUMENT_RIGHTS_KEY = DOCUMENT_METADATA_PREFIX + ACCESS_RIGHTS_KEY;
 
    // example of document metadata structure:
    // -------------------------------------
@@ -119,14 +123,14 @@ public class MetadataFacade implements Serializable {
    // ------------------------------------------------------------
    // VIEW METADATA
    // ------------------------------------------------------------
-   public final String VIEW_METADATA_PREFIX = "_meta-";
-   public final String META_TYPE_VALUE_FOR_STYLES = "styles";
-   public final String META_TYPE_VALUE_FOR_ACCESS_RIGHTS = "rights";
-   public final String NAME_OF_COLUMN_WITH_STYLES = "styles";
-   public final String NAME_OF_COLUMN_WITH_STYLE_TYPE = "type";
-   public final String NAME_OF_COLUMN_WITH_STYLE_VALUE = "style";
-   public final String NAME_OF_COLUMN_WITH_STYLE_CONDITION = "condition";
-   public final String VIEW_NAME_PREFIX = "_view-";
+   public final String VIEW_METADATA_PREFIX = "meta.";
+   public final String VIEW_STYLES_META_TYPE_VALUE = "styles";
+   public final String VIEW_ACCESS_RIGHTS_META_TYPE_VALUE = "rights";
+   public final String VIEW_ALL_STYLES_KEY = "styles";
+   public final String VIEW_STYLE_TYPE_KEY = "type";
+   public final String VIEW_STYLE_VALUE_KEY = "style";
+   public final String VIEW_STYLE_CONDITION_KEY = "condition";
+   public final String VIEW_NAME_PREFIX = "view.";
 
    // example of view metadata structure:
    // -------------------------------------
@@ -178,33 +182,287 @@ public class MetadataFacade implements Serializable {
    //	   ]
    // }
 
+   //   /**
+   //    * Converts collection name given by user to internal representation.
+   //    * First, spaces, diacritics, special characters etc. are removed from name
+   //    * which is converted to lowercase. Secondly, we add prefix and suffix
+   //    * so we get the name int the form _collection-{name}-{creatorUserId}
+   //    * to also make sure it's unique.
+   //    *
+   //    * @param originalCollectionName
+   //    *       name given by user
+   //    * @param creatorUserId
+   //    *       id of the user who created the collection
+   //    * @return internal collection name
+   //    */
+   //   public String collectionNameToInternalForm(String originalCollectionName, String creatorUserId) {
+   //      String name = originalCollectionName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
+   //      return COLLECTION_NAME_PREFIX + name + "-" + creatorUserId;
+   //   }
+   //
+   //   /**
+   //    * Same as collectionNameToInternalForm, just with view prefix
+   //    * @param originalViewName
+   //    * @param creatorUserId
+   //    * @return
+   //    */
+   //   public String viewNameToInternalForm(String originalViewName, String creatorUserId) {
+   //      String name = originalViewName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
+   //      return VIEW_NAME_PREFIX + name + "-" + creatorUserId;
+   //   }
+
    /**
     * Converts collection name given by user to internal representation.
     * First, spaces, diacritics, special characters etc. are removed from name
-    * which is converted to lowercase. Secondly, we add prefix and suffix
-    * so we get the name int the form _collection-{name}-{creatorUserId}
-    * to also make sure it's unique.
+    * which is converted to lowercase. Secondly, we add collection prefix.
     *
     * @param originalCollectionName
     *       name given by user
-    * @param creatorUserId
-    *       id of the user who created the collection
     * @return internal collection name
     */
-   public String collectionNameToInternalForm(String originalCollectionName, String creatorUserId) {
+   public String collectionNameToInternalForm(String originalCollectionName) {
       String name = originalCollectionName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-      return COLLECTION_NAME_PREFIX + name + "-" + creatorUserId;
+      return COLLECTION_NAME_PREFIX + name;
    }
 
    /**
     * Same as collectionNameToInternalForm, just with view prefix
+    *
     * @param originalViewName
-    * @param creatorUserId
+    *       name given by user
     * @return
     */
-   public String viewNameToInternalForm(String originalViewName, String creatorUserId) {
+   public String viewNameToInternalForm(String originalViewName) {
       String name = originalViewName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-      return VIEW_NAME_PREFIX + name + "-" + creatorUserId;
+      return VIEW_NAME_PREFIX + name;
+   }
+
+   /**
+    * Returns info about collection columns
+    * @param collectionName internal collection name
+    * @return map - keys are column names, values are types
+    */
+   public Map<String, String> getCollectionColumnsInfo(String collectionName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      String query = queryCollectionColumnsInfo(metadataCollectionName);
+      List<DataDocument> columnsInfoDocuments = dataStorage.search(query);
+
+      Map<String, String> columnsInfo = new HashMap<>();
+
+      for (int i = 0; i < columnsInfoDocuments.size(); i++) {
+         String name = columnsInfoDocuments.get(i).getString(COLLECTION_COLUMN_NAME_KEY);
+         String type = columnsInfoDocuments.get(i).getString(COLLECTION_COLUMN_TYPE_KEY);
+         columnsInfo.put(name, type);
+      }
+
+      return columnsInfo;
+   }
+
+   /**
+    * Adds a column to collection metadata.
+    * @param collectionName internal collection names
+    * @param columnName added column name
+    * @param columnType added column type
+    * @return true if add is successful
+    */
+   public boolean addCollectionColumn(String collectionName, String columnName, String columnType) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      String query = queryCollectionColumnInfo(metadataCollectionName, columnName);
+      List<DataDocument> columnInfo = dataStorage.search(query);
+
+      // return false if the column already exists
+      if (!columnInfo.isEmpty()) {
+         return false;
+      }
+
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put(META_TYPE_KEY, COLLECTION_COLUMNS_META_TYPE_VALUE);
+      metadata.put(COLLECTION_COLUMN_NAME_KEY, columnName);
+      metadata.put(COLLECTION_COLUMN_TYPE_KEY, columnType);
+      DataDocument metadataDocument = new DataDocument(metadata);
+      dataStorage.createDocument(metadataCollectionName, metadataDocument);
+
+      return true;
+   }
+
+   /**
+    * Renames existing column in collection metadata.
+    * @param collectionName internal collection names
+    * @param oldName old column name
+    * @param newName new column name
+    * @return true if rename is successful
+    */
+   public boolean renameCollectionColumn(String collectionName, String oldName, String newName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      String query = queryCollectionColumnInfo(metadataCollectionName, oldName);
+      List<DataDocument> columnInfo = dataStorage.search(query);
+
+      // the column does not exist
+      if (columnInfo.isEmpty()) {
+         return false;
+      }
+
+      DataDocument columnDocument = columnInfo.get(0);
+      String documentId = columnDocument.getString("_id"); // TODO throws java.lang.ClassCastException
+
+      Map<String, Object> metadata = new HashMap<>();
+      if (!newName.isEmpty()) {
+         metadata.put(COLLECTION_COLUMN_NAME_KEY, newName);
+         DataDocument metadataDocument = new DataDocument(metadata);
+         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
+         return true;
+      }
+
+      return false;
+   }
+
+   /**
+    * Changes column type in metadata.
+    * @param collectionName internal collection name
+    * @param columnName column name
+    * @param newType new column type
+    * @return true if retype is successful
+    */
+   public boolean retypeCollectionColumn(String collectionName, String columnName, String newType) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      String query = queryCollectionColumnInfo(metadataCollectionName, columnName);
+      List<DataDocument> columnInfo = dataStorage.search(query);
+
+      // the column does not exist
+      if (columnInfo.isEmpty()) {
+         return false;
+      }
+
+      DataDocument columnDocument = columnInfo.get(0);
+      String documentId = columnDocument.getString("_id"); // TODO throws java.lang.ClassCastException
+
+      Map<String, Object> metadata = new HashMap<>();
+      if (!newType.isEmpty()) {
+         metadata.put(COLLECTION_COLUMN_TYPE_KEY, newType);
+         DataDocument metadataDocument = new DataDocument(metadata);
+         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
+
+         return true;
+      }
+
+      return false;
+   }
+
+   /**
+    * Deletes a column from collection metadata
+    * @param collectionName internal collection name
+    * @param columnName column to be deleted
+    * @return true if delete is successful
+    */
+   public boolean dropCollectionColumn(String collectionName, String columnName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      String query = queryCollectionColumnInfo(metadataCollectionName, columnName);
+      List<DataDocument> columnInfo = dataStorage.search(query);
+
+      // the column does not exist
+      if (columnInfo.isEmpty()) {
+         return false;
+      }
+
+      DataDocument columnDocument = columnInfo.get(0);
+      String documentId = columnDocument.getString("_id"); // TODO throws java.lang.ClassCastException
+
+      dataStorage.dropDocument(metadataCollectionName, documentId);
+
+      return true;
+   }
+
+   /**
+    * Searches for original (given by user) collection name in metadata
+    * @param collectionName internal collection name
+    * @return original collection name
+    */
+   public String getOriginalCollectionName(String collectionName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      String query = queryCollectionNameInfo(metadataCollectionName);
+      List<DataDocument> nameInfo = dataStorage.search(query);
+
+      DataDocument nameDocument = nameInfo.get(0);
+      String name = nameDocument.getString(COLLECTION_REAL_NAME_KEY);
+
+      return name;
+   }
+
+    /**
+    * Sets original (given by user) collection name in metadata
+    * @param collectionOriginalName name given by user
+    */
+   public void setOriginalCollectionName(String collectionOriginalName) {
+      String collectionInternalName = collectionNameToInternalForm(collectionOriginalName);
+      String metadataCollectionName = collectionMetadataCollectionName(collectionInternalName);
+
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put(META_TYPE_KEY, COLLECTION_REAL_NAME_META_TYPE_VALUE);
+      metadata.put(COLLECTION_REAL_NAME_KEY, collectionOriginalName);
+      DataDocument metadataDocument = new DataDocument(metadata);
+      dataStorage.createDocument(metadataCollectionName, metadataDocument);
+   }
+
+   // returns MongoDb query for getting info about specific column
+   private String queryCollectionColumnInfo(String metadataCollectionName, String columnName) {
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(metadataCollectionName)
+            .append("\",filter:{\"")
+            .append(META_TYPE_KEY)
+            .append("\":\"")
+            .append(COLLECTION_COLUMNS_META_TYPE_VALUE)
+            .append("\",\"")
+            .append(COLLECTION_COLUMN_NAME_KEY)
+            .append("\":\"")
+            .append(columnName)
+            .append("\"}}");
+      String findColumnQuery = sb.toString();
+      return findColumnQuery;
+   }
+
+   // returns MongoDb query for getting real collection name
+   private String queryCollectionNameInfo(String metadataCollectionName) {
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(metadataCollectionName)
+            .append("\",filter:{\"")
+            .append(META_TYPE_KEY)
+            .append("\":\"")
+            .append(COLLECTION_REAL_NAME_META_TYPE_VALUE)
+            .append("\"}}");
+      String findNameQuery = sb.toString();
+      return findNameQuery;
+   }
+
+   // returns MongoDb query for getting info about all columns
+   private String queryCollectionColumnsInfo(String metadataCollectionName) {
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(metadataCollectionName)
+            .append("\",filter:{\"")
+            .append(META_TYPE_KEY)
+            .append("\":\"")
+            .append(COLLECTION_COLUMNS_META_TYPE_VALUE)
+            .append("\"}}");
+      String findColumnsQuery = sb.toString();
+      return findColumnsQuery;
+   }
+
+   /**
+    *
+    * @param collectionName internal collection name
+    * @return name of metadata collection
+    */
+   public String collectionMetadataCollectionName(String collectionName) {
+      return COLLECTION_METADATA_PREFIX + collectionName;
+   }
+
+   /**
+    *
+    * @param collectionName internal collection name
+    * @return true if the name is a name of metadata collection
+    */
+   public boolean isMetadataCollection(String collectionName) {
+      String prefix = collectionName.substring(0, COLLECTION_METADATA_PREFIX.length());
+      return COLLECTION_METADATA_PREFIX.equals(prefix);
    }
 
 }
