@@ -54,6 +54,7 @@ public class MongoDbStorage implements DataStorage {
    private final String DATABASE_NAME = "lumeer";
    private final String CURSOR_KEY = "cursor";
    private final String FIRST_BATCH_KEY = "firstBatch";
+   private final String _VERSION = "_version";
 
    private final int PORT = 27017;
 
@@ -96,8 +97,29 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
+   public void createOldDocument(final String collectionName, final DataDocument dataDocument, final String documentId, final int version) {
+      Document doc = new Document(dataDocument);
+      doc.put("_id", new BasicDBObject("_id", new ObjectId(documentId)).append(
+            _VERSION, version));
+      database.getCollection(collectionName).insertOne(doc);
+   }
+
+   @Override
    public DataDocument readDocument(final String collectionName, final String documentId) {
       BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      Document document = database.getCollection(collectionName).find(filter).first();
+
+      if (document == null) {
+         return null;
+      }
+
+      return new DataDocument(document);
+   }
+
+   @Override
+   public DataDocument readOldDocument(final String collectionName, final String documentId, final int version) {
+      BasicDBObject filter = new BasicDBObject("_id", new BasicDBObject("_id", new ObjectId(documentId)).append(
+            _VERSION, version));
       Document document = database.getCollection(collectionName).find(filter).first();
 
       if (document == null) {
@@ -121,8 +143,22 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
+   public void dropOldDocument(final String collectionName, final String documentId, final int version) {
+      BasicDBObject filter = new BasicDBObject("_id", new BasicDBObject("_id", new ObjectId(documentId)).append(
+            _VERSION, version));
+      database.getCollection(collectionName).deleteOne(filter);
+   }
+
+   @Override
    public void renameAttribute(final String collectionName, final String oldName, final String newName) {
       database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), Updates.rename(oldName, newName));
+   }
+
+   @Override
+   public void removeAttribute(final String collectionName, final String documentId, final String attributeName) {
+      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      BasicDBObject updateBson = new BasicDBObject("$unset", new BasicDBObject(attributeName, 1));
+      database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
    @Override

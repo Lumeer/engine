@@ -20,6 +20,8 @@ package io.lumeer.mongodb;/*
 
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.mongodb.BasicDBObject;
+import org.bson.types.ObjectId;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -89,6 +91,27 @@ public class MongoDbStorageTest {
    }
 
    @Test
+   public void testCreateAndReadOldDocument() throws Exception {
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
+
+      DataDocument insertedDocument = createDummyDocument();
+      mongoDbStorage.createOldDocument(DUMMY_COLLECTION1, insertedDocument, "507f191e810c19729de860ea", 1);
+
+      DataDocument readedDocument = mongoDbStorage.readOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
+
+      Assert.assertNotNull(readedDocument);
+
+      mongoDbStorage.dropOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
+
+      readedDocument = mongoDbStorage.readOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
+
+      Assert.assertNull(readedDocument);
+
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+
+   }
+
+   @Test
    public void testUpdateDocument() throws Exception {
       mongoDbStorage.createCollection(DUMMY_COLLECTION1);
 
@@ -124,6 +147,23 @@ public class MongoDbStorageTest {
       readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
 
       Assert.assertNull(readedDocument);
+
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+   }
+
+   @Test
+   public void testRemoveAttribute() throws Exception {
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
+
+      DataDocument insertedDocument = createDummyDocument();
+      String documentId = mongoDbStorage.createDocument(DUMMY_COLLECTION1, insertedDocument);
+      DataDocument readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
+      Assert.assertEquals(readedDocument.size(), 3);
+
+      mongoDbStorage.removeAttribute(DUMMY_COLLECTION1, documentId, DUMMY_KEY1);
+
+      readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
+      Assert.assertEquals(readedDocument.size(), 2);
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }
@@ -197,7 +237,7 @@ public class MongoDbStorageTest {
       Assert.assertEquals(attributeValues1.size(), Math.min(numDummyKey1, 100));
 
       Set<String> attributeValues2 = mongoDbStorage.getAttributeValues(DUMMY_COLLECTION1, DUMMY_KEY2);
-      Assert.assertEquals(attributeValues2.size(),  Math.min(numDummyKey2, 100));
+      Assert.assertEquals(attributeValues2.size(), Math.min(numDummyKey2, 100));
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }

@@ -66,6 +66,20 @@ public interface DataStorage {
    String createDocument(final String collectionName, final DataDocument document);
 
    /**
+    * Creates and inserts an old document to specified collection.
+    *
+    * @param collectionName
+    *       the name of the collection where the document will be created
+    * @param document
+    *       the DataDocument object representing a document to be created
+    * @param documentId
+    *       the id of the document
+    * @param version
+    *       the version of document
+    */
+   void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version);
+
+   /**
     * Reads the specified document in given collection by its id.
     *
     * @param collectionName
@@ -75,6 +89,19 @@ public interface DataStorage {
     * @return the DataDocument object representing the read document
     */
    DataDocument readDocument(final String collectionName, final String documentId);
+
+   /**
+    * Reads the old document in given collection by its id and version.
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the document
+    * @param version
+    *       the version of document
+    * @return the DataDocument object representing the read document
+    */
+   DataDocument readOldDocument(final String collectionName, final String documentId, final int version);
 
    /**
     * Modifies an existing document in given collection by its id.
@@ -99,6 +126,18 @@ public interface DataStorage {
    void dropDocument(final String collectionName, final String documentId);
 
    /**
+    * Reads the old document in given collection by its id and version.
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the document
+    * @param version
+    *       the version of document
+    */
+   void dropOldDocument(final String collectionName, final String documentId, final int version);
+
+   /**
     * Updates the name of an attribute which is found in all documents of given collection.
     *
     * @param collectionName
@@ -109,6 +148,18 @@ public interface DataStorage {
     *       the new name of an attribute
     */
    void renameAttribute(final String collectionName, final String oldName, final String newName);
+
+   /**
+    * Remove attribute from.
+    *
+    * @param collectionName
+    *       the name of the collection where the given attribute should be removed
+    * @param documentId
+    *       the id of document from which attribute will be removed
+    * @param attributeName
+    *       the name of an attribute
+    */
+   void removeAttribute(final String collectionName, final String documentId, final String attributeName);
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.
