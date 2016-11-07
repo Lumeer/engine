@@ -100,41 +100,41 @@ public class MetadataFacadeTest extends Arquillian {
       Assert.assertFalse(add);
    }
 
-   // @Test
-   // public void testRenameCollectionColumn() {
-   //    collectionFacade.createCollection(testCollectionRealName);
-   //    metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
-   //    boolean rename = metadataFacade.renameCollectionColumn(testCollectionInternalName, "column 1", "column 2");
-   //    Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
-   //    collectionFacade.dropCollection(testCollectionRealName);
+   @Test
+   public void testRenameCollectionColumn() {
+      collectionFacade.createCollection(testCollectionRealName);
+      metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+      boolean rename = metadataFacade.renameCollectionColumn(testCollectionInternalName, "column 1", "column 2");
+      Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
+      collectionFacade.dropCollection(testCollectionRealName);
 
-   //    Assert.assertTrue(columnsInfo.containsKey("column 2"));
-   //    Assert.assertTrue(rename);
-   // }
+      Assert.assertTrue(columnsInfo.containsKey("column 2"));
+      Assert.assertTrue(rename);
+   }
 
-   // @Test
-   // public void testRetypeCollectionColumn() {
-   //    collectionFacade.createCollection(testCollectionRealName);
-   //    metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
-   //    boolean retype = metadataFacade.retypeCollectionColumn(testCollectionInternalName, "column 1", "double");
-   //    Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
-   //    collectionFacade.dropCollection(testCollectionRealName);
+   @Test
+   public void testRetypeCollectionColumn() {
+      collectionFacade.createCollection(testCollectionRealName);
+      metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+      boolean retype = metadataFacade.retypeCollectionColumn(testCollectionInternalName, "column 1", "double");
+      Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
+      collectionFacade.dropCollection(testCollectionRealName);
 
-   //    Assert.assertTrue(columnsInfo.containsValue("double"));
-   //    Assert.assertTrue(retype);
-   // }
+      Assert.assertTrue(columnsInfo.containsValue("double"));
+      Assert.assertTrue(retype);
+   }
 
-   // @Test
-   // public void testDropCollectionColumn() {
-   //    collectionFacade.createCollection(testCollectionRealName);
-   //    metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
-   //    boolean drop = metadataFacade.dropCollectionColumn(testCollectionInternalName, "column 1");
-   //    Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
-   //    collectionFacade.dropCollection(testCollectionRealName);
+   @Test
+   public void testDropCollectionColumn() {
+      collectionFacade.createCollection(testCollectionRealName);
+      metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
+      boolean drop = metadataFacade.dropCollectionColumn(testCollectionInternalName, "column 1");
+      Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
+      collectionFacade.dropCollection(testCollectionRealName);
 
-   //    Assert.assertTrue(columnsInfo.isEmpty());
-   //    Assert.assertTrue(drop);
-   // }
+      Assert.assertTrue(columnsInfo.isEmpty());
+      Assert.assertTrue(drop);
+   }
 
    @Test
    public void testGetOriginalCollectionName() {

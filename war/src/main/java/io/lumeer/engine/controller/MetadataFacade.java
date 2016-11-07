@@ -303,7 +303,7 @@ public class MetadataFacade implements Serializable {
       }
 
       DataDocument columnDocument = columnInfo.get(0);
-      String documentId = columnDocument.getString("_id"); // TODO throws java.lang.ClassCastException
+      String documentId = columnDocument.get("_id").toString();
 
       Map<String, Object> metadata = new HashMap<>();
       if (!newName.isEmpty()) {
@@ -334,7 +334,7 @@ public class MetadataFacade implements Serializable {
       }
 
       DataDocument columnDocument = columnInfo.get(0);
-      String documentId = columnDocument.getString("_id"); // TODO throws java.lang.ClassCastException
+      String documentId = columnDocument.get("_id").toString();
 
       Map<String, Object> metadata = new HashMap<>();
       if (!newType.isEmpty()) {
@@ -365,7 +365,7 @@ public class MetadataFacade implements Serializable {
       }
 
       DataDocument columnDocument = columnInfo.get(0);
-      String documentId = columnDocument.getString("_id"); // TODO throws java.lang.ClassCastException
+      String documentId = columnDocument.get("_id").toString();
 
       dataStorage.dropDocument(metadataCollectionName, documentId);
 
