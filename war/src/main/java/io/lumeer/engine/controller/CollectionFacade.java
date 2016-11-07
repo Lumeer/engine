@@ -60,7 +60,7 @@ public class CollectionFacade implements Serializable {
    /**
     * Returns a List object of collection names in the database except of metadata collections.
     *
-    * @return the list of collection names
+    * @return the list of collection names (internal name form)
     */
    @Produces
    @Named("userCollections")
@@ -83,7 +83,7 @@ public class CollectionFacade implements Serializable {
     * Creates a new collection including its metadata collection with the specified name.
     *
     * @param collectionName
-    *       the name of the collection to create
+    *       the name of the collection to create (name given by user)
     */
    public void createCollection(final String collectionName) {
       String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
@@ -97,7 +97,7 @@ public class CollectionFacade implements Serializable {
    /**
     * Drops the collection including its metadata collection with the specified name.
     *
-    * @param collectionName the name of the collection to update
+    * @param collectionName the name of the collection to update (name given by user)
     */
    public void dropCollection(final String collectionName) {
       String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
@@ -116,6 +116,10 @@ public class CollectionFacade implements Serializable {
       // TODO:
    }
 
+   /**
+    * Drops collection metadata.
+    * @param collectionName (name given by user)
+    */
    public void dropCollectionMetadata(final String collectionName) {
       String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
       dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName));
@@ -125,25 +129,27 @@ public class CollectionFacade implements Serializable {
     * Gets the first 100 distinct values of the given attribute in the given collection.
     *
     * @param collectionName
-    *       the name of the collection where documents contain the given attribute
+    *       the name of the collection (name given by user) where documents contain the given attribute
     * @param attributeName
     *       the name of the attribute
     * @return the distinct set of values of the given attribute
     */
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
-      return dataStorage.getAttributeValues(collectionName, attributeName);
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+      return dataStorage.getAttributeValues(internalCollectionName, attributeName);
    }
 
    /**
     * Modifies all existing documents in given collection by adding a new column.
     *
     * @param collectionName
-    *       the name of the collection where the new column should be added
+    *       the name of the collection (name given by user) where the new column should be added
     * @param columnName
     *       the column name to add
     */
    public void addColumn(final String collectionName, final String columnName) {
-      List<DataDocument> documents = getAllDocuments(collectionName);
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+      List<DataDocument> documents = getAllDocuments(internalCollectionName);
 
       for (DataDocument document : documents) {
          String id = (document.get("_id")).toString();
@@ -151,7 +157,7 @@ public class CollectionFacade implements Serializable {
          // TODO: check, if the column name already exists
 
          document.put(columnName, ""); // blank column value
-         dataStorage.updateDocument(collectionName, document, id);
+         dataStorage.updateDocument(internalCollectionName, document, id);
       }
    }
 
@@ -159,19 +165,20 @@ public class CollectionFacade implements Serializable {
     * Removes given attribute from all existing document specified by its id.
     *
     * @param collectionName
-    *       the name of the collection where the given attribute should be removed
+    *       the name of the collection (name given by user) where the given attribute should be removed
     * @param columnName
     *       the column name to remove
     */
    public void dropColumn(final String collectionName, final String columnName) {
-      List<DataDocument> documents = getAllDocuments(collectionName);
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+      List<DataDocument> documents = getAllDocuments(internalCollectionName);
 
       for (DataDocument document : documents) {
          String id = (document.get("_id")).toString();
 
          // TODO: check, if the column name exists
 
-         dataStorage.removeAttribute(collectionName, id, columnName);
+         dataStorage.removeAttribute(internalCollectionName, id, columnName);
       }
    }
 
@@ -179,24 +186,20 @@ public class CollectionFacade implements Serializable {
     * Updates the name of an attribute which is found in all documents of given collection.
     *
     * @param collectionName
-    *       the name of the collection where the given attribute should be renamed
+    *       the name of the collection (name given by user) where the given attribute should be renamed
     * @param origName
     *       the old name of an attribute
     * @param newName
     *       the new name of an attribute
     */
    public void renameColumn(final String collectionName, final String origName, final String newName) {
-      dataStorage.renameAttribute(collectionName, origName, newName);
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+      dataStorage.renameAttribute(internalCollectionName, origName, newName);
    }
 
    public void onCollectionEvent(@Observes(notifyObserver = Reception.IF_EXISTS) final CollectionEvent event) {
       // we do not care which collection got changed, we just invalidate our cache
       collections = null;
-   }
-
-   // method used to query something from DB without any sort or filter
-   private List<DataDocument> queryFromDb(String collectionName, int page, int limit) {
-      return dataStorage.search(collectionName, "", "", (page - 1) * limit, limit);
    }
 
    private List<DataDocument> getAllDocuments(String collectionName) {

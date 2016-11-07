@@ -47,9 +47,9 @@ public class CollectionFacadeTest extends Arquillian {
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 
-   private final String METADATA_PREXIF = "metadata_";
-   private final String DUMMY_COLLECTION1 = "testCollection1".toLowerCase(); // CollectionFacade converts names to lower case
-   private final String DUMMY_COLLECTION2 = "testCollection2".toLowerCase();
+   private final String DUMMY_COLLECTION1 = "testcollection1";
+   private final String DUMMY_COLLECTION2 = "testcollection2";
+   private final String DUMMY_COLLECTION1_METADATA_COLLECTION = "meta.collection.testcollection1";
 
    private final String DUMMY_KEY1 = "key1";
    private final String DUMMY_KEY2 = "key2";
@@ -83,21 +83,20 @@ public class CollectionFacadeTest extends Arquillian {
 
    @Test
    public void testDropCollectionMetadata() throws Exception {
-      //      boolean isDropped = false;
-      //
-      //      collectionFacade.createCollection(DUMMY_COLLECTION1);
-      //      collectionFacade.dropCollectionMetadata(DUMMY_COLLECTION1);
-      //       // we should not use dataStorage here
-      //      if (!dataStorage.getAllCollections().contains(METADATA_PREXIF + DUMMY_COLLECTION1.toLowerCase())) {
-      //         isDropped = true;
-      //      }
-      //
-      //      Assert.assertEquals(isDropped, true);
+      boolean isDropped = true;
+      collectionFacade.createCollection(DUMMY_COLLECTION1);
+      collectionFacade.dropCollectionMetadata(DUMMY_COLLECTION1);
+      if (dataStorage.getAllCollections().contains(DUMMY_COLLECTION1_METADATA_COLLECTION)) {
+         isDropped = false;
+      }
+      dataStorage.dropCollection("collection." + DUMMY_COLLECTION1);
+
+      Assert.assertTrue(isDropped);
    }
 
    @Test
    public void testGetAttributeValues() throws Exception {
-
+      // TODO
    }
 
    @Test
@@ -107,10 +106,10 @@ public class CollectionFacadeTest extends Arquillian {
       fillDatabaseDummyEntries(DUMMY_COLLECTION1);
 
       collectionFacade.addColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
-      Assert.assertEquals(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY), true);
+      Assert.assertTrue(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
-      Assert.assertEquals(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY), false);
+      Assert.assertFalse(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
@@ -122,7 +121,7 @@ public class CollectionFacadeTest extends Arquillian {
       fillDatabaseDummyEntries(DUMMY_COLLECTION1);
 
       collectionFacade.renameColumn(DUMMY_COLLECTION1, DUMMY_KEY1, DUMMY_NEW_KEY);
-      Assert.assertEquals(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY), true);
+      Assert.assertTrue(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
@@ -143,12 +142,12 @@ public class CollectionFacadeTest extends Arquillian {
    private void fillDatabaseDummyEntries(String collectionName) {
       for (int i = 0; i < 100; i++) {
          DataDocument insertedDocument = createDummyDocument();
-         dataStorage.createDocument(collectionName, insertedDocument);
+         dataStorage.createDocument("collection." + collectionName, insertedDocument);
       }
    }
 
    private boolean isEveryDocumentFilledByNewColumn(String collection, String columnName) {
-      List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
+      List<DataDocument> documents = dataStorage.search("collection." + collection, null, null, 0, 0);
 
       for (DataDocument document : documents) {
          if (!document.keySet().contains(columnName)) {
