@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.api.data;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +31,14 @@ import java.util.Set;
  *         <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 public interface DataStorage {
+
+   void connect(final List<StorageConnection> connections, final String database);
+
+   default void connect(final StorageConnection connection, final String database) {
+      connect(Collections.singletonList(connection), database);
+   }
+
+   void disconnect();
 
    /**
     * Returns a List object of all collection names in the database.

@@ -19,9 +19,8 @@ package io.lumeer.mongodb;/*
  */
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.StorageConnection;
 
-import com.mongodb.BasicDBObject;
-import org.bson.types.ObjectId;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -49,7 +48,7 @@ public class MongoDbStorageTest {
    @BeforeMethod
    public void setUp() throws Exception {
       mongoDbStorage = new MongoDbStorage();
-      mongoDbStorage.connect();
+      mongoDbStorage.connect(new StorageConnection("localhost", 27017, "", ""), "lumeer");
    }
 
    @Test
@@ -97,15 +96,15 @@ public class MongoDbStorageTest {
       DataDocument insertedDocument = createDummyDocument();
       mongoDbStorage.createOldDocument(DUMMY_COLLECTION1, insertedDocument, "507f191e810c19729de860ea", 1);
 
-      DataDocument readedDocument = mongoDbStorage.readOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
+      DataDocument readDocument = mongoDbStorage.readOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
 
-      Assert.assertNotNull(readedDocument);
+      Assert.assertNotNull(readDocument);
 
       mongoDbStorage.dropOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
 
-      readedDocument = mongoDbStorage.readOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
+      readDocument = mongoDbStorage.readOldDocument(DUMMY_COLLECTION1, "507f191e810c19729de860ea", 1);
 
-      Assert.assertNull(readedDocument);
+      Assert.assertNull(readDocument);
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
 

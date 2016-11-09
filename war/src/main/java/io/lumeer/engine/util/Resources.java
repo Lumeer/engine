@@ -19,10 +19,13 @@
  */
 package io.lumeer.engine.util;
 
-import io.lumeer.engine.push.PushNotifications;
+import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.mongodb.MongoDbStorage;
 
 import java.util.logging.Logger;
-import javax.ejb.EJB;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 
@@ -33,22 +36,30 @@ import javax.enterprise.inject.spi.InjectionPoint;
  */
 public class Resources {
 
-   // use @SuppressWarnings to tell IDE to ignore warnings about field not being referenced directly
-   /*@SuppressWarnings("unused")
-   @Produces
-   @PersistenceContext
-   private EntityManager em;*/
+   private final String SYSTEM_DB_HOST = System.getProperty("lumeer.sysdb.host", "localhost");
+   private static final int SYSTEM_DB_PORT = Integer.getInteger("lumeer.sysdb.port", 27017);
+   private static final String SYSTEM_DB_NAME = System.getProperty("lumeer.sysdb.name", "lumeer");
+   private static final String SYSTEM_DB_USER = System.getProperty("lumeer.sysdb.user", "");
+   private static final String SYSTEM_DB_PASSWORD = System.getProperty("lumeer.sysdb.password", "");
 
    @Produces
    public Logger produceLog(InjectionPoint injectionPoint) {
       return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
    }
 
-
-   /*@Produces
+   /**
+    * Produces system storage for user data etc.
+    *
+    * @return System data storage.
+    */
+   @Produces
+   @SystemDataStorage
    @RequestScoped
-   public FacesContext produceFacesContext() {
-      return FacesContext.getCurrentInstance();
-   }*/
+   public DataStorage getSystemDataStorage() {
+      final MongoDbStorage storage = new MongoDbStorage();
+      storage.connect(new StorageConnection(SYSTEM_DB_HOST, SYSTEM_DB_PORT, SYSTEM_DB_USER, SYSTEM_DB_PASSWORD), SYSTEM_DB_NAME);
+
+      return storage;
+   }
 
 }

@@ -21,9 +21,12 @@ package io.lumeer.mongodb;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -50,21 +53,38 @@ import javax.enterprise.inject.Model;
 @Model
 public class MongoDbStorage implements DataStorage {
 
-   private final String HOST = "localhost";
-   private final String DATABASE_NAME = "lumeer";
-   private final String CURSOR_KEY = "cursor";
-   private final String FIRST_BATCH_KEY = "firstBatch";
-   private final String _VERSION = "_version";
+   private static final String HOST = System.getProperty("lumeer.db.host", "localhost");
+   private static final String DATABASE_NAME = System.getProperty("lumeer.db.name", "lumeer");
+   private static final int PORT = Integer.getInteger("lumeer.sysdb.port", 27017);
 
-   private final int PORT = 27017;
+   private static final String CURSOR_KEY = "cursor";
+   private static final String FIRST_BATCH_KEY = "firstBatch";
+   private static final String _VERSION = "_version";
 
    private MongoDatabase database;
-   private MongoClient mongoClient;
+   private MongoClient mongoClient = null;
 
    @PostConstruct
    public void connect() {
-      mongoClient = new MongoClient(HOST, PORT); // default connection
-      database = mongoClient.getDatabase(DATABASE_NAME);
+      if (mongoClient == null) {
+         connect(new StorageConnection(HOST, PORT, "", ""), DATABASE_NAME);
+      }
+   }
+
+   @Override
+   public void connect(final List<StorageConnection> connections, final String database) {
+      final List<ServerAddress> addresses = new ArrayList<>();
+      final List<MongoCredential> credentials = new ArrayList<>();
+
+      connections.forEach(c -> {
+         addresses.add(new ServerAddress(c.getHost(), c.getPort()));
+         if (c.getUserName() != null && !c.getUserName().isEmpty()) {
+            credentials.add(MongoCredential.createCredential(c.getUserName(), database, c.getPassword()));
+         }
+      });
+
+      this.mongoClient = new MongoClient(addresses, credentials);
+      this.database = mongoClient.getDatabase(database);
    }
 
    @PreDestroy
