@@ -36,7 +36,7 @@ public class MetadataFacade implements Serializable {
    @Inject
    private DataStorage dataStorage;
 
-   // table name prefixes, column names and other constants used in metadata
+   // table name prefixes, attribute names and other constants used in metadata
 
    public final String META_TYPE_KEY = "meta-type";
 
@@ -53,12 +53,12 @@ public class MetadataFacade implements Serializable {
    // COLLECTION METADATA
    // ------------------------------------------------------------
    public final String COLLECTION_METADATA_PREFIX = "meta.";
-   public final String COLLECTION_COLUMNS_META_TYPE_VALUE = "columns";
-   public final String COLLECTION_COLUMN_NAME_KEY = "name";
-   public final String COLLECTION_COLUMN_TYPE_KEY = "type";
-   // column types according to DataDocument methods, empty is default and is considered String
-   // TODO: What about nested columns? Should we return them as a string?
-   public final String[] COLLECTION_COLUMN_TYPE_VALUES = { "int", "long", "double", "boolean", "date", "" };
+   public final String COLLECTION_ATTRIBUTES_META_TYPE_VALUE = "attributes";
+   public final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
+   public final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
+   // attribute types according to DataDocument methods, empty is default and is considered String
+   // TODO: What about nested attributes? Should we return them as a string?
+   public final String[] COLLECTION_ATTRIBUTE_TYPE_VALUES = { "int", "long", "double", "boolean", "date", "" };
    public final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
    public final String COLLECTION_REAL_NAME_KEY = "name";
    public final String COLLECTION_NAME_PREFIX = "collection.";
@@ -67,13 +67,13 @@ public class MetadataFacade implements Serializable {
    // example of collection metadata structure:
    // -------------------------------------
    // {
-   //  “meta-type” : “columns”,
-   //  “name” : “column1”,
+   //  “meta-type” : “attributes”,
+   //  “name” : “attributes1”,
    //  “type” : “int”
    // },
    // {
-   //  “meta-type” : “columns”,
-   //  “name” : “column2”,
+   //  “meta-type” : “attributes”,
+   //  “name” : “attributes2”,
    //  “type” : “”
    // },
    // {
@@ -182,35 +182,6 @@ public class MetadataFacade implements Serializable {
    //	   ]
    // }
 
-   //   /**
-   //    * Converts collection name given by user to internal representation.
-   //    * First, spaces, diacritics, special characters etc. are removed from name
-   //    * which is converted to lowercase. Secondly, we add prefix and suffix
-   //    * so we get the name int the form _collection-{name}-{creatorUserId}
-   //    * to also make sure it's unique.
-   //    *
-   //    * @param originalCollectionName
-   //    *       name given by user
-   //    * @param creatorUserId
-   //    *       id of the user who created the collection
-   //    * @return internal collection name
-   //    */
-   //   public String collectionNameToInternalForm(String originalCollectionName, String creatorUserId) {
-   //      String name = originalCollectionName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-   //      return COLLECTION_NAME_PREFIX + name + "-" + creatorUserId;
-   //   }
-   //
-   //   /**
-   //    * Same as collectionNameToInternalForm, just with view prefix
-   //    * @param originalViewName
-   //    * @param creatorUserId
-   //    * @return
-   //    */
-   //   public String viewNameToInternalForm(String originalViewName, String creatorUserId) {
-   //      String name = originalViewName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-   //      return VIEW_NAME_PREFIX + name + "-" + creatorUserId;
-   //   }
-
    /**
     * Converts collection name given by user to internal representation.
     * First, spaces, diacritics, special characters etc. are removed from name
@@ -238,47 +209,53 @@ public class MetadataFacade implements Serializable {
    }
 
    /**
-    * Returns info about collection columns
-    * @param collectionName internal collection name
-    * @return map - keys are column names, values are types
+    * Returns info about collection attributes
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return map - keys are attribute names, values are types
     */
-   public Map<String, String> getCollectionColumnsInfo(String collectionName) {
+   public Map<String, String> getCollectionAttributesInfo(String collectionName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionColumnsInfo(metadataCollectionName);
-      List<DataDocument> columnsInfoDocuments = dataStorage.search(query);
+      String query = queryCollectionAttributesInfo(metadataCollectionName);
+      List<DataDocument> attributesInfoDocuments = dataStorage.search(query);
 
-      Map<String, String> columnsInfo = new HashMap<>();
+      Map<String, String> attributesInfo = new HashMap<>();
 
-      for (int i = 0; i < columnsInfoDocuments.size(); i++) {
-         String name = columnsInfoDocuments.get(i).getString(COLLECTION_COLUMN_NAME_KEY);
-         String type = columnsInfoDocuments.get(i).getString(COLLECTION_COLUMN_TYPE_KEY);
-         columnsInfo.put(name, type);
+      for (int i = 0; i < attributesInfoDocuments.size(); i++) {
+         String name = attributesInfoDocuments.get(i).getString(COLLECTION_ATTRIBUTE_NAME_KEY);
+         String type = attributesInfoDocuments.get(i).getString(COLLECTION_ATTRIBUTE_TYPE_KEY);
+         attributesInfo.put(name, type);
       }
 
-      return columnsInfo;
+      return attributesInfo;
    }
 
    /**
-    * Adds a column to collection metadata.
-    * @param collectionName internal collection names
-    * @param columnName added column name
-    * @param columnType added column type
+    * Adds an attribute to collection metadata.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attributeName
+    *       added attribute name
+    * @param attributeType
+    *       added attribute type
     * @return true if add is successful
     */
-   public boolean addCollectionColumn(String collectionName, String columnName, String columnType) {
+   public boolean addCollectionAttribute(String collectionName, String attributeName, String attributeType) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionColumnInfo(metadataCollectionName, columnName);
-      List<DataDocument> columnInfo = dataStorage.search(query);
+      String query = queryCollectionAttributeInfo(metadataCollectionName, attributeName);
+      List<DataDocument> attributeInfo = dataStorage.search(query);
 
-      // return false if the column already exists
-      if (!columnInfo.isEmpty()) {
+      // return false if the attribute already exists
+      if (!attributeInfo.isEmpty()) {
          return false;
       }
 
       Map<String, Object> metadata = new HashMap<>();
-      metadata.put(META_TYPE_KEY, COLLECTION_COLUMNS_META_TYPE_VALUE);
-      metadata.put(COLLECTION_COLUMN_NAME_KEY, columnName);
-      metadata.put(COLLECTION_COLUMN_TYPE_KEY, columnType);
+      metadata.put(META_TYPE_KEY, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
+      metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, attributeName);
+      metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, attributeType);
       DataDocument metadataDocument = new DataDocument(metadata);
       dataStorage.createDocument(metadataCollectionName, metadataDocument);
 
@@ -286,28 +263,32 @@ public class MetadataFacade implements Serializable {
    }
 
    /**
-    * Renames existing column in collection metadata.
-    * @param collectionName internal collection names
-    * @param oldName old column name
-    * @param newName new column name
+    * Renames existing attribute in collection metadata.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param oldName
+    *       old attribute name
+    * @param newName
+    *       new attribute name
     * @return true if rename is successful
     */
-   public boolean renameCollectionColumn(String collectionName, String oldName, String newName) {
+   public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionColumnInfo(metadataCollectionName, oldName);
-      List<DataDocument> columnInfo = dataStorage.search(query);
+      String query = queryCollectionAttributeInfo(metadataCollectionName, oldName);
+      List<DataDocument> attributeInfo = dataStorage.search(query);
 
-      // the column does not exist
-      if (columnInfo.isEmpty()) {
+      // the attribute does not exist
+      if (attributeInfo.isEmpty()) {
          return false;
       }
 
-      DataDocument columnDocument = columnInfo.get(0);
-      String documentId = columnDocument.get("_id").toString();
+      DataDocument attributeDocument = attributeInfo.get(0);
+      String documentId = attributeDocument.get("_id").toString();
 
       Map<String, Object> metadata = new HashMap<>();
       if (!newName.isEmpty()) {
-         metadata.put(COLLECTION_COLUMN_NAME_KEY, newName);
+         metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, newName);
          DataDocument metadataDocument = new DataDocument(metadata);
          dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
          return true;
@@ -317,55 +298,58 @@ public class MetadataFacade implements Serializable {
    }
 
    /**
-    * Changes column type in metadata.
-    * @param collectionName internal collection name
-    * @param columnName column name
-    * @param newType new column type
+    * Changes attribute type in metadata.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attributeName
+    *       attribute name
+    * @param newType
+    *       new attribute type
     * @return true if retype is successful
     */
-   public boolean retypeCollectionColumn(String collectionName, String columnName, String newType) {
+   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionColumnInfo(metadataCollectionName, columnName);
-      List<DataDocument> columnInfo = dataStorage.search(query);
+      String query = queryCollectionAttributeInfo(metadataCollectionName, attributeName);
+      List<DataDocument> attributeInfo = dataStorage.search(query);
 
-      // the column does not exist
-      if (columnInfo.isEmpty()) {
+      // the attribute does not exist
+      if (attributeInfo.isEmpty()) {
          return false;
       }
 
-      DataDocument columnDocument = columnInfo.get(0);
-      String documentId = columnDocument.get("_id").toString();
+      DataDocument attributeDocument = attributeInfo.get(0);
+      String documentId = attributeDocument.get("_id").toString();
 
       Map<String, Object> metadata = new HashMap<>();
-      if (!newType.isEmpty()) {
-         metadata.put(COLLECTION_COLUMN_TYPE_KEY, newType);
-         DataDocument metadataDocument = new DataDocument(metadata);
-         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
+      metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, newType);
+      DataDocument metadataDocument = new DataDocument(metadata);
+      dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
 
-         return true;
-      }
-
-      return false;
+      return true;
    }
 
    /**
-    * Deletes a column from collection metadata
-    * @param collectionName internal collection name
-    * @param columnName column to be deleted
+    * Deletes an attribute from collection metadata
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attributeName
+    *       attribute to be deleted
     * @return true if delete is successful
     */
-   public boolean dropCollectionColumn(String collectionName, String columnName) {
+   public boolean dropCollectionAttribute(String collectionName, String attributeName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionColumnInfo(metadataCollectionName, columnName);
-      List<DataDocument> columnInfo = dataStorage.search(query);
+      String query = queryCollectionAttributeInfo(metadataCollectionName, attributeName);
+      List<DataDocument> attributeInfo = dataStorage.search(query);
 
-      // the column does not exist
-      if (columnInfo.isEmpty()) {
+      // the attribute does not exist
+      if (attributeInfo.isEmpty()) {
          return false;
       }
 
-      DataDocument columnDocument = columnInfo.get(0);
-      String documentId = columnDocument.get("_id").toString();
+      DataDocument attributeDocument = attributeInfo.get(0);
+      String documentId = attributeDocument.get("_id").toString();
 
       dataStorage.dropDocument(metadataCollectionName, documentId);
 
@@ -374,7 +358,9 @@ public class MetadataFacade implements Serializable {
 
    /**
     * Searches for original (given by user) collection name in metadata
-    * @param collectionName internal collection name
+    *
+    * @param collectionName
+    *       internal collection name
     * @return original collection name
     */
    public String getOriginalCollectionName(String collectionName) {
@@ -388,9 +374,11 @@ public class MetadataFacade implements Serializable {
       return name;
    }
 
-    /**
+   /**
     * Sets original (given by user) collection name in metadata
-    * @param collectionOriginalName name given by user
+    *
+    * @param collectionOriginalName
+    *       name given by user
     */
    public void setOriginalCollectionName(String collectionOriginalName) {
       String collectionInternalName = collectionNameToInternalForm(collectionOriginalName);
@@ -403,21 +391,21 @@ public class MetadataFacade implements Serializable {
       dataStorage.createDocument(metadataCollectionName, metadataDocument);
    }
 
-   // returns MongoDb query for getting info about specific column
-   private String queryCollectionColumnInfo(String metadataCollectionName, String columnName) {
+   // returns MongoDb query for getting info about specific attribute
+   private String queryCollectionAttributeInfo(String metadataCollectionName, String attributeName) {
       StringBuilder sb = new StringBuilder("{find:\"")
             .append(metadataCollectionName)
             .append("\",filter:{\"")
             .append(META_TYPE_KEY)
             .append("\":\"")
-            .append(COLLECTION_COLUMNS_META_TYPE_VALUE)
+            .append(COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
             .append("\",\"")
-            .append(COLLECTION_COLUMN_NAME_KEY)
+            .append(COLLECTION_ATTRIBUTE_NAME_KEY)
             .append("\":\"")
-            .append(columnName)
+            .append(attributeName)
             .append("\"}}");
-      String findColumnQuery = sb.toString();
-      return findColumnQuery;
+      String findAttributeQuery = sb.toString();
+      return findAttributeQuery;
    }
 
    // returns MongoDb query for getting real collection name
@@ -433,22 +421,22 @@ public class MetadataFacade implements Serializable {
       return findNameQuery;
    }
 
-   // returns MongoDb query for getting info about all columns
-   private String queryCollectionColumnsInfo(String metadataCollectionName) {
+   // returns MongoDb query for getting info about all attributes
+   private String queryCollectionAttributesInfo(String metadataCollectionName) {
       StringBuilder sb = new StringBuilder("{find:\"")
             .append(metadataCollectionName)
             .append("\",filter:{\"")
             .append(META_TYPE_KEY)
             .append("\":\"")
-            .append(COLLECTION_COLUMNS_META_TYPE_VALUE)
+            .append(COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
             .append("\"}}");
-      String findColumnsQuery = sb.toString();
-      return findColumnsQuery;
+      String findAttributeQuery = sb.toString();
+      return findAttributeQuery;
    }
 
    /**
-    *
-    * @param collectionName internal collection name
+    * @param collectionName
+    *       internal collection name
     * @return name of metadata collection
     */
    public String collectionMetadataCollectionName(String collectionName) {
@@ -456,8 +444,8 @@ public class MetadataFacade implements Serializable {
    }
 
    /**
-    *
-    * @param collectionName internal collection name
+    * @param collectionName
+    *       internal collection name
     * @return true if the name is a name of "classical" collection containing data from user
     */
    public boolean isUserCollection(String collectionName) {

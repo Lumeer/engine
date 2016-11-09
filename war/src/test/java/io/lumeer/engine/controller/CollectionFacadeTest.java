@@ -102,28 +102,28 @@ public class CollectionFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testAddAndDropColumn() throws Exception {
+   public void testAddAndDropAttribute() throws Exception {
       collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
 
       fillDatabaseDummyEntries(DUMMY_COLLECTION1);
 
       collectionFacade.addAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
-      Assert.assertTrue(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
+      Assert.assertTrue(isEveryDocumentFilledByNewAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
-      Assert.assertFalse(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
+      Assert.assertFalse(isEveryDocumentFilledByNewAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
 
    @Test
-   public void testRenameColumn() throws Exception {
+   public void testRenameAttribute() throws Exception {
       collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
 
       fillDatabaseDummyEntries(DUMMY_COLLECTION1);
 
       collectionFacade.renameAttribute(DUMMY_COLLECTION1, DUMMY_KEY1, DUMMY_NEW_KEY);
-      Assert.assertTrue(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
+      Assert.assertTrue(isEveryDocumentFilledByNewAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
@@ -148,11 +148,11 @@ public class CollectionFacadeTest extends Arquillian {
       }
    }
 
-   private boolean isEveryDocumentFilledByNewColumn(String collection, String columnName) {
+   private boolean isEveryDocumentFilledByNewAttribute(String collection, String attributeName) {
       List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
 
       for (DataDocument document : documents) {
-         if (!document.keySet().contains(columnName)) {
+         if (!document.keySet().contains(attributeName)) {
             return false;
          }
       }

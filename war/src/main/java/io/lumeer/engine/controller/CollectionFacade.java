@@ -121,7 +121,7 @@ public class CollectionFacade implements Serializable {
     * @return list of names of all attributes in a collection
     */
    public List<String> readCollectionAttributes(final String collectionName) {
-      return new ArrayList<>(metadataFacade.getCollectionColumnsInfo(collectionName).keySet());
+      return new ArrayList<>(metadataFacade.getCollectionAttributesInfo(collectionName).keySet());
    }
 
    /**
@@ -163,9 +163,9 @@ public class CollectionFacade implements Serializable {
     * Modifies all existing documents in given collection by adding a new attribute.
     *
     * @param collectionName
-    *       internal name of the collection where the new column should be added
+    *       internal name of the collection where the new attribute should be added
     * @param attributeName
-    *       name of the column to add
+    *       name of the attribute to add
     */
    public void addAttribute(final String collectionName, final String attributeName) {
       List<DataDocument> documents = getAllDocuments(collectionName);
@@ -173,10 +173,10 @@ public class CollectionFacade implements Serializable {
       for (DataDocument document : documents) {
          String id = (document.get("_id")).toString();
 
-         // TODO: check, if the column name already exists
+         // TODO: check, if the attribute name already exists
          // TODO: update metadata (with MetadataFacade)
 
-         document.put(attributeName, ""); // blank column value
+         document.put(attributeName, ""); // blank attribute value
          dataStorage.updateDocument(collectionName, document, id);
       }
    }
@@ -187,7 +187,7 @@ public class CollectionFacade implements Serializable {
     * @param collectionName
     *       the internal name of the collection where the given attribute should be removed
     * @param attributeName
-    *       name of the column to remove
+    *       name of the attribute to remove
     */
    public void dropAttribute(final String collectionName, final String attributeName) {
       List<DataDocument> documents = getAllDocuments(collectionName);
@@ -195,7 +195,7 @@ public class CollectionFacade implements Serializable {
       for (DataDocument document : documents) {
          String id = (document.get("_id")).toString();
 
-         // TODO: check, if the column name exists
+         // TODO: check, if the attribute name exists
          // TODO: update metadata (with MetadataFacade)
 
          dataStorage.removeAttribute(collectionName, id, attributeName);
