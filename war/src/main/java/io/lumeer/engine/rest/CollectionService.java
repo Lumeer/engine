@@ -22,7 +22,9 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.controller.CollectionFacade;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -45,7 +47,7 @@ public class CollectionService implements Serializable {
 
    @Inject
    @Named("userCollections")
-   private List<String> collections;
+   private Map<String, String> collections;
 
    @PUT
    @Path("/")
@@ -56,6 +58,6 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/")
    public List<String> getAllCollections() {
-      return collections;
+      return new ArrayList<String>(collections.keySet());
    }
 }

@@ -458,11 +458,11 @@ public class MetadataFacade implements Serializable {
    /**
     *
     * @param collectionName internal collection name
-    * @return true if the name is a name of metadata collection
+    * @return true if the name is a name of "classical" collection containing data from user
     */
-   public boolean isMetadataCollection(String collectionName) {
-      String prefix = collectionName.substring(0, COLLECTION_METADATA_PREFIX.length());
-      return COLLECTION_METADATA_PREFIX.equals(prefix);
+   public boolean isUserCollection(String collectionName) {
+      String prefix = collectionName.substring(0, COLLECTION_NAME_PREFIX.length());
+      return COLLECTION_NAME_PREFIX.equals(prefix);
    }
 
 }

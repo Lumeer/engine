@@ -1,6 +1,6 @@
 /*
  * -----------------------------------------------------------------------\
- * Lummer
+ * Lumeer
  *  
  * Copyright (C) 2016 the original author or authors.
  *  
@@ -19,14 +19,15 @@
  */
 package io.lumeer.engine.controller;
 
-import io.lumeer.engine.api.data.CollectionMetadataElement;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.CollectionEvent;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Observes;
@@ -46,8 +47,6 @@ public class CollectionFacade implements Serializable {
 
    private static final long serialVersionUID = 8967474543742743308L;
 
-   private final int PAGE_SIZE = 100;
-
    @Inject
    // @Named("mongoDbStorage") // we have only one implementation, so mongo is automatically injected
    private DataStorage dataStorage;
@@ -55,24 +54,24 @@ public class CollectionFacade implements Serializable {
    @Inject
    private MetadataFacade metadataFacade;
 
-   private List<String> collections;
+   // cache of collections - keys are internal names, values are original names
+   private Map<String, String> collections;
 
    /**
-    * Returns a List object of collection names in the database except of metadata collections.
-    *
-    * @return the list of collection names (internal name form)
+    * @return map of collection names - keys are internal names, values are original names
     */
    @Produces
    @Named("userCollections")
-   public List<String> getAllCollections() {
-      if (collections == null) {
+   public Map<String, String> getAllCollections() {
+      if (this.collections == null) {
          List<String> collectionsAll = dataStorage.getAllCollections();
-         collections = new ArrayList<String>();
+         collections = new HashMap<>();
 
          // filters out metadata collections
          for (String collection : collectionsAll) {
-            if (!metadataFacade.isMetadataCollection(collection)) {
-               collections.add(collection);
+            if (metadataFacade.isUserCollection(collection)) {
+               String originalCollectionName = metadataFacade.getOriginalCollectionName(collection);
+               collections.put(collection, originalCollectionName);
             }
          }
       }
@@ -82,14 +81,14 @@ public class CollectionFacade implements Serializable {
    /**
     * Creates a new collection including its metadata collection with the specified name.
     *
-    * @param collectionName
-    *       the name of the collection to create (name given by user)
+    * @param collectionOriginalName
+    *       name of the collection to create (name given by user)
     */
-   public void createCollection(final String collectionName) {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
+   public void createCollection(final String collectionOriginalName) {
+      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionOriginalName);
       dataStorage.createCollection(internalCollectionName);
       dataStorage.createCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName)); // creates metadata collection
-      metadataFacade.setOriginalCollectionName(collectionName);
+      metadataFacade.setOriginalCollectionName(collectionOriginalName);
 
       collections = null;
    }
@@ -97,67 +96,88 @@ public class CollectionFacade implements Serializable {
    /**
     * Drops the collection including its metadata collection with the specified name.
     *
-    * @param collectionName the name of the collection to update (name given by user)
+    * @param collectionName
+    *       internal name of the collection to update
     */
    public void dropCollection(final String collectionName) {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
-      dataStorage.dropCollection(internalCollectionName);
-      dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName)); // removes metadata collection
+      dataStorage.dropCollection(collectionName);
+      dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(collectionName)); // removes metadata collection
 
       collections = null;
    }
 
-   public List<CollectionMetadataElement> readCollectionMetadata(final String collectionName) {
-      // TODO:
-      return null;
+   /**
+    * @param collectionName
+    *       internal collection name
+    * @return list of all documents from metadata collection
+    */
+   public List<DataDocument> readCollectionMetadata(final String collectionName) {
+      return dataStorage.search(metadataFacade.collectionMetadataCollectionName(collectionName), null, null, 0, 0);
    }
 
-   public void updateCollectionMetadata(final String collectionName, final CollectionMetadataElement element) {
-      // TODO:
+   /**
+    * @param collectionName
+    *       internal collection name
+    * @return list of names of all attributes in a collection
+    */
+   public List<String> readCollectionAttributes(final String collectionName) {
+      return new ArrayList<>(metadataFacade.getCollectionColumnsInfo(collectionName).keySet());
+   }
+
+   /**
+    * @param collectionName
+    *       internal collection name
+    * @param element
+    *       DataDocument with data to be updated
+    * @param elementId
+    *       id of document to be updated
+    */
+   public void updateCollectionMetadata(final String collectionName, final DataDocument element, String elementId) {
+      dataStorage.updateDocument(metadataFacade.collectionMetadataCollectionName(collectionName), element, elementId);
    }
 
    /**
     * Drops collection metadata.
-    * @param collectionName (name given by user)
+    *
+    * @param collectionName
+    *       internal collection name
     */
    public void dropCollectionMetadata(final String collectionName) {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
-      dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName));
+      dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(collectionName));
    }
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.
     *
     * @param collectionName
-    *       the name of the collection (name given by user) where documents contain the given attribute
+    *       the internal name of the collection where documents contain the given attribute
     * @param attributeName
     *       the name of the attribute
     * @return the distinct set of values of the given attribute
     */
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
-      return dataStorage.getAttributeValues(internalCollectionName, attributeName);
+      return dataStorage.getAttributeValues(collectionName, attributeName);
    }
 
    /**
-    * Modifies all existing documents in given collection by adding a new column.
+    * Modifies all existing documents in given collection by adding a new attribute.
     *
     * @param collectionName
-    *       the name of the collection (name given by user) where the new column should be added
-    * @param columnName
-    *       the column name to add
+    *       internal name of the collection where the new column should be added
+    * @param attributeName
+    *       name of the column to add
     */
-   public void addColumn(final String collectionName, final String columnName) {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
-      List<DataDocument> documents = getAllDocuments(internalCollectionName);
+   public void addAttribute(final String collectionName, final String attributeName) {
+      List<DataDocument> documents = getAllDocuments(collectionName);
 
       for (DataDocument document : documents) {
          String id = (document.get("_id")).toString();
 
          // TODO: check, if the column name already exists
+         // TODO: update metadata (with MetadataFacade)
 
-         document.put(columnName, ""); // blank column value
-         dataStorage.updateDocument(internalCollectionName, document, id);
+         document.put(attributeName, ""); // blank column value
+         dataStorage.updateDocument(collectionName, document, id);
       }
    }
 
@@ -165,20 +185,20 @@ public class CollectionFacade implements Serializable {
     * Removes given attribute from all existing document specified by its id.
     *
     * @param collectionName
-    *       the name of the collection (name given by user) where the given attribute should be removed
-    * @param columnName
-    *       the column name to remove
+    *       the internal name of the collection where the given attribute should be removed
+    * @param attributeName
+    *       name of the column to remove
     */
-   public void dropColumn(final String collectionName, final String columnName) {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
-      List<DataDocument> documents = getAllDocuments(internalCollectionName);
+   public void dropAttribute(final String collectionName, final String attributeName) {
+      List<DataDocument> documents = getAllDocuments(collectionName);
 
       for (DataDocument document : documents) {
          String id = (document.get("_id")).toString();
 
          // TODO: check, if the column name exists
+         // TODO: update metadata (with MetadataFacade)
 
-         dataStorage.removeAttribute(internalCollectionName, id, columnName);
+         dataStorage.removeAttribute(collectionName, id, attributeName);
       }
    }
 
@@ -186,15 +206,15 @@ public class CollectionFacade implements Serializable {
     * Updates the name of an attribute which is found in all documents of given collection.
     *
     * @param collectionName
-    *       the name of the collection (name given by user) where the given attribute should be renamed
+    *       internal name of the collection where the given attribute should be renamed
     * @param origName
-    *       the old name of an attribute
+    *       old name of an attribute
     * @param newName
-    *       the new name of an attribute
+    *       new name of an attribute
     */
-   public void renameColumn(final String collectionName, final String origName, final String newName) {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionName);
-      dataStorage.renameAttribute(internalCollectionName, origName, newName);
+   public void renameAttribute(final String collectionName, final String origName, final String newName) {
+      // TODO: update metadata (with MetadataFacade)
+      dataStorage.renameAttribute(collectionName, origName, newName);
    }
 
    public void onCollectionEvent(@Observes(notifyObserver = Reception.IF_EXISTS) final CollectionEvent event) {

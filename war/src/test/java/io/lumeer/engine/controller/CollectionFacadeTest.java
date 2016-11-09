@@ -47,9 +47,11 @@ public class CollectionFacadeTest extends Arquillian {
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 
-   private final String DUMMY_COLLECTION1 = "testcollection1";
-   private final String DUMMY_COLLECTION2 = "testcollection2";
+   private final String DUMMY_COLLECTION1 = "collection.testcollection1";
+   private final String DUMMY_COLLECTION1_ORIGINAL_NAME = "testCollection1";
    private final String DUMMY_COLLECTION1_METADATA_COLLECTION = "meta.collection.testcollection1";
+   private final String DUMMY_COLLECTION2 = "collection.testcollection2";
+   private final String DUMMY_COLLECTION2_ORIGINAL_NAME = "testCollection2";
 
    private final String DUMMY_KEY1 = "key1";
    private final String DUMMY_KEY2 = "key2";
@@ -70,8 +72,8 @@ public class CollectionFacadeTest extends Arquillian {
 
    @Test
    public void testCreateAndDropCollection() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1);
-      collectionFacade.createCollection(DUMMY_COLLECTION2);
+      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      collectionFacade.createCollection(DUMMY_COLLECTION2_ORIGINAL_NAME);
 
       Assert.assertEquals(collectionFacade.getAllCollections().size(), 2);
 
@@ -84,12 +86,12 @@ public class CollectionFacadeTest extends Arquillian {
    @Test
    public void testDropCollectionMetadata() throws Exception {
       boolean isDropped = true;
-      collectionFacade.createCollection(DUMMY_COLLECTION1);
+      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
       collectionFacade.dropCollectionMetadata(DUMMY_COLLECTION1);
       if (dataStorage.getAllCollections().contains(DUMMY_COLLECTION1_METADATA_COLLECTION)) {
          isDropped = false;
       }
-      dataStorage.dropCollection("collection." + DUMMY_COLLECTION1);
+      collectionFacade.dropCollection(DUMMY_COLLECTION1);
 
       Assert.assertTrue(isDropped);
    }
@@ -101,14 +103,14 @@ public class CollectionFacadeTest extends Arquillian {
 
    @Test
    public void testAddAndDropColumn() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1);
+      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
 
       fillDatabaseDummyEntries(DUMMY_COLLECTION1);
 
-      collectionFacade.addColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
+      collectionFacade.addAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
       Assert.assertTrue(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
-      collectionFacade.dropColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
+      collectionFacade.dropAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
       Assert.assertFalse(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropCollection(DUMMY_COLLECTION1);
@@ -116,11 +118,11 @@ public class CollectionFacadeTest extends Arquillian {
 
    @Test
    public void testRenameColumn() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1);
+      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
 
       fillDatabaseDummyEntries(DUMMY_COLLECTION1);
 
-      collectionFacade.renameColumn(DUMMY_COLLECTION1, DUMMY_KEY1, DUMMY_NEW_KEY);
+      collectionFacade.renameAttribute(DUMMY_COLLECTION1, DUMMY_KEY1, DUMMY_NEW_KEY);
       Assert.assertTrue(isEveryDocumentFilledByNewColumn(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropCollection(DUMMY_COLLECTION1);
@@ -142,12 +144,12 @@ public class CollectionFacadeTest extends Arquillian {
    private void fillDatabaseDummyEntries(String collectionName) {
       for (int i = 0; i < 100; i++) {
          DataDocument insertedDocument = createDummyDocument();
-         dataStorage.createDocument("collection." + collectionName, insertedDocument);
+         dataStorage.createDocument(collectionName, insertedDocument);
       }
    }
 
    private boolean isEveryDocumentFilledByNewColumn(String collection, String columnName) {
-      List<DataDocument> documents = dataStorage.search("collection." + collection, null, null, 0, 0);
+      List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
 
       for (DataDocument document : documents) {
          if (!document.keySet().contains(columnName)) {

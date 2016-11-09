@@ -74,7 +74,7 @@ public class MetadataFacadeTest extends Arquillian {
       metadataFacade.addCollectionColumn(testCollectionInternalName, name, type);
 
       Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
-      collectionFacade.dropCollection(testCollectionRealName);
+      collectionFacade.dropCollection(testCollectionInternalName);
 
       Assert.assertEquals(columnsInfo.size(), 1);
       Assert.assertTrue(columnsInfo.containsKey(name));
@@ -85,7 +85,7 @@ public class MetadataFacadeTest extends Arquillian {
    public void testAddCollectionColumnNew() {
       collectionFacade.createCollection(testCollectionRealName);
       boolean add = metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
-      collectionFacade.dropCollection(testCollectionRealName);
+      collectionFacade.dropCollection(testCollectionInternalName);
 
       Assert.assertTrue(add);
    }
@@ -95,7 +95,7 @@ public class MetadataFacadeTest extends Arquillian {
       collectionFacade.createCollection(testCollectionRealName);
       metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
       boolean add = metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
-      collectionFacade.dropCollection(testCollectionRealName);
+      collectionFacade.dropCollection(testCollectionInternalName);
 
       Assert.assertFalse(add);
    }
@@ -106,7 +106,7 @@ public class MetadataFacadeTest extends Arquillian {
       metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
       boolean rename = metadataFacade.renameCollectionColumn(testCollectionInternalName, "column 1", "column 2");
       Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
-      collectionFacade.dropCollection(testCollectionRealName);
+      collectionFacade.dropCollection(testCollectionInternalName);
 
       Assert.assertTrue(columnsInfo.containsKey("column 2"));
       Assert.assertTrue(rename);
@@ -118,7 +118,7 @@ public class MetadataFacadeTest extends Arquillian {
       metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
       boolean retype = metadataFacade.retypeCollectionColumn(testCollectionInternalName, "column 1", "double");
       Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
-      collectionFacade.dropCollection(testCollectionRealName);
+      collectionFacade.dropCollection(testCollectionInternalName);
 
       Assert.assertTrue(columnsInfo.containsValue("double"));
       Assert.assertTrue(retype);
@@ -130,7 +130,7 @@ public class MetadataFacadeTest extends Arquillian {
       metadataFacade.addCollectionColumn(testCollectionInternalName, "column 1", "int");
       boolean drop = metadataFacade.dropCollectionColumn(testCollectionInternalName, "column 1");
       Map<String, String> columnsInfo = metadataFacade.getCollectionColumnsInfo(testCollectionInternalName);
-      collectionFacade.dropCollection(testCollectionRealName);
+      collectionFacade.dropCollection(testCollectionInternalName);
 
       Assert.assertTrue(columnsInfo.isEmpty());
       Assert.assertTrue(drop);
@@ -141,7 +141,7 @@ public class MetadataFacadeTest extends Arquillian {
       collectionFacade.createCollection(testCollectionRealName);
       String internalName = metadataFacade.collectionNameToInternalForm(testCollectionRealName);
       String realName = metadataFacade.getOriginalCollectionName(internalName);
-      collectionFacade.dropCollection(testCollectionRealName);
+      collectionFacade.dropCollection(testCollectionInternalName);
       Assert.assertEquals(testCollectionRealName, realName);
    }
 }
