@@ -19,6 +19,9 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.exception.CollectionAlreadyExistsException;
+import io.lumeer.engine.exception.CollectionNotFoundException;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -67,7 +70,7 @@ public class MetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testGetCollectionColumnsInfo() {
+   public void testGetCollectionColumnsInfo() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(testCollectionRealName);
       String name = "column 1";
       String type = "int";
@@ -82,7 +85,7 @@ public class MetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testAddCollectionColumnNew() {
+   public void testAddCollectionColumnNew() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(testCollectionRealName);
       boolean add = metadataFacade.addCollectionAttribute(testCollectionInternalName, "column 1", "int");
       collectionFacade.dropCollection(testCollectionInternalName);
@@ -91,7 +94,7 @@ public class MetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testAddCollectionColumnExisting() {
+   public void testAddCollectionColumnExisting() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(testCollectionRealName);
       metadataFacade.addCollectionAttribute(testCollectionInternalName, "column 1", "int");
       boolean add = metadataFacade.addCollectionAttribute(testCollectionInternalName, "column 1", "int");
@@ -101,7 +104,7 @@ public class MetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testRenameCollectionColumn() {
+   public void testRenameCollectionColumn() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(testCollectionRealName);
       metadataFacade.addCollectionAttribute(testCollectionInternalName, "column 1", "int");
       boolean rename = metadataFacade.renameCollectionAttribute(testCollectionInternalName, "column 1", "column 2");
@@ -113,7 +116,7 @@ public class MetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testRetypeCollectionColumn() {
+   public void testRetypeCollectionColumn() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(testCollectionRealName);
       metadataFacade.addCollectionAttribute(testCollectionInternalName, "column 1", "int");
       boolean retype = metadataFacade.retypeCollectionAttribute(testCollectionInternalName, "column 1", "double");
@@ -125,7 +128,7 @@ public class MetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testDropCollectionColumn() {
+   public void testDropCollectionColumn() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(testCollectionRealName);
       metadataFacade.addCollectionAttribute(testCollectionInternalName, "column 1", "int");
       boolean drop = metadataFacade.dropCollectionAttribute(testCollectionInternalName, "column 1");
@@ -137,7 +140,7 @@ public class MetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testGetOriginalCollectionName() {
+   public void testGetOriginalCollectionName() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(testCollectionRealName);
       String internalName = metadataFacade.collectionNameToInternalForm(testCollectionRealName);
       String realName = metadataFacade.getOriginalCollectionName(internalName);

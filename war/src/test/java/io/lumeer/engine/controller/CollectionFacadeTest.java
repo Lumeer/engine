@@ -84,6 +84,21 @@ public class CollectionFacadeTest extends Arquillian {
    }
 
    @Test
+   public void testReadCollectionMetadata() throws Exception {
+      // TODO:
+   }
+
+   @Test
+   public void testReadCollectionAttributes() throws Exception {
+      // TODO:
+   }
+
+   @Test
+   public void testUpdateCollectionMetadata() throws Exception {
+      // TODO:
+   }
+
+   @Test
    public void testDropCollectionMetadata() throws Exception {
       boolean isDropped = true;
       collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
@@ -98,7 +113,7 @@ public class CollectionFacadeTest extends Arquillian {
 
    @Test
    public void testGetAttributeValues() throws Exception {
-      // TODO
+      // TODO:
    }
 
    @Test

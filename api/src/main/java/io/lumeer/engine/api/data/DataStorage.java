@@ -113,7 +113,7 @@ public interface DataStorage {
    DataDocument readOldDocument(final String collectionName, final String documentId, final int version);
 
    /**
-    * Modifies an existing document in given collection by its id.
+    * Modifies an existing document in given collection by its id. If updated document contains non-existing columns, they will be added into database.
     *
     * @param collectionName
     *       the name of the collection where the existing document is located
@@ -199,11 +199,11 @@ public interface DataStorage {
     * @param filter
     *       the query predicate. If unspecified, then all documents in the collection will match the predicate.
     * @param sort
-    *       the sort specification for the ordering of the results
+    *       the sort specification for the ordering of the results. If unspecified, then a sort is equivalent to setting no sort.
     * @param skip
-    *       the number of documents to skip
+    *       the number of documents to skip. A skip of 0 is equivalent to setting no skip.
     * @param limit
-    *       the maximum number of documents to return
+    *       the maximum number of documents to return. A limit of 0 is equivalent to setting no limit.
     * @return the list of the found documents
     */
    List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit);
