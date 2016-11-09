@@ -318,7 +318,7 @@ public class CollectionFacade implements Serializable {
     *
     * @param collectionName
     *       name of the collection
-    * @return true if given collection is in a database
+    * @return true if database has given collection
     */
    private boolean isDatabaseCollection(String collectionName) {
       Map<String, String> collectionNames = getAllCollections();
@@ -337,7 +337,7 @@ public class CollectionFacade implements Serializable {
     *       name of the collection
     * @param attributeName
     *       name of the attribute
-    * @return true if specified attribute is in given collection
+    * @return true if given collection has specified attribute
     * @throws CollectionNotFoundException
     */
    private boolean isCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException {
