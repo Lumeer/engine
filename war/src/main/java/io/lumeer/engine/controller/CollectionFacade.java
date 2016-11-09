@@ -321,13 +321,7 @@ public class CollectionFacade implements Serializable {
     * @return true if database has given collection
     */
    private boolean isDatabaseCollection(String collectionName) {
-      Map<String, String> collectionNames = getAllCollections();
-
-      if (collectionNames.containsKey(collectionName)) {
-         return true;
-      }
-
-      return false;
+      return getAllCollections().containsKey(collectionName);
    }
 
    /**
@@ -340,14 +334,9 @@ public class CollectionFacade implements Serializable {
     * @return true if given collection has specified attribute
     * @throws CollectionNotFoundException
     */
+
    private boolean isCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException {
-      List<String> collectionAttributes = readCollectionAttributes(collectionName);
-
-      if (collectionAttributes.contains(attributeName)) {
-         return true;
-      }
-
-      return false;
+      return readCollectionAttributes(collectionName).contains(attributeName);
    }
 
 }
