@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class VersionFacade implements Serializable {
    private final String shadow = ".shadow";
-   private final String versionString = "_metadata-version";
+   public final String versionString = "_metadata-version";
    private final String updaterString = "_metadata-updater";
    private final String documentIdString = "_id";
 

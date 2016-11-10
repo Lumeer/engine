@@ -88,6 +88,7 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @PreDestroy
+   @Override
    public void disconnect() {
       if (mongoClient != null) {
          mongoClient.close();
@@ -113,7 +114,7 @@ public class MongoDbStorage implements DataStorage {
    public String createDocument(final String collectionName, final DataDocument dataDocument) {
       Document doc = new Document(dataDocument);
       database.getCollection(collectionName).insertOne(doc);
-      return doc.getObjectId("_id").toString();
+      return doc.containsKey("_id") ? doc.getObjectId("_id").toString() : null;
    }
 
    @Override
@@ -133,6 +134,10 @@ public class MongoDbStorage implements DataStorage {
          return null;
       }
 
+      // converts id to string
+      String documentIdString = document.getObjectId("_id").toString();
+      document.replace("_id", documentIdString);
+
       return new DataDocument(document);
    }
 
@@ -146,12 +151,28 @@ public class MongoDbStorage implements DataStorage {
          return null;
       }
 
+      // converts id to string
+      String documentIdString = document.getObjectId("_id").toString();
+      document.replace("_id", documentIdString);
+
       return new DataDocument(document);
    }
 
    @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId) {
+      String versionKey = "_metadata-version";
+      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId)).append(versionKey, updatedDocument.getInteger(versionKey) - 1);
+      BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
+      database.getCollection(collectionName).updateOne(filter, updateBson);
+   }
+
+   @Override
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId, final int targetVersion) {
       BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      if (targetVersion >= 0) {
+         String versionKey = "_metadata-version";
+         filter.append(versionKey, updatedDocument.getInteger(versionKey));
+      }
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }

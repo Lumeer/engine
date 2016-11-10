@@ -26,6 +26,7 @@ import io.lumeer.engine.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.exception.AttributeNotFoundException;
 import io.lumeer.engine.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.exception.CollectionNotFoundException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ public class CollectionFacade implements Serializable {
 
          collections = null;
       } else {
-         throw new CollectionAlreadyExistsException("The collection \"" + internalCollectionName + "\" already exists.");
+         throw new CollectionAlreadyExistsException(ErrorMessageBuilder.collectionAlreadyExistsString(internalCollectionName));
       }
    }
 
@@ -123,7 +124,7 @@ public class CollectionFacade implements Serializable {
 
          collections = null;
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -139,7 +140,7 @@ public class CollectionFacade implements Serializable {
       if (isDatabaseCollection(collectionName)) {
          return dataStorage.search(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), null, null, 0, 0);
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -155,7 +156,7 @@ public class CollectionFacade implements Serializable {
       if (isDatabaseCollection(collectionName)) {
          return new ArrayList<>(collectionMetadataFacade.getCollectionAttributesInfo(collectionName).keySet());
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -174,7 +175,7 @@ public class CollectionFacade implements Serializable {
       if (isDatabaseCollection(collectionName)) {
          dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), element, elementId);
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -189,7 +190,7 @@ public class CollectionFacade implements Serializable {
       if (isDatabaseCollection(collectionName)) {
          dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collectionName));
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -209,10 +210,10 @@ public class CollectionFacade implements Serializable {
          if (isCollectionAttribute(collectionName, attributeName)) {
             return dataStorage.getAttributeValues(collectionName, attributeName);
          } else {
-            throw new AttributeNotFoundException("The attribute \"" + attributeName + "\" does not exist in collection \"" + collectionName + "\".");
+            throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
          }
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -231,17 +232,17 @@ public class CollectionFacade implements Serializable {
          List<DataDocument> documents = getAllDocuments(collectionName);
 
          for (DataDocument document : documents) {
-            String id = (document.get(ID_COLUMN_KEY)).toString();
+            String id = document.getString(ID_COLUMN_KEY);
 
             if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE)) {
                document.put(attributeName, DEFAULT_COLUMN_VALUE); // blank attribute value
                dataStorage.updateDocument(collectionName, document, id);
             } else {
-               throw new AttributeAlreadyExistsException("The attribute \"" + attributeName + "\" already еxists in collection \"" + collectionName + "\".");
+               throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(attributeName, collectionName));
             }
          }
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -260,16 +261,16 @@ public class CollectionFacade implements Serializable {
          List<DataDocument> documents = getAllDocuments(collectionName);
 
          for (DataDocument document : documents) {
-            String id = (document.get(ID_COLUMN_KEY)).toString();
+            String id = document.getString(ID_COLUMN_KEY);
 
             if (collectionMetadataFacade.dropCollectionAttribute(collectionName, attributeName)) {
                dataStorage.removeAttribute(collectionName, id, attributeName);
             } else {
-               throw new AttributeNotFoundException("The attribute \"" + attributeName + " does not exist in collection \"" + collectionName + "\".");
+               throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
             }
          }
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -290,10 +291,10 @@ public class CollectionFacade implements Serializable {
          if (collectionMetadataFacade.renameCollectionAttribute(collectionName, origName, newName)) {
             dataStorage.renameAttribute(collectionName, origName, newName);
          } else {
-            throw new AttributeNotFoundException("The attribute \"" + origName + " does not exist in collection \"" + collectionName + "\".");
+            throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(origName, collectionName));
          }
       } else {
-         throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
 
@@ -320,7 +321,7 @@ public class CollectionFacade implements Serializable {
     *       name of the collection
     * @return true if database has given collection
     */
-   private boolean isDatabaseCollection(String collectionName) {
+   public boolean isDatabaseCollection(String collectionName) {
       return getAllCollections().containsKey(collectionName);
    }
 

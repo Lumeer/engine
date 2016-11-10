@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -102,11 +103,9 @@ public class CollectionMetadataFacade implements Serializable {
       String internalCollectionName = collectionNameToInternalForm(collectionOriginalName);
       setOriginalCollectionName(internalCollectionName, collectionOriginalName);
 
-      String lock = ""; // TODO make string representation of current time
-
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(META_TYPE_KEY, COLLECTION_LOCK_META_TYPE_VALUE);
-      metadata.put(COLLECTION_LOCK_UPDATED_KEY, lock);
+      metadata.put(COLLECTION_LOCK_UPDATED_KEY, Utils.getCurrentTimeString());
       DataDocument metadataDocument = new DataDocument(metadata);
 
       String metadataCollectionName = collectionMetadataCollectionName(internalCollectionName);
