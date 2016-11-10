@@ -151,10 +151,6 @@ public class MongoDbStorage implements DataStorage {
          return null;
       }
 
-      // converts id to string
-      String documentIdString = document.getObjectId("_id").toString();
-      document.replace("_id", documentIdString);
-
       return new DataDocument(document);
    }
 

@@ -42,6 +42,7 @@ public class MongoDbStorageTest {
    private final String DUMMY_VALUE2 = "param2";
    private final String DUMMY_CHANGED_VALUE1 = "changed_param1";
    private final String DUMMY_CHANGED_VALUE2 = "changed_param2";
+   private final String METADATA_VERSION = "_metadata-version";
 
    private MongoDbStorage mongoDbStorage;
 
@@ -120,14 +121,16 @@ public class MongoDbStorageTest {
       DataDocument readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
       changeDummyDocumentValues(readedDocument);
       readedDocument.remove("_id");
+      readedDocument.put(METADATA_VERSION, 1);
 
-      mongoDbStorage.updateDocument(DUMMY_COLLECTION1, readedDocument, documentId);
+      mongoDbStorage.updateDocument(DUMMY_COLLECTION1, readedDocument, documentId, -1);
       DataDocument readedAfterInsDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
 
       Assert.assertNotEquals(readedAfterInsDocument.getString(DUMMY_KEY1), DUMMY_VALUE1);
       Assert.assertNotEquals(readedAfterInsDocument.getString(DUMMY_KEY2), DUMMY_VALUE2);
       Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY1), DUMMY_CHANGED_VALUE1);
       Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY2), DUMMY_CHANGED_VALUE2);
+      Assert.assertEquals(readedAfterInsDocument.getInteger(METADATA_VERSION).intValue(), 1);
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }
@@ -157,12 +160,12 @@ public class MongoDbStorageTest {
       DataDocument insertedDocument = createDummyDocument();
       String documentId = mongoDbStorage.createDocument(DUMMY_COLLECTION1, insertedDocument);
       DataDocument readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
-      Assert.assertEquals(readedDocument.size(), 3);
+      Assert.assertEquals(readedDocument.size(), 4);
 
       mongoDbStorage.removeAttribute(DUMMY_COLLECTION1, documentId, DUMMY_KEY1);
 
       readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
-      Assert.assertEquals(readedDocument.size(), 2);
+      Assert.assertEquals(readedDocument.size(), 3);
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }
@@ -245,6 +248,7 @@ public class MongoDbStorageTest {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put(DUMMY_KEY1, DUMMY_VALUE1);
       dataDocument.put(DUMMY_KEY2, DUMMY_VALUE2);
+      dataDocument.put(METADATA_VERSION, 0);
       return dataDocument;
    }
 
