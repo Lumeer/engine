@@ -60,7 +60,7 @@ public class CollectionFacade implements Serializable {
    private DataStorage dataStorage;
 
    @Inject
-   private MetadataFacade metadataFacade;
+   private CollectionMetadataFacade collectionMetadataFacade;
 
    // cache of collections - keys are internal names, values are original names
    private Map<String, String> collections;
@@ -79,8 +79,8 @@ public class CollectionFacade implements Serializable {
 
          // filters out metadata collections
          for (String collection : collectionsAll) {
-            if (metadataFacade.isUserCollection(collection)) {
-               String originalCollectionName = metadataFacade.getOriginalCollectionName(collection);
+            if (collectionMetadataFacade.isUserCollection(collection)) {
+               String originalCollectionName = collectionMetadataFacade.getOriginalCollectionName(collection);
                collections.put(collection, originalCollectionName);
             }
          }
@@ -96,12 +96,12 @@ public class CollectionFacade implements Serializable {
     * @throws CollectionAlreadyExistsException
     */
    public void createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException {
-      String internalCollectionName = metadataFacade.collectionNameToInternalForm(collectionOriginalName);
+      String internalCollectionName = collectionMetadataFacade.collectionNameToInternalForm(collectionOriginalName);
 
       if (!isDatabaseCollection(internalCollectionName)) {
          dataStorage.createCollection(internalCollectionName);
-         dataStorage.createCollection(metadataFacade.collectionMetadataCollectionName(internalCollectionName)); // creates metadata collection
-         metadataFacade.setOriginalCollectionName(collectionOriginalName);
+         dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(internalCollectionName)); // creates metadata collection
+         collectionMetadataFacade.createInitialMetadata(collectionOriginalName);
 
          collections = null;
       } else {
@@ -119,7 +119,7 @@ public class CollectionFacade implements Serializable {
    public void dropCollection(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
          dataStorage.dropCollection(collectionName);
-         dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(collectionName)); // removes metadata collection
+         dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collectionName)); // removes metadata collection
 
          collections = null;
       } else {
@@ -137,7 +137,7 @@ public class CollectionFacade implements Serializable {
     */
    public List<DataDocument> readCollectionMetadata(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         return dataStorage.search(metadataFacade.collectionMetadataCollectionName(collectionName), null, null, 0, 0);
+         return dataStorage.search(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), null, null, 0, 0);
       } else {
          throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
       }
@@ -153,7 +153,7 @@ public class CollectionFacade implements Serializable {
     */
    public List<String> readCollectionAttributes(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         return new ArrayList<>(metadataFacade.getCollectionAttributesInfo(collectionName).keySet());
+         return new ArrayList<>(collectionMetadataFacade.getCollectionAttributesInfo(collectionName).keySet());
       } else {
          throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
       }
@@ -172,7 +172,7 @@ public class CollectionFacade implements Serializable {
     */
    public void updateCollectionMetadata(final String collectionName, final DataDocument element, String elementId) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         dataStorage.updateDocument(metadataFacade.collectionMetadataCollectionName(collectionName), element, elementId);
+         dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), element, elementId);
       } else {
          throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
       }
@@ -187,7 +187,7 @@ public class CollectionFacade implements Serializable {
     */
    public void dropCollectionMetadata(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         dataStorage.dropCollection(metadataFacade.collectionMetadataCollectionName(collectionName));
+         dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collectionName));
       } else {
          throw new CollectionNotFoundException("The collection \"" + collectionName + "\" does not exist.");
       }
@@ -233,7 +233,7 @@ public class CollectionFacade implements Serializable {
          for (DataDocument document : documents) {
             String id = (document.get(ID_COLUMN_KEY)).toString();
 
-            if (metadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE)) {
+            if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE)) {
                document.put(attributeName, DEFAULT_COLUMN_VALUE); // blank attribute value
                dataStorage.updateDocument(collectionName, document, id);
             } else {
@@ -262,7 +262,7 @@ public class CollectionFacade implements Serializable {
          for (DataDocument document : documents) {
             String id = (document.get(ID_COLUMN_KEY)).toString();
 
-            if (metadataFacade.dropCollectionAttribute(collectionName, attributeName)) {
+            if (collectionMetadataFacade.dropCollectionAttribute(collectionName, attributeName)) {
                dataStorage.removeAttribute(collectionName, id, attributeName);
             } else {
                throw new AttributeNotFoundException("The attribute \"" + attributeName + " does not exist in collection \"" + collectionName + "\".");
@@ -287,7 +287,7 @@ public class CollectionFacade implements Serializable {
     */
    public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         if (metadataFacade.renameCollectionAttribute(collectionName, origName, newName)) {
+         if (collectionMetadataFacade.renameCollectionAttribute(collectionName, origName, newName)) {
             dataStorage.renameAttribute(collectionName, origName, newName);
          } else {
             throw new AttributeNotFoundException("The attribute \"" + origName + " does not exist in collection \"" + collectionName + "\".");

@@ -31,7 +31,7 @@ import javax.inject.Inject;
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
-public class MetadataFacade implements Serializable {
+public class CollectionMetadataFacade implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
@@ -39,29 +39,22 @@ public class MetadataFacade implements Serializable {
    // table name prefixes, attribute names and other constants used in metadata
 
    public final String META_TYPE_KEY = "meta-type";
-
-   // ------------------------------------------------------------
-   // ACCESS RIGHTS GENERALLY
-   // ------------------------------------------------------------
-   public final String CREATE_DATE_KEY = "create-date";
-   public final String UPDATE_DATE_KEY = "update-date";
-   public final String CREATE_BY_USER_KEY = "creator-user";
-   public final String UPDATED_BY_USER_KEY = "update-user";
-   public final String ACCESS_RIGHTS_KEY = "rights";
-
-   // ------------------------------------------------------------
-   // COLLECTION METADATA
-   // ------------------------------------------------------------
+   public final String COLLECTION_NAME_PREFIX = "collection.";
    public final String COLLECTION_METADATA_PREFIX = "meta.";
+
    public final String COLLECTION_ATTRIBUTES_META_TYPE_VALUE = "attributes";
    public final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
+
    public final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
    // attribute types according to DataDocument methods, empty is default and is considered String
    // TODO: What about nested attributes? Should we return them as a string?
    public final String[] COLLECTION_ATTRIBUTE_TYPE_VALUES = { "int", "long", "double", "boolean", "date", "" };
+
    public final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
    public final String COLLECTION_REAL_NAME_KEY = "name";
-   public final String COLLECTION_NAME_PREFIX = "collection.";
+
+   public final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
+   public final String COLLECTION_LOCK_UPDATED_KEY = "updated";
    // TODO: access rights
 
    // example of collection metadata structure:
@@ -80,107 +73,10 @@ public class MetadataFacade implements Serializable {
    // “meta-type” : “name”,
    // “name” : “This is my collection name.”
    // }
-
-   // ------------------------------------------------------------
-   // DOCUMENT METADATA
-   // ------------------------------------------------------------
-   public final String DOCUMENT_METADATA_PREFIX = "meta-";
-   public final String DOCUMENT_CREATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + CREATE_DATE_KEY;
-   public final String DOCUMENT_UPDATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + UPDATE_DATE_KEY;
-   public final String DOCUMENT_CREATE_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + CREATE_BY_USER_KEY;
-   public final String DOCUMENT_UPDATED_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + UPDATED_BY_USER_KEY;
-   public final String DOCUMENT_RIGHTS_KEY = DOCUMENT_METADATA_PREFIX + ACCESS_RIGHTS_KEY;
-
-   // example of document metadata structure:
-   // -------------------------------------
    // {
-   //	“_meta-create-date” : date,
-   //	“_meta-update-date” : date,
-   //	“_meta-creator-user” : user_name,
-   //	“_meta-update-user” : user_name,
-   //	“_meta-rights” : [
-   //      user_name1 : 1  //execute permissions
-   //      user_name2 : 2  //write permissions
-   //      user_name3 : 4  //read permissions
-   //      user_name4 : 3  //execute and write permissions = 1 + 2
-   //      user_name5 : 5  //read and execute permissions = 1 + 4
-   //      user_name6 : 6  //write and read permissions = 2 + 4
-   //      user_name7 : 7  //full permissions = 1 + 2 + 4
-   //      others     : 0  //others is forced to be there, maybe if not presented, that means 0 permissions
-   //    ],
-   // “_meta-group-rights” : [
-   //      group_name1: 1  //execute permissions
-   //      group_name2: 2  //write permissions
-   //      group_name3: 4  //read permissions
-   //      group_name4: 3  //execute and write permissions = 1 + 2
-   //      group_name5: 5  //read and execute permissions = 1 + 4
-   //      group_name6: 6  //write and read permissions = 2 + 4
-   //      group_name7: 7  //full permissions = 1 + 2 + 4
-   //	   ]
-   //	… (rest of the document) …
-   // }
-
-   // ------------------------------------------------------------
-   // VIEW METADATA
-   // ------------------------------------------------------------
-   public final String VIEW_METADATA_PREFIX = "meta.";
-   public final String VIEW_STYLES_META_TYPE_VALUE = "styles";
-   public final String VIEW_ACCESS_RIGHTS_META_TYPE_VALUE = "rights";
-   public final String VIEW_ALL_STYLES_KEY = "styles";
-   public final String VIEW_STYLE_TYPE_KEY = "type";
-   public final String VIEW_STYLE_VALUE_KEY = "style";
-   public final String VIEW_STYLE_CONDITION_KEY = "condition";
-   public final String VIEW_NAME_PREFIX = "view.";
-
-   // example of view metadata structure:
-   // -------------------------------------
-   // {
-   // “meta-type” : “styles”,
-   // “styles” : [
-   //    {
-   //    “type” : “column”,
-   //    “style” : “color:red;”,
-   //    “condition” :
-   //       {
-   //       … a representation of condition …
-   //       }
-   //    },
-   //    {
-   //    “type” : “row”,
-   //    “style” : “color:green;”,
-   //    “condition” :
-   //       {
-   //          … a representation of condition …
-   //       }
-   //     }
-   //    ]
-   // },
-   // {
-   //    “meta-type” : “rights”,
-   //	   “create-date” : date,
-   //	   “update-date” : date,
-   //	   “creator-user” : user_name,
-   //	   “update-user” : user_name,
-   //	   “rights” : [
-   //       user_name1 : 1  //execute permissions
-   //       user_name2 : 2  //write permissions
-   //       user_name3 : 4  //read permissions
-   //       user_name4 : 3  //execute and write permissions = 1 + 2
-   //       user_name5 : 5  //read and execute permissions = 1 + 4
-   //       user_name6 : 6  //write and read permissions = 2 + 4
-   //       user_name7 : 7  //full permissions = 1 + 2 + 4
-   //       others     : 0  //others is forced to be there, maybe if not presented, that means 0 permissions
-   //    ],
-   //    “group-rights” : [
-   //       group_name1: 1  //execute permissions
-   //       group_name2: 2  //write permissions
-   //       group_name3: 4  //read permissions
-   //       group_name4: 3  //execute and write permissions = 1 + 2
-   //       group_name5: 5  //read and execute permissions = 1 + 4
-   //       group_name6: 6  //write and read permissions = 2 + 4
-   //       group_name7: 7  //full permissions = 1 + 2 + 4
-   //	   ]
-   // }
+   // “meta-type” : “lock”,
+   // “updated” : “2016-11-08 12:23:21”
+   //  }
 
    /**
     * Converts collection name given by user to internal representation.
@@ -197,15 +93,24 @@ public class MetadataFacade implements Serializable {
    }
 
    /**
-    * Same as collectionNameToInternalForm, just with view prefix
+    * Creates initial metadata in metadata collection - adds original name and initial time lock.
     *
-    * @param originalViewName
-    *       name given by user
-    * @return
+    * @param collectionOriginalName
+    *       name of collection given by user
     */
-   public String viewNameToInternalForm(String originalViewName) {
-      String name = originalViewName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-      return VIEW_NAME_PREFIX + name;
+   public void createInitialMetadata(String collectionOriginalName) {
+      String internalCollectionName = collectionNameToInternalForm(collectionOriginalName);
+      setOriginalCollectionName(internalCollectionName, collectionOriginalName);
+
+      String lock = ""; // TODO make string representation of current time
+
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put(META_TYPE_KEY, COLLECTION_LOCK_META_TYPE_VALUE);
+      metadata.put(COLLECTION_LOCK_UPDATED_KEY, lock);
+      DataDocument metadataDocument = new DataDocument(metadata);
+
+      String metadataCollectionName = collectionMetadataCollectionName(internalCollectionName);
+      dataStorage.createDocument(metadataCollectionName, metadataDocument);
    }
 
    /**
@@ -216,8 +121,7 @@ public class MetadataFacade implements Serializable {
     * @return map - keys are attribute names, values are types
     */
    public Map<String, String> getCollectionAttributesInfo(String collectionName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionAttributesInfo(metadataCollectionName);
+      String query = queryCollectionAttributesInfo(collectionName);
       List<DataDocument> attributesInfoDocuments = dataStorage.search(query);
 
       Map<String, String> attributesInfo = new HashMap<>();
@@ -240,11 +144,10 @@ public class MetadataFacade implements Serializable {
     *       added attribute name
     * @param attributeType
     *       added attribute type
-    * @return true if add is successful
+    * @return true if add is successful, false if attribute already exists
     */
    public boolean addCollectionAttribute(String collectionName, String attributeName, String attributeType) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionAttributeInfo(metadataCollectionName, attributeName);
+      String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.search(query);
 
       // return false if the attribute already exists
@@ -257,6 +160,7 @@ public class MetadataFacade implements Serializable {
       metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, attributeName);
       metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, attributeType);
       DataDocument metadataDocument = new DataDocument(metadata);
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       dataStorage.createDocument(metadataCollectionName, metadataDocument);
 
       return true;
@@ -271,11 +175,10 @@ public class MetadataFacade implements Serializable {
     *       old attribute name
     * @param newName
     *       new attribute name
-    * @return true if rename is successful
+    * @return true if rename is successful, false if attribute does not exist
     */
    public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionAttributeInfo(metadataCollectionName, oldName);
+      String query = queryCollectionAttributeInfo(collectionName, oldName);
       List<DataDocument> attributeInfo = dataStorage.search(query);
 
       // the attribute does not exist
@@ -290,6 +193,7 @@ public class MetadataFacade implements Serializable {
       if (!newName.isEmpty()) {
          metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, newName);
          DataDocument metadataDocument = new DataDocument(metadata);
+         String metadataCollectionName = collectionMetadataCollectionName(collectionName);
          dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
          return true;
       }
@@ -306,11 +210,10 @@ public class MetadataFacade implements Serializable {
     *       attribute name
     * @param newType
     *       new attribute type
-    * @return true if retype is successful
+    * @return true if retype is successful, false if attribute does not exist
     */
    public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionAttributeInfo(metadataCollectionName, attributeName);
+      String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.search(query);
 
       // the attribute does not exist
@@ -324,6 +227,7 @@ public class MetadataFacade implements Serializable {
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, newType);
       DataDocument metadataDocument = new DataDocument(metadata);
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
 
       return true;
@@ -336,11 +240,10 @@ public class MetadataFacade implements Serializable {
     *       internal collection name
     * @param attributeName
     *       attribute to be deleted
-    * @return true if delete is successful
+    * @return true if delete is successful, false if attribute does not exist
     */
    public boolean dropCollectionAttribute(String collectionName, String attributeName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionAttributeInfo(metadataCollectionName, attributeName);
+      String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.search(query);
 
       // the attribute does not exist
@@ -350,7 +253,7 @@ public class MetadataFacade implements Serializable {
 
       DataDocument attributeDocument = attributeInfo.get(0);
       String documentId = attributeDocument.get("_id").toString();
-
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       dataStorage.dropDocument(metadataCollectionName, documentId);
 
       return true;
@@ -364,8 +267,7 @@ public class MetadataFacade implements Serializable {
     * @return original collection name
     */
    public String getOriginalCollectionName(String collectionName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      String query = queryCollectionNameInfo(metadataCollectionName);
+      String query = queryCollectionNameInfo(collectionName);
       List<DataDocument> nameInfo = dataStorage.search(query);
 
       DataDocument nameDocument = nameInfo.get(0);
@@ -380,58 +282,51 @@ public class MetadataFacade implements Serializable {
     * @param collectionOriginalName
     *       name given by user
     */
-   public void setOriginalCollectionName(String collectionOriginalName) {
-      String collectionInternalName = collectionNameToInternalForm(collectionOriginalName);
+   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionInternalName);
-
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(META_TYPE_KEY, COLLECTION_REAL_NAME_META_TYPE_VALUE);
       metadata.put(COLLECTION_REAL_NAME_KEY, collectionOriginalName);
+
       DataDocument metadataDocument = new DataDocument(metadata);
       dataStorage.createDocument(metadataCollectionName, metadataDocument);
    }
 
-   // returns MongoDb query for getting info about specific attribute
-   private String queryCollectionAttributeInfo(String metadataCollectionName, String attributeName) {
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(META_TYPE_KEY)
-            .append("\":\"")
-            .append(COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-            .append("\",\"")
-            .append(COLLECTION_ATTRIBUTE_NAME_KEY)
-            .append("\":\"")
-            .append(attributeName)
-            .append("\"}}");
-      String findAttributeQuery = sb.toString();
-      return findAttributeQuery;
+   /**
+    * Reads current value of collection lock
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return String representation of the time of the last update of collection lock
+    */
+   public String getCollectionLockTime(String collectionName) {
+      String query = queryCollectionLockTime(collectionName);
+      List<DataDocument> lockInfo = dataStorage.search(query);
+
+      DataDocument nameDocument = lockInfo.get(0);
+      String lock = nameDocument.getString(COLLECTION_LOCK_UPDATED_KEY);
+      return lock;
    }
 
-   // returns MongoDb query for getting real collection name
-   private String queryCollectionNameInfo(String metadataCollectionName) {
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(META_TYPE_KEY)
-            .append("\":\"")
-            .append(COLLECTION_REAL_NAME_META_TYPE_VALUE)
-            .append("\"}}");
-      String findNameQuery = sb.toString();
-      return findNameQuery;
-   }
+   /**
+    * Sets collection lock to new value
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param newTime
+    *       String representation of the time of the last update of collection lock
+    */
+   public void setCollectionLockTime(String collectionName, String newTime) {
+      String query = queryCollectionLockTime(collectionName);
+      List<DataDocument> lockInfo = dataStorage.search(query);
+      DataDocument lockDocument = lockInfo.get(0);
+      String id = lockDocument.get("_id").toString();
 
-   // returns MongoDb query for getting info about all attributes
-   private String queryCollectionAttributesInfo(String metadataCollectionName) {
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(META_TYPE_KEY)
-            .append("\":\"")
-            .append(COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-            .append("\"}}");
-      String findAttributeQuery = sb.toString();
-      return findAttributeQuery;
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put(COLLECTION_LOCK_UPDATED_KEY, newTime);
+
+      DataDocument metadataDocument = new DataDocument(metadata);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id);
    }
 
    /**
@@ -453,4 +348,63 @@ public class MetadataFacade implements Serializable {
       return COLLECTION_NAME_PREFIX.equals(prefix);
    }
 
+   // returns MongoDb query for getting real collection name
+   private String queryCollectionNameInfo(String collectionName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(metadataCollectionName)
+            .append("\",filter:{\"")
+            .append(META_TYPE_KEY)
+            .append("\":\"")
+            .append(COLLECTION_REAL_NAME_META_TYPE_VALUE)
+            .append("\"}}");
+      String findNameQuery = sb.toString();
+      return findNameQuery;
+   }
+
+   // returns MongoDb query for getting info about all attributes
+   private String queryCollectionAttributesInfo(String collectionName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(metadataCollectionName)
+            .append("\",filter:{\"")
+            .append(META_TYPE_KEY)
+            .append("\":\"")
+            .append(COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
+            .append("\"}}");
+      String findAttributeQuery = sb.toString();
+      return findAttributeQuery;
+   }
+
+   // returns MongoDb query for getting info about specific attribute
+   private String queryCollectionAttributeInfo(String collectionName, String attributeName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(metadataCollectionName)
+            .append("\",filter:{\"")
+            .append(META_TYPE_KEY)
+            .append("\":\"")
+            .append(COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
+            .append("\",\"")
+            .append(COLLECTION_ATTRIBUTE_NAME_KEY)
+            .append("\":\"")
+            .append(attributeName)
+            .append("\"}}");
+      String findAttributeQuery = sb.toString();
+      return findAttributeQuery;
+   }
+
+   // returns MongoDb query for getting collection lock time
+   private String queryCollectionLockTime(String collectionName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(metadataCollectionName)
+            .append("\",filter:{\"")
+            .append(META_TYPE_KEY)
+            .append("\":\"")
+            .append(COLLECTION_LOCK_META_TYPE_VALUE)
+            .append("\"}}");
+      String findNameQuery = sb.toString();
+      return findNameQuery;
+   }
 }
