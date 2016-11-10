@@ -20,26 +20,28 @@
 package io.lumeer.engine.controller;
 
 import java.io.Serializable;
+
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+
 import javax.inject.Inject;
-import javax.xml.crypto.Data;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
 public class VersionFacade implements Serializable {
-   private final String shadow = ".shadow";
-   public final String versionString = "_metadata-version";
-   private final String updaterString = "_metadata-updater";
-   private final String documentIdString = "_id";
+   private final String SHADOW = ".shadow";
+   private final String VERSION_STRING = "_metadata-version";
+   private final String DOCUMENT_ID_STRING = "_id";
 
    @Inject
    private DataStorage dataStorage;
-   //@Inject
-   private String userName = "testUser";
+
+   public String getVersionMetadataString() {
+      return VERSION_STRING;
+   }
 
    /**
     * Return document version
@@ -50,32 +52,8 @@ public class VersionFacade implements Serializable {
     *       the id of readed document
     * @return version of readed document as integer
     */
-   public int getDocumentVersion(String collectionName, String documentId){
+   public int getDocumentVersion(String collectionName, String documentId) {
       return getDocumentVersion(dataStorage.readDocument(collectionName, documentId));
-   }
-
-   /**
-    * Return username, which last change document
-    *
-    * @param collectionName
-    *       collection name, where document it stored
-    * @param documentId
-    *       the id of readed document
-    * @return  user which update this document as string
-    */
-   public String getDocumentUpdater(String collectionName, String documentId){
-      return getDocumentUpdater(dataStorage.readDocument(collectionName, documentId));
-   }
-
-   /**
-    * Return username, which last change document
-    *
-    * @param document
-    *       document which contains username string stored as metadata
-    * @return user which update this document as string
-    */
-   public String getDocumentUpdater(DataDocument document){
-      return document.getString(updaterString);
    }
 
    /**
@@ -85,117 +63,145 @@ public class VersionFacade implements Serializable {
     *       document where this id is stored
     * @return integer, document version
     */
-   public int getDocumentVersion(DataDocument document){
-      return document.getInteger(versionString);
+   public int getDocumentVersion(DataDocument document) {
+      return document.getInteger(VERSION_STRING);
    }
 
-   public boolean verifyDocumentUpdate(String collectionName, DataDocument document){
+   public boolean verifyDocumentUpdate(String collectionName, DataDocument document) {
+      //HOW TO DO ? WHAT IS NEEDED ?
       return true;
    }
 
    /**
-    * Create shadow collection if not exists. Create shadow copy of document
-    * and change document meta data version to new version (old version + 1). Both, document
-    * in shadow collection and in collection will have same data except id. After
-    * this new version you should change data in document in collection. Old document is safely
-    * in shadow collection
+    * Create shadow collection if not created. Backup document with
+    * same id as document in collection. Then replace document in
+    * collection with document from input.
+    *
     * @param collectionName
     *       collection name, where document is stored
     * @param document
-    *       document, which will be stored in shadow collection
+    *       document, which will be stored in SHADOW collection
     *       and then updated in new collection to new version.
     *       After that it is possible to change data and save it
     * @return hmm
     */
-   public int newDocumentVersion(String collectionName, DataDocument document){
+   public int newDocumentVersion(String collectionName, DataDocument document) {
+      int oldVersion = backUp(collectionName, document.get(DOCUMENT_ID_STRING).toString());
       createMetadata(document);
-      return newDocumentVersion(collectionName, document, getDocumentVersion(document) + 1);
+      document.replace(VERSION_STRING, oldVersion + 1);
+      dataStorage.updateDocument(collectionName, document, document.get(DOCUMENT_ID_STRING).toString());
+      return oldVersion + 1;
    }
 
    /**
     * Create metadata if not exists
+    *
     * @param document
     *       document where to create metadata
     */
-   private void createMetadata(DataDocument document){
-      if (!document.containsKey(versionString)){
-         document.put(versionString, 0);
-         document.put(updaterString, userName);
+   private void createMetadata(DataDocument document) {
+      if (!document.containsKey(VERSION_STRING)) {
+         document.put(VERSION_STRING, 0);
       }
    }
 
    /**
-    * Create shadow collection if not exists. Same as newDocumentVersion but
-    * can create version with specified integer
+    * Create shadow collection if not exists.
+    *
     * @param collectionName
-    *       collection where this document is stored
-    * @param document
-    *       document to back and change version
-    * @param toVersion
-    *       create new version with this integer. Not check if this version exists!
-    * @return hmm
+    *       collection name to imput.
     */
-   public int newDocumentVersion(String collectionName, DataDocument document, int toVersion){
-      createShadow(collectionName);
-      createMetadata(document);
-      LinkedHashMap<String, Object> hashMap = new LinkedHashMap<String, Object>();
-      hashMap.put(documentIdString, document.get(documentIdString));
-      hashMap.put(versionString, getDocumentVersion(document));
-      Object idOfDocument = document.get(documentIdString);
-      String idSringOfDocument = document.get(documentIdString).toString();
-      document.put(documentIdString, hashMap);
-      /*
-         create new createDocument method in DataStorage to return some constant string
-       */
-      dataStorage.createDocument(collectionName + shadow, document);
-      if (verifyDocumentUpdate(collectionName + shadow, document)) {
-         //throw new Exception("cannot create document in" + collectionName + ".shadow colleciton");
-         document.put(documentIdString, idOfDocument);
-         document.replace(versionString, toVersion);
-         document.replace(updaterString, userName);
-         dataStorage.updateDocument(collectionName, document, idSringOfDocument);
-         if (!verifyDocumentUpdate(collectionName, document)) {
-            //throw new Exception("cannot create document in" + collectionName + " colleciton");
-            return -1;
-         }
-      } else { //TODO throw EXCEPTION ?
-         return -1;
+   private void createShadow(String collectionName) {
+      if (!(dataStorage.getAllCollections().contains(collectionName + SHADOW))) {
+         dataStorage.createCollection(collectionName + SHADOW);
       }
-      return toVersion;
    }
 
-   private void createShadow(String collectionName){
-      if (!(dataStorage.getAllCollections().contains(collectionName + shadow))){
-         dataStorage.createCollection(collectionName + shadow);
-      }
+   private int backUp(String collectionName, String documentId) {
+      DataDocument document = dataStorage.readDocument(collectionName, documentId);
+      createMetadata(document);
+      createShadow(collectionName);
+      dataStorage.createOldDocument(collectionName + SHADOW, document, documentId, getDocumentVersion(document));
+      return getDocumentVersion(document);
    }
 
    /**
-    * Take document, parse id, backup document in collection (to .shadow collection)
-    * and replace document in collection with document as input. Create shadow if not
-    * exists
+    * Create new version from input document. Read document from shadow collection
+    * as old version and replace document in collection with document from shadow
+    * collection.
+    *
     * @param collectionName
     *       collection where document is stored
     * @param document
-    *       document to store in collection and backup document with same id
-    * @return return document new version
+    *       document to be saved with newDocumentVersion
+    * @param revertTo
+    *       integer version to be reverted to
     */
-   public int newDocumentVersionById(String collectionName, DataDocument document){
-      String documentId = document.get(documentIdString).toString();
-      DataDocument data = dataStorage.readDocument(collectionName,documentId);
-      int version = newDocumentVersion(collectionName,data);
-      document.replace(versionString,document.getInteger(versionString)+1);
-      document.replace(updaterString,userName);
-      dataStorage.updateDocument(collectionName,document,documentId);
-      return version;
+   public void revertDocumentVersion(String collectionName, DataDocument document, int revertTo) {
+      DataDocument newDocument = getOldDocumentVersion(collectionName, document, revertTo);
+      int newVersion = newDocumentVersion(collectionName, document);
+      newDocument.replace(VERSION_STRING, newVersion);
+      dataStorage.updateDocument(collectionName, newDocument, newDocument.get(DOCUMENT_ID_STRING).toString());
    }
 
-   public void revertDocumentVersion(String collectionName, DataDocument document, int revertTo){
-      //need to read data
+   /**
+    * Parse id from document from input. Read document from shadow and
+    * replace id with id specified in input document
+    *
+    * @param collectionName
+    *       collection of document to be readed
+    * @param document
+    *       document containingg ID
+    * @param version
+    *       version to be reverted
+    * @return
+    */
+   public DataDocument getOldDocumentVersion(String collectionName, DataDocument document, int version) {
+      Object id = document.get(DOCUMENT_ID_STRING);
+      DataDocument data = dataStorage.readOldDocument(collectionName + SHADOW, id.toString(), version);
+      data.replace(DOCUMENT_ID_STRING, id);
+      return data;
    }
 
-   public List<DataDocument> getDocumentVersions(String collectionName, String documentId){
-      //need to read data
-      return null;
+   /**
+    * Read document from shadow collection with specified id and version
+    *
+    * @param collectionName
+    *       collection to read
+    * @param documentId
+    *       id of document
+    * @param version
+    *       version of document
+    * @return
+    */
+   public DataDocument getOldDocumentVersion(String collectionName, String documentId, int version) {
+      Object id = dataStorage.readDocument(collectionName, documentId).get(DOCUMENT_ID_STRING);
+      DataDocument data = dataStorage.readOldDocument(collectionName + SHADOW, id.toString(), version);
+      data.replace(DOCUMENT_ID_STRING, id);
+      return data;
+   }
+
+   /**
+    * Read all version from shadow collection and normal collection,
+    * return it as list.
+    *
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @return
+    */
+   public List<DataDocument> getDocumentVersions(String collectionName, String documentId) {
+      //to be done by JSON
+      //JUST FOR TESTS
+      List<DataDocument> dataDocuments = new ArrayList<DataDocument>();
+      dataDocuments.add(dataStorage.readDocument(collectionName, documentId));
+      for (int i = getDocumentVersion(dataDocuments.get(0)); i >= 0; i--) {
+         DataDocument data = dataStorage.readOldDocument(collectionName + SHADOW, documentId, i);
+         if (data != null) {
+            dataDocuments.add(data);
+         }
+      }
+      return dataDocuments;
    }
 }

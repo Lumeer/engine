@@ -67,7 +67,7 @@ public class DocumentFacade implements Serializable {
       }
       document.put(documentMetadataFacade.DOCUMENT_UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       document.put(documentMetadataFacade.DOCUMENT_UPDATED_BY_USER_KEY, userName);
-      document.put(versionFacade.versionString, 0);
+      document.put(versionFacade.getVersionMetadataString(), 0);
       String documentId = dataStorage.createDocument(collectionName, document);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());

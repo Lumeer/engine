@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
+import com.mongodb.util.JSON;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -36,6 +37,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
+
+import jdk.nashorn.internal.runtime.regexp.RegExp;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
@@ -55,21 +58,21 @@ public class VersionFacadeTest extends Arquillian {
    private final String collectionTest = "tt";
    private final String collectionShadow = "tt.shadow";
    private final String versionString = "_metadata-version";
-   private final String updaterString = "_metadata-updater";
    private final String documentIdString = "_id";
 
    @Inject
    private VersionFacade versionFacade;
    @Inject
    private DataStorage dataStorage;
-   @Inject CollectionFacade collectionFacade;
+   @Inject
+   CollectionFacade collectionFacade;
 
    @Test
    public void testGetVersion() throws Exception {
       dataStorage.createCollection(collectionTest);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(collectionTest, dataDocument);
-      Assert.assertEquals(versionFacade.getDocumentVersion(collectionTest,documentId),1);
+      Assert.assertEquals(versionFacade.getDocumentVersion(collectionTest, documentId), 1);
       dataStorage.dropDocument(collectionTest, documentId);
       dataStorage.dropCollection(collectionTest);
    }
@@ -77,7 +80,7 @@ public class VersionFacadeTest extends Arquillian {
    @Test
    public void testGetVersionFromDocument() throws Exception {
       DataDocument dataDocument = createTestDocument();
-      Assert.assertEquals(versionFacade.getDocumentVersion(dataDocument),1);
+      Assert.assertEquals(versionFacade.getDocumentVersion(dataDocument), 1);
    }
 
    @Test
@@ -86,66 +89,96 @@ public class VersionFacadeTest extends Arquillian {
       dataStorage.createCollection(collectionShadow);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(collectionTest, dataDocument);
-      versionFacade.newDocumentVersion(collectionTest,dataStorage.readDocument(collectionTest,documentId));
-      Assert.assertEquals((int)dataStorage.readDocument(collectionTest,documentId).getInteger(versionString), 2);
-      Assert.assertEquals((int)dataStorage.search(collectionShadow,null,null,0,1).get(0).getInteger(versionString),1);
+      versionFacade.newDocumentVersion(collectionTest, dataStorage.readDocument(collectionTest, documentId));
+      Assert.assertEquals((int) dataStorage.readDocument(collectionTest, documentId).getInteger(versionString), 2);
+      Assert.assertEquals((int) dataStorage.search(collectionShadow, null, null, 0, 1).get(0).getInteger(versionString), 1);
       dataStorage.dropCollection(collectionTest);
       dataStorage.dropCollection(collectionShadow);
    }
 
    @Test
-   public void testWithoutMeta() throws Exception{
+   public void testWithoutMeta() throws Exception {
       dataStorage.createCollection(collectionTest);
       String documentId = dataStorage.createDocument(collectionTest, createEmptyDocument());
-      versionFacade.newDocumentVersion(collectionTest, dataStorage.readDocument(collectionTest,documentId));
-      Assert.assertEquals((int)dataStorage.readDocument(collectionTest,documentId).getInteger(versionString), 1);
-      Assert.assertEquals((int)dataStorage.search(collectionShadow,null,null,0,1).get(0).getInteger(versionString),0);
+      versionFacade.newDocumentVersion(collectionTest, dataStorage.readDocument(collectionTest, documentId));
+      Assert.assertEquals((int) dataStorage.readDocument(collectionTest, documentId).getInteger(versionString), 1);
+      Assert.assertEquals((int) dataStorage.search(collectionShadow, null, null, 0, 1).get(0).getInteger(versionString), 0);
       dataStorage.dropCollection(collectionTest);
       dataStorage.dropCollection(collectionShadow);
    }
 
    @Test
-   public void testNewVersionById() throws Exception {
-      dataStorage.createCollection(collectionShadow);
-      DataDocument dataDocument = createTestDocument();
-      String documentId = dataStorage.createDocument(collectionTest, dataDocument);
-      dataDocument = dataStorage.readDocument(collectionTest,documentId);
-      dataDocument.replace("dog","pig");
-      versionFacade.newDocumentVersionById(collectionTest,dataDocument);
-      Assert.assertEquals((int)dataStorage.readDocument(collectionTest,documentId).getInteger(versionString), 2);
-      Assert.assertEquals(dataStorage.readDocument(collectionTest,documentId).getString("dog"),"pig");
-      Assert.assertEquals((int)dataStorage.search(collectionShadow,null,null,0,1).get(0).getInteger(versionString),1);
-      Assert.assertEquals(dataStorage.search(collectionShadow,null,null,0,1).get(0).getString("dog"),"cat");
-      dataStorage.dropCollection(collectionTest);
-      dataStorage.dropCollection(collectionShadow);
-   }
-   /*@Test
-   public void verifyUpdateTest() throws Exception{
+   public void testChangedDocument() throws Exception {
       dataStorage.createCollection(collectionTest);
-      dataStorage.createCollection(collectionShadow);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(collectionTest, dataDocument);
-      DataDocument dataDocumentWithID = dataStorage.readDocument(collectionTest,documentId);
-      versionFacade.newDocumentVersion(collectionTest,dataDocumentWithID);
-      List<DataDocument> searchDocuments = dataStorage.search(collectionShadow, null, null, 0, 1);
-      versionFacade.verifyDocumentUpdate(collectionShadow, searchDocuments.get(0));
+      dataDocument = dataStorage.readDocument(collectionTest, documentId);
+      dataDocument.replace("dog", "pig");
+      versionFacade.newDocumentVersion(collectionTest, dataDocument);
+      Assert.assertEquals((int) dataStorage.readDocument(collectionTest, documentId).getInteger(versionString), 2);
+      Assert.assertEquals(dataStorage.readDocument(collectionTest, documentId).getString("dog"), "pig");
+      Assert.assertEquals((int) dataStorage.search(collectionShadow, null, null, 0, 1).get(0).getInteger(versionString), 1);
+      Assert.assertEquals(dataStorage.search(collectionShadow, null, null, 0, 1).get(0).getString("dog"), "cat");
       dataStorage.dropCollection(collectionTest);
       dataStorage.dropCollection(collectionShadow);
    }
 
    @Test
-   public void revertTest() throws Exception{
-      //cannot do
+   public void testGetVersions() throws Exception {
+      dataStorage.createCollection(collectionTest);
+      DataDocument dataDocument = createTestDocument();
+      String documentId = dataStorage.createDocument(collectionTest, dataDocument);
+      dataDocument = dataStorage.readDocument(collectionTest, documentId);
+      versionFacade.newDocumentVersion(collectionTest, dataDocument);
+      dataDocument = dataStorage.readDocument(collectionTest, documentId);
+      versionFacade.newDocumentVersion(collectionTest, dataDocument);
+      Assert.assertEquals(versionFacade.getDocumentVersions(collectionTest, documentId).size(), 3);
+      dataStorage.dropOldDocument(collectionShadow, documentId, 1);
+      Assert.assertEquals(versionFacade.getDocumentVersions(collectionTest, documentId).size(), 2);
+      dataStorage.dropCollection(collectionTest);
+      dataStorage.dropCollection(collectionShadow);
    }
-   ...
 
-   */
+   @Test
+   public void getOldDocument() throws Exception {
+      dataStorage.createCollection(collectionTest);
+      DataDocument dataDocument = createTestDocument();
+      String documentId = dataStorage.createDocument(collectionTest, dataDocument);
+      dataDocument = dataStorage.readDocument(collectionTest, documentId);
+      versionFacade.newDocumentVersion(collectionTest, dataDocument);
+      DataDocument testDocument = versionFacade.getOldDocumentVersion(collectionTest, dataDocument, 1);
+      testDocument.replace("_metadata-version", 2);
+      dataDocument = dataStorage.readDocument(collectionTest, documentId);
+      Assert.assertTrue(dataDocument.equals(testDocument));
+      testDocument = versionFacade.getOldDocumentVersion(collectionTest, documentId, 1);
+      testDocument.replace("_metadata-version", 2);
+      Assert.assertTrue(dataDocument.equals(testDocument));
+      dataStorage.dropCollection(collectionTest);
+      dataStorage.dropCollection(collectionShadow);
+   }
+
+   @Test
+   public void testChangedDocumentRevert() throws Exception {
+      dataStorage.createCollection(collectionTest);
+      DataDocument dataDocument = createTestDocument();
+      String documentId = dataStorage.createDocument(collectionTest, dataDocument);
+      dataDocument = dataStorage.readDocument(collectionTest, documentId);
+      dataDocument.replace("dog", "pig");
+      versionFacade.newDocumentVersion(collectionTest, dataDocument);
+      versionFacade.revertDocumentVersion(collectionTest, dataDocument, 1);
+      DataDocument newDoc = dataStorage.readDocument(collectionTest, documentId);
+      Assert.assertEquals(versionFacade.getDocumentVersion(newDoc), 3);
+      Assert.assertEquals(newDoc.getString("dog"), "cat");
+      Assert.assertEquals((int) dataStorage.search(collectionShadow, null, null, 0, 3).size(), 2);
+      Assert.assertEquals(versionFacade.getDocumentVersions(collectionTest, documentId).size(), 3);
+      dataStorage.dropCollection(collectionTest);
+      dataStorage.dropCollection(collectionShadow);
+   }
 
    private DataDocument createTestDocument() {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put("dog", "cat");
       dataDocument.put(versionString, 1);
-      dataDocument.put(updaterString, "user1");
       return dataDocument;
    }
 
