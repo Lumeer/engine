@@ -53,6 +53,7 @@ import javax.enterprise.inject.Model;
 @Model
 public class MongoDbStorage implements DataStorage {
 
+   private static final String ID = "_id";
    private static final String HOST = System.getProperty("lumeer.db.host", "localhost");
    private static final String DATABASE_NAME = System.getProperty("lumeer.db.name", "lumeer");
    private static final int PORT = Integer.getInteger("lumeer.sysdb.port", 27017);
@@ -114,20 +115,20 @@ public class MongoDbStorage implements DataStorage {
    public String createDocument(final String collectionName, final DataDocument dataDocument) {
       Document doc = new Document(dataDocument);
       database.getCollection(collectionName).insertOne(doc);
-      return doc.containsKey("_id") ? doc.getObjectId("_id").toString() : null;
+      return doc.containsKey(ID) ? doc.getObjectId(ID).toString() : null;
    }
 
    @Override
    public void createOldDocument(final String collectionName, final DataDocument dataDocument, final String documentId, final int version) {
       Document doc = new Document(dataDocument);
-      doc.put("_id", new BasicDBObject("_id", new ObjectId(documentId)).append(
+      doc.put(ID, new BasicDBObject(ID, new ObjectId(documentId)).append(
             _VERSION, version));
       database.getCollection(collectionName).insertOne(doc);
    }
 
    @Override
    public DataDocument readDocument(final String collectionName, final String documentId) {
-      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       Document document = database.getCollection(collectionName).find(filter).first();
 
       if (document == null) {
@@ -135,15 +136,15 @@ public class MongoDbStorage implements DataStorage {
       }
 
       // converts id to string
-      String documentIdString = document.getObjectId("_id").toString();
-      document.replace("_id", documentIdString);
+      String documentIdString = document.getObjectId(ID).toString();
+      document.replace(ID, documentIdString);
 
       return new DataDocument(document);
    }
 
    @Override
    public DataDocument readOldDocument(final String collectionName, final String documentId, final int version) {
-      BasicDBObject filter = new BasicDBObject("_id", new BasicDBObject("_id", new ObjectId(documentId)).append(
+      BasicDBObject filter = new BasicDBObject(ID, new BasicDBObject(ID, new ObjectId(documentId)).append(
             _VERSION, version));
       Document document = database.getCollection(collectionName).find(filter).first();
 
@@ -156,15 +157,21 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId) {
+      if (updatedDocument.containsKey(ID)) {
+         updatedDocument.remove(ID);
+      }
       String versionKey = "_metadata-version";
-      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId)).append(versionKey, updatedDocument.getInteger(versionKey) - 1);
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId)).append(versionKey, updatedDocument.getInteger(versionKey) - 1);
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
    @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId, final int targetVersion) {
-      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      if (updatedDocument.containsKey(ID)) {
+         updatedDocument.remove(ID);
+      }
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       if (targetVersion >= 0) {
          String versionKey = "_metadata-version";
          filter.append(versionKey, updatedDocument.getInteger(versionKey));
@@ -175,13 +182,13 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void dropDocument(final String collectionName, final String documentId) {
-      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       database.getCollection(collectionName).deleteOne(filter);
    }
 
    @Override
    public void dropOldDocument(final String collectionName, final String documentId, final int version) {
-      BasicDBObject filter = new BasicDBObject("_id", new BasicDBObject("_id", new ObjectId(documentId)).append(
+      BasicDBObject filter = new BasicDBObject(ID, new BasicDBObject(ID, new ObjectId(documentId)).append(
             _VERSION, version));
       database.getCollection(collectionName).deleteOne(filter);
    }
@@ -193,7 +200,7 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void removeAttribute(final String collectionName, final String documentId, final String attributeName) {
-      BasicDBObject filter = new BasicDBObject("_id", new ObjectId(documentId));
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       BasicDBObject updateBson = new BasicDBObject("$unset", new BasicDBObject(attributeName, 1));
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }
@@ -201,13 +208,13 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
       // define grouping by out attributeName
-      final Document group = new Document("$group", new Document("_id", "$" + attributeName));
+      final Document group = new Document("$group", new Document(ID, "$" + attributeName));
       // sorting by id, descending, from the newest entry to oldest one
-      final Document sort = new Document("$sort", new Document("_id", -1));
+      final Document sort = new Document("$sort", new Document(ID, -1));
       // limit...
       final Document limit = new Document("$limit", 100);
       // this projection adds attribute with desired name, and hides _id attribute
-      final Document project = new Document("$project", new Document(attributeName, "$_id").append("_id", 0));
+      final Document project = new Document("$project", new Document(attributeName, "$_id").append("ID", 0));
 
       AggregateIterable<Document> aggregate = database.getCollection(collectionName).aggregate(Arrays.asList(group, sort, limit, project));
       Set<String> attributeValues = new HashSet<>();

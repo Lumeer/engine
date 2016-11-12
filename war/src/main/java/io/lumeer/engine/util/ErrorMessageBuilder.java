@@ -37,6 +37,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_DOCUMENT_NOT_FOUND = "Document does not exists.";
    private static final String ERROR_CREATE_UNSUCCESFUL = "The document could not be created.";
    private static final String ERROR_DROP_UNSUCCESFUL = "The document could not be deleted.";
+   private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not succesfully updated.";
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
 
    public static String collectionNotFoundString(String collection) {
@@ -65,6 +66,10 @@ public class ErrorMessageBuilder {
 
    public static String createDocumentUnsuccesfulString() {
       return ERROR_CREATE_UNSUCCESFUL;
+   }
+
+   public static String updateDocumentUnsuccesfulString() {
+      return ERROR_UPDATE_UNSUCCESFUL;
    }
 
    public static String invalidMetadataKey(String key) {

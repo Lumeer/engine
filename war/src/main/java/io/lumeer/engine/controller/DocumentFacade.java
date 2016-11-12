@@ -28,6 +28,8 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -65,8 +67,8 @@ public class DocumentFacade implements Serializable {
       if (!collectionFacade.isDatabaseCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
-      document.put(documentMetadataFacade.DOCUMENT_UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      document.put(documentMetadataFacade.DOCUMENT_UPDATED_BY_USER_KEY, userName);
+      document.put(documentMetadataFacade.DOCUMENT_CREATE_DATE_KEY, Utils.getCurrentTimeString());
+      document.put(documentMetadataFacade.DOCUMENT_CREATE_BY_USER_KEY, userName);
       document.put(versionFacade.getVersionMetadataString(), 0);
       String documentId = dataStorage.createDocument(collectionName, document);
       if (documentId == null) {
@@ -107,7 +109,7 @@ public class DocumentFacade implements Serializable {
     * @param updatedDocument
     *       the DataDocument object representing a document with changes to update
     */
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException {
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException {
       if (!collectionFacade.isDatabaseCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -118,6 +120,9 @@ public class DocumentFacade implements Serializable {
       updatedDocument.put(documentMetadataFacade.DOCUMENT_UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       updatedDocument.put(documentMetadataFacade.DOCUMENT_UPDATED_BY_USER_KEY, userName);
       versionFacade.newDocumentVersion(collectionName, updatedDocument);
+      if (!verifyDocumentUpdate(updatedDocument, collectionName, documentId)) {
+         throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
+      }
    }
 
    /**
@@ -149,6 +154,65 @@ public class DocumentFacade implements Serializable {
       if (dataDocument != null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.dropDocumentUnsuccesfulString());
       }
+   }
+
+   /**
+    * Read all non-metadata document attributes
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the document to drop
+    * @return set containing document attributes
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    * @throws DocumentNotFoundException
+    *       if document is not found in database
+    */
+   public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
+      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      if (dataDocument == null) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      Set<String> documentAttributes = new HashSet<>();
+      // filter out metadata attributes
+      for (String key : dataDocument.keySet()) {
+         if (!key.startsWith(documentMetadataFacade.DOCUMENT_METADATA_PREFIX)) {
+            documentAttributes.add(key);
+         }
+      }
+      return documentAttributes;
+   }
+
+   /**
+    * Check if update was succesful. The method is called inside updateDocument,
+    * so we expect that collection and document exist in db
+    *
+    * @param updatedDocument
+    *       the document which was updated
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the document
+    * @return whether the update was succesful
+    */
+   public boolean verifyDocumentUpdate(DataDocument updatedDocument, String collectionName, String documentId) {
+      DataDocument documentFromDb = dataStorage.readDocument(collectionName, documentId);
+      if (documentFromDb == null) {
+         return false;
+      }
+      if (documentFromDb.size() != updatedDocument.size()) {
+         return false;
+      }
+      for (String key : updatedDocument.keySet()) {
+         if (!documentFromDb.containsKey(key) || updatedDocument.get(key).equals(documentFromDb.get(key))) {
+            return false;
+         }
+      }
+      return true;
    }
 
 }
