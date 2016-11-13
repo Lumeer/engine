@@ -32,6 +32,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -85,17 +86,31 @@ public class CollectionFacadeTest extends Arquillian {
 
    @Test
    public void testReadCollectionMetadata() throws Exception {
-      // TODO:
+      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      collectionFacade.addAttribute(DUMMY_COLLECTION1, "attribute1");
+
+      List<DataDocument> metadata = collectionFacade.readCollectionMetadata(DUMMY_COLLECTION1);
+
+      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+
+      Assert.assertEquals(metadata.size(), 3); // 3 documents: attribute, name, lock - count is to be added
    }
 
    @Test
    public void testReadCollectionAttributes() throws Exception {
-      // TODO:
-   }
+      String a1 = "attribute1";
+      String a2 = "attribute2";
 
-   @Test
-   public void testUpdateCollectionMetadata() throws Exception {
-      // TODO:
+      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      collectionFacade.addAttribute(DUMMY_COLLECTION1, a1);
+      collectionFacade.addAttribute(DUMMY_COLLECTION1, a2);
+
+      List<String> attributes = collectionFacade.readCollectionAttributes(DUMMY_COLLECTION1);
+
+      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+
+      Assert.assertTrue(attributes.contains(a1));
+      Assert.assertTrue(attributes.contains(a2));
    }
 
    @Test
@@ -111,10 +126,45 @@ public class CollectionFacadeTest extends Arquillian {
       Assert.assertTrue(isDropped);
    }
 
-   @Test
-   public void testGetAttributeValues() throws Exception {
-      // TODO:
-   }
+   // TODO: 
+   // NullPointerException
+   // at io.lumeer.mongodb.MongoDbStorage.getAttributeValues(MongoDbStorage.java:223)
+   // at io.lumeer.mongodb.MongoDbStorage$Proxy$_$$_WeldClientProxy.getAttributeValues(Unknown Source)
+   // at io.lumeer.engine.controller.CollectionFacade.getAttributeValues(CollectionFacade.java:213)
+   // at io.lumeer.engine.controller.CollectionFacade$Proxy$_$$_WeldClientProxy.getAttributeValues(Unknown Source)
+   // at io.lumeer.engine.controller.CollectionFacadeTest.testGetAttributeValues(CollectionFacadeTest.java:153)
+   // @Test
+   // public void testGetAttributeValues() throws Exception {
+   //    collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+
+   //    String a1 = "attribute";
+   //    String a2 = "dummyattribute";
+   //    String v1 = "hello";
+   //    String v2 = "world";
+   //    String v3 = "!";
+
+   //    collectionFacade.addAttribute(DUMMY_COLLECTION1, a1); // we have to add attributes to collection metadata - they aren't added by just adding the document (yet...)
+   //    collectionFacade.addAttribute(DUMMY_COLLECTION1, a2);
+
+   //    DataDocument doc1 = new DataDocument();
+   //    doc1.put(a1, v1);
+   //    DataDocument doc2 = new DataDocument();
+   //    doc2.put(a1, v2);
+   //    DataDocument doc3 = new DataDocument();
+   //    doc3.put(a2, v3);
+
+   //    dataStorage.createDocument(DUMMY_COLLECTION1, doc1);
+   //    dataStorage.createDocument(DUMMY_COLLECTION1, doc2);
+   //    dataStorage.createDocument(DUMMY_COLLECTION1, doc3);
+
+   //    Set<String> values = collectionFacade.getAttributeValues(DUMMY_COLLECTION1, a1);
+
+   //    collectionFacade.dropCollection(DUMMY_COLLECTION1);
+
+   //    Assert.assertTrue(values.contains(v1));
+   //    Assert.assertTrue(values.contains(v2));
+   //    Assert.assertFalse(values.contains(v3));
+   // }
 
    @Test
    public void testAddAndDropAttribute() throws Exception {
