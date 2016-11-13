@@ -31,9 +31,14 @@ public class Utils {
 
    private static final String DATE_FORMAT = "yyyy.MM.dd HH.mm.ss.SSS";
    private static final DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+   private static final String VERSION_STRING = "_metadata-version";
 
    private Utils() {
       // to prevent initialization
+   }
+
+   public static String getVersionStringName() {
+      return VERSION_STRING;
    }
 
    public static String getCurrentTimeString() {
