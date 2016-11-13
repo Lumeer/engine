@@ -158,6 +158,11 @@ public class VersionFacadeTest extends Arquillian {
    }
 
    @Test
+   public void testNotVersion() throws Exception {
+      Assert.assertEquals(versionFacade.getDocumentVersion(new DataDocument()),0);
+   }
+
+   @Test
    public void testChangedDocumentRevert() throws Exception {
       dataStorage.createCollection(collectionTest);
       DataDocument dataDocument = createTestDocument();
