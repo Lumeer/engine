@@ -173,6 +173,7 @@ public class CollectionFacade implements Serializable {
     */
    public void updateCollectionMetadata(final String collectionName, final DataDocument element, String elementId) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
+         // TODO: used method is actually deprecated
          dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), element, elementId);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -335,7 +336,6 @@ public class CollectionFacade implements Serializable {
     * @return true if given collection has specified attribute
     * @throws CollectionNotFoundException
     */
-
    private boolean isCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException {
       return readCollectionAttributes(collectionName).contains(attributeName);
    }

@@ -152,7 +152,7 @@ public class DocumentMetadataFacade implements Serializable {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
       }
       Map<String, Object> metadata = new HashMap<>();
-      metadata.remove(key, value);
+      metadata.put(key, value);
       updateDocumentMetadata(collectionName, documentId, metadata);
    }
 

@@ -30,11 +30,11 @@ public class ErrorMessageBuilder {
       // to prevent initialization
    }
 
-   private static final String ERROR_COLLECTION_NOT_FOUND = "The collection \"{0}\" does not exists.";
+   private static final String ERROR_COLLECTION_NOT_FOUND = "The collection \"{0}\" does not exist.";
    private static final String ERROR_COLLECTION_ALREADY_EXISTS = "The collection \"{0}\" already exists.";
-   private static final String ERROR_ATTRIBUTE_NOT_FOUND = "The attribute \"{0}\" does not exists in collection \"{1}\".";
+   private static final String ERROR_ATTRIBUTE_NOT_FOUND = "The attribute \"{0}\" does not exist in collection \"{1}\".";
    private static final String ERROR_ATTRIBUTE_ALREADY_EXISTS = "The attribute \"{0}\" already exists in collection \"{1}\".";
-   private static final String ERROR_DOCUMENT_NOT_FOUND = "Document does not exists.";
+   private static final String ERROR_DOCUMENT_NOT_FOUND = "Document does not exist.";
    private static final String ERROR_CREATE_UNSUCCESFUL = "The document could not be created.";
    private static final String ERROR_DROP_UNSUCCESFUL = "The document could not be deleted.";
    private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not succesfully updated.";
