@@ -136,8 +136,8 @@ public class CollectionFacadeTest extends Arquillian {
       collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
 
       fillDatabaseDummyEntries(DUMMY_COLLECTION1);
-
-      collectionFacade.renameAttribute(DUMMY_COLLECTION1, DUMMY_KEY1, DUMMY_NEW_KEY);
+      collectionFacade.addAttribute(DUMMY_COLLECTION1, "new"); // we need to add attribute to whole collection, because attributes from added documents (without addAttribute) are not added to metadata (yet :-))
+      collectionFacade.renameAttribute(DUMMY_COLLECTION1, "new", DUMMY_NEW_KEY);
       Assert.assertTrue(isEveryDocumentFilledByNewAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
 
       collectionFacade.dropCollection(DUMMY_COLLECTION1);

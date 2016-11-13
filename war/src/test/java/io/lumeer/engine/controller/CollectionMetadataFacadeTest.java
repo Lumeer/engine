@@ -162,8 +162,13 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testIsUserCollection() {
+   public void testIsUserCollectionYes() {
       Assert.assertTrue(collectionMetadataFacade.isUserCollection(TEST_COLLECTION_INTERNAL_NAME));
+   }
+
+   @Test
+   public void testIsUserCollectionNo() {
+      Assert.assertFalse(collectionMetadataFacade.isUserCollection(TEST_COLLECTION_METADATA_COLLECTION_NAME));
    }
 
 }

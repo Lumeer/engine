@@ -193,7 +193,7 @@ public class CollectionMetadataFacade implements Serializable {
          metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, newName);
          DataDocument metadataDocument = new DataDocument(metadata);
          String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
+         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId, -1);
          return true;
       }
 
@@ -227,7 +227,7 @@ public class CollectionMetadataFacade implements Serializable {
       metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, newType);
       DataDocument metadataDocument = new DataDocument(metadata);
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
+      dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId, -1);
 
       return true;
    }
@@ -325,7 +325,7 @@ public class CollectionMetadataFacade implements Serializable {
       metadata.put(COLLECTION_LOCK_UPDATED_KEY, newTime);
 
       DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
    }
 
    /**
@@ -344,7 +344,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public boolean isUserCollection(String collectionName) {
       String prefix = collectionName.substring(0, COLLECTION_NAME_PREFIX.length());
-      return COLLECTION_NAME_PREFIX.equals(prefix);
+      return COLLECTION_NAME_PREFIX.equals(prefix) && !collectionName.endsWith(".shadow"); // VersionFacade adds suffix
    }
 
    // returns MongoDb query for getting real collection name

@@ -230,17 +230,17 @@ public class CollectionFacade implements Serializable {
     */
    public void addAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
       if (isDatabaseCollection(collectionName)) {
-         List<DataDocument> documents = getAllDocuments(collectionName);
+         if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE)) { // true if attribute doesn't exist in the collection
+            List<DataDocument> documents = getAllDocuments(collectionName);
 
-         for (DataDocument document : documents) {
-            String id = document.getString(ID_COLUMN_KEY);
+            for (DataDocument document : documents) {
+               String id = document.get(ID_COLUMN_KEY).toString();
 
-            if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE)) {
                document.put(attributeName, DEFAULT_COLUMN_VALUE); // blank attribute value
-               dataStorage.updateDocument(collectionName, document, id);
-            } else {
-               throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(attributeName, collectionName));
+               dataStorage.updateDocument(collectionName, document, id, -1);
             }
+         } else {
+            throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(attributeName, collectionName));
          }
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -259,16 +259,16 @@ public class CollectionFacade implements Serializable {
     */
    public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         List<DataDocument> documents = getAllDocuments(collectionName);
+         if (collectionMetadataFacade.dropCollectionAttribute(collectionName, attributeName)) { // true if attribute exists in the collection metadata
+            List<DataDocument> documents = getAllDocuments(collectionName);
 
-         for (DataDocument document : documents) {
-            String id = document.getString(ID_COLUMN_KEY);
+            for (DataDocument document : documents) {
+               String id = document.get(ID_COLUMN_KEY).toString();
 
-            if (collectionMetadataFacade.dropCollectionAttribute(collectionName, attributeName)) {
                dataStorage.removeAttribute(collectionName, id, attributeName);
-            } else {
-               throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
             }
+         } else {
+            throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
          }
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -289,7 +289,7 @@ public class CollectionFacade implements Serializable {
     */
    public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         if (collectionMetadataFacade.renameCollectionAttribute(collectionName, origName, newName)) {
+         if (collectionMetadataFacade.renameCollectionAttribute(collectionName, origName, newName)) { // true if attribute exists in the collection metadata
             dataStorage.renameAttribute(collectionName, origName, newName);
          } else {
             throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(origName, collectionName));
