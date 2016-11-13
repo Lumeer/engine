@@ -20,7 +20,6 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.controller.CollectionFacade;
-import io.lumeer.engine.exception.CollectionAlreadyExistsException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -52,7 +51,7 @@ public class CollectionService implements Serializable {
 
    @PUT
    @Path("/")
-   public void createCollection(final @QueryParam("name") String name) throws CollectionAlreadyExistsException {
+   public void createCollection(final @QueryParam("name") String name) {
       collectionFacade.createCollection(name);
    }
 
