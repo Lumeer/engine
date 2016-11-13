@@ -204,11 +204,8 @@ public class DocumentFacade implements Serializable {
       if (documentFromDb == null) {
          return false;
       }
-      if (documentFromDb.size() != updatedDocument.size()) {
-         return false;
-      }
       for (String key : updatedDocument.keySet()) {
-         if (!documentFromDb.containsKey(key) || updatedDocument.get(key).equals(documentFromDb.get(key))) {
+         if (!documentFromDb.containsKey(key) || !updatedDocument.get(key).equals(documentFromDb.get(key))) {
             return false;
          }
       }
