@@ -214,7 +214,7 @@ public class MongoDbStorage implements DataStorage {
       // limit...
       final Document limit = new Document("$limit", 100);
       // this projection adds attribute with desired name, and hides _id attribute
-      final Document project = new Document("$project", new Document(attributeName, "$_id").append("ID", 0));
+      final Document project = new Document("$project", new Document(attributeName, "$_id").append("_id", 0));
 
       AggregateIterable<Document> aggregate = database.getCollection(collectionName).aggregate(Arrays.asList(group, sort, limit, project));
       Set<String> attributeValues = new HashSet<>();
