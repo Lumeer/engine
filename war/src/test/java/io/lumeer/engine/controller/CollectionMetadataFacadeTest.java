@@ -151,21 +151,21 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       Assert.assertEquals(collectionMetadataFacade.collectionMetadataCollectionName(TEST_COLLECTION_INTERNAL_NAME), TEST_COLLECTION_METADATA_COLLECTION_NAME);
    }
 
-   //   @Test
-   //   public void testCreateInitialMetadata() throws CollectionAlreadyExistsException, CollectionNotFoundException {
-   //      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(TEST_COLLECTION_INTERNAL_NAME));
-   //      collectionMetadataFacade.createInitialMetadata(TEST_COLLECTION_REAL_NAME);
-   //
-   //      String name = collectionMetadataFacade.getOriginalCollectionName(TEST_COLLECTION_INTERNAL_NAME);
-   //      String lock = collectionMetadataFacade.getCollectionLockTime(TEST_COLLECTION_INTERNAL_NAME);
-   //      long count = collectionMetadataFacade.getCollectionCount(TEST_COLLECTION_INTERNAL_NAME); // TODO
-   //
-   //      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(TEST_COLLECTION_INTERNAL_NAME));
-   //
-   //      Assert.assertEquals(name, TEST_COLLECTION_REAL_NAME);
-   //      Assert.assertNotEquals(lock, "");
-   //      Assert.assertEquals(count, 0);
-   //   }
+   @Test
+   public void testCreateInitialMetadata() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(TEST_COLLECTION_INTERNAL_NAME));
+      collectionMetadataFacade.createInitialMetadata(TEST_COLLECTION_REAL_NAME);
+
+      String name = collectionMetadataFacade.getOriginalCollectionName(TEST_COLLECTION_INTERNAL_NAME);
+      String lock = collectionMetadataFacade.getCollectionLockTime(TEST_COLLECTION_INTERNAL_NAME);
+      long count = collectionMetadataFacade.getCollectionCount(TEST_COLLECTION_INTERNAL_NAME); // TODO
+
+      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(TEST_COLLECTION_INTERNAL_NAME));
+
+      Assert.assertEquals(name, TEST_COLLECTION_REAL_NAME);
+      Assert.assertNotEquals(lock, "");
+      Assert.assertEquals(count, 0);
+   }
 
    @Test
    public void testSetGetCollectionLockTime() throws CollectionAlreadyExistsException, CollectionNotFoundException {
