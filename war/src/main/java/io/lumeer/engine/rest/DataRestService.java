@@ -21,7 +21,7 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.event.UpdateElement;
+import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.task.SearchTask;
 import io.lumeer.engine.push.PushService;
 import io.lumeer.engine.util.JmsService;
@@ -51,7 +51,7 @@ public class DataRestService {
    private DataStorage storage;
 
    @Inject
-   private Event<UpdateElement> element;
+   private Event<UpdateDocument> element;
 
    @Inject
    private JmsService jmsService;
@@ -70,7 +70,7 @@ public class DataRestService {
    @Path("/element/{batch:[0-9][0-9]*}")
    @Produces(MediaType.APPLICATION_JSON)
    public List<String> getElements(@PathParam("batch") final String batchId) {
-      element.fire(new UpdateElement(new DataDocument())); // this shows how to fire a CDI event
+      element.fire(new UpdateDocument(new DataDocument())); // this shows how to fire a CDI event
       jmsService.enqueueTask(new SearchTask("search for green keys")); // this is how we send a jms message
 
       return null;

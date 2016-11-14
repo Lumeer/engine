@@ -22,17 +22,19 @@ package io.lumeer.engine.api.event;
 import io.lumeer.engine.api.data.DataDocument;
 
 /**
+ * CDI event that carries information about manipulation with a {@link DataDocument}.
+ *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public abstract class ElementEvent {
+public abstract class DocumentEvent {
 
-   private DataDocument element;
+   private DataDocument document;
 
-   public ElementEvent(final DataDocument element) {
-      this.element = element;
+   public DocumentEvent(final DataDocument document) {
+      this.document = document;
    }
 
-   public DataDocument getElement() {
-      return element;
+   public DataDocument getDocument() {
+      return document;
    }
 }

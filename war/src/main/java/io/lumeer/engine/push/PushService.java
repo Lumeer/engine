@@ -19,7 +19,7 @@
  */
 package io.lumeer.engine.push;
 
-import io.lumeer.engine.api.event.ElementEvent;
+import io.lumeer.engine.api.event.DocumentEvent;
 
 import io.netty.util.internal.ConcurrentSet;
 
@@ -132,8 +132,8 @@ public class PushService {
     * @param event
     *       The document event with information about change.
     */
-   public void onDocumentEvent(@Observes(notifyObserver = Reception.ALWAYS) final ElementEvent event) {
-      final String objectId = event.getElement().get("_id").toString();
+   public void onDocumentEvent(@Observes(notifyObserver = Reception.ALWAYS) final DocumentEvent event) {
+      final String objectId = event.getDocument().get("_id").toString();
 
       if (objectId != null && !objectId.isEmpty() && observedObjects.containsKey(objectId)) {
          observedObjects.get(objectId).forEach(session -> {
