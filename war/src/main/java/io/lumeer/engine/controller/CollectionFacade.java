@@ -240,7 +240,7 @@ public class CollectionFacade implements Serializable {
     */
    public void addAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
       if (isDatabaseCollection(collectionName)) {
-         if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE)) { // true if attribute doesn't exist in the collection
+         if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE, -1)) { // true if attribute doesn't exist in the collection
             List<DataDocument> documents = getAllDocuments(collectionName);
 
             for (DataDocument document : documents) {
