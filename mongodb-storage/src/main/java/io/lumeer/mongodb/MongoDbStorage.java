@@ -207,6 +207,8 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
+      // skip non existing values
+      final Document match = new Document("$match", new Document(attributeName, new Document("$exists", true)));
       // define grouping by out attributeName
       final Document group = new Document("$group", new Document(ID, "$" + attributeName));
       // sorting by id, descending, from the newest entry to oldest one
@@ -216,7 +218,7 @@ public class MongoDbStorage implements DataStorage {
       // this projection adds attribute with desired name, and hides _id attribute
       final Document project = new Document("$project", new Document(attributeName, "$_id").append("_id", 0));
 
-      AggregateIterable<Document> aggregate = database.getCollection(collectionName).aggregate(Arrays.asList(group, sort, limit, project));
+      AggregateIterable<Document> aggregate = database.getCollection(collectionName).aggregate(Arrays.asList(match, group, sort, limit, project));
       Set<String> attributeValues = new HashSet<>();
       for (Document doc : aggregate) {
          // there is only one column with name "attributeName"

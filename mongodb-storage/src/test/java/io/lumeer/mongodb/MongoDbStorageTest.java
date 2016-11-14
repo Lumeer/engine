@@ -223,9 +223,9 @@ public class MongoDbStorageTest {
 
    @Test
    public void testGetAttributeValues() throws Exception {
-      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
       mongoDbStorage.createCollection(DUMMY_COLLECTION1);
 
+      // simple case
       int numDummyKey1 = 150;
       int numDummyKey2 = 10;
       for (int i = 0; i < numDummyKey1; i++) {
@@ -240,6 +240,29 @@ public class MongoDbStorageTest {
 
       Set<String> attributeValues2 = mongoDbStorage.getAttributeValues(DUMMY_COLLECTION1, DUMMY_KEY2);
       Assert.assertEquals(attributeValues2.size(), Math.min(numDummyKey2, 100));
+
+      // case when some attribute value is null
+
+      String k1 = "k1";
+      String k2 = "k2";
+      String v1 = "v1";
+      String v2 = "v2";
+      String v3 = "v3";
+
+      DataDocument d1 = new DataDocument();
+      d1.put(k1, v1);
+      d1.put(k2, v2);
+
+      DataDocument d2 = new DataDocument();
+      d2.put(k1, v3);
+
+      mongoDbStorage.createDocument(DUMMY_COLLECTION1, d1);
+      mongoDbStorage.createDocument(DUMMY_COLLECTION1, d2);
+
+      Set<String> a1 = mongoDbStorage.getAttributeValues(DUMMY_COLLECTION1, k1);
+      Assert.assertTrue(a1.contains(v1));
+      Assert.assertTrue(a1.contains(v3));
+      Assert.assertFalse(a1.contains(v2));
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }

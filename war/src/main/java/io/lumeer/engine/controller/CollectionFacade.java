@@ -95,6 +95,7 @@ public class CollectionFacade implements Serializable {
     * @param collectionOriginalName
     *       name of the collection to create (name given by user)
     * @throws CollectionAlreadyExistsException
+    *       if collection already exists in db
     */
    public void createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException {
       String internalCollectionName = collectionMetadataFacade.collectionNameToInternalForm(collectionOriginalName);
@@ -116,6 +117,7 @@ public class CollectionFacade implements Serializable {
     * @param collectionName
     *       internal name of the collection to update
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     */
    public void dropCollection(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
@@ -135,6 +137,7 @@ public class CollectionFacade implements Serializable {
     *       internal collection name
     * @return list of all documents from metadata collection
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     */
    public List<DataDocument> readCollectionMetadata(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
@@ -151,6 +154,7 @@ public class CollectionFacade implements Serializable {
     *       internal collection name
     * @return list of names of all attributes in a collection
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     */
    public List<String> readCollectionAttributes(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
@@ -170,6 +174,7 @@ public class CollectionFacade implements Serializable {
     * @param elementId
     *       id of document to be updated
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     */
    @Deprecated // CollectionMetadataFacade provides specific methods for metadata update
    public void updateCollectionMetadata(final String collectionName, final DataDocument element, String elementId) throws CollectionNotFoundException {
@@ -186,6 +191,7 @@ public class CollectionFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     */
    public void dropCollectionMetadata(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
@@ -204,7 +210,9 @@ public class CollectionFacade implements Serializable {
     *       the name of the attribute
     * @return the distinct set of values of the given attribute
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     * @throws AttributeNotFoundException
+    *       if attribute was not found in collection
     */
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (isDatabaseCollection(collectionName)) {
@@ -226,7 +234,9 @@ public class CollectionFacade implements Serializable {
     * @param attributeName
     *       name of the attribute to add
     * @throws AttributeAlreadyExistsException
+    *       if attribute already exists in collection
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     */
    public void addAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
       if (isDatabaseCollection(collectionName)) {
@@ -254,8 +264,10 @@ public class CollectionFacade implements Serializable {
     *       the internal name of the collection where the given attribute should be removed
     * @param attributeName
     *       name of the attribute to remove
-    * @throws AttributeNotFoundException
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
+    * @throws AttributeNotFoundException
+    *       if attribute was not found in collection
     */
    public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (isDatabaseCollection(collectionName)) {
@@ -284,8 +296,10 @@ public class CollectionFacade implements Serializable {
     *       old name of an attribute
     * @param newName
     *       new name of an attribute
-    * @throws AttributeNotFoundException
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
+    * @throws AttributeNotFoundException
+    *       if attribute was not found in collection
     */
    public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (isDatabaseCollection(collectionName)) {
@@ -335,6 +349,7 @@ public class CollectionFacade implements Serializable {
     *       name of the attribute
     * @return true if given collection has specified attribute
     * @throws CollectionNotFoundException
+    *       if collection was not found in database
     */
    private boolean isCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException {
       return readCollectionAttributes(collectionName).contains(attributeName);

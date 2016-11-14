@@ -62,6 +62,10 @@ public class DocumentFacade implements Serializable {
     * @param document
     *       the DataDocument object representing a document to be created
     * @return the id of the newly created document
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    * @throws UnsuccessfulOperationException
+    *       if create was not succesful
     */
    public String createDocument(final String collectionName, final DataDocument document) throws CollectionNotFoundException, UnsuccessfulOperationException {
       if (!collectionFacade.isDatabaseCollection(collectionName)) {
@@ -108,6 +112,12 @@ public class DocumentFacade implements Serializable {
     *       the name of the collection where the existing document is located
     * @param updatedDocument
     *       the DataDocument object representing a document with changes to update
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    * @throws DocumentNotFoundException
+    *       if document is not found in database
+    * @throws UnsuccessfulOperationException
+    *       if document was not updated succesfully
     */
    public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException {
       if (!collectionFacade.isDatabaseCollection(collectionName)) {

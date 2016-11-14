@@ -112,6 +112,7 @@ public class ViewMetadataFacade implements Serializable {
     * @param originalViewName
     *       name given by user
     * @return
+    *       internal name of view
     */
    public String viewNameToInternalForm(String originalViewName) {
       String name = originalViewName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();

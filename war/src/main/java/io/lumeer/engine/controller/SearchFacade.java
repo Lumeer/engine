@@ -21,6 +21,8 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.exception.CollectionNotFoundException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.List;
@@ -37,6 +39,9 @@ public class SearchFacade implements Serializable {
    @Inject
    private DataStorage dataStorage;
 
+   @Inject
+   private CollectionFacade collectionFacade;
+
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
     *
@@ -52,7 +57,10 @@ public class SearchFacade implements Serializable {
     *       the maximum number of documents to return
     * @return the list of the found documents
     */
-   public List<DataDocument> search(String collectionName, String filter, String sort, int skip, int limit) {
+   public List<DataDocument> search(String collectionName, String filter, String sort, int skip, int limit) throws CollectionNotFoundException {
+      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
       return dataStorage.search(collectionName, filter, sort, skip, limit);
    }
 
