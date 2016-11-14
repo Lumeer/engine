@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.exception.VersionUpdateConflictException;
 
 import com.mongodb.util.JSON;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -159,7 +160,7 @@ public class VersionFacadeTest extends Arquillian {
 
    @Test
    public void testNotVersion() throws Exception {
-      Assert.assertEquals(versionFacade.getDocumentVersion(new DataDocument()),0);
+      Assert.assertEquals(versionFacade.getDocumentVersion(new DataDocument()), 0);
    }
 
    @Test
@@ -180,14 +181,15 @@ public class VersionFacadeTest extends Arquillian {
       dataStorage.dropCollection(collectionShadow);
    }
 
-   @Test
+   @Test(expectedExceptions = Exception.class)
    public void testExceptionUpdateDouble() throws Exception {
+      dataStorage.dropCollection(collectionTest);
       dataStorage.createCollection(collectionTest);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(collectionTest, dataDocument);
       dataDocument = dataStorage.readDocument(collectionTest, documentId);
-      dataStorage.createOldDocument(collectionShadow,dataDocument,dataDocument.getString("_id"),10);
-      dataStorage.createOldDocument(collectionShadow,dataDocument,dataDocument.getString("_id"),10);
+      dataStorage.createOldDocument(collectionShadow, dataDocument, dataDocument.getString("_id"), 10);
+      dataStorage.createOldDocument(collectionShadow, dataDocument, dataDocument.getString("_id"), 10);
    }
 
    private DataDocument createTestDocument() {

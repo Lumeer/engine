@@ -86,7 +86,7 @@ public interface DataStorage {
     * @param version
     *       the version of document
     */
-   void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version);
+   void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws Exception;
 
    /**
     * Reads the specified document in given collection by its id.

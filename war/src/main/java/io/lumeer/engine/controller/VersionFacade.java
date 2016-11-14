@@ -28,6 +28,8 @@ import io.lumeer.engine.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
+import com.mongodb.MongoWriteException;
+
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,12 +147,10 @@ public class VersionFacade implements Serializable {
       }
       createMetadata(document);
       createShadow(collectionName);
-      try
-      {
+      try {
          dataStorage.createOldDocument(collectionName + SHADOW, document, documentId, getDocumentVersion(document));
-      }
-      catch (Exception ex) {
-         throw new VersionUpdateConflictException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
+      } catch (Exception e) {
+         throw new VersionUpdateConflictException(e.getMessage(), e.getCause());
       }
       return getDocumentVersion(document);
    }
@@ -178,10 +178,11 @@ public class VersionFacade implements Serializable {
       newDocument.replace(VERSION_STRING, newVersion);
       Object idN = newDocument.get(DOCUMENT_ID_STRING);
       dataStorage.updateDocument(collectionName, newDocument, idN.toString(), -1);
-      newDocument.put(DOCUMENT_ID_STRING,idN);
-      if(!newDocument.equals(dataStorage.readDocument(collectionName,newDocument.get(DOCUMENT_ID_STRING).toString()))){
+      newDocument.put(DOCUMENT_ID_STRING, idN);
+      if (!newDocument.equals(dataStorage.readDocument(collectionName, newDocument.get(DOCUMENT_ID_STRING).toString()))) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
-      };
+      }
+      ;
       document.put(DOCUMENT_ID_STRING, id);
    }
 
@@ -195,11 +196,9 @@ public class VersionFacade implements Serializable {
     *       document containingg ID
     * @param version
     *       version to be reverted
-    * @return
-    *       document from shadow with changed id
+    * @return document from shadow with changed id
     * @throws DocumentNotFoundException
     *       if document cannot be found
-    *
     */
    public DataDocument getOldDocumentVersion(String collectionName, DataDocument document, int version) throws DocumentNotFoundException {
       Object id = document.get(DOCUMENT_ID_STRING);
@@ -220,8 +219,7 @@ public class VersionFacade implements Serializable {
     *       id of document
     * @param version
     *       version of document
-    * @return
-    *       document from shadow collection
+    * @return document from shadow collection
     * @throws DocumentNotFoundException
     *       if document cannot be found
     */
@@ -247,7 +245,6 @@ public class VersionFacade implements Serializable {
     * @param documentId
     *       id of document
     * @return lis of documents from shadow with same id
-    *
     */
    public List<DataDocument> getDocumentVersions(String collectionName, String documentId) {
       List<DataDocument> dataDocuments = new ArrayList<DataDocument>();
