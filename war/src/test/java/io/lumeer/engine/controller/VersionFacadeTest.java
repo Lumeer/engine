@@ -180,6 +180,16 @@ public class VersionFacadeTest extends Arquillian {
       dataStorage.dropCollection(collectionShadow);
    }
 
+   @Test
+   public void testExceptionUpdateDouble() throws Exception {
+      dataStorage.createCollection(collectionTest);
+      DataDocument dataDocument = createTestDocument();
+      String documentId = dataStorage.createDocument(collectionTest, dataDocument);
+      dataDocument = dataStorage.readDocument(collectionTest, documentId);
+      dataStorage.createOldDocument(collectionShadow,dataDocument,dataDocument.getString("_id"),10);
+      dataStorage.createOldDocument(collectionShadow,dataDocument,dataDocument.getString("_id"),10);
+   }
+
    private DataDocument createTestDocument() {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put("dog", "cat");

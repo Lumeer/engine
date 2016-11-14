@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.exception.DocumentNotFoundException;
 import io.lumeer.engine.exception.UnsuccessfulOperationException;
+import io.lumeer.engine.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import javax.inject.Inject;
@@ -99,7 +100,7 @@ public class VersionFacade implements Serializable {
     *       if documment cannot be updated, bud was
     *       backuped in shadow collection
     */
-   public int newDocumentVersion(String collectionName, DataDocument document) throws DocumentNotFoundException, UnsuccessfulOperationException {
+   public int newDocumentVersion(String collectionName, DataDocument document) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
       Object id = document.get(DOCUMENT_ID_STRING);
       int oldVersion = backUp(collectionName, document.get(DOCUMENT_ID_STRING).toString());
       createMetadata(document);
@@ -137,14 +138,13 @@ public class VersionFacade implements Serializable {
       }
    }
 
-   private int backUp(String collectionName, String documentId) throws DocumentNotFoundException {
+   private int backUp(String collectionName, String documentId) throws DocumentNotFoundException, VersionUpdateConflictException {
       DataDocument document = dataStorage.readDocument(collectionName, documentId);
       if (document == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       createMetadata(document);
       createShadow(collectionName);
-      dataStorage.createOldDocument(collectionName + SHADOW, document, documentId, getDocumentVersion(document));
       return getDocumentVersion(document);
    }
 
@@ -164,7 +164,7 @@ public class VersionFacade implements Serializable {
     * @throws UnsuccessfulOperationException
     *       if document cannot be updated
     */
-   public void revertDocumentVersion(String collectionName, DataDocument document, int revertTo) throws DocumentNotFoundException, UnsuccessfulOperationException {
+   public void revertDocumentVersion(String collectionName, DataDocument document, int revertTo) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
       Object id = document.get(DOCUMENT_ID_STRING);
       DataDocument newDocument = getOldDocumentVersion(collectionName, document, revertTo);
       int newVersion = newDocumentVersion(collectionName, document);

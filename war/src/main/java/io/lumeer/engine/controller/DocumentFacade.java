@@ -24,6 +24,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.exception.CollectionNotFoundException;
 import io.lumeer.engine.exception.DocumentNotFoundException;
 import io.lumeer.engine.exception.UnsuccessfulOperationException;
+import io.lumeer.engine.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
@@ -119,7 +120,7 @@ public class DocumentFacade implements Serializable {
     * @throws UnsuccessfulOperationException
     *       if document was not updated succesfully
     */
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException {
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
       if (!collectionFacade.isDatabaseCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -149,7 +150,7 @@ public class DocumentFacade implements Serializable {
     * @throws UnsuccessfulOperationException
     *       if document stay in collection after drop
     */
-   public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException {
+   public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
       if (!collectionFacade.isDatabaseCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
