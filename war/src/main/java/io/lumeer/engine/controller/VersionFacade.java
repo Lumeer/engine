@@ -145,6 +145,13 @@ public class VersionFacade implements Serializable {
       }
       createMetadata(document);
       createShadow(collectionName);
+      try
+      {
+         dataStorage.createOldDocument(collectionName + SHADOW, document, documentId, getDocumentVersion(document));
+      }
+      catch (Exception ex) {
+         throw new VersionUpdateConflictException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
+      }
       return getDocumentVersion(document);
    }
 
