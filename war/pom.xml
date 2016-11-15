@@ -50,6 +50,8 @@
       <version.puppycrawl>7.1</version.puppycrawl>
 
       <java.level>1.8</java.level>
+
+      <web.xml.file>src/main/webapp/WEB-INF/web.xml</web.xml.file>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -307,6 +309,7 @@
             <version>${maven.war.plugin.version}</version>
             <configuration>
                <failOnMissingWebXml>false</failOnMissingWebXml>
+               <webXml>${web.xml.file}</webXml>
             </configuration>
          </plugin>
          <plugin>
@@ -412,7 +415,12 @@
             </plugins>
          </build>
       </profile>
-
+      <profile>
+         <id>production</id>
+         <properties>
+            <web.xml.file>src/main/webapp/WEB-INF/web-prod.xml</web.xml.file>
+         </properties>
+      </profile>
       <profile>
          <id>sign</id>
          <build>
