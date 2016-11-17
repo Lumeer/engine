@@ -49,8 +49,8 @@ import javax.enterprise.inject.Model;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
- *         <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
+ * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @Model
 public class MongoDbStorage implements DataStorage {
