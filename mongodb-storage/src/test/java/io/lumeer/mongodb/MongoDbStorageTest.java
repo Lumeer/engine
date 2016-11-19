@@ -222,6 +222,31 @@ public class MongoDbStorageTest {
    }
 
    @Test
+   public void testIncrementAttributeValueBy() throws Exception {
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
+
+      String incAttribute = "incAttribute";
+
+      DataDocument insertedDocument = createDummyDocument();
+      String id = mongoDbStorage.createDocument(DUMMY_COLLECTION1, insertedDocument);
+
+      mongoDbStorage.incerementAttributeValueBy(DUMMY_COLLECTION1, id, incAttribute, 1);
+
+      DataDocument readDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, id);
+
+      Assert.assertTrue(readDocument.containsKey(incAttribute));
+      Assert.assertEquals(readDocument.getInteger(incAttribute).intValue(), 1);
+
+      mongoDbStorage.incerementAttributeValueBy(DUMMY_COLLECTION1, id, incAttribute, 10);
+
+      readDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, id);
+      Assert.assertTrue(readDocument.containsKey(incAttribute));
+      Assert.assertEquals(readDocument.getInteger(incAttribute).intValue(), 11);
+
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+   }
+
+   @Test
    public void testGetAttributeValues() throws Exception {
       mongoDbStorage.createCollection(DUMMY_COLLECTION1);
 

@@ -166,17 +166,6 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId) {
-      if (updatedDocument.containsKey(ID)) {
-         updatedDocument.remove(ID);
-      }
-      String versionKey = "_metadata-version";
-      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId)).append(versionKey, updatedDocument.getInteger(versionKey) - 1);
-      BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
-      database.getCollection(collectionName).updateOne(filter, updateBson);
-   }
-
-   @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId, final int targetVersion) {
       if (updatedDocument.containsKey(ID)) {
          updatedDocument.remove(ID);
@@ -262,6 +251,13 @@ public class MongoDbStorage implements DataStorage {
                .forEach(d -> result.add(new DataDocument(d)));
 
       return result;
+   }
+
+   @Override
+   public void incerementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy) {
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
+      BasicDBObject updateBson = new BasicDBObject("$inc", new BasicDBObject(new Document(attributeName, incBy)));
+      database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
 }

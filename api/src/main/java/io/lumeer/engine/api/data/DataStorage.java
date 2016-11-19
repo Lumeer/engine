@@ -121,22 +121,6 @@ public interface DataStorage {
     *       the DataDocument object representing a document with changes to update
     * @param documentId
     *       the id of the existing document in given collection
-    *          /**
-    *
-    * @deprecated Use updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId, int targetVersion) method instead!
-    */
-   @Deprecated
-   void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId);
-
-   /**
-    * Modifies an existing document in given collection by its id. If updated document contains non-existing columns, they will be added into database.
-    *
-    * @param collectionName
-    *       the name of the collection where the existing document is located
-    * @param updatedDocument
-    *       the DataDocument object representing a document with changes to update
-    * @param documentId
-    *       the id of the existing document in given collection
     * @param targetVersion
     *       The version of document to update. Use -1 for disable filter for version attribute.
     */
@@ -225,5 +209,19 @@ public interface DataStorage {
     * @return the list of the found documents
     */
    List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit);
+
+   /**
+    * Increment attribute value of document by specified amount. If the field does not exist, it creates the field and sets the field to the specified value.
+    *
+    * @param collectionName
+    *       the name of the collection where the given document is located
+    * @param documentId
+    *       the id of specified document
+    * @param attributeName
+    *       the name of attribute which value is increment
+    * @param incBy
+    *       the value by which attribute is increment
+    */
+   void incerementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy);
 
 }
