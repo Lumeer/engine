@@ -46,6 +46,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Model;
+import javax.xml.crypto.Data;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -233,7 +234,10 @@ public class MongoDbStorage implements DataStorage {
 
       Document cursor = (Document) database.runCommand(BsonDocument.parse(query)).get(CURSOR_KEY);
 
-      ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> result.add(new DataDocument(d)));
+      ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
+         d.replace(ID, d.getObjectId(ID).toString());
+         result.add(new DataDocument(d));
+      });
 
       return result;
    }
@@ -248,7 +252,10 @@ public class MongoDbStorage implements DataStorage {
                .skip(skip)
                .limit(limit)
                .into(new ArrayList<>())
-               .forEach(d -> result.add(new DataDocument(d)));
+               .forEach(d -> {
+                  d.replace(ID, d.getObjectId(ID).toString());
+                  result.add(new DataDocument(d));
+               });
 
       return result;
    }

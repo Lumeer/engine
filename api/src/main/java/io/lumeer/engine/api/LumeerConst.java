@@ -32,4 +32,21 @@ public final class LumeerConst {
       // we do not want any instances to be created
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));
    }
+
+   public class LINKING {
+      public static final String PREFIX = "_linking";
+
+      public class MAIN_TABLE {
+         public static final String NAME = "_system_linking";
+         public static final String ATTR_COL1 = "collection1";
+         public static final String ATTR_COL2 = "collection2";
+         public static final String ATTR_COL_NAME = "collection_name";
+         public static final String ATTR_COUNT = "count";
+      }
+
+      public class LINKING_TABLE {
+         public static final String ATTR_DOC1 = "id_doc1";
+         public static final String ATTR_DOC2 = "id_doc2";
+      }
+   }
 }
