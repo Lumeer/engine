@@ -30,6 +30,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import org.bson.Document;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -37,50 +38,52 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 /**
+ * Manipulates user configuration properties.
+ *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- *         <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
+ * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RequestScoped
 public class ConfigurationFacade implements Serializable {
 
    private static final Map<String, String> DEFAULT_VALUES = new HashMap<>();
 
-   private final String USER_EMAIL_KEY = "userEmail";
-   private final String USER_CONFIG = "config.user";
-   private final String ID_KEY = "_id";
+   private static final String DEFAULT_PROPERTY_FILE = "defaults-dev.properties";
+   private static final String USER_EMAIL_KEY = "userEmail";
+   private static final String USER_CONFIG = "config.user";
+   private static final String ID_KEY = "_id";
 
-   private final int TARGET_VERSION_DISABLED = -1;
+   private static final int TARGET_VERSION_DISABLED = -1;
 
    @Inject
    @SystemDataStorage
    private DataStorage systemDataStorage;
 
    @Inject
+   private Logger log;
+
+   @Inject
    private UserFacade userFacade;
 
    static {
       String envDefaults = System.getenv("lumeer.defaults");
-
       if (envDefaults == null) {
-         Properties properties = new Properties();
-         try {
-            InputStream input = new FileInputStream("defaults-dev.properties");
-            properties.load(input);
+         envDefaults = DEFAULT_PROPERTY_FILE;
+      }
 
-            for (String key : properties.stringPropertyNames()) {
-               String value = properties.getProperty(key);
-               DEFAULT_VALUES.put(key, value);
-            }
-         } catch (Exception e) {
-            e.printStackTrace();
-            // TODO: exception?
-         }
-      } else {
-         // TODO: read and parase default values from lumeer.defaults and put them into DEFAULT_VALUES
+      final Properties properties = new Properties();
+      try {
+         final InputStream input = ConfigurationFacade.class.getResourceAsStream("/" + DEFAULT_PROPERTY_FILE);
+         properties.load(input);
+         properties.forEach((key, value) -> DEFAULT_VALUES.put(key.toString(), value.toString()));
+      } catch (IOException e) {
+         log.log(Level.SEVERE, "Unable to load default property values: ", e);
       }
    }
 
