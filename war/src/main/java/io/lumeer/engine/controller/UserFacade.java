@@ -53,7 +53,7 @@ public class UserFacade implements Serializable {
     * @return The email of currently logged in user.
     */
    public String getUserEmail() {
-      return "pepa@zdepa.cz";
+      return "pepa0@zdepa.cz";
    }
 
    /**
