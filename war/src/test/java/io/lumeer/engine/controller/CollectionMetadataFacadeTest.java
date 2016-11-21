@@ -71,66 +71,79 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    @Test
    public void testGetCollectionAttributesInfo() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-      String name = "column 1";
-      String type = "int";
-      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type, -1);
+
+      String name1 = "attribute 1";
+      String name2 = "attribute 2";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name1);
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name2);
 
       Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
 
-      Assert.assertEquals(columnsInfo.size(), 1);
-      Assert.assertTrue(columnsInfo.containsKey(name));
-      Assert.assertTrue(columnsInfo.containsValue(type));
+      Assert.assertEquals(columnsInfo.size(), 2);
+      Assert.assertTrue(columnsInfo.containsKey(name1));
+      Assert.assertTrue(columnsInfo.containsKey(name2));
    }
 
-   @Test
-   public void testAddCollectionAttributeNew() throws CollectionAlreadyExistsException, CollectionNotFoundException {
-      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-      boolean add = collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
-
-      Assert.assertTrue(add);
-   }
-
-   @Test
-   public void testAddCollectionAttributeExisting() throws CollectionAlreadyExistsException, CollectionNotFoundException {
-      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-      boolean add = collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
-
-      Assert.assertFalse(add);
-   }
+   //   @Test
+   //   public void testAddCollectionAttributeNew() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+   //      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
+   //      boolean add = collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
+   //      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
+   //
+   //      Assert.assertTrue(add);
+   //   }
+   //
+   //   @Test
+   //   public void testAddCollectionAttributeExisting() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+   //      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
+   //      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
+   //      boolean add = collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
+   //      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
+   //
+   //      Assert.assertFalse(add);
+   //   }
 
    @Test
    public void testRenameCollectionAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-      boolean rename = collectionMetadataFacade.renameCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "column 2");
+
+      String oldName = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, oldName);
+
+      String newName = "attribute 2";
+      boolean rename = collectionMetadataFacade.renameCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, oldName, newName);
       Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
 
-      Assert.assertTrue(columnsInfo.containsKey("column 2"));
+      Assert.assertTrue(columnsInfo.containsKey(newName));
       Assert.assertTrue(rename);
    }
 
    @Test
    public void testRetypeCollectionAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-      boolean retype = collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "double");
+
+      String name = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+
+      String type = "double";
+      boolean retype = collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
       Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
 
-      Assert.assertTrue(columnsInfo.containsValue("double"));
+      Assert.assertTrue(columnsInfo.containsValue(type));
       Assert.assertTrue(retype);
    }
 
    @Test
    public void testDropCollectionAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-      boolean drop = collectionMetadataFacade.dropCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1");
+
+      String name = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+
+      boolean drop = collectionMetadataFacade.dropCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
       Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
 
@@ -158,13 +171,11 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       String name = collectionMetadataFacade.getOriginalCollectionName(TEST_COLLECTION_INTERNAL_NAME);
       String lock = collectionMetadataFacade.getCollectionLockTime(TEST_COLLECTION_INTERNAL_NAME);
-      long count = collectionMetadataFacade.getCollectionCount(TEST_COLLECTION_INTERNAL_NAME); // TODO
 
       dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(TEST_COLLECTION_INTERNAL_NAME));
 
       Assert.assertEquals(name, TEST_COLLECTION_REAL_NAME);
       Assert.assertNotEquals(lock, "");
-      Assert.assertEquals(count, 0);
    }
 
    @Test
@@ -178,55 +189,44 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testGetCollectionCount() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+   public void testAddAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-      long count = collectionMetadataFacade.getCollectionCount(TEST_COLLECTION_INTERNAL_NAME);
+
+      String name = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+      long count = collectionMetadataFacade.getAttributeCount(TEST_COLLECTION_INTERNAL_NAME, name);
+
+      Assert.assertEquals(count, 1);
+
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+      count = collectionMetadataFacade.getAttributeCount(TEST_COLLECTION_INTERNAL_NAME, name);
+
+      Assert.assertEquals(count, 2);
+
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
+   }
+
+   @Test
+   public void testDropAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
+
+      String name = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+
+      collectionMetadataFacade.dropOrDecrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+      long count = collectionMetadataFacade.getAttributeCount(TEST_COLLECTION_INTERNAL_NAME, name);
+
+      Assert.assertEquals(count, 1);
+
+      collectionMetadataFacade.dropOrDecrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+      count = collectionMetadataFacade.getAttributeCount(TEST_COLLECTION_INTERNAL_NAME, name);
+      Map<String, String> attributeInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
+
       Assert.assertEquals(count, 0);
-   }
-
-   @Test
-   public void testIncrementDecrementCollectionCount() throws CollectionAlreadyExistsException, CollectionNotFoundException {
-      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-
-      collectionMetadataFacade.incrementCollectionCount(TEST_COLLECTION_INTERNAL_NAME);
-      long count1 = collectionMetadataFacade.getCollectionCount(TEST_COLLECTION_INTERNAL_NAME);
-
-      collectionMetadataFacade.decrementCollectionCount(TEST_COLLECTION_INTERNAL_NAME);
-      long count2 = collectionMetadataFacade.getCollectionCount(TEST_COLLECTION_INTERNAL_NAME);
+      Assert.assertEquals(attributeInfo.size(), 0);
 
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
-      Assert.assertEquals(count1, 1);
-      Assert.assertEquals(count2, 0);
-   }
-
-   @Test
-   public void testIncrementDecrementAttributeCount() throws CollectionAlreadyExistsException, CollectionNotFoundException {
-      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-
-      String attribute = "a1";
-      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, attribute, "", -1);
-
-      collectionMetadataFacade.incrementAttributeCount(TEST_COLLECTION_INTERNAL_NAME, attribute);
-      long count1 = collectionMetadataFacade.getAttributeCount(TEST_COLLECTION_INTERNAL_NAME, attribute);
-
-      collectionMetadataFacade.decrementAttributeCount(TEST_COLLECTION_INTERNAL_NAME, attribute);
-      long count2 = collectionMetadataFacade.getAttributeCount(TEST_COLLECTION_INTERNAL_NAME, attribute);
-
-      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
-
-      Assert.assertEquals(count1, 1);
-      Assert.assertEquals(count2, 0);
-   }
-
-   @Test
-   public void testAddDocumentAttributes() {
-      // TODO
-   }
-
-   @Test
-   public void testDropDocumentAttributes() {
-      // TODO
    }
 
    @Test

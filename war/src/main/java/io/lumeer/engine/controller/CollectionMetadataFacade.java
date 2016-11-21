@@ -59,8 +59,6 @@ public class CollectionMetadataFacade implements Serializable {
    public final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
    public final String COLLECTION_LOCK_UPDATED_KEY = "updated";
 
-   public final String COLLECTION_COUNT_META_TYPE_VALUE = "count";
-   public final String COLLECTION_COUNT_KEY = "count";
    // TODO: access rights
 
    // example of collection metadata structure:
@@ -82,10 +80,6 @@ public class CollectionMetadataFacade implements Serializable {
    // {
    // “meta-type” : “lock”,
    // “updated” : “2016-11-08 12:23:21”
-   //  },
-   // {
-   // “meta-type” : “count”,
-   // “count” : “23”
    //  }
 
    /**
@@ -123,12 +117,6 @@ public class CollectionMetadataFacade implements Serializable {
       metadataLock.put(META_TYPE_KEY, COLLECTION_LOCK_META_TYPE_VALUE);
       metadataLock.put(COLLECTION_LOCK_UPDATED_KEY, Utils.getCurrentTimeString());
       dataStorage.createDocument(metadataCollectionName, new DataDocument(metadataLock));
-
-      // set count - we don't use setCollectionCountTime, because that methods assumes document with count already exists
-      Map<String, Object> metadataCount = new HashMap<>();
-      metadataCount.put(META_TYPE_KEY, COLLECTION_COUNT_META_TYPE_VALUE);
-      metadataCount.put(COLLECTION_COUNT_KEY, 0L);
-      dataStorage.createDocument(metadataCollectionName, new DataDocument(metadataCount));
    }
 
    /**
@@ -151,44 +139,6 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       return attributesInfo;
-   }
-
-   /**
-    * Adds an attribute to collection metadata.
-    *
-    * @param collectionName
-    *       internal collection name
-    * @param attributeName
-    *       added attribute name
-    * @param attributeType
-    *       added attribute type
-    * @param attributeCount
-    *       added attribute count. If -1, then count is the number of documents in the collection
-    * @return true if add is successful, false if attribute already exists
-    */
-   public boolean addCollectionAttribute(String collectionName, String attributeName, String attributeType, long attributeCount) {
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.search(query);
-
-      // return false if the attribute already exists
-      if (!attributeInfo.isEmpty()) {
-         return false;
-      }
-
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(META_TYPE_KEY, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
-      metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, attributeName);
-      metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, attributeType);
-      if (attributeCount == -1) {
-         metadata.put(COLLECTION_ATTRIBUTE_COUNT_KEY, getCollectionCount(collectionName));
-      } else {
-         metadata.put(COLLECTION_ATTRIBUTE_COUNT_KEY, attributeCount);
-      }
-      DataDocument metadataDocument = new DataDocument(metadata);
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      dataStorage.createDocument(metadataCollectionName, metadataDocument);
-
-      return true;
    }
 
    /**
@@ -284,56 +234,79 @@ public class CollectionMetadataFacade implements Serializable {
       return true;
    }
 
-   // NOT TESTED YET
-   //   /**
-   //    * Adds attributes from given document to metadata collection, if the attribute already isn't there.
-   //    * Otherwise just increments count.
-   //    *
-   //    * @param collectionName
-   //    *       internal collection name
-   //    * @param attributes
-   //    *       set of attributes' names
-   //    */
-   //   public void addDocumentAttributes(String collectionName, Set<String> attributes) {
-   //      Set<String> collectionAttributes = getCollectionAttributesInfo(collectionName).keySet();
-   //      for (String attribute : attributes) {
-   //         if (!collectionAttributes.contains(attribute)) {
-   //            addCollectionAttribute(collectionName, attribute, "", 1);
-   //         } else {
-   //            incrementAttributeCount(collectionName, attribute);
-   //         }
-   //      }
-   //   }
+   /**
+    * Adds attribute to metadata collection, if the attribute already isn't there.
+    * Otherwise just increments count.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attribute
+    *       set of attributes' names
+    */
+   public void addOrIncrementAttribute(String collectionName, String attribute) {
+      String query = queryCollectionAttributeInfo(collectionName, attribute);
+      List<DataDocument> attributeInfo = dataStorage.search(query);
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      if (!attributeInfo.isEmpty()) { // attribute already exists
+         DataDocument attributeDocument = attributeInfo.get(0);
+         String documentId = attributeDocument.get("_id").toString();
+         dataStorage.incerementAttributeValueBy(metadataCollectionName, documentId, COLLECTION_ATTRIBUTE_COUNT_KEY, 1);
+      } else {
+         Map<String, Object> metadata = new HashMap<>();
+         metadata.put(META_TYPE_KEY, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
+         metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, attribute);
+         metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, "");
+         metadata.put(COLLECTION_ATTRIBUTE_COUNT_KEY, 1L);
+         DataDocument metadataDocument = new DataDocument(metadata);
+         dataStorage.createDocument(metadataCollectionName, metadataDocument);
+      }
+   }
 
-   // NOT TESTED YET
-   //   /**
-   //    * Drops attributes from given document, when there is no document with that
-   //    * attribute in the collection (count is 1). Otherwise just decrements count.
-   //    *
-   //    * @param collectionName
-   //    *       internal collection name
-   //    * @param attributes
-   //    *       set of attributes' names
-   //    */
-   //   public void dropDocumentAttributes(String collectionName, Set<String> attributes) {
-   //      Set<String> collectionAttributes = getCollectionAttributesInfo(collectionName).keySet();
-   //      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-   //      for (String attribute : attributes) {
-   //         String query = queryCollectionAttributeInfo(collectionName, attribute);
-   //         List<DataDocument> attributeInfo = dataStorage.search(query);
-   //
-   //         DataDocument attributeDocument = attributeInfo.get(0);
-   //
-   //         String documentId = attributeDocument.get("_id").toString();
-   //         long attributeCount = attributeDocument.getLong(COLLECTION_ATTRIBUTE_COUNT_KEY);
-   //         if (attributeCount == 1) { // document is the last one with the attribute
-   //            String attributeName = attributeDocument.getString(COLLECTION_ATTRIBUTE_NAME_KEY);
-   //            dropCollectionAttribute(collectionName, attributeName);
-   //         } else {
-   //            decrementAttributeCount(collectionName, attribute);
-   //         }
-   //      }
-   //   }
+   /**
+    * Drops attribute if there is no document with that
+    * attribute in the collection (count is 1). Otherwise just decrements count.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attribute
+    *       set of attributes' names
+    */
+   public void dropOrDecrementAttribute(String collectionName, String attribute) {
+      String query = queryCollectionAttributeInfo(collectionName, attribute);
+      List<DataDocument> attributeInfo = dataStorage.search(query);
+      if (!attributeInfo.isEmpty()) { // in case somebody did that sooner, we may have nothing to remove
+         DataDocument attributeDocument = attributeInfo.get(0);
+         String documentId = attributeDocument.get("_id").toString();
+         String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+
+         // we check if this was the last document with the attribute
+         if (attributeDocument.getLong(COLLECTION_ATTRIBUTE_COUNT_KEY) == 1) {
+            dataStorage.dropDocument(metadataCollectionName, documentId);
+         } else {
+            dataStorage.incerementAttributeValueBy(metadataCollectionName, documentId, COLLECTION_ATTRIBUTE_COUNT_KEY, -1);
+         }
+      }
+   }
+
+   /**
+    * Returns count for specific attribute
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attributeName
+    *       attribute name
+    * @return attribute count
+    */
+   public long getAttributeCount(String collectionName, String attributeName) {
+      String query = queryCollectionAttributeInfo(collectionName, attributeName);
+      List<DataDocument> countInfo = dataStorage.search(query);
+      if (!countInfo.isEmpty()) {
+         DataDocument countDocument = countInfo.get(0);
+         return countDocument.getLong(COLLECTION_ATTRIBUTE_COUNT_KEY);
+      } else {
+         return 0;
+      }
+   }
 
    /**
     * Searches for original (given by user) collection name in metadata
@@ -393,6 +366,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       String representation of the time of the last update of collection lock
     */
    public void setCollectionLockTime(String collectionName, String newTime) {
+      // TODO verify if newTime has good format
       String query = queryCollectionLockTime(collectionName);
       List<DataDocument> lockInfo = dataStorage.search(query);
       DataDocument lockDocument = lockInfo.get(0);
@@ -403,51 +377,6 @@ public class CollectionMetadataFacade implements Serializable {
 
       DataDocument metadataDocument = new DataDocument(metadata);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
-   }
-
-   public long getCollectionCount(String collectionName) {
-      String query = queryCollectionCount(collectionName);
-      List<DataDocument> countInfo = dataStorage.search(query);
-
-      DataDocument countDocument = countInfo.get(0);
-      return countDocument.getLong(COLLECTION_COUNT_KEY); // getLong() throws ClassCastException: "java.lang.Integer cannot be cast to java.lang.Long"
-   }
-
-   public void setCollectionCount(String collectionName, long count) {
-      String query = queryCollectionCount(collectionName);
-      List<DataDocument> countInfo = dataStorage.search(query);
-      DataDocument countDocument = countInfo.get(0);
-      String id = countDocument.get("_id").toString();
-
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(COLLECTION_COUNT_KEY, count);
-
-      DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
-   }
-
-   /**
-    * Increments collection count by 1
-    *
-    * @param collectionName
-    *       internal collection name
-    */
-   public void incrementCollectionCount(String collectionName) {
-      long count = getCollectionCount(collectionName);
-      count++;
-      setCollectionCount(collectionName, count);
-   }
-
-   /**
-    * Decrements collection count by 1
-    *
-    * @param collectionName
-    *       internal collection name
-    */
-   public void decrementCollectionCount(String collectionName) {
-      long count = getCollectionCount(collectionName);
-      count--;
-      setCollectionCount(collectionName, count);
    }
 
    /**
@@ -469,55 +398,50 @@ public class CollectionMetadataFacade implements Serializable {
       return COLLECTION_NAME_PREFIX.equals(prefix) && !collectionName.endsWith(".shadow"); // VersionFacade adds suffix
    }
 
-   /**
-    * Returns count for specific attribute
-    *
-    * @param collectionName
-    *       internal collection name
-    * @param attributeName
-    *       attribute name
-    * @return attribute count
-    */
-   public long getAttributeCount(String collectionName, String attributeName) {
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> countInfo = dataStorage.search(query);
-      DataDocument countDocument = countInfo.get(0);
-      return countDocument.getLong(COLLECTION_ATTRIBUTE_COUNT_KEY);
-   }
+   //   /**
+   //    * Sets count for specific attribute
+   //    *
+   //    * @param collectionName
+   //    *       internal collection name
+   //    * @param attributeName
+   //    *       attribute name
+   //    * @param count
+   //    *       count value to be set
+   //    */
+   //   public void setAttributeCount(String collectionName, String attributeName, long count) {
+   //      String query = queryCollectionAttributeInfo(collectionName, attributeName);
+   //      List<DataDocument> attributeInfo = dataStorage.search(query);
+   //      DataDocument attributeDocument = attributeInfo.get(0);
+   //      String id = attributeDocument.get("_id").toString();
+   //
+   //      Map<String, Object> metadata = new HashMap<>();
+   //      metadata.put(COLLECTION_ATTRIBUTE_COUNT_KEY, count);
+   //
+   //      DataDocument metadataDocument = new DataDocument(metadata);
+   //      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
+   //   }
 
    /**
-    * Sets count for specific attribute
+    * Checks whether given attribute type is correct
     *
     * @param collectionName
     *       internal collection name
     * @param attributeName
-    *       attribute name
-    * @param count
-    *       count value to be set
+    *       name of attribute to check
+    * @param attributeType
+    *       type of attribute to check
+    * @return true if type is correct, false if not or if attribute doesn't exist
     */
-   public void setAttributeCount(String collectionName, String attributeName, long count) {
+   public boolean checkAttributeType(String collectionName, String attributeName, String attributeType) {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.search(query);
-      DataDocument attributeDocument = attributeInfo.get(0);
-      String id = attributeDocument.get("_id").toString();
-
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(COLLECTION_ATTRIBUTE_COUNT_KEY, count);
-
-      DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
-   }
-
-   public void incrementAttributeCount(String collectionName, String attribute) {
-      long count = getAttributeCount(collectionName, attribute);
-      count++;
-      setAttributeCount(collectionName, attribute, count);
-   }
-
-   public void decrementAttributeCount(String collectionName, String attribute) {
-      long count = getAttributeCount(collectionName, attribute);
-      count--;
-      setAttributeCount(collectionName, attribute, count);
+      if (!attributeInfo.isEmpty()) {
+         DataDocument attributeDocument = attributeInfo.get(0);
+         String correctType = attributeDocument.getString(COLLECTION_ATTRIBUTE_TYPE_KEY);
+         return correctType == attributeType;
+      } else { // attribute doesn't exist
+         return false;
+      }
    }
 
    // returns MongoDb query for getting real collection name
@@ -578,19 +502,5 @@ public class CollectionMetadataFacade implements Serializable {
             .append("\"}}");
       String findNameQuery = sb.toString();
       return findNameQuery;
-   }
-
-   // returns MongoDb query for getting collection count
-   private String queryCollectionCount(String collectionName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(META_TYPE_KEY)
-            .append("\":\"")
-            .append(COLLECTION_COUNT_META_TYPE_VALUE)
-            .append("\"}}");
-      String findCountQuery = sb.toString();
-      return findCountQuery;
    }
 }

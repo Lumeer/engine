@@ -238,24 +238,24 @@ public class CollectionFacade implements Serializable {
     * @throws CollectionNotFoundException
     *       if collection was not found in database
     */
-   public void addAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
-      if (isDatabaseCollection(collectionName)) {
-         if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE, -1)) { // true if attribute doesn't exist in the collection
-            List<DataDocument> documents = getAllDocuments(collectionName);
-
-            for (DataDocument document : documents) {
-               String id = document.get(ID_COLUMN_KEY).toString();
-
-               document.put(attributeName, DEFAULT_COLUMN_VALUE); // blank attribute value
-               dataStorage.updateDocument(collectionName, document, id, -1);
-            }
-         } else {
-            throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(attributeName, collectionName));
-         }
-      } else {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-   }
+   //   public void addOrIncrementAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
+   //      if (isDatabaseCollection(collectionName)) {
+   //         if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE, -1)) { // true if attribute doesn't exist in the collection
+   //            List<DataDocument> documents = getAllDocuments(collectionName);
+   //
+   //            for (DataDocument document : documents) {
+   //               String id = document.get(ID_COLUMN_KEY).toString();
+   //
+   //               document.put(attributeName, DEFAULT_COLUMN_VALUE); // blank attribute value
+   //               dataStorage.updateDocument(collectionName, document, id, -1);
+   //            }
+   //         } else {
+   //            throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(attributeName, collectionName));
+   //         }
+   //      } else {
+   //         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+   //      }
+   //   }
 
    /**
     * Removes given attribute from all existing document specified by its id.
