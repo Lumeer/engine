@@ -39,6 +39,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_DROP_UNSUCCESFUL = "The document could not be deleted.";
    private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not succesfully updated.";
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
+   private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
 
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
@@ -74,6 +75,10 @@ public class ErrorMessageBuilder {
 
    public static String invalidMetadataKey(String key) {
       return MessageFormat.format(ERROR_INVALID_METADATA_KEY, key);
+   }
+
+   public static String nullKey() {
+      return ERROR_NULL_KEY;
    }
 
 }
