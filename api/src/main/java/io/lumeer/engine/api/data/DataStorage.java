@@ -149,6 +149,16 @@ public interface DataStorage {
    void dropOldDocument(final String collectionName, final String documentId, final int version);
 
    /**
+    * Drops many documents based on filter
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param filter
+    *       string representation of filter
+    */
+   void dropManyDocuments(final String collectionName, final String filter);
+
+   /**
     * Updates the name of an attribute which is found in all documents of given collection.
     *
     * @param collectionName

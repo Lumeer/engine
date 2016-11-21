@@ -22,9 +22,11 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -32,7 +34,7 @@ import javax.inject.Inject;
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-public class LinkingFacade {
+public class LinkingFacade implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
@@ -65,19 +67,52 @@ public class LinkingFacade {
       return readDocumentsFromLinkingDocuments(linkingDocuments, firstDocumentId, secondCollectionName);
    }
 
-   public void removeAllDocumentLinks(String collectionName, String documentId) {
-      // TODO
-      throw new UnsupportedOperationException();
+   public void dropAllDocumentLinks(String collectionName, String documentId) {
+      List<DataDocument> linkingTables = readLinkingTables(collectionName);
+      for (DataDocument lt : linkingTables) {
+         String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+         removeAllDocuments(colName, documentId);
+      }
    }
 
-   public void removeDocWithDocLink(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) {
-      // TODO
-      throw new UnsupportedOperationException();
+   public void dropDocWithDocLink(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) {
+      DataDocument linkingTable = readLinkingTable(firstCollectionName, secondCollectionName);
+      if (linkingTable == null) {
+         // throw exception?
+         return;
+      }
+      String filter = MongoUtils.convertBsonToJson(Filters.or(
+            Filters.and(
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, firstDocumentId),
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, secondDocumentId)),
+            Filters.and(
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, secondDocumentId),
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, firstDocumentId))));
+
+      dataStorage.dropManyDocuments(linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME), filter);
    }
 
-   public void removeDocWithCollectionLinks(String firstCollectionName, String firstDocumentId, String secondDocumentId) {
-      // TODO
-      throw new UnsupportedOperationException();
+   public void dropDocWithCollectionLinks(String firstCollectionName, String firstDocumentId, String secondCollectionName) {
+      DataDocument linkingTable = readLinkingTable(firstCollectionName, secondCollectionName);
+      if (linkingTable == null) {
+         // throw exception?
+         return;
+      }
+      String colName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+      removeAllDocuments(colName, firstDocumentId);
+   }
+
+   public void dropCollectionLinks(String collectionName) {
+      List<DataDocument> linkingTables = readLinkingTables(collectionName);
+      for (DataDocument lt : linkingTables) {
+         String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+         dataStorage.dropCollection(colName);
+      }
+      String filter = MongoUtils.convertBsonToJson(Filters.or(
+            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, collectionName),
+            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, collectionName)
+      ));
+      dataStorage.dropManyDocuments(collectionName, filter);
    }
 
    public void createDocWithDocLink(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) {
@@ -91,18 +126,27 @@ public class LinkingFacade {
    }
 
    private DataDocument readLinkingTable(String firstCollectionName, String secondCollectionName) {
-      String filter = Filters.or(Filters.and(Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName), Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, secondCollectionName)), Filters.and(Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, firstCollectionName), Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, secondCollectionName))).toString();
+      String filter = MongoUtils.convertBsonToJson(Filters.or(
+            Filters.and(
+                  Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName),
+                  Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, secondCollectionName)),
+            Filters.and(Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, firstCollectionName),
+                  Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, secondCollectionName))));
       List<DataDocument> linkingTables = dataStorage.search(LumeerConst.LINKING.MAIN_TABLE.NAME, filter, null, 0, 0);
       return linkingTables.size() == 1 ? linkingTables.get(0) : null;
    }
 
    private List<DataDocument> readLinkingTables(String firstCollectionName) {
-      String filter = Filters.or(Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName), Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, firstCollectionName)).toString();
+      String filter = MongoUtils.convertBsonToJson(Filters.or(
+            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName),
+            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, firstCollectionName)));
       return dataStorage.search(LumeerConst.LINKING.MAIN_TABLE.NAME, filter, null, 0, 0);
    }
 
    private List<DataDocument> readLinkingDocuments(final String collectionName, String documentId) {
-      String filter = Filters.or(Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, documentId), Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, documentId)).toString();
+      String filter = MongoUtils.convertBsonToJson(Filters.or(
+            Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, documentId),
+            Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, documentId)));
       return dataStorage.search(collectionName, filter, null, 0, 0);
    }
 
@@ -118,6 +162,11 @@ public class LinkingFacade {
          }
       }
       return docs;
+   }
+
+   private void removeAllDocuments(final String collectionName, final String documentId) {
+      String filter = Filters.or(Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, documentId), Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, documentId)).toString();
+      dataStorage.dropManyDocuments(collectionName, filter);
    }
 
    private void createLinkingTable(String firstCollectionName, String secondCollectionName) {

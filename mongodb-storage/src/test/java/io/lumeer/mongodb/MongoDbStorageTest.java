@@ -21,6 +21,18 @@ package io.lumeer.mongodb;/*
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.StorageConnection;
 
+import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import com.mongodb.client.model.Filters;
+import com.mongodb.util.JSON;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
+import org.bson.Document;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
+import org.bson.json.JsonReader;
+import org.bson.json.JsonWriter;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -149,6 +161,30 @@ public class MongoDbStorageTest {
       readedDocument = mongoDbStorage.readDocument(DUMMY_COLLECTION1, documentId);
 
       Assert.assertNull(readedDocument);
+
+      mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
+   }
+
+   @Test
+   public void testDropManyDocuments() throws Exception {
+      mongoDbStorage.createCollection(DUMMY_COLLECTION1);
+
+      String dropManyKey = "dropManyKey";
+      String value1 = "v1";
+      String value2 = "v2";
+      for (int i = 0; i < 1000; i++) {
+         DataDocument insertedDocument = createDummyDocument();
+         insertedDocument.put(dropManyKey, i % 2 == 0 ? value1 : value2);
+         mongoDbStorage.createDocument(DUMMY_COLLECTION1, insertedDocument);
+      }
+
+      List<DataDocument> docs = mongoDbStorage.search(DUMMY_COLLECTION1, null, null, 0, 0);
+      Assert.assertEquals(docs.size(), 1000);
+
+      mongoDbStorage.dropManyDocuments(DUMMY_COLLECTION1, MongoUtils.convertBsonToJson(Filters.eq(dropManyKey, value1)));
+
+      docs = mongoDbStorage.search(DUMMY_COLLECTION1, null, null, 0, 0);
+      Assert.assertEquals(docs.size(), 500);
 
       mongoDbStorage.dropCollection(DUMMY_COLLECTION1);
    }

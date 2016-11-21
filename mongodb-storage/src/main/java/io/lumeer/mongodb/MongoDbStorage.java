@@ -194,6 +194,11 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
+   public void dropManyDocuments(final String collectionName, final String filter) {
+      database.getCollection(collectionName).deleteMany(BsonDocument.parse(filter));
+   }
+
+   @Override
    public void renameAttribute(final String collectionName, final String oldName, final String newName) {
       database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), Updates.rename(oldName, newName));
    }
