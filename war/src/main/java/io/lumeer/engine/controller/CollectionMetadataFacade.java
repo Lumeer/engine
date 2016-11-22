@@ -24,10 +24,10 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -49,8 +49,8 @@ public class CollectionMetadataFacade implements Serializable {
    public final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
    public final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
    // attribute types according to DataDocument methods, empty is default and is considered String
-   // TODO: What about nested attributes? Should we return them as a string?
-   public final String[] COLLECTION_ATTRIBUTE_TYPE_VALUES = { "int", "long", "double", "boolean", "date", "" };
+   public final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES = Arrays.asList(new String[] { "int", "long", "double", "bool", "date", "", "string", "nested" });
+   public final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
    public final String COLLECTION_ATTRIBUTE_COUNT_KEY = "count";
 
    public final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
@@ -59,19 +59,31 @@ public class CollectionMetadataFacade implements Serializable {
    public final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
    public final String COLLECTION_LOCK_UPDATED_KEY = "updated";
 
-   // TODO: access rights
-
    // example of collection metadata structure:
    // -------------------------------------
    // {
    //  “meta-type” : “attributes”,
-   //  “name” : “attributes1”,
-   //  “type” : “int”
+   //  “name” : “attribute1”,
+   //  “type” : “int”,
+   //  “constraints” : [{"gt" : 2}, {"let" : 10}], // grater than 2, less or equal than 10
+   //  “child-attributes” : []
    // },
    // {
    //  “meta-type” : “attributes”,
-   //  “name” : “attributes2”,
-   //  “type” : “”
+   //  “name” : “attribute2”,
+   //  “type” : “nested”
+   //  “child-attributes” : [
+   //    {
+   //       “name” : “attribute3”,
+   //       “type” : “string”,
+   //       “constraints” : [{"regex" : "[a-z]*"}, {"lt" : 10}], // string shorter than 10 consisting of lowercase letters
+   //    },
+   //    {
+   //       “name” : “attribute4”,
+   //       “type” : “double”,
+   //       “constraints” : ""
+   //    }
+   //    ]
    // },
    // {
    // “meta-type” : “name”,
@@ -120,13 +132,13 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Returns info about collection attributes
+    * Returns some info about collection attributes
     *
     * @param collectionName
     *       internal collection name
     * @return map - keys are attribute names, values are types
     */
-   public Map<String, String> getCollectionAttributesInfo(String collectionName) {
+   public Map<String, String> getCollectionAttributesNamesAndTypes(String collectionName) {
       String query = queryCollectionAttributesInfo(collectionName);
       List<DataDocument> attributesInfoDocuments = dataStorage.search(query);
 
@@ -139,6 +151,19 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       return attributesInfo;
+   }
+
+   /**
+    * Gets complete info about collection attributes
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return list of DataDocuments, each with info about one attribute
+    */
+   public List<DataDocument> getCollectionAttributesInfo(String collectionName) {
+      String query = queryCollectionAttributesInfo(collectionName);
+      List<DataDocument> attributesInfoDocuments = dataStorage.search(query);
+      return attributesInfoDocuments;
    }
 
    /**
@@ -185,9 +210,13 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @param newType
     *       new attribute type
-    * @return true if retype is successful, false if attribute does not exist
+    * @return true if retype is successful, false if attribute or type does not exist
     */
    public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) {
+      if (!COLLECTION_ATTRIBUTE_TYPE_VALUES.contains(newType)) { // new type must be from our list
+         return false;
+      }
+
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.search(query);
 
@@ -256,6 +285,7 @@ public class CollectionMetadataFacade implements Serializable {
          metadata.put(META_TYPE_KEY, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
          metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, attribute);
          metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, "");
+         metadata.put(COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, "");
          metadata.put(COLLECTION_ATTRIBUTE_COUNT_KEY, 1L);
          DataDocument metadataDocument = new DataDocument(metadata);
          dataStorage.createDocument(metadataCollectionName, metadataDocument);
@@ -364,9 +394,13 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param newTime
     *       String representation of the time of the last update of collection lock
+    * @return true if set was succesful
     */
-   public void setCollectionLockTime(String collectionName, String newTime) {
-      // TODO verify if newTime has good format
+   public boolean setCollectionLockTime(String collectionName, String newTime) {
+      if (!Utils.isValidDateFormat(newTime)) { // time format is not valid
+         return false;
+      }
+
       String query = queryCollectionLockTime(collectionName);
       List<DataDocument> lockInfo = dataStorage.search(query);
       DataDocument lockDocument = lockInfo.get(0);
@@ -377,6 +411,7 @@ public class CollectionMetadataFacade implements Serializable {
 
       DataDocument metadataDocument = new DataDocument(metadata);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
+      return true;
    }
 
    /**
@@ -422,7 +457,7 @@ public class CollectionMetadataFacade implements Serializable {
    //   }
 
    /**
-    * Checks whether given attribute type is correct
+    * Checks whether given attribute type is correct (if it corresponds to attribute type saved in metadata)
     *
     * @param collectionName
     *       internal collection name
@@ -442,6 +477,68 @@ public class CollectionMetadataFacade implements Serializable {
       } else { // attribute doesn't exist
          return false;
       }
+   }
+
+   /**
+    * Checks whether value corresponds to attribute type
+    * TODO: check attributes constraints
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attribute
+    *       attribute name
+    * @param valueString
+    *       value converted to String
+    * @return true if value corresponds to attribute type, false if not or attribute does not exist
+    */
+   public boolean checkAttributeValue(String collectionName, String attribute, String valueString) {
+      String type = getCollectionAttributesNamesAndTypes(collectionName).get(attribute);
+
+      if (type == null) {
+         return false; // attribute does not exist
+      }
+
+      if (type.equals("int")) {
+         try {
+            Integer.parseInt(valueString);
+            return true;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+
+      if (type.equals("long")) {
+         try {
+            Long.parseLong(valueString);
+            return true;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+
+      if (type.equals("double")) {
+         try {
+            Double.parseDouble(valueString);
+            return true;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+
+      if (type.equals("date")) { // we accept yyyy.MM.dd and yyyy.MM.dd HH.mm.ss
+         return Utils.isValidDateFormatJustDate(valueString) || Utils.isValidDateFormatDateAndTimeMinutes(valueString);
+      }
+
+      if (type.equals("bool")) {
+         return valueString.equals("false") || valueString.equals("true");
+      }
+
+      if (type.equals("nested")) { // we cannot add value to nested attribute, just to its children
+         return false;
+      }
+
+      // we return true when type is not specified or string
+      return true;
    }
 
    // returns MongoDb query for getting real collection name

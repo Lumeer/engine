@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.exception.CollectionNotFoundException;
@@ -33,8 +34,10 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.xml.crypto.Data;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
@@ -69,7 +72,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testGetCollectionAttributesInfo() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+   public void testGetCollectionAttributesNamesAndTypes() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
 
       String name1 = "attribute 1";
@@ -77,12 +80,30 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name1);
       collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name2);
 
-      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
+      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesNamesAndTypes(TEST_COLLECTION_INTERNAL_NAME);
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
 
       Assert.assertEquals(columnsInfo.size(), 2);
       Assert.assertTrue(columnsInfo.containsKey(name1));
       Assert.assertTrue(columnsInfo.containsKey(name2));
+   }
+
+   @Test
+   public void testGetCollectionAttributesInfo() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
+
+      List<DataDocument> attributesInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
+      Assert.assertEquals(attributesInfo.size(), 0);
+
+      String name1 = "attribute 1";
+      String name2 = "attribute 2";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name1);
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name2);
+
+      attributesInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
+      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
+
+      Assert.assertEquals(attributesInfo.size(), 2);
    }
 
    //   @Test
@@ -113,7 +134,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       String newName = "attribute 2";
       boolean rename = collectionMetadataFacade.renameCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, oldName, newName);
-      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
+      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesNamesAndTypes(TEST_COLLECTION_INTERNAL_NAME);
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
 
       Assert.assertTrue(columnsInfo.containsKey(newName));
@@ -129,11 +150,17 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       String type = "double";
       boolean retype = collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
-      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
-      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
+      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesNamesAndTypes(TEST_COLLECTION_INTERNAL_NAME);
 
-      Assert.assertTrue(columnsInfo.containsValue(type));
+      Assert.assertEquals(columnsInfo.get(name), type);
       Assert.assertTrue(retype);
+
+      String type2 = "hello";
+      retype = collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type2);
+
+      Assert.assertFalse(retype);
+
+      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
    }
 
    @Test
@@ -144,7 +171,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
 
       boolean drop = collectionMetadataFacade.dropCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
-      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
+      Map<String, String> columnsInfo = collectionMetadataFacade.getCollectionAttributesNamesAndTypes(TEST_COLLECTION_INTERNAL_NAME);
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
 
       Assert.assertTrue(columnsInfo.isEmpty());
@@ -221,10 +248,62 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       collectionMetadataFacade.dropOrDecrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
       count = collectionMetadataFacade.getAttributeCount(TEST_COLLECTION_INTERNAL_NAME, name);
-      Map<String, String> attributeInfo = collectionMetadataFacade.getCollectionAttributesInfo(TEST_COLLECTION_INTERNAL_NAME);
+      Map<String, String> attributeInfo = collectionMetadataFacade.getCollectionAttributesNamesAndTypes(TEST_COLLECTION_INTERNAL_NAME);
 
       Assert.assertEquals(count, 0);
       Assert.assertEquals(attributeInfo.size(), 0);
+
+      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
+   }
+
+   @Test
+   public void testCheckAttributeValue() throws CollectionAlreadyExistsException, CollectionNotFoundException {
+      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
+
+      String name = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(TEST_COLLECTION_INTERNAL_NAME, name);
+
+      String type = "double";
+      collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
+      boolean check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "3.14");
+      Assert.assertTrue(check);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "hm");
+      Assert.assertFalse(check);
+
+      type = "int";
+      collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "3");
+      Assert.assertTrue(check);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "3.14");
+      Assert.assertFalse(check);
+
+      type = "long";
+      collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "12345678900");
+      Assert.assertTrue(check);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "hm");
+      Assert.assertFalse(check);
+
+      type = "nested";
+      collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "hm");
+      Assert.assertFalse(check);
+
+      type = "date";
+      collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "2016.11.22");
+      Assert.assertTrue(check);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "2016.11.22 21.36");
+      Assert.assertTrue(check);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "hm");
+      Assert.assertFalse(check);
+
+      type = "bool";
+      collectionMetadataFacade.retypeCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, name, type);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "true");
+      Assert.assertTrue(check);
+      check = collectionMetadataFacade.checkAttributeValue(TEST_COLLECTION_INTERNAL_NAME, name, "hm");
+      Assert.assertFalse(check);
 
       collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
    }

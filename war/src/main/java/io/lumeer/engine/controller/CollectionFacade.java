@@ -158,7 +158,7 @@ public class CollectionFacade implements Serializable {
     */
    public List<String> readCollectionAttributes(final String collectionName) throws CollectionNotFoundException {
       if (isDatabaseCollection(collectionName)) {
-         return new ArrayList<>(collectionMetadataFacade.getCollectionAttributesInfo(collectionName).keySet());
+         return new ArrayList<>(collectionMetadataFacade.getCollectionAttributesNamesAndTypes(collectionName).keySet());
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
