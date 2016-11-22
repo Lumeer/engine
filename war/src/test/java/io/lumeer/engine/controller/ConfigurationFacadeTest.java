@@ -75,29 +75,6 @@ public class ConfigurationFacadeTest extends Arquillian {
    private ConfigurationFacade configurationFacade;
 
    @Test
-   public void testGetAllSystemCollections() throws Exception {
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      systemDataStorage.createCollection(DUMMY_TEAM_COLLECTION);
-
-      Assert.assertEquals(configurationFacade.getAllSystemCollections().size(), 2);
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
-      systemDataStorage.dropCollection(DUMMY_TEAM_COLLECTION);
-
-      Assert.assertEquals(configurationFacade.getAllSystemCollections().size(), 0);
-   }
-
-   @Test
-   public void testGetSystemConfigurations() throws Exception {
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);
-
-      Assert.assertEquals(configurationFacade.getSystemConfigurations(DUMMY_USER_COLLECTION).size(), 20);
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
-   }
-
-   @Test
    public void testGetConfigurationString() throws Exception {
       systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
       fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);

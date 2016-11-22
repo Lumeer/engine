@@ -29,7 +29,6 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import org.bson.Document;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -40,6 +39,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -71,7 +71,8 @@ public class ConfigurationFacade implements Serializable {
    @Inject
    private UserFacade userFacade;
 
-   static {
+   @PostConstruct
+   public void setDefaultValues() {
       String envDefaults = System.getenv("lumeer.defaults");
       if (envDefaults == null) {
          envDefaults = DEFAULT_PROPERTY_FILE;
@@ -85,33 +86,6 @@ public class ConfigurationFacade implements Serializable {
       } catch (IOException e) {
          log.log(Level.SEVERE, "Unable to load default property values: ", e);
       }
-   }
-
-   /**
-    * Returns a List object of collection names in system database.
-    *
-    * @return the list of system collection names
-    */
-   // TODO: useless method?
-   public List<String> getAllSystemCollections() {
-      return systemDataStorage.getAllCollections();
-   }
-
-   /**
-    * Returns a list of DataDocument objects representing configuration entries of given collection.
-    *
-    * @param collectionName
-    *       the name of collection
-    * @return the list of all system configuration entries
-    * @throws CollectionNotFoundException
-    */
-   // TODO: useless method?
-   public List<DataDocument> getSystemConfigurations(String collectionName) throws CollectionNotFoundException {
-      if (!isDatabaseCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-
-      return systemDataStorage.search(collectionName, null, null, 0, 0);
    }
 
    /**
@@ -258,7 +232,8 @@ public class ConfigurationFacade implements Serializable {
 
             systemDataStorage.updateDocument(collectionName, defaultConfigDocument, id, TARGET_VERSION_DISABLED);
          } else {
-            // TODO: exception?
+            // if userConfig does not exist, create it
+            createNewUserConfiguration(collectionName, user);
          }
       }
    }
@@ -292,7 +267,8 @@ public class ConfigurationFacade implements Serializable {
 
          systemDataStorage.createDocument(collectionName, defaultConfigDocument);
       } else {
-         // TODO: exception?
+         // if userConfig does not exist, create it
+         createNewUserConfiguration(collectionName, user);
       }
    }
 
@@ -313,7 +289,7 @@ public class ConfigurationFacade implements Serializable {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
 
-      if (key == null) {
+      if (key == null && value == null) {
          throw new NullParameterException(ErrorMessageBuilder.nullKey());
       }
 
@@ -331,7 +307,6 @@ public class ConfigurationFacade implements Serializable {
             id = configDocument.get(ID_KEY).toString();
          } else {
             configDocument = new DataDocument();
-            // TODO: should be primary default values inserted from DEFAULT_VALUES?
             configDocument.put(USER_EMAIL_KEY, user);
          }
 
@@ -392,7 +367,7 @@ public class ConfigurationFacade implements Serializable {
     * @return true if database has given collection
     */
    private boolean isDatabaseCollection(final String collectionName) {
-      return getAllSystemCollections().contains(collectionName);
+      return systemDataStorage.getAllCollections().contains(collectionName);
    }
 
    /**
@@ -402,7 +377,12 @@ public class ConfigurationFacade implements Serializable {
     *       email address of logged user
     * @return Optional object with DataDocument configuration entry
     */
-   private Optional<DataDocument> getUserConfiguration(final String user) {
+   private Optional<DataDocument> getUserConfiguration(final String user) throws CollectionNotFoundException {
+      if (!isDatabaseCollection(USER_CONFIG)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(USER_CONFIG));
+      }
+      // TODO: indexing?
+
       String filter = "{" + USER_EMAIL_KEY + ": \"" + user + "\"}";
       List<DataDocument> configs = systemDataStorage.search(USER_CONFIG, filter, null, 0, 0);
 
@@ -412,4 +392,19 @@ public class ConfigurationFacade implements Serializable {
 
       return Optional.empty();
    }
+
+   /**
+    * Creates new user configuration. The assumption is that the user has not existed so far.
+    *
+    * @param collectionName
+    *       the name of collection
+    * @param user
+    *       email address of logged user
+    */
+   private void createNewUserConfiguration(final String collectionName, final String user) {
+      DataDocument configDocument = new DataDocument();
+      configDocument.put(USER_EMAIL_KEY, user);
+      systemDataStorage.createDocument(collectionName, configDocument);
+   }
+
 }
