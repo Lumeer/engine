@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
- * Copyright (C) 2016 the original author or authors.
+ * Copyright (C) 2016 - 2017 the original author or authors.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ package io.lumeer.engine.api.event;
 import io.lumeer.engine.api.data.DataDocument;
 
 /**
- * CDI event that is sent when an {@link DataDocument} is updated.
+ * CDI event that is fired when a document is dropped.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class UpdateDocument extends DocumentEvent {
+public class DropDocument extends DocumentEvent {
 
-   public UpdateDocument(final String collectionName, final DataDocument document) {
+   public DropDocument(final String collectionName, final DataDocument document) {
       super(collectionName, document);
    }
 }
