@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
@@ -29,15 +30,23 @@ import com.mongodb.client.model.Filters;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.enterprise.context.SessionScoped;
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.Reception;
 import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
+@SessionScoped
 public class LinkingFacade implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
+
+   public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) {
+      dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId());
+   }
 
    public List<DataDocument> readAllDocumentLinks(String collectionName, String documentId) {
       List<DataDocument> linkingTables = readLinkingTables(collectionName);

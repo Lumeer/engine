@@ -30,12 +30,25 @@ import java.util.Map;
  */
 public class DataDocument extends LinkedHashMap<String, Object> {
 
+   /**
+    * Name of the document attribute that carries its id.
+    */
+   public static final String DOCUMENT_ID_ATTR = "_id";
+
    public DataDocument() {
       super(); // this is done automatically, but looks better than an empty constructor body ;-)
    }
 
    public DataDocument(final Map<String, Object> data) {
       super(data);
+   }
+
+   /**
+    * Gets the document id.
+    * @return The document id.
+    */
+   public String getId() {
+      return getString(DOCUMENT_ID_ATTR);
    }
 
    /**

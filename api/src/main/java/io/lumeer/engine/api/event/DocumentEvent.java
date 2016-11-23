@@ -28,13 +28,20 @@ import io.lumeer.engine.api.data.DataDocument;
  */
 public abstract class DocumentEvent {
 
+   private String collectionName;
+
    private DataDocument document;
 
-   public DocumentEvent(final DataDocument document) {
+   public DocumentEvent(final String collectionName, final DataDocument document) {
+      this.collectionName = collectionName;
       this.document = document;
    }
 
    public DataDocument getDocument() {
       return document;
+   }
+
+   public String getCollectionName() {
+      return collectionName;
    }
 }

@@ -21,6 +21,8 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.event.DropDocument;
+import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.exception.CollectionNotFoundException;
 import io.lumeer.engine.exception.DocumentNotFoundException;
 import io.lumeer.engine.exception.UnsuccessfulOperationException;
@@ -32,6 +34,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 /**
@@ -51,6 +54,9 @@ public class DocumentFacade implements Serializable {
 
    @Inject
    private DocumentMetadataFacade documentMetadataFacade;
+
+   @Inject
+   private Event<DropDocument> dropDocumentEvent;
 
    //@Inject
    private String userName = "testUser";
@@ -161,9 +167,11 @@ public class DocumentFacade implements Serializable {
       versionFacade.newDocumentVersion(collectionName, dataDocument);
       dataStorage.dropDocument(collectionName, documentId);
 
-      dataDocument = dataStorage.readDocument(collectionName, documentId);
-      if (dataDocument != null) {
+      final DataDocument checkDataDocument = dataStorage.readDocument(collectionName, documentId);
+      if (checkDataDocument != null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.dropDocumentUnsuccesfulString());
+      } else {
+         dropDocumentEvent.fire(new DropDocument(collectionName, dataDocument));
       }
    }
 
