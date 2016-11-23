@@ -43,8 +43,8 @@ import javax.inject.Named;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- *         <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
- *         <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
+ * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
+ * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @Named
 @SessionScoped
@@ -98,12 +98,12 @@ public class CollectionFacade implements Serializable {
     *       if collection already exists in db
     */
    public void createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException {
-      String internalCollectionName = collectionMetadataFacade.collectionNameToInternalForm(collectionOriginalName);
+      String internalCollectionName = collectionMetadataFacade.createInternalName(collectionOriginalName);
 
       if (!isDatabaseCollection(internalCollectionName)) {
          dataStorage.createCollection(internalCollectionName);
          dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(internalCollectionName)); // creates metadata collection
-         collectionMetadataFacade.createInitialMetadata(collectionOriginalName);
+         collectionMetadataFacade.createInitialMetadata(internalCollectionName, collectionOriginalName);
 
          collections = null;
       } else {

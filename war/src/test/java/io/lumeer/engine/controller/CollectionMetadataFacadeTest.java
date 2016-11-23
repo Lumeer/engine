@@ -37,7 +37,6 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
-import javax.xml.crypto.Data;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
@@ -60,15 +59,16 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    @Inject
    private DataStorage dataStorage;
 
-   private final String TEST_COLLECTION_INTERNAL_NAME = "collection.collection1";
-   private final String TEST_COLLECTION_REAL_NAME = "Collection_1";
-   private final String TEST_COLLECTION_METADATA_COLLECTION_NAME = "meta.collection.collection1";
+   private final String TEST_COLLECTION_INTERNAL_NAME = "collection.collection_1_0";
+   private final String TEST_COLLECTION_REAL_NAME = "Collečťion&-./ 1";
+   private final String TEST_COLLECTION_METADATA_COLLECTION_NAME = "meta.collection.collection_1_0";
 
    @Test
-   public void testCollectionNameToInternalForm() throws Exception {
-      String originalName = "čťH-%/e&äll o1";
-      String newName = "collection.hello1";
-      Assert.assertEquals(collectionMetadataFacade.collectionNameToInternalForm(originalName), newName);
+   public void testCreateInternalName() throws Exception {
+      Assert.assertEquals(collectionMetadataFacade.createInternalName(TEST_COLLECTION_REAL_NAME), TEST_COLLECTION_INTERNAL_NAME);
+      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
+      Assert.assertEquals(collectionMetadataFacade.createInternalName(TEST_COLLECTION_REAL_NAME), "collection.collection_1_1");
+      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
    }
 
    @Test

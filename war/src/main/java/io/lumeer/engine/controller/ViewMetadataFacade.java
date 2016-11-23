@@ -107,7 +107,7 @@ public class ViewMetadataFacade implements Serializable {
    // }
 
    /**
-    * Same as collectionNameToInternalForm, just with view prefix
+    * Same as createInternalName, just with view prefix
     *
     * @param originalViewName
     *       name given by user

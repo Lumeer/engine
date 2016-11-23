@@ -20,6 +20,7 @@
 package io.lumeer.engine.util;
 
 import java.text.DateFormat;
+import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -148,5 +149,13 @@ public class Utils {
          return false;
       }
       return true;
+   }
+
+   public static String normalize(String string) {
+      if (string == null) {
+         return null;
+      }
+      String s = string.toLowerCase();
+      return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
    }
 }

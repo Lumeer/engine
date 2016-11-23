@@ -96,16 +96,27 @@ public class CollectionMetadataFacade implements Serializable {
 
    /**
     * Converts collection name given by user to internal representation.
-    * First, spaces, diacritics, special characters etc. are removed from name
-    * which is converted to lowercase. Secondly, we add collection prefix.
+    * Whitespaces are replaced by "_". Converted to lowercase.
+    * Diacritics are replaced by ASCII characters.
+    * Everything except a-z, 0-9 and _ is removed.
+    * Number is added to the end of the name to ensure it is unique.
     *
     * @param originalCollectionName
     *       name given by user
     * @return internal collection name
     */
-   public String collectionNameToInternalForm(String originalCollectionName) {
-      String name = originalCollectionName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-      return COLLECTION_NAME_PREFIX + name;
+   public String createInternalName(String originalCollectionName) {
+      String name = originalCollectionName.replace(' ', '_').toLowerCase();
+      name = Utils.normalize(name);
+      name = name.replaceAll("[^_a-z0-9]+", "");
+      name = COLLECTION_NAME_PREFIX + name;
+      Integer i = 0;
+      while (dataStorage.getAllCollections().contains(name + "_" + i.toString())) {
+         i++;
+      }
+      name = name + "_" + i.toString();
+
+      return name;
    }
 
    /**
@@ -114,8 +125,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionOriginalName
     *       name of collection given by user
     */
-   public void createInitialMetadata(String collectionOriginalName) {
-      String internalCollectionName = collectionNameToInternalForm(collectionOriginalName);
+   public void createInitialMetadata(String internalCollectionName, String collectionOriginalName) {
       String metadataCollectionName = collectionMetadataCollectionName(internalCollectionName);
 
       // set name - we don't use setOriginalCollectionName, because that methods assumes document with name already exists
@@ -600,4 +610,5 @@ public class CollectionMetadataFacade implements Serializable {
       String findNameQuery = sb.toString();
       return findNameQuery;
    }
+
 }
