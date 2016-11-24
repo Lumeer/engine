@@ -21,7 +21,6 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 
-import org.bson.Document;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -29,9 +28,10 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -47,8 +47,10 @@ public class SearchFacadeTest extends Arquillian {
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 
-   private final String DUMMY_COLLECTION1 = "collection.testcollection1";
-   private final String DUMMY_COLLECTION1_ORIGINAL_NAME = "testCollection1";
+   private final String COLLECTION_SEARCH = "collectionSearch";
+   private final String COLLECTION_SEARCH_INTERNAL = "collection.collectionSearch";
+   private final String COLLECTION_SEARCH_RAW = "collectionSearchRaw";
+   private final String COLLECTION_SEARCH_RAW_INTERNAL = "collection.collectionSearchRaw";
 
    @Inject
    private SearchFacade searchFacade;
@@ -59,39 +61,41 @@ public class SearchFacadeTest extends Arquillian {
    @Inject
    private CollectionFacade collectionFacade;
 
+   @BeforeMethod
+   public void setUp() throws Exception {
+      collectionFacade.dropCollection(COLLECTION_SEARCH_INTERNAL);
+      collectionFacade.dropCollection(COLLECTION_SEARCH_RAW_INTERNAL);
+   }
+
    @Test
    public void testSearch() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      collectionFacade.createCollection(COLLECTION_SEARCH);
 
       for (int i = 0; i < 1000; i++) {
          DataDocument insertedDocument = new DataDocument();
-         documentFacade.createDocument(DUMMY_COLLECTION1, insertedDocument);
+         documentFacade.createDocument(COLLECTION_SEARCH_INTERNAL, insertedDocument);
       }
 
-      List<DataDocument> searchDocuments = searchFacade.search(DUMMY_COLLECTION1, null, null, 100, 100);
+      List<DataDocument> searchDocuments = searchFacade.search(COLLECTION_SEARCH_INTERNAL, null, null, 100, 100);
 
       Assert.assertEquals(searchDocuments.size(), 100);
-
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
 
    @Test
    public void testRawSearch() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      collectionFacade.createCollection(COLLECTION_SEARCH_RAW);
 
       for (int i = 0; i < 1000; i++) {
          DataDocument insertedDocument = new DataDocument();
-         documentFacade.createDocument(DUMMY_COLLECTION1, insertedDocument);
+         documentFacade.createDocument(COLLECTION_SEARCH_RAW_INTERNAL, insertedDocument);
       }
 
-      String query = "{find: \"" + DUMMY_COLLECTION1 + "\"}";
+      String query = "{find: \"" + COLLECTION_SEARCH_RAW_INTERNAL + "\"}";
 
       List<DataDocument> searchDocuments = searchFacade.search(query);
 
       // search() method returns 101 entries due to it is a default value of "batchSize" query key
       Assert.assertEquals(searchDocuments.size(), 101);
-
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
 
 }

@@ -27,6 +27,7 @@ package io.lumeer.engine.api;
 public final class LumeerConst {
 
    public static final String LUMEER_VERSION = "1.0";
+   public static final String METADATA_VERSION_KEY = "_metadata-version";
 
    private LumeerConst() {
       // we do not want any instances to be created
