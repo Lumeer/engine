@@ -48,10 +48,10 @@ public class CollectionFacadeTest extends Arquillian {
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 
-   private final String DUMMY_COLLECTION1 = "collection.testcollection1";
+   private final String DUMMY_COLLECTION1 = "collection.testcollection1_0";
    private final String DUMMY_COLLECTION1_ORIGINAL_NAME = "testCollection1";
-   private final String DUMMY_COLLECTION1_METADATA_COLLECTION = "meta.collection.testcollection1";
-   private final String DUMMY_COLLECTION2 = "collection.testcollection2";
+   private final String DUMMY_COLLECTION1_METADATA_COLLECTION = "meta.collection.testcollection1_0";
+   private final String DUMMY_COLLECTION2 = "collection.testcollection2_0";
    private final String DUMMY_COLLECTION2_ORIGINAL_NAME = "testCollection2";
 
    private final String DUMMY_KEY1 = "key1";

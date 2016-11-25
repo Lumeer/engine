@@ -96,7 +96,8 @@ public class CollectionMetadataFacade implements Serializable {
 
    /**
     * Converts collection name given by user to internal representation.
-    * Whitespaces are replaced by "_". Converted to lowercase.
+    * First, the name is trimmed of whitespaces.
+    * Spaces are replaced by "_". Converted to lowercase.
     * Diacritics are replaced by ASCII characters.
     * Everything except a-z, 0-9 and _ is removed.
     * Number is added to the end of the name to ensure it is unique.
@@ -106,7 +107,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return internal collection name
     */
    public String createInternalName(String originalCollectionName) {
-      String name = originalCollectionName.replace(' ', '_').toLowerCase();
+      String name = originalCollectionName.trim();
+      name = name.replace(' ', '_').toLowerCase();
       name = Utils.normalize(name);
       name = name.replaceAll("[^_a-z0-9]+", "");
       name = COLLECTION_NAME_PREFIX + name;
@@ -483,7 +485,7 @@ public class CollectionMetadataFacade implements Serializable {
       if (!attributeInfo.isEmpty()) {
          DataDocument attributeDocument = attributeInfo.get(0);
          String correctType = attributeDocument.getString(COLLECTION_ATTRIBUTE_TYPE_KEY);
-         return correctType == attributeType;
+         return correctType.equals(attributeType);
       } else { // attribute doesn't exist
          return false;
       }

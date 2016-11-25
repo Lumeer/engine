@@ -49,7 +49,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 
-   private final String DUMMY_COLLECTION1 = "collection.testcollection1";
+   private final String DUMMY_COLLECTION1 = "collection.testcollection1_0";
    private final String DUMMY_COLLECTION1_ORIGINAL_NAME = "testCollection1";
 
    private final String META_CREATE_USER_KEY = "meta-create-user";

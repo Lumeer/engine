@@ -48,7 +48,7 @@ public class SearchFacadeTest extends Arquillian {
    }
 
    private final String COLLECTION_SEARCH = "collectionSearch";
-   private final String COLLECTION_SEARCH_INTERNAL = "collection.collectionSearch";
+   private final String COLLECTION_SEARCH_INTERNAL = "collection.collectionSearch_0";
    private final String COLLECTION_SEARCH_RAW = "collectionSearchRaw";
    private final String COLLECTION_SEARCH_RAW_INTERNAL = "collection.collectionSearchRaw";
 

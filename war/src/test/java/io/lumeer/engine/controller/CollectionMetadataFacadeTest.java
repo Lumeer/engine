@@ -194,7 +194,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    @Test
    public void testCreateInitialMetadata() throws CollectionAlreadyExistsException, CollectionNotFoundException {
       dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(TEST_COLLECTION_INTERNAL_NAME));
-      collectionMetadataFacade.createInitialMetadata(TEST_COLLECTION_REAL_NAME);
+      collectionMetadataFacade.createInitialMetadata(TEST_COLLECTION_INTERNAL_NAME, TEST_COLLECTION_REAL_NAME);
 
       String name = collectionMetadataFacade.getOriginalCollectionName(TEST_COLLECTION_INTERNAL_NAME);
       String lock = collectionMetadataFacade.getCollectionLockTime(TEST_COLLECTION_INTERNAL_NAME);
