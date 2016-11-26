@@ -124,6 +124,8 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Creates initial metadata in metadata collection - adds original name and initial time lock.
     *
+    * @param internalCollectionName
+    *       internal collection name
     * @param collectionOriginalName
     *       name of collection given by user
     */
@@ -370,6 +372,8 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Sets original (given by user) collection name in metadata
     *
+    * @param collectionInternalName
+    *       internal collection name
     * @param collectionOriginalName
     *       name given by user
     */
