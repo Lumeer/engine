@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;/*
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.util.ConfigurationManipulator;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -29,6 +30,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -45,27 +47,25 @@ public class ConfigurationFacadeTest extends Arquillian {
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 
-   private final String DUMMY_USER_COLLECTION = "config.user";
-   private final String DUMMY_TEAM_COLLECTION = "config.team";
+   private final String COLLECTION_USER_CONFIG = "config.user";
+   // private final String COLLECTION_TEAM_CONFIG = "config.team";
 
-   private final String DUMMY_EMAIL_KEY = "userEmail";
-   private final String DUMMY_PORT_KEY = "dbPort";
-   private final String DUMMY_DBNAME_KEY = "dbName";
-   private final String DUMMY_DBURL_KEY = "dbURL";
-   private final String DUMMY_DOCUMENT_KEY = "dummyDocument";
+   private final String NAME_KEY = "name";
+   private final String PORT_KEY = "db_port";
+   private final String DBHOST_KEY = "db_host";
+   private final String DBURL_KEY = "db_url";
+   private final String CONFIG_DOCUMENT_KEY = "config";
+   private final String DOCUMENT_PROPERTY_KEY = "document_property";
 
-   private final String DUMMY_EMAIL_FIRSTNAME = "pepa";
-   private final String DUMMY_EMAIL_VALUE = "@zdepa.cz";
-   private final String DUMMY_DBNAME_VALUE = "lumeer";
-   private final String DUMMY_DBURL_VALUE = "mongodb://" + DUMMY_DBNAME_VALUE;
+   private final String DUMMY_EMAIL_PREFIX = "pepa";
+   private final String DUMMY_EMAIL_DOMAIN = "@zdepa.cz";
+   private final String DUMMY_DBHOST_VALUE = "lumeer";
+   private final String DUMMY_DBURL_VALUE = "mongodb://" + DUMMY_DBHOST_VALUE;
+   private final String DUMMY_VALUE = "dummyValue";
+
    private final int DUMMY_PORT_VALUE = 27017;
-
-   private final String DUMMY_KEY_1 = "dummyKey1";
-   private final String DUMMY_KEY_2 = "dummyKey2";
-   private final String DUMMY_VALUE_1 = "dummyValue1";
-   private final String DUMMY_VALUE_2 = "dummyValue2";
-
-   private DataDocument dummyDataDocument;
+   private final int BEFORE_SIZE_RESET = 4;
+   private final int AFTER_SIZE_RESET = 0;
 
    @Inject
    @SystemDataStorage
@@ -74,139 +74,95 @@ public class ConfigurationFacadeTest extends Arquillian {
    @Inject
    private ConfigurationFacade configurationFacade;
 
-   @Test
-   public void testGetConfigurationString() throws Exception {
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);
+   @Inject
+   private ConfigurationManipulator configurationManipulator;
 
-      Assert.assertEquals(configurationFacade.getConfigurationString(DUMMY_USER_COLLECTION, DUMMY_DBNAME_KEY).get(), DUMMY_DBNAME_VALUE + '0');
+   @Inject
+   private UserFacade userFacade;
 
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
+   private DataDocument dummyDataDocument;
+
+   @BeforeMethod
+   public void setUp() throws Exception {
+      if (isDatabaseCollection(COLLECTION_USER_CONFIG)) {
+         systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
+      }
    }
 
    @Test
-   public void testGetConfigurationInteger() throws Exception {
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);
+   public void testSetAndGetConfigurationString() throws Exception {
+      systemDataStorage.createCollection(COLLECTION_USER_CONFIG);
 
-      Assert.assertEquals(configurationFacade.getConfigurationInteger(DUMMY_USER_COLLECTION, DUMMY_PORT_KEY).get().intValue(), DUMMY_PORT_VALUE);
+      // #1 if system database is empty
+      configurationFacade.setConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      Assert.assertEquals(configurationFacade.getConfigurationString(DBHOST_KEY).get(), DUMMY_DBHOST_VALUE);
+      systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
 
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
+      // #2 if system database is filled and key exists
+      fillSystemDatabase(COLLECTION_USER_CONFIG);
+      configurationFacade.setConfigurationString(DBURL_KEY, DUMMY_VALUE);
+      Assert.assertEquals(configurationFacade.getConfigurationString(DBURL_KEY).get(), DUMMY_VALUE);
    }
 
    @Test
-   public void testGetConfigurationDocument() throws Exception {
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);
+   public void testSetAndGetConfigurationInteger() throws Exception {
+      systemDataStorage.createCollection(COLLECTION_USER_CONFIG);
 
-      Assert.assertEquals(configurationFacade.getConfigurationDocument(DUMMY_USER_COLLECTION, DUMMY_DOCUMENT_KEY).get(), dummyDataDocument);
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
+      // #1 if system database is empty
+      configurationFacade.setConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
+      Assert.assertTrue(configurationFacade.getConfigurationInteger(PORT_KEY).get() == DUMMY_PORT_VALUE);
    }
 
    @Test
-   public void testSetConfigurationDocument() throws Exception {
-      // #1: if configuration entry has not existed so far - dbs is empty
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
+   public void testSetAndGetConfigurationDocument() throws Exception {
+      systemDataStorage.createCollection(COLLECTION_USER_CONFIG);
 
-      DataDocument insertedDocument = new DataDocument();
-      insertedDocument.put(DUMMY_KEY_1, DUMMY_VALUE_1);
-      insertedDocument.put(DUMMY_KEY_2, DUMMY_VALUE_2);
+      DataDocument dummyDocument = createDummyDataDocument();
+      configurationFacade.setConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      DataDocument document = configurationFacade.getConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
-      configurationFacade.setConfigurationDocument(DUMMY_USER_COLLECTION, DUMMY_DOCUMENT_KEY, insertedDocument);
-
-      DataDocument configDocument = configurationFacade.getConfigurationDocument(DUMMY_USER_COLLECTION, DUMMY_DOCUMENT_KEY).get();
-      Assert.assertEquals(configDocument.get(DUMMY_KEY_1), insertedDocument.get(DUMMY_KEY_1));
-      Assert.assertEquals(configDocument.get(DUMMY_KEY_2), insertedDocument.get(DUMMY_KEY_2));
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
-
-      // #2: if configuration entry has already existed - dbs is filled
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);
-
-      configurationFacade.setConfigurationDocument(DUMMY_USER_COLLECTION, DUMMY_DOCUMENT_KEY, insertedDocument);
-
-      DataDocument reconfigDocument = configurationFacade.getConfigurationDocument(DUMMY_USER_COLLECTION, DUMMY_DOCUMENT_KEY).get();
-      Assert.assertEquals(reconfigDocument.get(DUMMY_KEY_1), insertedDocument.get(DUMMY_KEY_1));
-      Assert.assertEquals(reconfigDocument.get(DUMMY_KEY_2), insertedDocument.get(DUMMY_KEY_2));
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
+      Assert.assertTrue(dummyDocument.equals(document));
    }
 
    @Test
-   public void testSetConfigurationString() throws Exception {
-      final String DUMMY_STRING_KEY = "stringKey";
-      final String DUMMY_STRING_VALUE = "stringValue";
-      final String DUMMY_DBURL_VALUE = "mongodb://localhost";
+   public void testResetConfiguration() throws Exception {
+      fillSystemDatabase(COLLECTION_USER_CONFIG);
 
-      // #1: if configuration entry has not existed so far - dbs is empty
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      configurationFacade.setConfigurationString(DUMMY_USER_COLLECTION, DUMMY_STRING_KEY, DUMMY_STRING_VALUE);
-
-      String configString = configurationFacade.getConfigurationString(DUMMY_USER_COLLECTION, DUMMY_STRING_KEY).get();
-      Assert.assertEquals(configString, DUMMY_STRING_VALUE);
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
-
-      // #2: if configuration entry has already existed - dbs is filled
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);
-
-      configurationFacade.setConfigurationString(DUMMY_USER_COLLECTION, DUMMY_DBURL_KEY, DUMMY_DBURL_VALUE);
-
-      String reconfigString = configurationFacade.getConfigurationString(DUMMY_USER_COLLECTION, DUMMY_DBURL_KEY).get();
-      Assert.assertEquals(reconfigString, DUMMY_DBURL_VALUE);
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
+      Assert.assertEquals(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY)).size(), BEFORE_SIZE_RESET);
+      configurationFacade.resetConfiguration();
+      Assert.assertEquals(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY)).size(), AFTER_SIZE_RESET);
    }
 
    @Test
-   public void testSetConfigurationInteger() throws Exception {
-      final String DUMMY_INT_KEY = "integerKey";
-      final int DUMMY_PORT_VALUE = 12345;
+   public void testResetConfigurationAttribute() throws Exception {
+      fillSystemDatabase(COLLECTION_USER_CONFIG);
 
-      // #1: if configuration entry has not existed so far - dbs is empty
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      configurationFacade.setConfigurationInteger(DUMMY_USER_COLLECTION, DUMMY_INT_KEY, DUMMY_PORT_VALUE);
-
-      int configInt = configurationFacade.getConfigurationInteger(DUMMY_USER_COLLECTION, DUMMY_INT_KEY).get();
-      Assert.assertEquals(configInt, DUMMY_PORT_VALUE);
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
-
-      // #2: if configuration entry has already existed - dbs is filled
-      systemDataStorage.createCollection(DUMMY_USER_COLLECTION);
-      fillDatabaseDummySystemConfigEntries(DUMMY_USER_COLLECTION);
-
-      configurationFacade.setConfigurationInteger(DUMMY_USER_COLLECTION, DUMMY_PORT_KEY, DUMMY_PORT_VALUE);
-
-      int reconfigInt = configurationFacade.getConfigurationInteger(DUMMY_USER_COLLECTION, DUMMY_PORT_KEY).get();
-      Assert.assertEquals(reconfigInt, DUMMY_PORT_VALUE);
-
-      systemDataStorage.dropCollection(DUMMY_USER_COLLECTION);
+      configurationFacade.resetConfigurationAttribute(DBURL_KEY);
+      Assert.assertFalse(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY)).containsKey(DBURL_KEY));
    }
 
-   @Test
-   public void testResetToDefaultConfiguration() throws Exception {
-      // TODO:
-   }
+   private void fillSystemDatabase(final String collectionUser) {
+      if (collectionUser != null) {
+         systemDataStorage.createCollection(collectionUser);
+         // insert user entries
+         for (int i = 0; i < 5; i++) {
+            DataDocument insertedDocument = new DataDocument();
+            if (i == 0) {
+               insertedDocument.put(NAME_KEY, userFacade.getUserEmail());
+            } else {
+               insertedDocument.put(NAME_KEY, DUMMY_EMAIL_PREFIX + i + DUMMY_EMAIL_DOMAIN);
+            }
 
-   @Test
-   public void testResetAllToDefaults() throws Exception {
-      // TODO:
-   }
+            DataDocument config = new DataDocument();
+            config.put(DBHOST_KEY, DUMMY_DBHOST_VALUE + i);
+            config.put(PORT_KEY, DUMMY_PORT_VALUE + i);
+            config.put(DBURL_KEY, DUMMY_DBURL_VALUE + i);
+            config.put(DOCUMENT_PROPERTY_KEY, createDummyDataDocument());
 
-   private void fillDatabaseDummySystemConfigEntries(String collectionName) {
-      for (int i = 0; i < 20; i++) {
-         DataDocument insertedDocument = new DataDocument();
-         insertedDocument.put(DUMMY_EMAIL_KEY, DUMMY_EMAIL_FIRSTNAME + i + DUMMY_EMAIL_VALUE);
-         insertedDocument.put(DUMMY_DBNAME_KEY, DUMMY_DBNAME_VALUE + i);
-         insertedDocument.put(DUMMY_PORT_KEY, DUMMY_PORT_VALUE + i);
-         insertedDocument.put(DUMMY_DBURL_KEY, DUMMY_DBURL_VALUE + i);
-         insertedDocument.put(DUMMY_DOCUMENT_KEY, createDummyDataDocument());
+            insertedDocument.put(CONFIG_DOCUMENT_KEY, config);
 
-         systemDataStorage.createDocument(collectionName, insertedDocument);
+            systemDataStorage.createDocument(collectionUser, insertedDocument);
+         }
       }
    }
 
@@ -221,6 +177,15 @@ public class ConfigurationFacadeTest extends Arquillian {
       dummyDataDocument.put(dummyKey2, dummyValue2);
 
       return dummyDataDocument;
+   }
+
+   private boolean isDatabaseCollection(final String collectionName) {
+      try {
+         return systemDataStorage.getAllCollections().contains(collectionName);
+      } catch (Exception e) {
+         // nothing to do
+      }
+      return false;
    }
 
 }

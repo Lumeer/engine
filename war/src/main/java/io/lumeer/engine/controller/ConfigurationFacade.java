@@ -22,18 +22,13 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.exception.AttributeNotFoundException;
 import io.lumeer.engine.exception.CollectionNotFoundException;
-import io.lumeer.engine.exception.NullParameterException;
-import io.lumeer.engine.util.ErrorMessageBuilder;
-
-import org.bson.Document;
+import io.lumeer.engine.util.ConfigurationManipulator;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -55,11 +50,8 @@ public class ConfigurationFacade implements Serializable {
    private static final Map<String, String> DEFAULT_VALUES = new HashMap<>();
 
    private static final String DEFAULT_PROPERTY_FILE = "defaults-dev.properties";
-   private static final String USER_EMAIL_KEY = "userEmail";
    private static final String USER_CONFIG = "config.user";
-   private static final String ID_KEY = "_id";
-
-   private static final int TARGET_VERSION_DISABLED = -1;
+   private static final String TEAM_CONFIG = "config.team";
 
    @Inject
    @SystemDataStorage
@@ -71,8 +63,14 @@ public class ConfigurationFacade implements Serializable {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   private ConfigurationManipulator configurationManipulator;
+
+   /**
+    * Sets default values loaded from system environment or predefined (local resources).
+    */
    @PostConstruct
-   public void setDefaultValues() {
+   private void setDefaultValues() {
       String envDefaults = System.getenv("lumeer.defaults");
       if (envDefaults == null) {
          envDefaults = DEFAULT_PROPERTY_FILE;
@@ -80,331 +78,166 @@ public class ConfigurationFacade implements Serializable {
 
       final Properties properties = new Properties();
       try {
+         // TODO: why input returns null?
          final InputStream input = ConfigurationFacade.class.getResourceAsStream("/" + DEFAULT_PROPERTY_FILE);
-         properties.load(input);
-         properties.forEach((key, value) -> DEFAULT_VALUES.put(key.toString(), value.toString()));
+         if (input != null) {
+            properties.load(input);
+            properties.forEach((key, value) -> DEFAULT_VALUES.put(key.toString(), value.toString()));
+         }
       } catch (IOException e) {
          log.log(Level.SEVERE, "Unable to load default property values: ", e);
       }
    }
 
    /**
-    * Returns an Optional String with the specified present non-null value of given key in the collection.
+    * Returns an Optional String value of the given key for currently logged user's configuration.
     *
-    * @param collectionName
-    *       the name of collection
     * @param key
-    *       the key of given collection
-    * @return string value of given key
+    *       the name of key
+    * @return Optional String value of the given key
     * @throws CollectionNotFoundException
-    * @throws AttributeNotFoundException
+    *       if the configuration collection does not exist
     */
-   public Optional<String> getConfigurationString(final String collectionName, final String key) throws CollectionNotFoundException, AttributeNotFoundException {
-      final Object value = readValueFromDb(collectionName, key);
-
-      if (value == null && DEFAULT_VALUES.containsKey(key)) {
-         return Optional.of(DEFAULT_VALUES.get(key));
-      } else if (value != null) {
-         return Optional.of(value.toString());
-      }
-
-      return Optional.empty();
+   public Optional<String> getConfigurationString(final String key) throws CollectionNotFoundException {
+      return Optional.of(getConfiguration(key).toString());
    }
 
    /**
-    * Returns an Optional Integer with the specified present non-null value of given key in the collection.
+    * Returns an Optional Integer value of the given key for currently logged user's configuration.
     *
-    * @param collectionName
-    *       the name of collection
     * @param key
-    *       the key of given collection
-    * @return integer value of given key
+    *       the name of key
+    * @return Optional Integer value of the given key
     * @throws CollectionNotFoundException
-    * @throws AttributeNotFoundException
+    *       if the configuration collection does not exist
     */
-   public Optional<Integer> getConfigurationInteger(final String collectionName, final String key) throws CollectionNotFoundException, AttributeNotFoundException {
-      final Optional<String> value = getConfigurationString(collectionName, key);
-
-      if (value.isPresent()) {
-         return Optional.of(Integer.parseInt(value.get()));
-      } else {
-         return Optional.empty();
-      }
+   public Optional<Integer> getConfigurationInteger(final String key) throws CollectionNotFoundException {
+      return Optional.of(Integer.parseInt(getConfigurationString(key).get()));
    }
 
    /**
-    * Returns an Optional DataDocument with the specified present non-null value of given key in the collection.
+    * Returns an Optional DataDocument value of the given key for currently logged user's configuration.
     *
-    * @param collectionName
-    *       the name of collection
     * @param key
-    *       the key of given collection
-    * @return DataDocument object of given key
+    *       the name of key
+    * @return Optional DataDocument value of the given key
     * @throws CollectionNotFoundException
-    * @throws AttributeNotFoundException
+    *       if the configuration collection does not exist
     */
-   public Optional<DataDocument> getConfigurationDocument(final String collectionName, final String key) throws CollectionNotFoundException, AttributeNotFoundException {
-      final Object value = readValueFromDb(collectionName, key);
+   public Optional<DataDocument> getConfigurationDocument(final String key) throws CollectionNotFoundException {
+      final Object value = getConfiguration(key);
 
-      if (value != null && value instanceof Document) {
+      if (value instanceof DataDocument) {
          DataDocument document = new DataDocument();
          document.putAll((Map<? extends String, ?>) value);
-
          return Optional.of(document);
       }
-
       return Optional.empty();
    }
 
    /**
-    * Sets a new String value for given key in system configuration entry. If the given key exists, its value will be updated.
+    * Sets a new key-String value to configuration entry for currently logged user. If the given key exists, its value will be updated.
     *
-    * @param collectionName
-    *       the name of collection in system database
     * @param key
-    *       the key of configuration field
+    *       the name of key
     * @param value
     *       the String value of the given key
     * @throws CollectionNotFoundException
-    * @throws NullParameterException
+    *       if the configuration collection does not exist
     */
-   public void setConfigurationString(final String collectionName, final String key, final String value) throws CollectionNotFoundException, NullParameterException {
-      writeValueToDb(collectionName, key, value);
+   public void setConfigurationString(final String key, final String value) throws CollectionNotFoundException {
+      setConfiguration(key, value);
    }
 
    /**
-    * Sets a new Integer value for given key in system configuration entry. If the given key exists, its value will be updated.
+    * Sets a new key-Integer value to configuration entry for currently logged user. If the given key exists, its value will be updated.
     *
-    * @param collectionName
-    *       the name of collection in system database
     * @param key
-    *       the key of configuration field
+    *       the name of key
     * @param value
     *       the Integer value of the given key
     * @throws CollectionNotFoundException
-    * @throws NullParameterException
+    *       if the configuration collection does not exist
     */
-   public void setConfigurationInteger(final String collectionName, final String key, final int value) throws CollectionNotFoundException, NullParameterException {
-      writeValueToDb(collectionName, key, value);
+   public void setConfigurationInteger(final String key, final int value) throws CollectionNotFoundException {
+      setConfiguration(key, value);
    }
 
    /**
-    * Sets a new DataDocument document for given key in system configuration entry. If the given document exists, it will be updated.
+    * Sets a new key-DataDocument value to configuration entry for currently logged user. If the given key exists, the document will be updated.
     *
-    * @param collectionName
-    *       the name of collection in system database
     * @param key
-    *       the key of configuration field
-    * @param configurationDocument
-    *       the DataDocument object representing a configuration document
+    *       the name of key
+    * @param document
+    *       the DataDocument of the given key
     * @throws CollectionNotFoundException
-    * @throws NullParameterException
+    *       if the configuration collection does not exist
     */
-   public void setConfigurationDocument(final String collectionName, final String key, final DataDocument configurationDocument) throws CollectionNotFoundException, NullParameterException {
-      writeValueToDb(collectionName, key, configurationDocument);
+   public void setConfigurationDocument(final String key, final DataDocument document) throws CollectionNotFoundException {
+      setConfiguration(key, document);
    }
 
    /**
-    * Restores a configuration field specified by its key to default value.
+    * Removes all system configuration of currently logged user. Does not delete user's configuration entry!
     *
-    * @param collectionName
-    *       the name of collection in system database
-    * @param key
-    *       the key of configuration field
     * @throws CollectionNotFoundException
+    *       if the configuration collection does not exist
     */
-   public void resetToDefaultConfiguration(final String collectionName, final String key) throws CollectionNotFoundException {
-      if (!isDatabaseCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-
-      if (DEFAULT_VALUES.containsKey(key)) {
-         String user = userFacade.getUserEmail();
-         Optional<DataDocument> userConfig = getUserConfiguration(user);
-
-         if (userConfig.isPresent()) {
-            String id = userConfig.get().get(ID_KEY).toString();
-
-            systemDataStorage.removeAttribute(collectionName, id, key);
-
-            DataDocument defaultConfigDocument = new DataDocument();
-            defaultConfigDocument.put(key, DEFAULT_VALUES.get(key));
-
-            systemDataStorage.updateDocument(collectionName, defaultConfigDocument, id, TARGET_VERSION_DISABLED);
-         } else {
-            // if userConfig does not exist, create it
-            createNewUserConfiguration(collectionName, user);
-         }
-      }
-   }
-
-   /**
-    * Restores all configuration fields to default values.
-    *
-    * @param collectionName
-    *       the name of collection in system database
-    * @throws CollectionNotFoundException
-    */
-   public void resetAllToDefaults(final String collectionName) throws CollectionNotFoundException {
-      if (!isDatabaseCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-
+   public void resetConfiguration() throws CollectionNotFoundException {
       String user = userFacade.getUserEmail();
-      Optional<DataDocument> userConfig = getUserConfiguration(user);
-
-      if (userConfig.isPresent()) {
-         String id = userConfig.get().get(ID_KEY).toString();
-         systemDataStorage.dropDocument(collectionName, id);
-
-         // TODO: test
-         DataDocument defaultConfigDocument = new DataDocument();
-         defaultConfigDocument.put(USER_EMAIL_KEY, user);
-
-         for (String defaultKey : DEFAULT_VALUES.keySet()) {
-            defaultConfigDocument.put(defaultKey, DEFAULT_VALUES.get(defaultKey));
-         }
-
-         systemDataStorage.createDocument(collectionName, defaultConfigDocument);
-      } else {
-         // if userConfig does not exist, create it
-         createNewUserConfiguration(collectionName, user);
-      }
+      configurationManipulator.resetConfiguration(USER_CONFIG, user);
    }
 
    /**
-    * Sets a new object value for given key in system configuration entry. If the given key exists, its value will be updated.
+    * Removes the specified attribute located in configuration field.
     *
-    * @param collectionName
-    *       the name of collection in system database
+    * @param attributeName
+    *       the name of attribute to remove
+    * @throws CollectionNotFoundException
+    *       if the configuration collection does not exist
+    */
+   public void resetConfigurationAttribute(final String attributeName) throws CollectionNotFoundException {
+      String user = userFacade.getUserEmail();
+      configurationManipulator.resetConfigurationAttribute(USER_CONFIG, user, attributeName);
+   }
+
+   /**
+    * Sets a new key-Object value to configuration entry for currently logged user. If the given key exists, the document will be updated.
+    *
     * @param key
-    *       the key of configuration field
+    *       the name of key
     * @param value
     *       the Object value of the given key
     * @throws CollectionNotFoundException
-    * @throws NullParameterException
+    *       if the configuration collection does not exist
     */
-   private void writeValueToDb(final String collectionName, final String key, final Object value) throws CollectionNotFoundException, NullParameterException {
-      if (!isDatabaseCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-
-      if (key == null && value == null) {
-         throw new NullParameterException(ErrorMessageBuilder.nullKey());
-      }
-
-      // if default value for given key exists, do not add this key-value to system dbs
-      if (!DEFAULT_VALUES.containsKey(key)) {
-         final String user = userFacade.getUserEmail();
-         Optional<DataDocument> userConfig = getUserConfiguration(user);
-
-         DataDocument configDocument;
-         String id = "";
-
-         // if user's system configuration entry does exist in database
-         if (userConfig.isPresent()) {
-            configDocument = userConfig.get();
-            id = configDocument.get(ID_KEY).toString();
-         } else {
-            configDocument = new DataDocument();
-            configDocument.put(USER_EMAIL_KEY, user);
-         }
-
-         if (value instanceof String) {
-            configDocument.put(key, value.toString());
-         }
-
-         if (value instanceof Integer) {
-            configDocument.put(key, Integer.valueOf(value.toString()));
-         }
-
-         if (value instanceof DataDocument) {
-            configDocument.put(key, value);
-         }
-
-         if (userConfig.isPresent()) {
-            systemDataStorage.updateDocument(collectionName, configDocument, id, TARGET_VERSION_DISABLED);
-         } else {
-            systemDataStorage.createDocument(collectionName, configDocument);
-         }
-      }
-   }
-
-   /**
-    * Reads a value of given key from system database.
-    *
-    * @param collectionName
-    *       the collection name
-    * @param key
-    *       the key of given collection
-    * @return the value of given key
-    * @throws CollectionNotFoundException
-    * @throws AttributeNotFoundException
-    */
-   private Object readValueFromDb(final String collectionName, final String key) throws CollectionNotFoundException, AttributeNotFoundException {
+   private void setConfiguration(final String key, final Object value) throws CollectionNotFoundException {
       final String user = userFacade.getUserEmail();
 
-      if (!isDatabaseCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      // if default value for given key does not exist in DEFAULT_VALUES, insert the value to configuration entry
+      if (!DEFAULT_VALUES.containsKey(key)) {
+         configurationManipulator.setConfiguration(USER_CONFIG, user, key, value);
       }
-
-      String filter = "{" + USER_EMAIL_KEY + ": \"" + user + "\"}";
-      // every single user has only one configuration entry
-      DataDocument userConfig = systemDataStorage.search(collectionName, filter, null, 0, 0).get(0);
-
-      if (!userConfig.containsKey(key)) {
-         throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(key, collectionName));
-      }
-
-      return userConfig.get(key);
    }
 
    /**
-    * Finds out if database has given collection.
+    * Returns an Object value of the given key for currently logged user's configuration.
     *
-    * @param collectionName
-    *       name of the collection
-    * @return true if database has given collection
+    * @param key
+    *       the name of key
+    * @return Objectvalue of the given key
+    * @throws CollectionNotFoundException
+    *       if the configuration collection does not exist
     */
-   private boolean isDatabaseCollection(final String collectionName) {
-      return systemDataStorage.getAllCollections().contains(collectionName);
-   }
+   private Object getConfiguration(final String key) throws CollectionNotFoundException {
+      String user = userFacade.getUserEmail();
+      Object conf;
 
-   /**
-    * Returns user configuration of given user email address.ø
-    *
-    * @param user
-    *       email address of logged user
-    * @return Optional object with DataDocument configuration entry
-    */
-   private Optional<DataDocument> getUserConfiguration(final String user) throws CollectionNotFoundException {
-      if (!isDatabaseCollection(USER_CONFIG)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(USER_CONFIG));
+      if ((conf = configurationManipulator.getConfiguration(USER_CONFIG, user, key)) == null) {
+         if ((conf = configurationManipulator.getConfiguration(TEAM_CONFIG, user, key)) == null) {
+            return DEFAULT_VALUES.get(key);
+         }
       }
-      // TODO: indexing?
-
-      String filter = "{" + USER_EMAIL_KEY + ": \"" + user + "\"}";
-      List<DataDocument> configs = systemDataStorage.search(USER_CONFIG, filter, null, 0, 0);
-
-      if (!configs.isEmpty()) {
-         return Optional.of(configs.get(0));
-      }
-
-      return Optional.empty();
+      return conf;
    }
-
-   /**
-    * Creates new user configuration. The assumption is that the user has not existed so far.
-    *
-    * @param collectionName
-    *       the name of collection
-    * @param user
-    *       email address of logged user
-    */
-   private void createNewUserConfiguration(final String collectionName, final String user) {
-      DataDocument configDocument = new DataDocument();
-      configDocument.put(USER_EMAIL_KEY, user);
-      systemDataStorage.createDocument(collectionName, configDocument);
-   }
-
 }
