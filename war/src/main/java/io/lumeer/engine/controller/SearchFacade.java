@@ -32,7 +32,6 @@ import javax.inject.Inject;
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-
 @SessionScoped
 public class SearchFacade implements Serializable {
 

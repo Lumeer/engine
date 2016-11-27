@@ -112,11 +112,11 @@ public class CollectionMetadataFacade implements Serializable {
       name = Utils.normalize(name);
       name = name.replaceAll("[^_a-z0-9]+", "");
       name = COLLECTION_NAME_PREFIX + name;
-      Integer i = 0;
-      while (dataStorage.getAllCollections().contains(name + "_" + i.toString())) {
+      int i = 0;
+      while (dataStorage.getAllCollections().contains(name + "_" + i)) {
          i++;
       }
-      name = name + "_" + i.toString();
+      name = name + "_" + i;
 
       return name;
    }

@@ -30,6 +30,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import com.mongodb.MongoWriteException;
 
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
+@SessionScoped
 public class VersionFacade implements Serializable {
    private final String SHADOW = ".shadow";
    private final String VERSION_STRING = "_metadata-version"; //use from utils

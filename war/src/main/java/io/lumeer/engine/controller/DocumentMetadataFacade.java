@@ -29,11 +29,13 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
+@SessionScoped
 public class DocumentMetadataFacade implements Serializable {
 
    @Inject

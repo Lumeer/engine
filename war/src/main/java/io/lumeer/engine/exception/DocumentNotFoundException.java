@@ -19,8 +19,6 @@
  */
 package io.lumeer.engine.exception;
 
-import io.lumeer.engine.DbException;
-
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */

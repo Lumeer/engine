@@ -24,15 +24,17 @@ import io.lumeer.engine.api.data.DataStorage;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
+@SessionScoped
 public class ViewMetadataFacade implements Serializable {
 
    @Inject
-   DataStorage dataStorage;
+   private DataStorage dataStorage;
 
    public final String META_TYPE_KEY = "meta-type";
    public final String VIEW_METADATA_PREFIX = "meta.";

@@ -18,7 +18,7 @@
  * -----------------------------------------------------------------------/
  */
 
-package io.lumeer.engine;
+package io.lumeer.engine.exception;
 
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
