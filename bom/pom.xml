@@ -102,6 +102,7 @@
       <version.servo>0.12.10</version.servo>
       <version.netty>4.1.6.Final</version.netty>
       <version.mongo.driver>3.3.0</version.mongo.driver>
+      <version.keycloak>2.4.0.Final</version.keycloak>
 
       <version.maven.plugin.api>3.3.9</version.maven.plugin.api>
       <version.maven.core>3.3.9</version.maven.core>
@@ -168,6 +169,13 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${version.slf4j}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-core</artifactId>
+            <version>${version.keycloak}</version>
+            <scope>provided</scope>
          </dependency>
 
          <!-- Groovy -->

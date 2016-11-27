@@ -19,12 +19,15 @@
  */
 package io.lumeer.engine.controller;
 
+import org.keycloak.KeycloakPrincipal;
+
 import java.io.Serializable;
-import java.security.Principal;
 import java.util.Collections;
-import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Holds information about currently logged in user.
@@ -35,8 +38,7 @@ import javax.inject.Inject;
 public class UserFacade implements Serializable {
 
    @Inject
-   private Principal principal;
-   // KeycloakPrincipal<KeycloakSecurityContext> kcPrincipal = (KeycloakPrincipal<KeycloakSecurityContext>)(sessionContext.getCallerPrincipal());
+   private HttpServletRequest request;
 
    /**
     * Gets the name of currently logged in user.
@@ -44,7 +46,8 @@ public class UserFacade implements Serializable {
     * @return The name of currently logged in user.
     */
    public String getUserName() {
-      return "Pepa Žblotký";
+      final Optional<KeycloakPrincipal> principal = getPrincipal();
+      return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getName() : "Alan Mathison Turing";
    }
 
    /**
@@ -53,7 +56,8 @@ public class UserFacade implements Serializable {
     * @return The email of currently logged in user.
     */
    public String getUserEmail() {
-      return "pepa0@zdepa.cz";
+      final Optional<KeycloakPrincipal> principal = getPrincipal();
+      return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getEmail() : "aturing@lumeer.io";
    }
 
    /**
@@ -61,7 +65,21 @@ public class UserFacade implements Serializable {
     *
     * @return The user roles of currently logged in user.
     */
-   public List<String> getUserRoles() {
-      return Collections.singletonList("user");
+   public Set<String> getUserRoles() {
+      final Optional<KeycloakPrincipal> principal = getPrincipal();
+      return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getRealmAccess().getRoles() : Collections.singleton("scientist");
+   }
+
+   /**
+    * Obtains Keycloak principal is possible.
+    *
+    * @return Optionally returns the Keycloak principal if it was available.
+    */
+   private Optional<KeycloakPrincipal> getPrincipal() {
+      try {
+         return Optional.ofNullable((KeycloakPrincipal) request.getUserPrincipal());
+      } catch (Throwable t) {
+         return Optional.empty();
+      }
    }
 }
