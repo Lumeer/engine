@@ -56,6 +56,9 @@ public class DocumentFacade implements Serializable {
    private DocumentMetadataFacade documentMetadataFacade;
 
    @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
+
+   @Inject
    private Event<DropDocument> dropDocumentEvent;
 
    //@Inject
@@ -84,6 +87,10 @@ public class DocumentFacade implements Serializable {
       String documentId = dataStorage.createDocument(collectionName, document);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
+      }
+      // we add all document attributes to collection metadata
+      for (String attribute : document.keySet()) {
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
       }
       return documentId;
    }
@@ -131,14 +138,23 @@ public class DocumentFacade implements Serializable {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       String documentId = updatedDocument.getString("_id");
-      if (dataStorage.readDocument(collectionName, documentId) == null) {
+      DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
+      if (existingDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      // we drop all attributes of existing document from collection metadata
+      for (String attribute : existingDocument.keySet()) {
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
       }
       updatedDocument.put(documentMetadataFacade.DOCUMENT_UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       updatedDocument.put(documentMetadataFacade.DOCUMENT_UPDATED_BY_USER_KEY, userName);
       versionFacade.newDocumentVersion(collectionName, updatedDocument);
       if (!verifyDocumentUpdate(updatedDocument, collectionName, documentId)) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
+      }
+      // we add all attributes of updated document to collection metadata
+      for (String attribute : updatedDocument.keySet()) {
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
       }
    }
 
@@ -172,6 +188,10 @@ public class DocumentFacade implements Serializable {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.dropDocumentUnsuccesfulString());
       } else {
          dropDocumentEvent.fire(new DropDocument(collectionName, dataDocument));
+         // we drop all attributes of dropped document from collection metadata
+         for (String attribute : dataDocument.keySet()) {
+            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         }
       }
    }
 
