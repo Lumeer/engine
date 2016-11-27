@@ -36,23 +36,23 @@ public class ViewMetadataFacade implements Serializable {
    @Inject
    private DataStorage dataStorage;
 
-   public final String META_TYPE_KEY = "meta-type";
-   public final String VIEW_METADATA_PREFIX = "meta.";
-   public final String VIEW_NAME_PREFIX = "view.";
+   private static final String META_TYPE_KEY = "meta-type";
+   private static final String VIEW_METADATA_PREFIX = "meta.";
+   private static final String VIEW_NAME_PREFIX = "view.";
 
-   public final String VIEW_TYPE_META_TYPE_VALUE = "type";
-   public final String VIEW_TYPE_KEY = "type";
+   private static final String VIEW_TYPE_META_TYPE_VALUE = "type";
+   private static final String VIEW_TYPE_KEY = "type";
 
-   public final String VIEW_STYLES_META_TYPE_VALUE = "styles";
-   public final String VIEW_ALL_STYLES_KEY = "styles";
-   public final String VIEW_STYLE_TYPE_KEY = "type";
-   public final String VIEW_STYLE_VALUE_KEY = "style";
-   public final String VIEW_STYLE_CONDITION_KEY = "condition";
+   private static final String VIEW_STYLES_META_TYPE_VALUE = "styles";
+   private static final String VIEW_ALL_STYLES_KEY = "styles";
+   private static final String VIEW_STYLE_TYPE_KEY = "type";
+   private static final String VIEW_STYLE_VALUE_KEY = "style";
+   private static final String VIEW_STYLE_CONDITION_KEY = "condition";
 
-   public final String VIEW_REAL_NAME_META_TYPE_VALUE = "name";
-   public final String VIEW_REAL_NAME_KEY = "name";
+   private static final String VIEW_REAL_NAME_META_TYPE_VALUE = "name";
+   private static final String VIEW_REAL_NAME_KEY = "name";
 
-   public final String VIEW_ACCESS_RIGHTS_META_TYPE_VALUE = "rights";
+   private static final String VIEW_ACCESS_RIGHTS_META_TYPE_VALUE = "rights";
 
    // example of view metadata structure:
    // -------------------------------------

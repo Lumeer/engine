@@ -44,12 +44,12 @@ public class DocumentMetadataFacade implements Serializable {
    @Inject
    private DocumentFacade documentFacade;
 
-   public final String DOCUMENT_METADATA_PREFIX = "meta-";
-   public final String DOCUMENT_CREATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + "create-date";
-   public final String DOCUMENT_UPDATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + "update-date";
-   public final String DOCUMENT_CREATE_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + "create-user";
-   public final String DOCUMENT_UPDATED_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + "update-user";
-   public final String DOCUMENT_RIGHTS_KEY = DOCUMENT_METADATA_PREFIX + "rights";
+   public static final String DOCUMENT_METADATA_PREFIX = "meta-";
+   public static final String DOCUMENT_CREATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + "create-date";
+   public static final String DOCUMENT_UPDATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + "update-date";
+   public static final String DOCUMENT_CREATE_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + "create-user";
+   public static final String DOCUMENT_UPDATED_BY_USER_KEY = DOCUMENT_METADATA_PREFIX + "update-user";
+   public static final String DOCUMENT_RIGHTS_KEY = DOCUMENT_METADATA_PREFIX + "rights";
 
    // example of document metadata structure:
    // -------------------------------------

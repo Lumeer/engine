@@ -28,11 +28,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
+
+@SessionScoped
 public class CollectionMetadataFacade implements Serializable {
 
    @Inject
@@ -40,24 +43,24 @@ public class CollectionMetadataFacade implements Serializable {
 
    // table name prefixes, attribute names and other constants used in metadata
 
-   public final String META_TYPE_KEY = "meta-type";
-   public final String COLLECTION_NAME_PREFIX = "collection.";
-   public final String COLLECTION_METADATA_PREFIX = "meta.";
+   private static final String META_TYPE_KEY = "meta-type";
+   private static final String COLLECTION_NAME_PREFIX = "collection.";
+   private static final String COLLECTION_METADATA_PREFIX = "meta.";
 
-   public final String COLLECTION_ATTRIBUTES_META_TYPE_VALUE = "attributes";
+   private static final String COLLECTION_ATTRIBUTES_META_TYPE_VALUE = "attributes";
 
-   public final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
-   public final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
+   private static final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
+   private static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
    // attribute types according to DataDocument methods, empty is default and is considered String
-   public final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES = Arrays.asList(new String[] { "int", "long", "double", "bool", "date", "", "string", "nested" });
-   public final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
-   public final String COLLECTION_ATTRIBUTE_COUNT_KEY = "count";
+   private static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES = Arrays.asList(new String[] { "int", "long", "double", "bool", "date", "", "string", "nested" });
+   private static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
+   private static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "count";
 
-   public final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
-   public final String COLLECTION_REAL_NAME_KEY = "name";
+   private static final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
+   private static final String COLLECTION_REAL_NAME_KEY = "name";
 
-   public final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
-   public final String COLLECTION_LOCK_UPDATED_KEY = "updated";
+   private static final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
+   private static final String COLLECTION_LOCK_UPDATED_KEY = "updated";
 
    // example of collection metadata structure:
    // -------------------------------------
