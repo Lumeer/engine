@@ -36,6 +36,12 @@ import java.util.Set;
  */
 public class MongoDbStorageTest {
 
+   private static final String DB_HOST = System.getProperty("lumeer.db.host", "ds163667.mlab.com");
+   private static final String DB_NAME = System.getProperty("lumeer.db.name", "lumeer-test");
+   private static final int DB_PORT = Integer.getInteger("lumeer.sysdb.port", 63667);
+   private static final String DB_USER = System.getProperty("lumeer.db.user", "lumeer");
+   private static final String DB_PASSWORD = System.getProperty("lumeer.db.passwd", "/Lumeer1");
+
    private final String DUMMY_KEY1 = "key1";
    private final String DUMMY_KEY2 = "key2";
    private final String DUMMY_VALUE1 = "param1";
@@ -65,7 +71,7 @@ public class MongoDbStorageTest {
    @BeforeMethod
    public void setUp() throws Exception {
       mongoDbStorage = new MongoDbStorage();
-      mongoDbStorage.connect(new StorageConnection("localhost", 27017, "", ""), "lumeer");
+      mongoDbStorage.connect(new StorageConnection(DB_HOST, DB_PORT, DB_USER, DB_PASSWORD), DB_NAME);
 
       // setup=drop collections for next use
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_I);
