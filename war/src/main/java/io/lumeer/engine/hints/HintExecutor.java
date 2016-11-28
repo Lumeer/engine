@@ -19,15 +19,9 @@
  */
 package io.lumeer.engine.hints;
 
-import com.sun.corba.se.spi.orbutil.threadpool.ThreadPool;
-
 import java.io.Serializable;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.PreDestroy;
+import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -36,29 +30,15 @@ import javax.inject.Inject;
  */
 @SessionScoped
 public class HintExecutor implements Serializable {
-   int corePoolSize = 5;
-   int maxPoolSize = 10;
-   long keepAliveTime = 5000;
+
+   private int corePoolSize = 5;
+   private int maxPoolSize = 10;
+   private long keepAliveTime = 5000;
 
    @Inject
-   ThreadPoolExecutor threadPool;
+   private ManagedExecutorService executorService;
 
-   public Future<Hint> runHintDetect(Hint hintToStart) {
-      if (threadPool == null){
-         threadPool = new ThreadPoolExecutor(
-               corePoolSize,
-               maxPoolSize,
-               keepAliveTime,
-               TimeUnit.MILLISECONDS,
-               new LinkedBlockingQueue<Runnable>()
-         );
-      }
-      Future<Hint> result = threadPool.submit(hintToStart);
-      return result;
-   }
-
-   @PreDestroy
-   public void delete(){
-      threadPool.shutdownNow();
+   public Future<Hint> runHintDetect(final Hint hintToStart) {
+      return executorService.submit(hintToStart);
    }
 }
