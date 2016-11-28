@@ -45,7 +45,8 @@ public class ConfigurationFacadeTest extends Arquillian {
       return ShrinkWrap.create(WebArchive.class, "ConfigurationFacadeTest.war")
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml");
+                       .addAsWebInfResource("jboss-deployment-structure.xml")
+                       .addAsResource("defaults-dev.properties");
    }
 
    private final String COLLECTION_USER_CONFIG = "config.user";

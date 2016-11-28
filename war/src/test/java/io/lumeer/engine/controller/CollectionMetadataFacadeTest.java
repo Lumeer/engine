@@ -48,7 +48,8 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       return ShrinkWrap.create(WebArchive.class, "CollectionMetadataFacadeTest.war")
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml");
+                       .addAsWebInfResource("jboss-deployment-structure.xml")
+                       .addAsResource("defaults-dev.properties");
    }
 
    @Inject

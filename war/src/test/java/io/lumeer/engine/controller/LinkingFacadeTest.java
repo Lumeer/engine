@@ -43,7 +43,8 @@ public class LinkingFacadeTest extends Arquillian {
       return ShrinkWrap.create(WebArchive.class, "LinkingFacadeTest.war")
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml");
+                       .addAsWebInfResource("jboss-deployment-structure.xml")
+                       .addAsResource("defaults-dev.properties");
    }
 
    private final String DUMMY_COLLECTION1 = "collection.testcollection1";

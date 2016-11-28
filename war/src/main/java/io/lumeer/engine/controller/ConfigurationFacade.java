@@ -77,6 +77,8 @@ public class ConfigurationFacade implements Serializable {
          if (input != null) {
             properties.load(input);
             properties.forEach((key, value) -> DEFAULT_VALUES.put(key.toString(), value.toString()));
+         } else {
+            log.log(Level.WARNING, String.format("Default property file %s not found.", DEFAULT_PROPERTY_FILE));
          }
       } catch (IOException e) {
          log.log(Level.SEVERE, "Unable to load default property values: ", e);

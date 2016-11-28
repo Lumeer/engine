@@ -43,7 +43,9 @@ public class ConfigurationManipulatorTest extends Arquillian {
    public static Archive<?> createTestArchive() {
       return ShrinkWrap.create(WebArchive.class, "ConfigurationManipulatorTest.war")
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
+                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
+                       .addAsWebInfResource("jboss-deployment-structure.xml")
+                       .addAsResource("defaults-dev.properties");
    }
 
    private final String COLLECTION_USER_SET_CONFIGURATION = "config.user_setConfiguration";
