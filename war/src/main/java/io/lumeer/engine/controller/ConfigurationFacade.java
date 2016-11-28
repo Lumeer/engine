@@ -19,9 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.exception.CollectionNotFoundException;
 import io.lumeer.engine.util.ConfigurationManipulator;
 
@@ -52,10 +50,6 @@ public class ConfigurationFacade implements Serializable {
    private static final String DEFAULT_PROPERTY_FILE = "defaults-dev.properties";
    private static final String USER_CONFIG = "config.user";
    private static final String TEAM_CONFIG = "config.team";
-
-   @Inject
-   @SystemDataStorage
-   private DataStorage systemDataStorage;
 
    @Inject
    private Logger log;
