@@ -39,7 +39,8 @@ import javax.enterprise.context.SessionScoped;
 @SessionScoped
 public class DefaultConfigurationProducer implements Serializable {
 
-   private static final long serialVersionUID = -8974156455413284479L;
+   private static final long serialVersionUID = -9139613375175238783L;
+
    private static final String DEFAULT_PROPERTY_FILE = "defaults-dev.properties";
 
    private Logger log = Logger.getLogger(DefaultConfigurationProducer.class.getName());

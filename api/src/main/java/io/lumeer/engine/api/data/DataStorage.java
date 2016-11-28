@@ -19,8 +19,10 @@
  */
 package io.lumeer.engine.api.data;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,7 +32,7 @@ import java.util.Set;
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-public interface DataStorage {
+public interface DataStorage extends Serializable {
 
    void connect(final List<StorageConnection> connections, final String database);
 
@@ -234,4 +236,57 @@ public interface DataStorage {
     */
    void incerementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy);
 
+   /**
+    * Gets the next value of sequence.
+    *
+    * @param collectionName
+    *       Name of the collection with sequences.
+    * @param indexAttribute
+    *       Name of the attribute that identifies the sequence document.
+    * @param index
+    *       Value of the index attribute to identify the sequence.
+    * @return The next value in the sequence.
+    */
+   long getNextSequenceNo(final String collectionName, final String indexAttribute, final String index);
+
+   /**
+    * Resets a sequence to zero.
+    *
+    * @param collectionName
+    *       Name of the collection with sequences.
+    * @param indexAttribute
+    *       Name of the attribute that identifies the sequence document.
+    * @param index
+    *       Value of the index attribute to identify the sequence.
+    */
+   void resetSequence(final String collectionName, final String indexAttribute, final String index);
+
+   /**
+    * Creates an index on a collection.
+    *
+    * @param collectionName
+    *       Name of the collection.
+    * @param indexAttributes
+    *       Names of atributes and their index types to create index on.
+    */
+   void createIndex(final String collectionName, final Map<String, String> indexAttributes);
+
+   /**
+    * Lists all indexes on the given collection.
+    *
+    * @param collectionName
+    *       The name of the collection to get indexes of.
+    * @return The list of all indexes on the given collection.
+    */
+   List<DataDocument> listIndexes(final String collectionName);
+
+   /**
+    * Drops the given index on a collection.
+    *
+    * @param collectionName
+    *       The collection name.
+    * @param indexName
+    *       The name of an index to drop.
+    */
+   void dropIndex(final String collectionName, final String indexName);
 }

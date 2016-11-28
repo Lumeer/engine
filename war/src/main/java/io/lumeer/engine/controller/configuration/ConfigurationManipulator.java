@@ -22,7 +22,6 @@ package io.lumeer.engine.controller.configuration;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.exception.CollectionNotFoundException;
 import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
@@ -30,7 +29,7 @@ import com.mongodb.client.model.Filters;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
@@ -38,7 +37,7 @@ import javax.inject.Inject;
  *
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@RequestScoped
+@SessionScoped
 public class ConfigurationManipulator implements Serializable {
 
    // SYSTEM DATABASE ENTRIES STRUCTURE

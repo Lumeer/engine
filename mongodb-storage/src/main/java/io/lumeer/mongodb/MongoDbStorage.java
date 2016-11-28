@@ -34,6 +34,9 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -43,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -77,7 +81,6 @@ public class MongoDbStorage implements DataStorage {
    public void connect() {
       if (mongoClient == null) {
          connect(storageConnection, storageDatabase);
-         //connect(new StorageConnection(DB_HOST, DB_PORT, DB_USER, DB_PASSWORD), DB_NAME);
       }
    }
 
@@ -297,4 +300,63 @@ public class MongoDbStorage implements DataStorage {
       }
    }
 
+   @Override
+   public synchronized long getNextSequenceNo(final String collectionName, final String indexAttribute, final String index) {
+      final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
+      options.returnDocument(ReturnDocument.BEFORE);
+
+      final Document doc = database.getCollection(collectionName).findOneAndUpdate(Filters.eq(indexAttribute, index), Updates.inc("seq", 1),
+            options);
+
+      if (doc == null) { // the sequence did not exist
+         resetSequence(collectionName, indexAttribute, index);
+         return 1;
+      } else {
+         return doc.getLong("seq");
+      }
+   }
+
+   @Override
+   public synchronized void resetSequence(final String collectionName, final String indexAttribute, final String index) {
+      final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
+      options.returnDocument(ReturnDocument.AFTER);
+
+      final Document doc = database.getCollection(collectionName).findOneAndUpdate(Filters.eq(indexAttribute, index), Updates.set("seq", 1),
+            options);
+
+      if (doc == null) {
+         Document newSeq = new Document();
+         newSeq.put(indexAttribute, index);
+         newSeq.put("seq", 1);
+         database.getCollection(collectionName).insertOne(newSeq);
+      }
+   }
+
+   @Override
+   public void createIndex(final String collectionName, final Map<String, String> indexAttributes) {
+      final StringBuilder indexJson = new StringBuilder();
+      indexAttributes.forEach((k, v) -> {
+         if (indexJson.length() > 0) {
+            indexJson.append(", ");
+         }
+         indexJson.append(k);
+         indexJson.append(":");
+         indexJson.append(v);
+      });
+      database.getCollection(collectionName).createIndex(BsonDocument.parse("{" + indexJson.toString() + "}"));
+   }
+
+   @Override
+   public List<DataDocument> listIndexes(final String collectionName) {
+      final List<DataDocument> result = new ArrayList<>();
+
+      ((Iterable<Document>) database.getCollection(collectionName).listIndexes()).forEach(d -> result.add(new DataDocument(d)));
+
+      return result;
+   }
+
+   @Override
+   public void dropIndex(final String collectionName, final String indexName) {
+      database.getCollection(collectionName).dropIndex(indexName);
+   }
 }
