@@ -29,12 +29,24 @@ public final class LumeerConst {
    public static final String LUMEER_VERSION = "1.0";
    public static final String METADATA_VERSION_KEY = "_metadata-version";
 
+   public static final String DB_HOST_PROPERTY = "db_host";
+   public static final String DB_PORT_PROPERTY = "db_port";
+   public static final String DB_NAME_PROPERTY = "db_name";
+   public static final String DB_USER_PROPERTY = "db_user";
+   public static final String DB_PASSWORD_PROPERTY = "db_passwd";
+
+   public static final String SYSTEM_DB_HOST_PROPERTY = "sys_db_host";
+   public static final String SYSTEM_DB_PORT_PROPERTY = "sys_db_port";
+   public static final String SYSTEM_DB_NAME_PROPERTY = "sys_db_name";
+   public static final String SYSTEM_DB_USER_PROPERTY = "sys_db_user";
+   public static final String SYSTEM_DB_PASSWORD_PROPERTY = "sys_db_passwd";
+
    private LumeerConst() {
       // we do not want any instances to be created
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));
    }
 
-   public class LINKING {
+   public static class LINKING {
       public static final String PREFIX = "_linking";
 
       public class MAIN_TABLE {

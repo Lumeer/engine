@@ -19,22 +19,19 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.exception.CollectionNotFoundException;
-import io.lumeer.engine.util.ConfigurationManipulator;
+import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
+import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * Manipulates user configuration properties.
@@ -42,17 +39,11 @@ import javax.inject.Inject;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@RequestScoped
+@SessionScoped
 public class ConfigurationFacade implements Serializable {
 
-   private static final Map<String, String> DEFAULT_VALUES = new HashMap<>();
-
-   private static final String DEFAULT_PROPERTY_FILE = "defaults-dev.properties";
    private static final String USER_CONFIG = "config.user";
    private static final String TEAM_CONFIG = "config.team";
-
-   @Inject
-   private Logger log;
 
    @Inject
    private UserFacade userFacade;
@@ -60,29 +51,23 @@ public class ConfigurationFacade implements Serializable {
    @Inject
    private ConfigurationManipulator configurationManipulator;
 
-   /**
-    * Sets default values loaded from system environment or predefined (local resources).
-    */
-   @PostConstruct
-   private void setDefaultValues() {
-      String envDefaults = System.getenv("lumeer.defaults");
-      if (envDefaults == null) {
-         envDefaults = DEFAULT_PROPERTY_FILE;
-      }
+   @Inject
+   private DefaultConfigurationProducer defaultConfigurationProducer;
 
-      final Properties properties = new Properties();
-      try {
-         // TODO: why input returns null?
-         final InputStream input = ConfigurationFacade.class.getResourceAsStream("/" + DEFAULT_PROPERTY_FILE);
-         if (input != null) {
-            properties.load(input);
-            properties.forEach((key, value) -> DEFAULT_VALUES.put(key.toString(), value.toString()));
-         } else {
-            log.log(Level.WARNING, String.format("Default property file %s not found.", DEFAULT_PROPERTY_FILE));
-         }
-      } catch (IOException e) {
-         log.log(Level.SEVERE, "Unable to load default property values: ", e);
-      }
+   @Produces
+   @Named("dataStorageConnection")
+   public StorageConnection getDataStorage() {
+      return new StorageConnection(
+            getConfigurationString(LumeerConst.DB_HOST_PROPERTY).orElse("localhost"),
+            getConfigurationInteger(LumeerConst.DB_PORT_PROPERTY).orElse(27017),
+            getConfigurationString(LumeerConst.DB_USER_PROPERTY).orElse(""),
+            getConfigurationString(LumeerConst.DB_PASSWORD_PROPERTY).orElse(""));
+   }
+
+   @Produces
+   @Named("dataStorageDatabase")
+   public String getDataStorageDatabase() {
+      return getConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
    }
 
    /**
@@ -91,10 +76,8 @@ public class ConfigurationFacade implements Serializable {
     * @param key
     *       the name of key
     * @return Optional String value of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public Optional<String> getConfigurationString(final String key) throws CollectionNotFoundException {
+   public Optional<String> getConfigurationString(final String key) {
       return Optional.of(getConfiguration(key).toString());
    }
 
@@ -104,10 +87,8 @@ public class ConfigurationFacade implements Serializable {
     * @param key
     *       the name of key
     * @return Optional Integer value of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public Optional<Integer> getConfigurationInteger(final String key) throws CollectionNotFoundException {
+   public Optional<Integer> getConfigurationInteger(final String key) {
       return Optional.of(Integer.parseInt(getConfigurationString(key).get()));
    }
 
@@ -117,10 +98,8 @@ public class ConfigurationFacade implements Serializable {
     * @param key
     *       the name of key
     * @return Optional DataDocument value of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public Optional<DataDocument> getConfigurationDocument(final String key) throws CollectionNotFoundException {
+   public Optional<DataDocument> getConfigurationDocument(final String key) {
       final Object value = getConfiguration(key);
 
       if (value instanceof DataDocument) {
@@ -138,10 +117,8 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @param value
     *       the String value of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public void setConfigurationString(final String key, final String value) throws CollectionNotFoundException {
+   public void setConfigurationString(final String key, final String value) {
       setConfiguration(key, value);
    }
 
@@ -152,10 +129,8 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @param value
     *       the Integer value of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public void setConfigurationInteger(final String key, final int value) throws CollectionNotFoundException {
+   public void setConfigurationInteger(final String key, final int value) {
       setConfiguration(key, value);
    }
 
@@ -166,20 +141,15 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @param document
     *       the DataDocument of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public void setConfigurationDocument(final String key, final DataDocument document) throws CollectionNotFoundException {
+   public void setConfigurationDocument(final String key, final DataDocument document) {
       setConfiguration(key, document);
    }
 
    /**
     * Removes all system configuration of currently logged user. Does not delete user's configuration entry!
-    *
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public void resetConfiguration() throws CollectionNotFoundException {
+   public void resetConfiguration() {
       String user = userFacade.getUserEmail();
       configurationManipulator.resetConfiguration(USER_CONFIG, user);
    }
@@ -189,10 +159,8 @@ public class ConfigurationFacade implements Serializable {
     *
     * @param attributeName
     *       the name of attribute to remove
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   public void resetConfigurationAttribute(final String attributeName) throws CollectionNotFoundException {
+   public void resetConfigurationAttribute(final String attributeName){
       String user = userFacade.getUserEmail();
       configurationManipulator.resetConfigurationAttribute(USER_CONFIG, user, attributeName);
    }
@@ -204,14 +172,12 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @param value
     *       the Object value of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   private void setConfiguration(final String key, final Object value) throws CollectionNotFoundException {
+   private void setConfiguration(final String key, final Object value) {
       final String user = userFacade.getUserEmail();
 
       // if default value for given key does not exist in DEFAULT_VALUES, insert the value to configuration entry
-      if (!DEFAULT_VALUES.containsKey(key)) {
+      if (!defaultConfigurationProducer.getDefaultConfiguration().containsKey(key)) {
          configurationManipulator.setConfiguration(USER_CONFIG, user, key, value);
       }
    }
@@ -222,16 +188,14 @@ public class ConfigurationFacade implements Serializable {
     * @param key
     *       the name of key
     * @return Objectvalue of the given key
-    * @throws CollectionNotFoundException
-    *       if the configuration collection does not exist
     */
-   private Object getConfiguration(final String key) throws CollectionNotFoundException {
+   private Object getConfiguration(final String key) {
       String user = userFacade.getUserEmail();
       Object conf;
 
       if ((conf = configurationManipulator.getConfiguration(USER_CONFIG, user, key)) == null) {
          if ((conf = configurationManipulator.getConfiguration(TEAM_CONFIG, user, key)) == null) {
-            return DEFAULT_VALUES.get(key);
+            return defaultConfigurationProducer.getDefaultConfiguration().get(key);
          }
       }
       return conf;

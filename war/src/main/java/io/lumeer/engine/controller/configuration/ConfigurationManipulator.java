@@ -17,7 +17,7 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.util;
+package io.lumeer.engine.controller.configuration;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
@@ -90,10 +90,8 @@ public class ConfigurationManipulator implements Serializable {
     *       the unique name value of stored configuration entry
     * @param attributeName
     *       the name of attribute located in 'config' field
-    * @throws CollectionNotFoundException
-    *       if the collection does not exist
     */
-   public void resetConfigurationAttribute(final String collectionName, final String nameValue, final String attributeName) throws CollectionNotFoundException {
+   public void resetConfigurationAttribute(final String collectionName, final String nameValue, final String attributeName) {
       if (nameValue == null || attributeName == null) {
          return;
       }
@@ -118,10 +116,8 @@ public class ConfigurationManipulator implements Serializable {
     *       the name of collection in system database
     * @param nameValue
     *       the unique name value of stored configuration entry
-    * @throws CollectionNotFoundException
-    *       if the collection does not exist
     */
-   public void resetConfiguration(final String collectionName, final String nameValue) throws CollectionNotFoundException {
+   public void resetConfiguration(final String collectionName, final String nameValue) {
       if (nameValue == null) {
          return;
       }
@@ -149,10 +145,8 @@ public class ConfigurationManipulator implements Serializable {
     *       the name of key to store in 'config' field
     * @param value
     *       the Object value of the given key
-    * @throws CollectionNotFoundException
-    *       if the collection does not exist
     */
-   public void setConfiguration(final String collectionName, final String nameValue, final String key, final Object value) throws CollectionNotFoundException {
+   public void setConfiguration(final String collectionName, final String nameValue, final String key, final Object value) {
       writeValueToDb(collectionName, nameValue, key, value);
    }
 
@@ -166,10 +160,8 @@ public class ConfigurationManipulator implements Serializable {
     * @param key
     *       the name of key located in 'config' field
     * @return Object value of the given key
-    * @throws CollectionNotFoundException
-    *       if the collection does not exist
     */
-   public Object getConfiguration(final String collectionName, final String nameValue, final String key) throws CollectionNotFoundException {
+   public Object getConfiguration(final String collectionName, final String nameValue, final String key) {
       Optional<Object> conf = readValueFromDb(collectionName, nameValue, key);
       if (conf.isPresent()) {
          return conf.get();
@@ -185,23 +177,19 @@ public class ConfigurationManipulator implements Serializable {
     * @param nameValue
     *       the unique name value of stored configuration entry
     * @return configuration entry of the given nameValue in given collection
-    * @throws CollectionNotFoundException
-    *       if the collection does not exist
     */
-   public Optional<DataDocument> getConfigurationEntry(final String collectionName, final String nameValue) throws CollectionNotFoundException {
-      if (!isDatabaseCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+   public Optional<DataDocument> getConfigurationEntry(final String collectionName, final String nameValue) {
+      if (isDatabaseCollection(collectionName)) {
+         if (nameValue == null) {
+            return Optional.empty();
+         }
 
-      if (nameValue == null) {
-         return Optional.empty();
-      }
+         String filter = MongoUtils.convertBsonToJson(Filters.eq(NAME_KEY, nameValue));
+         List<DataDocument> configs = systemDataStorage.search(collectionName, filter, null, 0, 0);
 
-      String filter = MongoUtils.convertBsonToJson(Filters.eq(NAME_KEY, nameValue));
-      List<DataDocument> configs = systemDataStorage.search(collectionName, filter, null, 0, 0);
-
-      if (!configs.isEmpty()) {
-         return Optional.of(configs.get(0));
+         if (!configs.isEmpty()) {
+            return Optional.of(configs.get(0));
+         }
       }
 
       return Optional.empty();
@@ -218,10 +206,8 @@ public class ConfigurationManipulator implements Serializable {
     *       the name of key to write into 'config' field
     * @param value
     *       the Object value of the given key
-    * @throws CollectionNotFoundException
-    *       if the collection does not exist
     */
-   private void writeValueToDb(final String collectionName, final String nameValue, final String key, final Object value) throws CollectionNotFoundException {
+   private void writeValueToDb(final String collectionName, final String nameValue, final String key, final Object value) {
       if (nameValue == null || key == null || value == null) {
          return;
       }
@@ -272,10 +258,8 @@ public class ConfigurationManipulator implements Serializable {
     * @param key
     *       the name of key in 'config' field
     * @return Optional<Object> with value of the given key
-    * @throws CollectionNotFoundException
-    *       if the collection does not exist
     */
-   private Optional<Object> readValueFromDb(final String collectionName, final String nameValue, final String key) throws CollectionNotFoundException {
+   private Optional<Object> readValueFromDb(final String collectionName, final String nameValue, final String key) {
       if (nameValue == null || key == null) {
          return Optional.empty();
       }
@@ -323,7 +307,7 @@ public class ConfigurationManipulator implements Serializable {
     * @param nameValue
     *       value of name field
     */
-   private void createSimpleConfigurationEntry(final String collectionName, final String nameValue) throws CollectionNotFoundException {
+   private void createSimpleConfigurationEntry(final String collectionName, final String nameValue) {
       DataDocument configDocument = new DataDocument();
       configDocument.put(NAME_KEY, nameValue);
       configDocument.put(CONFIG_KEY, new DataDocument());

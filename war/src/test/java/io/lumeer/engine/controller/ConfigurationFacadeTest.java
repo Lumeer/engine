@@ -21,7 +21,7 @@ package io.lumeer.engine.controller;/*
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.util.ConfigurationManipulator;
+import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -53,9 +53,9 @@ public class ConfigurationFacadeTest extends Arquillian {
    // private final String COLLECTION_TEAM_CONFIG = "config.team";
 
    private final String NAME_KEY = "name";
-   private final String PORT_KEY = "db_port";
-   private final String DBHOST_KEY = "db_host";
-   private final String DBURL_KEY = "db_url";
+   private final String PORT_KEY = "db_port_test";
+   private final String DBHOST_KEY = "db_host_test";
+   private final String DBURL_KEY = "db_url_test";
    private final String CONFIG_DOCUMENT_KEY = "config";
    private final String DOCUMENT_PROPERTY_KEY = "document_property";
 

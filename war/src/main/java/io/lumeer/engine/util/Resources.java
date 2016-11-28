@@ -20,18 +20,23 @@
 package io.lumeer.engine.util;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 import io.lumeer.mongodb.MongoDbStorage;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 /**
@@ -41,17 +46,15 @@ import javax.inject.Named;
  */
 public class Resources {
 
-   private static final String SYSTEM_DB_HOST = System.getProperty("lumeer.db.host", "ds163667.mlab.com");
-   private static final String SYSTEM_DB_NAME = System.getProperty("lumeer.db.name", "lumeer-test");
-   private static final int SYSTEM_DB_PORT = Integer.getInteger("lumeer.sysdb.port", 63667);
-   private static final String SYSTEM_DB_USER = System.getProperty("lumeer.db.user", "lumeer");
-   private static final String SYSTEM_DB_PASSWORD = System.getProperty("lumeer.db.passwd", "/Lumeer1");
+   @Inject
+   private DefaultConfigurationProducer defaultConfigurationProducer;
 
    @Resource
    @Produces
    private ManagedExecutorService managedExecutorService;
 
    @Produces
+   @Dependent
    public Logger produceLog(InjectionPoint injectionPoint) {
       return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
    }
@@ -66,7 +69,14 @@ public class Resources {
    @RequestScoped
    public DataStorage getSystemDataStorage() {
       final MongoDbStorage storage = new MongoDbStorage();
-      storage.connect(new StorageConnection(SYSTEM_DB_HOST, SYSTEM_DB_PORT, SYSTEM_DB_USER, SYSTEM_DB_PASSWORD), SYSTEM_DB_NAME);
+      final Map<String, String> defaultConfiguration = defaultConfigurationProducer.getDefaultConfiguration();
+
+      storage.connect(new StorageConnection(
+            defaultConfiguration.get(LumeerConst.SYSTEM_DB_HOST_PROPERTY),
+            Integer.valueOf(defaultConfiguration.get(LumeerConst.SYSTEM_DB_PORT_PROPERTY)),
+            defaultConfiguration.get(LumeerConst.SYSTEM_DB_USER_PROPERTY),
+            defaultConfiguration.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY)),
+            defaultConfiguration.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY));
 
       return storage;
    }
