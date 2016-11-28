@@ -178,6 +178,14 @@
             <scope>provided</scope>
          </dependency>
 
+         <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-wildfly-adapter-dist</artifactId>
+            <version>${version.keycloak}</version>
+            <type>zip</type>
+            <scope>test</scope>
+         </dependency>
+
          <!-- Groovy -->
          <dependency>
             <groupId>org.codehaus.groovy</groupId>

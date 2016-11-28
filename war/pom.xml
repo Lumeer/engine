@@ -48,6 +48,7 @@
 
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
+      <version.keycloak>2.4.0.Final</version.keycloak>
 
       <java.level>1.8</java.level>
 
@@ -173,6 +174,13 @@
       <dependency>
          <groupId>org.wildfly</groupId>
          <artifactId>wildfly-dist</artifactId>
+         <type>zip</type>
+         <scope>test</scope>
+      </dependency>
+      <!-- https://mvnrepository.com/artifact/org.keycloak/keycloak-wildfly-adapter-dist -->
+      <dependency>
+         <groupId>org.keycloak</groupId>
+         <artifactId>keycloak-wildfly-adapter-dist</artifactId>
          <type>zip</type>
          <scope>test</scope>
       </dependency>
@@ -343,6 +351,14 @@
                            <type>zip</type>
                            <overWrite>false</overWrite>
                            <outputDirectory>target</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.keycloak</groupId>
+                           <artifactId>keycloak-wildfly-adapter-dist</artifactId>
+                           <version>${version.keycloak}</version>
+                           <type>zip</type>
+                           <overWrite>true</overWrite>
+                           <outputDirectory>target/wildfly-10.1.0.Final</outputDirectory>
                         </artifactItem>
                      </artifactItems>
                   </configuration>

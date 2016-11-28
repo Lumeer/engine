@@ -31,6 +31,7 @@
         <extension module="org.wildfly.extension.security.manager"/>
         <extension module="org.wildfly.extension.undertow"/>
         <extension module="org.wildfly.iiop-openjdk"/>
+        <extension module="org.keycloak.keycloak-adapter-subsystem"/>
     </extensions>
     <management>
         <security-realms>
@@ -387,6 +388,11 @@
                       <login-module code="Simple" flag="required"/>
                    </authentication>
                 </security-domain>
+                <security-domain name="keycloak">
+                    <authentication>
+                        <login-module code="org.keycloak.adapters.jboss.KeycloakLoginModule" flag="required"/>
+                    </authentication>
+                </security-domain>
             </security-domains>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:transactions:3.0">
@@ -431,6 +437,7 @@
             <client-config name="Standard-Client-Config"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:weld:3.0"/>
+        <subsystem xmlns="urn:jboss:domain:keycloak:1.1"/>
     </profile>
     <interfaces>
         <interface name="management">
