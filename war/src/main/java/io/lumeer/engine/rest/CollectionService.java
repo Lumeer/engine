@@ -46,10 +46,6 @@ public class CollectionService implements Serializable {
    @Inject
    private CollectionFacade collectionFacade;
 
-   @Inject
-   @Named("userCollections")
-   private Map<String, String> collections;
-
    @PUT
    @Path("/")
    public void createCollection(final @QueryParam("name") String name) throws CollectionAlreadyExistsException {
@@ -59,6 +55,6 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/")
    public List<String> getAllCollections() {
-      return new ArrayList<String>(collections.keySet());
+      return new ArrayList<String>(collectionFacade.getAllCollections().keySet());
    }
 }

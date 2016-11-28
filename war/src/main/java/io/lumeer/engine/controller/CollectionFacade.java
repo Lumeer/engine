@@ -71,8 +71,6 @@ public class CollectionFacade implements Serializable {
     *
     * @return the map of collection names. Keys are internal names, values are original names.
     */
-   @Produces
-   @Named("userCollections")
    public Map<String, String> getAllCollections() {
       if (this.collections == null) {
          List<String> collectionsAll = dataStorage.getAllCollections();
