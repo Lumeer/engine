@@ -57,9 +57,11 @@ import javax.enterprise.inject.Model;
 public class MongoDbStorage implements DataStorage {
 
    private static final String ID = "_id";
-   private static final String HOST = System.getProperty("lumeer.db.host", "localhost");
-   private static final String DATABASE_NAME = System.getProperty("lumeer.db.name", "lumeer");
-   private static final int PORT = Integer.getInteger("lumeer.sysdb.port", 27017);
+   private static final String DB_HOST = System.getProperty("lumeer.db.host", "ds163667.mlab.com");
+   private static final String DB_NAME = System.getProperty("lumeer.db.name", "lumeer-test");
+   private static final int DB_PORT = Integer.getInteger("lumeer.sysdb.port", 63667);
+   private static final String DB_USER = System.getProperty("lumeer.db.user", "lumeer");
+   private static final String DB_PASSWORD = System.getProperty("lumeer.db.passwd", "/Lumeer1");
 
    private static final String CURSOR_KEY = "cursor";
    private static final String FIRST_BATCH_KEY = "firstBatch";
@@ -70,7 +72,7 @@ public class MongoDbStorage implements DataStorage {
    @PostConstruct
    public void connect() {
       if (mongoClient == null) {
-         connect(new StorageConnection(HOST, PORT, "", ""), DATABASE_NAME);
+         connect(new StorageConnection(DB_HOST, DB_PORT, DB_USER, DB_PASSWORD), DB_NAME);
       }
    }
 

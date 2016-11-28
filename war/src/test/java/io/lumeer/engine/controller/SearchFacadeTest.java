@@ -44,7 +44,8 @@ public class SearchFacadeTest extends Arquillian {
    public static Archive<?> createTestArchive() {
       return ShrinkWrap.create(WebArchive.class, "SearchFacadeTest.war")
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
+                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
+                       .addAsWebInfResource("jboss-deployment-structure.xml");
    }
 
    private final String COLLECTION_SEARCH = "collectionSearch";

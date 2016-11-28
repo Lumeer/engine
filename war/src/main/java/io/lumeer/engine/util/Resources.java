@@ -41,11 +41,11 @@ import javax.inject.Named;
  */
 public class Resources {
 
-   private final String SYSTEM_DB_HOST = System.getProperty("lumeer.sysdb.host", "localhost");
-   private static final int SYSTEM_DB_PORT = Integer.getInteger("lumeer.sysdb.port", 27018);
-   private static final String SYSTEM_DB_NAME = System.getProperty("lumeer.sysdb.name", "lumeer-sys");
-   private static final String SYSTEM_DB_USER = System.getProperty("lumeer.sysdb.user", "");
-   private static final String SYSTEM_DB_PASSWORD = System.getProperty("lumeer.sysdb.password", "");
+   private static final String SYSTEM_DB_HOST = System.getProperty("lumeer.db.host", "ds163667.mlab.com");
+   private static final String SYSTEM_DB_NAME = System.getProperty("lumeer.db.name", "lumeer-test");
+   private static final int SYSTEM_DB_PORT = Integer.getInteger("lumeer.sysdb.port", 63667);
+   private static final String SYSTEM_DB_USER = System.getProperty("lumeer.db.user", "lumeer");
+   private static final String SYSTEM_DB_PASSWORD = System.getProperty("lumeer.db.passwd", "/Lumeer1");
 
    @Resource
    @Produces

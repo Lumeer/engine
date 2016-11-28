@@ -42,7 +42,8 @@ public class DocumentFacadeTest extends Arquillian {
    public static Archive<?> createTestArchive() {
       return ShrinkWrap.create(WebArchive.class, "DocumentFacadeTest.war")
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
+                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
+                       .addAsWebInfResource("jboss-deployment-structure.xml");
    }
 
    private final String DUMMY_COLLECTION1 = "collection.testcollection1_0";
