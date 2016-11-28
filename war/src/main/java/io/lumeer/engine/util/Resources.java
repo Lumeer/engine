@@ -24,12 +24,15 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.mongodb.MongoDbStorage;
 
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Named;
 
 /**
  * This class uses CDI to alias Java EE resources, such as the persistence context, to CDI beans

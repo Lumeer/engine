@@ -25,8 +25,8 @@ import java.util.concurrent.Callable;
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
 public interface Hint extends Callable {
-   public Hint call() throws Exception;
-   public boolean isApplicable();
-   public boolean apply();
-   public void sendNotification();
+   Hint call() throws Exception;
+   boolean isApplicable();
+   boolean apply();
+   void sendNotification();
 }
