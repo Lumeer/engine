@@ -25,6 +25,8 @@ import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.mongodb.MongoDbStorage;
 
 import java.util.logging.Logger;
+import javax.annotation.Resource;
+import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
@@ -41,6 +43,10 @@ public class Resources {
    private static final String SYSTEM_DB_NAME = System.getProperty("lumeer.sysdb.name", "lumeer-sys");
    private static final String SYSTEM_DB_USER = System.getProperty("lumeer.sysdb.user", "");
    private static final String SYSTEM_DB_PASSWORD = System.getProperty("lumeer.sysdb.password", "");
+
+   @Resource
+   @Produces
+   private ManagedExecutorService managedExecutorService;
 
    @Produces
    public Logger produceLog(InjectionPoint injectionPoint) {
