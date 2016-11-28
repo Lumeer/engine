@@ -1,0 +1,6 @@
+{
+  "realm": "lumeer",
+  "auth-server-url": "http://localhost:8180/auth",
+  "resource": "engine",
+  "public-client": true
+}
