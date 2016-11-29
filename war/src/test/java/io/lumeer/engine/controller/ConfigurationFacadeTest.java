@@ -1,4 +1,4 @@
-package io.lumeer.engine.controller;/*
+/*
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
@@ -17,6 +17,7 @@ package io.lumeer.engine.controller;/*
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
+package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;

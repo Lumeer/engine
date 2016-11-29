@@ -66,6 +66,15 @@ public interface DataStorage extends Serializable {
    void dropCollection(final String collectionName);
 
    /**
+    * Checks whether the given collection already exists.
+    *
+    * @param collectionName
+    *       The name of the collection to check for.
+    * @return True if and only if the collection exists.
+    */
+   boolean hasCollection(final String collectionName);
+
+   /**
     * Creates and inserts a new document to specified collection.
     *
     * @param collectionName
@@ -247,7 +256,7 @@ public interface DataStorage extends Serializable {
     *       Value of the index attribute to identify the sequence.
     * @return The next value in the sequence.
     */
-   long getNextSequenceNo(final String collectionName, final String indexAttribute, final String index);
+   int getNextSequenceNo(final String collectionName, final String indexAttribute, final String index);
 
    /**
     * Resets a sequence to zero.

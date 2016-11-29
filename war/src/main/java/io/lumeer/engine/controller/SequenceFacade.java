@@ -45,11 +45,13 @@ public class SequenceFacade implements Serializable {
 
    @PostConstruct
    public void init() {
-      dataStorage.createCollection(SEQUENCE_COLLECTION);
-      dataStorage.createIndex(SEQUENCE_COLLECTION, Collections.singletonMap(SEQUENCE_INDEX_ATTR, "1"));
+      if (!dataStorage.hasCollection(SEQUENCE_COLLECTION)) {
+         dataStorage.createCollection(SEQUENCE_COLLECTION);
+         dataStorage.createIndex(SEQUENCE_COLLECTION, Collections.singletonMap(SEQUENCE_INDEX_ATTR, "1"));
+      }
    }
 
-   public long getNext(final String sequenceName) {
+   public int getNext(final String sequenceName) {
       return dataStorage.getNextSequenceNo(SEQUENCE_COLLECTION, SEQUENCE_INDEX_ATTR, sequenceName);
    }
 

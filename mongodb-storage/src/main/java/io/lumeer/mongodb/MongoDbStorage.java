@@ -124,6 +124,11 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
+   public boolean hasCollection(final String collectionName) {
+      return database.getCollection(collectionName) != null;
+   }
+
+   @Override
    public String createDocument(final String collectionName, final DataDocument dataDocument) {
       Document doc = new Document(dataDocument);
       database.getCollection(collectionName).insertOne(doc);
@@ -301,18 +306,18 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public synchronized long getNextSequenceNo(final String collectionName, final String indexAttribute, final String index) {
+   public synchronized int getNextSequenceNo(final String collectionName, final String indexAttribute, final String index) {
       final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
-      options.returnDocument(ReturnDocument.BEFORE);
+      options.returnDocument(ReturnDocument.AFTER);
 
       final Document doc = database.getCollection(collectionName).findOneAndUpdate(Filters.eq(indexAttribute, index), Updates.inc("seq", 1),
             options);
 
       if (doc == null) { // the sequence did not exist
          resetSequence(collectionName, indexAttribute, index);
-         return 1;
+         return 0;
       } else {
-         return doc.getLong("seq");
+         return doc.getInteger("seq");
       }
    }
 
@@ -321,13 +326,13 @@ public class MongoDbStorage implements DataStorage {
       final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
       options.returnDocument(ReturnDocument.AFTER);
 
-      final Document doc = database.getCollection(collectionName).findOneAndUpdate(Filters.eq(indexAttribute, index), Updates.set("seq", 1),
+      final Document doc = database.getCollection(collectionName).findOneAndUpdate(Filters.eq(indexAttribute, index), Updates.set("seq", 0),
             options);
 
       if (doc == null) {
          Document newSeq = new Document();
          newSeq.put(indexAttribute, index);
-         newSeq.put("seq", 1);
+         newSeq.put("seq", 0);
          database.getCollection(collectionName).insertOne(newSeq);
       }
    }
