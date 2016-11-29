@@ -21,7 +21,6 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -30,7 +29,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -52,15 +50,6 @@ public class SequenceFacadeTest extends Arquillian {
    @Inject
    @SystemDataStorage
    private DataStorage systemDataStorage;
-
-   @Inject
-   private ConfigurationFacade configurationFacade;
-
-   @Inject
-   private ConfigurationManipulator configurationManipulator;
-
-   @Inject
-   private UserFacade userFacade;
 
    @Inject
    private SequenceFacade sequenceFacade;
