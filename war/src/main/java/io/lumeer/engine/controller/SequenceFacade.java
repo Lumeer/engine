@@ -36,13 +36,23 @@ import javax.inject.Inject;
 @SessionScoped
 public class SequenceFacade implements Serializable {
 
+   /**
+    * The name of the sequences collection.
+    */
    private static final String SEQUENCE_COLLECTION = "_sequences";
+
+   /**
+    * The name of the document attribute to find sequences by.
+    */
    private static final String SEQUENCE_INDEX_ATTR = "name";
 
    @Inject
    @SystemDataStorage
    private DataStorage dataStorage;
 
+   /**
+    * Initializes collections needed for storing sequences.
+    */
    @PostConstruct
    public void init() {
       if (!dataStorage.hasCollection(SEQUENCE_COLLECTION)) {
@@ -51,10 +61,23 @@ public class SequenceFacade implements Serializable {
       }
    }
 
+   /**
+    * Gets the next value of the given sequence.
+    *
+    * @param sequenceName
+    *       The name of the sequence.
+    * @return The next value of the sequence.
+    */
    public int getNext(final String sequenceName) {
       return dataStorage.getNextSequenceNo(SEQUENCE_COLLECTION, SEQUENCE_INDEX_ATTR, sequenceName);
    }
 
+   /**
+    * Resets the sequence to zero.
+    *
+    * @param sequenceName
+    *       The name of the sequence to reset.
+    */
    public void resetSequence(final String sequenceName) {
       dataStorage.resetSequence(SEQUENCE_COLLECTION, SEQUENCE_INDEX_ATTR, sequenceName);
    }
