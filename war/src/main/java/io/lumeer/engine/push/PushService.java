@@ -20,6 +20,8 @@
 package io.lumeer.engine.push;
 
 import io.lumeer.engine.api.event.DocumentEvent;
+import io.lumeer.engine.api.push.PushMessage;
+import io.lumeer.engine.controller.UserFacade;
 
 import io.netty.util.internal.ConcurrentSet;
 
@@ -54,6 +56,10 @@ public class PushService {
 
    @Inject
    private Logger log;
+
+   @Inject
+   private UserFacade userFacade;
+
    /**
     * Currently opened sessions with clients.
     */
@@ -124,6 +130,44 @@ public class PushService {
             log.log(Level.FINE, "Unable to send push notification: ", e);
          }
       });
+   }
+
+   /**
+    * Sends push-notification message to a single WebSocket client listening on the given channel.
+    *
+    * @param clientSession
+    *       Session ID of the client to send the message to.
+    * @param channel
+    *       Channel suffix to send to or empty to send to all channels.
+    * @param message
+    *       The message to be sent.
+    */
+   public void publishMessage(final String clientSession, final String channel, final PushMessage message) {
+      sessions.forEach(session -> {
+         if (session.getId() != null && session.getId().equals(clientSession)) {
+            try {
+               if (channel == null || channel.isEmpty() || session.getRequestURI().toString().endsWith(channel)) {
+                  if (session.getUserProperties().containsKey(LUMEER_AUTH_HEADER)) {
+                     session.getBasicRemote().sendText(message.toString());
+                  }
+               }
+            } catch (IOException e) {
+               log.log(Level.FINE, "Unable to send push notification: ", e);
+            }
+         }
+      });
+   }
+
+   /**
+    * Sends push-notification message to the current WebSocket client listening on the given channel.
+    *
+    * @param channel
+    *       Channel suffix to send to or empty to send to all channels.
+    * @param message
+    *       The message to be sent.
+    */
+   public void publishMessageToCurrentUser(final String channel, final PushMessage message) {
+      publishMessage(userFacade.getUserSessionId(), channel, message);
    }
 
    /**

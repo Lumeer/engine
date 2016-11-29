@@ -70,6 +70,10 @@ public class UserFacade implements Serializable {
       return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getRealmAccess().getRoles() : Collections.singleton("scientist");
    }
 
+   public String getUserSessionId() {
+      return request.getSession().getId();
+   }
+
    /**
     * Obtains Keycloak principal is possible.
     *
