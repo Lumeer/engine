@@ -19,31 +19,27 @@
  */
 package io.lumeer.engine.api.constraint;
 
-import java.util.List;
-
 /**
- * Defines a type of constraint that makes sure user data are in the required format.
- * The constraint is typically specified in the form of &lt;constraint type&gt;:&lt;constraint parameter(s)&gt;.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public interface ConstraintType {
+public class InvalidConstraintException extends Exception {
 
-   /**
-    * Get configuration prefixes recognized by this constraint type.
-    *
-    * @return Configuration prefixes recognized by this constraint type.
-    */
-   List<String> getRegisteredPrefixes();
+   public InvalidConstraintException() {
+   }
 
-   /**
-    * Parses constraint configuration.
-    *
-    * @param constraintConfiguration
-    *       Constraint configuration.
-    * @return Parsed constraint.
-    * @throws InvalidConstraintException
-    *       When the configuration was not parseable.
-    */
-   Constraint parseConstraint(final String constraintConfiguration) throws InvalidConstraintException;
+   public InvalidConstraintException(final String message) {
+      super(message);
+   }
+
+   public InvalidConstraintException(final String message, final Throwable cause) {
+      super(message, cause);
+   }
+
+   public InvalidConstraintException(final Throwable cause) {
+      super(cause);
+   }
+
+   public InvalidConstraintException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
+      super(message, cause, enableSuppression, writableStackTrace);
+   }
 }
