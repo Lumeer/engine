@@ -19,8 +19,14 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -38,9 +44,22 @@ public class NumberConstraintType implements ConstraintType {
    private static final String LESS_OR_EQUALS = "lessOrEquals";
    private static final String EQUALS = "equals";
 
+   /**
+    * Number format respecting given locale.
+    */
+   private NumberFormat numberFormat = NumberFormat.getNumberInstance();
+   private NumberFormat integerNumberFormat = NumberFormat.getNumberInstance();
+
+   public NumberConstraintType() {
+      integerNumberFormat.setParseIntegerOnly(true);
+   }
+
    @Override
-   public List<String> getRegisteredPrefixes() {
-      return Arrays.asList(IS_NUMBER, IS_INTEGER, GREATER_THAN, LESS_THAN, "greaterOrEquals", "lessOrEquals", "equals");
+   public Set<String> getRegisteredPrefixes() {
+      final Set<String> result = new HashSet<>();
+      result.addAll(Arrays.asList(IS_NUMBER, IS_INTEGER, GREATER_THAN, LESS_THAN, "greaterOrEquals", "lessOrEquals", "equals"));
+
+      return result;
    }
 
    @Override
@@ -49,65 +68,65 @@ public class NumberConstraintType implements ConstraintType {
 
       switch (config[0]) {
          case IS_NUMBER:
-            return new NumberConstraint((value -> {
+            return new FunctionConstraint((value -> {
                try {
-                  Double.parseDouble(value.replaceAll(" ", ""));
+                  numberFormat.parse(value.replaceAll(" ", ""));
                   return true;
-               } catch (NumberFormatException nfe) {
+               } catch (ParseException pe) {
                   return false;
                }
             }), constraintConfiguration);
          case IS_INTEGER:
-            return new NumberConstraint((value -> {
+            return new FunctionConstraint((value -> {
                try {
-                  Integer.parseInt(value.replaceAll(" ", ""));
+                  integerNumberFormat.parse(value.replaceAll(" ", "")).intValue();
                   return true;
-               } catch (NumberFormatException nfe) {
+               } catch (ParseException pe) {
                   return false;
                }
             }), constraintConfiguration);
          case LESS_THAN:
             final double ltParam = checkParameter(config, constraintConfiguration);
-            return new NumberConstraint((value -> {
+            return new FunctionConstraint((value -> {
                try {
-                  return Double.parseDouble(value.replaceAll(" ", "")) < ltParam;
-               } catch (NumberFormatException nfe) {
+                  return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() < ltParam;
+               } catch (ParseException pe) {
                   return false;
                }
             }), constraintConfiguration);
          case GREATER_THAN:
             final double gtParam = checkParameter(config, constraintConfiguration);
-            return new NumberConstraint((value -> {
+            return new FunctionConstraint((value -> {
                try {
-                  return Double.parseDouble(value.replaceAll(" ", "")) > gtParam;
-               } catch (NumberFormatException nfe) {
+                  return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() > gtParam;
+               } catch (ParseException pe) {
                   return false;
                }
             }), constraintConfiguration);
          case GREATER_OR_EQUALS:
             final double gteParam = checkParameter(config, constraintConfiguration);
-            return new NumberConstraint((value -> {
+            return new FunctionConstraint((value -> {
                try {
-                  return Double.parseDouble(value.replaceAll(" ", "")) >= gteParam;
-               } catch (NumberFormatException nfe) {
+                  return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() >= gteParam;
+               } catch (ParseException pe) {
                   return false;
                }
             }), constraintConfiguration);
          case LESS_OR_EQUALS:
             final double lteParam = checkParameter(config, constraintConfiguration);
-            return new NumberConstraint((value -> {
+            return new FunctionConstraint((value -> {
                try {
-                  return Double.parseDouble(value.replaceAll(" ", "")) <= lteParam;
-               } catch (NumberFormatException nfe) {
+                  return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() <= lteParam;
+               } catch (ParseException pe) {
                   return false;
                }
             }), constraintConfiguration);
          case EQUALS:
             final double eqParam = checkParameter(config, constraintConfiguration);
-            return new NumberConstraint((value -> {
+            return new FunctionConstraint((value -> {
                try {
-                  return Double.parseDouble(value.replaceAll(" ", "")) == eqParam;
-               } catch (NumberFormatException nfe) {
+                  return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() == eqParam;
+               } catch (ParseException pe) {
                   return false;
                }
             }), constraintConfiguration);
@@ -130,30 +149,13 @@ public class NumberConstraintType implements ConstraintType {
       return parameter;
    }
 
-   private static class NumberConstraint implements Constraint {
+   @Override
+   public Set<String> getParameterSuggestions(final String prefix) {
+      return Collections.emptySet();
+   }
 
-      private final Function<String, Boolean> assesFunction;
-
-      private final String configuration;
-
-      private NumberConstraint(final Function<String, Boolean> assesFunction, final String configuration) {
-         this.assesFunction = assesFunction;
-         this.configuration = configuration;
-      }
-
-      @Override
-      public ConstraintResult isValid(final String value) {
-         return assesFunction.apply(value) ? ConstraintResult.VALID : ConstraintResult.INVALID;
-      }
-
-      @Override
-      public String fix(final String value) {
-         return isValid(value) == ConstraintResult.VALID ? value : null;
-      }
-
-      @Override
-      public String getConfigurationString() {
-         return configuration;
-      }
+   @Override
+   public void setLocale(final Locale locale) {
+      numberFormat = NumberFormat.getInstance(locale);
    }
 }
