@@ -62,4 +62,13 @@ public final class LumeerConst {
          public static final String ATTR_DOC2 = "id_doc2";
       }
    }
+
+   public static class DOCUMENT {
+      public static final String METADATA_PREFIX = "meta-";
+      public static final String CREATE_DATE_KEY = METADATA_PREFIX + "create-date";
+      public static final String UPDATE_DATE_KEY = METADATA_PREFIX + "update-date";
+      public static final String CREATE_BY_USER_KEY = METADATA_PREFIX + "create-user";
+      public static final String UPDATED_BY_USER_KEY = METADATA_PREFIX + "update-user";
+
+   }
 }

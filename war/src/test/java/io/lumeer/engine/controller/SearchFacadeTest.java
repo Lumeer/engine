@@ -20,6 +20,7 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -50,9 +51,7 @@ public class SearchFacadeTest extends Arquillian {
    }
 
    private final String COLLECTION_SEARCH = "collectionSearch";
-   private final String COLLECTION_SEARCH_INTERNAL = "collection.collectionSearch_0";
    private final String COLLECTION_SEARCH_RAW = "collectionSearchRaw";
-   private final String COLLECTION_SEARCH_RAW_INTERNAL = "collection.collectionSearchRaw";
 
    @Inject
    private SearchFacade searchFacade;
@@ -61,38 +60,38 @@ public class SearchFacadeTest extends Arquillian {
    private DocumentFacade documentFacade;
 
    @Inject
-   private CollectionFacade collectionFacade;
+   private DataStorage dataStorage;
 
    @BeforeMethod
    public void setUp() throws Exception {
-      collectionFacade.dropCollection(COLLECTION_SEARCH_INTERNAL);
-      collectionFacade.dropCollection(COLLECTION_SEARCH_RAW_INTERNAL);
+      dataStorage.dropCollection(COLLECTION_SEARCH);
+      dataStorage.dropCollection(COLLECTION_SEARCH_RAW);
    }
 
    @Test
    public void testSearch() throws Exception {
-      collectionFacade.createCollection(COLLECTION_SEARCH);
+      dataStorage.createCollection(COLLECTION_SEARCH);
 
       for (int i = 0; i < 1000; i++) {
          DataDocument insertedDocument = new DataDocument();
-         documentFacade.createDocument(COLLECTION_SEARCH_INTERNAL, insertedDocument);
+         documentFacade.createDocument(COLLECTION_SEARCH, insertedDocument);
       }
 
-      List<DataDocument> searchDocuments = searchFacade.search(COLLECTION_SEARCH_INTERNAL, null, null, 100, 100);
+      List<DataDocument> searchDocuments = searchFacade.search(COLLECTION_SEARCH, null, null, 100, 100);
 
       Assert.assertEquals(searchDocuments.size(), 100);
    }
 
    @Test
    public void testRawSearch() throws Exception {
-      collectionFacade.createCollection(COLLECTION_SEARCH_RAW);
+      dataStorage.createCollection(COLLECTION_SEARCH_RAW);
 
       for (int i = 0; i < 1000; i++) {
          DataDocument insertedDocument = new DataDocument();
-         documentFacade.createDocument(COLLECTION_SEARCH_RAW_INTERNAL, insertedDocument);
+         documentFacade.createDocument(COLLECTION_SEARCH_RAW, insertedDocument);
       }
 
-      String query = "{find: \"" + COLLECTION_SEARCH_RAW_INTERNAL + "\"}";
+      String query = "{find: \"" + COLLECTION_SEARCH_RAW + "\"}";
 
       List<DataDocument> searchDocuments = searchFacade.search(query);
 

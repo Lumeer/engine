@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
@@ -78,12 +79,12 @@ public class DocumentFacade implements Serializable {
     *       if create was not succesful
     */
    public String createDocument(final String collectionName, final DataDocument document) throws CollectionNotFoundException, UnsuccessfulOperationException {
-      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+      if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
-      document.put(documentMetadataFacade.DOCUMENT_CREATE_DATE_KEY, Utils.getCurrentTimeString());
-      document.put(documentMetadataFacade.DOCUMENT_CREATE_BY_USER_KEY, userName);
-      document.put(versionFacade.getVersionMetadataString(), 0);
+      document.put(LumeerConst.DOCUMENT.CREATE_DATE_KEY, Utils.getCurrentTimeString());
+      document.put(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY, userName);
+      document.put(LumeerConst.METADATA_VERSION_KEY, 0);
       String documentId = dataStorage.createDocument(collectionName, document);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
@@ -109,7 +110,7 @@ public class DocumentFacade implements Serializable {
     *       if document is not found in database
     */
    public DataDocument readDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
-      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+      if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
@@ -134,7 +135,7 @@ public class DocumentFacade implements Serializable {
     *       if document was not updated succesfully
     */
    public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
-      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+      if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       String documentId = updatedDocument.getString("_id");
@@ -142,16 +143,15 @@ public class DocumentFacade implements Serializable {
       if (existingDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
+      // TODO is it neccessary to drop all keys??
       // we drop all attributes of existing document from collection metadata
       for (String attribute : existingDocument.keySet()) {
          collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
       }
-      updatedDocument.put(documentMetadataFacade.DOCUMENT_UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      updatedDocument.put(documentMetadataFacade.DOCUMENT_UPDATED_BY_USER_KEY, userName);
+      updatedDocument.put(LumeerConst.DOCUMENT.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
+      updatedDocument.put(LumeerConst.DOCUMENT.UPDATED_BY_USER_KEY, userName);
       versionFacade.newDocumentVersion(collectionName, updatedDocument);
-      if (!verifyDocumentUpdate(updatedDocument, collectionName, documentId)) {
-         throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
-      }
+
       // we add all attributes of updated document to collection metadata
       for (String attribute : updatedDocument.keySet()) {
          collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
@@ -173,13 +173,14 @@ public class DocumentFacade implements Serializable {
     *       if document stay in collection after drop
     */
    public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
-      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+      if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
       if (dataDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
+      // TODO swap with backUp method
       versionFacade.newDocumentVersion(collectionName, dataDocument);
       dataStorage.dropDocument(collectionName, documentId);
 
@@ -209,7 +210,7 @@ public class DocumentFacade implements Serializable {
     *       if document is not found in database
     */
    public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
-      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+      if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
@@ -219,36 +220,11 @@ public class DocumentFacade implements Serializable {
       Set<String> documentAttributes = new HashSet<>();
       // filter out metadata attributes
       for (String key : dataDocument.keySet()) {
-         if (!key.startsWith(documentMetadataFacade.DOCUMENT_METADATA_PREFIX)) {
+         if (!key.startsWith(LumeerConst.DOCUMENT.METADATA_PREFIX)) {
             documentAttributes.add(key);
          }
       }
       return documentAttributes;
-   }
-
-   /**
-    * Check if update was succesful. The method is called inside updateDocument,
-    * so we expect that collection and document exist in db
-    *
-    * @param updatedDocument
-    *       the document which was updated
-    * @param collectionName
-    *       the name of the collection where the document is located
-    * @param documentId
-    *       the id of the document
-    * @return whether the update was succesful
-    */
-   public boolean verifyDocumentUpdate(DataDocument updatedDocument, String collectionName, String documentId) {
-      DataDocument documentFromDb = dataStorage.readDocument(collectionName, documentId);
-      if (documentFromDb == null) {
-         return false;
-      }
-      for (String key : updatedDocument.keySet()) {
-         if (!documentFromDb.containsKey(key) || !updatedDocument.get(key).equals(documentFromDb.get(key))) {
-            return false;
-         }
-      }
-      return true;
    }
 
 }

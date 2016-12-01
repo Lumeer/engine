@@ -23,6 +23,8 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
+import io.lumeer.engine.exception.CollectionNotFoundException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
@@ -41,6 +43,19 @@ import javax.inject.Inject;
 @SessionScoped
 public class LinkingFacade implements Serializable {
 
+   /*
+      Main linking table name is "_system_linking"
+      attributes - "collection1" name of first collection
+                 - "collection2" name of second collection
+                 - "collection_name" name of collection, where links are located
+                 - "count" number of links in collection
+
+      Collection linking table
+      attributes - "id_doc1" id of first document
+                 - "id_doc2" id of second document
+
+    */
+
    @Inject
    private DataStorage dataStorage;
 
@@ -48,28 +63,63 @@ public class LinkingFacade implements Serializable {
       dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId());
    }
 
-   public List<DataDocument> readAllDocumentLinks(String collectionName, String documentId) {
+   /**
+    * Read all linking documents for specified document
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the document to search for links
+    * @return list of linking documents
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    */
+   public List<DataDocument> readAllDocumentLinks(String collectionName, String documentId) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      // retrieve all documents, where collectionName is first or second attribute
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
       List<DataDocument> docLinks = new ArrayList<>();
-      for (DataDocument lt : linkingTables) {
+      for (DataDocument lt : linkingTables) { // search in each linking table
          String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
          List<DataDocument> linkingDocuments = readLinkingDocuments(colName, documentId);
 
+         // find right name of collection where the linking document is located
          String firstColName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1);
-         String linkingCollectionName = firstColName.equals(collectionName) ? firstColName : lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2);
+         String linkingCollectionName = !firstColName.equals(collectionName) ? firstColName : lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2);
 
+         // add all linking documents from storage
          docLinks.addAll(readDocumentsFromLinkingDocuments(linkingDocuments, documentId, linkingCollectionName));
       }
       return docLinks;
    }
 
-   public List<DataDocument> readDocWithCollectionLinks(String firstCollectionName, String firstDocumentId, String secondCollectionName) {
+   /**
+    * Read all linking documents for specified document and collection
+    *
+    * @param firstCollectionName
+    *       the name of the collection where the document is located
+    * @param firstDocumentId
+    *       the id of the document to search for links
+    * @param secondCollectionName
+    *       the name of the collection to search for linking documents
+    * @return list of linking documents
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    */
+   public List<DataDocument> readDocWithCollectionLinks(String firstCollectionName, String firstDocumentId, String secondCollectionName) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(firstCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(firstCollectionName));
+      }
+      if (!dataStorage.hasCollection(secondCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(secondCollectionName));
+      }
       DataDocument linkingTable = readLinkingTable(firstCollectionName, secondCollectionName);
       if (linkingTable == null) {
          return new ArrayList<>();
       }
 
-      List<DataDocument> docLinks = new ArrayList<>();
       String colName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
       List<DataDocument> linkingDocuments = readLinkingDocuments(colName, firstDocumentId);
 
@@ -111,7 +161,18 @@ public class LinkingFacade implements Serializable {
       removeAllDocuments(colName, firstDocumentId);
    }
 
-   public void dropCollectionLinks(String collectionName) {
+   /**
+    * Drop all links for specified collection
+    *
+    * @param collectionName
+    *       the name of the collection to drop links
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    */
+   public void dropCollectionLinks(String collectionName) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
@@ -162,8 +223,9 @@ public class LinkingFacade implements Serializable {
    private List<DataDocument> readDocumentsFromLinkingDocuments(List<DataDocument> linkingDocuments, String documentId, String collectionName) {
       List<DataDocument> docs = new ArrayList<>();
       for (DataDocument ld : linkingDocuments) {
+         // check for right id of linking document
          String firstDocId = ld.getString(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1);
-         String linkingDocumentId = firstDocId.equals(documentId) ? firstDocId : ld.getString(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2);
+         String linkingDocumentId = !firstDocId.equals(documentId) ? firstDocId : ld.getString(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2);
 
          DataDocument doc = dataStorage.readDocument(collectionName, linkingDocumentId);
          if (doc != null) {
