@@ -19,6 +19,9 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.constraint.ConstraintManager;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.util.Utils;
@@ -27,9 +30,13 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
@@ -40,6 +47,9 @@ public class CollectionMetadataFacade implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private ConfigurationFacade configurationFacade;
 
    // table name prefixes, attribute names and other constants used in metadata
 
@@ -61,6 +71,8 @@ public class CollectionMetadataFacade implements Serializable {
 
    private static final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
    private static final String COLLECTION_LOCK_UPDATED_KEY = "updated";
+
+   private ConstraintManager constraintManager;
 
    // example of collection metadata structure:
    // -------------------------------------
@@ -96,6 +108,30 @@ public class CollectionMetadataFacade implements Serializable {
    // “meta-type” : “lock”,
    // “updated” : “2016-11-08 12:23:21”
    //  }
+
+   /**
+    * Initializes constraint manager.
+    */
+   @PostConstruct
+   public void initConstraintManager() {
+      try {
+         constraintManager = new ConstraintManager();
+         constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US")));
+      } catch (InvalidConstraintException e) {
+         throw new IllegalStateException("Illegal constraint prefix collision: ", e);
+      }
+   }
+
+   /**
+    * Gets active constraint manager.
+    *
+    * @return The active constraint manager.
+    */
+   @Produces
+   @Named
+   public ConstraintManager getConstraintManager() {
+      return constraintManager;
+   }
 
    /**
     * Converts collection name given by user to internal representation.

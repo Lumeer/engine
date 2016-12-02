@@ -19,11 +19,17 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
+import io.lumeer.engine.controller.ConfigurationFacade;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -45,15 +51,28 @@ public class WhisperService {
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
+   @Inject
+   private ConstraintManager constraintManager;
+
+   @Inject
+   private ConfigurationFacade configurationFacade;
+
+   private Locale locale = Locale.getDefault();
+
+   @PostConstruct
+   public void initLocale() {
+      locale = Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US"));
+   }
+
    @GET
-   @Path("/collection/{userInput}")
+   @Path("/collection/{collectionName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionNames(@PathParam("userInput") final String userInput) {
-      if (userInput == null || userInput.isEmpty()) {
+   public Set<String> getPossibleCollectionNames(@PathParam("collectionName") final String collectionName) {
+      if (collectionName == null || collectionName.isEmpty()) {
          // return user names of all user collections
          return Collections.emptySet();
       } else {
-         // return user names of all user collections starting with the userInput ignoring case
+         // return user names of all user collections starting with the collectionName ignoring case
          return Collections.emptySet();
          //return dataStorage.getAllCollections().stream().filter(name -> name.startsWith(prefix)).collect(Collectors.toSet());
 
@@ -69,6 +88,45 @@ public class WhisperService {
       // return all collections attributes (except for meta data) starting with the userInput ignoring case
 
       return Collections.emptySet();
+   }
+
+   /**
+    * Gets available names of constraint prefixes.
+    *
+    * @param constraintName
+    *       Already written part of the constraint prefix.
+    * @return Set of available constraint prefix names according to the already entered part.
+    */
+   @GET
+   @Path("/constraint/{constraintName}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Set<String> getPossibleConstraintNamePrefixes(@PathParam("constraintName") final String constraintName) {
+      if (constraintName != null && !constraintName.isEmpty()) {
+         return constraintManager.getRegisteredPrefixes().stream().filter(prefix -> prefix.toLowerCase(locale).startsWith(constraintName.toLowerCase(locale))).collect(Collectors.toSet());
+      }
+
+      return constraintManager.getRegisteredPrefixes();
+   }
+
+   /**
+    * Gets available parameter values for the given constraint.
+    *
+    * @param constraintName
+    *       Name of the constraint.
+    * @param constraintParam
+    *       Already written part of the constraint parameter.
+    * @return Set of available constraint parameters based on the already entered part.
+    */
+   @GET
+   @Path("/constraint/{constraintName}/{constraintParam}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Set<String> getPossibleConstraintNamePrefixes(@PathParam("constraintName") final String constraintName, @PathParam("constraintParam") final String constraintParam) {
+      if (constraintParam != null && !constraintParam.isEmpty()) {
+         return constraintManager.getConstraintParameterSuggestions(constraintName).stream().filter(
+               suggestion -> suggestion.toLowerCase(locale).startsWith(constraintParam.toLowerCase(locale))).collect(Collectors.toSet());
+      }
+
+      return constraintManager.getConstraintParameterSuggestions(constraintName);
    }
 
 }

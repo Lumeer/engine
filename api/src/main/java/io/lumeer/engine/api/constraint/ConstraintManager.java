@@ -20,6 +20,7 @@
 package io.lumeer.engine.api.constraint;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -258,5 +259,25 @@ public class ConstraintManager {
    public Set<String> getConstraintParameterSuggestions(final String prefix) {
       final ConstraintType constraintType = registry.get(prefix);
       return constraintType == null ? Collections.emptySet() : constraintType.getParameterSuggestions(prefix);
+   }
+
+   /**
+    * Sets the user's locale.
+    *
+    * @return The user's locale.
+    */
+   public Locale getLocale() {
+      return locale;
+   }
+
+   /**
+    * Gets the currently used locale.
+    *
+    * @param locale
+    *       The currently used locale.
+    */
+   public void setLocale(final Locale locale) {
+      this.locale = locale;
+      Arrays.asList(CONSTRAINT_CLASSES).forEach(ct -> ct.setLocale(locale));
    }
 }

@@ -44,6 +44,8 @@ public final class LumeerConst {
    public static final String SYSTEM_DB_USER_PROPERTY = "sys_db_user";
    public static final String SYSTEM_DB_PASSWORD_PROPERTY = "sys_db_passwd";
 
+   public static final String USER_LOCALE_PROPERTY = "locale";
+
    private LumeerConst() {
       // we do not want any instances to be created
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));
