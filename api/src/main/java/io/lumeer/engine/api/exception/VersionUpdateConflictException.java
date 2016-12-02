@@ -17,7 +17,7 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.exception;
+package io.lumeer.engine.api.exception;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>

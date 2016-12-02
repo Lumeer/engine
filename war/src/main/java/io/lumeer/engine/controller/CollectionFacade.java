@@ -22,10 +22,10 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.CollectionEvent;
-import io.lumeer.engine.exception.AttributeAlreadyExistsException;
-import io.lumeer.engine.exception.AttributeNotFoundException;
-import io.lumeer.engine.exception.CollectionAlreadyExistsException;
-import io.lumeer.engine.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
+import io.lumeer.engine.api.exception.AttributeNotFoundException;
+import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;

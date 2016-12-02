@@ -17,22 +17,22 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.exception;
+package io.lumeer.engine.api.exception;
 
 /**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-public class DocumentNotFoundException extends DbException {
+public class CollectionAlreadyExistsException extends DbException {
 
-   public DocumentNotFoundException(final String message) {
+   public CollectionAlreadyExistsException(final String message) {
       super(message);
    }
 
-   public DocumentNotFoundException(final String message, final Throwable cause) {
+   public CollectionAlreadyExistsException(final String message, final Throwable cause) {
       super(message, cause);
    }
 
-   public DocumentNotFoundException(final Throwable cause) {
+   public CollectionAlreadyExistsException(final Throwable cause) {
       super(cause);
    }
 

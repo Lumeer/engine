@@ -21,9 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.exception.VersionUpdateConflictException;
 
-import com.mongodb.util.JSON;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -33,13 +31,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
-
-import jdk.nashorn.internal.runtime.regexp.RegExp;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>

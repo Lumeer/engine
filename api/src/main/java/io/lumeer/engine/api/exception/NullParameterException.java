@@ -17,22 +17,22 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.exception;
+package io.lumeer.engine.api.exception;
 
 /**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-public class UnsuccessfulOperationException extends DbException {
+public class NullParameterException extends DbException {
 
-   public UnsuccessfulOperationException(final String message) {
+   public NullParameterException(final String message) {
       super(message);
    }
 
-   public UnsuccessfulOperationException(final String message, final Throwable cause) {
+   public NullParameterException(final String message, final Throwable cause) {
       super(message, cause);
    }
 
-   public UnsuccessfulOperationException(final Throwable cause) {
+   public NullParameterException(final Throwable cause) {
       super(cause);
    }
 

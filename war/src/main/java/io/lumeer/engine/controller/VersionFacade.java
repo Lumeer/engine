@@ -23,12 +23,10 @@ import java.io.Serializable;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.exception.DocumentNotFoundException;
-import io.lumeer.engine.exception.UnsuccessfulOperationException;
-import io.lumeer.engine.exception.VersionUpdateConflictException;
+import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
+import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
-
-import com.mongodb.MongoWriteException;
 
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;

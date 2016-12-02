@@ -30,7 +30,7 @@ public interface Constraint {
     * Result of the check of a value. The value can be either completely ok, or we know how to make it ok, or it is wrong.
     */
    enum ConstraintResult {
-      VALID, FIXABLE, INVALID;
+      VALID, FIXABLE, INVALID
    }
 
    /**

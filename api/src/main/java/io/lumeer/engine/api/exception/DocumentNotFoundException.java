@@ -17,22 +17,22 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.exception;
+package io.lumeer.engine.api.exception;
 
 /**
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
+ * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-public class NullParameterException extends DbException {
+public class DocumentNotFoundException extends DbException {
 
-   public NullParameterException(final String message) {
+   public DocumentNotFoundException(final String message) {
       super(message);
    }
 
-   public NullParameterException(final String message, final Throwable cause) {
+   public DocumentNotFoundException(final String message, final Throwable cause) {
       super(message, cause);
    }
 
-   public NullParameterException(final Throwable cause) {
+   public DocumentNotFoundException(final Throwable cause) {
       super(cause);
    }
 

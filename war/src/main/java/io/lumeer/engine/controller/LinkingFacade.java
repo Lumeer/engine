@@ -23,7 +23,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
 

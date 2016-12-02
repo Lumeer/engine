@@ -44,45 +44,4 @@ import javax.ws.rs.core.MediaType;
 @RequestScoped
 public class DataRestService {
 
-   @Inject
-   private Logger log;
-
-   @Inject
-   private DataStorage storage;
-
-   @Inject
-   private Event<UpdateDocument> element;
-
-   @Inject
-   private JmsService jmsService;
-
-   @Inject
-   private PushService pushService;
-
-   /**
-    * Sample get request handler.
-    *
-    * @param batchId
-    *       Id of object to obtain.
-    * @return Returns the list of objects.
-    */
-   @GET
-   @Path("/element/{batch:[0-9][0-9]*}")
-   @Produces(MediaType.APPLICATION_JSON)
-   public List<String> getElements(@PathParam("batch") final String batchId) {
-      element.fire(new UpdateDocument("collection", new DataDocument())); // this shows how to fire a CDI event
-      jmsService.enqueueTask(new SearchTask("search for green keys")); // this is how we send a jms message
-
-      return null;
-   }
-
-   /**
-    * Broadcasts a push notification to browsers.
-    */
-   @GET
-   @Path("/broadcast")
-   public void broadcast() {
-      pushService.publishMessage("chat", "Hello everyone, this is Lumeer speaking!");
-   }
-
 }

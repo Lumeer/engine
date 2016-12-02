@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.api.data;
 
+import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -107,8 +109,9 @@ public interface DataStorage extends Serializable {
     *       the id of the document
     * @param version
     *       the version of document
+    * @throws UnsuccessfulOperationException When somebody already updated the document.
     */
-   void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws Exception;
+   void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws UnsuccessfulOperationException;
 
    /**
     * Reads the specified document in given collection by its id.

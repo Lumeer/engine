@@ -21,8 +21,8 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.exception.CollectionAlreadyExistsException;
-import io.lumeer.engine.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.util.Utils;
 
 import org.jboss.arquillian.container.test.api.Deployment;

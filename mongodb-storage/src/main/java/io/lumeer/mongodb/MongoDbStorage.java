@@ -23,6 +23,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.ErrorCategory;
@@ -141,15 +142,14 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void createOldDocument(final String collectionName, final DataDocument dataDocument, final String documentId, final int version) throws Exception {
+   public void createOldDocument(final String collectionName, final DataDocument dataDocument, final String documentId, final int version) throws UnsuccessfulOperationException {
       Document doc = new Document(dataDocument);
-      doc.put(ID, new BasicDBObject(ID, new ObjectId(documentId)).append(
-            LumeerConst.METADATA_VERSION_KEY, version));
+      doc.put(ID, new BasicDBObject(ID, new ObjectId(documentId)).append(LumeerConst.METADATA_VERSION_KEY, version));
       try {
          database.getCollection(collectionName).insertOne(doc);
       } catch (MongoWriteException e) {
          if (e.getError().getCategory().equals(ErrorCategory.DUPLICATE_KEY)) {
-            throw new Exception(e.getMessage(), e.getCause());
+            throw new UnsuccessfulOperationException(e.getMessage(), e.getCause());
          } else {
             throw e;
          }

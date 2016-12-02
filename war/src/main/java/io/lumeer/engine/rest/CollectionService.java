@@ -20,15 +20,13 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.controller.CollectionFacade;
-import io.lumeer.engine.exception.CollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;

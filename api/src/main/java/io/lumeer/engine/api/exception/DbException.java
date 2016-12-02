@@ -17,22 +17,23 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.exception;
+
+package io.lumeer.engine.api.exception;
 
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-public class AttributeAlreadyExistsException extends DbException {
+public class DbException extends Exception {
 
-   public AttributeAlreadyExistsException(final String message) {
+   public DbException(final String message) {
       super(message);
    }
 
-   public AttributeAlreadyExistsException(final String message, final Throwable cause) {
+   public DbException(final String message, final Throwable cause) {
       super(message, cause);
    }
 
-   public AttributeAlreadyExistsException(final Throwable cause) {
+   public DbException(final Throwable cause) {
       super(cause);
    }
 
