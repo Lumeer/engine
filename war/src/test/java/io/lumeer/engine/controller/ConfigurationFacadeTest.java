@@ -152,7 +152,7 @@ public class ConfigurationFacadeTest extends Arquillian {
 
       // #1 if the default value exists
       configurationFacade.setUserConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
-      Assert.assertEquals(configurationFacade.getUserConfigurationString(DBHOST_KEY), Optional.empty());
+      Assert.assertEquals(configurationFacade.getUserConfigurationString(DBHOST_KEY).get(), DUMMY_DBHOST_VALUE);
       systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
 
       // #2 if the system user collection is filled and key exists
@@ -170,7 +170,7 @@ public class ConfigurationFacadeTest extends Arquillian {
 
       // #1 if the default value exists
       configurationFacade.setUserConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
-      Assert.assertEquals(configurationFacade.getUserConfigurationInteger(PORT_KEY), Optional.empty());
+      Assert.assertTrue(configurationFacade.getUserConfigurationInteger(PORT_KEY).get() == DUMMY_PORT_VALUE);
 
       // #2 if none of system values exists in collections, neither the default value
       Assert.assertEquals(configurationFacade.getConfigurationInteger(DEFAULT_NOT_EXISTED_KEY), Optional.empty());
@@ -193,7 +193,7 @@ public class ConfigurationFacadeTest extends Arquillian {
 
       // #1 if the system user collection is empty
       configurationFacade.setTeamConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
-      Assert.assertEquals(configurationFacade.getTeamConfigurationString(DBHOST_KEY), Optional.empty());
+      Assert.assertEquals(configurationFacade.getTeamConfigurationString(DBHOST_KEY).get(), DUMMY_DBHOST_VALUE);
       systemDataStorage.dropCollection(COLLECTION_TEAM_CONFIG);
 
       // #2 if the system user collection is filled and key exists
@@ -206,9 +206,8 @@ public class ConfigurationFacadeTest extends Arquillian {
    public void testSetAndGetTeamConfigurationInteger() throws Exception {
       systemDataStorage.createCollection(COLLECTION_TEAM_CONFIG);
 
-      // #1 if the system team collection is empty
       configurationFacade.setTeamConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
-      Assert.assertEquals(configurationFacade.getTeamConfigurationInteger(PORT_KEY), Optional.empty());
+      Assert.assertTrue(configurationFacade.getTeamConfigurationInteger(PORT_KEY).get() == DUMMY_PORT_VALUE);
    }
 
    @Test
