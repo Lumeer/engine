@@ -427,13 +427,10 @@ public class ConfigurationFacade implements Serializable {
    private void setConfiguration(final boolean groupOption, final String key, final Object value) {
       final String user = userFacade.getUserEmail();
 
-      // if default value for given key does not exist in DEFAULT_VALUES, insert the value to configuration entry
-      if (!defaultConfigurationProducer.getDefaultConfiguration().containsKey(key)) {
-         if (groupOption) {
-            configurationManipulator.setConfiguration(USER_CONFIG, user, key, value);
-         } else {
-            configurationManipulator.setConfiguration(TEAM_CONFIG, user, key, value);
-         }
+      if (groupOption) {
+         configurationManipulator.setConfiguration(USER_CONFIG, user, key, value);
+      } else {
+         configurationManipulator.setConfiguration(TEAM_CONFIG, user, key, value);
       }
    }
 
