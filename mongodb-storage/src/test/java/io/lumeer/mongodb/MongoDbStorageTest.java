@@ -266,9 +266,9 @@ public class MongoDbStorageTest {
 
       // query form: https://docs.mongodb.com/v3.2/reference/command/find/#definition
       String query = "{find: \"" + COLLECTION_SEARCH_RAW + "\"}";
-      List<DataDocument> searchDocuments = mongoDbStorage.search(query);
+      List<DataDocument> searchDocuments = mongoDbStorage.run(query);
 
-      // search() method returns 101 entries due to it is a default value of "batchSize" query key
+      // run() method returns 101 entries due to it is a default value of "batchSize" query key
       Assert.assertEquals(searchDocuments.size(), 101);
    }
 
@@ -296,14 +296,14 @@ public class MongoDbStorageTest {
       DataDocument insertedDocument = createDummyDocument();
       String id = mongoDbStorage.createDocument(COLLECTION_INC_ATTR_VALUE_BY, insertedDocument);
 
-      mongoDbStorage.incerementAttributeValueBy(COLLECTION_INC_ATTR_VALUE_BY, id, incAttribute, 1);
+      mongoDbStorage.incrementAttributeValueBy(COLLECTION_INC_ATTR_VALUE_BY, id, incAttribute, 1);
 
       DataDocument readDocument = mongoDbStorage.readDocument(COLLECTION_INC_ATTR_VALUE_BY, id);
 
       Assert.assertTrue(readDocument.containsKey(incAttribute));
       Assert.assertEquals(readDocument.getInteger(incAttribute).intValue(), 1);
 
-      mongoDbStorage.incerementAttributeValueBy(COLLECTION_INC_ATTR_VALUE_BY, id, incAttribute, 10);
+      mongoDbStorage.incrementAttributeValueBy(COLLECTION_INC_ATTR_VALUE_BY, id, incAttribute, 10);
 
       readDocument = mongoDbStorage.readDocument(COLLECTION_INC_ATTR_VALUE_BY, id);
       Assert.assertTrue(readDocument.containsKey(incAttribute));

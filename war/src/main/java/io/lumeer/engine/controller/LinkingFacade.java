@@ -69,7 +69,7 @@ public class LinkingFacade implements Serializable {
     * @param collectionName
     *       the name of the collection where the document is located
     * @param documentId
-    *       the id of the document to search for links
+    *       the id of the document to run for links
     * @return list of linking documents
     * @throws CollectionNotFoundException
     *       if collection is not found in database
@@ -81,7 +81,7 @@ public class LinkingFacade implements Serializable {
       // retrieve all documents, where collectionName is first or second attribute
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
       List<DataDocument> docLinks = new ArrayList<>();
-      for (DataDocument lt : linkingTables) { // search in each linking table
+      for (DataDocument lt : linkingTables) { // run in each linking table
          String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
          List<DataDocument> linkingDocuments = readLinkingDocuments(colName, documentId);
 
@@ -101,9 +101,9 @@ public class LinkingFacade implements Serializable {
     * @param firstCollectionName
     *       the name of the collection where the document is located
     * @param firstDocumentId
-    *       the id of the document to search for links
+    *       the id of the document to run for links
     * @param secondCollectionName
-    *       the name of the collection to search for linking documents
+    *       the name of the collection to run for linking documents
     * @return list of linking documents
     * @throws CollectionNotFoundException
     *       if collection is not found in database

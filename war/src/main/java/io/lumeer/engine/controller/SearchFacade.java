@@ -45,7 +45,7 @@ public class SearchFacade implements Serializable {
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
     *
     * @param collectionName
-    *       the name of the collection where the search will be performed
+    *       the name of the collection where the run will be performed
     * @param filter
     *       the query predicate. If unspecified, then all documents in the collection will match the predicate.
     * @param sort
@@ -72,7 +72,7 @@ public class SearchFacade implements Serializable {
     * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
     */
    public List<DataDocument> search(String query) {
-      return dataStorage.search(query);
+      return dataStorage.run(query);
    }
 
 }

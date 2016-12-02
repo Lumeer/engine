@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Model;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -60,7 +61,7 @@ import javax.inject.Named;
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@Model
+@SessionScoped
 public class MongoDbStorage implements DataStorage {
 
    private static final String ID = "_id";
@@ -257,17 +258,19 @@ public class MongoDbStorage implements DataStorage {
 
    @SuppressWarnings("unchecked")
    @Override
-   public List<DataDocument> search(final String query) {
+   public List<DataDocument> run(final String command) {
       final List<DataDocument> result = new ArrayList<>();
 
-      Document cursor = (Document) database.runCommand(BsonDocument.parse(query)).get(CURSOR_KEY);
+      Document cursor = (Document) database.runCommand(BsonDocument.parse(command)).get(CURSOR_KEY);
 
-      ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
-         d.replace(ID, d.getObjectId(ID).toString());
-         DataDocument raw = new DataDocument(d);
-         convertNestedDocuments(raw);
-         result.add(raw);
-      });
+      if (cursor != null) {
+         ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
+            d.replace(ID, d.getObjectId(ID).toString());
+            DataDocument raw = new DataDocument(d);
+            convertNestedDocuments(raw);
+            result.add(raw);
+         });
+      }
 
       return result;
    }
@@ -293,7 +296,7 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void incerementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy) {
+   public void incrementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy) {
       BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       BasicDBObject updateBson = new BasicDBObject("$inc", new BasicDBObject(new Document(attributeName, incBy)));
       database.getCollection(collectionName).updateOne(filter, updateBson);

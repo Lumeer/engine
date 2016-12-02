@@ -193,7 +193,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public Map<String, String> getCollectionAttributesNamesAndTypes(String collectionName) {
       String query = queryCollectionAttributesInfo(collectionName);
-      List<DataDocument> attributesInfoDocuments = dataStorage.search(query);
+      List<DataDocument> attributesInfoDocuments = dataStorage.run(query);
 
       Map<String, String> attributesInfo = new HashMap<>();
 
@@ -215,7 +215,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public List<DataDocument> getCollectionAttributesInfo(String collectionName) {
       String query = queryCollectionAttributesInfo(collectionName);
-      List<DataDocument> attributesInfoDocuments = dataStorage.search(query);
+      List<DataDocument> attributesInfoDocuments = dataStorage.run(query);
       return attributesInfoDocuments;
    }
 
@@ -232,7 +232,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) {
       String query = queryCollectionAttributeInfo(collectionName, oldName);
-      List<DataDocument> attributeInfo = dataStorage.search(query);
+      List<DataDocument> attributeInfo = dataStorage.run(query);
 
       // the attribute does not exist
       if (attributeInfo.isEmpty()) {
@@ -271,7 +271,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.search(query);
+      List<DataDocument> attributeInfo = dataStorage.run(query);
 
       // the attribute does not exist
       if (attributeInfo.isEmpty()) {
@@ -301,7 +301,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public boolean dropCollectionAttribute(String collectionName, String attributeName) {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.search(query);
+      List<DataDocument> attributeInfo = dataStorage.run(query);
 
       // the attribute does not exist
       if (attributeInfo.isEmpty()) {
@@ -327,12 +327,12 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public void addOrIncrementAttribute(String collectionName, String attribute) {
       String query = queryCollectionAttributeInfo(collectionName, attribute);
-      List<DataDocument> attributeInfo = dataStorage.search(query);
+      List<DataDocument> attributeInfo = dataStorage.run(query);
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       if (!attributeInfo.isEmpty()) { // attribute already exists
          DataDocument attributeDocument = attributeInfo.get(0);
          String documentId = attributeDocument.get("_id").toString();
-         dataStorage.incerementAttributeValueBy(metadataCollectionName, documentId, COLLECTION_ATTRIBUTE_COUNT_KEY, 1);
+         dataStorage.incrementAttributeValueBy(metadataCollectionName, documentId, COLLECTION_ATTRIBUTE_COUNT_KEY, 1);
       } else {
          Map<String, Object> metadata = new HashMap<>();
          metadata.put(META_TYPE_KEY, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
@@ -356,7 +356,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public void dropOrDecrementAttribute(String collectionName, String attribute) {
       String query = queryCollectionAttributeInfo(collectionName, attribute);
-      List<DataDocument> attributeInfo = dataStorage.search(query);
+      List<DataDocument> attributeInfo = dataStorage.run(query);
       if (!attributeInfo.isEmpty()) { // in case somebody did that sooner, we may have nothing to remove
          DataDocument attributeDocument = attributeInfo.get(0);
          String documentId = attributeDocument.get("_id").toString();
@@ -366,7 +366,7 @@ public class CollectionMetadataFacade implements Serializable {
          if (attributeDocument.getLong(COLLECTION_ATTRIBUTE_COUNT_KEY) == 1) {
             dataStorage.dropDocument(metadataCollectionName, documentId);
          } else {
-            dataStorage.incerementAttributeValueBy(metadataCollectionName, documentId, COLLECTION_ATTRIBUTE_COUNT_KEY, -1);
+            dataStorage.incrementAttributeValueBy(metadataCollectionName, documentId, COLLECTION_ATTRIBUTE_COUNT_KEY, -1);
          }
       }
    }
@@ -382,7 +382,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public long getAttributeCount(String collectionName, String attributeName) {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> countInfo = dataStorage.search(query);
+      List<DataDocument> countInfo = dataStorage.run(query);
       if (!countInfo.isEmpty()) {
          DataDocument countDocument = countInfo.get(0);
          return countDocument.getLong(COLLECTION_ATTRIBUTE_COUNT_KEY);
@@ -400,7 +400,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public String getOriginalCollectionName(String collectionName) {
       String query = queryCollectionNameInfo(collectionName);
-      List<DataDocument> nameInfo = dataStorage.search(query);
+      List<DataDocument> nameInfo = dataStorage.run(query);
 
       DataDocument nameDocument = nameInfo.get(0);
       String name = nameDocument.getString(COLLECTION_REAL_NAME_KEY);
@@ -435,7 +435,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public String getCollectionLockTime(String collectionName) {
       String query = queryCollectionLockTime(collectionName);
-      List<DataDocument> lockInfo = dataStorage.search(query);
+      List<DataDocument> lockInfo = dataStorage.run(query);
 
       DataDocument nameDocument = lockInfo.get(0);
       String lock = nameDocument.getString(COLLECTION_LOCK_UPDATED_KEY);
@@ -457,7 +457,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       String query = queryCollectionLockTime(collectionName);
-      List<DataDocument> lockInfo = dataStorage.search(query);
+      List<DataDocument> lockInfo = dataStorage.run(query);
       DataDocument lockDocument = lockInfo.get(0);
       String id = lockDocument.get("_id").toString();
 
@@ -500,7 +500,7 @@ public class CollectionMetadataFacade implements Serializable {
    //    */
    //   public void setAttributeCount(String collectionName, String attributeName, long count) {
    //      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-   //      List<DataDocument> attributeInfo = dataStorage.search(query);
+   //      List<DataDocument> attributeInfo = dataStorage.run(query);
    //      DataDocument attributeDocument = attributeInfo.get(0);
    //      String id = attributeDocument.get("_id").toString();
    //
@@ -524,7 +524,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public boolean checkAttributeType(String collectionName, String attributeName, String attributeType) {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.search(query);
+      List<DataDocument> attributeInfo = dataStorage.run(query);
       if (!attributeInfo.isEmpty()) {
          DataDocument attributeDocument = attributeInfo.get(0);
          String correctType = attributeDocument.getString(COLLECTION_ATTRIBUTE_TYPE_KEY);

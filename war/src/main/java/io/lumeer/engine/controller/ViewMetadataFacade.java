@@ -137,7 +137,7 @@ public class ViewMetadataFacade implements Serializable {
     */
    public String getViewType(String viewName) {
       String query = queryViewType(viewName);
-      List<DataDocument> viewInfo = dataStorage.search(query);
+      List<DataDocument> viewInfo = dataStorage.run(query);
 
       DataDocument viewDocument = viewInfo.get(0);
       String type = viewDocument.getString(VIEW_TYPE_KEY);

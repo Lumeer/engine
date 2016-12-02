@@ -219,20 +219,20 @@ public interface DataStorage extends Serializable {
    Set<String> getAttributeValues(final String collectionName, final String attributeName);
 
    /**
-    * Executes a query to find and return documents.
+    * Executes a command to find and return documents.
     *
-    * @param query
+    * @param command
     *       the database find command specified as a JSON string
     * @return the list of the found documents
     * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
     */
-   List<DataDocument> search(final String query);
+   List<DataDocument> run(final String command);
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
     *
     * @param collectionName
-    *       the name of the collection where the search will be performed
+    *       the name of the collection where the run will be performed
     * @param filter
     *       the query predicate. If unspecified, then all documents in the collection will match the predicate.
     * @param sort
@@ -257,7 +257,7 @@ public interface DataStorage extends Serializable {
     * @param incBy
     *       the value by which attribute is increment
     */
-   void incerementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy);
+   void incrementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy);
 
    /**
     * Gets the next value of sequence.

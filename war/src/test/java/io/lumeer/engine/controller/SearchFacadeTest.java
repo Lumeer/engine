@@ -95,7 +95,7 @@ public class SearchFacadeTest extends Arquillian {
 
       List<DataDocument> searchDocuments = searchFacade.search(query);
 
-      // search() method returns 101 entries due to it is a default value of "batchSize" query key
+      // run() method returns 101 entries due to it is a default value of "batchSize" query key
       Assert.assertEquals(searchDocuments.size(), 101);
    }
 

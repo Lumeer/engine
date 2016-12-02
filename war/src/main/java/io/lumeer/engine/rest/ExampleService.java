@@ -67,7 +67,7 @@ public class ExampleService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<String> getElements(@PathParam("batch") final String batchId) {
       element.fire(new UpdateDocument("collection", new DataDocument())); // this shows how to fire a CDI event
-      jmsService.enqueueTask(new SearchTask("search for green keys")); // this is how we send a jms message
+      jmsService.enqueueTask(new SearchTask("run for green keys")); // this is how we send a jms message
 
       return null;
    }

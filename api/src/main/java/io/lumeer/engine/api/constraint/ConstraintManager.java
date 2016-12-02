@@ -55,7 +55,9 @@ public class ConstraintManager {
    /**
     * List of all constraint type classes.
     */
-   private static final ConstraintType[] CONSTRAINT_CLASSES = { new NumberConstraintType() };
+   private static final ConstraintType[] CONSTRAINT_CLASSES = {
+         new NumberConstraintType(), new CaseConstraintType(), new ListConstraintType(), new MatchesConstraintType()
+   };
 
    /**
     * Initializes an empty constraint manager.
