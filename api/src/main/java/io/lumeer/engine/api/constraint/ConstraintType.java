@@ -19,7 +19,8 @@
  */
 package io.lumeer.engine.api.constraint;
 
-import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Defines a type of constraint that makes sure user data are in the required format.
@@ -34,7 +35,7 @@ public interface ConstraintType {
     *
     * @return Configuration prefixes recognized by this constraint type.
     */
-   List<String> getRegisteredPrefixes();
+   Set<String> getRegisteredPrefixes();
 
    /**
     * Parses constraint configuration.
@@ -46,4 +47,22 @@ public interface ConstraintType {
     *       When the configuration was not parseable.
     */
    Constraint parseConstraint(final String constraintConfiguration) throws InvalidConstraintException;
+
+   /**
+    * Get the set of possible parameter values for the given constraint prefix (e.g. for prefix case,
+    * it can be lower, upper).
+    *
+    * @param prefix
+    *       The prefix to return possible parameters for.
+    * @return The set of possible parameter values for the given constraint prefix.
+    */
+   Set<String> getParameterSuggestions(final String prefix);
+
+   /**
+    * Sets locale that needs to be respected by all constraints of this type.
+    *
+    * @param locale
+    *       Locale to set.
+    */
+   void setLocale(final Locale locale);
 }

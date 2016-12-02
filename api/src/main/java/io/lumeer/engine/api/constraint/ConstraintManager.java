@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +35,11 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class ConstraintManager {
+
+   /**
+    * Locale that will be passed to all constraints.
+    */
+   private Locale locale;
 
    /**
     * Configured constraints.
@@ -230,5 +236,27 @@ public class ConstraintManager {
       }
 
       return constraints.stream().map(Constraint::getConfigurationString).collect(Collectors.toList());
+   }
+
+   /**
+    * Gets the set of possible constrain prefixes (e.g. lessThan, case, matches...).
+    *
+    * @return The set of possible constrain prefixes.
+    */
+   public Set<String> getRegisteredPrefixes() {
+      return registry.keySet();
+   }
+
+   /**
+    * Get the set of possible parameter values for the given constraint prefix (e.g. for prefix case,
+    * it can be lower, upper).
+    *
+    * @param prefix
+    *       The prefix to return possible parameters for.
+    * @return The set of possible parameter values for the given constraint prefix.
+    */
+   public Set<String> getConstraintParameterSuggestions(final String prefix) {
+      final ConstraintType constraintType = registry.get(prefix);
+      return constraintType == null ? Collections.emptySet() : constraintType.getParameterSuggestions(prefix);
    }
 }
