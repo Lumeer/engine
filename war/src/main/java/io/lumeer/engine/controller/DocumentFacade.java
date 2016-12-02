@@ -23,7 +23,6 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.exception.CollectionNotFoundException;
 import io.lumeer.engine.exception.DocumentNotFoundException;
 import io.lumeer.engine.exception.UnsuccessfulOperationException;
@@ -117,6 +116,9 @@ public class DocumentFacade implements Serializable {
       if (dataDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
+      for (String key : LumeerConst.DOCUMENT.METADATA_KEYS) {
+         dataDocument.remove(key);
+      }
       return dataDocument;
    }
 
@@ -143,18 +145,15 @@ public class DocumentFacade implements Serializable {
       if (existingDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      // TODO is it neccessary to drop all keys??
-      // we drop all attributes of existing document from collection metadata
-      for (String attribute : existingDocument.keySet()) {
-         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
-      }
       updatedDocument.put(LumeerConst.DOCUMENT.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       updatedDocument.put(LumeerConst.DOCUMENT.UPDATED_BY_USER_KEY, userName);
       versionFacade.newDocumentVersion(collectionName, updatedDocument);
 
-      // we add all attributes of updated document to collection metadata
+      // we add new attributes of updated document to collection metadata
       for (String attribute : updatedDocument.keySet()) {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         if (!existingDocument.containsKey(attribute)) {
+            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         }
       }
    }
 
@@ -190,10 +189,35 @@ public class DocumentFacade implements Serializable {
       } else {
          dropDocumentEvent.fire(new DropDocument(collectionName, dataDocument));
          // we drop all attributes of dropped document from collection metadata
-         for (String attribute : dataDocument.keySet()) {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         for (String attributeName : dataDocument.keySet()) {
+            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
          }
       }
+   }
+
+   /**
+    * Remove specific attribute of document
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the document
+    * @param attributeName
+    *       the name of attribute to drop
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    * @throws DocumentNotFoundException
+    *       if document is not found in database
+    */
+   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws CollectionNotFoundException, DocumentNotFoundException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      dataStorage.dropAttribute(collectionName, documentId, attributeName);
+      collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
    }
 
    /**

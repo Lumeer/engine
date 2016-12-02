@@ -19,6 +19,9 @@
  */
 package io.lumeer.engine.api;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Lumeer constants.
  *
@@ -50,7 +53,7 @@ public final class LumeerConst {
       public static final String PREFIX = "_linking";
 
       public class MAIN_TABLE {
-         public static final String NAME = "_system_linking";
+         public static final String NAME = "_system-linking";
          public static final String ATTR_COL1 = "collection1";
          public static final String ATTR_COL2 = "collection2";
          public static final String ATTR_COL_NAME = "collection_name";
@@ -64,11 +67,11 @@ public final class LumeerConst {
    }
 
    public static class DOCUMENT {
-      public static final String METADATA_PREFIX = "meta-";
+      public static final String METADATA_PREFIX = "_metadata-";
       public static final String CREATE_DATE_KEY = METADATA_PREFIX + "create-date";
       public static final String UPDATE_DATE_KEY = METADATA_PREFIX + "update-date";
       public static final String CREATE_BY_USER_KEY = METADATA_PREFIX + "create-user";
       public static final String UPDATED_BY_USER_KEY = METADATA_PREFIX + "update-user";
-
+      public static final List<String> METADATA_KEYS = Arrays.asList(METADATA_VERSION_KEY, CREATE_DATE_KEY, UPDATE_DATE_KEY, CREATE_BY_USER_KEY, UPDATED_BY_USER_KEY);
    }
 }

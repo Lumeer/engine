@@ -125,7 +125,12 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public boolean hasCollection(final String collectionName) {
-      return database.getCollection(collectionName) != null;
+      return database.listCollectionNames().into(new HashSet<>()).contains(collectionName);
+   }
+
+   @Override
+   public boolean collectionHasDocument(final String collectionName, final String documentId) {
+      return database.getCollection(collectionName).find(new BasicDBObject(ID, new ObjectId(documentId))).limit(1).iterator().hasNext();
    }
 
    @Override
@@ -222,7 +227,7 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void removeAttribute(final String collectionName, final String documentId, final String attributeName) {
+   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) {
       BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       BasicDBObject updateBson = new BasicDBObject("$unset", new BasicDBObject(attributeName, 1));
       database.getCollection(collectionName).updateOne(filter, updateBson);

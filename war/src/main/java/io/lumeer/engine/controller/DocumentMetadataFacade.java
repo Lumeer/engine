@@ -118,7 +118,13 @@ public class DocumentMetadataFacade implements Serializable {
     *       if document is not found in collection
     */
    public Map<String, Object> readDocumentMetadata(String collectionName, String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
-      DataDocument document = readDocument(collectionName, documentId);
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      DataDocument document = dataStorage.readDocument(collectionName, documentId);
+      if (document == null) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
       Iterator<Map.Entry<String, Object>> iter = document.entrySet().iterator();
       // filter out non-metadata attributes with  values
       Map<String, Object> documentMetadata = new HashMap<>();
@@ -175,7 +181,12 @@ public class DocumentMetadataFacade implements Serializable {
     *       if key is not metadata attribute
     */
    public void updateDocumentMetadata(String collectionName, String documentId, Map<String, Object> metadata) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      readDocument(collectionName, documentId);
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
       for (String key : metadata.keySet()) {
          if (!key.startsWith(DOCUMENT_METADATA_PREFIX)) {
             throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
@@ -201,15 +212,16 @@ public class DocumentMetadataFacade implements Serializable {
     *       if key is not metadata attribute
     */
    public void dropDocumentMetadata(String collectionName, String documentId, String key) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      readDocument(collectionName, documentId);
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
       if (!key.startsWith(DOCUMENT_METADATA_PREFIX)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
       }
-      dataStorage.removeAttribute(collectionName, documentId, key);
-   }
-
-   private DataDocument readDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
-      return documentFacade.readDocument(collectionName, documentId);
+      dataStorage.dropAttribute(collectionName, documentId, key);
    }
 
 }

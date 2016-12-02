@@ -75,6 +75,17 @@ public interface DataStorage extends Serializable {
    boolean hasCollection(final String collectionName);
 
    /**
+    * Checks whether the document exists in given collection.
+    *
+    * @param collectionName
+    *       The name of the collection to find document.
+    * @param documentId
+    *       The id of the document to check for.
+    * @return True if and only if the document exists.
+    */
+   boolean collectionHasDocument(final String collectionName, final String documentId);
+
+   /**
     * Creates and inserts a new document to specified collection.
     *
     * @param collectionName
@@ -191,7 +202,7 @@ public interface DataStorage extends Serializable {
     * @param attributeName
     *       the name of an attribute to remove
     */
-   void removeAttribute(final String collectionName, final String documentId, final String attributeName);
+   void dropAttribute(final String collectionName, final String documentId, final String attributeName);
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.

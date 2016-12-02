@@ -37,7 +37,6 @@ import java.util.Set;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.Reception;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -275,7 +274,7 @@ public class CollectionFacade implements Serializable {
             for (DataDocument document : documents) {
                String id = document.get(ID_COLUMN_KEY).toString();
 
-               dataStorage.removeAttribute(collectionName, id, attributeName);
+               dataStorage.dropAttribute(collectionName, id, attributeName);
             }
          } else {
             throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));

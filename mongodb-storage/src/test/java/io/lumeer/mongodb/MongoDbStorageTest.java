@@ -53,12 +53,14 @@ public class MongoDbStorageTest {
    private final String COLLECTION_CREATE_AND_DROP_II = "collectionCreateAndDrop_II";
    private final String COLLECTION_GET_ALL_COLLECTIONS_I = "collectionGetAllCollections_I";
    private final String COLLECTION_GET_ALL__COLLECTIONS_II = "collectionGetAllCollections_II";
+   private final String COLLECTION_HAS_COLLECTION = "collectionHasCollection";
+   private final String COLLECTION_COLLECTION_HAS_DOCUMENT = "collectionCollectionHasDocument";
    private final String COLLECTION_CREATE_AND_READ_DOCUMENT = "collectionCreateAndReadDocument";
    private final String COLLECTION_CREATE_AND_READ_OLD_DOCUMENT = "collectionCreateAndReadOldDocument";
    private final String COLLECTION_UPDATE_DOCUMENT = "collectionUpdateDocument";
    private final String COLLECTION_DROP_DOCUMENT = "collectionDropDocument";
    private final String COLLECTION_DROP_MANY = "collectionDropMany";
-   private final String COLLECTION_REMOVE_ATTRIBUTE = "collectionRemoveAttribute";
+   private final String COLLECTION_DROP_ATTRIBUTE = "collectionRemoveAttribute";
    private final String COLLECTION_SEARCH = "collectionSearch";
    private final String COLLECTION_SEARCH_RAW = "collectionSearchRaw";
    private final String COLLECTION_RENAME_ATTRIBUTE = "collectionRenameAttribute";
@@ -78,12 +80,14 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_II);
       mongoDbStorage.dropCollection(COLLECTION_GET_ALL_COLLECTIONS_I);
       mongoDbStorage.dropCollection(COLLECTION_GET_ALL__COLLECTIONS_II);
+      mongoDbStorage.dropCollection(COLLECTION_HAS_COLLECTION);
+      mongoDbStorage.dropCollection(COLLECTION_COLLECTION_HAS_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_READ_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_UPDATE_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_DROP_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_DROP_MANY);
-      mongoDbStorage.dropCollection(COLLECTION_REMOVE_ATTRIBUTE);
+      mongoDbStorage.dropCollection(COLLECTION_DROP_ATTRIBUTE);
       mongoDbStorage.dropCollection(COLLECTION_SEARCH);
       mongoDbStorage.dropCollection(COLLECTION_SEARCH_RAW);
       mongoDbStorage.dropCollection(COLLECTION_RENAME_ATTRIBUTE);
@@ -112,6 +116,27 @@ public class MongoDbStorageTest {
       mongoDbStorage.createCollection(COLLECTION_GET_ALL__COLLECTIONS_II);
 
       Assert.assertEquals(mongoDbStorage.getAllCollections().size(), numCollections + 2);
+   }
+
+   @Test
+   public void testHasCollection() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_HAS_COLLECTION);
+
+      Assert.assertTrue(mongoDbStorage.hasCollection(COLLECTION_HAS_COLLECTION));
+      Assert.assertFalse(mongoDbStorage.hasCollection("someNotExistingNameOfCollection"));
+   }
+
+   @Test
+   public void testCollectionHasDocument() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_COLLECTION_HAS_DOCUMENT);
+
+      String id = mongoDbStorage.createDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, createDummyDocument());
+
+      Assert.assertTrue(mongoDbStorage.collectionHasDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, id));
+
+      String dummyId = "507f191e810c19729de860ea";
+
+      Assert.assertFalse(mongoDbStorage.collectionHasDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, dummyId));
    }
 
    @Test
@@ -202,17 +227,17 @@ public class MongoDbStorageTest {
    }
 
    @Test
-   public void testRemoveAttribute() throws Exception {
-      mongoDbStorage.createCollection(COLLECTION_REMOVE_ATTRIBUTE);
+   public void testDropAttribute() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_DROP_ATTRIBUTE);
 
       DataDocument insertedDocument = createDummyDocument();
-      String documentId = mongoDbStorage.createDocument(COLLECTION_REMOVE_ATTRIBUTE, insertedDocument);
-      DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_REMOVE_ATTRIBUTE, documentId);
+      String documentId = mongoDbStorage.createDocument(COLLECTION_DROP_ATTRIBUTE, insertedDocument);
+      DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_ATTRIBUTE, documentId);
       Assert.assertEquals(readedDocument.size(), 4);
 
-      mongoDbStorage.removeAttribute(COLLECTION_REMOVE_ATTRIBUTE, documentId, DUMMY_KEY1);
+      mongoDbStorage.dropAttribute(COLLECTION_DROP_ATTRIBUTE, documentId, DUMMY_KEY1);
 
-      readedDocument = mongoDbStorage.readDocument(COLLECTION_REMOVE_ATTRIBUTE, documentId);
+      readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_ATTRIBUTE, documentId);
       Assert.assertEquals(readedDocument.size(), 3);
    }
 

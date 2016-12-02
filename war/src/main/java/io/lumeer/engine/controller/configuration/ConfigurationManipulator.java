@@ -102,7 +102,7 @@ public class ConfigurationManipulator implements Serializable {
             return;
          }
          String id = configuration.get().getString(ID_KEY);
-         systemDataStorage.removeAttribute(collectionName, id, CONFIG_KEY + "." + attributeName);
+         systemDataStorage.dropAttribute(collectionName, id, CONFIG_KEY + "." + attributeName);
       } else {
          createSimpleConfigurationEntry(collectionName, nameValue);
       }
