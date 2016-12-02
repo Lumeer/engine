@@ -66,7 +66,7 @@ public class Resources {
     */
    @Produces
    @SystemDataStorage
-   @RequestScoped
+   @SessionScoped
    public DataStorage getSystemDataStorage() {
       final MongoDbStorage storage = new MongoDbStorage();
       final Map<String, String> defaultConfiguration = defaultConfigurationProducer.getDefaultConfiguration();
