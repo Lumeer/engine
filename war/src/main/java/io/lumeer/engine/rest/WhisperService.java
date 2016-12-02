@@ -35,6 +35,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -65,9 +66,9 @@ public class WhisperService {
    }
 
    @GET
-   @Path("/collection/{collectionName}")
+   @Path("/collection")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionNames(@PathParam("collectionName") final String collectionName) {
+   public Set<String> getPossibleCollectionNames(@QueryParam("collectionName") final String collectionName) {
       if (collectionName == null || collectionName.isEmpty()) {
          // return user names of all user collections
          return Collections.emptySet();
@@ -80,28 +81,14 @@ public class WhisperService {
    }
 
    @GET
-   @Path("/collection")
+   @Path("/collection/{collectionName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionNames() {
-      return getPossibleCollectionNames(null);
-   }
-
-   @GET
-   @Path("/collection/{collectionName}/attr/{userInput}")
-   @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionAttributeNames(@PathParam("collectionName") final String userCollectionName, @PathParam("userInput") final String userInput) {
+   public Set<String> getPossibleCollectionAttributeNames(@PathParam("collectionName") final String userCollectionName, @QueryParam("attributeName") final String attributeName) {
       // returns empty set if user collection name does not exsits
-      // returns all collection attributes (except for meta data) if userInput is null or empty
-      // return all collections attributes (except for meta data) starting with the userInput ignoring case
+      // returns all collection attributes (except for meta data) if attributeName is null or empty
+      // return all collections attributes (except for meta data) starting with the attributeName ignoring case
 
       return Collections.emptySet();
-   }
-
-   @GET
-   @Path("/collection/{collectionName}/attr")
-   @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionAttributeNames(@PathParam("collectionName") final String userCollectionName) {
-      return getPossibleCollectionAttributeNames(userCollectionName, null);
    }
 
    /**
@@ -112,22 +99,14 @@ public class WhisperService {
     * @return Set of available constraint prefix names according to the already entered part.
     */
    @GET
-   @Path("/constraint/{constraintName}")
+   @Path("/constraint")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleConstraintNamePrefixes(@PathParam("constraintName") final String constraintName) {
-      System.out.println("prefixes.");
+   public Set<String> getPossibleConstraintNamePrefixes(@QueryParam("constraintName") final String constraintName) {
       if (constraintName != null && !constraintName.isEmpty()) {
          return constraintManager.getRegisteredPrefixes().stream().filter(prefix -> prefix.toLowerCase(locale).startsWith(constraintName.toLowerCase(locale))).collect(Collectors.toSet());
       }
 
       return constraintManager.getRegisteredPrefixes();
-   }
-
-   @GET
-   @Path("/constraint")
-   @Produces(MediaType.APPLICATION_JSON)
-   public Set<String>  getPossibleConstraintNamePrefixes() {
-      return getPossibleConstraintNamePrefixes(null);
    }
 
    /**
@@ -140,23 +119,15 @@ public class WhisperService {
     * @return Set of available constraint parameters based on the already entered part.
     */
    @GET
-   @Path("/constraint/{constraintName}/param/{constraintParam}")
+   @Path("/constraint/{constraintName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleConstraintNameParameters(@PathParam("constraintName") final String constraintName, @PathParam("constraintParam") final String constraintParam) {
-      System.out.println("prefixes: " + constraintParam);
+   public Set<String> getPossibleConstraintNameParameters(@PathParam("constraintName") final String constraintName, @QueryParam("constraintParam") final String constraintParam) {
       if (constraintParam != null && !constraintParam.isEmpty()) {
          return constraintManager.getConstraintParameterSuggestions(constraintName).stream().filter(
                suggestion -> suggestion.toLowerCase(locale).startsWith(constraintParam.toLowerCase(locale))).collect(Collectors.toSet());
       }
 
       return constraintManager.getConstraintParameterSuggestions(constraintName);
-   }
-
-   @GET
-   @Path("/constraint/{constraintName}/param")
-   @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleConstraintNameParameters(@PathParam("constraintName") final String constraintName) {
-      return getPossibleConstraintNameParameters(constraintName, null);
    }
 
 }
