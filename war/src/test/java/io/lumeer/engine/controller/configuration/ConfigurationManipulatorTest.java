@@ -1,27 +1,8 @@
-package io.lumeer.engine.util;/*
- * -----------------------------------------------------------------------\
- * Lumeer
- *  
- * Copyright (C) 2016 - 2017 the original author or authors.
- *  
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * -----------------------------------------------------------------------/
- */
+package io.lumeer.engine.controller.configuration;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -126,7 +107,7 @@ public class ConfigurationManipulatorTest extends Arquillian {
       systemDataStorage.createCollection(COLLECTION_USER_SET_CONFIGURATION);
       systemDataStorage.createCollection(COLLECTION_TEAM_SET_CONFIGURATION);
 
-      // #1 if system database is empty
+      // #1 if the system collection is empty
       configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, PORT_KEY, DUMMY_PORT_VALUE);
       configurationManipulator.setConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, PORT_KEY, DUMMY_PORT_VALUE);
 
@@ -136,7 +117,7 @@ public class ConfigurationManipulatorTest extends Arquillian {
       systemDataStorage.dropCollection(COLLECTION_USER_SET_CONFIGURATION);
       systemDataStorage.dropCollection(COLLECTION_TEAM_SET_CONFIGURATION);
 
-      // #2 if system database is filled
+      // #2 if the system collection is filled
       fillSystemDatabase(COLLECTION_USER_SET_CONFIGURATION, COLLECTION_TEAM_SET_CONFIGURATION);
 
       configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY, DUMMY_VALUE);
@@ -158,14 +139,14 @@ public class ConfigurationManipulatorTest extends Arquillian {
       systemDataStorage.createCollection(COLLECTION_USER_GET_CONFIGURATION);
       systemDataStorage.createCollection(COLLECTION_TEAM_GET_CONFIGURATION);
 
-      // #1 if system database is empty = key-value does not exist
+      // #1 if the system collection is empty = key-value does not exist
       Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY), null);
       Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_TEAM_GET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY), null);
 
       systemDataStorage.dropCollection(COLLECTION_USER_GET_CONFIGURATION);
       systemDataStorage.dropCollection(COLLECTION_TEAM_GET_CONFIGURATION);
 
-      // #2 if system database is filled
+      // #2 if the system collection is filled
       fillSystemDatabase(COLLECTION_USER_GET_CONFIGURATION, COLLECTION_TEAM_GET_CONFIGURATION);
 
       Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY), DUMMY_DBURL_VALUE + 2);
@@ -244,7 +225,7 @@ public class ConfigurationManipulatorTest extends Arquillian {
 
    private boolean isDatabaseCollection(final String collectionName) {
       try {
-         return systemDataStorage.getAllCollections().contains(collectionName);
+         return systemDataStorage.hasCollection(collectionName);
       } catch (Exception e) {
          // nothing to do
       }

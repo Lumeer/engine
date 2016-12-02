@@ -107,6 +107,8 @@ public interface DataStorage extends Serializable {
     *       the id of the document
     * @param version
     *       the version of document
+    * @throws Exception
+    *       throws single Exception
     */
    void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws Exception;
 

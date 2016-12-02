@@ -22,8 +22,8 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.StorageConnection;
-import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
+import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -67,18 +67,82 @@ public class ConfigurationFacade implements Serializable {
    @Produces
    @Named("dataStorageDatabase")
    public String getDataStorageDatabase() {
-      return getConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
+      return getUserConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
    }
 
    /**
-    * Returns an Optional String value of the given key for currently logged user's configuration.
+    * Returns an Optional String value of the given key.
     *
     * @param key
     *       the name of key
     * @return Optional String value of the given key
     */
    public Optional<String> getConfigurationString(final String key) {
-      return Optional.of(getConfiguration(key).toString());
+      try {
+         String value = getConfiguration(key).toString();
+         if (value != null) {
+            return Optional.of(value);
+         }
+      } catch (Exception e) {
+         // nothing to do
+      }
+      return Optional.empty();
+   }
+
+   /**
+    * Returns an Optional Integer value of the given key.
+    *
+    * @param key
+    *       the name of key
+    * @return Optional Integer value of the given key
+    */
+   public Optional<Integer> getConfigurationInteger(final String key) {
+      Optional<String> value = getConfigurationString(key);
+      if (value.isPresent()) {
+         return Optional.of(Integer.parseInt(value.get()));
+      }
+      return Optional.empty();
+   }
+
+   /**
+    * Returns an Optional DataDocument value of the given key.
+    *
+    * @param key
+    *       the name of key
+    * @return Optional DataDocument value of the given key
+    */
+   public Optional<DataDocument> getConfigurationDocument(final String key) {
+      try {
+         final Object value = getConfiguration(key);
+
+         if (value instanceof DataDocument && value != null) {
+            DataDocument document = new DataDocument();
+            document.putAll((Map<? extends String, ?>) value);
+            return Optional.of(document);
+         }
+      } catch (Exception e) {
+         // nothing to do
+      }
+      return Optional.empty();
+   }
+
+   /**
+    * Returns an Optional String value of the given key for currently logged user configuration.
+    *
+    * @param key
+    *       the name of key
+    * @return Optional String value of the given key
+    */
+   public Optional<String> getUserConfigurationString(final String key) {
+      try {
+         String value = getUserConfiguration(key).toString();
+         if (value != null) {
+            return Optional.of(value);
+         }
+      } catch (Exception e) {
+         // nothing to do
+      }
+      return Optional.empty();
    }
 
    /**
@@ -88,8 +152,13 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @return Optional Integer value of the given key
     */
-   public Optional<Integer> getConfigurationInteger(final String key) {
-      return Optional.of(Integer.parseInt(getConfigurationString(key).get()));
+   public Optional<Integer> getUserConfigurationInteger(final String key) {
+      Optional<String> value = getUserConfigurationString(key);
+      if (value.isPresent()) {
+         return Optional.of(Integer.parseInt(value.get()));
+      }
+
+      return Optional.empty();
    }
 
    /**
@@ -99,13 +168,71 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @return Optional DataDocument value of the given key
     */
-   public Optional<DataDocument> getConfigurationDocument(final String key) {
-      final Object value = getConfiguration(key);
+   public Optional<DataDocument> getUserConfigurationDocument(final String key) {
+      try {
+         final Object value = getUserConfiguration(key);
+         if (value instanceof DataDocument && value != null) {
+            DataDocument document = new DataDocument();
+            document.putAll((Map<? extends String, ?>) value);
+            return Optional.of(document);
+         }
+      } catch (Exception e) {
+         // nothing to do
+      }
+      return Optional.empty();
+   }
 
-      if (value instanceof DataDocument) {
-         DataDocument document = new DataDocument();
-         document.putAll((Map<? extends String, ?>) value);
-         return Optional.of(document);
+   /**
+    * Returns an Optional String value of the given key for currently logged team configuration.
+    *
+    * @param key
+    *       the name of key
+    * @return Optional String value of the given key
+    */
+   public Optional<String> getTeamConfigurationString(final String key) {
+      try {
+         String value = getTeamConfiguration(key).toString();
+         if (value != null) {
+            return Optional.of(value);
+         }
+      } catch (Exception e) {
+         // nothing to do
+      }
+      return Optional.empty();
+   }
+
+   /**
+    * Returns an Optional Integer value of the given key for currently logged team configuration.
+    *
+    * @param key
+    *       the name of key
+    * @return Optional Integer value of the given key
+    */
+   public Optional<Integer> getTeamConfigurationInteger(final String key) {
+      Optional<String> value = getTeamConfigurationString(key);
+      if (value.isPresent()) {
+         return Optional.of(Integer.parseInt(value.get()));
+      }
+      return Optional.empty();
+   }
+
+   /**
+    * Returns an Optional DataDocument value of the given key for currently logged team configuration.
+    *
+    * @param key
+    *       the name of key
+    * @return Optional DataDocument value of the given key
+    */
+   public Optional<DataDocument> getTeamConfigurationDocument(final String key) {
+      try {
+         final Object value = getTeamConfiguration(key);
+         if (value instanceof DataDocument && value != null) {
+            DataDocument document = new DataDocument();
+            document.putAll((Map<? extends String, ?>) value);
+            return Optional.of(document);
+         }
+      } catch (Exception e) {
+         // nothing to do
       }
       return Optional.empty();
    }
@@ -118,8 +245,8 @@ public class ConfigurationFacade implements Serializable {
     * @param value
     *       the String value of the given key
     */
-   public void setConfigurationString(final String key, final String value) {
-      setConfiguration(key, value);
+   public void setUserConfigurationString(final String key, final String value) {
+      setConfiguration(true, key, value);
    }
 
    /**
@@ -130,8 +257,8 @@ public class ConfigurationFacade implements Serializable {
     * @param value
     *       the Integer value of the given key
     */
-   public void setConfigurationInteger(final String key, final int value) {
-      setConfiguration(key, value);
+   public void setUserConfigurationInteger(final String key, final int value) {
+      setConfiguration(true, key, value);
    }
 
    /**
@@ -142,52 +269,138 @@ public class ConfigurationFacade implements Serializable {
     * @param document
     *       the DataDocument of the given key
     */
-   public void setConfigurationDocument(final String key, final DataDocument document) {
-      setConfiguration(key, document);
+   public void setUserConfigurationDocument(final String key, final DataDocument document) {
+      setConfiguration(true, key, document);
    }
 
    /**
-    * Removes all system configuration of currently logged user. Does not delete user's configuration entry!
-    */
-   public void resetConfiguration() {
-      String user = userFacade.getUserEmail();
-      configurationManipulator.resetConfiguration(USER_CONFIG, user);
-   }
-
-   /**
-    * Removes the specified attribute located in configuration field.
-    *
-    * @param attributeName
-    *       the name of attribute to remove
-    */
-   public void resetConfigurationAttribute(final String attributeName){
-      String user = userFacade.getUserEmail();
-      configurationManipulator.resetConfigurationAttribute(USER_CONFIG, user, attributeName);
-   }
-
-   /**
-    * Sets a new key-Object value to configuration entry for currently logged user. If the given key exists, the document will be updated.
+    * Sets a new key-String value to configuration entry for currently logged team. If the given key exists, its value will be updated.
     *
     * @param key
     *       the name of key
     * @param value
-    *       the Object value of the given key
+    *       the String value of the given key
     */
-   private void setConfiguration(final String key, final Object value) {
-      final String user = userFacade.getUserEmail();
+   public void setTeamConfigurationString(final String key, final String value) {
+      setConfiguration(false, key, value);
+   }
 
-      // if default value for given key does not exist in DEFAULT_VALUES, insert the value to configuration entry
-      if (!defaultConfigurationProducer.getDefaultConfiguration().containsKey(key)) {
-         configurationManipulator.setConfiguration(USER_CONFIG, user, key, value);
+   /**
+    * Sets a new key-Integer value to configuration entry for currently logged team. If the given key exists, its value will be updated.
+    *
+    * @param key
+    *       the name of key
+    * @param value
+    *       the Integer value of the given key
+    */
+   public void setTeamConfigurationInteger(final String key, final int value) {
+      setConfiguration(false, key, value);
+   }
+
+   /**
+    * Sets a new key-DataDocument value to configuration entry for currently logged team. If the given key exists, the document will be updated.
+    *
+    * @param key
+    *       the name of key
+    * @param document
+    *       the DataDocument of the given key
+    */
+   public void setTeamConfigurationDocument(final String key, final DataDocument document) {
+      setConfiguration(false, key, document);
+   }
+
+   /**
+    * Resets currently logged user configuration. The whole user configuration entry will not be deleted from the system collection, just the config field!
+    */
+   public void resetUserConfiguration() {
+      resetConfiguration(true, null);
+   }
+
+   /**
+    * Removes the specified attribute located in user configuration entry.
+    *
+    * @param attributeName
+    *       the name of attribute to remove
+    */
+   public void resetUserConfigurationAttribute(final String attributeName) {
+      resetConfiguration(true, attributeName);
+   }
+
+   /**
+    * Resets currently logged team configuration. The whole team configuration entry will not be deleted from the system collection, just the config field!
+    */
+   public void resetTeamConfiguration() {
+      resetConfiguration(false, null);
+   }
+
+   /**
+    * Removes the specified attribute located in team configuration entry.
+    *
+    * @param attributeName
+    *       the name of attribute to remove
+    */
+   public void resetTeamConfigurationAttribute(final String attributeName) {
+      resetConfiguration(false, attributeName);
+   }
+
+   /**
+    * Resets the configuration of specified group (user or team). If attribute is null, it will remove the specified attribute located in configuration entry of the given group.
+    *
+    * @param groupOption
+    *       true = user configuration, false = team configuration
+    * @param attributeName
+    *       If not null, it will reset just the specified field with the given name. Else, the whole config field will be reset, but configuration entry of the given group will not be dropped.
+    */
+   private void resetConfiguration(final boolean groupOption, final String attributeName) {
+      String user = userFacade.getUserEmail();
+
+      if (attributeName != null) {
+         // reset user configuration attribute
+         if (groupOption) {
+            configurationManipulator.resetConfigurationAttribute(USER_CONFIG, user, attributeName);
+         } else {
+            // reset team configuration attribute
+            configurationManipulator.resetConfigurationAttribute(TEAM_CONFIG, user, attributeName);
+         }
+      } else {
+         // reset currently logged user's configuration
+         if (groupOption) {
+            configurationManipulator.resetConfiguration(USER_CONFIG, user);
+         } else {
+            // reset currently logged team's configuration
+            configurationManipulator.resetConfiguration(TEAM_CONFIG, user);
+         }
       }
    }
 
    /**
-    * Returns an Object value of the given key for currently logged user's configuration.
+    * Returns an Object value of the given key for user. It will return null, if the value of the given key does not exist.
     *
     * @param key
     *       the name of key
-    * @return Objectvalue of the given key
+    * @return Object value of the given key
+    */
+   private Object getUserConfiguration(final String key) {
+      return configurationManipulator.getConfiguration(USER_CONFIG, userFacade.getUserEmail(), key);
+   }
+
+   /**
+    * Returns an Object value of the given key for team. It will return null, if the value of the given key does not exist.
+    *
+    * @param key
+    *       the name of key
+    * @return Object value of the given key
+    */
+   private Object getTeamConfiguration(final String key) {
+      return configurationManipulator.getConfiguration(TEAM_CONFIG, userFacade.getUserEmail(), key);
+   }
+
+   /**
+    * Returns an Object value of the given key. First, the method checks config.user collection, then config.team collection - returns first non-null value of the given key. Otherwise, it will return default value. If default value does not exist, the method will return null.
+    *
+    * @param key
+    *       the name of key
+    * @return Object value of the given key
     */
    private Object getConfiguration(final String key) {
       String user = userFacade.getUserEmail();
@@ -200,4 +413,28 @@ public class ConfigurationFacade implements Serializable {
       }
       return conf;
    }
+
+   /**
+    * Sets a new key-Object value to the specified configuration entry. If the given key exists, the value of specified field will be updated.
+    *
+    * @param groupOption
+    *       true = user configuration, false = team configuration
+    * @param key
+    *       the name of key
+    * @param value
+    *       the Object value of the given key
+    */
+   private void setConfiguration(final boolean groupOption, final String key, final Object value) {
+      final String user = userFacade.getUserEmail();
+
+      // if default value for given key does not exist in DEFAULT_VALUES, insert the value to configuration entry
+      if (!defaultConfigurationProducer.getDefaultConfiguration().containsKey(key)) {
+         if (groupOption) {
+            configurationManipulator.setConfiguration(USER_CONFIG, user, key, value);
+         } else {
+            configurationManipulator.setConfiguration(TEAM_CONFIG, user, key, value);
+         }
+      }
+   }
+
 }
