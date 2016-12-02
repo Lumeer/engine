@@ -178,7 +178,7 @@ public class ConfigurationManipulator implements Serializable {
     * @return configuration entry of the given nameValue in given collection
     */
    public Optional<DataDocument> getConfigurationEntry(final String collectionName, final String nameValue) {
-      if (isDatabaseCollection(collectionName)) {
+      if (systemDataStorage.hasCollection(collectionName)) {
          if (nameValue == null) {
             return Optional.empty();
          }
@@ -285,17 +285,6 @@ public class ConfigurationManipulator implements Serializable {
       // if configuration document is not found, it will be created
       createSimpleConfigurationEntry(collectionName, nameValue);
       return Optional.empty();
-   }
-
-   /**
-    * Finds out if database has given collection.
-    *
-    * @param collectionName
-    *       name of the collection
-    * @return true if database has given collection
-    */
-   private boolean isDatabaseCollection(final String collectionName) {
-      return systemDataStorage.getAllCollections().contains(collectionName);
    }
 
    /**
