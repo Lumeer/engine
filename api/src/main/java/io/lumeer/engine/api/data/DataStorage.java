@@ -109,7 +109,8 @@ public interface DataStorage extends Serializable {
     *       the id of the document
     * @param version
     *       the version of document
-    * @throws UnsuccessfulOperationException When somebody already updated the document.
+    * @throws UnsuccessfulOperationException
+    *       When somebody already updated the document.
     */
    void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws UnsuccessfulOperationException;
 
@@ -206,6 +207,62 @@ public interface DataStorage extends Serializable {
     *       the name of an attribute to remove
     */
    void dropAttribute(final String collectionName, final String documentId, final String attributeName);
+
+   /**
+    * Add item to array
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       the id of document
+    * @param attributeName
+    *       the name of an attribute to add item
+    * @param item
+    *       the item to add to array
+    */
+   <T> void addItemToArray(final String collectionName, final String documentId, final String attributeName, final T item);
+
+   /**
+    * Add items to array
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       the id of document
+    * @param attributeName
+    *       the name of an attribute to add item
+    * @param items
+    *       the items to add to array
+    */
+   <T> void addItemsToArray(final String collectionName, final String documentId, final String attributeName, final List<T> items);
+
+   /**
+    * remove specified item from array
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       the id of document
+    * @param attributeName
+    *       the name of an attribute to add item
+    * @param item
+    *       the item that will be deleted from the array
+    */
+   <T> void removeItemFromArray(final String collectionName, final String documentId, final String attributeName, final T item);
+
+   /**
+    * remove items from array
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       the id of document
+    * @param attributeName
+    *       the name of an attribute to add item
+    * @param items
+    *       the items  that will be deleted from the array
+    */
+   <T> void removeItemsFromArray(final String collectionName, final String documentId, final String attributeName, final List<T> items);
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.

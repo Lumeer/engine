@@ -27,6 +27,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -62,11 +63,13 @@ public class MongoDbStorageTest {
    private final String COLLECTION_DROP_MANY = "collectionDropMany";
    private final String COLLECTION_DROP_ATTRIBUTE = "collectionRemoveAttribute";
    private final String COLLECTION_SEARCH = "collectionSearch";
-   private final String COLLECTION_SEARCH_RAW = "collectionSearchRaw";
+   private final String COLLECTION_RUN = "collectionSearchRaw";
    private final String COLLECTION_RENAME_ATTRIBUTE = "collectionRenameAttribute";
    private final String COLLECTION_INC_ATTR_VALUE_BY = "collectionIncAttrValueBy";
    private final String COLLECTION_GET_ATTRIBUTE_VALUES = "collectionGetAttributeValues";
    private final String COLLECTION_NESTED_DOCUMENTS = "collectionNestedDocuments";
+   private final String COLLECTION_BASIC_ARRAY_MANIPULATION = "collectionBasicArrayManipulation";
+   private final String COLLECTION_COMPLEX_ARRAY_MANIPULATION = "collectionComplexArrayManipulation";
 
    private MongoDbStorage mongoDbStorage;
 
@@ -89,11 +92,13 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_DROP_MANY);
       mongoDbStorage.dropCollection(COLLECTION_DROP_ATTRIBUTE);
       mongoDbStorage.dropCollection(COLLECTION_SEARCH);
-      mongoDbStorage.dropCollection(COLLECTION_SEARCH_RAW);
+      mongoDbStorage.dropCollection(COLLECTION_RUN);
       mongoDbStorage.dropCollection(COLLECTION_RENAME_ATTRIBUTE);
       mongoDbStorage.dropCollection(COLLECTION_INC_ATTR_VALUE_BY);
       mongoDbStorage.dropCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
       mongoDbStorage.dropCollection(COLLECTION_NESTED_DOCUMENTS);
+      mongoDbStorage.dropCollection(COLLECTION_BASIC_ARRAY_MANIPULATION);
+      mongoDbStorage.dropCollection(COLLECTION_COMPLEX_ARRAY_MANIPULATION);
    }
 
    @Test
@@ -256,16 +261,16 @@ public class MongoDbStorageTest {
    }
 
    @Test
-   public void testRawSearch() throws Exception {
-      mongoDbStorage.createCollection(COLLECTION_SEARCH_RAW);
+   public void testRun() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_RUN);
 
       for (int i = 0; i < 1000; i++) {
          DataDocument insertedDocument = createDummyDocument();
-         mongoDbStorage.createDocument(COLLECTION_SEARCH_RAW, insertedDocument);
+         mongoDbStorage.createDocument(COLLECTION_RUN, insertedDocument);
       }
 
       // query form: https://docs.mongodb.com/v3.2/reference/command/find/#definition
-      String query = "{find: \"" + COLLECTION_SEARCH_RAW + "\"}";
+      String query = "{find: \"" + COLLECTION_RUN + "\"}";
       List<DataDocument> searchDocuments = mongoDbStorage.run(query);
 
       // run() method returns 101 entries due to it is a default value of "batchSize" query key
@@ -361,6 +366,8 @@ public class MongoDbStorageTest {
       DataDocument d = createDummyDocument();
       d.put("a", createDummyDocument());
       d.put("b", createDummyDocument());
+      d.put("l", Arrays.asList(1, 2, 3, 4));
+      d.put("ld", Arrays.asList(createDummyDocument(), createDummyDocument(), createDummyDocument()));
 
       DataDocument doubleNested = createDummyDocument();
       doubleNested.put("dn", createDummyDocument());
@@ -370,14 +377,91 @@ public class MongoDbStorageTest {
       DataDocument tn = createDummyDocument();
       tn.put("tnn", createDummyDocument());
       trippleNested.put("tn", tn);
-      d.put("d", trippleNested);
+      trippleNested.put("ld", Arrays.asList(createDummyDocument(), createDummyDocument(), createDummyDocument()));
+      d.put("d_d", trippleNested);
 
       String id = mongoDbStorage.createDocument(COLLECTION_NESTED_DOCUMENTS, d);
+
+      mongoDbStorage.dropAttribute(COLLECTION_NESTED_DOCUMENTS, id, "d_d.tn.tnn." + DUMMY_KEY1);
 
       // use debug to see nested hierarchy works
       DataDocument nested = mongoDbStorage.readDocument(COLLECTION_NESTED_DOCUMENTS, id);
 
       Assert.assertNotNull(nested);
+   }
+
+   @Test
+   public void testBasicArrayManipulation() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_BASIC_ARRAY_MANIPULATION);
+
+      DataDocument doc = createDummyDocument();
+      doc.put("a", Arrays.asList(1, 2, 3, 4));
+
+      String id = mongoDbStorage.createDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, doc);
+      DataDocument fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(4, fromDb.getArrayList("a", Integer.class).size());
+
+      mongoDbStorage.addItemToArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", 10);
+      fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(5, fromDb.getArrayList("a", Integer.class).size());
+
+      mongoDbStorage.addItemsToArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", Arrays.asList(5, 6, 7));
+      fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(8, fromDb.getArrayList("a", Integer.class).size());
+
+      mongoDbStorage.removeItemFromArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", 10);
+      fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(7, fromDb.getArrayList("a", Integer.class).size());
+
+      mongoDbStorage.removeItemsFromArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", Arrays.asList(5, 6, 7));
+      fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(4, fromDb.getArrayList("a", Integer.class).size());
+   }
+
+   @Test
+   public void testComplexArrayManipulation() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_COMPLEX_ARRAY_MANIPULATION);
+
+      DataDocument d = createDummyDocument();
+      DataDocument n = createDummyDocument();
+
+      DataDocument d1 = new DataDocument();
+      d1.put("gt", 10);
+      DataDocument d2 = new DataDocument();
+      d2.put("lt", 20);
+      n.put("a", Arrays.asList(d1, d2));
+      d.put("n", n);
+
+      String id = mongoDbStorage.createDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, d);
+      DataDocument fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(2, fromDb.getArrayList("n.a", DataDocument.class).size());
+
+      DataDocument d3 = new DataDocument();
+      d3.put("equals", "true");
+      mongoDbStorage.addItemToArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", d3);
+      fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(3, fromDb.getArrayList("n.a", DataDocument.class).size());
+
+      DataDocument d4 = new DataDocument();
+      d4.put("i", true);
+      DataDocument d5 = new DataDocument();
+      d4.put("p", 12.3);
+      mongoDbStorage.addItemsToArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", Arrays.asList(d4, d5));
+      fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(5, fromDb.getArrayList("n.a", DataDocument.class).size());
+
+      mongoDbStorage.removeItemsFromArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", Arrays.asList(d2, d3));
+      fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(3, fromDb.getArrayList("n.a", DataDocument.class).size());
+
+      mongoDbStorage.removeItemFromArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", d2);
+      fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(3, fromDb.getArrayList("n.a", DataDocument.class).size());
+
+      mongoDbStorage.removeItemFromArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", d4);
+      fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
+      Assert.assertEquals(2, fromDb.getArrayList("n.a", DataDocument.class).size());
+
    }
 
    private DataDocument createDummyDocument() {
