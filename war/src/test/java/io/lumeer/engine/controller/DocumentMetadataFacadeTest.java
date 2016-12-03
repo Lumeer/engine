@@ -21,8 +21,10 @@ package io.lumeer.engine.controller;/*
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
+import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -114,7 +116,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
       collectionFacade.dropCollection(DUMMY_COLLECTION1);
    }
 
-   private String createCollectionAndNewDocument() throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException {
+   private String createCollectionAndNewDocument() throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
       collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
 
       DataDocument document = new DataDocument(new HashMap<>());

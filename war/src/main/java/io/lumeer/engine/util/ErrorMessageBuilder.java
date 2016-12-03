@@ -41,6 +41,12 @@ public class ErrorMessageBuilder {
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
 
+   private static final String ERROR_USER_COLLECTION_NOT_FOUND = "The user collection \"{0}\" does not exist.";
+   private static final String ERROR_USER_COLLECTION_ALREADY_EXISTS = "The user collection \"{0}\" already exists.";
+   private static final String ERROR_ATTRIBUTE_METADATA_DOCUMENT_NOT_FOUND = "The metadata document for attribute \"{0}\" in collection \"{1}\" does not exist.";
+   private static final String ERROR_ATTRIBUTE_METADATA_NOT_FOUND = "The metadata \"{0}\" for attribute \"{1}\" in collection \"{2}\" does not exist.";
+   private static final String ERROR_COLLECTION_METADATA_NOT_FOUND = "The metadata \"{0}\" for collection \"{1}\" does not exist.";
+
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
    }
@@ -79,6 +85,26 @@ public class ErrorMessageBuilder {
 
    public static String nullKey() {
       return ERROR_NULL_KEY;
+   }
+
+   public static String userCollectionNotFoundString(String collection) {
+      return MessageFormat.format(ERROR_USER_COLLECTION_NOT_FOUND, collection);
+   }
+
+   public static String userCollectionAlreadyExistsString(String collection) {
+      return MessageFormat.format(ERROR_USER_COLLECTION_ALREADY_EXISTS, collection);
+   }
+
+   public static String attributeMetadataDocumentNotFoundString(String collection, String attribute) {
+      return MessageFormat.format(ERROR_ATTRIBUTE_METADATA_DOCUMENT_NOT_FOUND, attribute, collection);
+   }
+
+   public static String attributeMetadataNotFoundString(String collection, String attribute, String metadataType) {
+      return MessageFormat.format(ERROR_ATTRIBUTE_METADATA_NOT_FOUND, metadataType, attribute, collection);
+   }
+
+   public static String collectionMetadataNotFound(String collection, String metadataType) {
+      return MessageFormat.format(ERROR_COLLECTION_METADATA_NOT_FOUND, metadataType, collection);
    }
 
 }

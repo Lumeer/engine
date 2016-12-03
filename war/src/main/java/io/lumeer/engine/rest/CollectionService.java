@@ -19,6 +19,9 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 
@@ -46,13 +49,13 @@ public class CollectionService implements Serializable {
 
    @PUT
    @Path("/")
-   public void createCollection(final @QueryParam("name") String name) throws CollectionAlreadyExistsException {
+   public void createCollection(final @QueryParam("name") String name) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataNotFoundException {
       collectionFacade.createCollection(name);
    }
 
    @GET
    @Path("/")
-   public List<String> getAllCollections() {
+   public List<String> getAllCollections() throws CollectionNotFoundException, CollectionMetadataNotFoundException {
       return new ArrayList<String>(collectionFacade.getAllCollections().keySet());
    }
 }

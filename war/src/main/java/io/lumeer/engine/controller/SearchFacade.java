@@ -57,7 +57,7 @@ public class SearchFacade implements Serializable {
     * @return the list of the found documents
     */
    public List<DataDocument> search(String collectionName, String filter, String sort, int skip, int limit) throws CollectionNotFoundException {
-      if (!collectionFacade.isDatabaseCollection(collectionName)) {
+      if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       return dataStorage.search(collectionName, filter, sort, skip, limit);
