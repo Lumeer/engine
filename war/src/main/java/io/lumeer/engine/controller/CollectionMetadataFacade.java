@@ -283,7 +283,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       old attribute name
     * @param newName
     *       new attribute name
-    * @return true if rename is successful, false if attribute does not exist
+    * @return true if rename is successful, false if attribute already exists
     * @throws CollectionNotFoundException
     * @throws CollectionMetadataNotFoundException
     */
@@ -291,7 +291,15 @@ public class CollectionMetadataFacade implements Serializable {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       checkIfMetadataCollectionExists(metadataCollectionName);
 
-      String query = queryCollectionAttributeInfo(collectionName, oldName);
+      String query = queryCollectionAttributeInfo(collectionName, newName);
+      List<DataDocument> newAttributeInfo = dataStorage.run(query);
+      // check if the attribute with new name already exists in the collection
+      if (!newAttributeInfo.isEmpty()) {
+         // TODO Add exception?
+         return false;
+      }
+
+      query = queryCollectionAttributeInfo(collectionName, oldName);
       List<DataDocument> attributeInfo = dataStorage.run(query);
 
       // the attribute does not exist
@@ -505,14 +513,14 @@ public class CollectionMetadataFacade implements Serializable {
       List<DataDocument> nameInfo = dataStorage.run(query);
 
       if (nameInfo.isEmpty()) {
-         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFound(collectionName, COLLECTION_REAL_NAME_META_TYPE_VALUE));
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, COLLECTION_REAL_NAME_META_TYPE_VALUE));
       }
 
       DataDocument nameDocument = nameInfo.get(0);
       String name = nameDocument.getString(COLLECTION_REAL_NAME_KEY);
 
       if (name == null) {
-         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFound(collectionName, COLLECTION_REAL_NAME_META_TYPE_VALUE));
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, COLLECTION_REAL_NAME_META_TYPE_VALUE));
       }
 
       return name;
@@ -579,7 +587,7 @@ public class CollectionMetadataFacade implements Serializable {
       List<DataDocument> lockInfo = dataStorage.run(query);
 
       if (lockInfo.isEmpty()) {
-         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFound(collectionName, COLLECTION_LOCK_META_TYPE_VALUE));
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, COLLECTION_LOCK_META_TYPE_VALUE));
       }
 
       DataDocument nameDocument = lockInfo.get(0);
