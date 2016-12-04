@@ -64,6 +64,9 @@ public class CollectionFacade implements Serializable {
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
+   @Inject
+   private LinkingFacade linkingFacade;
+
    // cache of collections - keys are internal names, values are original names
    private Map<String, String> collections;
 
@@ -122,6 +125,8 @@ public class CollectionFacade implements Serializable {
       if (dataStorage.hasCollection(collectionName)) {
          dataStorage.dropCollection(collectionName);
          dropCollectionMetadata(collectionName); // removes metadata collection
+         linkingFacade.dropCollectionLinks(collectionName);
+         // TODO: drop shadow collection
 
          collections = null;
       } else {
