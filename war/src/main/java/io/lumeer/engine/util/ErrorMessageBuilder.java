@@ -39,7 +39,18 @@ public class ErrorMessageBuilder {
    private static final String ERROR_DROP_UNSUCCESFUL = "The document could not be deleted.";
    private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not succesfully updated.";
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
+   private static final String ERROR_INVALID_DOCUMENT_KEY = "The key  \"{0}\" is not valid";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
+
+   private static final String ERROR_USER_COLLECTION_NOT_FOUND = "The user collection \"{0}\" does not exist.";
+   private static final String ERROR_USER_COLLECTION_ALREADY_EXISTS = "The user collection \"{0}\" already exists.";
+   private static final String ERROR_ATTRIBUTE_METADATA_DOCUMENT_NOT_FOUND = "The metadata document for attribute \"{0}\" in collection \"{1}\" does not exist.";
+   private static final String ERROR_ATTRIBUTE_METADATA_NOT_FOUND = "The metadata \"{0}\" for attribute \"{1}\" in collection \"{2}\" does not exist.";
+   private static final String ERROR_COLLECTION_METADATA_NOT_FOUND = "The metadata \"{0}\" for collection \"{1}\" does not exist.";
+
+   private static final String ERROR_VIEW_METADATA_NOT_FOUND = "The metadata for view \"{0}\" does not exist.";
+   private static final String ERROR_VIEW_METADATA_VALUE_NOT_FOUND = "The metadata value for key \"{1}\" for view \"{0}\" does not exist.";
+   private static final String ERROR_VIEW_USERNAME_ALREADY_EXISTS = "The view with username \"{0}\" already exists.";
 
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
@@ -77,8 +88,44 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_INVALID_METADATA_KEY, key);
    }
 
+   public static String invalidDocumentKey(String key) {
+      return MessageFormat.format(ERROR_INVALID_DOCUMENT_KEY, key);
+   }
+
    public static String nullKey() {
       return ERROR_NULL_KEY;
+   }
+
+   public static String userCollectionNotFoundString(String collection) {
+      return MessageFormat.format(ERROR_USER_COLLECTION_NOT_FOUND, collection);
+   }
+
+   public static String userCollectionAlreadyExistsString(String collection) {
+      return MessageFormat.format(ERROR_USER_COLLECTION_ALREADY_EXISTS, collection);
+   }
+
+   public static String attributeMetadataDocumentNotFoundString(String collection, String attribute) {
+      return MessageFormat.format(ERROR_ATTRIBUTE_METADATA_DOCUMENT_NOT_FOUND, attribute, collection);
+   }
+
+   public static String attributeMetadataNotFoundString(String collection, String attribute, String metadataType) {
+      return MessageFormat.format(ERROR_ATTRIBUTE_METADATA_NOT_FOUND, metadataType, attribute, collection);
+   }
+
+   public static String collectionMetadataNotFoundString(String collection, String metadataType) {
+      return MessageFormat.format(ERROR_COLLECTION_METADATA_NOT_FOUND, metadataType, collection);
+   }
+
+   public static String viewMetadataNotFoundString(String viewId) {
+      return MessageFormat.format(ERROR_VIEW_METADATA_NOT_FOUND, viewId);
+   }
+
+   public static String viewMetadataValueNotFoundString(String viewId, String valueKey) {
+      return MessageFormat.format(ERROR_VIEW_METADATA_VALUE_NOT_FOUND, viewId, valueKey);
+   }
+
+   public static String viewUsernameAlreadyExistsString(String viewName) {
+      return MessageFormat.format(ERROR_VIEW_USERNAME_ALREADY_EXISTS, viewName);
    }
 
 }

@@ -24,9 +24,15 @@ import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -61,9 +67,42 @@ public class CollectionMetadataFacade implements Serializable {
 
    private static final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
    private static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
+
    // attribute types according to DataDocument methods, empty is default and is considered String
-   private static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES = Arrays.asList(new String[] { "int", "long", "double", "bool", "date", "", "string", "nested" });
+   public static final String COLLECTION_ATTRIBUTE_TYPE_INT = "int";
+   public static final String COLLECTION_ATTRIBUTE_TYPE_LONG = "long";
+   public static final String COLLECTION_ATTRIBUTE_TYPE_DOUBLE = "double";
+   public static final String COLLECTION_ATTRIBUTE_TYPE_BOOLEAN = "bool";
+   public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date";
+   public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "";
+   public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested";
+   private static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES =
+         Arrays.asList(new String[] {
+               COLLECTION_ATTRIBUTE_TYPE_INT,
+               COLLECTION_ATTRIBUTE_TYPE_LONG,
+               COLLECTION_ATTRIBUTE_TYPE_DOUBLE,
+               COLLECTION_ATTRIBUTE_TYPE_BOOLEAN,
+               COLLECTION_ATTRIBUTE_TYPE_DATE,
+               COLLECTION_ATTRIBUTE_TYPE_STRING,
+               COLLECTION_ATTRIBUTE_TYPE_NESTED
+         });
+
    private static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
+
+   //   public static final String COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GT = "gt";
+   //   public static final String COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GTE = "gtt";
+   //   public static final String COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_LT = "lt";
+   //   public static final String COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_LTE = "lte";
+   //   public static final String COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_REGEX = "regex";
+   //   private static final List<String> COLLECTION_CONSTRAINT_TYPE_VALUES =
+   //         Arrays.asList(new String[] {
+   //               COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GT,
+   //               COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_LT,
+   //               COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GTE,
+   //               COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_LTE,
+   //               COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_REGEX
+   //         });
+
    private static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "count";
 
    private static final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
@@ -73,6 +112,30 @@ public class CollectionMetadataFacade implements Serializable {
    private static final String COLLECTION_LOCK_UPDATED_KEY = "updated";
 
    private ConstraintManager constraintManager;
+
+   /**
+    * Initializes constraint manager.
+    */
+   @PostConstruct
+   public void initConstraintManager() {
+      try {
+         constraintManager = new ConstraintManager();
+         constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US")));
+      } catch (InvalidConstraintException e) {
+         throw new IllegalStateException("Illegal constraint prefix collision: ", e);
+      }
+   }
+
+   /**
+    * Gets active constraint manager.
+    *
+    * @return The active constraint manager.
+    */
+   @Produces
+   @Named
+   public ConstraintManager getConstraintManager() {
+      return constraintManager;
+   }
 
    // example of collection metadata structure:
    // -------------------------------------
@@ -110,30 +173,6 @@ public class CollectionMetadataFacade implements Serializable {
    //  }
 
    /**
-    * Initializes constraint manager.
-    */
-   @PostConstruct
-   public void initConstraintManager() {
-      try {
-         constraintManager = new ConstraintManager();
-         constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US")));
-      } catch (InvalidConstraintException e) {
-         throw new IllegalStateException("Illegal constraint prefix collision: ", e);
-      }
-   }
-
-   /**
-    * Gets active constraint manager.
-    *
-    * @return The active constraint manager.
-    */
-   @Produces
-   @Named
-   public ConstraintManager getConstraintManager() {
-      return constraintManager;
-   }
-
-   /**
     * Converts collection name given by user to internal representation.
     * First, the name is trimmed of whitespaces.
     * Spaces are replaced by "_". Converted to lowercase.
@@ -144,8 +183,15 @@ public class CollectionMetadataFacade implements Serializable {
     * @param originalCollectionName
     *       name given by user
     * @return internal collection name
+    * @throws UserCollectionAlreadyExistsException
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
     */
-   public String createInternalName(String originalCollectionName) {
+   public String createInternalName(String originalCollectionName) throws UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException, CollectionNotFoundException {
+      if (checkIfUserCollectionExists(originalCollectionName)) {
+         throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(originalCollectionName));
+      }
+
       String name = originalCollectionName.trim();
       name = name.replace(' ', '_').toLowerCase();
       name = Utils.normalize(name);
@@ -167,9 +213,11 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param collectionOriginalName
     *       name of collection given by user
+    * @throws CollectionNotFoundException
     */
-   public void createInitialMetadata(String internalCollectionName, String collectionOriginalName) {
+   public void createInitialMetadata(String internalCollectionName, String collectionOriginalName) throws CollectionNotFoundException {
       String metadataCollectionName = collectionMetadataCollectionName(internalCollectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
 
       // set name - we don't use setOriginalCollectionName, because that methods assumes document with name already exists
       Map<String, Object> metadataName = new HashMap<>();
@@ -185,25 +233,28 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Returns some info about collection attributes
+    * Returns list of names of collection attributes
     *
     * @param collectionName
     *       internal collection name
-    * @return map - keys are attribute names, values are types
+    * @return list of collection attributes
+    * @throws CollectionNotFoundException
     */
-   public Map<String, String> getCollectionAttributesNamesAndTypes(String collectionName) {
-      String query = queryCollectionAttributesInfo(collectionName);
+   public List<String> getCollectionAttributesNames(String collectionName) throws CollectionNotFoundException {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
+      String query = queryOneValueFromCollectionMetadata(collectionName, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
       List<DataDocument> attributesInfoDocuments = dataStorage.run(query);
 
-      Map<String, String> attributesInfo = new HashMap<>();
+      List<String> attributes = new ArrayList<>();
 
       for (int i = 0; i < attributesInfoDocuments.size(); i++) {
          String name = attributesInfoDocuments.get(i).getString(COLLECTION_ATTRIBUTE_NAME_KEY);
-         String type = attributesInfoDocuments.get(i).getString(COLLECTION_ATTRIBUTE_TYPE_KEY);
-         attributesInfo.put(name, type);
+         attributes.add(name);
       }
 
-      return attributesInfo;
+      return attributes;
    }
 
    /**
@@ -212,9 +263,13 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @return list of DataDocuments, each with info about one attribute
+    * @throws CollectionNotFoundException
     */
-   public List<DataDocument> getCollectionAttributesInfo(String collectionName) {
-      String query = queryCollectionAttributesInfo(collectionName);
+   public List<DataDocument> getCollectionAttributesInfo(String collectionName) throws CollectionNotFoundException {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
+      String query = queryOneValueFromCollectionMetadata(collectionName, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
       List<DataDocument> attributesInfoDocuments = dataStorage.run(query);
       return attributesInfoDocuments;
    }
@@ -228,15 +283,28 @@ public class CollectionMetadataFacade implements Serializable {
     *       old attribute name
     * @param newName
     *       new attribute name
-    * @return true if rename is successful, false if attribute does not exist
+    * @return true if rename is successful, false if attribute already exists
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
     */
-   public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) {
-      String query = queryCollectionAttributeInfo(collectionName, oldName);
+   public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) throws CollectionMetadataNotFoundException, CollectionNotFoundException {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
+      String query = queryCollectionAttributeInfo(collectionName, newName);
+      List<DataDocument> newAttributeInfo = dataStorage.run(query);
+      // check if the attribute with new name already exists in the collection
+      if (!newAttributeInfo.isEmpty()) {
+         // TODO Add exception?
+         return false;
+      }
+
+      query = queryCollectionAttributeInfo(collectionName, oldName);
       List<DataDocument> attributeInfo = dataStorage.run(query);
 
       // the attribute does not exist
       if (attributeInfo.isEmpty()) {
-         return false;
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, oldName));
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
@@ -246,7 +314,6 @@ public class CollectionMetadataFacade implements Serializable {
       if (!newName.isEmpty()) {
          metadata.put(COLLECTION_ATTRIBUTE_NAME_KEY, newName);
          DataDocument metadataDocument = new DataDocument(metadata);
-         String metadataCollectionName = collectionMetadataCollectionName(collectionName);
          dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId, -1);
          return true;
       }
@@ -264,8 +331,13 @@ public class CollectionMetadataFacade implements Serializable {
     * @param newType
     *       new attribute type
     * @return true if retype is successful, false if attribute or type does not exist
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
     */
-   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) {
+   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) throws CollectionNotFoundException, CollectionMetadataNotFoundException {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
       if (!COLLECTION_ATTRIBUTE_TYPE_VALUES.contains(newType)) { // new type must be from our list
          return false;
       }
@@ -273,9 +345,9 @@ public class CollectionMetadataFacade implements Serializable {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.run(query);
 
-      // the attribute does not exist
+      // attribute metadata does not exist
       if (attributeInfo.isEmpty()) {
-         return false;
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, attributeName));
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
@@ -284,10 +356,35 @@ public class CollectionMetadataFacade implements Serializable {
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(COLLECTION_ATTRIBUTE_TYPE_KEY, newType);
       DataDocument metadataDocument = new DataDocument(metadata);
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId, -1);
 
       return true;
+   }
+
+   /**
+    * Gets attribute type from metadata
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param attributeName
+    *       attribute name
+    * @return type of the attribute
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
+    */
+   public String getAttributeType(String collectionName, String attributeName) throws CollectionNotFoundException, CollectionMetadataNotFoundException {
+      List<DataDocument> attributesInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
+      if (attributesInfo.isEmpty()) {
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, attributeName));
+      }
+
+      DataDocument attributeInfo = attributesInfo.get(0);
+      String type = attributeInfo.get(COLLECTION_ATTRIBUTE_TYPE_KEY).toString();
+      if (type == null) {
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.attributeMetadataNotFoundString(collectionName, attributeName, COLLECTION_ATTRIBUTE_TYPE_KEY));
+      }
+
+      return type;
    }
 
    /**
@@ -298,19 +395,23 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       attribute to be deleted
     * @return true if delete is successful, false if attribute does not exist
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
     */
-   public boolean dropCollectionAttribute(String collectionName, String attributeName) {
+   public boolean dropCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException, CollectionMetadataNotFoundException {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.run(query);
 
-      // the attribute does not exist
+      // attribute metadata does not exist
       if (attributeInfo.isEmpty()) {
-         return false;
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, attributeName));
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
       String documentId = attributeDocument.get("_id").toString();
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       dataStorage.dropDocument(metadataCollectionName, documentId);
 
       return true;
@@ -324,11 +425,14 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param attribute
     *       set of attributes' names
+    * @throws CollectionNotFoundException
     */
-   public void addOrIncrementAttribute(String collectionName, String attribute) {
+   public void addOrIncrementAttribute(String collectionName, String attribute) throws CollectionNotFoundException {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
       String query = queryCollectionAttributeInfo(collectionName, attribute);
       List<DataDocument> attributeInfo = dataStorage.run(query);
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       if (!attributeInfo.isEmpty()) { // attribute already exists
          DataDocument attributeDocument = attributeInfo.get(0);
          String documentId = attributeDocument.get("_id").toString();
@@ -353,14 +457,17 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param attribute
     *       set of attributes' names
+    * @throws CollectionNotFoundException
     */
-   public void dropOrDecrementAttribute(String collectionName, String attribute) {
+   public void dropOrDecrementAttribute(String collectionName, String attribute) throws CollectionNotFoundException {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
       String query = queryCollectionAttributeInfo(collectionName, attribute);
       List<DataDocument> attributeInfo = dataStorage.run(query);
       if (!attributeInfo.isEmpty()) { // in case somebody did that sooner, we may have nothing to remove
          DataDocument attributeDocument = attributeInfo.get(0);
          String documentId = attributeDocument.get("_id").toString();
-         String metadataCollectionName = collectionMetadataCollectionName(collectionName);
 
          // we check if this was the last document with the attribute
          if (attributeDocument.getLong(COLLECTION_ATTRIBUTE_COUNT_KEY) == 1) {
@@ -379,8 +486,9 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       attribute name
     * @return attribute count
+    * @throws CollectionNotFoundException
     */
-   public long getAttributeCount(String collectionName, String attributeName) {
+   public long getAttributeCount(String collectionName, String attributeName) throws CollectionNotFoundException {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> countInfo = dataStorage.run(query);
       if (!countInfo.isEmpty()) {
@@ -397,15 +505,47 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @return original collection name
+    * @throws CollectionMetadataNotFoundException
+    * @throws CollectionNotFoundException
     */
-   public String getOriginalCollectionName(String collectionName) {
-      String query = queryCollectionNameInfo(collectionName);
+   public String getOriginalCollectionName(String collectionName) throws CollectionMetadataNotFoundException, CollectionNotFoundException {
+      String query = queryOneValueFromCollectionMetadata(collectionName, COLLECTION_REAL_NAME_META_TYPE_VALUE);
       List<DataDocument> nameInfo = dataStorage.run(query);
+
+      if (nameInfo.isEmpty()) {
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, COLLECTION_REAL_NAME_META_TYPE_VALUE));
+      }
 
       DataDocument nameDocument = nameInfo.get(0);
       String name = nameDocument.getString(COLLECTION_REAL_NAME_KEY);
 
+      if (name == null) {
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, COLLECTION_REAL_NAME_META_TYPE_VALUE));
+      }
+
       return name;
+   }
+
+   /**
+    * Searches for internal representation of collection name
+    *
+    * @param originalCollectionName
+    *       original collection name
+    * @return internal representation of collection name
+    * @throws UserCollectionNotFoundException
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
+    */
+   public String getInternalCollectionName(String originalCollectionName) throws UserCollectionNotFoundException, CollectionNotFoundException, CollectionMetadataNotFoundException {
+      List<String> collections = dataStorage.getAllCollections();
+      for (String c : collections) {
+         if (isUserCollection(c)) {
+            if (getOriginalCollectionName(c).equals(originalCollectionName)) {
+               return c;
+            }
+         }
+      }
+      throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(originalCollectionName));
    }
 
    /**
@@ -415,8 +555,15 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param collectionOriginalName
     *       name given by user
+    * @throws CollectionNotFoundException
+    * @throws UserCollectionAlreadyExistsException
+    * @throws CollectionMetadataNotFoundException
     */
-   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) {
+   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+      if (checkIfUserCollectionExists(collectionOriginalName)) {
+         throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
+      }
+
       String metadataCollectionName = collectionMetadataCollectionName(collectionInternalName);
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(META_TYPE_KEY, COLLECTION_REAL_NAME_META_TYPE_VALUE);
@@ -432,10 +579,16 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @return String representation of the time of the last update of collection lock
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
     */
-   public String getCollectionLockTime(String collectionName) {
-      String query = queryCollectionLockTime(collectionName);
+   public String getCollectionLockTime(String collectionName) throws CollectionNotFoundException, CollectionMetadataNotFoundException {
+      String query = queryOneValueFromCollectionMetadata(collectionName, COLLECTION_LOCK_META_TYPE_VALUE);
       List<DataDocument> lockInfo = dataStorage.run(query);
+
+      if (lockInfo.isEmpty()) {
+         throw new CollectionMetadataNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, COLLECTION_LOCK_META_TYPE_VALUE));
+      }
 
       DataDocument nameDocument = lockInfo.get(0);
       String lock = nameDocument.getString(COLLECTION_LOCK_UPDATED_KEY);
@@ -449,14 +602,15 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param newTime
     *       String representation of the time of the last update of collection lock
-    * @return true if set was succesful
+    * @return true if set was successful
+    * @throws CollectionNotFoundException
     */
-   public boolean setCollectionLockTime(String collectionName, String newTime) {
+   public boolean setCollectionLockTime(String collectionName, String newTime) throws CollectionNotFoundException {
       if (!Utils.isValidDateFormat(newTime)) { // time format is not valid
          return false;
       }
 
-      String query = queryCollectionLockTime(collectionName);
+      String query = queryOneValueFromCollectionMetadata(collectionName, COLLECTION_LOCK_META_TYPE_VALUE);
       List<DataDocument> lockInfo = dataStorage.run(query);
       DataDocument lockDocument = lockInfo.get(0);
       String id = lockDocument.get("_id").toString();
@@ -484,6 +638,9 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if the name is a name of "classical" collection containing data from user
     */
    public boolean isUserCollection(String collectionName) {
+      if (collectionName.length() < COLLECTION_NAME_PREFIX.length()) {
+         return false;
+      }
       String prefix = collectionName.substring(0, COLLECTION_NAME_PREFIX.length());
       return COLLECTION_NAME_PREFIX.equals(prefix) && !collectionName.endsWith(".shadow"); // VersionFacade adds suffix
    }
@@ -500,7 +657,7 @@ public class CollectionMetadataFacade implements Serializable {
    //    */
    //   public void setAttributeCount(String collectionName, String attributeName, long count) {
    //      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-   //      List<DataDocument> attributeInfo = dataStorage.run(query);
+   //      List<DataDocument> attributeInfo = dataStorage.search(query);
    //      DataDocument attributeDocument = attributeInfo.get(0);
    //      String id = attributeDocument.get("_id").toString();
    //
@@ -510,29 +667,6 @@ public class CollectionMetadataFacade implements Serializable {
    //      DataDocument metadataDocument = new DataDocument(metadata);
    //      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
    //   }
-
-   /**
-    * Checks whether given attribute type is correct (if it corresponds to attribute type saved in metadata)
-    *
-    * @param collectionName
-    *       internal collection name
-    * @param attributeName
-    *       name of attribute to check
-    * @param attributeType
-    *       type of attribute to check
-    * @return true if type is correct, false if not or if attribute doesn't exist
-    */
-   public boolean checkAttributeType(String collectionName, String attributeName, String attributeType) {
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.run(query);
-      if (!attributeInfo.isEmpty()) {
-         DataDocument attributeDocument = attributeInfo.get(0);
-         String correctType = attributeDocument.getString(COLLECTION_ATTRIBUTE_TYPE_KEY);
-         return correctType.equals(attributeType);
-      } else { // attribute doesn't exist
-         return false;
-      }
-   }
 
    /**
     * Checks whether value corresponds to attribute type
@@ -545,15 +679,13 @@ public class CollectionMetadataFacade implements Serializable {
     * @param valueString
     *       value converted to String
     * @return true if value corresponds to attribute type, false if not or attribute does not exist
+    * @throws CollectionNotFoundException
+    * @throws CollectionMetadataNotFoundException
     */
-   public boolean checkAttributeValue(String collectionName, String attribute, String valueString) {
-      String type = getCollectionAttributesNamesAndTypes(collectionName).get(attribute);
+   public boolean checkAttributeValue(String collectionName, String attribute, String valueString) throws CollectionNotFoundException, CollectionMetadataNotFoundException {
+      String type = getAttributeType(collectionName, attribute);
 
-      if (type == null) {
-         return false; // attribute does not exist
-      }
-
-      if (type.equals("int")) {
+      if (type.equals(COLLECTION_ATTRIBUTE_TYPE_INT)) {
          try {
             Integer.parseInt(valueString);
             return true;
@@ -562,7 +694,7 @@ public class CollectionMetadataFacade implements Serializable {
          }
       }
 
-      if (type.equals("long")) {
+      if (type.equals(COLLECTION_ATTRIBUTE_TYPE_LONG)) {
          try {
             Long.parseLong(valueString);
             return true;
@@ -571,7 +703,7 @@ public class CollectionMetadataFacade implements Serializable {
          }
       }
 
-      if (type.equals("double")) {
+      if (type.equals(COLLECTION_ATTRIBUTE_TYPE_DOUBLE)) {
          try {
             Double.parseDouble(valueString);
             return true;
@@ -580,15 +712,15 @@ public class CollectionMetadataFacade implements Serializable {
          }
       }
 
-      if (type.equals("date")) { // we accept yyyy.MM.dd and yyyy.MM.dd HH.mm.ss
+      if (type.equals(COLLECTION_ATTRIBUTE_TYPE_DATE)) { // we accept yyyy.MM.dd and yyyy.MM.dd HH.mm.ss
          return Utils.isValidDateFormatJustDate(valueString) || Utils.isValidDateFormatDateAndTimeMinutes(valueString);
       }
 
-      if (type.equals("bool")) {
+      if (type.equals(COLLECTION_ATTRIBUTE_TYPE_BOOLEAN)) {
          return valueString.equals("false") || valueString.equals("true");
       }
 
-      if (type.equals("nested")) { // we cannot add value to nested attribute, just to its children
+      if (type.equals(COLLECTION_ATTRIBUTE_TYPE_NESTED)) { // we cannot add value to nested attribute, just to its children
          return false;
       }
 
@@ -596,37 +728,138 @@ public class CollectionMetadataFacade implements Serializable {
       return true;
    }
 
-   // returns MongoDb query for getting real collection name
-   private String queryCollectionNameInfo(String collectionName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(META_TYPE_KEY)
-            .append("\":\"")
-            .append(COLLECTION_REAL_NAME_META_TYPE_VALUE)
-            .append("\"}}");
-      String findNameQuery = sb.toString();
-      return findNameQuery;
+   //   public List<DataDocument> getAttributeConstraints(String collectionName, String attributeName) throws CollectionNotFoundException {
+   //      String query = queryCollectionAttributeInfo(collectionName, attributeName);
+   //      List<DataDocument> attributesInfo = dataStorage.run(query);
+   //      if (attributesInfo.isEmpty()) {
+   //         // TODO
+   //         return null;
+   //      }
+   //
+   //      DataDocument attributeInfo = attributesInfo.get(0);
+   //      List<DataDocument> constraints = (List<DataDocument>) (attributeInfo.get(COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY));
+   //
+   //      return constraints;
+   //   }
+
+   //   public boolean addAttributeConstraint(String collectionName, String attributeName, String constraintType, String constraintValueString) {
+   //      String id = getAttributeDocumentId(collectionName, attributeName);
+   //
+   //      String type = getCollectionAttributesNames(collectionName).get(attributeName);
+   //      if (type == null) {
+   //         return false; // attribute does not exist
+   //      }
+   //
+   //      if (!COLLECTION_CONSTRAINT_TYPE_VALUES.contains(constraintType)) {
+   //         return false; // attribute constraint type is invalid
+   //      }
+   //
+   //      DataDocument constraintDocument;
+   //      Map<String, Object> constraintEntry = new HashMap<String, Object>();
+   //
+   //      if (constraintType.equals(COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GT) ||
+   //            constraintType.equals(COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_LT) ||
+   //            constraintType.equals(COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GTE) ||
+   //            constraintType.equals(COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_LTE)) {
+   //         if (type.equals(COLLECTION_ATTRIBUTE_TYPE_INT)) {
+   //            try {
+   //               int value = Integer.parseInt(constraintValueString);
+   //               constraintEntry.put(constraintType, value);
+   //            } catch (NumberFormatException e) {
+   //               return false;
+   //            }
+   //         } else if (type.equals(COLLECTION_ATTRIBUTE_TYPE_LONG)) {
+   //            try {
+   //               long value = Long.parseLong(constraintValueString);
+   //               constraintEntry.put(constraintType, value);
+   //            } catch (NumberFormatException e) {
+   //               return false;
+   //            }
+   //         } else if (type.equals(COLLECTION_ATTRIBUTE_TYPE_DOUBLE)) {
+   //            try {
+   //               double value = Double.parseDouble(constraintValueString);
+   //               constraintEntry.put(constraintType, value);
+   //            } catch (NumberFormatException e) {
+   //               return false;
+   //            }
+   //
+   //         } else if (type.equals(COLLECTION_ATTRIBUTE_TYPE_DATE)) {
+   //            if (Utils.isValidDateFormatJustDate(constraintValueString) || Utils.isValidDateFormatDateAndTimeMinutes(constraintValueString)) {
+   //               constraintEntry.put(constraintType, constraintValueString);
+   //            }
+   //         } else if (type.equals(COLLECTION_ATTRIBUTE_TYPE_STRING)) {
+   //            try {
+   //               int value = Integer.parseInt(constraintValueString);
+   //               constraintEntry.put(constraintType, value);
+   //            } catch (NumberFormatException e) {
+   //               return false;
+   //            }
+   //         }
+   //      } else if (constraintType.equals(COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_REGEX)) {
+   //         if (type.equals(COLLECTION_ATTRIBUTE_TYPE_STRING)) {
+   //            constraintEntry.put(constraintType, constraintValueString);
+   //         }
+   //      }
+   //
+   //      if (constraintEntry.isEmpty()) {
+   //         // we return false if the constraint is not valid
+   //         return false;
+   //      }
+   //
+   //      constraintDocument = new DataDocument(constraintEntry);
+   //      // so far we can add only one constraint
+   //      DataDocument attributeDocument = createNestedDocumentWithAttributeConstraint(attributeName, constraintDocument);
+   //      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), attributeDocument, id, -1);
+   //      return true;
+   //   }
+   //
+   //   public boolean dropAttributeConstraint(String collectionName, String attributeName, String constraintType) {
+   //      // TODO
+   //      return false;
+   //   }
+   //
+   //   private DataDocument createNestedDocumentWithAttributeConstraint(String attributeName, DataDocument constraintDocument) {
+   //      Map<String, Object> attributeMap = new HashMap<String, Object>();
+   //      List<DataDocument> constraintsList = new ArrayList<>();
+   //      // TODO add already existing constraints
+   //      constraintsList.add(constraintDocument);
+   //      attributeMap.put(COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, constraintDocument);
+   //      return new DataDocument(attributeMap);
+   //   }
+
+   // returns id of the document with info about given attribute
+   private String getAttributeDocumentId(String collectionName, String attributeName) throws CollectionNotFoundException {
+      String query = queryCollectionAttributeInfo(collectionName, attributeName);
+      List<DataDocument> attributeInfo = dataStorage.run(query);
+      if (!attributeInfo.isEmpty()) {
+         DataDocument attributeDocument = attributeInfo.get(0);
+         return attributeDocument.getId();
+      } else { // attribute doesn't exist
+         return null;
+      }
    }
 
-   // returns MongoDb query for getting info about all attributes
-   private String queryCollectionAttributesInfo(String collectionName) {
+   // returns MongoDb query for getting specific metadata value
+   private String queryOneValueFromCollectionMetadata(String collectionName, String metaTypeValue) throws CollectionNotFoundException {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
       StringBuilder sb = new StringBuilder("{find:\"")
             .append(metadataCollectionName)
             .append("\",filter:{\"")
             .append(META_TYPE_KEY)
             .append("\":\"")
-            .append(COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
+            .append(metaTypeValue)
             .append("\"}}");
-      String findAttributeQuery = sb.toString();
-      return findAttributeQuery;
+      String query = sb.toString();
+      return query;
    }
 
    // returns MongoDb query for getting info about specific attribute
-   private String queryCollectionAttributeInfo(String collectionName, String attributeName) {
+   private String queryCollectionAttributeInfo(String collectionName, String attributeName) throws CollectionNotFoundException {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+      checkIfMetadataCollectionExists(metadataCollectionName);
+
       StringBuilder sb = new StringBuilder("{find:\"")
             .append(metadataCollectionName)
             .append("\",filter:{\"")
@@ -642,18 +875,21 @@ public class CollectionMetadataFacade implements Serializable {
       return findAttributeQuery;
    }
 
-   // returns MongoDb query for getting collection lock time
-   private String queryCollectionLockTime(String collectionName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(META_TYPE_KEY)
-            .append("\":\"")
-            .append(COLLECTION_LOCK_META_TYPE_VALUE)
-            .append("\"}}");
-      String findNameQuery = sb.toString();
-      return findNameQuery;
+   private boolean checkIfUserCollectionExists(String originalCollectionName) throws CollectionMetadataNotFoundException, CollectionNotFoundException {
+      List<String> collections = dataStorage.getAllCollections();
+      for (String c : collections) {
+         if (isUserCollection(c)) {
+            if (getOriginalCollectionName(c).equals(originalCollectionName)) {
+               return true;
+            }
+         }
+      }
+      return false;
    }
 
+   private void checkIfMetadataCollectionExists(String metadataCollectionName) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(metadataCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(metadataCollectionName));
+      }
+   }
 }

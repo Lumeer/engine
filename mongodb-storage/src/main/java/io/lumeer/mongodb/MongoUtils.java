@@ -19,9 +19,15 @@
  */
 package io.lumeer.mongodb;
 
+import io.lumeer.engine.api.data.DataDocument;
+
 import com.mongodb.MongoClient;
 import org.bson.BsonDocument;
+import org.bson.Document;
 import org.bson.conversions.Bson;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
@@ -35,4 +41,42 @@ public class MongoUtils {
    public static String convertBsonToJson(Bson object) {
       return object.toBsonDocument(BsonDocument.class, MongoClient.getDefaultCodecRegistry()).toJson();
    }
+
+   public static void convertNestedAndListDocuments(DataDocument dataDocument) {
+      for (String key : dataDocument.keySet()) {
+         Object value = dataDocument.get(key);
+         if (isDocument(value)) {
+            DataDocument converted = new DataDocument((Document) value);
+            dataDocument.replace(key, converted);
+            convertNestedAndListDocuments(converted);
+         } else if (isList(value)) {
+            List l = (List) value;
+            if (!l.isEmpty() && isDocument(l.get(0))) {
+               ArrayList<DataDocument> docs = new ArrayList<>(l.size());
+               dataDocument.replace(key, docs);
+               for (Object o : l) {
+                  if (!isDocument(o)) {
+                     continue;
+                  }
+                  DataDocument d = new DataDocument((Document) o);
+                  docs.add(d);
+                  convertNestedAndListDocuments(d);
+               }
+            }
+         }
+      }
+   }
+
+   public static boolean isDataDocument(Object obj) {
+      return obj != null && obj instanceof DataDocument;
+   }
+
+   public static boolean isDocument(Object obj) {
+      return obj != null && obj instanceof Document;
+   }
+
+   public static boolean isList(Object obj) {
+      return obj != null && obj instanceof List;
+   }
+
 }

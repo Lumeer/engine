@@ -55,7 +55,6 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.SessionScoped;
-import javax.enterprise.inject.Model;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -174,7 +173,7 @@ public class MongoDbStorage implements DataStorage {
       document.replace(ID, documentIdString);
 
       DataDocument readed = new DataDocument(document);
-      convertNestedDocuments(readed);
+      MongoUtils.convertNestedAndListDocuments(readed);
 
       return readed;
    }
@@ -189,7 +188,7 @@ public class MongoDbStorage implements DataStorage {
          return null;
       }
       DataDocument readed = new DataDocument(document);
-      convertNestedDocuments(readed);
+      MongoUtils.convertNestedAndListDocuments(readed);
 
       return readed;
    }
@@ -237,6 +236,52 @@ public class MongoDbStorage implements DataStorage {
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
+   public <T> void addItemToArray(final String collectionName, final String documentId, final String attributeName, final T item) {
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
+      database.getCollection(collectionName).updateOne(filter, Updates.push(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+   }
+
+   public <T> void addItemsToArray(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
+      if (items.isEmpty()) {
+         return;
+      }
+      if (MongoUtils.isDataDocument(items.get(0))) {
+         List<Document> docs = new ArrayList<>();
+         items.forEach((i) -> docs.add(new Document((DataDocument) i)));
+         addItemsToArrayInternal(collectionName, documentId, attributeName, docs);
+         return;
+      }
+      addItemsToArrayInternal(collectionName, documentId, attributeName, items);
+   }
+
+   private <T> void addItemsToArrayInternal(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
+      database.getCollection(collectionName).updateOne(filter, Updates.pushEach(attributeName, items));
+   }
+
+   public <T> void removeItemFromArray(final String collectionName, final String documentId, final String attributeName, final T item) {
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
+      database.getCollection(collectionName).updateOne(filter, Updates.pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+   }
+
+   public <T> void removeItemsFromArray(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
+      if (items.isEmpty()) {
+         return;
+      }
+      if (MongoUtils.isDataDocument(items.get(0))) {
+         List<Document> docs = new ArrayList<>();
+         items.forEach((i) -> docs.add(new Document((DataDocument) i)));
+         removeItemsFromArrayInternal(collectionName, documentId, attributeName, docs);
+         return;
+      }
+      removeItemsFromArrayInternal(collectionName, documentId, attributeName, items);
+   }
+
+   private <T> void removeItemsFromArrayInternal(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
+      BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
+      database.getCollection(collectionName).updateOne(filter, Updates.pullAll(attributeName, items));
+   }
+
    @Override
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
       // skip non existing values
@@ -270,7 +315,7 @@ public class MongoDbStorage implements DataStorage {
          ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
             d.replace(ID, d.getObjectId(ID).toString());
             DataDocument raw = new DataDocument(d);
-            convertNestedDocuments(raw);
+            MongoUtils.convertNestedAndListDocuments(raw);
             result.add(raw);
          });
       }
@@ -291,7 +336,7 @@ public class MongoDbStorage implements DataStorage {
                .forEach(d -> {
                   d.replace(ID, d.getObjectId(ID).toString());
                   DataDocument raw = new DataDocument(d);
-                  convertNestedDocuments(raw);
+                  MongoUtils.convertNestedAndListDocuments(raw);
                   result.add(raw);
                });
 
@@ -371,17 +416,6 @@ public class MongoDbStorage implements DataStorage {
       BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       BasicDBObject updateBson = new BasicDBObject("$inc", new BasicDBObject(new Document(attributeName, incBy)));
       database.getCollection(collectionName).updateOne(filter, updateBson);
-   }
-
-   private void convertNestedDocuments(DataDocument dataDcument) {
-      for (String key : dataDcument.keySet()) {
-         Object value = dataDcument.get(key);
-         if (value instanceof Document) {
-            DataDocument converted = new DataDocument((Document) value);
-            dataDcument.replace(key, converted);
-            convertNestedDocuments(converted);
-         }
-      }
    }
 
    @Override

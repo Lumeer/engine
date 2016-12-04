@@ -50,17 +50,19 @@ public class CollectionFacadeTest extends Arquillian {
                        .addAsResource("defaults-dev.properties");
    }
 
-   private final String DUMMY_COLLECTION1 = "collection.testcollection1_0";
-   private final String DUMMY_COLLECTION1_ORIGINAL_NAME = "testCollection1";
-   private final String DUMMY_COLLECTION1_METADATA_COLLECTION = "meta.collection.testcollection1_0";
-   private final String DUMMY_COLLECTION2 = "collection.testcollection2_0";
-   private final String DUMMY_COLLECTION2_ORIGINAL_NAME = "testCollection2";
+   // do not change collection names, because it can mess up internal name creation in method internalName()
+   private final String COLLECTION_GET_ALL_COLLECTIONS = "CollectionFacadeCollectionGetAllCollections";
+   private final String COLLECTION_CREATE_AND_DROP = "CollectionFacadeCollectionCreateAndDrop";
+   private final String COLLECTION_READ_COLLECTION_METADATA = "CollectionFacadeReadCollectionCollectionMetadata";
+   private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionFacadeReadCollectionCollectionAttributes";
+   private final String COLLECTION_DROP_COLLECTION_METADATA = "CollectionFacadeCollectionDropCollectionMetadata";
+   private final String COLLECTION_GET_ATTRIBUTE_VALUES = "CollectionFacadeCollectionGetAttributeValues";
+   private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionFacadeCollectionRenameAttribute";
 
    private final String DUMMY_KEY1 = "key1";
    private final String DUMMY_KEY2 = "key2";
    private final String DUMMY_VALUE1 = "param1";
    private final String DUMMY_VALUE2 = "param2";
-   private final String DUMMY_NEW_KEY = "newKey";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -73,69 +75,77 @@ public class CollectionFacadeTest extends Arquillian {
 
    @Test
    public void testGetAllCollections() throws Exception {
-      Assert.assertEquals(collectionFacade.getAllCollections().size(), 0);
+      setUpCollection(COLLECTION_GET_ALL_COLLECTIONS);
+
+      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS);
+      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_GET_ALL_COLLECTIONS)));
    }
 
    @Test
    public void testCreateAndDropCollection() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
-      collectionFacade.createCollection(DUMMY_COLLECTION2_ORIGINAL_NAME);
+      setUpCollection(COLLECTION_CREATE_AND_DROP);
 
-      Assert.assertEquals(collectionFacade.getAllCollections().size(), 2);
+      Assert.assertFalse(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_CREATE_AND_DROP)));
 
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
-      collectionFacade.dropCollection(DUMMY_COLLECTION2);
+      collectionFacade.createCollection(COLLECTION_CREATE_AND_DROP);
+      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_CREATE_AND_DROP)));
 
-      Assert.assertEquals(collectionFacade.getAllCollections().size(), 0);
+      collectionFacade.dropCollection(internalName(COLLECTION_CREATE_AND_DROP));
+      Assert.assertFalse(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_CREATE_AND_DROP)));
    }
 
    @Test
    public void testReadCollectionMetadata() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      setUpCollection(COLLECTION_READ_COLLECTION_METADATA);
+
+      collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
 
       String name = "attribute 1";
-      collectionMetadataFacade.addOrIncrementAttribute(DUMMY_COLLECTION1, name);
+      String collection = internalName(COLLECTION_READ_COLLECTION_METADATA);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
 
-      List<DataDocument> metadata = collectionFacade.readCollectionMetadata(DUMMY_COLLECTION1);
-
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      List<DataDocument> metadata = collectionFacade.readCollectionMetadata(collection);
 
       Assert.assertEquals(metadata.size(), 3); // 3 documents: attribute, name, lock
    }
 
    @Test
    public void testReadCollectionAttributes() throws Exception {
+      setUpCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
+
       String a1 = "attribute1";
       String a2 = "attribute2";
+      String collection = internalName(COLLECTION_READ_COLLECTION_ATTRIBUTES);
 
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
-      collectionMetadataFacade.addOrIncrementAttribute(DUMMY_COLLECTION1, a1);
-      collectionMetadataFacade.addOrIncrementAttribute(DUMMY_COLLECTION1, a2);
+      collectionFacade.createCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, a1);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, a2);
 
-      List<String> attributes = collectionFacade.readCollectionAttributes(DUMMY_COLLECTION1);
-
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      List<String> attributes = collectionFacade.readCollectionAttributes(collection);
 
       Assert.assertTrue(attributes.contains(a1));
       Assert.assertTrue(attributes.contains(a2));
    }
 
-   @Test
-   public void testDropCollectionMetadata() throws Exception {
-      boolean isDropped = true;
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
-      collectionFacade.dropCollectionMetadata(DUMMY_COLLECTION1);
-      if (dataStorage.getAllCollections().contains(DUMMY_COLLECTION1_METADATA_COLLECTION)) {
-         isDropped = false;
-      }
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
-
-      Assert.assertTrue(isDropped);
-   }
+   //   @Test
+   //   public void testDropCollectionMetadata() throws Exception {
+   //      boolean isDropped = true;
+   //      collectionFacade.createCollection(COLLECTION_DROP_COLLECTION_METADATA);
+   //      collectionFacade.dropCollectionMetadata(internalName(COLLECTION_DROP_COLLECTION_METADATA));
+   //      collectionFacade.dropCollection(internalName(COLLECTION_DROP_COLLECTION_METADATA));
+   //      if (dataStorage.getAllCollections().contains(COLLECTION_DROP_COLLECTION_METADATA_METADATA_COLLECTION)) {
+   //         isDropped = false;
+   //      }
+   //
+   //      Assert.assertTrue(isDropped);
+   //   }
 
    @Test
    public void testGetAttributeValues() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      setUpCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
+
+      collectionFacade.createCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
+      String collection = internalName(COLLECTION_GET_ATTRIBUTE_VALUES);
 
       String a1 = "attribute";
       String a2 = "dummyattribute";
@@ -150,17 +160,15 @@ public class CollectionFacadeTest extends Arquillian {
       DataDocument doc3 = new DataDocument();
       doc3.put(a2, v3);
 
-      dataStorage.createDocument(DUMMY_COLLECTION1, doc1);
-      dataStorage.createDocument(DUMMY_COLLECTION1, doc2);
-      dataStorage.createDocument(DUMMY_COLLECTION1, doc3);
+      dataStorage.createDocument(collection, doc1);
+      dataStorage.createDocument(collection, doc2);
+      dataStorage.createDocument(collection, doc3);
 
       // we have to add attributes to metadata because we test them in getAttributeValues
-      collectionMetadataFacade.addOrIncrementAttribute(DUMMY_COLLECTION1, a1);
-      collectionMetadataFacade.addOrIncrementAttribute(DUMMY_COLLECTION1, a2);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, a1);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, a2);
 
-      Set<String> values = collectionFacade.getAttributeValues(DUMMY_COLLECTION1, a1);
-
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      Set<String> values = collectionFacade.getAttributeValues(collection, a1);
 
       Assert.assertTrue(values.contains(v1));
       Assert.assertTrue(values.contains(v2));
@@ -182,22 +190,44 @@ public class CollectionFacadeTest extends Arquillian {
    //      collectionFacade.dropCollection(DUMMY_COLLECTION1);
    //   }
 
-   // TODO!!!
-   //   @Test
-   //   public void testRenameAttribute() throws Exception {
-   //      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
-   //
-   //      String name = "attribute 1";
-   //      collectionMetadataFacade.addOrIncrementAttribute(DUMMY_COLLECTION1, name);
-   //      collectionFacade.renameAttribute(DUMMY_COLLECTION1, name, DUMMY_NEW_KEY);
-   //      Assert.assertTrue(isEveryDocumentFilledByNewAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
-   //
-   //      collectionFacade.dropCollection(DUMMY_COLLECTION1);
-   //   }
+   @Test
+   public void testRenameAttribute() throws Exception {
+      setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
+
+      collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
+      String collection = internalName(COLLECTION_RENAME_ATTRIBUTE);
+
+      String name = "attribute 1";
+      String newName = "new attribute 1";
+
+      DataDocument doc1 = new DataDocument();
+      doc1.put(name, DUMMY_VALUE1);
+      DataDocument doc2 = new DataDocument();
+      doc2.put(name, DUMMY_VALUE1);
+      DataDocument doc3 = new DataDocument();
+      doc3.put(name, DUMMY_VALUE1);
+
+      dataStorage.createDocument(collection, doc1);
+      dataStorage.createDocument(collection, doc2);
+      dataStorage.createDocument(collection, doc3);
+
+      // we have to increment 3 times, because we added 3 documents
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+
+      collectionFacade.renameAttribute(collection, name, newName);
+
+      Assert.assertTrue(isEveryDocumentFilledByNewAttribute(collection, newName));
+   }
 
    @Test
    public void testOnCollectionEvent() throws Exception {
 
+   }
+
+   private String internalName(String collectionOriginalName) {
+      return "collection." + collectionOriginalName.toLowerCase() + "_0";
    }
 
    private DataDocument createDummyDocument() {
@@ -206,13 +236,6 @@ public class CollectionFacadeTest extends Arquillian {
       dataDocument.put(DUMMY_KEY2, DUMMY_VALUE2);
 
       return dataDocument;
-   }
-
-   private void fillDatabaseDummyEntries(String collectionName) {
-      for (int i = 0; i < 100; i++) {
-         DataDocument insertedDocument = createDummyDocument();
-         dataStorage.createDocument(collectionName, insertedDocument);
-      }
    }
 
    private boolean isEveryDocumentFilledByNewAttribute(String collection, String attributeName) {
@@ -224,5 +247,10 @@ public class CollectionFacadeTest extends Arquillian {
          }
       }
       return true;
+   }
+
+   private void setUpCollection(String originalCollectionName) {
+      dataStorage.dropCollection(internalName(originalCollectionName));
+      dataStorage.dropCollection("meta." + internalName(originalCollectionName));
    }
 }
