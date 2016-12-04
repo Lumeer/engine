@@ -47,6 +47,10 @@ public class ErrorMessageBuilder {
    private static final String ERROR_ATTRIBUTE_METADATA_NOT_FOUND = "The metadata \"{0}\" for attribute \"{1}\" in collection \"{2}\" does not exist.";
    private static final String ERROR_COLLECTION_METADATA_NOT_FOUND = "The metadata \"{0}\" for collection \"{1}\" does not exist.";
 
+   private static final String ERROR_VIEW_METADATA_NOT_FOUND = "The metadata for view \"{0}\" does not exist.";
+   private static final String ERROR_VIEW_METADATA_VALUE_NOT_FOUND = "The metadata value for key \"{1}\" for view \"{0}\" does not exist.";
+   private static final String ERROR_VIEW_USERNAME_ALREADY_EXISTS = "The view with username \"{0}\" already exists.";
+
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
    }
@@ -103,8 +107,20 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_ATTRIBUTE_METADATA_NOT_FOUND, metadataType, attribute, collection);
    }
 
-   public static String collectionMetadataNotFound(String collection, String metadataType) {
+   public static String collectionMetadataNotFoundString(String collection, String metadataType) {
       return MessageFormat.format(ERROR_COLLECTION_METADATA_NOT_FOUND, metadataType, collection);
+   }
+
+   public static String viewMetadataNotFoundString(String viewId) {
+      return MessageFormat.format(ERROR_VIEW_METADATA_NOT_FOUND, viewId);
+   }
+
+   public static String viewMetadataValueNotFoundString(String viewId, String valueKey) {
+      return MessageFormat.format(ERROR_VIEW_METADATA_VALUE_NOT_FOUND, viewId, valueKey);
+   }
+
+   public static String viewUsernameAlreadyExistsString(String viewName) {
+      return MessageFormat.format(ERROR_VIEW_USERNAME_ALREADY_EXISTS, viewName);
    }
 
 }

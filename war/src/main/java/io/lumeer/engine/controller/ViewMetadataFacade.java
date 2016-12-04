@@ -21,9 +21,15 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
+import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
+import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -36,32 +42,31 @@ public class ViewMetadataFacade implements Serializable {
    @Inject
    private DataStorage dataStorage;
 
-   private static final String META_TYPE_KEY = "meta-type";
-   private static final String VIEW_METADATA_PREFIX = "meta.";
+   public static final String VIEW_METADATA_COLLECTION_NAME = "viewmetadatacollection";
    private static final String VIEW_NAME_PREFIX = "view.";
 
-   private static final String VIEW_TYPE_META_TYPE_VALUE = "type";
-   private static final String VIEW_TYPE_KEY = "type";
+   public static final String VIEW_ID_NAME_KEY = "id";
+   public static final String VIEW_REAL_NAME_KEY = "name";
+   public static final String VIEW_TYPE_KEY = "type";
 
-   private static final String VIEW_STYLES_META_TYPE_VALUE = "styles";
-   private static final String VIEW_ALL_STYLES_KEY = "styles";
-   private static final String VIEW_STYLE_TYPE_KEY = "type";
-   private static final String VIEW_STYLE_VALUE_KEY = "style";
-   private static final String VIEW_STYLE_CONDITION_KEY = "condition";
+   public static final String VIEW_ALL_STYLES_KEY = "styles";
+   public static final String VIEW_STYLE_TYPE_KEY = "type";
+   public static final String VIEW_STYLE_VALUE_KEY = "style";
+   public static final String VIEW_STYLE_CONDITION_KEY = "condition";
 
-   private static final String VIEW_REAL_NAME_META_TYPE_VALUE = "name";
-   private static final String VIEW_REAL_NAME_KEY = "name";
-
-   private static final String VIEW_ACCESS_RIGHTS_META_TYPE_VALUE = "rights";
+   public static final String VIEW_USER_RIGHTS_KEY = "rights";
+   public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
+   public static final String VIEW_CREATE_DATE_KEY = "create-date";
+   public static final String VIEW_CREATE_USER_KEY = "create-user";
+   public static final String VIEW_UPDATE_DATE_KEY = "update-date";
+   public static final String VIEW_UPDATE_USER_KEY = "update-user";
 
    // example of view metadata structure:
    // -------------------------------------
    // {
-   //	“meta-type” : “type”,
-   //	“type” : “table”
-   // },
-   // {
-   // “meta-type” : “styles”,
+   // “id” : “view.thisismyview_0”,
+   // “name” : “This is my view.”,
+   //	“type” : “table”,
    // “styles” : [
    //    {
    //    “type” : “column”,
@@ -79,13 +84,10 @@ public class ViewMetadataFacade implements Serializable {
    //          … a representation of condition …
    //       }
    //     }
-   //    ]
-   // },
-   // {
-   //    “meta-type” : “rights”,
+   //    ],
    //	   “create-date” : date,
    //	   “update-date” : date,
-   //	   “creator-user” : user_name,
+   //	   “create-user” : user_name,
    //	   “update-user” : user_name,
    //	   “rights” : [
    //       user_name1 : 1  //execute permissions
@@ -109,52 +111,136 @@ public class ViewMetadataFacade implements Serializable {
    // }
 
    /**
-    * Same as createInternalName, just with view prefix
+    * Converts view name given by user to internal representation.
+    * First, the name is trimmed of whitespaces.
+    * Spaces are replaced by "_". Converted to lowercase.
+    * Diacritics are replaced by ASCII characters.
+    * Everything except a-z, 0-9 and _ is removed.
+    * Number is added to the end of the name to ensure it is unique.
     *
     * @param originalViewName
     *       name given by user
-    * @return
-    *       internal name of view
+    * @return internal view name
     */
-   public String viewNameToInternalForm(String originalViewName) {
-      String name = originalViewName.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-      return VIEW_NAME_PREFIX + name;
+   public String createInternalName(String originalViewName) throws ViewAlreadyExistsException {
+      if (checkIfViewUserNameExists(originalViewName)) {
+         throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
+      }
+
+      String name = originalViewName.trim();
+      name = name.replace(' ', '_').toLowerCase();
+      name = Utils.normalize(name);
+      name = name.replaceAll("[^_a-z0-9]+", "");
+      name = VIEW_NAME_PREFIX + name;
+      int i = 0;
+      while (checkIfViewIdExists(name + "_" + i)) {
+         i++;
+      }
+      name = name + "_" + i;
+
+      return name;
    }
 
    /**
-    * @param viewName
-    *       internal view name
-    * @return name of collection with metadata for given view
+    * Creates initial metadata for view (so far only user name and id name)
+    * @param originalViewName name given by user
+    * @throws ViewAlreadyExistsException
     */
-   public String viewMetadataCollectionName(String viewName) {
-      return VIEW_METADATA_PREFIX + viewName;
+   public void createInitialMetadata(String originalViewName) throws ViewAlreadyExistsException {
+      Map<String, Object> metadata = new HashMap<>();
+      if (checkIfViewUserNameExists(originalViewName)) {
+         throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
+      }
+      String id = createInternalName(originalViewName);
+      metadata.put(VIEW_REAL_NAME_KEY, originalViewName);
+      metadata.put(VIEW_ID_NAME_KEY, id);
+
+      // TODO add other metadata
+
+      dataStorage.createDocument(VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadata));
    }
 
    /**
-    * @param viewName
-    *       internal view name
-    * @return view type
+    *
+    * @param viewId internal view name
+    * @return DataDocument with all metadata about given view
+    * @throws ViewMetadataNotFoundException
     */
-   public String getViewType(String viewName) {
-      String query = queryViewType(viewName);
-      List<DataDocument> viewInfo = dataStorage.run(query);
+   public DataDocument getViewMetadata(String viewId) throws ViewMetadataNotFoundException {
+      List<DataDocument> viewList = dataStorage.run(queryOneViewMetadata(viewId));
+      if (viewList.isEmpty()) {
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataNotFoundString(viewId));
+      }
 
-      DataDocument viewDocument = viewInfo.get(0);
-      String type = viewDocument.getString(VIEW_TYPE_KEY);
-      return type;
+      return viewList.get(0);
    }
 
-   // returns MongoDb query for getting view type
-   private String queryViewType(String viewName) {
-      String metadataCollectionName = viewMetadataCollectionName(viewName);
+   /**
+    * @param viewId
+    *       internal view name
+    * @param metaKey
+    *       key of value we want to get
+    * @return specific value from view metadata
+    * @throws ViewMetadataNotFoundException
+    */
+   public Object getViewMetadataValue(String viewId, String metaKey) throws ViewMetadataNotFoundException {
+      Object value = getViewMetadata(viewId).get(metaKey);
+      if (value == null) {
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataValueNotFoundString(viewId, metaKey));
+      }
+      return value;
+   }
+
+   /**
+    * Sets view metadata value. If the given key does not exist, it is created. Otherwise it is just updated
+    *
+    * @param viewId
+    *       internal view name
+    * @param metaKey
+    *       key of value we want to set
+    * @param value
+    *       value we want to set
+    * @throws ViewMetadataNotFoundException
+    */
+   public void setViewMetadataValue(String viewId, String metaKey, Object value) throws ViewMetadataNotFoundException {
+      String id = getViewMetadata(viewId).getId();
+      Map<String, Object> metadataMap = new HashMap<>();
+      metadataMap.put(metaKey, value);
+      dataStorage.updateDocument(VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadataMap), id, -1);
+   }
+
+   // returns MongoDb query for getting metadata for one given view
+   private String queryOneViewMetadata(String viewId) {
       StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
+            .append(VIEW_METADATA_COLLECTION_NAME)
             .append("\",filter:{\"")
-            .append(META_TYPE_KEY)
+            .append(VIEW_ID_NAME_KEY)
             .append("\":\"")
-            .append(VIEW_TYPE_META_TYPE_VALUE)
+            .append(viewId)
             .append("\"}}");
       String findTypeQuery = sb.toString();
       return findTypeQuery;
+   }
+
+   private List<DataDocument> getViewsMetadata() {
+      return dataStorage.search(VIEW_METADATA_COLLECTION_NAME, null, null, 0, 0);
+   }
+
+   private boolean checkIfViewUserNameExists(String originalViewName) {
+      for (DataDocument v : getViewsMetadata()) {
+         if (v.get(VIEW_REAL_NAME_KEY).toString().equals(originalViewName)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   private boolean checkIfViewIdExists(String viewId) {
+      for (DataDocument v : getViewsMetadata()) {
+         if (v.get(VIEW_ID_NAME_KEY).toString().equals(viewId)) {
+            return true;
+         }
+      }
+      return false;
    }
 }
