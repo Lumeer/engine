@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -73,6 +74,10 @@ public class SearchFacade implements Serializable {
     */
    public List<DataDocument> search(String query) {
       return dataStorage.run(query);
+   }
+
+   public List<DataDocument> query(final Query query) {
+      return null;
    }
 
 }

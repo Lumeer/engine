@@ -109,7 +109,8 @@ public interface DataStorage extends Serializable {
     *       the id of the document
     * @param version
     *       the version of document
-    * @throws UnsuccessfulOperationException When somebody already updated the document.
+    * @throws UnsuccessfulOperationException
+    *       When somebody already updated the document.
     */
    void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws UnsuccessfulOperationException;
 
@@ -246,30 +247,51 @@ public interface DataStorage extends Serializable {
    List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit);
 
    /**
-    * Increment attribute value of document by specified amount. If the field does not exist, it creates the field and sets the field to the specified value.
+    * Executes the provided query and returns its results. The query needs to have real database collection names filled in.
     *
-    * @param collectionName
-    *       the name of the collection where the given document is located
-    * @param documentId
-    *       the id of specified document
-    * @param attributeName
-    *       the name of attribute which value is increment
-    * @param incBy
-    *       the value by which attribute is increment
+    * @param query
+    *       Query to execute.
+    * @return Results of the query.
     */
-   void incrementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy);
+   List<DataDocument> query(final Query query);
 
    /**
-    * Gets the next value of sequence.
+    * Executes series of database operations.
     *
     * @param collectionName
-    *       Name of the collection with sequences.
-    * @param indexAttribute
-    *       Name of the attribute that identifies the sequence document.
-    * @param index
-    *       Value of the index attribute to identify the sequence.
-    * @return The next value in the sequence.
+    *       Collection on which to execute the operations.
+    * @param stages
+    *       Operation stages to execute one by one.
+    * @return Resulting document.
     */
+   List<DataDocument> aggregate(final String collectionName, final DataDocument... stages);
+
+      /**
+       * Increment attribute value of document by specified amount. If the field does not exist, it creates the field and sets the field to the specified value.
+       *
+       * @param collectionName
+       *       the name of the collection where the given document is located
+       * @param documentId
+       *       the id of specified document
+       * @param attributeName
+       *       the name of attribute which value is increment
+       * @param incBy
+       *       the value by which attribute is increment
+       */
+      void incrementAttributeValueBy ( final String collectionName, final String documentId, final String attributeName, final int incBy);
+
+      /**
+       * Gets the next value of sequence.
+       *
+       * @param collectionName
+       *       Name of the collection with sequences.
+       * @param indexAttribute
+       *       Name of the attribute that identifies the sequence document.
+       * @param index
+       *       Value of the index attribute to identify the sequence.
+       * @return The next value in the sequence.
+       */
+
    int getNextSequenceNo(final String collectionName, final String indexAttribute, final String index);
 
    /**

@@ -22,6 +22,7 @@ package io.lumeer.mongodb;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 
@@ -45,7 +46,9 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -291,6 +294,74 @@ public class MongoDbStorage implements DataStorage {
                   convertNestedDocuments(raw);
                   result.add(raw);
                });
+
+      return result;
+   }
+
+   @Override
+   public List<DataDocument> query(final Query query) {
+      List<DataDocument> result = new LinkedList<>();
+      List<DataDocument> stages = new LinkedList<>();
+
+      if (query.getFilters().size() > 0) {
+         final DataDocument filters = new DataDocument();
+         filters.put("$match", query.getFilters());
+         stages.add(filters);
+      }
+
+      if (query.getSorting().size() > 0) {
+         final DataDocument sorts = new DataDocument();
+         sorts.put("$sort", query.getSorting());
+         stages.add(sorts);
+      }
+
+      if (query.getProjections().size() > 0) {
+         final DataDocument projections = new DataDocument();
+         projections.put("$project", query.getProjections());
+         stages.add(projections);
+      }
+
+      if (query.getSkip() != null && query.getSkip() > 0) {
+         final DataDocument skip = new DataDocument();
+         skip.put("$skip", query.getSkip());
+         stages.add(skip);
+      }
+
+      if (query.getLimit() != null && query.getLimit() > 0) {
+         final DataDocument limit = new DataDocument();
+         limit.put("$limit", query.getLimit());
+         stages.add(limit);
+      }
+
+      query.getCollections().forEach(collection -> {
+         result.addAll(aggregate(collection, stages.toArray(new DataDocument[stages.size()])));
+      });
+
+      return result;
+   }
+
+   @Override
+   public List<DataDocument> aggregate(final String collectionName, final DataDocument... stages) {
+      if (stages == null || stages.length == 0) {
+         return Collections.EMPTY_LIST;
+      }
+
+      final List<DataDocument> result = new LinkedList<>();
+      final List<Document> documents = new LinkedList<>();
+      for (final DataDocument d : stages) {
+         final Document doc = new Document();
+         doc.putAll(d);
+         // TODO: convert nested data documents
+         documents.add(doc);
+      }
+
+      AggregateIterable<Document> resultDocuments = database.getCollection(collectionName).aggregate(documents);
+      resultDocuments.into(new LinkedList<>()).forEach(d -> {
+         d.replace(ID, d.getObjectId(ID).toString());
+         DataDocument raw = new DataDocument(d);
+         convertNestedDocuments(raw);
+         result.add(raw);
+      });
 
       return result;
    }
