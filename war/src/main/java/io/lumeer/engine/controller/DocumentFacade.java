@@ -25,13 +25,18 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
+import io.lumeer.mongodb.MongoUtils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Event;
@@ -76,20 +81,23 @@ public class DocumentFacade implements Serializable {
     *       if collection is not found in database
     * @throws UnsuccessfulOperationException
     *       if create was not succesful
+    * @throws InvalidDocumentKeyException
+    *       if one of document's key contains illegal character
     */
-   public String createDocument(final String collectionName, final DataDocument document) throws CollectionNotFoundException, UnsuccessfulOperationException {
+   public String createDocument(final String collectionName, final DataDocument document) throws CollectionNotFoundException, UnsuccessfulOperationException, InvalidDocumentKeyException {
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
-      document.put(LumeerConst.DOCUMENT.CREATE_DATE_KEY, Utils.getCurrentTimeString());
-      document.put(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY, userName);
-      document.put(LumeerConst.METADATA_VERSION_KEY, 0);
-      String documentId = dataStorage.createDocument(collectionName, document);
+      DataDocument doc = checkDocumentKeysValidity(document);
+      doc.put(LumeerConst.DOCUMENT.CREATE_DATE_KEY, Utils.getCurrentTimeString());
+      doc.put(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY, userName);
+      doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
+      String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
       }
       // we add all document attributes to collection metadata
-      for (String attribute : document.keySet()) {
+      for (String attribute : doc.keySet()) {
          collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
       }
       return documentId;
@@ -135,8 +143,10 @@ public class DocumentFacade implements Serializable {
     *       if document is not found in database
     * @throws UnsuccessfulOperationException
     *       if document was not updated succesfully
+    * @throws InvalidDocumentKeyException
+    *       if one of document's key contains illegal character
     */
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -145,12 +155,13 @@ public class DocumentFacade implements Serializable {
       if (existingDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      updatedDocument.put(LumeerConst.DOCUMENT.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      updatedDocument.put(LumeerConst.DOCUMENT.UPDATED_BY_USER_KEY, userName);
-      versionFacade.newDocumentVersion(collectionName, updatedDocument);
+      DataDocument upd = checkDocumentKeysValidity(updatedDocument);
+      upd.put(LumeerConst.DOCUMENT.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
+      upd.put(LumeerConst.DOCUMENT.UPDATED_BY_USER_KEY, userName);
+      versionFacade.newDocumentVersion(collectionName, upd);
 
       // we add new attributes of updated document to collection metadata
-      for (String attribute : updatedDocument.keySet()) {
+      for (String attribute : upd.keySet()) {
          if (!existingDocument.containsKey(attribute)) {
             collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
          }
@@ -249,6 +260,38 @@ public class DocumentFacade implements Serializable {
          }
       }
       return documentAttributes;
+   }
+
+   private DataDocument checkDocumentKeysValidity(DataDocument dataDocument) throws InvalidDocumentKeyException {
+      DataDocument ndd = new DataDocument();
+      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
+         String key = entry.getKey().trim();
+         if (isKeyInvalid(key)) {
+            throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKey(key));
+         }
+         Object value = entry.getValue();
+         if (MongoUtils.isDataDocument(value)) {
+            ndd.put(key, checkDocumentKeysValidity((DataDocument) value));
+         } else if (MongoUtils.isList(value)) {
+            List l = (List) entry.getValue();
+            if (!l.isEmpty() && MongoUtils.isDataDocument(l.get(0))) {
+               ArrayList<DataDocument> docs = new ArrayList<>();
+               ndd.put(key, docs);
+               for (Object o : l) {
+                  docs.add(checkDocumentKeysValidity((DataDocument) o));
+               }
+            } else {
+               ndd.put(key, l);
+            }
+         } else {
+            ndd.put(key, value);
+         }
+      }
+      return ndd;
+   }
+
+   private boolean isKeyInvalid(String key) {
+      return !key.equals("_id") && (key.startsWith("$") || key.startsWith("_") || key.contains("."));
    }
 
 }

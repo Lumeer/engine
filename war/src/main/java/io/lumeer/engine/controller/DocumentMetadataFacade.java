@@ -41,9 +41,6 @@ public class DocumentMetadataFacade implements Serializable {
    @Inject
    private DataStorage dataStorage;
 
-   @Inject
-   private DocumentFacade documentFacade;
-
    public static final String DOCUMENT_METADATA_PREFIX = "meta-";
    public static final String DOCUMENT_CREATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + "create-date";
    public static final String DOCUMENT_UPDATE_DATE_KEY = DOCUMENT_METADATA_PREFIX + "update-date";

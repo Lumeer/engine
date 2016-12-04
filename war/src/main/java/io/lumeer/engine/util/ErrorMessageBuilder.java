@@ -39,6 +39,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_DROP_UNSUCCESFUL = "The document could not be deleted.";
    private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not succesfully updated.";
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
+   private static final String ERROR_INVALID_DOCUMENT_KEY = "The key  \"{0}\" is not valid";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
 
    private static final String ERROR_USER_COLLECTION_NOT_FOUND = "The user collection \"{0}\" does not exist.";
@@ -81,6 +82,10 @@ public class ErrorMessageBuilder {
 
    public static String invalidMetadataKey(String key) {
       return MessageFormat.format(ERROR_INVALID_METADATA_KEY, key);
+   }
+
+   public static String invalidDocumentKey(String key) {
+      return MessageFormat.format(ERROR_INVALID_DOCUMENT_KEY, key);
    }
 
    public static String nullKey() {
