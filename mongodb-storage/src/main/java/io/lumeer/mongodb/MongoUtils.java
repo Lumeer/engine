@@ -28,7 +28,6 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.crypto.Data;
 
 /**
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
