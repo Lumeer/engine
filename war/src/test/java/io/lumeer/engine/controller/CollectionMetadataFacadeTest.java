@@ -22,8 +22,6 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
-import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.Utils;
 
@@ -101,7 +99,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testGetCollectionAttributesNames() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testGetCollectionAttributesNames() throws Exception {
       setUpCollection(COLLECTION_ATTRIBUTES_NAMES);
 
       collectionFacade.createCollection(COLLECTION_ATTRIBUTES_NAMES);
@@ -120,7 +118,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testGetCollectionAttributesInfo() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testGetCollectionAttributesInfo() throws Exception {
       setUpCollection(COLLECTION_ATTRIBUTES_INFO);
 
       collectionFacade.createCollection(COLLECTION_ATTRIBUTES_INFO);
@@ -159,7 +157,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    //   }
 
    @Test
-   public void testRenameCollectionAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testRenameCollectionAttribute() throws Exception {
       setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
 
       collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
@@ -186,7 +184,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testRetypeCollectionAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testRetypeCollectionAttribute() throws Exception {
       setUpCollection(COLLECTION_RETYPE_ATTRIBUTE);
 
       collectionFacade.createCollection(COLLECTION_RETYPE_ATTRIBUTE);
@@ -222,7 +220,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testDropCollectionAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testDropCollectionAttribute() throws Exception {
       setUpCollection(COLLECTION_DROP_ATTRIBUTE);
 
       collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
@@ -248,7 +246,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testSetGetOriginalCollectionName() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testSetGetOriginalCollectionName() throws Exception {
       setUpCollection(COLLECTION_SET_ORIGINAL_NAME);
 
       collectionFacade.createCollection(COLLECTION_SET_ORIGINAL_NAME); // set is done in this method
@@ -264,7 +262,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testCreateInitialMetadata() throws CollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataNotFoundException {
+   public void testCreateInitialMetadata() throws Exception {
       String collection = internalName(COLLECTION_CREATE_INITIAL_METADATA);
       String metaCollection = collectionMetadataFacade.collectionMetadataCollectionName(collection);
 
@@ -282,7 +280,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testSetGetCollectionLockTime() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testSetGetCollectionLockTime() throws Exception {
       setUpCollection(COLLECTION_SET_LOCK_TIME);
 
       collectionFacade.createCollection(COLLECTION_SET_LOCK_TIME);
@@ -295,7 +293,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testAddOrIncrementAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testAddOrIncrementAttribute() throws Exception {
       setUpCollection(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE);
 
       collectionFacade.createCollection(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE);
@@ -314,7 +312,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testDropOrDecrementAttribute() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testDropOrDecrementAttribute() throws Exception {
       setUpCollection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE);
 
       collectionFacade.createCollection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE);
@@ -338,7 +336,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    }
 
    @Test
-   public void testCheckAttributeValue() throws CollectionAlreadyExistsException, CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void testCheckAttributeValue() throws Exception {
       setUpCollection(COLLECTION_CHECK_ATTRIBUTE_VALUE);
 
       collectionFacade.createCollection(COLLECTION_CHECK_ATTRIBUTE_VALUE);
