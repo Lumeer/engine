@@ -405,6 +405,7 @@ public class MongoDbStorage implements DataStorage {
          d.replace(ID, d.getObjectId(ID).toString());
          DataDocument raw = new DataDocument(d);
          //convertNestedDocuments(raw);
+         MongoUtils.convertNestedAndListDocuments(raw);
          result.add(raw);
       });
 

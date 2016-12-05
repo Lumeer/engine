@@ -31,7 +31,6 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,9 +122,9 @@ public class CollectionFacade implements Serializable {
     */
    public void dropCollection(final String collectionName) throws CollectionNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
+         linkingFacade.dropCollectionLinks(collectionName);
          dataStorage.dropCollection(collectionName);
          dropCollectionMetadata(collectionName); // removes metadata collection
-         linkingFacade.dropCollectionLinks(collectionName);
          // TODO: drop shadow collection
 
          collections = null;

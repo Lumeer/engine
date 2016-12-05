@@ -24,6 +24,8 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
 
@@ -59,7 +61,7 @@ public class LinkingFacade implements Serializable {
    @Inject
    private DataStorage dataStorage;
 
-   public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) {
+   public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) throws CollectionNotFoundException {
       dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId());
    }
 
@@ -67,9 +69,9 @@ public class LinkingFacade implements Serializable {
     * Read all linking documents for specified document
     *
     * @param collectionName
-    *       the name of the collection where the document is located
+    *       the name of the document's collection
     * @param documentId
-    *       the id of the document to run for links
+    *       the id of the document to search for links
     * @return list of linking documents
     * @throws CollectionNotFoundException
     *       if collection is not found in database
@@ -99,11 +101,11 @@ public class LinkingFacade implements Serializable {
     * Read all linking documents for specified document and collection
     *
     * @param firstCollectionName
-    *       the name of the collection where the document is located
+    *       the name of the document's collection
     * @param firstDocumentId
-    *       the id of the document to run for links
+    *       the id of the document to search for links
     * @param secondCollectionName
-    *       the name of the collection to run for linking documents
+    *       the name of the collection to search for linking documents
     * @return list of linking documents
     * @throws CollectionNotFoundException
     *       if collection is not found in database
@@ -126,7 +128,20 @@ public class LinkingFacade implements Serializable {
       return readDocumentsFromLinkingDocuments(linkingDocuments, firstDocumentId, secondCollectionName);
    }
 
-   public void dropAllDocumentLinks(String collectionName, String documentId) {
+   /**
+    * Drop all links for specified document
+    *
+    * @param collectionName
+    *       the name of the document's collection
+    * @param documentId
+    *       the id of the document to drop links
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    */
+   public void dropAllDocumentLinks(String collectionName, String documentId) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
@@ -134,24 +149,54 @@ public class LinkingFacade implements Serializable {
       }
    }
 
-   public void dropDocWithDocLink(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) {
+   /**
+    * Drop link between two documents
+    *
+    * @param firstCollectionName
+    *       the name of the first document's collection
+    * @param firstDocumentId
+    *       the id of the first document
+    * @param secondCollectionName
+    *       the name of the second document's collection
+    * @param secondDocumentId
+    *       the id of the second document
+    * @throws CollectionNotFoundException
+    *       if first or second collection is not found in database
+    */
+   public void dropDocWithDocLink(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(firstCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(firstCollectionName));
+      }
+      if (!dataStorage.hasCollection(secondCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(secondCollectionName));
+      }
       DataDocument linkingTable = readLinkingTable(firstCollectionName, secondCollectionName);
       if (linkingTable == null) {
          // throw exception?
          return;
       }
-      String filter = MongoUtils.convertBsonToJson(Filters.or(
-            Filters.and(
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, firstDocumentId),
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, secondDocumentId)),
-            Filters.and(
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, secondDocumentId),
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, firstDocumentId))));
-
-      dataStorage.dropManyDocuments(linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME), filter);
+      dataStorage.dropManyDocuments(linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME), getDoc1Doc2Filter(firstDocumentId, secondDocumentId));
    }
 
-   public void dropDocWithCollectionLinks(String firstCollectionName, String firstDocumentId, String secondCollectionName) {
+   /**
+    * Drop link between document and collection
+    *
+    * @param firstCollectionName
+    *       the name of the document's collection
+    * @param firstDocumentId
+    *       the id of the document
+    * @param secondCollectionName
+    *       the name of the collection to drop links
+    * @throws CollectionNotFoundException
+    *       if first or second collection is not found in database
+    */
+   public void dropDocWithCollectionLinks(String firstCollectionName, String firstDocumentId, String secondCollectionName) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(firstCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(firstCollectionName));
+      }
+      if (!dataStorage.hasCollection(secondCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(secondCollectionName));
+      }
       DataDocument linkingTable = readLinkingTable(firstCollectionName, secondCollectionName);
       if (linkingTable == null) {
          // throw exception?
@@ -185,14 +230,96 @@ public class LinkingFacade implements Serializable {
       dataStorage.dropManyDocuments(collectionName, filter);
    }
 
-   public void createDocWithDocLink(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) {
-      // TODO
-      throw new UnsupportedOperationException();
+   /**
+    * Create link between two documents
+    *
+    * @param firstCollectionName
+    *       the name of the first document's collection
+    * @param firstDocumentId
+    *       the id of the first document
+    * @param secondCollectionName
+    *       the name of the second document's collection
+    * @param secondDocumentId
+    *       the id of the second document
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    * @throws DocumentNotFoundException
+    *       if one of the documents is not in appropriate collection
+    * @throws LinkAlreadyExistsException
+    *       if link between documents already exists
+    */
+   public void createDocWithDocLink(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) throws CollectionNotFoundException, DocumentNotFoundException, LinkAlreadyExistsException {
+      if (!dataStorage.hasCollection(firstCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(firstCollectionName));
+      }
+      if (!dataStorage.hasCollection(secondCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(secondCollectionName));
+      }
+      if (!(dataStorage.collectionHasDocument(firstCollectionName, firstDocumentId) && dataStorage.collectionHasDocument(secondCollectionName, secondDocumentId))) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      String collectionName = checkOrCreateLinkInSystemCollection(firstCollectionName, secondCollectionName);
+      createLinkDocsOrThrow(collectionName, firstDocumentId, secondDocumentId);
    }
 
-   public void createDocWithColletionLinks(String firstCollectionName, String firstDocumentId, String secondCollectionName, List<String> documentIds) {
-      // TODO
-      throw new UnsupportedOperationException();
+   /**
+    * Create link between two documents
+    *
+    * @param firstCollectionName
+    *       the name of the first document's collection
+    * @param firstDocumentId
+    *       the id of the first document
+    * @param secondCollectionName
+    *       the name of the second document's collection
+    * @param documentIds
+    *       the id of the second document
+    * @throws CollectionNotFoundException
+    *       if collection is not found in database
+    * @throws DocumentNotFoundException
+    *       if one of the documents is not in appropriate collection
+    * @throws LinkAlreadyExistsException
+    *       if link between documents already exists
+    */
+   public void createDocWithColletionLinks(String firstCollectionName, String firstDocumentId, String secondCollectionName, List<String> documentIds) throws CollectionNotFoundException, LinkAlreadyExistsException, DocumentNotFoundException {
+      if (!dataStorage.hasCollection(firstCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(firstCollectionName));
+      }
+      if (!dataStorage.hasCollection(secondCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(secondCollectionName));
+      }
+      if (!dataStorage.collectionHasDocument(firstCollectionName, firstDocumentId)) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      String collectionName = checkOrCreateLinkInSystemCollection(firstCollectionName, secondCollectionName);
+      for (String secondDocumentId : documentIds) {
+         if (secondDocumentId != null) {
+            if (!dataStorage.collectionHasDocument(secondCollectionName, secondDocumentId)) {
+               throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+            }
+            createLinkDocsOrThrow(collectionName, firstDocumentId, secondDocumentId);
+         }
+      }
+   }
+
+   private void createLinkDocsOrThrow(final String collectionName, final String firstDocumentId, final String secondDocumentId) throws LinkAlreadyExistsException {
+      DataDocument linkingDocument = readLinkingDocument(collectionName, firstDocumentId, secondDocumentId);
+      if (linkingDocument == null) {
+         createLinkingDocument(collectionName, firstDocumentId, secondDocumentId);
+      } else {
+         throw new LinkAlreadyExistsException(ErrorMessageBuilder.linkAlreadyExists());
+      }
+   }
+
+   private String checkOrCreateLinkInSystemCollection(String firstCollectionName, String secondCollectionName) {
+      String collectionName;
+      DataDocument linkingTable = readLinkingTable(firstCollectionName, secondCollectionName);
+      if (linkingTable == null) {
+         collectionName = createCollectionName(firstCollectionName, secondCollectionName);
+         createLinkingTable(firstCollectionName, secondCollectionName, collectionName);
+      } else {
+         collectionName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+      }
+      return collectionName;
    }
 
    private DataDocument readLinkingTable(String firstCollectionName, String secondCollectionName) {
@@ -204,6 +331,11 @@ public class LinkingFacade implements Serializable {
                   Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, secondCollectionName))));
       List<DataDocument> linkingTables = dataStorage.search(LumeerConst.LINKING.MAIN_TABLE.NAME, filter, null, 0, 0);
       return linkingTables.size() == 1 ? linkingTables.get(0) : null;
+   }
+
+   private DataDocument readLinkingDocument(final String collectionName, String firstDocumentId, String secondDocumentId) {
+      List<DataDocument> linkingDocuments = dataStorage.search(collectionName, getDoc1Doc2Filter(firstDocumentId, secondDocumentId), null, 0, 0);
+      return linkingDocuments.size() == 1 ? linkingDocuments.get(0) : null;
    }
 
    private List<DataDocument> readLinkingTables(String firstCollectionName) {
@@ -236,16 +368,39 @@ public class LinkingFacade implements Serializable {
    }
 
    private void removeAllDocuments(final String collectionName, final String documentId) {
-      String filter = Filters.or(Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, documentId), Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, documentId)).toString();
+      String filter = MongoUtils.convertBsonToJson(Filters.or(Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, documentId), Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, documentId)));
       dataStorage.dropManyDocuments(collectionName, filter);
    }
 
-   private void createLinkingTable(String firstCollectionName, String secondCollectionName) {
+   private void createLinkingTable(String firstCollectionName, String secondCollectionName, final String collectionName) {
       DataDocument doc = new DataDocument();
       doc.put(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName);
       doc.put(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, secondCollectionName);
+      doc.put(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME, collectionName);
 
       dataStorage.createDocument(LumeerConst.LINKING.MAIN_TABLE.NAME, doc);
 
+   }
+
+   private void createLinkingDocument(final String collectionName, final String firstDocumentId, final String secondDocumentId) {
+      DataDocument doc = new DataDocument();
+      doc.put(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, firstDocumentId);
+      doc.put(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, secondDocumentId);
+
+      dataStorage.createDocument(collectionName, doc);
+   }
+
+   private String getDoc1Doc2Filter(final String firstDocumentId, final String secondDocumentId) {
+      return MongoUtils.convertBsonToJson(Filters.or(
+            Filters.and(
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, firstDocumentId),
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, secondDocumentId)),
+            Filters.and(
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, secondDocumentId),
+                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, firstDocumentId))));
+   }
+
+   private String createCollectionName(final String firstCollectionName, final String secondCollectionName) {
+      return LumeerConst.LINKING.PREFIX + "_" + firstCollectionName + "_" + secondCollectionName;
    }
 }
