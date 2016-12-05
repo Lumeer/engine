@@ -41,6 +41,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
    private static final String ERROR_INVALID_DOCUMENT_KEY = "The key  \"{0}\" is not valid";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
+   private static final String ERROR_LINK_ALREADY_EXISTS = "Link between documents already exists";
 
    private static final String ERROR_USER_COLLECTION_NOT_FOUND = "The user collection \"{0}\" does not exist.";
    private static final String ERROR_USER_COLLECTION_ALREADY_EXISTS = "The user collection \"{0}\" already exists.";
@@ -94,6 +95,10 @@ public class ErrorMessageBuilder {
 
    public static String nullKey() {
       return ERROR_NULL_KEY;
+   }
+
+   public static String linkAlreadyExists() {
+      return ERROR_LINK_ALREADY_EXISTS;
    }
 
    public static String userCollectionNotFoundString(String collection) {
