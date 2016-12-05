@@ -536,7 +536,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws CollectionNotFoundException
     * @throws CollectionMetadataNotFoundException
     */
-   public String getInternalCollectionName(String originalCollectionName) throws UserCollectionNotFoundException, CollectionNotFoundException, CollectionMetadataNotFoundException {
+   public String getInternalCollectionName(String originalCollectionName) throws CollectionNotFoundException, CollectionMetadataNotFoundException {
       List<String> collections = dataStorage.getAllCollections();
       for (String c : collections) {
          if (isUserCollection(c)) {

@@ -46,6 +46,8 @@ public final class LumeerConst {
 
    public static final String USER_LOCALE_PROPERTY = "locale";
 
+   public static final String DEFAULT_LIMIT_PROPERTY = "result_limit";
+
    private LumeerConst() {
       // we do not want any instances to be created
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));

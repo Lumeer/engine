@@ -394,17 +394,13 @@ public class MongoDbStorage implements DataStorage {
       final List<DataDocument> result = new LinkedList<>();
       final List<Document> documents = new LinkedList<>();
       for (final DataDocument d : stages) {
-         final Document doc = new Document();
-         doc.putAll(d);
-         // TODO: convert nested data documents
-         documents.add(doc);
+         documents.add(MongoUtils.dataDocumentToDocument(d));
       }
 
       AggregateIterable<Document> resultDocuments = database.getCollection(collectionName).aggregate(documents);
       resultDocuments.into(new LinkedList<>()).forEach(d -> {
          d.replace(ID, d.getObjectId(ID).toString());
          DataDocument raw = new DataDocument(d);
-         //convertNestedDocuments(raw);
          MongoUtils.convertNestedAndListDocuments(raw);
          result.add(raw);
       });

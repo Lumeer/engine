@@ -20,23 +20,20 @@
 package io.lumeer.engine.api.exception;
 
 /**
- * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
+ * Thrown when a data query has any issues.
+ *
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-
-/**
- * Thrown in case the collection with given user name is not found
- */
-public class UserCollectionNotFoundException extends CollectionNotFoundException {
-
-   public UserCollectionNotFoundException(final String message) {
+public class InvalidQueryException extends DbException {
+   public InvalidQueryException(final String message) {
       super(message);
    }
 
-   public UserCollectionNotFoundException(final String message, final Throwable cause) {
+   public InvalidQueryException(final String message, final Throwable cause) {
       super(message, cause);
    }
 
-   public UserCollectionNotFoundException(final Throwable cause) {
+   public InvalidQueryException(final Throwable cause) {
       super(cause);
    }
 }

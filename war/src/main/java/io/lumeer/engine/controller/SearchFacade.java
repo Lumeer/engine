@@ -19,13 +19,18 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
@@ -40,7 +45,13 @@ public class SearchFacade implements Serializable {
    private DataStorage dataStorage;
 
    @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
+
+   @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private ConfigurationFacade configurationFacade;
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
@@ -76,8 +87,50 @@ public class SearchFacade implements Serializable {
       return dataStorage.run(query);
    }
 
-   public List<DataDocument> query(final Query query) {
-      return dataStorage.query(query);
+   /**
+    * Queries the data storage in a flexible way. Allows for none or multiple collection names to be specified,
+    * automatically sets limit to default values.
+    *
+    * @param query
+    * @return
+    * @throws InvalidQueryException
+    *       When it was not possible to execute the query.
+    */
+   public List<DataDocument> query(final Query query) throws InvalidQueryException {
+      final List<String> collections = new ArrayList<>();
+      final List<DataDocument> result = new ArrayList<>();
+      final Query internalQuery = new Query();
+
+      try {
+         for (final String collectionName : query.getCollections()) {
+            collections.add(collectionMetadataFacade.getInternalCollectionName(collectionName));
+         }
+
+         if (collections.size() == 0) {
+            collections.addAll(collectionFacade.getAllCollections().keySet());
+         }
+      } catch (CollectionNotFoundException | CollectionMetadataNotFoundException e) {
+         throw new InvalidQueryException("Search asks for collections that are not available: ", e);
+      }
+
+      internalQuery.setFilters(query.getFilters());
+      internalQuery.setProjections(query.getProjections());
+      internalQuery.setSorting(query.getSorting());
+
+      if (query.getLimit() == null) {
+         internalQuery.setLimit(configurationFacade.getConfigurationInteger(LumeerConst.DEFAULT_LIMIT_PROPERTY).orElse(100) / collections.size());
+      }
+
+      if (query.getSkip() == null) {
+         internalQuery.setSkip(0);
+      }
+
+      for (final String collection : collections) {
+         internalQuery.setCollections(Collections.singleton(collection));
+         result.addAll(dataStorage.query(internalQuery));
+      }
+
+      return result;
    }
 
 }

@@ -67,6 +67,23 @@ public class MongoUtils {
       }
    }
 
+   /**
+    * Converts {@link DataDocument} recursively to {@link Document}.
+    *
+    * @param dataDocument
+    *       {@link DataDocument} to convert.
+    * @return Converted {@link Document}.
+    */
+   public static Document dataDocumentToDocument(final DataDocument dataDocument) {
+      for (final String key : dataDocument.keySet()) {
+         if (isDataDocument(dataDocument.get(key))) {
+            dataDocument.replace(key, dataDocumentToDocument((DataDocument) dataDocument.get(key)));
+         }
+      }
+
+      return new Document(dataDocument);
+   }
+
    public static boolean isDataDocument(Object obj) {
       return obj != null && obj instanceof DataDocument;
    }
