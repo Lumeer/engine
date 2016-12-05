@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.Query;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -52,6 +53,7 @@ public class SearchFacadeTest extends Arquillian {
 
    private final String COLLECTION_SEARCH = "collectionSearch";
    private final String COLLECTION_SEARCH_RAW = "collectionSearchRaw";
+   private final String COLLECTION_QUERY = "collectionQuery";
 
    @Inject
    private SearchFacade searchFacade;
@@ -97,6 +99,21 @@ public class SearchFacadeTest extends Arquillian {
 
       // run() method returns 101 entries due to it is a default value of "batchSize" query key
       Assert.assertEquals(searchDocuments.size(), 101);
+   }
+
+   @Test
+   public void testQuery() throws Exception {
+      if (dataStorage.hasCollection(COLLECTION_QUERY)) {
+         dataStorage.dropCollection(COLLECTION_QUERY);
+      }
+
+      DataDocument d1 = new DataDocument();
+
+
+      dataStorage.createCollection(COLLECTION_QUERY);
+      //dataStorage.createDocument(COLLECTION_QUERY);
+
+      final Query q = new Query();
    }
 
 }

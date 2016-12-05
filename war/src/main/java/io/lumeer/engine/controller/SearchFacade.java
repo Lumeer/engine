@@ -77,7 +77,7 @@ public class SearchFacade implements Serializable {
    }
 
    public List<DataDocument> query(final Query query) {
-      return null;
+      return dataStorage.query(query);
    }
 
 }

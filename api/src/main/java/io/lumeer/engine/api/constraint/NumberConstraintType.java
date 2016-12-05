@@ -57,7 +57,7 @@ public class NumberConstraintType implements ConstraintType {
    @Override
    public Set<String> getRegisteredPrefixes() {
       final Set<String> result = new HashSet<>();
-      result.addAll(Arrays.asList(IS_NUMBER, IS_INTEGER, GREATER_THAN, LESS_THAN, "greaterOrEquals", "lessOrEquals", "equals"));
+      result.addAll(Arrays.asList(IS_NUMBER, IS_INTEGER, GREATER_THAN, LESS_THAN, GREATER_OR_EQUALS, LESS_OR_EQUALS, EQUALS));
 
       return result;
    }
