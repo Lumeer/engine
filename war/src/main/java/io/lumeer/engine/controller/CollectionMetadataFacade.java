@@ -132,7 +132,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @return The active constraint manager.
     */
    @Produces
-   @Named
+   @Named("systemConstraintManager")
    public ConstraintManager getConstraintManager() {
       return constraintManager;
    }

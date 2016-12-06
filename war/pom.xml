@@ -51,6 +51,7 @@
       <version.keycloak>2.4.0.Final</version.keycloak>
 
       <java.level>1.8</java.level>
+      <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -218,6 +219,7 @@
                <redirectTestOutputToFile>false</redirectTestOutputToFile>
                <systemPropertyVariables>
                   <log4j.skipJansi>true</log4j.skipJansi>
+                  <lumeer.defaults>${lumeer.defaults}</lumeer.defaults>
                </systemPropertyVariables>
                <excludedGroups>integration</excludedGroups>
             </configuration>

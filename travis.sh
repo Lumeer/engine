@@ -30,6 +30,8 @@ PING_LOOP_PID=$!
 # My build is using maven, but you could build anything with this, E.g.
 # your_build_command_1 >> $BUILD_OUTPUT 2>&1
 # your_build_command_2 >> $BUILD_OUTPUT 2>&1
+export LUMEER_HOME=$(pwd)/war
+export LUMEER_DEFAULTS=defaults-ci.properties
 mvn -P-default install >> $BUILD_OUTPUT 2>&1
 
 # The build finished without returning an error so dump a tail of the output

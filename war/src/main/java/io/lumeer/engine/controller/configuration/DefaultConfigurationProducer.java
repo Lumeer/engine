@@ -51,10 +51,12 @@ public class DefaultConfigurationProducer implements Serializable {
       if (defaultConfiguration == null) {
          defaultConfiguration = new HashMap<>();
 
-         String envDefaults = System.getenv("lumeer.defaults");
+         String envDefaults = System.getProperty("lumeer.defaults", System.getenv("LUMEER_DEFAULTS"));
          if (envDefaults == null) {
             envDefaults = DEFAULT_PROPERTY_FILE;
          }
+
+         log.info("Loading default properties from: " + envDefaults);
 
          final Properties properties = new Properties();
          try {

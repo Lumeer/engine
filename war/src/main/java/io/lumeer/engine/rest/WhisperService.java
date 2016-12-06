@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -53,6 +54,7 @@ public class WhisperService {
    private CollectionMetadataFacade collectionMetadataFacade;
 
    @Inject
+   @Named("systemConstraintManager")
    private ConstraintManager constraintManager;
 
    @Inject
