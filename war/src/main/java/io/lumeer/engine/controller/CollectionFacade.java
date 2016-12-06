@@ -123,8 +123,8 @@ public class CollectionFacade implements Serializable {
    public void dropCollection(final String collectionName) throws CollectionNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
          linkingFacade.dropCollectionLinks(collectionName);
-         dataStorage.dropCollection(collectionName);
          dropCollectionMetadata(collectionName); // removes metadata collection
+         dataStorage.dropCollection(collectionName);
          // TODO: drop shadow collection
 
          collections = null;

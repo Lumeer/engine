@@ -19,10 +19,14 @@
  */
 package io.lumeer.engine.api.data;
 
+import java.io.Serializable;
+
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class StorageConnection {
+public class StorageConnection implements Serializable {
+
+   private static final long serialVersionUID = -5170090833580954480L;
 
    final private String host;
    final private int port;
