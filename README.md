@@ -1,3 +1,8 @@
+[![Build Status][Travis badge]][Travis build]
+
+[Travis badge]: https://travis-ci.org/Lumeer/engine.svg?branch=devel
+[Travis build]: https://travis-ci.org/Lumeer/engine
+
 # engine
 Lumeer Backend Engine
 
