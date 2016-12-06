@@ -24,6 +24,7 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
@@ -223,6 +224,20 @@ public class CollectionService implements Serializable {
          }
          return collectionFacade.readCollectionAttributes(collectionName);
       } catch (CollectionNotFoundException e) {
+         throw new NotFoundException();
+      }
+   }
+
+   @POST
+   @Path("/{collection-id-name}/documents/{document-id}/versions/{version-id}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public DataDocument getDocumentVersion(final @PathParam("collection-id-name") String collectionName, final @PathParam("document-id") String documentId, final @PathParam("version-id") int versionId) {
+      try {
+         if (collectionName == null || documentId == null) {
+            throw new BadRequestException();
+         }
+         return versionFacade.getOldDocumentVersion(collectionName, documentId, versionId);
+      } catch (DocumentNotFoundException e) {
          throw new NotFoundException();
       }
    }
