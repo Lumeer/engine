@@ -32,7 +32,7 @@ PING_LOOP_PID=$!
 # your_build_command_2 >> $BUILD_OUTPUT 2>&1
 export LUMEER_HOME=$(pwd)/war
 export LUMEER_DEFAULTS=defaults-ci.properties
-mvn -P-default install >> $BUILD_OUTPUT 2>&1
+mvn -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci >> $BUILD_OUTPUT 2>&1
 
 # The build finished without returning an error so dump a tail of the output
 dump_output

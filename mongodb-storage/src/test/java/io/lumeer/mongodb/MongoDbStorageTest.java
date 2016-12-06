@@ -39,7 +39,7 @@ public class MongoDbStorageTest {
 
    private static final String DB_HOST = System.getProperty("lumeer.db.host", "ds163667.mlab.com");
    private static final String DB_NAME = System.getProperty("lumeer.db.name", "lumeer-test");
-   private static final int DB_PORT = Integer.getInteger("lumeer.sysdb.port", 63667);
+   private static final int DB_PORT = Integer.getInteger("lumeer.db.port", 63667);
    private static final String DB_USER = System.getProperty("lumeer.db.user", "lumeer");
    private static final String DB_PASSWORD = System.getProperty("lumeer.db.passwd", "/Lumeer1");
 
