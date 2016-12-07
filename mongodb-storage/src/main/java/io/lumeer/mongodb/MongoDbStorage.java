@@ -29,6 +29,7 @@ import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
@@ -100,7 +101,7 @@ public class MongoDbStorage implements DataStorage {
          }
       });
 
-      this.mongoClient = new MongoClient(addresses, credentials);
+      this.mongoClient = new MongoClient(addresses, credentials, (new MongoClientOptions.Builder()).connectTimeout(30000).build());
       this.database = mongoClient.getDatabase(database);
    }
 
