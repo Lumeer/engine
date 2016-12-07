@@ -85,7 +85,7 @@ public class LinkingFacade implements Serializable {
     *       the name of the document's collection
     * @param documentId
     *       the id of the document to search for links
-    * @return list of linking documents
+    * @return map of collections and its documents
     * @throws CollectionNotFoundException
     *       if collection is not found in database
     */
