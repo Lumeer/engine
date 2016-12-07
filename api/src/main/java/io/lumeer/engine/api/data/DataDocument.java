@@ -46,6 +46,11 @@ public class DataDocument extends LinkedHashMap<String, Object> {
       super(data);
    }
 
+   public DataDocument(final String key, final Object value) {
+      super();
+      put(key, value);
+   }
+
    /**
     * Gets the document id.
     *

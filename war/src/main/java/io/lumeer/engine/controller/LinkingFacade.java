@@ -34,6 +34,7 @@ import com.mongodb.client.model.Filters;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.Reception;
@@ -60,6 +61,16 @@ public class LinkingFacade implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
+
+   /**
+    * Creates main linking table if not exists
+    */
+   @PostConstruct
+   public void init() {
+      if (!dataStorage.hasCollection(LumeerConst.LINKING.MAIN_TABLE.NAME)) {
+         dataStorage.createCollection(LumeerConst.LINKING.MAIN_TABLE.NAME);
+      }
+   }
 
    public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) throws CollectionNotFoundException {
       dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId());

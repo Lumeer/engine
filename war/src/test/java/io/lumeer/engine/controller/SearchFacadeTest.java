@@ -66,8 +66,10 @@ public class SearchFacadeTest extends Arquillian {
 
    @BeforeMethod
    public void setUp() throws Exception {
-      dataStorage.dropCollection(COLLECTION_SEARCH);
-      dataStorage.dropCollection(COLLECTION_SEARCH_RAW);
+      if (dataStorage != null) {
+         dataStorage.dropCollection(COLLECTION_SEARCH);
+         dataStorage.dropCollection(COLLECTION_SEARCH_RAW);
+      }
    }
 
    @Test
@@ -108,7 +110,6 @@ public class SearchFacadeTest extends Arquillian {
       }
 
       DataDocument d1 = new DataDocument();
-
 
       dataStorage.createCollection(COLLECTION_QUERY);
       //dataStorage.createDocument(COLLECTION_QUERY);

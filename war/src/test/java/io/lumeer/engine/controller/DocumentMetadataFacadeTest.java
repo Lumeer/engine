@@ -18,6 +18,7 @@ package io.lumeer.engine.controller;/*
  * -----------------------------------------------------------------------/
  */
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
@@ -34,6 +35,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -54,13 +56,11 @@ public class DocumentMetadataFacadeTest extends Arquillian {
                        .addAsResource("defaults-dev.properties");
    }
 
-   private final String DUMMY_COLLECTION1 = "collection.testcollection1_0";
-   private final String DUMMY_COLLECTION1_ORIGINAL_NAME = "testCollection1";
+   private final String COLLECTION_GET_METADATA = "collectionGetMetadata";
+   private final String COLLECTION_READ_METADATA = "collectionReadMetadata";
+   private final String COLLECTION_PUT_AND_UPDATE_METADATA = "collectionPutAndUpdateMetadata";
 
-   private final String META_CREATE_USER_KEY = "meta-create-user";
-   private final String META_CREATE_DATE_KEY = "meta-create-date";
-   private final String META_CREATE_USER_VALUE = "testUser";
-
+   private final String DUMMY_USER = "testUser";
    private final String DUMMY_META_KEY = "meta-key";
    private final String DUMMY_META_VALUE = "param";
    private final String DUMMY_META_UPDATE_VALUE = "paramUpdated";
@@ -72,56 +72,62 @@ public class DocumentMetadataFacadeTest extends Arquillian {
    private DocumentMetadataFacade documentMetadataFacade;
 
    @Inject
-   private CollectionFacade collectionFacade;
-
-   @Inject
    private DataStorage dataStorage;
+
+   @BeforeTest
+   public void setUp() {
+      if (dataStorage != null) {
+         dataStorage.dropCollection(COLLECTION_GET_METADATA);
+         dataStorage.dropCollection(COLLECTION_READ_METADATA);
+         dataStorage.dropCollection(COLLECTION_PUT_AND_UPDATE_METADATA);
+      }
+   }
 
    @Test
    public void testGetDocumentMetadata() throws Exception {
-      String documentId = createCollectionAndNewDocument();
-      Object metadataValue = documentMetadataFacade.getDocumentMetadata(DUMMY_COLLECTION1, documentId, META_CREATE_USER_KEY);
+      String documentId = createCollectionAndNewDocument(COLLECTION_GET_METADATA);
+      Object metadataValue = documentMetadataFacade.getDocumentMetadata(COLLECTION_GET_METADATA, documentId, LumeerConst.DOCUMENT.CREATE_BY_USER_KEY);
 
-      Assert.assertEquals(metadataValue.toString(), META_CREATE_USER_VALUE);
+      Assert.assertEquals(metadataValue.toString(), DUMMY_USER);
 
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      dataStorage.dropCollection(COLLECTION_GET_METADATA);
    }
 
    @Test
    public void testReadDocumentMetadata() throws Exception {
-      String documentId = createCollectionAndNewDocument();
-      Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(DUMMY_COLLECTION1, documentId);
+      String documentId = createCollectionAndNewDocument(COLLECTION_READ_METADATA);
+      Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(COLLECTION_READ_METADATA, documentId);
 
-      Assert.assertTrue(documentMetadata.containsKey(META_CREATE_DATE_KEY) && documentMetadata.containsKey(META_CREATE_USER_KEY) && documentMetadata.size() == 2);
+      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY) && documentMetadata.containsKey(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY) && documentMetadata.size() == 2);
 
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      dataStorage.dropCollection(COLLECTION_GET_METADATA);
    }
 
    @Test
    public void testPutAndUpdateAndDropDocumentMetadata() throws Exception {
-      String documentId = createCollectionAndNewDocument();
-      documentMetadataFacade.putDocumentMetadata(DUMMY_COLLECTION1, documentId, DUMMY_META_KEY, DUMMY_META_VALUE);
+      String documentId = createCollectionAndNewDocument(COLLECTION_PUT_AND_UPDATE_METADATA);
+      documentMetadataFacade.putDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY, DUMMY_META_VALUE);
 
-      Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(DUMMY_COLLECTION1, documentId, DUMMY_META_KEY).toString().equals(DUMMY_META_VALUE));
+      Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY).toString().equals(DUMMY_META_VALUE));
 
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(DUMMY_META_KEY, DUMMY_META_UPDATE_VALUE);
-      documentMetadataFacade.updateDocumentMetadata(DUMMY_COLLECTION1, documentId, metadata);
+      documentMetadataFacade.updateDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, metadata);
 
-      Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(DUMMY_COLLECTION1, documentId, DUMMY_META_KEY).toString().equals(DUMMY_META_UPDATE_VALUE));
+      Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY).toString().equals(DUMMY_META_UPDATE_VALUE));
 
-      documentMetadataFacade.dropDocumentMetadata(DUMMY_COLLECTION1, documentId, DUMMY_META_KEY);
+      documentMetadataFacade.dropDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY);
 
-      Assert.assertFalse(documentMetadataFacade.readDocumentMetadata(DUMMY_COLLECTION1, documentId).containsKey(DUMMY_META_KEY));
+      Assert.assertFalse(documentMetadataFacade.readDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId).containsKey(DUMMY_META_KEY));
 
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      dataStorage.dropCollection(COLLECTION_GET_METADATA);
    }
 
-   private String createCollectionAndNewDocument() throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException, InvalidDocumentKeyException {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+   private String createCollectionAndNewDocument(final String collection) throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException, InvalidDocumentKeyException {
+      dataStorage.createCollection(collection);
 
       DataDocument document = new DataDocument(new HashMap<>());
-      return documentFacade.createDocument(DUMMY_COLLECTION1, document);
+      return documentFacade.createDocument(collection, document);
    }
 
 }

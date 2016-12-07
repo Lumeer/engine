@@ -28,9 +28,11 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -47,8 +49,9 @@ public class DocumentFacadeTest extends Arquillian {
                        .addAsResource("defaults-dev.properties");
    }
 
-   private final String DUMMY_COLLECTION1 = "collection.testcollection1_0";
-   private final String DUMMY_COLLECTION1_ORIGINAL_NAME = "testCollection1";
+   private final String COLLECTION_CREATE_AND_DROP = "collectionCreateAndDrop";
+   private final String COLLECTION_READ_AND_UPDATE = "collectionReadAndUpdate";
+   private final String COLLECTION_GETATTRS_AND_DROPATTR = "collectionGetAttrsAndDropAttr";
 
    private final String DUMMY_KEY1 = "key1";
    private final String DUMMY_VALUE1 = "param1";
@@ -58,46 +61,82 @@ public class DocumentFacadeTest extends Arquillian {
    private DocumentFacade documentFacade;
 
    @Inject
-   private CollectionFacade collectionFacade;
-
-   @Inject
    private DataStorage dataStorage;
+
+   @BeforeTest
+   public void setUp() {
+      if (dataStorage != null) {
+         dataStorage.dropCollection(COLLECTION_CREATE_AND_DROP);
+         dataStorage.dropCollection(COLLECTION_READ_AND_UPDATE);
+         dataStorage.dropCollection(COLLECTION_GETATTRS_AND_DROPATTR);
+      }
+   }
 
    @Test
    public void testCreateAndDropDocument() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      dataStorage.dropCollection(COLLECTION_CREATE_AND_DROP);
+      dataStorage.createCollection(COLLECTION_CREATE_AND_DROP);
 
       DataDocument document = new DataDocument(new HashMap<>());
-      String documentId = documentFacade.createDocument(DUMMY_COLLECTION1, document);
+      String documentId = documentFacade.createDocument(COLLECTION_CREATE_AND_DROP, document);
+      DataDocument inserted = documentFacade.readDocument(COLLECTION_CREATE_AND_DROP, documentId);
+      Assert.assertNotNull(inserted);
 
-      Assert.assertEquals(dataStorage.readDocument(DUMMY_COLLECTION1, documentId).get(ID_KEY), documentId);
-
-      documentFacade.dropDocument(DUMMY_COLLECTION1, documentId);
-
-      Assert.assertNull(dataStorage.readDocument(DUMMY_COLLECTION1, documentId));
-
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      documentFacade.dropDocument(COLLECTION_CREATE_AND_DROP, documentId);
+      Assert.assertNull(dataStorage.readDocument(COLLECTION_CREATE_AND_DROP, documentId));
    }
 
    @Test
    public void testReadAndUpdateDocument() throws Exception {
-      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
+      dataStorage.dropCollection(COLLECTION_READ_AND_UPDATE);
+      dataStorage.createCollection(COLLECTION_READ_AND_UPDATE);
 
-      DataDocument document = new DataDocument(new HashMap<>());
-      String documentId = documentFacade.createDocument(DUMMY_COLLECTION1, document);
+      DataDocument document = new DataDocument(DUMMY_KEY1, DUMMY_VALUE1);
+      String documentId = documentFacade.createDocument(COLLECTION_READ_AND_UPDATE, document);
+      DataDocument inserted = documentFacade.readDocument(COLLECTION_READ_AND_UPDATE, documentId);
+      Assert.assertNotNull(inserted);
+      Assert.assertEquals(inserted.getString(ID_KEY), documentId);
 
-      Assert.assertEquals(documentFacade.readDocument(DUMMY_COLLECTION1, documentId).get(ID_KEY).toString(), documentId);
+      String changed = DUMMY_VALUE1 + "_changed";
+      inserted.put(DUMMY_KEY1, changed);
+      documentFacade.updateDocument(COLLECTION_READ_AND_UPDATE, inserted);
+      DataDocument updated = dataStorage.readDocument(COLLECTION_READ_AND_UPDATE, documentId);
+      Assert.assertNotNull(updated);
+      Assert.assertEquals(updated.getString(DUMMY_KEY1), changed);
+   }
 
-      DataDocument updatedDocument = documentFacade.readDocument(DUMMY_COLLECTION1, documentId);
-      String updatedDocumentId = updatedDocument.getString(ID_KEY);
-      updatedDocument.put(DUMMY_KEY1, DUMMY_VALUE1);
+   @Test
+   public void testGetAttributes() throws Exception {
+      dataStorage.dropCollection(COLLECTION_GETATTRS_AND_DROPATTR);
+      dataStorage.createCollection(COLLECTION_GETATTRS_AND_DROPATTR);
 
-      documentFacade.updateDocument(DUMMY_COLLECTION1, updatedDocument);
-      String value = dataStorage.readDocument(DUMMY_COLLECTION1, updatedDocumentId).getString(DUMMY_KEY1);
+      DataDocument document = new DataDocument();
+      document.put("a", 1);
+      document.put("b", 2);
+      document.put("c", 3);
+      document.put("d", 4);
 
-      Assert.assertEquals(value, DUMMY_VALUE1);
+      String docId = dataStorage.createDocument(COLLECTION_GETATTRS_AND_DROPATTR, document);
 
-      collectionFacade.dropCollection(DUMMY_COLLECTION1);
+      Set<String> attrs = documentFacade.getDocumentAttributes(COLLECTION_GETATTRS_AND_DROPATTR, docId);
+      Assert.assertTrue(attrs.contains("a"));
+      Assert.assertTrue(attrs.contains("c"));
+      Assert.assertFalse(attrs.contains("x"));
+      Assert.assertFalse(attrs.contains("g"));
+
+      documentFacade.dropAttribute(COLLECTION_GETATTRS_AND_DROPATTR, docId, "a");
+      documentFacade.dropAttribute(COLLECTION_GETATTRS_AND_DROPATTR, docId, "d");
+
+      DataDocument update = new DataDocument(ID_KEY, docId);
+      update.put("f", 2);
+      update.put("x", 10);
+      documentFacade.updateDocument(COLLECTION_GETATTRS_AND_DROPATTR, update);
+
+      Assert.assertFalse(attrs.contains("a"));
+      Assert.assertFalse(attrs.contains("d"));
+      Assert.assertTrue(attrs.contains("f"));
+      Assert.assertTrue(attrs.contains("x"));
+
    }
 
 }
