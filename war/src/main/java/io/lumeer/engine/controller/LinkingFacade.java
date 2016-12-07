@@ -33,7 +33,9 @@ import com.mongodb.client.model.Filters;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Observes;
@@ -87,13 +89,13 @@ public class LinkingFacade implements Serializable {
     * @throws CollectionNotFoundException
     *       if collection is not found in database
     */
-   public List<DataDocument> readAllDocumentLinks(String collectionName, String documentId) throws CollectionNotFoundException {
+   public Map<String, List<DataDocument>> readAllDocumentLinks(String collectionName, String documentId) throws CollectionNotFoundException {
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       // retrieve all documents, where collectionName is first or second attribute
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
-      List<DataDocument> docLinks = new ArrayList<>();
+      Map<String, List<DataDocument>> docLinks = new HashMap<>();
       for (DataDocument lt : linkingTables) { // run in each linking table
          String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
          List<DataDocument> linkingDocuments = readLinkingDocuments(colName, documentId);
@@ -103,9 +105,39 @@ public class LinkingFacade implements Serializable {
          String linkingCollectionName = !firstColName.equals(collectionName) ? firstColName : lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2);
 
          // add all linking documents from storage
-         docLinks.addAll(readDocumentsFromLinkingDocuments(linkingDocuments, documentId, linkingCollectionName));
+         docLinks.put(linkingCollectionName, readDocumentsFromLinkingDocuments(linkingDocuments, documentId, linkingCollectionName));
       }
       return docLinks;
+   }
+
+   /**
+    * Check if link exist between two documents
+    *
+    * @param firstCollectionName
+    *       the name of the first document's collection
+    * @param firstDocumentId
+    *       the id of the first document
+    * @param secondCollectionName
+    *       the name of the second document's collection
+    * @param secondDocumentId
+    *       the id of the second document
+    * @throws CollectionNotFoundException
+    *       if first or second collection is not found in database
+    */
+   public boolean linkExistsBetweenDocuments(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(firstCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(firstCollectionName));
+      }
+      if (!dataStorage.hasCollection(secondCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(secondCollectionName));
+      }
+      DataDocument linkingTable = readLinkingTable(firstCollectionName, secondCollectionName);
+      if (linkingTable == null) {
+         return false;
+      }
+      String colName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+      DataDocument linkingDocuments = readLinkingDocument(colName, firstDocumentId, secondDocumentId);
+      return linkingDocuments != null;
    }
 
    /**
