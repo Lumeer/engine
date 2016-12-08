@@ -61,21 +61,14 @@ public class DocumentFacadeTest extends Arquillian {
    private DocumentFacade documentFacade;
 
    @Inject
-   private DataStorage dataStorage;
+   private CollectionMetadataFacade collectionMetadataFacade;
 
-   @BeforeTest
-   public void setUp() {
-      if (dataStorage != null) {
-         dataStorage.dropCollection(COLLECTION_CREATE_AND_DROP);
-         dataStorage.dropCollection(COLLECTION_READ_AND_UPDATE);
-         dataStorage.dropCollection(COLLECTION_GETATTRS_AND_DROPATTR);
-      }
-   }
+   @Inject
+   private DataStorage dataStorage;
 
    @Test
    public void testCreateAndDropDocument() throws Exception {
-      dataStorage.dropCollection(COLLECTION_CREATE_AND_DROP);
-      dataStorage.createCollection(COLLECTION_CREATE_AND_DROP);
+      setUpCollection(COLLECTION_CREATE_AND_DROP);
 
       DataDocument document = new DataDocument(new HashMap<>());
       String documentId = documentFacade.createDocument(COLLECTION_CREATE_AND_DROP, document);
@@ -88,8 +81,7 @@ public class DocumentFacadeTest extends Arquillian {
 
    @Test
    public void testReadAndUpdateDocument() throws Exception {
-      dataStorage.dropCollection(COLLECTION_READ_AND_UPDATE);
-      dataStorage.createCollection(COLLECTION_READ_AND_UPDATE);
+      setUpCollection(COLLECTION_READ_AND_UPDATE);
 
       DataDocument document = new DataDocument(DUMMY_KEY1, DUMMY_VALUE1);
       String documentId = documentFacade.createDocument(COLLECTION_READ_AND_UPDATE, document);
@@ -107,8 +99,7 @@ public class DocumentFacadeTest extends Arquillian {
 
    @Test
    public void testGetAttributes() throws Exception {
-      dataStorage.dropCollection(COLLECTION_GETATTRS_AND_DROPATTR);
-      dataStorage.createCollection(COLLECTION_GETATTRS_AND_DROPATTR);
+      setUpCollection(COLLECTION_GETATTRS_AND_DROPATTR);
 
       DataDocument document = new DataDocument();
       document.put("a", 1);
@@ -132,11 +123,20 @@ public class DocumentFacadeTest extends Arquillian {
       update.put("x", 10);
       documentFacade.updateDocument(COLLECTION_GETATTRS_AND_DROPATTR, update);
 
+      attrs = documentFacade.getDocumentAttributes(COLLECTION_GETATTRS_AND_DROPATTR, docId);
+
       Assert.assertFalse(attrs.contains("a"));
       Assert.assertFalse(attrs.contains("d"));
       Assert.assertTrue(attrs.contains("f"));
       Assert.assertTrue(attrs.contains("x"));
 
+   }
+
+   private void setUpCollection(final String collection) {
+      dataStorage.dropCollection(collection);
+      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
+      dataStorage.createCollection(collection);
+      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
    }
 
 }

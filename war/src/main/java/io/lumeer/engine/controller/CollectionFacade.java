@@ -95,10 +95,11 @@ public class CollectionFacade implements Serializable {
     *
     * @param collectionOriginalName
     *       name of the collection to create (name given by user)
+    * @return name of internal collection
     * @throws CollectionAlreadyExistsException
     *       if collection already exists in db
     */
-   public void createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataNotFoundException {
+   public String createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataNotFoundException {
       String internalCollectionName = collectionMetadataFacade.createInternalName(collectionOriginalName);
 
       if (!dataStorage.hasCollection(internalCollectionName)) {
@@ -110,6 +111,7 @@ public class CollectionFacade implements Serializable {
       } else {
          throw new CollectionAlreadyExistsException(ErrorMessageBuilder.collectionAlreadyExistsString(internalCollectionName));
       }
+      return internalCollectionName;
    }
 
    /**

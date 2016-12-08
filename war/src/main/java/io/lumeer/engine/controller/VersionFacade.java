@@ -32,6 +32,7 @@ import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
@@ -103,16 +104,16 @@ public class VersionFacade implements Serializable {
     *       backuped in shadow collection
     */
    public int newDocumentVersion(String collectionName, DataDocument document) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
-      Object id = document.get(DOCUMENT_ID_STRING);
+      String id = document.getString(DOCUMENT_ID_STRING);
       int oldVersion = backUp(collectionName, document.get(DOCUMENT_ID_STRING).toString());
       createMetadata(document);
       document.replace(VERSION_STRING, oldVersion + 1);
-      dataStorage.updateDocument(collectionName, document, document.get(DOCUMENT_ID_STRING).toString(), -1);
-      document.put(DOCUMENT_ID_STRING, id);
-      if (!document.equals(dataStorage.readDocument(collectionName, id.toString()))) {
+      dataStorage.updateDocument(collectionName, document, document.getString(DOCUMENT_ID_STRING), -1);
+      DataDocument readed = dataStorage.readDocument(collectionName, id);
+      if (!readed.keySet().containsAll(document.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
       }
-      ;
+      // TODO compare values.. WARN! equals is not safe!
       return oldVersion + 1;
    }
 

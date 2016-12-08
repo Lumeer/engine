@@ -75,23 +75,6 @@ public class LinkingFacadeTest extends Arquillian {
    @Inject
    private DataStorage dataStorage;
 
-   @BeforeTest
-   public void setUp() {
-      if (dataStorage != null) {
-         dataStorage.dropCollection(COLLECTION_SINGLE_LINKS_I);
-         dataStorage.dropCollection(COLLECTION_SINGLE_LINKS_II);
-         dataStorage.dropCollection(COLLECTION_SINGLE_LINKS_III);
-         dataStorage.dropCollection(COLLECTION_COLL_LINKS_I);
-         dataStorage.dropCollection(COLLECTION_COLL_LINKS_II);
-         dataStorage.dropCollection(COLLECTION_COLL_LINKS_III);
-         dataStorage.dropCollection(COLLECTION_ALL_LINKS_I);
-         dataStorage.dropCollection(COLLECTION_ALL_LINKS_II);
-         dataStorage.dropCollection(COLLECTION_ALL_LINKS_III);
-         dataStorage.dropCollection(COLLECTION_EXCEPTION_LINKS_I);
-         dataStorage.dropCollection(COLLECTION_EXCEPTION_LINKS_II);
-      }
-   }
-
    @Test
    public void testSingleLinkCRD() throws Exception {
       List<String> collections = Arrays.asList(COLLECTION_SINGLE_LINKS_I, COLLECTION_SINGLE_LINKS_II, COLLECTION_SINGLE_LINKS_III);
@@ -162,8 +145,8 @@ public class LinkingFacadeTest extends Arquillian {
       linkingFacade.createDocWithColletionLinks(COLLECTION_ALL_LINKS_I, col1Id1, COLLECTION_ALL_LINKS_III, Arrays.asList(col3Id1, col3Id2, col3Id3));
       Map<String, List<DataDocument>> links = linkingFacade.readAllDocumentLinks(COLLECTION_ALL_LINKS_I, col1Id1);
       Assert.assertFalse(links.isEmpty());
-      Assert.assertEquals(2, links.get(COLLECTION_ALL_LINKS_I).size());
-      Assert.assertEquals(3, links.get(COLLECTION_ALL_LINKS_I).size());
+      Assert.assertEquals(2, links.get(COLLECTION_ALL_LINKS_II).size());
+      Assert.assertEquals(3, links.get(COLLECTION_ALL_LINKS_III).size());
 
       linkingFacade.dropAllDocumentLinks(COLLECTION_ALL_LINKS_I, col1Id1);
       links = linkingFacade.readAllDocumentLinks(COLLECTION_ALL_LINKS_I, col1Id1);
@@ -184,6 +167,7 @@ public class LinkingFacadeTest extends Arquillian {
    private Map<String, List<String>> createTestData(List<String> collections) {
       Map<String, List<String>> ids = new HashMap<>();
       for (String col : collections) {
+         dataStorage.dropCollection(col);
          dataStorage.createCollection(col);
          List<String> collIds = new ArrayList<>();
          for (int i = 0; i < NUM_DOCUMENTS; i++) {

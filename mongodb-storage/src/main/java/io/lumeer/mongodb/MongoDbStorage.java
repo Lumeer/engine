@@ -208,6 +208,7 @@ public class MongoDbStorage implements DataStorage {
          filter.append(LumeerConst.METADATA_VERSION_KEY, updatedDocument.getInteger(LumeerConst.METADATA_VERSION_KEY));
       }
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
+      updatedDocument.put(ID, documentId);
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
@@ -215,6 +216,11 @@ public class MongoDbStorage implements DataStorage {
    public void dropDocument(final String collectionName, final String documentId) {
       BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       database.getCollection(collectionName).deleteOne(filter);
+   }
+
+   @Override
+   public long documentCount(final String collectionName) {
+      return database.getCollection(collectionName).count();
    }
 
    @Override

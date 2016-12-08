@@ -77,6 +77,15 @@ public interface DataStorage extends Serializable {
    boolean hasCollection(final String collectionName);
 
    /**
+    * Count number of documents in collection
+    *
+    * @param collectionName
+    *       The name of the collection to check for.
+    * @return number of documents in collection
+    */
+   long documentCount(final String collectionName);
+
+   /**
     * Checks whether the document exists in given collection.
     *
     * @param collectionName
