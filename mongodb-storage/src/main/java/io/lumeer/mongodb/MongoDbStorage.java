@@ -88,7 +88,6 @@ public class MongoDbStorage implements DataStorage {
 
    @PostConstruct
    public void connect() {
-      log.severe("@@@@@@@@@@@@@@@@ post construct " + mongoClient);
       if (mongoClient == null) {
          connect(storageConnection, storageDatabase);
       }
@@ -101,7 +100,6 @@ public class MongoDbStorage implements DataStorage {
 
       connections.forEach(c -> {
          addresses.add(new ServerAddress(c.getHost(), c.getPort()));
-         log.severe("@@@@@@@@@@@@@ " + c.getUserName() + " / " + database + " / " + c.getPassword());
          if (c.getUserName() != null && !c.getUserName().isEmpty()) {
             credentials.add(MongoCredential.createScramSha1Credential(c.getUserName(), database, c.getPassword()));
          }
@@ -337,15 +335,15 @@ public class MongoDbStorage implements DataStorage {
       MongoCollection<Document> collection = database.getCollection(collectionName);
       FindIterable<Document> documents = filter != null ? collection.find(BsonDocument.parse(filter)) : collection.find();
       documents.sort(sort != null ? BsonDocument.parse(sort) : null)
-               .skip(skip)
-               .limit(limit)
-               .into(new ArrayList<>())
-               .forEach(d -> {
-                  d.replace(ID, d.getObjectId(ID).toString());
-                  DataDocument raw = new DataDocument(d);
-                  MongoUtils.convertNestedAndListDocuments(raw);
-                  result.add(raw);
-               });
+            .skip(skip)
+            .limit(limit)
+            .into(new ArrayList<>())
+            .forEach(d -> {
+               d.replace(ID, d.getObjectId(ID).toString());
+               DataDocument raw = new DataDocument(d);
+               MongoUtils.convertNestedAndListDocuments(raw);
+               result.add(raw);
+            });
 
       return result;
    }

@@ -22,6 +22,8 @@ package io.lumeer.engine.api.data;
 import java.io.Serializable;
 
 /**
+ * Credentials and URL to get a database connection.
+ *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class StorageConnection implements Serializable {
@@ -54,5 +56,15 @@ public class StorageConnection implements Serializable {
 
    public char[] getPassword() {
       return password;
+   }
+
+   @Override
+   public String toString() {
+      return "StorageConnection{" +
+            "host='" + host + '\'' +
+            ", port=" + port +
+            ", userName='" + userName + '\'' +
+            ", password=" + new String(password) +
+            '}';
    }
 }
