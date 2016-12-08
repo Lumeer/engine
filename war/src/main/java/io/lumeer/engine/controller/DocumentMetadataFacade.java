@@ -89,7 +89,7 @@ public class DocumentMetadataFacade implements Serializable {
     *       if key is not metadata attribute
     */
    public Object getDocumentMetadata(String collectionName, String documentId, String key) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      if (!key.startsWith(LumeerConst.DOCUMENT.METADATA_PREFIX)) {
+      if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
       }
       return readDocumentMetadata(collectionName, documentId).get(key);
@@ -121,7 +121,7 @@ public class DocumentMetadataFacade implements Serializable {
       Map<String, Object> documentMetadata = new HashMap<>();
       while (iter.hasNext()) {
          Map.Entry<String, Object> entry = iter.next();
-         if (entry.getKey().startsWith(LumeerConst.DOCUMENT.METADATA_PREFIX)) {
+         if (entry.getKey().startsWith(LumeerConst.Document.METADATA_PREFIX)) {
             documentMetadata.put(entry.getKey(), entry.getValue());
          }
       }
@@ -147,7 +147,7 @@ public class DocumentMetadataFacade implements Serializable {
     *       if key is not metadata attribute
     */
    public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      if (!key.startsWith(LumeerConst.DOCUMENT.METADATA_PREFIX)) {
+      if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
       }
       updateDocumentMetadata(collectionName, documentId, new DataDocument(key, value));
@@ -177,7 +177,7 @@ public class DocumentMetadataFacade implements Serializable {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       for (String key : metadata.keySet()) {
-         if (!key.startsWith(LumeerConst.DOCUMENT.METADATA_PREFIX)) {
+         if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
             throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
          }
       }
@@ -207,7 +207,7 @@ public class DocumentMetadataFacade implements Serializable {
       if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      if (!key.startsWith(LumeerConst.DOCUMENT.METADATA_PREFIX)) {
+      if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
       }
       dataStorage.dropAttribute(collectionName, documentId, key);

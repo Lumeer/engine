@@ -59,7 +59,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
    private final String COLLECTION_READ_METADATA = "collectionReadMetadata";
    private final String COLLECTION_PUT_AND_UPDATE_METADATA = "collectionPutAndUpdateMetadata";
 
-   private final String DUMMY_META_KEY = LumeerConst.DOCUMENT.METADATA_PREFIX + "key";
+   private final String DUMMY_META_KEY = LumeerConst.Document.METADATA_PREFIX + "key";
    private final String DUMMY_META_VALUE = "param";
    private final String DUMMY_META_UPDATE_VALUE = "paramUpdated";
 
@@ -78,7 +78,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
    @Test
    public void testGetDocumentMetadata() throws Exception {
       String documentId = setupCollectionAndCreateNewDocument(COLLECTION_GET_METADATA);
-      Object metadataValue = documentMetadataFacade.getDocumentMetadata(COLLECTION_GET_METADATA, documentId, LumeerConst.DOCUMENT.CREATE_BY_USER_KEY);
+      Object metadataValue = documentMetadataFacade.getDocumentMetadata(COLLECTION_GET_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
       Assert.assertNotNull(metadataValue);
    }
 
@@ -87,8 +87,8 @@ public class DocumentMetadataFacadeTest extends Arquillian {
       String documentId = setupCollectionAndCreateNewDocument(COLLECTION_READ_METADATA);
       Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(COLLECTION_READ_METADATA, documentId);
 
-      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY));
-      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.DOCUMENT.CREATE_DATE_KEY));
+      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_BY_USER_KEY));
+      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_DATE_KEY));
       Assert.assertEquals(2, documentMetadata.size());
    }
 
