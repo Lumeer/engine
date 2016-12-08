@@ -69,14 +69,13 @@ public class Resources {
    @SessionScoped
    public DataStorage getSystemDataStorage() {
       final MongoDbStorage storage = new MongoDbStorage();
-      final Map<String, String> defaultConfiguration = defaultConfigurationProducer.getDefaultConfiguration();
 
       storage.connect(new StorageConnection(
-            defaultConfiguration.get(LumeerConst.SYSTEM_DB_HOST_PROPERTY),
-            Integer.valueOf(defaultConfiguration.get(LumeerConst.SYSTEM_DB_PORT_PROPERTY)),
-            defaultConfiguration.get(LumeerConst.SYSTEM_DB_USER_PROPERTY),
-            defaultConfiguration.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY)),
-            defaultConfiguration.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY));
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_HOST_PROPERTY),
+            Integer.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PORT_PROPERTY)),
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USER_PROPERTY),
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY)),
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY));
 
       return storage;
    }

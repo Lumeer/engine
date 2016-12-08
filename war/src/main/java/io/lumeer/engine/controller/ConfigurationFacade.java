@@ -60,7 +60,7 @@ public class ConfigurationFacade implements Serializable {
       return new StorageConnection(
             getConfigurationString(LumeerConst.DB_HOST_PROPERTY).orElse("localhost"),
             getConfigurationInteger(LumeerConst.DB_PORT_PROPERTY).orElse(27017),
-            getConfigurationString(LumeerConst.DB_USER_PROPERTY).orElse(""),
+            getConfigurationString(LumeerConst.DB_USER_PROPERTY).orElse("pepa"),
             getConfigurationString(LumeerConst.DB_PASSWORD_PROPERTY).orElse(""));
    }
 
@@ -404,13 +404,18 @@ public class ConfigurationFacade implements Serializable {
     */
    private Object getConfiguration(final String key) {
       String user = userFacade.getUserEmail();
-      Object conf;
+      Object conf = null;
 
-      if ((conf = configurationManipulator.getConfiguration(USER_CONFIG, user, key)) == null) {
-         if ((conf = configurationManipulator.getConfiguration(TEAM_CONFIG, user, key)) == null) {
-            return defaultConfigurationProducer.getDefaultConfiguration().get(key);
+      try {
+         if ((conf = configurationManipulator.getConfiguration(USER_CONFIG, user, key)) == null) {
+            if ((conf = configurationManipulator.getConfiguration(TEAM_CONFIG, user, key)) == null) {
+               return defaultConfigurationProducer.get(key);
+            }
          }
+      } catch (Throwable t) {
+         t.printStackTrace();
       }
+
       return conf;
    }
 

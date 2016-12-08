@@ -53,6 +53,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.SessionScoped;
@@ -82,8 +83,12 @@ public class MongoDbStorage implements DataStorage {
    @Named("dataStorageDatabase")
    private String storageDatabase;
 
+   @Inject
+   private Logger log;
+
    @PostConstruct
    public void connect() {
+      log.severe("@@@@@@@@@@@@@@@@ post construct " + mongoClient);
       if (mongoClient == null) {
          connect(storageConnection, storageDatabase);
       }
@@ -96,8 +101,9 @@ public class MongoDbStorage implements DataStorage {
 
       connections.forEach(c -> {
          addresses.add(new ServerAddress(c.getHost(), c.getPort()));
+         log.severe("@@@@@@@@@@@@@ " + c.getUserName() + " / " + database + " / " + c.getPassword());
          if (c.getUserName() != null && !c.getUserName().isEmpty()) {
-            credentials.add(MongoCredential.createCredential(c.getUserName(), database, c.getPassword()));
+            credentials.add(MongoCredential.createScramSha1Credential(c.getUserName(), database, c.getPassword()));
          }
       });
 
