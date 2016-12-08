@@ -89,8 +89,8 @@ public class DocumentFacade implements Serializable {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
       DataDocument doc = checkDocumentKeysValidity(document);
-      doc.put(LumeerConst.DOCUMENT.CREATE_DATE_KEY, Utils.getCurrentTimeString());
-      doc.put(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY, userName);
+      doc.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
+      doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userName);
       doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
       String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
@@ -124,7 +124,7 @@ public class DocumentFacade implements Serializable {
       if (dataDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      for (String key : LumeerConst.DOCUMENT.METADATA_KEYS) {
+      for (String key : LumeerConst.Document.METADATA_KEYS) {
          dataDocument.remove(key);
       }
       return dataDocument;
@@ -156,8 +156,8 @@ public class DocumentFacade implements Serializable {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       DataDocument upd = checkDocumentKeysValidity(updatedDocument);
-      upd.put(LumeerConst.DOCUMENT.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      upd.put(LumeerConst.DOCUMENT.UPDATED_BY_USER_KEY, userName);
+      upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
+      upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userName);
       versionFacade.newDocumentVersion(collectionName, upd);
 
       // we add new attributes of updated document to collection metadata
@@ -255,7 +255,7 @@ public class DocumentFacade implements Serializable {
       Set<String> documentAttributes = new HashSet<>();
       // filter out metadata attributes
       for (String key : dataDocument.keySet()) {
-         if (!key.startsWith(LumeerConst.DOCUMENT.METADATA_PREFIX)) {
+         if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
             documentAttributes.add(key);
          }
       }

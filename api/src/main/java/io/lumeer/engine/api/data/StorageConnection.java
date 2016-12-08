@@ -30,11 +30,23 @@ public class StorageConnection implements Serializable {
 
    private static final long serialVersionUID = -5170090833580954480L;
 
-   final private String host;
-   final private int port;
-   final private String userName;
-   final private char[] password;
+   private final String host;
+   private final int port;
+   private final String userName;
+   private final char[] password;
 
+   /**
+    * Defines a new connection information using the given hostname, port, user name and password.
+    *
+    * @param host
+    *       The host name.
+    * @param port
+    *       The TCP port.
+    * @param userName
+    *       The user name.
+    * @param password
+    *       The user password.
+    */
    public StorageConnection(final String host, final int port, final String userName, final String password) {
       this.host = host;
       this.port = port;
@@ -60,11 +72,11 @@ public class StorageConnection implements Serializable {
 
    @Override
    public String toString() {
-      return "StorageConnection{" +
-            "host='" + host + '\'' +
-            ", port=" + port +
-            ", userName='" + userName + '\'' +
-            ", password=" + new String(password) +
-            '}';
+      return "StorageConnection{"
+            + "host='" + host + '\''
+            + ", port=" + port
+            + ", userName='" + userName + '\''
+            + ", password=" + new String(password)
+            + '}';
    }
 }

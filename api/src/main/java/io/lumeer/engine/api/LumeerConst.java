@@ -53,10 +53,10 @@ public final class LumeerConst {
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));
    }
 
-   public static class LINKING {
+   public static class Linking {
       public static final String PREFIX = "_linking";
 
-      public class MAIN_TABLE {
+      public class MainTable {
          public static final String NAME = "_system-linking";
          public static final String ATTR_COL1 = "collection1";
          public static final String ATTR_COL2 = "collection2";
@@ -64,13 +64,13 @@ public final class LumeerConst {
          public static final String ATTR_COUNT = "count";
       }
 
-      public class LINKING_TABLE {
+      public class LinkingTable {
          public static final String ATTR_DOC1 = "id_doc1";
          public static final String ATTR_DOC2 = "id_doc2";
       }
    }
 
-   public static class DOCUMENT {
+   public static class Document {
       public static final String METADATA_PREFIX = "_metadata-";
       public static final String CREATE_DATE_KEY = METADATA_PREFIX + "create-date";
       public static final String UPDATE_DATE_KEY = METADATA_PREFIX + "update-date";

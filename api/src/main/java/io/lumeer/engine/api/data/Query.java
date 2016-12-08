@@ -47,21 +47,57 @@ public class Query implements Serializable {
    public Query() {
    }
 
+   /**
+    * Creates a new query with the specified filters.
+    *
+    * @param filters
+    *       Query filters.
+    */
    public Query(final DataDocument filters) {
       this.filters = filters;
    }
 
+   /**
+    * Creates a new query on the given collections with the given filters.
+    *
+    * @param collections
+    *       Query collections.
+    * @param filters
+    *       Query filters.
+    */
    public Query(final Set<String> collections, final DataDocument filters) {
       this.collections = collections;
       this.filters = filters;
    }
 
+   /**
+    * Creates a new query with the given filters, projections and sorting.
+    *
+    * @param filters
+    *       Query filters.
+    * @param projections
+    *       Query projections.
+    * @param sorting
+    *       Query sorting.
+    */
    public Query(final DataDocument filters, final DataDocument projections, final DataDocument sorting) {
       this.filters = filters;
       this.projections = projections;
       this.sorting = sorting;
    }
 
+   /**
+    * Creates a new query on the given collections with the given filters, projections and sorting.
+    *
+    * @param collections
+    *       Query collections.
+    * @param filters
+    *       Query filters.
+    * @param projections
+    *       Query projections.
+    * @param sorting
+    *       Query sorting.
+    */
    public Query(final Set<String> collections, final DataDocument filters, final DataDocument projections, final DataDocument sorting) {
       this.collections = collections;
       this.filters = filters;
@@ -69,6 +105,22 @@ public class Query implements Serializable {
       this.sorting = sorting;
    }
 
+   /**
+    * Creates a new query on the given collections with the given filters, projections, sorting, limit and skip.
+    *
+    * @param collections
+    *       Query collections.
+    * @param filters
+    *       Query filters.
+    * @param projections
+    *       Query projections.
+    * @param sorting
+    *       Query sorting.
+    * @param limit
+    *       Limit on the number of returned entries. Zero means unlimited, null means default settings.
+    * @param skip
+    *       Number of entries to skip in the result.
+    */
    public Query(final Set<String> collections, final DataDocument filters, final DataDocument projections, final DataDocument sorting, final Integer limit, final Integer skip) {
       this.collections = collections;
       this.filters = filters;
@@ -169,13 +221,13 @@ public class Query implements Serializable {
 
    @Override
    public String toString() {
-      return "Query{" +
-            "collections=" + collections +
-            ", filters=" + filters +
-            ", projections=" + projections +
-            ", sorting=" + sorting +
-            ", limit=" + limit +
-            ", skip=" + skip +
-            '}';
+      return "Query{"
+            + "collections=" + collections
+            + ", filters=" + filters
+            + ", projections=" + projections
+            + ", sorting=" + sorting
+            + ", limit=" + limit
+            + ", skip=" + skip
+            + '}';
    }
 }

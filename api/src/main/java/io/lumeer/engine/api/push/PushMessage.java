@@ -41,6 +41,16 @@ public class PushMessage {
     */
    private final String message;
 
+   /**
+    * Specifies a new push message for the client.
+    *
+    * @param type
+    *       Type of the message.
+    * @param resource
+    *       Resource address.
+    * @param message
+    *       Message content.
+    */
    public PushMessage(final String type, final String resource, final String message) {
       this.type = type;
       this.resource = resource;

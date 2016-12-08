@@ -69,8 +69,8 @@ public class LinkingFacade implements Serializable {
     */
    @PostConstruct
    public void init() {
-      if (!dataStorage.hasCollection(LumeerConst.LINKING.MAIN_TABLE.NAME)) {
-         dataStorage.createCollection(LumeerConst.LINKING.MAIN_TABLE.NAME);
+      if (!dataStorage.hasCollection(LumeerConst.Linking.MainTable.NAME)) {
+         dataStorage.createCollection(LumeerConst.Linking.MainTable.NAME);
       }
    }
 
@@ -97,12 +97,12 @@ public class LinkingFacade implements Serializable {
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
       Map<String, List<DataDocument>> docLinks = new HashMap<>();
       for (DataDocument lt : linkingTables) { // run in each linking table
-         String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          List<DataDocument> linkingDocuments = readLinkingDocuments(colName, documentId);
 
          // find right name of collection where the linking document is located
-         String firstColName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1);
-         String linkingCollectionName = !firstColName.equals(collectionName) ? firstColName : lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2);
+         String firstColName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL1);
+         String linkingCollectionName = !firstColName.equals(collectionName) ? firstColName : lt.getString(LumeerConst.Linking.MainTable.ATTR_COL2);
 
          // add all linking documents from storage
          docLinks.put(linkingCollectionName, readDocumentsFromLinkingDocuments(linkingDocuments, documentId, linkingCollectionName));
@@ -135,7 +135,7 @@ public class LinkingFacade implements Serializable {
       if (linkingTable == null) {
          return false;
       }
-      String colName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+      String colName = linkingTable.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
       DataDocument linkingDocuments = readLinkingDocument(colName, firstDocumentId, secondDocumentId);
       return linkingDocuments != null;
    }
@@ -165,7 +165,7 @@ public class LinkingFacade implements Serializable {
          return new ArrayList<>();
       }
 
-      String colName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+      String colName = linkingTable.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
       List<DataDocument> linkingDocuments = readLinkingDocuments(colName, firstDocumentId);
 
       return readDocumentsFromLinkingDocuments(linkingDocuments, firstDocumentId, secondCollectionName);
@@ -187,7 +187,7 @@ public class LinkingFacade implements Serializable {
       }
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
       for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          removeAllDocuments(colName, documentId);
       }
    }
@@ -218,7 +218,7 @@ public class LinkingFacade implements Serializable {
          // throw exception?
          return;
       }
-      dataStorage.dropManyDocuments(linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME), getDoc1Doc2Filter(firstDocumentId, secondDocumentId));
+      dataStorage.dropManyDocuments(linkingTable.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME), getDoc1Doc2Filter(firstDocumentId, secondDocumentId));
    }
 
    /**
@@ -245,7 +245,7 @@ public class LinkingFacade implements Serializable {
          // throw exception?
          return;
       }
-      String colName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+      String colName = linkingTable.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
       removeAllDocuments(colName, firstDocumentId);
    }
 
@@ -263,12 +263,12 @@ public class LinkingFacade implements Serializable {
       }
       List<DataDocument> linkingTables = readLinkingTables(collectionName);
       for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          dataStorage.dropCollection(colName);
       }
       String filter = MongoUtils.convertBsonToJson(Filters.or(
-            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, collectionName),
-            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, collectionName)
+            Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL1, collectionName),
+            Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL2, collectionName)
       ));
       dataStorage.dropManyDocuments(collectionName, filter);
    }
@@ -360,7 +360,7 @@ public class LinkingFacade implements Serializable {
          collectionName = createCollectionName(firstCollectionName, secondCollectionName);
          createLinkingTable(firstCollectionName, secondCollectionName, collectionName);
       } else {
-         collectionName = linkingTable.getString(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME);
+         collectionName = linkingTable.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
       }
       return collectionName;
    }
@@ -368,11 +368,11 @@ public class LinkingFacade implements Serializable {
    private DataDocument readLinkingTable(String firstCollectionName, String secondCollectionName) {
       String filter = MongoUtils.convertBsonToJson(Filters.or(
             Filters.and(
-                  Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName),
-                  Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, secondCollectionName)),
-            Filters.and(Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, firstCollectionName),
-                  Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, secondCollectionName))));
-      List<DataDocument> linkingTables = dataStorage.search(LumeerConst.LINKING.MAIN_TABLE.NAME, filter, null, 0, 0);
+                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL1, firstCollectionName),
+                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL2, secondCollectionName)),
+            Filters.and(Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL2, firstCollectionName),
+                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL1, secondCollectionName))));
+      List<DataDocument> linkingTables = dataStorage.search(LumeerConst.Linking.MainTable.NAME, filter, null, 0, 0);
       return linkingTables.size() == 1 ? linkingTables.get(0) : null;
    }
 
@@ -383,15 +383,15 @@ public class LinkingFacade implements Serializable {
 
    private List<DataDocument> readLinkingTables(String firstCollectionName) {
       String filter = MongoUtils.convertBsonToJson(Filters.or(
-            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName),
-            Filters.eq(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, firstCollectionName)));
-      return dataStorage.search(LumeerConst.LINKING.MAIN_TABLE.NAME, filter, null, 0, 0);
+            Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL1, firstCollectionName),
+            Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL2, firstCollectionName)));
+      return dataStorage.search(LumeerConst.Linking.MainTable.NAME, filter, null, 0, 0);
    }
 
    private List<DataDocument> readLinkingDocuments(final String collectionName, String documentId) {
       String filter = MongoUtils.convertBsonToJson(Filters.or(
-            Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, documentId),
-            Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, documentId)));
+            Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC1, documentId),
+            Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC2, documentId)));
       return dataStorage.search(collectionName, filter, null, 0, 0);
    }
 
@@ -399,8 +399,8 @@ public class LinkingFacade implements Serializable {
       List<DataDocument> docs = new ArrayList<>();
       for (DataDocument ld : linkingDocuments) {
          // check for right id of linking document
-         String firstDocId = ld.getString(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1);
-         String linkingDocumentId = !firstDocId.equals(documentId) ? firstDocId : ld.getString(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2);
+         String firstDocId = ld.getString(LumeerConst.Linking.LinkingTable.ATTR_DOC1);
+         String linkingDocumentId = !firstDocId.equals(documentId) ? firstDocId : ld.getString(LumeerConst.Linking.LinkingTable.ATTR_DOC2);
 
          DataDocument doc = dataStorage.readDocument(collectionName, linkingDocumentId);
          if (doc != null) {
@@ -411,24 +411,24 @@ public class LinkingFacade implements Serializable {
    }
 
    private void removeAllDocuments(final String collectionName, final String documentId) {
-      String filter = MongoUtils.convertBsonToJson(Filters.or(Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, documentId), Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, documentId)));
+      String filter = MongoUtils.convertBsonToJson(Filters.or(Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC1, documentId), Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC2, documentId)));
       dataStorage.dropManyDocuments(collectionName, filter);
    }
 
    private void createLinkingTable(String firstCollectionName, String secondCollectionName, final String collectionName) {
       DataDocument doc = new DataDocument();
-      doc.put(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL1, firstCollectionName);
-      doc.put(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL2, secondCollectionName);
-      doc.put(LumeerConst.LINKING.MAIN_TABLE.ATTR_COL_NAME, collectionName);
+      doc.put(LumeerConst.Linking.MainTable.ATTR_COL1, firstCollectionName);
+      doc.put(LumeerConst.Linking.MainTable.ATTR_COL2, secondCollectionName);
+      doc.put(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName);
 
-      dataStorage.createDocument(LumeerConst.LINKING.MAIN_TABLE.NAME, doc);
+      dataStorage.createDocument(LumeerConst.Linking.MainTable.NAME, doc);
 
    }
 
    private void createLinkingDocument(final String collectionName, final String firstDocumentId, final String secondDocumentId) {
       DataDocument doc = new DataDocument();
-      doc.put(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, firstDocumentId);
-      doc.put(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, secondDocumentId);
+      doc.put(LumeerConst.Linking.LinkingTable.ATTR_DOC1, firstDocumentId);
+      doc.put(LumeerConst.Linking.LinkingTable.ATTR_DOC2, secondDocumentId);
 
       dataStorage.createDocument(collectionName, doc);
    }
@@ -436,14 +436,14 @@ public class LinkingFacade implements Serializable {
    private String getDoc1Doc2Filter(final String firstDocumentId, final String secondDocumentId) {
       return MongoUtils.convertBsonToJson(Filters.or(
             Filters.and(
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, firstDocumentId),
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, secondDocumentId)),
+                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC1, firstDocumentId),
+                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC2, secondDocumentId)),
             Filters.and(
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC1, secondDocumentId),
-                  Filters.eq(LumeerConst.LINKING.LINKING_TABLE.ATTR_DOC2, firstDocumentId))));
+                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC1, secondDocumentId),
+                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_DOC2, firstDocumentId))));
    }
 
    private String createCollectionName(final String firstCollectionName, final String secondCollectionName) {
-      return LumeerConst.LINKING.PREFIX + "_" + firstCollectionName + "_" + secondCollectionName;
+      return LumeerConst.Linking.PREFIX + "_" + firstCollectionName + "_" + secondCollectionName;
    }
 }
