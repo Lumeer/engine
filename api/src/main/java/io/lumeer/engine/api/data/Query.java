@@ -46,6 +46,8 @@ public class Query implements Serializable {
 
    private Integer skip = null;
 
+   private String output = null;
+
    public Query() {
    }
 
@@ -188,6 +190,14 @@ public class Query implements Serializable {
       this.skip = skip;
    }
 
+   public String getOutput() {
+      return output;
+   }
+
+   public void setOutput(final String output) {
+      this.output = output;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -217,7 +227,10 @@ public class Query implements Serializable {
       if (limit != null ? !limit.equals(query.limit) : query.limit != null) {
          return false;
       }
-      return skip != null ? skip.equals(query.skip) : query.skip == null;
+      if (skip != null ? !skip.equals(query.skip) : query.skip != null) {
+         return false;
+      }
+      return output != null ? output.equals(query.output) : query.output == null;
    }
 
    @Override
@@ -229,6 +242,7 @@ public class Query implements Serializable {
       result = 31 * result + (sorting != null ? sorting.hashCode() : 0);
       result = 31 * result + (limit != null ? limit.hashCode() : 0);
       result = 31 * result + (skip != null ? skip.hashCode() : 0);
+      result = 31 * result + (output != null ? output.hashCode() : 0);
       return result;
    }
 
@@ -242,6 +256,7 @@ public class Query implements Serializable {
             + ", sorting=" + sorting
             + ", limit=" + limit
             + ", skip=" + skip
+            + ", output=" + output
             + '}';
    }
 }

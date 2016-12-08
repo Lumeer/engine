@@ -389,6 +389,13 @@ public class MongoDbStorage implements DataStorage {
          stages.add(limit);
       }
 
+      if (query.getOutput() != null && !query.getOutput().isEmpty()) {
+         final DataDocument output = new DataDocument();
+         output.put("$out", query.getOutput());
+         stages.add(output);
+      }
+
+
       query.getCollections().forEach(collection -> {
          result.addAll(aggregate(collection, stages.toArray(new DataDocument[stages.size()])));
       });
