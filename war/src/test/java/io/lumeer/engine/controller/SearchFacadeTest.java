@@ -62,19 +62,14 @@ public class SearchFacadeTest extends Arquillian {
    private DocumentFacade documentFacade;
 
    @Inject
-   private DataStorage dataStorage;
+   private CollectionMetadataFacade collectionMetadataFacade;
 
-   @BeforeMethod
-   public void setUp() throws Exception {
-      if (dataStorage != null) {
-         dataStorage.dropCollection(COLLECTION_SEARCH);
-         dataStorage.dropCollection(COLLECTION_SEARCH_RAW);
-      }
-   }
+   @Inject
+   private DataStorage dataStorage;
 
    @Test
    public void testSearch() throws Exception {
-      dataStorage.createCollection(COLLECTION_SEARCH);
+      setUpCollection(COLLECTION_SEARCH);
 
       for (int i = 0; i < 1000; i++) {
          DataDocument insertedDocument = new DataDocument();
@@ -88,7 +83,7 @@ public class SearchFacadeTest extends Arquillian {
 
    @Test
    public void testRawSearch() throws Exception {
-      dataStorage.createCollection(COLLECTION_SEARCH_RAW);
+      setUpCollection(COLLECTION_SEARCH_RAW);
 
       for (int i = 0; i < 1000; i++) {
          DataDocument insertedDocument = new DataDocument();
@@ -105,16 +100,20 @@ public class SearchFacadeTest extends Arquillian {
 
    @Test
    public void testQuery() throws Exception {
-      if (dataStorage.hasCollection(COLLECTION_QUERY)) {
-         dataStorage.dropCollection(COLLECTION_QUERY);
-      }
+      setUpCollection(COLLECTION_QUERY);
 
       DataDocument d1 = new DataDocument();
 
-      dataStorage.createCollection(COLLECTION_QUERY);
       //dataStorage.createDocument(COLLECTION_QUERY);
 
       final Query q = new Query();
+   }
+
+   private void setUpCollection(final String collection) {
+      dataStorage.dropCollection(collection);
+      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
+      dataStorage.createCollection(collection);
+      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
    }
 
 }

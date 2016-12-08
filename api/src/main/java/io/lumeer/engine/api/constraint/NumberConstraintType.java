@@ -23,10 +23,13 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
 /**
@@ -157,5 +160,71 @@ public class NumberConstraintType implements ConstraintType {
    @Override
    public void setLocale(final Locale locale) {
       numberFormat = NumberFormat.getInstance(locale);
+   }
+
+   @Override
+   public Set<Constraint> suggestConstraints(final List<String> values) {
+      final Set<Constraint> constraints = new HashSet<>();
+      final LongAdder numbers = new LongAdder();
+      final LongAdder integers = new LongAdder();
+      final Map<String, Double> stats = new HashMap<>();
+      stats.put("min", Double.MAX_VALUE);
+      stats.put("max", -Double.MAX_VALUE);
+
+      values.forEach(s -> {
+         try {
+            double d = numberFormat.parse(s.replaceAll(" ", "")).doubleValue();
+            numbers.increment();
+            stats.put("min", Math.min(d, stats.get("min")));
+            stats.put("max", Math.min(d, stats.get("max")));
+         } catch (ParseException pe) {
+            // nps
+         }
+
+         try {
+            integerNumberFormat.parse(s.replaceAll(" ", "")).intValue();
+            integers.increment();
+         } catch (ParseException pe) {
+            // nps
+         }
+      });
+
+      if (numbers.intValue() == values.size()) {
+         try {
+            constraints.add(parseConstraint(IS_NUMBER));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+
+         if (integers.intValue() == values.size()) {
+            try {
+               constraints.add(parseConstraint(IS_INTEGER));
+            } catch (InvalidConstraintException ice) {
+               // we just don't suggest the wrong constraint
+            }
+         }
+
+         try {
+            constraints.add(parseConstraint(LESS_OR_EQUALS + ":" + (stats.get("max"))));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+
+         try {
+            constraints.add(parseConstraint(GREATER_OR_EQUALS + ":" + (stats.get("min"))));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+
+         if ((double) stats.get("min") == stats.get("max")) {
+            try {
+               constraints.add(parseConstraint(EQUALS + ":" + (stats.get("min"))));
+            } catch (InvalidConstraintException ice) {
+               // we just don't suggest the wrong constraint
+            }
+         }
+      }
+
+      return constraints;
    }
 }

@@ -128,6 +128,21 @@ public class ConstraintManager {
    }
 
    /**
+    * Gets constraint configurations based on the provided constraints.
+    *
+    * @param constraints
+    *       Constraints to get configurations for.
+    * @return The constraint configurations.
+    */
+   public List<String> getConstraintConfigurations(final List<Constraint> constraints) {
+      if (constraints == null) {
+         return Collections.emptyList();
+      }
+
+      return constraints.stream().map(Constraint::getConfigurationString).collect(Collectors.toList());
+   }
+
+   /**
     * Validates the given value with all constraints.
     *
     * @param value
@@ -224,21 +239,6 @@ public class ConstraintManager {
       }
 
       return constraints;
-   }
-
-   /**
-    * Gets constraint configurations based on the provided constraints.
-    *
-    * @param constraints
-    *       Constraints to get configurations for.
-    * @return The constraint configurations.
-    */
-   public List<String> getConstraintConfigurations(final List<Constraint> constraints) {
-      if (constraints == null) {
-         return Collections.emptyList();
-      }
-
-      return constraints.stream().map(Constraint::getConfigurationString).collect(Collectors.toList());
    }
 
    /**

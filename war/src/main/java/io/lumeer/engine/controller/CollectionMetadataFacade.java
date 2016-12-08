@@ -77,15 +77,13 @@ public class CollectionMetadataFacade implements Serializable {
    public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "";
    public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested";
    private static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES =
-         Arrays.asList(new String[] {
-               COLLECTION_ATTRIBUTE_TYPE_INT,
+         Arrays.asList(COLLECTION_ATTRIBUTE_TYPE_INT,
                COLLECTION_ATTRIBUTE_TYPE_LONG,
                COLLECTION_ATTRIBUTE_TYPE_DOUBLE,
                COLLECTION_ATTRIBUTE_TYPE_BOOLEAN,
                COLLECTION_ATTRIBUTE_TYPE_DATE,
                COLLECTION_ATTRIBUTE_TYPE_STRING,
-               COLLECTION_ATTRIBUTE_TYPE_NESTED
-         });
+               COLLECTION_ATTRIBUTE_TYPE_NESTED);
 
    private static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
 
@@ -198,7 +196,8 @@ public class CollectionMetadataFacade implements Serializable {
       name = name.replaceAll("[^_a-z0-9]+", "");
       name = COLLECTION_NAME_PREFIX + name;
       int i = 0;
-      while (dataStorage.getAllCollections().contains(name + "_" + i)) {
+      List<String> allCollections = dataStorage.getAllCollections();
+      while (allCollections.contains(name + "_" + i)) {
          i++;
       }
       name = name + "_" + i;
@@ -270,8 +269,7 @@ public class CollectionMetadataFacade implements Serializable {
       checkIfMetadataCollectionExists(metadataCollectionName);
 
       String query = queryOneValueFromCollectionMetadata(collectionName, COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
-      List<DataDocument> attributesInfoDocuments = dataStorage.run(query);
-      return attributesInfoDocuments;
+      return dataStorage.run(query);
    }
 
    /**

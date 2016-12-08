@@ -67,7 +67,7 @@ public class ConfigurationFacade implements Serializable {
    @Produces
    @Named("dataStorageDatabase")
    public String getDataStorageDatabase() {
-      return getUserConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
+      return getConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
    }
 
    /**

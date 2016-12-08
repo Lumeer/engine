@@ -77,6 +77,15 @@ public interface DataStorage extends Serializable {
    boolean hasCollection(final String collectionName);
 
    /**
+    * Count number of documents in collection
+    *
+    * @param collectionName
+    *       The name of the collection to check for.
+    * @return number of documents in collection
+    */
+   long documentCount(final String collectionName);
+
+   /**
     * Checks whether the document exists in given collection.
     *
     * @param collectionName
@@ -175,7 +184,7 @@ public interface DataStorage extends Serializable {
    void dropOldDocument(final String collectionName, final String documentId, final int version);
 
    /**
-    * Drops many documents based on filter
+    * Drops many documents based on filter.
     *
     * @param collectionName
     *       the name of the collection
@@ -322,32 +331,31 @@ public interface DataStorage extends Serializable {
     */
    List aggregate(final String collectionName, final DataDocument... stages);
 
-      /**
-       * Increment attribute value of document by specified amount. If the field does not exist, it creates the field and sets the field to the specified value.
-       *
-       * @param collectionName
-       *       the name of the collection where the given document is located
-       * @param documentId
-       *       the id of specified document
-       * @param attributeName
-       *       the name of attribute which value is increment
-       * @param incBy
-       *       the value by which attribute is increment
-       */
-      void incrementAttributeValueBy ( final String collectionName, final String documentId, final String attributeName, final int incBy);
+   /**
+    * Increment attribute value of document by specified amount. If the field does not exist, it creates the field and sets the field to the specified value.
+    *
+    * @param collectionName
+    *       the name of the collection where the given document is located
+    * @param documentId
+    *       the id of specified document
+    * @param attributeName
+    *       the name of attribute which value is increment
+    * @param incBy
+    *       the value by which attribute is increment
+    */
+   void incrementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy);
 
-      /**
-       * Gets the next value of sequence.
-       *
-       * @param collectionName
-       *       Name of the collection with sequences.
-       * @param indexAttribute
-       *       Name of the attribute that identifies the sequence document.
-       * @param index
-       *       Value of the index attribute to identify the sequence.
-       * @return The next value in the sequence.
-       */
-
+   /**
+    * Gets the next value of sequence.
+    *
+    * @param collectionName
+    *       Name of the collection with sequences.
+    * @param indexAttribute
+    *       Name of the attribute that identifies the sequence document.
+    * @param index
+    *       Value of the index attribute to identify the sequence.
+    * @return The next value in the sequence.
+    */
    int getNextSequenceNo(final String collectionName, final String indexAttribute, final String index);
 
    /**

@@ -36,6 +36,8 @@ public class Query implements Serializable {
 
    private DataDocument filters = new DataDocument();
 
+   private DataDocument grouping = new DataDocument();
+
    private DataDocument projections = new DataDocument();
 
    private DataDocument sorting = new DataDocument();
@@ -44,24 +46,62 @@ public class Query implements Serializable {
 
    private Integer skip = null;
 
+   private String output = null;
+
    public Query() {
    }
 
+   /**
+    * Creates a new query with the specified filters.
+    *
+    * @param filters
+    *       Query filters.
+    */
    public Query(final DataDocument filters) {
       this.filters = filters;
    }
 
+   /**
+    * Creates a new query on the given collections with the given filters.
+    *
+    * @param collections
+    *       Query collections.
+    * @param filters
+    *       Query filters.
+    */
    public Query(final Set<String> collections, final DataDocument filters) {
       this.collections = collections;
       this.filters = filters;
    }
 
+   /**
+    * Creates a new query with the given filters, projections and sorting.
+    *
+    * @param filters
+    *       Query filters.
+    * @param projections
+    *       Query projections.
+    * @param sorting
+    *       Query sorting.
+    */
    public Query(final DataDocument filters, final DataDocument projections, final DataDocument sorting) {
       this.filters = filters;
       this.projections = projections;
       this.sorting = sorting;
    }
 
+   /**
+    * Creates a new query on the given collections with the given filters, projections and sorting.
+    *
+    * @param collections
+    *       Query collections.
+    * @param filters
+    *       Query filters.
+    * @param projections
+    *       Query projections.
+    * @param sorting
+    *       Query sorting.
+    */
    public Query(final Set<String> collections, final DataDocument filters, final DataDocument projections, final DataDocument sorting) {
       this.collections = collections;
       this.filters = filters;
@@ -69,6 +109,22 @@ public class Query implements Serializable {
       this.sorting = sorting;
    }
 
+   /**
+    * Creates a new query on the given collections with the given filters, projections, sorting, limit and skip.
+    *
+    * @param collections
+    *       Query collections.
+    * @param filters
+    *       Query filters.
+    * @param projections
+    *       Query projections.
+    * @param sorting
+    *       Query sorting.
+    * @param limit
+    *       Limit on the number of returned entries. Zero means unlimited, null means default settings.
+    * @param skip
+    *       Number of entries to skip in the result.
+    */
    public Query(final Set<String> collections, final DataDocument filters, final DataDocument projections, final DataDocument sorting, final Integer limit, final Integer skip) {
       this.collections = collections;
       this.filters = filters;
@@ -110,6 +166,14 @@ public class Query implements Serializable {
       this.sorting = sorting;
    }
 
+   public DataDocument getGrouping() {
+      return grouping;
+   }
+
+   public void setGrouping(final DataDocument grouping) {
+      this.grouping = grouping;
+   }
+
    public Integer getLimit() {
       return limit;
    }
@@ -124,6 +188,14 @@ public class Query implements Serializable {
 
    public void setSkip(final Integer skip) {
       this.skip = skip;
+   }
+
+   public String getOutput() {
+      return output;
+   }
+
+   public void setOutput(final String output) {
+      this.output = output;
    }
 
    @Override
@@ -143,6 +215,9 @@ public class Query implements Serializable {
       if (filters != null ? !filters.equals(query.filters) : query.filters != null) {
          return false;
       }
+      if (grouping != null ? !grouping.equals(query.grouping) : query.grouping != null) {
+         return false;
+      }
       if (projections != null ? !projections.equals(query.projections) : query.projections != null) {
          return false;
       }
@@ -152,30 +227,36 @@ public class Query implements Serializable {
       if (limit != null ? !limit.equals(query.limit) : query.limit != null) {
          return false;
       }
-      return skip != null ? skip.equals(query.skip) : query.skip == null;
-
+      if (skip != null ? !skip.equals(query.skip) : query.skip != null) {
+         return false;
+      }
+      return output != null ? output.equals(query.output) : query.output == null;
    }
 
    @Override
    public int hashCode() {
       int result = collections != null ? collections.hashCode() : 0;
       result = 31 * result + (filters != null ? filters.hashCode() : 0);
+      result = 31 * result + (grouping != null ? grouping.hashCode() : 0);
       result = 31 * result + (projections != null ? projections.hashCode() : 0);
       result = 31 * result + (sorting != null ? sorting.hashCode() : 0);
       result = 31 * result + (limit != null ? limit.hashCode() : 0);
       result = 31 * result + (skip != null ? skip.hashCode() : 0);
+      result = 31 * result + (output != null ? output.hashCode() : 0);
       return result;
    }
 
    @Override
    public String toString() {
-      return "Query{" +
-            "collections=" + collections +
-            ", filters=" + filters +
-            ", projections=" + projections +
-            ", sorting=" + sorting +
-            ", limit=" + limit +
-            ", skip=" + skip +
-            '}';
+      return "Query{"
+            + "collections=" + collections
+            + ", filters=" + filters
+            + ", grouping=" + grouping
+            + ", projections=" + projections
+            + ", sorting=" + sorting
+            + ", limit=" + limit
+            + ", skip=" + skip
+            + ", output=" + output
+            + '}';
    }
 }

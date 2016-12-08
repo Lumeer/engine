@@ -35,7 +35,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -60,8 +59,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
    private final String COLLECTION_READ_METADATA = "collectionReadMetadata";
    private final String COLLECTION_PUT_AND_UPDATE_METADATA = "collectionPutAndUpdateMetadata";
 
-   private final String DUMMY_USER = "testUser";
-   private final String DUMMY_META_KEY = "meta-key";
+   private final String DUMMY_META_KEY = LumeerConst.Document.METADATA_PREFIX + "key";
    private final String DUMMY_META_VALUE = "param";
    private final String DUMMY_META_UPDATE_VALUE = "paramUpdated";
 
@@ -72,46 +70,36 @@ public class DocumentMetadataFacadeTest extends Arquillian {
    private DocumentMetadataFacade documentMetadataFacade;
 
    @Inject
-   private DataStorage dataStorage;
+   private CollectionMetadataFacade collectionMetadataFacade;
 
-   @BeforeTest
-   public void setUp() {
-      if (dataStorage != null) {
-         dataStorage.dropCollection(COLLECTION_GET_METADATA);
-         dataStorage.dropCollection(COLLECTION_READ_METADATA);
-         dataStorage.dropCollection(COLLECTION_PUT_AND_UPDATE_METADATA);
-      }
-   }
+   @Inject
+   private DataStorage dataStorage;
 
    @Test
    public void testGetDocumentMetadata() throws Exception {
-      String documentId = createCollectionAndNewDocument(COLLECTION_GET_METADATA);
-      Object metadataValue = documentMetadataFacade.getDocumentMetadata(COLLECTION_GET_METADATA, documentId, LumeerConst.DOCUMENT.CREATE_BY_USER_KEY);
-
-      Assert.assertEquals(metadataValue.toString(), DUMMY_USER);
-
-      dataStorage.dropCollection(COLLECTION_GET_METADATA);
+      String documentId = setupCollectionAndCreateNewDocument(COLLECTION_GET_METADATA);
+      Object metadataValue = documentMetadataFacade.getDocumentMetadata(COLLECTION_GET_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
+      Assert.assertNotNull(metadataValue);
    }
 
    @Test
    public void testReadDocumentMetadata() throws Exception {
-      String documentId = createCollectionAndNewDocument(COLLECTION_READ_METADATA);
+      String documentId = setupCollectionAndCreateNewDocument(COLLECTION_READ_METADATA);
       Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(COLLECTION_READ_METADATA, documentId);
 
-      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY) && documentMetadata.containsKey(LumeerConst.DOCUMENT.CREATE_BY_USER_KEY) && documentMetadata.size() == 2);
-
-      dataStorage.dropCollection(COLLECTION_GET_METADATA);
+      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_BY_USER_KEY));
+      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_DATE_KEY));
+      Assert.assertEquals(2, documentMetadata.size());
    }
 
    @Test
    public void testPutAndUpdateAndDropDocumentMetadata() throws Exception {
-      String documentId = createCollectionAndNewDocument(COLLECTION_PUT_AND_UPDATE_METADATA);
+      String documentId = setupCollectionAndCreateNewDocument(COLLECTION_PUT_AND_UPDATE_METADATA);
       documentMetadataFacade.putDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY, DUMMY_META_VALUE);
 
       Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY).toString().equals(DUMMY_META_VALUE));
 
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(DUMMY_META_KEY, DUMMY_META_UPDATE_VALUE);
+      DataDocument metadata = new DataDocument(DUMMY_META_KEY, DUMMY_META_UPDATE_VALUE);
       documentMetadataFacade.updateDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, metadata);
 
       Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY).toString().equals(DUMMY_META_UPDATE_VALUE));
@@ -119,12 +107,13 @@ public class DocumentMetadataFacadeTest extends Arquillian {
       documentMetadataFacade.dropDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, DUMMY_META_KEY);
 
       Assert.assertFalse(documentMetadataFacade.readDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId).containsKey(DUMMY_META_KEY));
-
-      dataStorage.dropCollection(COLLECTION_GET_METADATA);
    }
 
-   private String createCollectionAndNewDocument(final String collection) throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException, InvalidDocumentKeyException {
+   private String setupCollectionAndCreateNewDocument(final String collection) throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException, UserCollectionAlreadyExistsException, CollectionMetadataNotFoundException, InvalidDocumentKeyException {
+      dataStorage.dropCollection(collection);
+      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
       dataStorage.createCollection(collection);
+      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
 
       DataDocument document = new DataDocument(new HashMap<>());
       return documentFacade.createDocument(collection, document);

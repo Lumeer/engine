@@ -88,7 +88,6 @@ public class MongoDbStorage implements DataStorage {
 
    @PostConstruct
    public void connect() {
-      log.severe("@@@@@@@@@@@@@@@@ post construct " + mongoClient);
       if (mongoClient == null) {
          connect(storageConnection, storageDatabase);
       }
@@ -101,7 +100,6 @@ public class MongoDbStorage implements DataStorage {
 
       connections.forEach(c -> {
          addresses.add(new ServerAddress(c.getHost(), c.getPort()));
-         log.severe("@@@@@@@@@@@@@ " + c.getUserName() + " / " + database + " / " + c.getPassword());
          if (c.getUserName() != null && !c.getUserName().isEmpty()) {
             credentials.add(MongoCredential.createScramSha1Credential(c.getUserName(), database, c.getPassword()));
          }
@@ -210,6 +208,7 @@ public class MongoDbStorage implements DataStorage {
          filter.append(LumeerConst.METADATA_VERSION_KEY, updatedDocument.getInteger(LumeerConst.METADATA_VERSION_KEY));
       }
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
+      updatedDocument.put(ID, documentId);
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
@@ -217,6 +216,11 @@ public class MongoDbStorage implements DataStorage {
    public void dropDocument(final String collectionName, final String documentId) {
       BasicDBObject filter = new BasicDBObject(ID, new ObjectId(documentId));
       database.getCollection(collectionName).deleteOne(filter);
+   }
+
+   @Override
+   public long documentCount(final String collectionName) {
+      return database.getCollection(collectionName).count();
    }
 
    @Override
@@ -337,15 +341,15 @@ public class MongoDbStorage implements DataStorage {
       MongoCollection<Document> collection = database.getCollection(collectionName);
       FindIterable<Document> documents = filter != null ? collection.find(BsonDocument.parse(filter)) : collection.find();
       documents.sort(sort != null ? BsonDocument.parse(sort) : null)
-               .skip(skip)
-               .limit(limit)
-               .into(new ArrayList<>())
-               .forEach(d -> {
-                  d.replace(ID, d.getObjectId(ID).toString());
-                  DataDocument raw = new DataDocument(d);
-                  MongoUtils.convertNestedAndListDocuments(raw);
-                  result.add(raw);
-               });
+            .skip(skip)
+            .limit(limit)
+            .into(new ArrayList<>())
+            .forEach(d -> {
+               d.replace(ID, d.getObjectId(ID).toString());
+               DataDocument raw = new DataDocument(d);
+               MongoUtils.convertNestedAndListDocuments(raw);
+               result.add(raw);
+            });
 
       return result;
    }
@@ -361,16 +365,22 @@ public class MongoDbStorage implements DataStorage {
          stages.add(filters);
       }
 
-      if (query.getSorting().size() > 0) {
-         final DataDocument sorts = new DataDocument();
-         sorts.put("$sort", query.getSorting());
-         stages.add(sorts);
+      if (query.getGrouping().size() > 0) {
+         final DataDocument grouping = new DataDocument();
+         grouping.put("$group", query.getGrouping());
+         stages.add(grouping);
       }
 
       if (query.getProjections().size() > 0) {
          final DataDocument projections = new DataDocument();
          projections.put("$project", query.getProjections());
          stages.add(projections);
+      }
+
+      if (query.getSorting().size() > 0) {
+         final DataDocument sorts = new DataDocument();
+         sorts.put("$sort", query.getSorting());
+         stages.add(sorts);
       }
 
       if (query.getSkip() != null && query.getSkip() > 0) {
@@ -384,6 +394,13 @@ public class MongoDbStorage implements DataStorage {
          limit.put("$limit", query.getLimit());
          stages.add(limit);
       }
+
+      if (query.getOutput() != null && !query.getOutput().isEmpty()) {
+         final DataDocument output = new DataDocument();
+         output.put("$out", query.getOutput());
+         stages.add(output);
+      }
+
 
       query.getCollections().forEach(collection -> {
          result.addAll(aggregate(collection, stages.toArray(new DataDocument[stages.size()])));
@@ -406,7 +423,11 @@ public class MongoDbStorage implements DataStorage {
 
       AggregateIterable<Document> resultDocuments = database.getCollection(collectionName).aggregate(documents);
       resultDocuments.into(new LinkedList<>()).forEach(d -> {
-         d.replace(ID, d.getObjectId(ID).toString());
+         if (d.get(ID) instanceof Document) {
+            d.replace(ID, ((Document) d.get(ID)).toJson());
+         } else {
+            d.replace(ID, d.getObjectId(ID).toString());
+         }
          DataDocument raw = new DataDocument(d);
          MongoUtils.convertNestedAndListDocuments(raw);
          result.add(raw);

@@ -20,11 +20,9 @@
 package io.lumeer.engine.api.exception;
 
 /**
- * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
- */
-
-/**
- * Thrown in case collection with given user name already exists
+ * Thrown in case collection with given user name already exists.
+ *
+ * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 public class UserCollectionAlreadyExistsException extends DbException {
 
