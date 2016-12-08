@@ -492,8 +492,6 @@ public class MongoDbStorageTest {
       grouping.put("_id", groupId);
       grouping.put("added", aggregate);
 
-      //$group : { _id: { param1: "$param1" }, added : { $sum : "$param2" } }
-
       final Query q = new Query(filters);
       q.setGrouping(grouping);
       q.setCollections(Collections.singleton(COLLECTION_AGGREGATE));
