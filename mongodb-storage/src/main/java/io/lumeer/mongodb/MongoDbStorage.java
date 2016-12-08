@@ -359,16 +359,22 @@ public class MongoDbStorage implements DataStorage {
          stages.add(filters);
       }
 
-      if (query.getSorting().size() > 0) {
-         final DataDocument sorts = new DataDocument();
-         sorts.put("$sort", query.getSorting());
-         stages.add(sorts);
+      if (query.getGrouping().size() > 0) {
+         final DataDocument grouping = new DataDocument();
+         grouping.put("$group", query.getGrouping());
+         stages.add(grouping);
       }
 
       if (query.getProjections().size() > 0) {
          final DataDocument projections = new DataDocument();
          projections.put("$project", query.getProjections());
          stages.add(projections);
+      }
+
+      if (query.getSorting().size() > 0) {
+         final DataDocument sorts = new DataDocument();
+         sorts.put("$sort", query.getSorting());
+         stages.add(sorts);
       }
 
       if (query.getSkip() != null && query.getSkip() > 0) {
@@ -404,7 +410,11 @@ public class MongoDbStorage implements DataStorage {
 
       AggregateIterable<Document> resultDocuments = database.getCollection(collectionName).aggregate(documents);
       resultDocuments.into(new LinkedList<>()).forEach(d -> {
-         d.replace(ID, d.getObjectId(ID).toString());
+         if (d.get(ID) instanceof Document) {
+            d.replace(ID, ((Document) d.get(ID)).toJson());
+         } else {
+            d.replace(ID, d.getObjectId(ID).toString());
+         }
          DataDocument raw = new DataDocument(d);
          MongoUtils.convertNestedAndListDocuments(raw);
          result.add(raw);

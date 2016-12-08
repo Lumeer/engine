@@ -36,6 +36,8 @@ public class Query implements Serializable {
 
    private DataDocument filters = new DataDocument();
 
+   private DataDocument grouping = new DataDocument();
+
    private DataDocument projections = new DataDocument();
 
    private DataDocument sorting = new DataDocument();
@@ -162,6 +164,14 @@ public class Query implements Serializable {
       this.sorting = sorting;
    }
 
+   public DataDocument getGrouping() {
+      return grouping;
+   }
+
+   public void setGrouping(final DataDocument grouping) {
+      this.grouping = grouping;
+   }
+
    public Integer getLimit() {
       return limit;
    }
@@ -195,6 +205,9 @@ public class Query implements Serializable {
       if (filters != null ? !filters.equals(query.filters) : query.filters != null) {
          return false;
       }
+      if (grouping != null ? !grouping.equals(query.grouping) : query.grouping != null) {
+         return false;
+      }
       if (projections != null ? !projections.equals(query.projections) : query.projections != null) {
          return false;
       }
@@ -205,13 +218,13 @@ public class Query implements Serializable {
          return false;
       }
       return skip != null ? skip.equals(query.skip) : query.skip == null;
-
    }
 
    @Override
    public int hashCode() {
       int result = collections != null ? collections.hashCode() : 0;
       result = 31 * result + (filters != null ? filters.hashCode() : 0);
+      result = 31 * result + (grouping != null ? grouping.hashCode() : 0);
       result = 31 * result + (projections != null ? projections.hashCode() : 0);
       result = 31 * result + (sorting != null ? sorting.hashCode() : 0);
       result = 31 * result + (limit != null ? limit.hashCode() : 0);
@@ -224,6 +237,7 @@ public class Query implements Serializable {
       return "Query{"
             + "collections=" + collections
             + ", filters=" + filters
+            + ", grouping=" + grouping
             + ", projections=" + projections
             + ", sorting=" + sorting
             + ", limit=" + limit

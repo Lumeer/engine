@@ -20,6 +20,7 @@ package io.lumeer.mongodb;/*
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.model.Filters;
@@ -28,6 +29,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -70,6 +72,7 @@ public class MongoDbStorageTest {
    private final String COLLECTION_NESTED_DOCUMENTS = "collectionNestedDocuments";
    private final String COLLECTION_BASIC_ARRAY_MANIPULATION = "collectionBasicArrayManipulation";
    private final String COLLECTION_COMPLEX_ARRAY_MANIPULATION = "collectionComplexArrayManipulation";
+   private final String COLLECTION_AGGREGATE = "collectionAggregate";
 
    private MongoDbStorage mongoDbStorage;
 
@@ -99,6 +102,7 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_NESTED_DOCUMENTS);
       mongoDbStorage.dropCollection(COLLECTION_BASIC_ARRAY_MANIPULATION);
       mongoDbStorage.dropCollection(COLLECTION_COMPLEX_ARRAY_MANIPULATION);
+      mongoDbStorage.dropCollection(COLLECTION_AGGREGATE);
    }
 
    @Test
@@ -464,6 +468,71 @@ public class MongoDbStorageTest {
 
    }
 
+   @Test
+   public void testAggregate() {
+      mongoDbStorage.createCollection(COLLECTION_AGGREGATE);
+
+      mongoDbStorage.createDocument(COLLECTION_AGGREGATE, getTestDocument("a", "1", "val1"));
+      mongoDbStorage.createDocument(COLLECTION_AGGREGATE, getTestDocument("a", "2", "val2"));
+      mongoDbStorage.createDocument(COLLECTION_AGGREGATE, getTestDocument("a", "3", "val3"));
+      mongoDbStorage.createDocument(COLLECTION_AGGREGATE, getTestDocument("a", "4", "val6"));
+      mongoDbStorage.createDocument(COLLECTION_AGGREGATE, getTestDocument("b", "1", "val4"));
+      mongoDbStorage.createDocument(COLLECTION_AGGREGATE, getTestDocument("c", "1", "val5"));
+
+      final DataDocument filters = new DataDocument();
+      final DataDocument condition = new DataDocument();
+      condition.put("$gt", 2);
+      filters.put("param2", condition);
+
+      final DataDocument grouping = new DataDocument();
+      final DataDocument groupId = new DataDocument();
+      final DataDocument aggregate = new DataDocument();
+      groupId.put("param1", "$param1");
+      aggregate.put("$sum", "$param2");
+      grouping.put("_id", groupId);
+      grouping.put("added", aggregate);
+
+      //$group : { _id: { param1: "$param1" }, added : { $sum : "$param2" } }
+
+      final Query q = new Query(filters);
+      q.setGrouping(grouping);
+      q.setCollections(Collections.singleton(COLLECTION_AGGREGATE));
+
+      List<DataDocument> result = mongoDbStorage.query(q);
+      Assert.assertEquals(result.size(), 1);
+      Assert.assertEquals(result.get(0).get("_id"), "{ \"param1\" : \"a\" }");
+      Assert.assertEquals(result.get(0).get("added"), 7);
+
+      final DataDocument project = new DataDocument();
+      final DataDocument multiply = new DataDocument();
+      multiply.put("$multiply", Arrays.asList("$param2", 5));
+      project.put("param4", multiply);
+
+      final DataDocument sort = new DataDocument();
+      sort.put("param4", -1);
+
+      q.setGrouping(new DataDocument());
+      q.setProjections(project);
+      q.setSorting(sort);
+
+      result = mongoDbStorage.query(q);
+
+      Assert.assertEquals(result.size(), 2);
+      Assert.assertEquals(result.get(0).get("param4"), 20);
+      Assert.assertEquals(result.get(1).get("param4"), 15);
+
+      q.setSkip(1);
+      result = mongoDbStorage.query(q);
+      Assert.assertEquals(result.size(), 1);
+      Assert.assertEquals(result.get(0).get("param4"), 15);
+
+      q.setSkip(0);
+      q.setLimit(1);
+      result = mongoDbStorage.query(q);
+      Assert.assertEquals(result.size(), 1);
+      Assert.assertEquals(result.get(0).get("param4"), 20);
+   }
+
    private DataDocument createDummyDocument() {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put(DUMMY_KEY1, DUMMY_VALUE1);
@@ -475,6 +544,21 @@ public class MongoDbStorageTest {
    private void changeDummyDocumentValues(DataDocument readedDocument) {
       readedDocument.replace(DUMMY_KEY1, DUMMY_CHANGED_VALUE1);
       readedDocument.replace(DUMMY_KEY2, DUMMY_CHANGED_VALUE2);
+   }
+
+   private DataDocument getTestDocument(final String... values) {
+      final DataDocument d = new DataDocument();
+
+      for (int i = 0; i < values.length; i++) {
+         try {
+            int x = Integer.parseInt(values[i]);
+            d.put("param" + (i + 1), x);
+         } catch (NumberFormatException nfe) {
+            d.put("param" + (i + 1), values[i]);
+         }
+      }
+
+      return d;
    }
 
 }
