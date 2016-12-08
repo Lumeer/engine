@@ -47,6 +47,7 @@ public class CollectionServiceTest extends Arquillian {
             .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
             .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
+                       .addAsResource("defaults-ci.properties")
                        .addAsResource("defaults-dev.properties");
    }
 
