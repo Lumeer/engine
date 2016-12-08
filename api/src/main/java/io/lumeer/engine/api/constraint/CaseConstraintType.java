@@ -22,6 +22,7 @@ package io.lumeer.engine.api.constraint;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -94,5 +95,44 @@ public class CaseConstraintType implements ConstraintType {
    @Override
    public void setLocale(final Locale locale) {
       this.locale = locale;
+   }
+
+   @Override
+   public Set<Constraint> suggestConstraints(final List<String> values) {
+      final Set<Constraint> constraints = new HashSet<>();
+
+      if (values.stream().filter(s -> s.toLowerCase(locale).equals(s)).count() == values.size()) {
+         try {
+            constraints.add(parseConstraint(CONSTRAINT_PREFIX + ":" + LOWER_CASE));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+      }
+
+      if (values.stream().filter(s -> s.toUpperCase(locale).equals(s)).count() == values.size()) {
+         try {
+            constraints.add(parseConstraint(CONSTRAINT_PREFIX + ":" + UPPER_CASE));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+      }
+
+      if (values.stream().filter(s -> s.substring(0, 1).toLowerCase(locale).equals(s.substring(0, 1))).count() == values.size()) {
+         try {
+            constraints.add(parseConstraint(CONSTRAINT_PREFIX + ":" + FIRST_LOWER_CASE));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+      }
+
+      if (values.stream().filter(s -> s.substring(0, 1).toUpperCase(locale).equals(s.substring(0, 1))).count() == values.size()) {
+         try {
+            constraints.add(parseConstraint(CONSTRAINT_PREFIX + ":" + FIRST_UPPER_CASE));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+      }
+
+      return constraints;
    }
 }

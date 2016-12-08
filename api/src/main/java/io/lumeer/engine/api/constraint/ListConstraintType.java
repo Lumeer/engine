@@ -21,6 +21,7 @@ package io.lumeer.engine.api.constraint;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -113,5 +114,26 @@ public class ListConstraintType implements ConstraintType {
    @Override
    public void setLocale(final Locale locale) {
       this.locale = locale;
+   }
+
+   @Override
+   public Set<Constraint> suggestConstraints(final List<String> values) {
+      final Set<Constraint> constraints = new HashSet<>();
+      final Set<String> distinct = values.stream().collect(Collectors.toSet());
+
+      if (distinct.size() < 10) {
+         try {
+            constraints.add(parseConstraint(ONE_OF_TYPE + ":" + String.join(",", distinct)));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+         try {
+            constraints.add(parseConstraint(TAGS_TYPE + ":" + String.join(",", distinct)));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+      }
+
+      return constraints;
    }
 }

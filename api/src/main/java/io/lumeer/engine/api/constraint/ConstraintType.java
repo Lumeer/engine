@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -67,5 +68,14 @@ public interface ConstraintType {
     */
    void setLocale(final Locale locale);
 
-   //Set<Constraint> suggestConstraints(final List<String> values);
+   /**
+    * Tries to provide constraint of its own type that are valid for all input values.
+    *
+    * @param values
+    *       Values to figure constraints for.
+    * @return The suggested constraints.
+    */
+   default Set<Constraint> suggestConstraints(final List<String> values) {
+      return Collections.emptySet();
+   }
 }
