@@ -20,6 +20,7 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
@@ -165,6 +166,8 @@ public class CollectionService implements Serializable {
          throw new NotFoundException();
       } catch (CollectionNotFoundException e) {
          throw new NotFoundException();
+      } catch (AttributeAlreadyExistsException e) {
+         throw new BadRequestException();
       }
    }
 

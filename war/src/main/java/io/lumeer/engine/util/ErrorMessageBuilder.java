@@ -37,7 +37,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_DOCUMENT_NOT_FOUND = "Document does not exist.";
    private static final String ERROR_CREATE_UNSUCCESFUL = "The document could not be created.";
    private static final String ERROR_DROP_UNSUCCESFUL = "The document could not be deleted.";
-   private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not succesfully updated.";
+   private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not successfully updated.";
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
    private static final String ERROR_INVALID_DOCUMENT_KEY = "The key  \"{0}\" is not valid";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
@@ -52,6 +52,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_VIEW_METADATA_NOT_FOUND = "The metadata for view \"{0}\" does not exist.";
    private static final String ERROR_VIEW_METADATA_VALUE_NOT_FOUND = "The metadata value for key \"{1}\" for view \"{0}\" does not exist.";
    private static final String ERROR_VIEW_USERNAME_ALREADY_EXISTS = "The view with username \"{0}\" already exists.";
+   private static final String ERROR_VIEW_META_IMMUTABLE = "The metadata key \"{1}\" for view \"{0}\" cannot be changed.";
 
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
@@ -131,6 +132,10 @@ public class ErrorMessageBuilder {
 
    public static String viewUsernameAlreadyExistsString(String viewName) {
       return MessageFormat.format(ERROR_VIEW_USERNAME_ALREADY_EXISTS, viewName);
+   }
+
+   public static String viewMetaImmutableString(String viewName, String metaKey) {
+      return MessageFormat.format(ERROR_VIEW_META_IMMUTABLE, viewName, metaKey);
    }
 
 }

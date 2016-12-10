@@ -78,4 +78,66 @@ public final class LumeerConst {
       public static final String UPDATED_BY_USER_KEY = METADATA_PREFIX + "update-user";
       public static final List<String> METADATA_KEYS = Arrays.asList(METADATA_VERSION_KEY, CREATE_DATE_KEY, UPDATE_DATE_KEY, CREATE_BY_USER_KEY, UPDATED_BY_USER_KEY);
    }
+
+   public static class View {
+      public static final String VIEW_METADATA_COLLECTION_NAME = "viewmetadatacollection";
+      public static final String VIEW_SEQUENCE_NAME = "view-sequence";
+
+      public static final String VIEW_INTERNAL_NAME_KEY = "internal-name";
+      public static final String VIEW_REAL_NAME_KEY = "name";
+      public static final String VIEW_SEQUENCE_NUMBER_KEY = "sequence-number";
+      public static final String VIEW_TYPE_KEY = "type";
+
+      public static final String VIEW_ALL_STYLES_KEY = "styles";
+      public static final String VIEW_STYLE_TYPE_KEY = "type";
+      public static final String VIEW_STYLE_VALUE_KEY = "style";
+      public static final String VIEW_STYLE_CONDITION_KEY = "condition";
+
+      public static final String VIEW_USER_RIGHTS_KEY = "rights";
+      public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
+      public static final String VIEW_CREATE_DATE_KEY = "create-date";
+      public static final String VIEW_CREATE_USER_KEY = "create-user";
+      public static final String VIEW_UPDATE_DATE_KEY = "update-date";
+      public static final String VIEW_UPDATE_USER_KEY = "update-user";
+
+      public static final List<String> VIEW_IMMUTABLE_KEYS = Arrays.asList(VIEW_INTERNAL_NAME_KEY, VIEW_SEQUENCE_NUMBER_KEY, VIEW_CREATE_DATE_KEY, VIEW_CREATE_USER_KEY);
+   }
+
+   public static class Collection {
+      public static final String META_TYPE_KEY = "meta-type";
+      public static final String COLLECTION_NAME_PREFIX = "collection.";
+      public static final String COLLECTION_METADATA_PREFIX = "meta.";
+
+      public static final String COLLECTION_ATTRIBUTES_META_TYPE_VALUE = "attributes";
+
+      public static final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
+
+      // attribute types according to DataDocument methods, empty is default and is considered String
+      public static final String COLLECTION_ATTRIBUTE_TYPE_INT = "int";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_LONG = "long";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_DOUBLE = "double";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_BOOLEAN = "bool";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested";
+      public static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES =
+            Arrays.asList(COLLECTION_ATTRIBUTE_TYPE_INT,
+                  COLLECTION_ATTRIBUTE_TYPE_LONG,
+                  COLLECTION_ATTRIBUTE_TYPE_DOUBLE,
+                  COLLECTION_ATTRIBUTE_TYPE_BOOLEAN,
+                  COLLECTION_ATTRIBUTE_TYPE_DATE,
+                  COLLECTION_ATTRIBUTE_TYPE_STRING,
+                  COLLECTION_ATTRIBUTE_TYPE_NESTED);
+
+      public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
+
+      public static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "count";
+
+      public static final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
+      public static final String COLLECTION_REAL_NAME_KEY = "name";
+
+      public static final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
+      public static final String COLLECTION_LOCK_UPDATED_KEY = "updated";
+   }
 }

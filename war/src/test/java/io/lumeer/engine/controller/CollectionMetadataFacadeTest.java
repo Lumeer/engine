@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.Utils;
@@ -174,10 +175,19 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       Assert.assertTrue(columns.contains(newName));
       Assert.assertTrue(rename);
 
-      // we try to rename non existing attribute
+      // we try to rename attribute to name that already exists in collection
       boolean pass = false;
       try {
          collectionMetadataFacade.renameCollectionAttribute(collection, oldName, newName);
+      } catch (AttributeAlreadyExistsException e) {
+         pass = true;
+      }
+      Assert.assertTrue(pass);
+
+      // we try to rename non existing attribute
+      pass = false;
+      try {
+         collectionMetadataFacade.renameCollectionAttribute(collection, oldName, "attribute 3");
       } catch (CollectionMetadataNotFoundException e) {
          pass = true;
       }

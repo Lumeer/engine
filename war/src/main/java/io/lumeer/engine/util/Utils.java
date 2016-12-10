@@ -69,7 +69,7 @@ public class Utils {
     *
     * @param date date string we want to convert to Date
     * @return Date representation of string
-    * @throws ParseException
+    * @throws ParseException when string cannot be parsed
     */
    public static Date getDate(String date) throws ParseException {
       return dateFormat.parse(date);

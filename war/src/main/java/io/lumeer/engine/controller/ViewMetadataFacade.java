@@ -19,8 +19,10 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -42,30 +44,18 @@ public class ViewMetadataFacade implements Serializable {
    @Inject
    private DataStorage dataStorage;
 
-   public static final String VIEW_METADATA_COLLECTION_NAME = "viewmetadatacollection";
-   private static final String VIEW_NAME_PREFIX = "view.";
+   @Inject
+   private SequenceFacade sequenceFacade;
 
-   public static final String VIEW_ID_NAME_KEY = "id";
-   public static final String VIEW_REAL_NAME_KEY = "name";
-   public static final String VIEW_TYPE_KEY = "type";
-
-   public static final String VIEW_ALL_STYLES_KEY = "styles";
-   public static final String VIEW_STYLE_TYPE_KEY = "type";
-   public static final String VIEW_STYLE_VALUE_KEY = "style";
-   public static final String VIEW_STYLE_CONDITION_KEY = "condition";
-
-   public static final String VIEW_USER_RIGHTS_KEY = "rights";
-   public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
-   public static final String VIEW_CREATE_DATE_KEY = "create-date";
-   public static final String VIEW_CREATE_USER_KEY = "create-user";
-   public static final String VIEW_UPDATE_DATE_KEY = "update-date";
-   public static final String VIEW_UPDATE_USER_KEY = "update-user";
+   @Inject
+   private UserFacade userFacade;
 
    // example of view metadata structure:
    // -------------------------------------
    // {
-   // “id” : “view.thisismyview_0”,
+   // “internal-name” : “thisismyview_0”,
    // “name” : “This is my view.”,
+   // “sequence-number” : 111,
    //	“type” : “table”,
    // “styles” : [
    //    {
@@ -121,6 +111,8 @@ public class ViewMetadataFacade implements Serializable {
     * @param originalViewName
     *       name given by user
     * @return internal view name
+    * @throws ViewAlreadyExistsException
+    *       when view with given name already exists
     */
    public String createInternalName(String originalViewName) throws ViewAlreadyExistsException {
       if (checkIfViewUserNameExists(originalViewName)) {
@@ -131,9 +123,8 @@ public class ViewMetadataFacade implements Serializable {
       name = name.replace(' ', '_').toLowerCase();
       name = Utils.normalize(name);
       name = name.replaceAll("[^_a-z0-9]+", "");
-      name = VIEW_NAME_PREFIX + name;
       int i = 0;
-      while (checkIfViewIdExists(name + "_" + i)) {
+      while (checkIfViewInternalNameExists(name + "_" + i)) {
          i++;
       }
       name = name + "_" + i;
@@ -142,51 +133,67 @@ public class ViewMetadataFacade implements Serializable {
    }
 
    /**
-    * Creates initial metadata for view (so far only user name and id name)
-    * @param originalViewName name given by user
+    * Creates initial metadata for view
+    *
+    * @param originalViewName
+    *       name given by user
     * @throws ViewAlreadyExistsException
+    *       when view with given name already exists
     */
    public void createInitialMetadata(String originalViewName) throws ViewAlreadyExistsException {
       Map<String, Object> metadata = new HashMap<>();
       if (checkIfViewUserNameExists(originalViewName)) {
          throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
       }
-      String id = createInternalName(originalViewName);
-      metadata.put(VIEW_REAL_NAME_KEY, originalViewName);
-      metadata.put(VIEW_ID_NAME_KEY, id);
 
-      // TODO add other metadata
+      metadata.put(LumeerConst.View.VIEW_REAL_NAME_KEY, originalViewName);
 
-      dataStorage.createDocument(VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadata));
+      String internalName = createInternalName(originalViewName);
+      metadata.put(LumeerConst.View.VIEW_INTERNAL_NAME_KEY, internalName);
+
+      int sequenceNumber = sequenceFacade.getNext(LumeerConst.View.VIEW_SEQUENCE_NAME);
+      metadata.put(LumeerConst.View.VIEW_SEQUENCE_NUMBER_KEY, sequenceNumber);
+
+      String createUser = userFacade.getUserName();
+      metadata.put(LumeerConst.View.VIEW_CREATE_USER_KEY, createUser);
+
+      String date = Utils.getCurrentTimeString();
+      metadata.put(LumeerConst.View.VIEW_CREATE_DATE_KEY, date);
+
+      dataStorage.createDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadata));
    }
 
    /**
-    *
-    * @param viewId internal view name
+    * @param viewName
+    *       internal view name
     * @return DataDocument with all metadata about given view
     * @throws ViewMetadataNotFoundException
+    *       when metadata for view with given name does not exist
     */
-   public DataDocument getViewMetadata(String viewId) throws ViewMetadataNotFoundException {
-      List<DataDocument> viewList = dataStorage.run(queryOneViewMetadata(viewId));
+   public DataDocument getViewMetadata(String viewName) throws ViewMetadataNotFoundException {
+      // TODO: check access rights
+      List<DataDocument> viewList = dataStorage.run(queryOneViewMetadata(viewName));
       if (viewList.isEmpty()) {
-         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataNotFoundString(viewId));
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataNotFoundString(viewName));
       }
 
       return viewList.get(0);
    }
 
    /**
-    * @param viewId
+    * @param viewName
     *       internal view name
     * @param metaKey
     *       key of value we want to get
     * @return specific value from view metadata
     * @throws ViewMetadataNotFoundException
+    *       when metadata does not exist
     */
-   public Object getViewMetadataValue(String viewId, String metaKey) throws ViewMetadataNotFoundException {
-      Object value = getViewMetadata(viewId).get(metaKey);
+   public Object getViewMetadataValue(String viewName, String metaKey) throws ViewMetadataNotFoundException {
+      // TODO: check access rights
+      Object value = getViewMetadata(viewName).get(metaKey);
       if (value == null) {
-         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataValueNotFoundString(viewId, metaKey));
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataValueNotFoundString(viewName, metaKey));
       }
       return value;
    }
@@ -194,50 +201,102 @@ public class ViewMetadataFacade implements Serializable {
    /**
     * Sets view metadata value. If the given key does not exist, it is created. Otherwise it is just updated
     *
-    * @param viewId
+    * @param viewName
     *       internal view name
     * @param metaKey
     *       key of value we want to set
     * @param value
     *       value we want to set
     * @throws ViewMetadataNotFoundException
+    *       when metadata for the view does not exist
+    * @throws UnsuccessfulOperationException
+    *       when metadata cannot be set
     */
-   public void setViewMetadataValue(String viewId, String metaKey, Object value) throws ViewMetadataNotFoundException {
-      String id = getViewMetadata(viewId).getId();
+   public void setViewMetadataValue(String viewName, String metaKey, Object value) throws ViewMetadataNotFoundException, UnsuccessfulOperationException {
+      // TODO: check access rights
+
+      if (LumeerConst.View.VIEW_IMMUTABLE_KEYS.contains(metaKey)) { // we check if the meta key is not between fields that cannot be changed
+         throw new UnsuccessfulOperationException(ErrorMessageBuilder.viewMetaImmutableString(viewName, metaKey));
+      }
+
+      String id = getViewMetadata(viewName).getId();
       Map<String, Object> metadataMap = new HashMap<>();
       metadataMap.put(metaKey, value);
-      dataStorage.updateDocument(VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadataMap), id, -1);
+
+      // with every change, we change update user and date
+      String currentUser = userFacade.getUserName();
+      metadataMap.put(LumeerConst.View.VIEW_UPDATE_USER_KEY, currentUser);
+      String date = Utils.getCurrentTimeString();
+      metadataMap.put(LumeerConst.View.VIEW_UPDATE_DATE_KEY, date);
+
+      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadataMap), id, -1);
+   }
+
+   /**
+    * Converts sequence number to internal name.
+    *
+    * @param sequenceNumber
+    *       sequence number of the view
+    * @return internal name of the view with given sequence number
+    * @throws ViewMetadataNotFoundException
+    *       when metadata for the view does not exist
+    */
+   public String getViewInternalNameFromSequenceNumber(int sequenceNumber) throws ViewMetadataNotFoundException {
+      // TODO: check access rights
+      List<DataDocument> viewList = dataStorage.run(queryViewMetadataFromSequenceNumber(sequenceNumber));
+      if (viewList.isEmpty()) {
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataNotFoundString("sequence number: " + sequenceNumber));
+      }
+
+      String value = viewList.get(0).getString(LumeerConst.View.VIEW_INTERNAL_NAME_KEY);
+      if (value == null) {
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataValueNotFoundString("sequence number: " + sequenceNumber, LumeerConst.View.VIEW_INTERNAL_NAME_KEY));
+      }
+      return value;
+   }
+
+   // returns MongoDb query for getting metadata for one given view and its sequence number
+   private String queryViewMetadataFromSequenceNumber(int number) {
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
+            .append("\",filter:{\"")
+            .append(LumeerConst.View.VIEW_SEQUENCE_NUMBER_KEY)
+            .append("\":\"")
+            .append(number)
+            .append("\"}}");
+      String query = sb.toString();
+      return query;
    }
 
    // returns MongoDb query for getting metadata for one given view
-   private String queryOneViewMetadata(String viewId) {
+   private String queryOneViewMetadata(String viewName) {
       StringBuilder sb = new StringBuilder("{find:\"")
-            .append(VIEW_METADATA_COLLECTION_NAME)
+            .append(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
             .append("\",filter:{\"")
-            .append(VIEW_ID_NAME_KEY)
+            .append(LumeerConst.View.VIEW_INTERNAL_NAME_KEY)
             .append("\":\"")
-            .append(viewId)
+            .append(viewName)
             .append("\"}}");
-      String findTypeQuery = sb.toString();
-      return findTypeQuery;
+      String viewMetaQuery = sb.toString();
+      return viewMetaQuery;
    }
 
    private List<DataDocument> getViewsMetadata() {
-      return dataStorage.search(VIEW_METADATA_COLLECTION_NAME, null, null, 0, 0);
+      return dataStorage.search(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, null, null, 0, 0);
    }
 
    private boolean checkIfViewUserNameExists(String originalViewName) {
       for (DataDocument v : getViewsMetadata()) {
-         if (v.get(VIEW_REAL_NAME_KEY).toString().equals(originalViewName)) {
+         if (v.get(LumeerConst.View.VIEW_REAL_NAME_KEY).toString().equals(originalViewName)) {
             return true;
          }
       }
       return false;
    }
 
-   private boolean checkIfViewIdExists(String viewId) {
+   private boolean checkIfViewInternalNameExists(String viewName) {
       for (DataDocument v : getViewsMetadata()) {
-         if (v.get(VIEW_ID_NAME_KEY).toString().equals(viewId)) {
+         if (v.get(LumeerConst.View.VIEW_INTERNAL_NAME_KEY).toString().equals(viewName)) {
             return true;
          }
       }
