@@ -21,12 +21,15 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.io.Serializable;
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
-public class SecurityFacade {
+@SessionScoped
+public class SecurityFacade implements Serializable {
 
    public boolean checkForRead(DataDocument dataDocument, String userName) {
       return true;
