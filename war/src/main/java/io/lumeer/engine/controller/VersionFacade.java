@@ -34,15 +34,11 @@ import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
 
-import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
-import sun.security.provider.SHA;
 
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>

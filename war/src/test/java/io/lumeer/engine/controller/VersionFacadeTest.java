@@ -22,11 +22,8 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
-import io.lumeer.mongodb.MongoUtils;
 
-import com.mongodb.client.model.Filters;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -36,7 +33,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -63,7 +59,6 @@ public class VersionFacadeTest extends Arquillian {
    private final String TEST_GET_OLD_DOC = "versionTestGetOldDocuments";
    private final String TEST_REVERT = "versionTestRevert";
    private final String TEST_EXCEPTION = "versionTestException";
-   private final String TEST_DELETE = "versionTestDelete";
    private final String SHADOW = ".shadow";
 
    @Inject
