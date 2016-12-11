@@ -58,7 +58,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Return document version
+    * Return document version.
     *
     * @param collectionName
     *       collection name in which document is stored
@@ -77,7 +77,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Return document version
+    * Return document version.
     *
     * @param document
     *       document where this id is stored
@@ -127,7 +127,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Create metadata if not exists
+    * Create metadata if not exists.
     *
     * @param document
     *       document where to create metadata
@@ -205,7 +205,7 @@ public class VersionFacade implements Serializable {
 
    /**
     * Parse id from document from input. Read document from shadow and
-    * replace id with id specified in input document
+    * replace id with id specified in input document.
     *
     * @param collectionName
     *       collection of document to be readed
@@ -231,7 +231,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Read document from shadow collection with specified id and version
+    * Read document from shadow collection with specified id and version.
     *
     * @param collectionName
     *       collection to read

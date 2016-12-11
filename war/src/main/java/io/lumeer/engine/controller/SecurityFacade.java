@@ -76,7 +76,7 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
-    * Check in datadocument for userName if can read
+    * Check in datadocument for userName if can read.
     *
     * @param dataDocument
     *       document to check
@@ -89,7 +89,7 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
-    * Check in datadocument for userName if can write
+    * Check in datadocument for userName if can write.
     *
     * @param dataDocument
     *       document to check
@@ -102,7 +102,7 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
-    * Check in datadocument for userName if can execute
+    * Check in datadocument for userName if can execute.
     *
     * @param dataDocument
     *       document to check
@@ -115,7 +115,7 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
-    * Check in datadocument for userName if can add rights - same as execute
+    * Check in datadocument for userName if can add rights - same as execute.
     *
     * @param dataDocument
     *       document to check
@@ -134,7 +134,7 @@ public class SecurityFacade implements Serializable {
 
    /**
     * Read document from collectionName with specified documentId
-    * and check if user can read this document
+    * and check if user can read this document.
     *
     * @param collectionName
     *       collection name where document is stored
@@ -150,7 +150,7 @@ public class SecurityFacade implements Serializable {
 
    /**
     * Read document from collectionName with specified documentId
-    * and check if user can write to this document
+    * and check if user can write to this document.
     *
     * @param collectionName
     *       collection name where document is stored
@@ -172,7 +172,7 @@ public class SecurityFacade implements Serializable {
 
    /**
     * Read document from collectionName with specified documentId
-    * and check if user can execute this document
+    * and check if user can execute this document.
     *
     * @param collectionName
     *       collection name where document is stored
@@ -194,7 +194,7 @@ public class SecurityFacade implements Serializable {
 
    /**
     * Read document from collectionName with specified documentId
-    * and check if user can add rights to this document
+    * and check if user can add rights to this document.
     *
     * @param collectionName
     *       collection name where document is stored
@@ -220,7 +220,7 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
-    * Set read rights to dataDocument for userName
+    * Set read rights to dataDocument for userName.
     *
     * @param dataDocument
     *       dataDocument where rights are set
@@ -236,7 +236,7 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
-    * Set write rights to dataDocument for userName
+    * Set write rights to dataDocument for userName.
     *
     * @param dataDocument
     *       dataDocument where rights are set
@@ -252,7 +252,7 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
-    * Set execute rights to dataDocument for userName
+    * Set execute rights to dataDocument for userName.
     *
     * @param dataDocument
     *       dataDocument where rights are set
