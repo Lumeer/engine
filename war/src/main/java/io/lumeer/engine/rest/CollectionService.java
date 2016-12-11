@@ -23,7 +23,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
-import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
@@ -80,7 +80,7 @@ public class CollectionService implements Serializable {
          return new ArrayList<>(collectionFacade.getAllCollections().keySet());
       } catch (CollectionNotFoundException e) {
          throw new InternalServerErrorException();
-      } catch (CollectionMetadataNotFoundException e) {
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          throw new InternalServerErrorException();
       }
    }
@@ -95,7 +95,7 @@ public class CollectionService implements Serializable {
          collectionFacade.createCollection(name);
       } catch (CollectionNotFoundException e) {
          throw new InternalServerErrorException();
-      } catch (CollectionMetadataNotFoundException e) {
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          throw new InternalServerErrorException();
       } catch (CollectionAlreadyExistsException e) {
          throw new BadRequestException();
@@ -144,7 +144,7 @@ public class CollectionService implements Serializable {
          throw new NotFoundException();
       } catch (AttributeNotFoundException e) {
          throw new NotFoundException();
-      } catch (CollectionMetadataNotFoundException e) {
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          throw new NotFoundException();
       }
    }
@@ -162,7 +162,7 @@ public class CollectionService implements Serializable {
                || (collectionMetadataFacade.renameCollectionAttribute(collectionName, oldName, newName) == false)) {
             throw new BadRequestException();
          }
-      } catch (CollectionMetadataNotFoundException e) {
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          throw new NotFoundException();
       } catch (CollectionNotFoundException e) {
          throw new NotFoundException();

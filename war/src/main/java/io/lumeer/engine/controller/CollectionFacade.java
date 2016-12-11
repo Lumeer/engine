@@ -25,7 +25,7 @@ import io.lumeer.engine.api.event.CollectionEvent;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
-import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -75,10 +75,10 @@ public class CollectionFacade implements Serializable {
     * @return the map of collection names. Keys are internal names, values are original names.
     * @throws CollectionNotFoundException
     *       when
-    * @throws CollectionMetadataNotFoundException
+    * @throws CollectionMetadataDocumentNotFoundException
     *       when
     */
-   public Map<String, String> getAllCollections() throws CollectionNotFoundException, CollectionMetadataNotFoundException {
+   public Map<String, String> getAllCollections() throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (this.collections == null) {
          List<String> collectionsAll = dataStorage.getAllCollections();
          collections = new HashMap<>();
@@ -106,10 +106,10 @@ public class CollectionFacade implements Serializable {
     *       when
     * @throws CollectionNotFoundException
     *       when
-    * @throws CollectionMetadataNotFoundException
+    * @throws CollectionMetadataDocumentNotFoundException
     *       when
     */
-   public String createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataNotFoundException {
+   public String createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       String internalCollectionName = collectionMetadataFacade.createInternalName(collectionOriginalName);
 
       if (!dataStorage.hasCollection(internalCollectionName)) {
@@ -287,10 +287,10 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     * @throws AttributeNotFoundException
     *       if attribute was not found in collection
-    * @throws CollectionMetadataNotFoundException
+    * @throws CollectionMetadataDocumentNotFoundException
     *       when metadata about attribute was not found
     */
-   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException, CollectionMetadataNotFoundException {
+   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException, CollectionMetadataDocumentNotFoundException {
       // TODO: check access rights
       if (dataStorage.hasCollection(collectionName)) {
          if (collectionMetadataFacade.dropCollectionAttribute(collectionName, attributeName)) { // true if attribute exists in the collection metadata
@@ -322,10 +322,10 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
-    * @throws CollectionMetadataNotFoundException
+    * @throws CollectionMetadataDocumentNotFoundException
     *       when attribute with old name does not exist
     */
-   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataNotFoundException {
+   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
       // TODO: check access rights
       if (dataStorage.hasCollection(collectionName)) {
          collectionMetadataFacade.renameCollectionAttribute(collectionName, origName, newName);

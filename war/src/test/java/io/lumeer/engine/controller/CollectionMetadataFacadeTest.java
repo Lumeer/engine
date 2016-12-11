@@ -19,10 +19,12 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
-import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.Utils;
 
@@ -72,12 +74,13 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    private final String COLLECTION_RETYPE_ATTRIBUTE = "CollectionMetadataFacadeCollectionRetypeAttribute";
    private final String COLLECTION_DROP_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropAttribute";
    private final String COLLECTION_SET_ORIGINAL_NAME = "CollectionMetadataFacadeCollectionSetOriginalName";
+   private final String COLLECTION_GET_INTERNAL_NAME = "CollectionMetadataFacadeCollectionGetInternalName";
    private final String COLLECTION_CREATE_INITIAL_METADATA = "CollectionMetadataFacadeCollectionCreateInitialMetadata";
    private final String COLLECTION_SET_LOCK_TIME = "CollectionMetadataFacadeCollectionSetLockTime";
    private final String COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionAddOrIncrementAttribute";
    private final String COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropOrDecrementAttribute";
    private final String COLLECTION_CHECK_ATTRIBUTE_VALUE = "CollectionMetadataFacadeCollectionCheckAttributeValue";
-   //private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
+   private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
 
    @Test
    public void testCreateInternalName() throws Exception {
@@ -188,7 +191,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       pass = false;
       try {
          collectionMetadataFacade.renameCollectionAttribute(collection, oldName, "attribute 3");
-      } catch (CollectionMetadataNotFoundException e) {
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          pass = true;
       }
       Assert.assertTrue(pass);
@@ -204,27 +207,22 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
 
-      String oldType = "double";
+      String oldType = LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_NUMBER;
       boolean retype = collectionMetadataFacade.retypeCollectionAttribute(collection, name, oldType);
       Assert.assertEquals(collectionMetadataFacade.getAttributeType(collection, name), oldType);
       Assert.assertTrue(retype);
 
-      oldType = "int";
-      retype = collectionMetadataFacade.retypeCollectionAttribute(collection, name, oldType);
-      Assert.assertEquals(collectionMetadataFacade.getAttributeType(collection, name), oldType);
-      Assert.assertTrue(retype);
-
+      // we try to retype to invalid type
       String newType = "hello";
       retype = collectionMetadataFacade.retypeCollectionAttribute(collection, name, newType);
-
       Assert.assertEquals(collectionMetadataFacade.getAttributeType(collection, name), oldType);
       Assert.assertFalse(retype);
 
       // we try to retype non existing attribute
       boolean pass = false;
       try {
-         collectionMetadataFacade.retypeCollectionAttribute(collection, "attribute2", "int");
-      } catch (CollectionMetadataNotFoundException e) {
+         collectionMetadataFacade.retypeCollectionAttribute(collection, "attribute2", LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          pass = true;
       }
       Assert.assertTrue(pass);
@@ -250,7 +248,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       boolean pass = false;
       try {
          collectionMetadataFacade.dropCollectionAttribute(collection, "attribute2");
-      } catch (CollectionMetadataNotFoundException e) {
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          pass = true;
       }
       Assert.assertTrue(pass);
@@ -265,6 +263,17 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String realName = collectionMetadataFacade.getOriginalCollectionName(collection);
 
       Assert.assertEquals(COLLECTION_SET_ORIGINAL_NAME, realName);
+   }
+
+   @Test
+   public void testGetInternalCollectionName() throws Exception {
+      setUpCollection(COLLECTION_GET_INTERNAL_NAME);
+
+      collectionFacade.createCollection(COLLECTION_GET_INTERNAL_NAME);
+      String ourInternalName = internalName(COLLECTION_GET_INTERNAL_NAME);
+      String realInternalName = collectionMetadataFacade.getInternalCollectionName(COLLECTION_GET_INTERNAL_NAME);
+
+      Assert.assertEquals(ourInternalName, realInternalName);
    }
 
    @Test
@@ -353,50 +362,64 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       collectionFacade.createCollection(COLLECTION_CHECK_ATTRIBUTE_VALUE);
       String collection = internalName(COLLECTION_CHECK_ATTRIBUTE_VALUE);
 
-      String name = "attribute 1";
-      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+      String attribute = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
 
-      String type = "double";
-      collectionMetadataFacade.retypeCollectionAttribute(collection, name, type);
-      boolean check = collectionMetadataFacade.checkAttributeValue(collection, name, "3.14");
-      Assert.assertTrue(check);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "hm");
-      Assert.assertFalse(check);
+      String constraint1 = "isNumber";
+      String constraint2 = "lessThan:3";
+      collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint1);
+      collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint2);
 
-      type = "int";
-      collectionMetadataFacade.retypeCollectionAttribute(collection, name, type);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "3");
-      Assert.assertTrue(check);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "3.14");
-      Assert.assertFalse(check);
+      String valueValid = "2";
+      String valueInvalid1 = "4";
+      String valueInvalid2 = "a";
 
-      type = "long";
-      collectionMetadataFacade.retypeCollectionAttribute(collection, name, type);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "12345678900");
-      Assert.assertTrue(check);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "hm");
-      Assert.assertFalse(check);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attribute, valueValid), "2");
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attribute, valueInvalid1), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attribute, valueInvalid2), null);
+   }
 
-      type = "nested";
-      collectionMetadataFacade.retypeCollectionAttribute(collection, name, type);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "hm");
-      Assert.assertFalse(check);
+   @Test
+   public void testGetAddDropConstraint() throws Exception {
+      setUpCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
 
-      type = "date";
-      collectionMetadataFacade.retypeCollectionAttribute(collection, name, type);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "2016.11.22");
-      Assert.assertTrue(check);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "2016.11.22 21.36");
-      Assert.assertTrue(check);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "hm");
-      Assert.assertFalse(check);
+      collectionFacade.createCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
+      String collection = internalName(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
 
-      type = "bool";
-      collectionMetadataFacade.retypeCollectionAttribute(collection, name, type);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "true");
-      Assert.assertTrue(check);
-      check = collectionMetadataFacade.checkAttributeValue(collection, name, "hm");
-      Assert.assertFalse(check);
+      String attribute = "attribute 1";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
+
+      List<String> constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
+      Assert.assertTrue(constraints.isEmpty());
+
+      String constraint1 = "isNumber";
+      String constraint2 = "lessThan:3";
+
+      collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint1);
+      collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint2);
+      constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
+      Assert.assertEquals(constraints.size(), 2);
+      Assert.assertTrue(constraints.contains(constraint1));
+      Assert.assertTrue(constraints.contains(constraint2));
+
+      collectionMetadataFacade.dropAttributeConstraint(collection, attribute, constraint1);
+      constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
+      Assert.assertEquals(constraints.size(), 1);
+      Assert.assertTrue(constraints.contains(constraint2));
+
+      collectionMetadataFacade.dropAttributeConstraint(collection, attribute, constraint2);
+      constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
+      Assert.assertTrue(constraints.isEmpty());
+
+      // we try to add dummy constraint
+      String constraint3 = "dummy";
+      boolean pass = false;
+      try {
+         collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint3);
+      } catch (InvalidConstraintException e) {
+         pass = true;
+      }
+      Assert.assertTrue(pass);
    }
 
    @Test
@@ -416,7 +439,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    //      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
    //      collectionMetadataFacade.retypeCollectionAttribute(collection, name, collectionMetadataFacade.COLLECTION_ATTRIBUTE_TYPE_INT);
    //
-   //      Assert.assertTrue(collectionMetadataFacade.getAttributeConstraints(collection, name).isEmpty());
+   //      Assert.assertTrue(collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, name).isEmpty());
    //
    //      boolean valid = collectionMetadataFacade.addAttributeConstraint(collection, name, collectionMetadataFacade.COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GT, "10");
    //      Assert.assertTrue(valid);
@@ -427,7 +450,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    //      valid = collectionMetadataFacade.addAttributeConstraint(collection, name, collectionMetadataFacade.COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_REGEX, "a");
    //      Assert.assertFalse(valid);
    //
-   //      Assert.assertEquals(collectionMetadataFacade.getAttributeConstraints(collection, name).size(), 1);
+   //      Assert.assertEquals(collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, name).size(), 1);
    //   }
 
    private String internalName(String collectionOriginalName) {

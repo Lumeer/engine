@@ -24,17 +24,17 @@ package io.lumeer.engine.api.exception;
  *
  * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
  */
-public class CollectionMetadataNotFoundException extends DbException {
+public class CollectionMetadataDocumentNotFoundException extends DbException {
 
-   public CollectionMetadataNotFoundException(final String message) {
+   public CollectionMetadataDocumentNotFoundException(final String message) {
       super(message);
    }
 
-   public CollectionMetadataNotFoundException(final String message, final Throwable cause) {
+   public CollectionMetadataDocumentNotFoundException(final String message, final Throwable cause) {
       super(message, cause);
    }
 
-   public CollectionMetadataNotFoundException(final Throwable cause) {
+   public CollectionMetadataDocumentNotFoundException(final Throwable cause) {
       super(cause);
    }
 }

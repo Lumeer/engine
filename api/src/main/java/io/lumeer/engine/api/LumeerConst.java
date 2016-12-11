@@ -114,22 +114,16 @@ public final class LumeerConst {
       public static final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
       public static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
 
-      // attribute types according to DataDocument methods, empty is default and is considered String
-      public static final String COLLECTION_ATTRIBUTE_TYPE_INT = "int";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_LONG = "long";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_DOUBLE = "double";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_BOOLEAN = "bool";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_NUMBER = "number";
       public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = ""; // empty is default and is considered String
+      public static final String COLLECTION_ATTRIBUTE_TYPE_LIST = "list";
+      // public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested"; // TODO
       public static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES =
-            Arrays.asList(COLLECTION_ATTRIBUTE_TYPE_INT,
-                  COLLECTION_ATTRIBUTE_TYPE_LONG,
-                  COLLECTION_ATTRIBUTE_TYPE_DOUBLE,
-                  COLLECTION_ATTRIBUTE_TYPE_BOOLEAN,
+            Arrays.asList(COLLECTION_ATTRIBUTE_TYPE_NUMBER,
                   COLLECTION_ATTRIBUTE_TYPE_DATE,
                   COLLECTION_ATTRIBUTE_TYPE_STRING,
-                  COLLECTION_ATTRIBUTE_TYPE_NESTED);
+                  COLLECTION_ATTRIBUTE_TYPE_LIST);
 
       public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
 

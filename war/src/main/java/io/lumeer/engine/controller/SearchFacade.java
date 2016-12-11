@@ -23,7 +23,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
-import io.lumeer.engine.api.exception.CollectionMetadataNotFoundException;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -109,7 +109,7 @@ public class SearchFacade implements Serializable {
          if (collections.size() == 0) {
             collections.addAll(collectionFacade.getAllCollections().keySet());
          }
-      } catch (CollectionNotFoundException | CollectionMetadataNotFoundException e) {
+      } catch (CollectionNotFoundException | CollectionMetadataDocumentNotFoundException e) {
          throw new InvalidQueryException("Search asks for collections that are not available: ", e);
       }
 
