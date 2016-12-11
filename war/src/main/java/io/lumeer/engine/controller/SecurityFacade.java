@@ -23,4 +23,19 @@ package io.lumeer.engine.controller;
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
 public class SecurityFacade {
+   public boolean checkForRead() {
+      return true;
+   }
+
+   public boolean checkForWrite() {
+      return true;
+   }
+
+   public boolean checkForExecute() {
+      return true;
+   }
+
+   public boolean checkForAddRights() {
+      return true;
+   }
 }

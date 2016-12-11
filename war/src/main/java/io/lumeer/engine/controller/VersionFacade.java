@@ -21,12 +21,22 @@ package io.lumeer.engine.controller;
 
 import java.io.Serializable;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
+import io.lumeer.mongodb.MongoUtils;
+
+import com.mongodb.client.model.Filters;
+
+import org.bson.BsonDocument;
+import org.bson.types.ObjectId;
+import sun.security.provider.SHA;
 
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
@@ -39,15 +49,16 @@ import java.util.Objects;
  */
 @SessionScoped
 public class VersionFacade implements Serializable {
+
    private final String SHADOW = ".shadow";
-   private final String VERSION_STRING = "_metadata-version"; //use from utils
-   private final String DOCUMENT_ID_STRING = "_id";
+   ;
+   public static final String METADATA_ID_KEY = "_id";
 
    @Inject
    private DataStorage dataStorage;
 
    public String getVersionMetadataString() {
-      return VERSION_STRING;
+      return LumeerConst.METADATA_VERSION_KEY;
    }
 
    /**
@@ -77,10 +88,10 @@ public class VersionFacade implements Serializable {
     * @return integer, document version
     */
    public int getDocumentVersion(DataDocument document) {
-      if (document.getInteger(VERSION_STRING) == null) {
+      if (document.getInteger(LumeerConst.METADATA_VERSION_KEY) == null) {
          return 0;
       }
-      return document.getInteger(VERSION_STRING);
+      return document.getInteger(LumeerConst.METADATA_VERSION_KEY);
    }
 
    /**
@@ -103,17 +114,19 @@ public class VersionFacade implements Serializable {
     *       if documment cannot be updated, bud was
     *       backuped in shadow collection
     */
-   public int newDocumentVersion(String collectionName, DataDocument document) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
-      String id = document.getString(DOCUMENT_ID_STRING);
-      int oldVersion = backUp(collectionName, document.get(DOCUMENT_ID_STRING).toString());
+   public int newDocumentVersion(String collectionName, DataDocument document) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
+      String id = document.getString(METADATA_ID_KEY);
+      if (id == null) {
+         throw new InvalidDocumentKeyException("no document id");
+      }
       createMetadata(document);
-      document.replace(VERSION_STRING, oldVersion + 1);
-      dataStorage.updateDocument(collectionName, document, document.getString(DOCUMENT_ID_STRING), -1);
+      int oldVersion = backUp(collectionName, document.getString(METADATA_ID_KEY));
+      document.replace(LumeerConst.METADATA_VERSION_KEY, oldVersion + 1);
+      dataStorage.updateDocument(collectionName, document, document.getString(METADATA_ID_KEY), -1);
       DataDocument readed = dataStorage.readDocument(collectionName, id);
       if (!readed.keySet().containsAll(document.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
       }
-      // TODO compare values.. WARN! equals is not safe!
       return oldVersion + 1;
    }
 
@@ -124,8 +137,8 @@ public class VersionFacade implements Serializable {
     *       document where to create metadata
     */
    private void createMetadata(DataDocument document) {
-      if (!document.containsKey(VERSION_STRING)) {
-         document.put(VERSION_STRING, 0);
+      if (!document.containsKey(LumeerConst.METADATA_VERSION_KEY)) {
+         document.put(LumeerConst.METADATA_VERSION_KEY, 0);
       }
    }
 
@@ -136,12 +149,12 @@ public class VersionFacade implements Serializable {
     *       collection name to imput.
     */
    private void createShadow(String collectionName) {
-      if (!(dataStorage.getAllCollections().contains(collectionName + SHADOW))) {
+      if (!(dataStorage.hasCollection(collectionName + SHADOW))) {
          dataStorage.createCollection(collectionName + SHADOW);
       }
    }
 
-   private int backUp(String collectionName, String documentId) throws DocumentNotFoundException, VersionUpdateConflictException {
+   public int backUp(String collectionName, String documentId) throws DocumentNotFoundException, VersionUpdateConflictException {
       DataDocument document = dataStorage.readDocument(collectionName, documentId);
       if (document == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
@@ -172,19 +185,26 @@ public class VersionFacade implements Serializable {
     * @throws UnsuccessfulOperationException
     *       if document cannot be updated
     */
-   public void revertDocumentVersion(String collectionName, DataDocument document, int revertTo) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
-      Object id = document.get(DOCUMENT_ID_STRING);
+   public void revertDocumentVersion(String collectionName, DataDocument document, int revertTo) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
+      Object id = document.get(METADATA_ID_KEY);
+      if (id == null) {
+         throw new InvalidDocumentKeyException("no document id");
+      }
       DataDocument newDocument = getOldDocumentVersion(collectionName, document, revertTo);
       int newVersion = newDocumentVersion(collectionName, document);
-      newDocument.replace(VERSION_STRING, newVersion);
-      Object idN = newDocument.get(DOCUMENT_ID_STRING);
+      newDocument.replace(LumeerConst.METADATA_VERSION_KEY, newVersion);
+      Object idN = newDocument.get(METADATA_ID_KEY);
       dataStorage.updateDocument(collectionName, newDocument, idN.toString(), -1);
-      newDocument.put(DOCUMENT_ID_STRING, idN);
-      if (!newDocument.equals(dataStorage.readDocument(collectionName, newDocument.get(DOCUMENT_ID_STRING).toString()))) {
+      newDocument.put(METADATA_ID_KEY, idN);
+     /* if (!newDocument.equals(dataStorage.readDocument(collectionName, newDocument.get(METADATA_ID_KEY).toString()))) {
+         throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
+      };
+*/
+      DataDocument readed = dataStorage.readDocument(collectionName, newDocument.getString(METADATA_ID_KEY));
+      if (!readed.keySet().containsAll(newDocument.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
       }
-      ;
-      document.put(DOCUMENT_ID_STRING, id);
+      document.put(METADATA_ID_KEY, id);
    }
 
    /**
@@ -201,13 +221,16 @@ public class VersionFacade implements Serializable {
     * @throws DocumentNotFoundException
     *       if document cannot be found
     */
-   public DataDocument getOldDocumentVersion(String collectionName, DataDocument document, int version) throws DocumentNotFoundException {
-      Object id = document.get(DOCUMENT_ID_STRING);
+   public DataDocument getOldDocumentVersion(String collectionName, DataDocument document, int version) throws DocumentNotFoundException, InvalidDocumentKeyException {
+      Object id = document.get(METADATA_ID_KEY);
+      if (id == null) {
+         throw new InvalidDocumentKeyException("no document id");
+      }
       DataDocument data = dataStorage.readOldDocument(collectionName + SHADOW, id.toString(), version);
       if (data == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      data.replace(DOCUMENT_ID_STRING, id);
+      data.replace(METADATA_ID_KEY, id);
       return data;
    }
 
@@ -225,7 +248,7 @@ public class VersionFacade implements Serializable {
     *       if document cannot be found
     */
    public DataDocument getOldDocumentVersion(String collectionName, String documentId, int version) throws DocumentNotFoundException {
-      Object id = dataStorage.readDocument(collectionName, documentId).get(DOCUMENT_ID_STRING);
+      Object id = dataStorage.readDocument(collectionName, documentId).get(METADATA_ID_KEY);
       if (id == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -233,7 +256,7 @@ public class VersionFacade implements Serializable {
       if (data == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      data.replace(DOCUMENT_ID_STRING, id);
+      data.replace(METADATA_ID_KEY, id);
       return data;
    }
 
@@ -247,20 +270,37 @@ public class VersionFacade implements Serializable {
     *       id of document
     * @return lis of documents from shadow with same id
     */
-   public List<DataDocument> getDocumentVersions(String collectionName, String documentId) {
-      List<DataDocument> dataDocuments = new ArrayList<DataDocument>();
+   public List<DataDocument> getDocumentVersions(String collectionName, String documentId) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      List<DataDocument> dataDocuments;
+      /*      = new ArrayList<DataDocument>();
       StringBuilder sb = new StringBuilder("{\"")
             .append("_id._id")
             .append("\" : ")
-            .append("ObjectId(\"")
+            .append("$oid:\"")
             .append(documentId)
             .append("\")}");
-      String filter = sb.toString();
+      String filter = sb.toString();*/
       dataDocuments = dataStorage.search(collectionName + SHADOW,
-            filter
-            , null, 0, Integer.MAX_VALUE);
+            MongoUtils.convertBsonToJson(Filters.eq("_id._id", new ObjectId(documentId)))
+            , null, 0, 100);
       DataDocument main = dataStorage.readDocument(collectionName, documentId);
       dataDocuments.add(main);
       return dataDocuments;
+   }
+
+   /**
+    * Add .delete tag to shadow collection
+    * @param collectionName
+    */
+   public void deleteVersionCollection(String collectionName) {
+      StringBuilder sb = new StringBuilder("{ renameCollection: \"")
+            .append(collectionName + SHADOW)
+            .append("\", to: \"")
+            .append(collectionName + SHADOW + ".delete")
+            .append("\"}");
+      dataStorage.run(sb.toString());
    }
 }

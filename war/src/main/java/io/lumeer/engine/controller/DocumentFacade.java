@@ -182,7 +182,7 @@ public class DocumentFacade implements Serializable {
     * @throws UnsuccessfulOperationException
     *       if document stay in collection after drop
     */
-   public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException {
+   public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
