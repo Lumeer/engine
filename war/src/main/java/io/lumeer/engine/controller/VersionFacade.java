@@ -47,7 +47,7 @@ import java.util.List;
 public class VersionFacade implements Serializable {
 
    private final String SHADOW = ".shadow";
-   ;
+
    public static final String METADATA_ID_KEY = "_id";
 
    @Inject
@@ -111,14 +111,14 @@ public class VersionFacade implements Serializable {
     *       backuped in shadow collection
     */
    public int newDocumentVersion(String collectionName, DataDocument document) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
-      String id = document.getString(METADATA_ID_KEY);
+      String id = document.getId();
       if (id == null) {
          throw new InvalidDocumentKeyException("no document id");
       }
       createMetadata(document);
-      int oldVersion = backUp(collectionName, document.getString(METADATA_ID_KEY));
+      int oldVersion = backUp(collectionName, document.getId());
       document.replace(LumeerConst.METADATA_VERSION_KEY, oldVersion + 1);
-      dataStorage.updateDocument(collectionName, document, document.getString(METADATA_ID_KEY), -1);
+      dataStorage.updateDocument(collectionName, document, document.getId(), -1);
       DataDocument readed = dataStorage.readDocument(collectionName, id);
       if (!readed.keySet().containsAll(document.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
@@ -192,11 +192,7 @@ public class VersionFacade implements Serializable {
       Object idN = newDocument.get(METADATA_ID_KEY);
       dataStorage.updateDocument(collectionName, newDocument, idN.toString(), -1);
       newDocument.put(METADATA_ID_KEY, idN);
-     /* if (!newDocument.equals(dataStorage.readDocument(collectionName, newDocument.get(METADATA_ID_KEY).toString()))) {
-         throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
-      };
-*/
-      DataDocument readed = dataStorage.readDocument(collectionName, newDocument.getString(METADATA_ID_KEY));
+      DataDocument readed = dataStorage.readDocument(collectionName, newDocument.getId());
       if (!readed.keySet().containsAll(newDocument.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
       }
