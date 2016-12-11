@@ -19,23 +19,44 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.data.DataDocument;
+
+import javax.inject.Inject;
+
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
 public class SecurityFacade {
-   public boolean checkForRead() {
+
+   public boolean checkForRead(DataDocument dataDocument, String userName) {
       return true;
    }
 
-   public boolean checkForWrite() {
+   public boolean checkForWrite(DataDocument dataDocument, String userName) {
       return true;
    }
 
-   public boolean checkForExecute() {
+   public boolean checkForExecute(DataDocument dataDocument, String userName) {
       return true;
    }
 
-   public boolean checkForAddRights() {
+   public boolean checkForAddRights(DataDocument dataDocument, String userName) {
+      return true;
+   }
+
+   public boolean checkForRead(String collectionName, String documentId, String userName) {
+      return true;
+   }
+
+   public boolean checkForWrite(String collectionName, String documentId, String userName) {
+      return true;
+   }
+
+   public boolean checkForExecute(String collectionName, String documentId, String userName) {
+      return true;
+   }
+
+   public boolean checkForAddRights(String collectionName, String documentId, String userName) {
       return true;
    }
 }
