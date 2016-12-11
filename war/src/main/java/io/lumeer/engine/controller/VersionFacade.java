@@ -34,15 +34,11 @@ import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
 
-import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
-import sun.security.provider.SHA;
 
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
@@ -51,7 +47,7 @@ import java.util.Objects;
 public class VersionFacade implements Serializable {
 
    private final String SHADOW = ".shadow";
-   ;
+
    public static final String METADATA_ID_KEY = "_id";
 
    @Inject
@@ -62,7 +58,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Return document version
+    * Return document version.
     *
     * @param collectionName
     *       collection name in which document is stored
@@ -81,7 +77,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Return document version
+    * Return document version.
     *
     * @param document
     *       document where this id is stored
@@ -115,14 +111,14 @@ public class VersionFacade implements Serializable {
     *       backuped in shadow collection
     */
    public int newDocumentVersion(String collectionName, DataDocument document) throws DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
-      String id = document.getString(METADATA_ID_KEY);
+      String id = document.getId();
       if (id == null) {
          throw new InvalidDocumentKeyException("no document id");
       }
       createMetadata(document);
-      int oldVersion = backUp(collectionName, document.getString(METADATA_ID_KEY));
+      int oldVersion = backUp(collectionName, document.getId());
       document.replace(LumeerConst.METADATA_VERSION_KEY, oldVersion + 1);
-      dataStorage.updateDocument(collectionName, document, document.getString(METADATA_ID_KEY), -1);
+      dataStorage.updateDocument(collectionName, document, document.getId(), -1);
       DataDocument readed = dataStorage.readDocument(collectionName, id);
       if (!readed.keySet().containsAll(document.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
@@ -131,7 +127,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Create metadata if not exists
+    * Create metadata if not exists.
     *
     * @param document
     *       document where to create metadata
@@ -196,11 +192,7 @@ public class VersionFacade implements Serializable {
       Object idN = newDocument.get(METADATA_ID_KEY);
       dataStorage.updateDocument(collectionName, newDocument, idN.toString(), -1);
       newDocument.put(METADATA_ID_KEY, idN);
-     /* if (!newDocument.equals(dataStorage.readDocument(collectionName, newDocument.get(METADATA_ID_KEY).toString()))) {
-         throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
-      };
-*/
-      DataDocument readed = dataStorage.readDocument(collectionName, newDocument.getString(METADATA_ID_KEY));
+      DataDocument readed = dataStorage.readDocument(collectionName, newDocument.getId());
       if (!readed.keySet().containsAll(newDocument.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
       }
@@ -209,7 +201,7 @@ public class VersionFacade implements Serializable {
 
    /**
     * Parse id from document from input. Read document from shadow and
-    * replace id with id specified in input document
+    * replace id with id specified in input document.
     *
     * @param collectionName
     *       collection of document to be readed
@@ -235,7 +227,7 @@ public class VersionFacade implements Serializable {
    }
 
    /**
-    * Read document from shadow collection with specified id and version
+    * Read document from shadow collection with specified id and version.
     *
     * @param collectionName
     *       collection to read

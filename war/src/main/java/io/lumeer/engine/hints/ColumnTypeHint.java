@@ -19,24 +19,55 @@
  */
 package io.lumeer.engine.hints;
 
+import io.lumeer.engine.api.data.DataDocument;
+
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
 public class ColumnTypeHint implements Hint {
+
+   private DataDocument dataDocument;
+   private String userName;
+   private String collectionName;
+
    @Override
    public Hint call() throws Exception {
+      if (dataDocument != null) {
+         return test(dataDocument);
+      }
+      return new ColumnTypeHint();
+   }
+
+   public ColumnTypeHint test(DataDocument dataDocument) {
+      //dataDocument.g
       return new ColumnTypeHint();
    }
 
    @Override
-   public boolean isApplicable(){
+   public boolean isApplicable() {
       return true;
    }
+
    @Override
-   public boolean apply(){
+   public boolean apply() {
       return true;
    }
+
    @Override
-   public void sendNotification(){
+   public void sendNotification() {
+   }
+
+   public void setDocument(DataDocument dataDocument) {
+      this.dataDocument = dataDocument;
+   }
+
+   @Override
+   public void setCollection(final String collectionName) {
+      this.collectionName = collectionName;
+   }
+
+   @Override
+   public void setUser(final String userName) {
+      this.userName = userName;
    }
 }
