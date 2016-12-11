@@ -71,6 +71,7 @@ public final class LumeerConst {
    }
 
    public static class Document {
+      public static final String ID = "_id";
       public static final String METADATA_PREFIX = "_meta-";
       public static final String CREATE_DATE_KEY = METADATA_PREFIX + "create-date";
       public static final String UPDATE_DATE_KEY = METADATA_PREFIX + "update-date";

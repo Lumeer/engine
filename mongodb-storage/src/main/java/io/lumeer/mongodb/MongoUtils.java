@@ -19,12 +19,14 @@
  */
 package io.lumeer.mongodb;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.mongodb.MongoClient;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +84,18 @@ public class MongoUtils {
       }
 
       return new Document(dataDocument);
+   }
+
+   public static void replaceId(final Document document) {
+      Object docId = document.get(LumeerConst.Document.ID);
+      if (docId instanceof ObjectId) { // classic document
+         document.replace(LumeerConst.Document.ID, docId.toString());
+      } else if (docId instanceof Document) { // shadow document
+         Document d = (Document) docId;
+         d.replace(LumeerConst.Document.ID, d.getObjectId(LumeerConst.Document.ID).toString());
+         DataDocument doc = new DataDocument(d);
+         document.replace(LumeerConst.Document.ID, doc);
+      }
    }
 
    public static boolean isDataDocument(Object obj) {
