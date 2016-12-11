@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.api.data;
 
+import io.lumeer.engine.api.batch.Batch;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 
 import java.io.Serializable;
@@ -398,4 +399,12 @@ public interface DataStorage extends Serializable {
     *       The name of an index to drop.
     */
    void dropIndex(final String collectionName, final String indexName);
+
+   /**
+    * Runs batch operation on the database.
+    *
+    * @param batch
+    *       The batch operation to run.
+    */
+   void batch(final Batch batch);
 }
