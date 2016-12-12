@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
- * Copyright (C) 2016 - 2017 the original author or authors.
+ * Copyright (C) since 2016 the original author or authors.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,26 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.hints;
-
-import io.lumeer.engine.api.data.DataDocument;
-
-import java.util.concurrent.Callable;
+package io.lumeer.engine.api.batch;
 
 /**
- * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
+ * Represents a batch operation on a collection.
+ *
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public interface Hint extends Callable {
+abstract public class AbstractCollectionBatch implements Batch {
 
-   Hint call() throws Exception;
-   boolean isApplicable();
-   boolean apply();
-   void sendNotification();
-   void setDocument(DataDocument datadocument);
-   void setCollection(String collectionName);
-   void setUser(String username);
+   /**
+    * Name of the collection to run batch on.
+    */
+   protected String collectionName;
 
+   @Override
+   public String getCollectionName() {
+      return collectionName;
+   }
+
+   public void setCollectionName(final String collectionName) {
+      this.collectionName = collectionName;
+   }
 }

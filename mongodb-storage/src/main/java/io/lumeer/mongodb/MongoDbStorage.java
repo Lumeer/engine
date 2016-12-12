@@ -20,6 +20,7 @@
 package io.lumeer.mongodb;
 
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.batch.Batch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
@@ -499,5 +500,10 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void dropIndex(final String collectionName, final String indexName) {
       database.getCollection(collectionName).dropIndex(indexName);
+   }
+
+   @Override
+   public void batch(final Batch batch) {
+      // TODO implement batch
    }
 }

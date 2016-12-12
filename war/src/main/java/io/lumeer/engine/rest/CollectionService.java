@@ -25,11 +25,11 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
-import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.SearchFacade;
+import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.VersionFacade;
 
 import java.io.Serializable;
@@ -37,12 +37,9 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -72,191 +69,132 @@ public class CollectionService implements Serializable {
    @Inject
    private VersionFacade versionFacade;
 
+   @Inject
+   private SecurityFacade securityFacade;
+
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<String> getAllCollections() {
-      try {
-         return new ArrayList<>(collectionFacade.getAllCollections().keySet());
-      } catch (CollectionNotFoundException e) {
-         throw new InternalServerErrorException();
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         throw new InternalServerErrorException();
-      }
+   public List<String> getAllCollections() throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      return new ArrayList<>(collectionFacade.getAllCollections().keySet());
    }
 
    @POST
    @Path("/{name}")
-   public void createCollection(final @PathParam("name") String name) {
-      try {
-         if (name == null) {
-            throw new BadRequestException();
-         }
-         collectionFacade.createCollection(name);
-      } catch (CollectionNotFoundException e) {
-         throw new InternalServerErrorException();
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         throw new InternalServerErrorException();
-      } catch (CollectionAlreadyExistsException e) {
-         throw new BadRequestException();
-      } catch (UserCollectionAlreadyExistsException e) {
-         throw new BadRequestException();
+   @Produces(MediaType.APPLICATION_JSON)
+   public String createCollection(final @PathParam("name") String name) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException, CollectionAlreadyExistsException, UserCollectionAlreadyExistsException {
+      if (name == null) {
+         throw new IllegalArgumentException();
       }
+      return collectionFacade.createCollection(name);
    }
 
    @DELETE
    @Path("/{name}")
-   public void dropCollection(final @PathParam("name") String name) {
-      try {
-         if (name == null) {
-            throw new BadRequestException();
-         }
-         collectionFacade.dropCollection(name);
-      } catch (CollectionNotFoundException e) {
-         throw new NotFoundException();
+   public void dropCollection(final @PathParam("name") String name) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      if (name == null) {
+         throw new IllegalArgumentException();
       }
-   }
-
-   @POST
-   @Path("/{collection-id-name}/attributes/")
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void addAttribute(final @PathParam("collection-id-name") String collectionName, final String attributeName) {
-      try {
-         if (collectionName == null || attributeName == null) {
-            throw new BadRequestException();
-         }
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attributeName);
-      } catch (CollectionNotFoundException e) {
-         throw new NotFoundException();
-      }
+      collectionFacade.dropCollection(getInternalName(name));
    }
 
    @DELETE
-   @Path("/{collection-id-name}/attributes/")
+   @Path("/{collectionName}/attributes/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void dropAttribute(final @PathParam("collection-id-name") String collectionName, final String attributeName) {
-      try {
-         if (collectionName == null || attributeName == null) {
-            throw new BadRequestException();
-         }
-         collectionFacade.dropAttribute(collectionName, attributeName);
-      } catch (CollectionNotFoundException e) {
-         throw new NotFoundException();
-      } catch (AttributeNotFoundException e) {
-         throw new NotFoundException();
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         throw new NotFoundException();
+   public void dropAttribute(final @PathParam("collectionName") String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeNotFoundException {
+      if (collectionName == null || attributeName == null) {
+         throw new IllegalArgumentException();
       }
+      collectionFacade.dropAttribute(getInternalName(collectionName), attributeName);
    }
 
    @PUT
-   @Path("/{collection-id-name}/attributes/")
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void renameAttribute(final @PathParam("collection-id-name") String collectionName, final String names) {
-      // TODO: respresentation of old and newName in the request body
-      final String oldName = names.split(",")[0];
-      final String newName = names.split(",")[1];
-
-      try {
-         if (collectionName == null || oldName == null || newName == null
-               || (collectionMetadataFacade.renameCollectionAttribute(collectionName, oldName, newName) == false)) {
-            throw new BadRequestException();
-         }
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         throw new NotFoundException();
-      } catch (CollectionNotFoundException e) {
-         throw new NotFoundException();
-      } catch (AttributeAlreadyExistsException e) {
-         throw new BadRequestException();
+   @Path("/{collectionName}/attributes/rename/{oldName}/{newName}")
+   public void renameAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeAlreadyExistsException {
+      if (collectionName == null || oldName == null || newName == null
+            || (collectionMetadataFacade.renameCollectionAttribute(getInternalName(collectionName), oldName, newName) == false)) {
+         throw new IllegalArgumentException();
       }
    }
 
    @POST
-   @Path("/{collection-id-name}/query")
+   @Path("/{collectionName}/search/filter/{filter}/sort/{sort}/skip/{skip}/limit/{limit}")
    @Produces(MediaType.APPLICATION_JSON)
-   @Consumes(MediaType.APPLICATION_JSON)
-   public List<DataDocument> runQuery(final @PathParam("collection-id-name") String collectionName, final String filter, final String sort, final int skip, final int limit) {
-      // TODO: representation of filter, sort, skip, limit in the request body
-      try {
-         if (collectionName == null) {
-            throw new BadRequestException();
-         }
-         return searchFacade.search(collectionName, filter, sort, skip, limit);
-      } catch (CollectionNotFoundException e) {
-         throw new NotFoundException();
+   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @PathParam("filter") String filter, final @PathParam("sort") String sort, final @PathParam("skip") int skip, final @PathParam("limit") int limit) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      // TODO: is the path representation correct?
+      if (collectionName == null) {
+         throw new IllegalArgumentException();
       }
+      return searchFacade.search(getInternalName(collectionName), filter, sort, skip, limit);
    }
 
-   // 3. note: ...able to store, read, update metadata to individual collections
    @POST
-   @Path("/{collection-id-name}/meta/{attribute-name}")
+   @Path("/{collectionName}/search/{query}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @PathParam("query") String query) {
+      // TODO: is the path representation correct?
+      // TODO: collectionName is not used
+      if (collectionName == null || query == null) {
+         throw new IllegalArgumentException();
+      }
+      return searchFacade.search(query);
+   }
+
+   @POST
+   @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addCollectionMetadata(final @PathParam("collection-id-name") String collectionName, final @PathParam("attribute-name") String attributeName) {
-      // TODO: value in request body?
-      // TODO: which method to use?
+   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) {
+      if (collectionName == null || attributeName == null) {
+         throw new IllegalArgumentException();
+      }
+      // TODO: there is no method for adding metadata by the given attributeName
    }
 
    @GET
-   @Path("/{collection-id-name}/meta/")
+   @Path("/{collectionName}/meta/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> readCollectionMetadata(final @PathParam("collection-id-name") String collectionName) {
-      try {
-         if (collectionName == null) {
-            throw new BadRequestException();
-         }
-         return collectionFacade.readCollectionMetadata(collectionName);
-      } catch (CollectionNotFoundException e) {
-         throw new NotFoundException();
+   public List<DataDocument> readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      if (collectionName == null) {
+         throw new IllegalArgumentException();
       }
+      return collectionFacade.readCollectionMetadata(getInternalName(collectionName));
    }
 
    @PUT
-   @Path("/{collection-id-name}/meta/{attribute-name}")
-   public void updateCollectionMetadata(final @PathParam("collection-id-name") String collectionName, final @PathParam("attribute-name") String attributeName) {
+   @Path("/{collectionName}/meta/{attributeName}")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) {
       // TODO: value in the request body?
       // TODO: which method to use?
    }
 
    @GET
-   @Path("/{collection-id-name}/attributes/")
+   @Path("/{collectionName}/attributes/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<String> readCollectionAttributes(final @PathParam("collection-id-name") String collectionName) {
-      try {
-         if (collectionName == null) {
-            throw new BadRequestException();
-         }
-         return collectionFacade.readCollectionAttributes(collectionName);
-      } catch (CollectionNotFoundException e) {
-         throw new NotFoundException();
+   public List<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      if (collectionName == null) {
+         throw new IllegalArgumentException();
       }
+      return collectionFacade.readCollectionAttributes(getInternalName(collectionName));
    }
 
-   @POST
-   @Path("/{collection-id-name}/documents/{document-id}/versions/{version-id}")
-   @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument getDocumentVersion(final @PathParam("collection-id-name") String collectionName, final @PathParam("document-id") String documentId, final @PathParam("version-id") int versionId) {
-      try {
-         if (collectionName == null || documentId == null) {
-            throw new BadRequestException();
-         }
-         return versionFacade.getOldDocumentVersion(collectionName, documentId, versionId);
-      } catch (DocumentNotFoundException e) {
-         throw new NotFoundException();
-      }
-   }
-
-   // 10. note: ...able to read, update access right of individual entries and collections so that only allowed users can have access
    @GET
-   @Path("/{collection-id-name}/rights")
+   @Path("/{collectionName}/rights")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readAccessRights(final @PathParam("collection-id-name") String collectionName) {
+   public DataDocument readAccessRights(final @PathParam("collectionName") String collectionName) {
       // TODO: implement method in facade to manage access rights
       return null;
    }
 
    @PUT
-   @Path("/{collection-id-name}/rights")
-   public void updateAccessRights(final @PathParam("collection-id-name") String collectionName) {
+   @Path("/{collectionName}/rights")
+   public void updateAccessRights(final @PathParam("collectionName") String collectionName) {
       // TODO: implement method in facade to manage access rights
+   }
+
+   // TODO: As a REST client I would like to be able to set, read and update attribute type, attribute integrity checks and format.
+
+   private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
    }
 }

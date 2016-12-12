@@ -74,17 +74,17 @@ public class SecurityFacadeTest extends Arquillian {
    public void testCheckForReadDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
       Assert.assertTrue(securityFacade.checkForRead(dataDocument, "testUSER"));
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser4", 4);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser5", 5);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser6", 6);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser4", 4);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser5", 5);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser6", 6);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       Assert.assertFalse(securityFacade.checkForRead(dataDocument, "testUSER"));
       Assert.assertTrue(securityFacade.checkForRead(dataDocument, "newTestUser4"));
       Assert.assertTrue(securityFacade.checkForRead(dataDocument, "newTestUser5"));
       Assert.assertTrue(securityFacade.checkForRead(dataDocument, "newTestUser6"));
       Assert.assertTrue(securityFacade.checkForRead(dataDocument, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 2);
       Assert.assertFalse(securityFacade.checkForRead(dataDocument, "testUSER"));
    }
 
@@ -92,17 +92,17 @@ public class SecurityFacadeTest extends Arquillian {
    public void testCheckForWriteDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
       Assert.assertTrue(securityFacade.checkForWrite(dataDocument, "testUSER"));
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser2", 2);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser3", 3);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser6", 6);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser2", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser3", 3);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser6", 6);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       Assert.assertFalse(securityFacade.checkForWrite(dataDocument, "testUSER"));
       Assert.assertTrue(securityFacade.checkForWrite(dataDocument, "newTestUser2"));
       Assert.assertTrue(securityFacade.checkForWrite(dataDocument, "newTestUser3"));
       Assert.assertTrue(securityFacade.checkForWrite(dataDocument, "newTestUser6"));
       Assert.assertTrue(securityFacade.checkForWrite(dataDocument, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 4);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 4);
       Assert.assertFalse(securityFacade.checkForWrite(dataDocument, "testUSER"));
    }
 
@@ -110,17 +110,17 @@ public class SecurityFacadeTest extends Arquillian {
    public void testCheckForExecuteDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
       Assert.assertTrue(securityFacade.checkForExecute(dataDocument, "testUSER"));
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser1", 1);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser3", 3);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser5", 5);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser1", 1);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser3", 3);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser5", 5);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       Assert.assertFalse(securityFacade.checkForExecute(dataDocument, "testUSER"));
       Assert.assertTrue(securityFacade.checkForExecute(dataDocument, "newTestUser1"));
       Assert.assertTrue(securityFacade.checkForExecute(dataDocument, "newTestUser3"));
       Assert.assertTrue(securityFacade.checkForExecute(dataDocument, "newTestUser5"));
       Assert.assertTrue(securityFacade.checkForExecute(dataDocument, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 2);
       Assert.assertFalse(securityFacade.checkForExecute(dataDocument, "testUSER"));
    }
 
@@ -128,17 +128,17 @@ public class SecurityFacadeTest extends Arquillian {
    public void testCheckForAddRightsDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, "testUSER"));
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser1", 1);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser3", 3);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser5", 5);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser1", 1);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser3", 3);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser5", 5);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       Assert.assertFalse(securityFacade.checkForAddRights(dataDocument, "testUSER"));
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, "newTestUser1"));
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, "newTestUser3"));
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, "newTestUser5"));
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 2);
       Assert.assertFalse(securityFacade.checkForAddRights(dataDocument, "testUSER"));
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, "testUSER");
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, "testUSER"));
@@ -147,11 +147,11 @@ public class SecurityFacadeTest extends Arquillian {
    @Test
    public void testCheckForRead() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser4", 4);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser5", 5);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser6", 6);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser4", 4);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser5", 5);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser6", 6);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       if (dataStorage.hasCollection(SECURITY_TEST_COLLECTION_READ)) {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_READ);
       }
@@ -162,7 +162,7 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, "newTestUser5"));
       Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, "newTestUser6"));
       Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 2);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_READ, dataDocument, id, -1);
       Assert.assertFalse(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, "testUSER"));
    }
@@ -170,11 +170,11 @@ public class SecurityFacadeTest extends Arquillian {
    @Test
    public void testCheckForWrite() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser2", 2);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser3", 3);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser6", 6);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser2", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser3", 3);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser6", 6);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       if (dataStorage.hasCollection(SECURITY_TEST_COLLECTION_WRITE)) {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_WRITE);
       }
@@ -185,7 +185,7 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, "newTestUser3"));
       Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, "newTestUser6"));
       Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 4);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 4);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument, id, -1);
       Assert.assertFalse(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, "testUSER"));
    }
@@ -193,11 +193,11 @@ public class SecurityFacadeTest extends Arquillian {
    @Test
    public void testCheckForExecute() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser1", 1);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser3", 3);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser5", 5);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser1", 1);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser3", 3);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser5", 5);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       if (dataStorage.hasCollection(SECURITY_TEST_COLLECTION_EXECUTE)) {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_EXECUTE);
       }
@@ -208,7 +208,7 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, "newTestUser3"));
       Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, "newTestUser5"));
       Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 2);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument, id, -1);
       Assert.assertFalse(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, "testUSER"));
    }
@@ -216,11 +216,11 @@ public class SecurityFacadeTest extends Arquillian {
    @Test
    public void testCheckForAddRights() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser1", 1);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser3", 3);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser5", 5);
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("newTestUser7", 7);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser1", 1);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser3", 3);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser5", 5);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("newTestUser7", 7);
       if (dataStorage.hasCollection(SECURITY_TEST_COLLECTION_ADD_RIGHTS)) {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_ADD_RIGHTS);
       }
@@ -231,7 +231,7 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, "newTestUser3"));
       Assert.assertTrue(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, "newTestUser5"));
       Assert.assertTrue(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, "newTestUser7"));
-      dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put("testUSER", 2);
+      dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put("testUSER", 2);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id, -1);
       Assert.assertFalse(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, "testUSER"));
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, "testUSER");
@@ -279,26 +279,34 @@ public class SecurityFacadeTest extends Arquillian {
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserName());
       securityFacade.setRightsRead(dataDocument, "user1");
       securityFacade.setRightsWrite(dataDocument, "user1");
-      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).get("user1"), 6);
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 6);
       securityFacade.setRightsExecute(dataDocument, "user1");
-      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).get("user1"), 7);
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 7);
       dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserName());
       securityFacade.setRightsRead(dataDocument, "user1");
       securityFacade.setRightsExecute(dataDocument, "user1");
-      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).get("user1"), 5);
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 5);
       securityFacade.setRightsWrite(dataDocument, "user1");
-      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).get("user1"), 7);
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 7);
       dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserName());
       securityFacade.setRightsWrite(dataDocument, "user1");
       securityFacade.setRightsExecute(dataDocument, "user1");
-      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).get("user1"), 3);
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 3);
       securityFacade.setRightsRead(dataDocument, "user1");
-      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).get("user1"), 7);
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 7);
       securityFacade.setRightsWrite(dataDocument, "user1");
       securityFacade.setRightsExecute(dataDocument, "user1");
       securityFacade.setRightsRead(dataDocument, "user1");
-      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).get("user1"), 7);
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 7);
+      securityFacade.removeRightsExecute(dataDocument, "user1");
+      Assert.assertFalse(securityFacade.checkForExecute(dataDocument,"user1"));
+      securityFacade.removeRightsRead(dataDocument, "user1");
+      Assert.assertFalse(securityFacade.checkForRead(dataDocument,"user1"));
+      securityFacade.removeRightsWrite(dataDocument, "user1");
+      Assert.assertFalse(securityFacade.checkForWrite(dataDocument,"user1"));
+      securityFacade.removeRightsWrite(dataDocument, "user1");
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 0);
    }
 }
