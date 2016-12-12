@@ -504,6 +504,6 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void batch(final Batch batch) {
-      // TODO implement batch
+      MongoDbBatchTranslator.translateBatch(database, batch);
    }
 }
