@@ -89,7 +89,7 @@ public final class LumeerConst {
       public static final String VIEW_REAL_NAME_KEY = "name";
       public static final String VIEW_SEQUENCE_NUMBER_KEY = "sequence-number";
 
-      public static final String VIEW_USER_RIGHTS_KEY = "rights";
+      public static final String VIEW_USER_RIGHTS_KEY = Document.USER_RIGHTS;
       //public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
       public static final String VIEW_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
       public static final String VIEW_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
@@ -102,7 +102,7 @@ public final class LumeerConst {
             VIEW_CREATE_DATE_KEY,
             VIEW_CREATE_USER_KEY,
             VIEW_USER_RIGHTS_KEY,
-            Document.METADATA_PREFIX + VIEW_USER_RIGHTS_KEY // this key is used by security facade to store access rights
+            VIEW_USER_RIGHTS_KEY
       );
    }
 
