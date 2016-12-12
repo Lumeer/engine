@@ -21,26 +21,42 @@ package io.lumeer.engine.hints;
 
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
-public class ColumnTypeHint implements Hint {
+public class ValueTypeHint implements Hint {
 
    private DataDocument dataDocument;
    private String userName;
    private String collectionName;
+   private List<Object> objects;
 
    @Override
    public Hint call() throws Exception {
       if (dataDocument != null) {
-         return test(dataDocument);
+         return testOneDocument(dataDocument);
       }
-      return new ColumnTypeHint();
+      return new ValueTypeHint();
    }
 
-   public ColumnTypeHint test(DataDocument dataDocument) {
-      //dataDocument.g
-      return new ColumnTypeHint();
+   private ValueTypeHint testOneDocument(DataDocument dataDocument) {
+      Iterator<Map.Entry<String, Object>> iter = dataDocument.entrySet().iterator();
+      Map<String, Object> documentMetadata = new HashMap<>();
+      while (iter.hasNext()) {
+         Map.Entry<String, Object> entry = iter.next();
+         Object obj = entry.getKey();
+         if (obj instanceof Integer) {
+         }
+         if (obj instanceof Boolean) {
+
+         }
+      }
+      return new ValueTypeHint();
    }
 
    @Override

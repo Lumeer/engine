@@ -27,6 +27,7 @@ import java.util.concurrent.Callable;
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
 public interface Hint extends Callable {
+
    Hint call() throws Exception;
    boolean isApplicable();
    boolean apply();
@@ -34,4 +35,5 @@ public interface Hint extends Callable {
    void setDocument(DataDocument datadocument);
    void setCollection(String collectionName);
    void setUser(String username);
+
 }

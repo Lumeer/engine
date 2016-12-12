@@ -44,15 +44,15 @@ public class HintFacade implements Serializable {
    @Inject
    UserFacade userFacade;
 
-   private List<Future<Hint>> hints = new ArrayList<>();
-
+   private List<Future<Hint>> hintsList = new ArrayList<>();
+   private List<Hint> activeHints = new ArrayList<>();
    public void getHint() throws ExecutionException, InterruptedException {
       Hint hint = null;
-      if (!hints.isEmpty()) {
-         for (Future<Hint> future : hints) {
+      if (!hintsList.isEmpty()) {
+         for (Future<Hint> future : hintsList) {
             if (future.isDone()) {
                hint = future.get();
-               hints.remove(future);
+               hintsList.remove(future);
                break;
             }
          }
@@ -65,21 +65,21 @@ public class HintFacade implements Serializable {
    public void runHint(String hintName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
       Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
       hint.setUser(userFacade.getUserName());
-      hints.add(hintEx.runHintDetect(hint));
+      hintsList.add(hintEx.runHintDetect(hint));
    }
 
    public void runHint(String hintName, DataDocument dataDocument) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
       Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
       hint.setUser(userFacade.getUserName());
       hint.setDocument(dataDocument);
-      hints.add(hintEx.runHintDetect(hint));
+      hintsList.add(hintEx.runHintDetect(hint));
    }
 
    public void runHint(String hintName, String collectionName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
       Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
       hint.setUser(userFacade.getUserName());
       hint.setCollection(collectionName);
-      hints.add(hintEx.runHintDetect(hint));
+      hintsList.add(hintEx.runHintDetect(hint));
    }
 
    public void runHint(String hintName, String collectionName, DataDocument dataDocument) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
@@ -87,20 +87,20 @@ public class HintFacade implements Serializable {
       hint.setUser(userFacade.getUserName());
       hint.setCollection(collectionName);
       hint.setDocument(dataDocument);
-      hints.add(hintEx.runHintDetect(hint));
+      hintsList.add(hintEx.runHintDetect(hint));
    }
 
 
 
    public boolean haveHint() {
-      if (hints.isEmpty()) {
+      if (hintsList.isEmpty()) {
          return false;
       }
       return true;
    }
 
    public void clearHints() {
-      hints.clear();
+      hintsList.clear();
    }
 
    public void clearOldHints() {

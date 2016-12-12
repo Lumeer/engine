@@ -78,6 +78,7 @@ public final class LumeerConst {
       public static final String CREATE_BY_USER_KEY = METADATA_PREFIX + "create-user";
       public static final String UPDATED_BY_USER_KEY = METADATA_PREFIX + "update-user";
       public static final List<String> METADATA_KEYS = Arrays.asList(METADATA_VERSION_KEY, CREATE_DATE_KEY, UPDATE_DATE_KEY, CREATE_BY_USER_KEY, UPDATED_BY_USER_KEY);
+      public static final String USER_RIGHTS = METADATA_PREFIX + "rights";
    }
 
    public static class View {

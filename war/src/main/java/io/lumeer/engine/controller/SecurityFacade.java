@@ -50,7 +50,7 @@ public class SecurityFacade implements Serializable {
    private final int EXECUTE = 1;
 
    private DataDocument readUserRights(DataDocument dataDocument) {
-      DataDocument rights = dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY);
+      DataDocument rights = dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS);
       return rights;
    }
 
@@ -65,8 +65,11 @@ public class SecurityFacade implements Serializable {
       }
       if (rights.containsKey(userName)) {
          int rightsInteger = rights.getInteger(userName);
-         String checkString = String.format("%3s", Integer.toBinaryString(rightsInteger)).replace(' ', '0');
+         /*String checkString = String.format("%3s", Integer.toBinaryString(rightsInteger)).replace(' ', '0');
          if (checkString.charAt(2 - bit) == '1') {
+
+         }*/
+         if ((rightsInteger >> bit & 1) == 1) {
             return true;
          }
       } else {
@@ -267,25 +270,73 @@ public class SecurityFacade implements Serializable {
       return dataDocument;
    }
 
+   /**
+    * Remove execute rights to dataDocument for userName.
+    *
+    * @param dataDocument
+    *       dataDocument where rights are set
+    * @param userName
+    *       user name to set rights
+    * @return return dataDocument with rights speficied
+    */
+   public DataDocument removeRightsExecute(DataDocument dataDocument, String userName){
+      if (checkForAddRights(dataDocument, user.getUserName())) {
+         setRights(dataDocument, (-1)*EXECUTE, userName);
+      }
+      return dataDocument;
+   }
+
+   /**
+    * Remove write rights to dataDocument for userName.
+    *
+    * @param dataDocument
+    *       dataDocument where rights are set
+    * @param userName
+    *       user name to set rights
+    * @return return dataDocument with rights speficied
+    */
+   public DataDocument removeRightsWrite(DataDocument dataDocument, String userName){
+      if (checkForAddRights(dataDocument, user.getUserName())) {
+         setRights(dataDocument, (-1)* WRITE, userName);
+      }
+      return dataDocument;
+   }
+
+   /**
+    * Remove read rights to dataDocument for userName.
+    *
+    * @param dataDocument
+    *       dataDocument where rights are set
+    * @param userName
+    *       user name to set rights
+    * @return return dataDocument with rights speficied
+    */
+   public DataDocument removeRightsRead(DataDocument dataDocument, String userName){
+      if (checkForAddRights(dataDocument, user.getUserName())) {
+         setRights(dataDocument, (-1) * READ, userName);
+      }
+      return dataDocument;
+   }
+
    private boolean checkMetadata(DataDocument dataDocument) {
       return dataDocument.containsKey(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY);
    }
 
    private void addMetaData(DataDocument dataDocument) {
-      dataDocument.put(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY, new DataDocument());
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, new DataDocument());
    }
 
    private void setRights(DataDocument dataDocument, int addRights, String userName) {
       if (!checkMetadata(dataDocument)) {
          addMetaData(dataDocument);
       }
-      if (dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).containsKey(userName)) {
-         int newRights = dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).getInteger(userName) + addRights;
-         if (newRights <= 7) {
-            dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).replace(userName, newRights);
+      if (dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).containsKey(userName)) {
+         int newRights = dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).getInteger(userName) + addRights;
+         if ((newRights <= 7) && (newRights >= 0)) {
+            dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).replace(userName, newRights);
          }
       } else {
-         dataDocument.getDataDocument(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY).put(userName, addRights);
+         dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).put(userName, addRights);
       }
    }
 }
