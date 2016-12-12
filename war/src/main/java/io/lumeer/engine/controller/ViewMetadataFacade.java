@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
@@ -50,55 +51,8 @@ public class ViewMetadataFacade implements Serializable {
    @Inject
    private UserFacade userFacade;
 
-   // example of view metadata structure:
-   // -------------------------------------
-   // {
-   // “internal-name” : “thisismyview_0”,
-   // “name” : “This is my view.”,
-   // “sequence-number” : 111,
-   //	“type” : “table”,
-   // “styles” : [
-   //    {
-   //    “type” : “column”,
-   //    “style” : “color:red;”,
-   //    “condition” :
-   //       {
-   //       … a representation of condition …
-   //       }
-   //    },
-   //    {
-   //    “type” : “row”,
-   //    “style” : “color:green;”,
-   //    “condition” :
-   //       {
-   //          … a representation of condition …
-   //       }
-   //     }
-   //    ],
-   //	   “create-date” : date,
-   //	   “update-date” : date,
-   //	   “create-user” : user_name,
-   //	   “update-user” : user_name,
-   //	   “rights” : [
-   //       user_name1 : 1  //execute permissions
-   //       user_name2 : 2  //write permissions
-   //       user_name3 : 4  //read permissions
-   //       user_name4 : 3  //execute and write permissions = 1 + 2
-   //       user_name5 : 5  //read and execute permissions = 1 + 4
-   //       user_name6 : 6  //write and read permissions = 2 + 4
-   //       user_name7 : 7  //full permissions = 1 + 2 + 4
-   //       others     : 0  //others is forced to be there, maybe if not presented, that means 0 permissions
-   //    ],
-   //    “group-rights” : [
-   //       group_name1: 1  //execute permissions
-   //       group_name2: 2  //write permissions
-   //       group_name3: 4  //read permissions
-   //       group_name4: 3  //execute and write permissions = 1 + 2
-   //       group_name5: 5  //read and execute permissions = 1 + 4
-   //       group_name6: 6  //write and read permissions = 2 + 4
-   //       group_name7: 7  //full permissions = 1 + 2 + 4
-   //	   ]
-   // }
+   @Inject
+   private SecurityFacade securityFacade;
 
    /**
     * Converts view name given by user to internal representation.
@@ -111,14 +65,8 @@ public class ViewMetadataFacade implements Serializable {
     * @param originalViewName
     *       name given by user
     * @return internal view name
-    * @throws ViewAlreadyExistsException
-    *       when view with given name already exists
     */
-   public String createInternalName(String originalViewName) throws ViewAlreadyExistsException {
-      if (checkIfViewUserNameExists(originalViewName)) {
-         throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
-      }
-
+   public String createInternalName(String originalViewName) {
       String name = originalViewName.trim();
       name = name.replace(' ', '_').toLowerCase();
       name = Utils.normalize(name);
@@ -139,12 +87,14 @@ public class ViewMetadataFacade implements Serializable {
     *       name given by user
     * @throws ViewAlreadyExistsException
     *       when view with given name already exists
+    * @return internal view name
     */
-   public void createInitialMetadata(String originalViewName) throws ViewAlreadyExistsException {
-      Map<String, Object> metadata = new HashMap<>();
+   public String createInitialMetadata(String originalViewName) throws ViewAlreadyExistsException {
       if (checkIfViewUserNameExists(originalViewName)) {
          throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
       }
+
+      Map<String, Object> metadata = new HashMap<>();
 
       metadata.put(LumeerConst.View.VIEW_REAL_NAME_KEY, originalViewName);
 
@@ -160,7 +110,15 @@ public class ViewMetadataFacade implements Serializable {
       String date = Utils.getCurrentTimeString();
       metadata.put(LumeerConst.View.VIEW_CREATE_DATE_KEY, date);
 
-      dataStorage.createDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadata));
+      DataDocument metadataDocument = new DataDocument(metadata);
+
+      securityFacade.setRightsRead(metadataDocument, createUser);
+      securityFacade.setRightsWrite(metadataDocument, createUser);
+      securityFacade.setRightsExecute(metadataDocument, createUser);
+
+      dataStorage.createDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, metadataDocument);
+
+      return internalName;
    }
 
    /**
@@ -170,14 +128,15 @@ public class ViewMetadataFacade implements Serializable {
     * @throws ViewMetadataNotFoundException
     *       when metadata for view with given name does not exist
     */
-   public DataDocument getViewMetadata(String viewName) throws ViewMetadataNotFoundException {
-      // TODO: check access rights
-      List<DataDocument> viewList = dataStorage.run(queryOneViewMetadata(viewName));
-      if (viewList.isEmpty()) {
-         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataNotFoundString(viewName));
+   public DataDocument getViewMetadata(String viewName) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewName);
+
+      String user = userFacade.getUserName();
+      if (!securityFacade.checkForRead(viewDocument, user)) {
+         throw new UnauthorizedAccessException();
       }
 
-      return viewList.get(0);
+      return viewDocument;
    }
 
    /**
@@ -189,9 +148,8 @@ public class ViewMetadataFacade implements Serializable {
     * @throws ViewMetadataNotFoundException
     *       when metadata does not exist
     */
-   public Object getViewMetadataValue(String viewName, String metaKey) throws ViewMetadataNotFoundException {
-      // TODO: check access rights
-      Object value = getViewMetadata(viewName).get(metaKey);
+   public Object getViewMetadataValue(String viewName, String metaKey) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      Object value = getViewMetadata(viewName).get(metaKey); // access rights are checked in getViewMetadata
       if (value == null) {
          throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataValueNotFoundString(viewName, metaKey));
       }
@@ -212,14 +170,19 @@ public class ViewMetadataFacade implements Serializable {
     * @throws UnsuccessfulOperationException
     *       when metadata cannot be set
     */
-   public void setViewMetadataValue(String viewName, String metaKey, Object value) throws ViewMetadataNotFoundException, UnsuccessfulOperationException {
-      // TODO: check access rights
+   public void setViewMetadataValue(String viewName, String metaKey, Object value) throws ViewMetadataNotFoundException, UnsuccessfulOperationException, UnauthorizedAccessException {
+      DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewName);
+
+      String user = userFacade.getUserName();
+      if (!securityFacade.checkForWrite(viewDocument, user)) {
+         throw new UnauthorizedAccessException();
+      }
 
       if (LumeerConst.View.VIEW_IMMUTABLE_KEYS.contains(metaKey)) { // we check if the meta key is not between fields that cannot be changed
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.viewMetaImmutableString(viewName, metaKey));
       }
 
-      String id = getViewMetadata(viewName).getId();
+      String id = viewDocument.getId();
       Map<String, Object> metadataMap = new HashMap<>();
       metadataMap.put(metaKey, value);
 
@@ -242,7 +205,6 @@ public class ViewMetadataFacade implements Serializable {
     *       when metadata for the view does not exist
     */
    public String getViewInternalNameFromSequenceNumber(int sequenceNumber) throws ViewMetadataNotFoundException {
-      // TODO: check access rights
       List<DataDocument> viewList = dataStorage.run(queryViewMetadataFromSequenceNumber(sequenceNumber));
       if (viewList.isEmpty()) {
          throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataNotFoundString("sequence number: " + sequenceNumber));
@@ -301,5 +263,14 @@ public class ViewMetadataFacade implements Serializable {
          }
       }
       return false;
+   }
+
+   private DataDocument getViewMetadataWithoutAccessCheck(String viewName) throws ViewMetadataNotFoundException {
+      List<DataDocument> viewList = dataStorage.run(queryOneViewMetadata(viewName));
+      if (viewList.isEmpty()) {
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataNotFoundString(viewName));
+      }
+
+      return viewList.get(0);
    }
 }

@@ -87,21 +87,22 @@ public final class LumeerConst {
       public static final String VIEW_INTERNAL_NAME_KEY = "internal-name";
       public static final String VIEW_REAL_NAME_KEY = "name";
       public static final String VIEW_SEQUENCE_NUMBER_KEY = "sequence-number";
-      public static final String VIEW_TYPE_KEY = "type";
-
-      public static final String VIEW_ALL_STYLES_KEY = "styles";
-      public static final String VIEW_STYLE_TYPE_KEY = "type";
-      public static final String VIEW_STYLE_VALUE_KEY = "style";
-      public static final String VIEW_STYLE_CONDITION_KEY = "condition";
 
       public static final String VIEW_USER_RIGHTS_KEY = "rights";
-      public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
-      public static final String VIEW_CREATE_DATE_KEY = "create-date";
-      public static final String VIEW_CREATE_USER_KEY = "create-user";
-      public static final String VIEW_UPDATE_DATE_KEY = "update-date";
-      public static final String VIEW_UPDATE_USER_KEY = "update-user";
+      //public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
+      public static final String VIEW_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
+      public static final String VIEW_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
+      public static final String VIEW_UPDATE_DATE_KEY = Document.UPDATE_DATE_KEY;
+      public static final String VIEW_UPDATE_USER_KEY = Document.UPDATED_BY_USER_KEY;
 
-      public static final List<String> VIEW_IMMUTABLE_KEYS = Arrays.asList(VIEW_INTERNAL_NAME_KEY, VIEW_SEQUENCE_NUMBER_KEY, VIEW_CREATE_DATE_KEY, VIEW_CREATE_USER_KEY);
+      public static final List<String> VIEW_IMMUTABLE_KEYS = Arrays.asList(
+            VIEW_INTERNAL_NAME_KEY,
+            VIEW_SEQUENCE_NUMBER_KEY,
+            VIEW_CREATE_DATE_KEY,
+            VIEW_CREATE_USER_KEY,
+            VIEW_USER_RIGHTS_KEY,
+            Document.METADATA_PREFIX + VIEW_USER_RIGHTS_KEY // this key is used by security facade to store access rights
+      );
    }
 
    public static class Collection {

@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -96,7 +97,6 @@ public class ViewMetadataFacadeTest extends Arquillian {
 
       String user = userFacade.getUserName();
 
-      Assert.assertEquals(metadata.size(), 5 + 1); // we have to add 1 because of id field
       Assert.assertTrue(metadata.containsValue(CREATE_INITIAL_METADATA_VIEW));
       Assert.assertTrue(metadata.containsValue(viewInternalName(CREATE_INITIAL_METADATA_VIEW)));
       Assert.assertTrue(metadata.containsValue(user));
@@ -123,17 +123,26 @@ public class ViewMetadataFacadeTest extends Arquillian {
       String key = "key";
       String value = "value";
 
+      // we try to get non existing value
       boolean pass = false;
       try {
-         viewMetadataFacade.getViewMetadataValue(viewId, key);
+         viewMetadataFacade.getViewMetadataValue(viewId, key); // value does not exist
       } catch (ViewMetadataNotFoundException e) {
          pass = true;
       }
       Assert.assertTrue(pass);
 
       viewMetadataFacade.setViewMetadataValue(viewId, key, value);
-
       Assert.assertEquals(viewMetadataFacade.getViewMetadataValue(viewId, key), value);
+
+      // we try to modify key that is immutable
+      pass = false;
+      try {
+         viewMetadataFacade.setViewMetadataValue(viewId, LumeerConst.View.VIEW_CREATE_DATE_KEY, "hmm");
+      } catch (UnsuccessfulOperationException e) {
+         pass = true;
+      }
+      Assert.assertTrue(pass);
    }
 
    private void setUpCollection() {
