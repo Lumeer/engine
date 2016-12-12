@@ -233,7 +233,9 @@ public class SecurityFacade implements Serializable {
     */
    public DataDocument setRightsRead(DataDocument dataDocument, String userName) {
       if (checkForAddRights(dataDocument, user.getUserName())) {
-         setRights(dataDocument, READ, userName);
+         if (!checkForRead(dataDocument,userName) || (readUserRights(dataDocument) == null)) {
+            setRights(dataDocument, READ, userName);
+         }
       }
       return dataDocument;
    }
@@ -249,7 +251,9 @@ public class SecurityFacade implements Serializable {
     */
    public DataDocument setRightsWrite(DataDocument dataDocument, String userName) {
       if (checkForAddRights(dataDocument, user.getUserName())) {
-         setRights(dataDocument, WRITE, userName);
+         if (!checkForWrite(dataDocument,userName) || (readUserRights(dataDocument) == null)) {
+            setRights(dataDocument, WRITE, userName);
+         }
       }
       return dataDocument;
    }
@@ -265,7 +269,9 @@ public class SecurityFacade implements Serializable {
     */
    public DataDocument setRightsExecute(DataDocument dataDocument, String userName) {
       if (checkForAddRights(dataDocument, user.getUserName())) {
-         setRights(dataDocument, EXECUTE, userName);
+         if (!checkForExecute(dataDocument,userName) || (readUserRights(dataDocument) == null)) {
+            setRights(dataDocument, EXECUTE, userName);
+         }
       }
       return dataDocument;
    }
@@ -281,7 +287,9 @@ public class SecurityFacade implements Serializable {
     */
    public DataDocument removeRightsExecute(DataDocument dataDocument, String userName){
       if (checkForAddRights(dataDocument, user.getUserName())) {
-         setRights(dataDocument, (-1)*EXECUTE, userName);
+         if (checkForExecute(dataDocument,userName) || (readUserRights(dataDocument) == null)) {
+            setRights(dataDocument, (-1) * EXECUTE, userName);
+         }
       }
       return dataDocument;
    }
@@ -297,7 +305,9 @@ public class SecurityFacade implements Serializable {
     */
    public DataDocument removeRightsWrite(DataDocument dataDocument, String userName){
       if (checkForAddRights(dataDocument, user.getUserName())) {
-         setRights(dataDocument, (-1)* WRITE, userName);
+         if (checkForWrite(dataDocument,userName) || (readUserRights(dataDocument) == null)) {
+            setRights(dataDocument, (-1) * WRITE, userName);
+         }
       }
       return dataDocument;
    }
@@ -313,13 +323,15 @@ public class SecurityFacade implements Serializable {
     */
    public DataDocument removeRightsRead(DataDocument dataDocument, String userName){
       if (checkForAddRights(dataDocument, user.getUserName())) {
-         setRights(dataDocument, (-1) * READ, userName);
+         if (checkForRead(dataDocument,userName) || (readUserRights(dataDocument) == null)) {
+            setRights(dataDocument, (-1) * READ, userName);
+         }
       }
       return dataDocument;
    }
 
    private boolean checkMetadata(DataDocument dataDocument) {
-      return dataDocument.containsKey(LumeerConst.Document.METADATA_PREFIX + LumeerConst.View.VIEW_USER_RIGHTS_KEY);
+      return dataDocument.containsKey(LumeerConst.Document.USER_RIGHTS);
    }
 
    private void addMetaData(DataDocument dataDocument) {
