@@ -136,9 +136,9 @@ public class CollectionFacade implements Serializable {
       // TODO: check access rights
       if (dataStorage.hasCollection(collectionName)) {
          linkingFacade.dropCollectionLinks(collectionName);
-         dropCollectionMetadata(collectionName); // removes metadata collection
+         dropCollectionMetadata(collectionName);
          dataStorage.dropCollection(collectionName);
-         // TODO: drop shadow collection
+         dataStorage.dropCollection(collectionName + ".shadow"); // TODO: find more intelligent way to drop shadow collection
 
          collections = null;
       } else {
