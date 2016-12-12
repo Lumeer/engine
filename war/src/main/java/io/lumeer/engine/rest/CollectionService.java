@@ -29,6 +29,7 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.SearchFacade;
+import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.VersionFacade;
 
 import java.io.Serializable;
@@ -67,6 +68,9 @@ public class CollectionService implements Serializable {
 
    @Inject
    private VersionFacade versionFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
 
    @GET
    @Path("/")
@@ -187,6 +191,8 @@ public class CollectionService implements Serializable {
    public void updateAccessRights(final @PathParam("collectionName") String collectionName) {
       // TODO: implement method in facade to manage access rights
    }
+
+   // TODO: As a REST client I would like to be able to set, read and update attribute type, attribute integrity checks and format.
 
    private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);

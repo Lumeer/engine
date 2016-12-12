@@ -36,7 +36,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -84,12 +83,6 @@ public class CollectionServiceTest extends Arquillian {
    @Inject
    private DocumentFacade documentFacade;
 
-   @PostConstruct
-   private void setUp() {
-      // DataStorage injection does not work
-      // TODO: drop used existing collections
-   }
-
    @Test
    public void testRegister() throws Exception {
       Assert.assertNotNull(collectionService);
@@ -99,7 +92,7 @@ public class CollectionServiceTest extends Arquillian {
    public void testRestClient() throws Exception {
       final Client client = ClientBuilder.newBuilder().build();
       // the path prefix '/lumeer-engine/' does not work in test classes
-      Response response = client.target("http://localhost:8080").path("/lumeer-engine/rest/collections/").request(MediaType.APPLICATION_JSON_TYPE).buildGet().invoke();
+      Response response = client.target(TARGET_URI).path("/lumeer-engine/rest/collections/").request(MediaType.APPLICATION_JSON_TYPE).buildGet().invoke();
    }
 
    @Test
