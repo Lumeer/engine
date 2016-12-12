@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.rest.dao;
 
+import io.lumeer.engine.api.data.DataDocument;
+
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
@@ -34,13 +36,19 @@ public class LinkDao extends LinkTypeDao {
     */
    private String toId;
 
+   /**
+    * Link attributes.
+    */
+   private DataDocument attributes;
+
    public LinkDao() {
    }
 
-   public LinkDao(final String fromCollection, final String toCollection, final String role, final String fromId, final String toId) {
+   public LinkDao(final String fromCollection, final String toCollection, final String role, final String fromId, final String toId, final DataDocument attributes) {
       super(fromCollection, toCollection, role);
       this.fromId = fromId;
       this.toId = toId;
+      this.attributes = attributes;
    }
 
    public String getFromId() {
@@ -60,6 +68,15 @@ public class LinkDao extends LinkTypeDao {
    }
 
    @Override
+   public String toString() {
+      return "LinkDao{"
+            + "fromId='" + fromId + '\''
+            + ", toId='" + toId + '\''
+            + ", attributes=" + attributes
+            + '}';
+   }
+
+   @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;
@@ -76,7 +93,10 @@ public class LinkDao extends LinkTypeDao {
       if (fromId != null ? !fromId.equals(linkDao.fromId) : linkDao.fromId != null) {
          return false;
       }
-      return toId != null ? toId.equals(linkDao.toId) : linkDao.toId == null;
+      if (toId != null ? !toId.equals(linkDao.toId) : linkDao.toId != null) {
+         return false;
+      }
+      return attributes != null ? attributes.equals(linkDao.attributes) : linkDao.attributes == null;
    }
 
    @Override
@@ -84,14 +104,17 @@ public class LinkDao extends LinkTypeDao {
       int result = super.hashCode();
       result = 31 * result + (fromId != null ? fromId.hashCode() : 0);
       result = 31 * result + (toId != null ? toId.hashCode() : 0);
+      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
       return result;
    }
 
-   @Override
-   public String toString() {
-      return "LinkDao{"
-            + "fromId='" + fromId + '\''
-            + ", toId='" + toId + '\''
-            + '}';
+   public DataDocument getAttributes() {
+
+      return attributes;
    }
+
+   public void setAttributes(final DataDocument attributes) {
+      this.attributes = attributes;
+   }
+
 }

@@ -28,6 +28,7 @@ import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -110,13 +111,44 @@ public class LinkingService {
     *       The source/target document id.
     * @param linkDirection
     *       Which link direction to work with.
-    * @return Linked data documents.
+    * @return Required links.
     */
    @GET
    @Path("/{role}/documents/{id}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LinkDirection linkDirection) {
-      final List<DataDocument> links = new ArrayList<>();
+   public List<LinkDao> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LinkDirection linkDirection) {
+      final List<LinkDao> links = new ArrayList<>();
+      // TODO translate user collection names
+
+      if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.FROM) {
+         // TODO přidat do links dokumenty z vazby role vychházející z kolekce collectionName z dokumentu _id kamkoliv
+      }
+
+      if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.TO) {
+         // TODO přidat do links dokumenty z vazby role směřující do kolekce collectionName do dokumentu _id odkudkoliv
+      }
+
+      return links;
+   }
+
+   /**
+    * Get links between source and target documents of the given role.
+    *
+    * @param collectionName
+    *       The source/target collection.
+    * @param role
+    *       The link role.
+    * @param documentId
+    *       The source/target document id.
+    * @param linkDirection
+    *       Which link direction to work with.
+    * @return Required links.
+    */
+   @GET
+   @Path("/{role}/documents/{id}/target/{targetId}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public List<LinkDao> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LinkDirection linkDirection) {
+      final List<LinkDao> links = new ArrayList<>();
       // TODO translate user collection names
 
       if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.FROM) {
@@ -145,7 +177,7 @@ public class LinkingService {
    @DELETE
    @Path("/{role}/documents/{id}")
    @Produces(MediaType.APPLICATION_JSON)
-   public void deleteLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LinkDirection linkDirection) {
+   public void deleteLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LinkDirection linkDirection) {
       // TODO translate user collection names
       if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.FROM) {
          // TODO smazat z links dokumenty z vazby role vychházející z kolekce collectionName z dokumentu _id kamkoliv
@@ -153,6 +185,34 @@ public class LinkingService {
 
       if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.TO) {
          // TODO smazat z links dokumenty z vazby role směřující do kolekce collectionName do dokumentu _id odkudkoliv
+      }
+   }
+
+   /**
+    * Removes given document linked from/to the given collection and document id with the given role.
+    *
+    * @param collectionName
+    *       The source/target collection.
+    * @param role
+    *       The link role.
+    * @param documentId
+    *       The source/target document id.
+    * @param targetDocumentId
+    *       The target/source document id.
+    * @param linkDirection
+    *       Which link direction to work with.
+    */
+   @DELETE
+   @Path("/{role}/documents/{id}/targets/{targetId}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public void deleteLink(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LinkDirection linkDirection) {
+      // TODO translate user collection names
+      if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.FROM) {
+         // TODO smazat z links dokument targetId z vazby role vychházející z kolekce collectionName z dokumentu _id
+      }
+
+      if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.TO) {
+         // TODO smazat z links dokument targetId z vazby role směřující do kolekce collectionName do dokumentu _id
       }
    }
 
@@ -172,7 +232,7 @@ public class LinkingService {
     * @param attributes
     *       The link attributes.
     */
-   @PUT
+   @POST
    @Path("/{role}/collections/{targetCollection}")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
@@ -185,6 +245,8 @@ public class LinkingService {
          // TODO přidat do vazby záznam na propojení dokumentů fromId a toId s atributy v attributes
       }
    }
+
+   // get links with link attributes for document
 
    /**
     * Which direction of link to work with.

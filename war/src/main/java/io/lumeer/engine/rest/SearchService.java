@@ -38,6 +38,7 @@ import javax.ws.rs.core.MediaType;
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
+@Path("/query/")
 @RequestScoped
 public class SearchService implements Serializable {
 
@@ -47,11 +48,11 @@ public class SearchService implements Serializable {
    private SearchFacade searchFacade;
 
    @POST
-   @Path("/collections/{collectionName}/query")
+   @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public List<DataDocument> runQuery(final @PathParam("collectionName") String collectionName, final Query query) throws InvalidQueryException {
-      if (collectionName == null || query == null) {
+   public List<DataDocument> runQuery(final Query query) throws InvalidQueryException {
+      if (query == null) {
          throw new IllegalArgumentException();
       }
       return searchFacade.query(query);

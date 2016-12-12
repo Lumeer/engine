@@ -170,6 +170,7 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
+      // IMPLEMENTATION POSTPONED
       // TODO: user in the request body?
       // return securityFacade.checkForAddRights(collectionName, documentId, ?user?);
       return false;
@@ -181,6 +182,7 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
+      // IMPLEMENTATION POSTPONED
       // TODO: which metod to use?
       // TODO: access rights to request body? any bean?
    }
