@@ -535,13 +535,16 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
       }
 
-      String metadataCollectionName = collectionMetadataCollectionName(collectionInternalName);
+      String query = queryOneValueFromCollectionMetadata(collectionInternalName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
+      List<DataDocument> nameInfo = dataStorage.run(query);
+      DataDocument nameDocument = nameInfo.get(0);
+      String id = nameDocument.getId();
+
       Map<String, Object> metadata = new HashMap<>();
-      metadata.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
       metadata.put(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
 
       DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.createDocument(metadataCollectionName, metadataDocument);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionInternalName), metadataDocument, id, -1);
    }
 
    /**

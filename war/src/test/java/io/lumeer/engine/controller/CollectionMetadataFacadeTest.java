@@ -258,11 +258,13 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    public void testSetGetOriginalCollectionName() throws Exception {
       setUpCollection(COLLECTION_SET_ORIGINAL_NAME);
 
-      collectionFacade.createCollection(COLLECTION_SET_ORIGINAL_NAME); // set is done in this method
+      collectionFacade.createCollection(COLLECTION_SET_ORIGINAL_NAME);
       String collection = internalName(COLLECTION_SET_ORIGINAL_NAME);
+      String newName = "my great collection";
+      collectionMetadataFacade.setOriginalCollectionName(collection, newName);
       String realName = collectionMetadataFacade.getOriginalCollectionName(collection);
 
-      Assert.assertEquals(COLLECTION_SET_ORIGINAL_NAME, realName);
+      Assert.assertEquals(newName, realName);
    }
 
    @Test
