@@ -23,20 +23,18 @@ error_handler() {
 trap 'error_handler' ERR
 
 # Set up a repeating loop to send some output to Travis.
-
-bash -c "while true; do echo \$(date) - building ...; sleep $PING_SLEEP; done" &
-PING_LOOP_PID=$!
+#bash -c "while true; do echo \$(date) - building ...; sleep $PING_SLEEP; done" &
+#PING_LOOP_PID=$!
 
 # My build is using maven, but you could build anything with this, E.g.
 # your_build_command_1 | tee $BUILD_OUTPUT 2>&1
 # your_build_command_2 | tee $BUILD_OUTPUT 2>&1
 export LUMEER_HOME=$(pwd)/war
 export LUMEER_DEFAULTS=defaults-ci.properties
-mvn -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci | tee $BUILD_OUTPUT 2>&1
+mvn -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci && find . -name 'Surefire test.xml' -exec cat {} \; | tee $BUILD_OUTPUT 2>&1
 
 # The build finished without returning an error so dump a tail of the output
 #dump_output
 
 # nicely terminate the ping output loop
-#
-kill $PING_LOOP_PID
+#kill $PING_LOOP_PID
