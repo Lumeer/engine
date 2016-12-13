@@ -1,5 +1,5 @@
 language: java
-script: ./travis.sh
+script: travis_wait 60 ./travis.sh
 jdk:
   - oraclejdk8
 addons:
