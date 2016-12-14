@@ -65,7 +65,7 @@ public class BatchServiceTest extends Arquillian {
       System.out.println(response.getStatus());
       System.out.println(response.getStatusInfo());*/
 
-      Thread.sleep(5 * 60 * 1000L);
+      //Thread.sleep(5 * 60 * 1000L);
    }
 
 }
