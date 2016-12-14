@@ -19,32 +19,28 @@
  */
 package io.lumeer.engine.util;
 
-import io.lumeer.engine.api.task.Task;
-
 import java.util.logging.Logger;
-import javax.annotation.Resource;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.Queue;
 
 /**
+ * TODO JMS is disabled at the moment
+ *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RequestScoped
 public class JmsService {
 
-   @Resource(mappedName = "java:/jms/queue/TaskQueue")
-   private Queue taskQueue;
+   //@Resource(mappedName = "java:/jms/queue/TaskQueue")
+   //private Queue taskQueue;
 
-   @Inject
-   private JMSContext context;
+   //@Inject
+   //private JMSContext context;
 
    @Inject
    private Logger log;
 
-   public void enqueueTask(final Task task) {
+   /*public void enqueueTask(final Task task) {
       context.createProducer().send(taskQueue, task);
-   }
+   }*/
 }

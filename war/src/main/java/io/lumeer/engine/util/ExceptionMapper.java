@@ -46,7 +46,8 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
 
       // ILLEGAL ARGUMENT
       if (e instanceof IllegalArgumentException) {
-         return Response.status(Response.Status.BAD_REQUEST).entity("Illegal argument.").type(MediaType.TEXT_PLAIN).build();
+         e.printStackTrace();
+         return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       if (e instanceof UnsupportedOperationException) {

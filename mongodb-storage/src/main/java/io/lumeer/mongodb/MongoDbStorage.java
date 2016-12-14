@@ -129,6 +129,9 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void createCollection(final String collectionName) {
+      if (collectionCache != null) {
+         collectionCache.add(collectionName);
+      }
       database.createCollection(collectionName);
    }
 
