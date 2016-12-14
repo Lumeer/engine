@@ -8,6 +8,7 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
@@ -31,6 +32,11 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
             e instanceof InvalidQueryException || e instanceof InvalidDocumentKeyException ||
             e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException) {
          return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
+      }
+
+      // 401 - UNAUTHORIZED
+      if (e instanceof UnauthorizedAccessException) {
+         return Response.status(Response.Status.NOT_FOUND).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 404 - NOT FOUND
