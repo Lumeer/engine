@@ -39,8 +39,6 @@ public class MergeBatch extends AbstractCollectionBatch {
 
    private MergeType mergeType = MergeType.DOCUMENT;
 
-   private boolean keepOriginal = false;
-
    public MergeBatch() {
    }
 
@@ -83,14 +81,6 @@ public class MergeBatch extends AbstractCollectionBatch {
 
    public void setMergeType(final MergeType mergeType) {
       this.mergeType = mergeType;
-   }
-
-   public boolean isKeepOriginal() {
-      return keepOriginal;
-   }
-
-   public void setKeepOriginal(final boolean keepOriginal) {
-      this.keepOriginal = keepOriginal;
    }
 
    @Override

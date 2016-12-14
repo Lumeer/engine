@@ -26,14 +26,10 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
 
-import org.bson.Document;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -163,7 +159,27 @@ public class BatchFacade implements Serializable {
       }
    }
 
-   private static void internalExecuteBatch(final SplitBatch batch) {
+   private void internalExecuteBatch(final SplitBatch batch) throws DbException {
+      List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, -1, -1);
+
+      for (final DataDocument doc : documents) {
+         final Object value = doc.get(batch.getAttribute());
+
+         if (value != null) {
+            final String original = value instanceof String ? (String) value : value.toString();
+            final String[] parts = original.split(batch.getDelimiter(), batch.getSplitAttributes().size());
+
+            for (int i = 0; i < parts.length; i++) {
+               doc.put(batch.getSplitAttributes().get(i), batch.isTrim() ? parts[i].trim() : parts[i]);
+            }
+         }
+
+         if (!batch.isKeepOriginal()) {
+            doc.remove(batch.getAttribute());
+         }
+
+         documentFacade.updateDocument(batch.getCollectionName(), doc);
+      }
    }
 
 }
