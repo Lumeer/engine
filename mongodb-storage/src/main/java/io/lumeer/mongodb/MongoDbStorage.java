@@ -43,6 +43,7 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -328,9 +329,18 @@ public class MongoDbStorage implements DataStorage {
    @SuppressWarnings("unchecked")
    @Override
    public List<DataDocument> run(final String command) {
+      return run(BsonDocument.parse(command));
+   }
+
+   @Override
+   public List<DataDocument> run(final DataDocument command) {
+      return run(MongoUtils.dataDocumentToDocument(command));
+   }
+
+   private List<DataDocument> run(final Bson command) {
       final List<DataDocument> result = new ArrayList<>();
 
-      Document cursor = (Document) database.runCommand(BsonDocument.parse(command)).get(CURSOR_KEY);
+      Document cursor = (Document) database.runCommand(command).get(CURSOR_KEY);
 
       if (cursor != null) {
          ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
@@ -343,6 +353,7 @@ public class MongoDbStorage implements DataStorage {
 
       return result;
    }
+
 
    @Override
    public List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit) {

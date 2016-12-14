@@ -296,6 +296,16 @@ public interface DataStorage extends Serializable {
    List<DataDocument> run(final String command);
 
    /**
+    * Executes a command to find and return documents.
+    *
+    * @param command
+    *       the database find command specified as a DataDocument
+    * @return the list of the found documents
+    * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
+    */
+   List<DataDocument> run(final DataDocument command);
+
+   /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
     *
     * @param collectionName

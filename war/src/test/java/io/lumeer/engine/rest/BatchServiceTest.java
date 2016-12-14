@@ -57,15 +57,15 @@ public class BatchServiceTest extends Arquillian {
    public void testSplitBatch() throws Exception {
       final Client client = ClientBuilder.newBuilder().build();
       // the path prefix '/lumeer-engine/' does not work in test classes
-      Response response = client.target(TARGET_URI)
+      /*Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + "collections/Super")
                                 .request(MediaType.APPLICATION_JSON_TYPE)
                                 .buildPost(Entity.text(""))
                                 .invoke();
       System.out.println(response.getStatus());
-      System.out.println(response.getStatusInfo());
+      System.out.println(response.getStatusInfo());*/
 
-      //Thread.sleep(5 * 60 * 1000L);
+      Thread.sleep(5 * 60 * 1000L);
    }
 
 }

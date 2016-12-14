@@ -52,6 +52,20 @@ public class DataDocument extends LinkedHashMap<String, Object> {
    }
 
    /**
+    * Puts the key and value in the document and returns this.
+    *
+    * @param key
+    *       The key to set.
+    * @param value
+    *       The value to set in the key.
+    * @return Instance of this.
+    */
+   public DataDocument append(final String key, final Object value) {
+      put(key, value);
+      return this;
+   }
+
+   /**
     * Gets the document id.
     *
     * @return The document id.
