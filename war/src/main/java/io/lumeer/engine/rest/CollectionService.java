@@ -25,6 +25,7 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
@@ -91,7 +92,7 @@ public class CollectionService implements Serializable {
 
    @DELETE
    @Path("/{name}")
-   public void dropCollection(final @PathParam("name") String name) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public void dropCollection(final @PathParam("name") String name) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (name == null) {
          throw new IllegalArgumentException();
       }
@@ -101,7 +102,7 @@ public class CollectionService implements Serializable {
    @DELETE
    @Path("/{collectionName}/attributes/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void dropAttribute(final @PathParam("collectionName") String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeNotFoundException {
+   public void dropAttribute(final @PathParam("collectionName") String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
@@ -153,7 +154,7 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/{collectionName}/meta/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public List<DataDocument> readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
@@ -171,7 +172,7 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/{collectionName}/attributes/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public List<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }

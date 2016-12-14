@@ -237,12 +237,11 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
-      boolean drop = collectionMetadataFacade.dropCollectionAttribute(collection, name);
+      collectionMetadataFacade.dropCollectionAttribute(collection, name);
 
       List<String> columns = collectionMetadataFacade.getCollectionAttributesNames(collection);
 
       Assert.assertTrue(columns.isEmpty());
-      Assert.assertTrue(drop);
 
       // we try to drop non existing attribute
       boolean pass = false;
