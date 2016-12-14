@@ -313,6 +313,15 @@ public interface DataStorage extends Serializable {
    List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit);
 
    /**
+    * Counts the number of document in the collection optionally meeting the filter criteria.
+    *
+    * @param collectionName The name of the collection.
+    * @param filter The filter on documents.
+    * @return Number of documents in the collection meeting the criteria.
+    */
+   long count(final String collectionName, final String filter);
+
+   /**
     * Executes the provided query and returns its results. The query needs to have real database collection names filled in.
     *
     * @param query
@@ -399,12 +408,4 @@ public interface DataStorage extends Serializable {
     *       The name of an index to drop.
     */
    void dropIndex(final String collectionName, final String indexName);
-
-   /**
-    * Runs batch operation on the database.
-    *
-    * @param batch
-    *       The batch operation to run.
-    */
-   void batch(final Batch batch);
 }

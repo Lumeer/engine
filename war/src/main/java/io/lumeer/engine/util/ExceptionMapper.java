@@ -30,23 +30,27 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
             e instanceof AttributeNotFoundException || e instanceof AttributeAlreadyExistsException ||
             e instanceof InvalidQueryException || e instanceof InvalidDocumentKeyException ||
             e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException) {
-         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).type(MediaType.TEXT_PLAIN).build();
+         return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 404 - NOT FOUND
       if (e instanceof CollectionNotFoundException || e instanceof CollectionMetadataDocumentNotFoundException ||
             e instanceof DocumentNotFoundException) {
-         return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).type(MediaType.TEXT_PLAIN).build();
+         return Response.status(Response.Status.NOT_FOUND).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 500 - INTERNAL SERVER ERROR
       if (e instanceof VersionUpdateConflictException) {
-         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).type(MediaType.TEXT_PLAIN).build();
+         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // ILLEGAL ARGUMENT
       if (e instanceof IllegalArgumentException) {
          return Response.status(Response.Status.BAD_REQUEST).entity("Illegal argument.").type(MediaType.TEXT_PLAIN).build();
+      }
+
+      if (e instanceof UnsupportedOperationException) {
+         return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // return Response.status(Response.Status.CONFLICT).type(MediaType.TEXT_PLAIN).build();

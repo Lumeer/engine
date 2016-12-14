@@ -39,15 +39,18 @@ public class MergeBatch extends AbstractCollectionBatch {
 
    private MergeType mergeType = MergeType.DOCUMENT;
 
+   private boolean keepOriginal = false;
+
    public MergeBatch() {
    }
 
-   public MergeBatch(final String collectionName, final List<String> attributes, final String resultAttribute, final String join, final MergeType mergeType) {
+   public MergeBatch(final String collectionName, final List<String> attributes, final String resultAttribute, final String join, final MergeType mergeType, boolean keepOriginal) {
       this.collectionName = collectionName;
       this.attributes = attributes;
       this.resultAttribute = resultAttribute;
       this.join = join;
       this.mergeType = mergeType;
+      this.keepOriginal = keepOriginal;
    }
 
    public List<String> getAttributes() {
@@ -82,6 +85,14 @@ public class MergeBatch extends AbstractCollectionBatch {
       this.mergeType = mergeType;
    }
 
+   public boolean isKeepOriginal() {
+      return keepOriginal;
+   }
+
+   public void setKeepOriginal(final boolean keepOriginal) {
+      this.keepOriginal = keepOriginal;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -93,6 +104,9 @@ public class MergeBatch extends AbstractCollectionBatch {
 
       final MergeBatch that = (MergeBatch) o;
 
+      if (keepOriginal != that.keepOriginal) {
+         return false;
+      }
       if (attributes != null ? !attributes.equals(that.attributes) : that.attributes != null) {
          return false;
       }
@@ -111,6 +125,7 @@ public class MergeBatch extends AbstractCollectionBatch {
       result = 31 * result + (resultAttribute != null ? resultAttribute.hashCode() : 0);
       result = 31 * result + (join != null ? join.hashCode() : 0);
       result = 31 * result + (mergeType != null ? mergeType.hashCode() : 0);
+      result = 31 * result + (keepOriginal ? 1 : 0);
       return result;
    }
 
@@ -122,6 +137,7 @@ public class MergeBatch extends AbstractCollectionBatch {
             + ", resultAttribute='" + resultAttribute + '\''
             + ", join='" + join + '\''
             + ", mergeType='" + mergeType + '\''
+            + ", keepOriginal='" + keepOriginal + '\''
             + '}';
    }
 }

@@ -23,7 +23,7 @@ package io.lumeer.engine.api.exception;
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-public class DbException extends Exception {
+abstract public class DbException extends Exception {
 
    public DbException(final String message) {
       super(message);

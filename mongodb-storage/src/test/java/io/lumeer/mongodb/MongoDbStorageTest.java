@@ -77,7 +77,6 @@ public class MongoDbStorageTest {
    private final String COLLECTION_BASIC_ARRAY_MANIPULATION = "collectionBasicArrayManipulation";
    private final String COLLECTION_COMPLEX_ARRAY_MANIPULATION = "collectionComplexArrayManipulation";
    private final String COLLECTION_AGGREGATE = "collectionAggregate";
-   private final String COLLECTION_MERGE = "collectionMerge";
 
    private MongoDbStorage mongoDbStorage;
 
@@ -108,7 +107,6 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_BASIC_ARRAY_MANIPULATION);
       mongoDbStorage.dropCollection(COLLECTION_COMPLEX_ARRAY_MANIPULATION);
       mongoDbStorage.dropCollection(COLLECTION_AGGREGATE);
-      mongoDbStorage.dropCollection(COLLECTION_MERGE);
    }
 
    @Test
@@ -472,30 +470,6 @@ public class MongoDbStorageTest {
       fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
       Assert.assertEquals(2, fromDb.getArrayList("n.a", DataDocument.class).size());
 
-   }
-
-   @Test(enabled = false)
-   public void testMerge() {
-      mongoDbStorage.createCollection(COLLECTION_MERGE);
-
-      mongoDbStorage.createDocument(COLLECTION_MERGE, getTestDocument("a", "1", "val1"));
-      mongoDbStorage.createDocument(COLLECTION_MERGE, getTestDocument("b", "2", "val2"));
-      mongoDbStorage.createDocument(COLLECTION_MERGE, getTestDocument("c", "3", "val3"));
-      mongoDbStorage.createDocument(COLLECTION_MERGE, getTestDocument("d", "4", "val4"));
-
-      final MergeBatch b = new MergeBatch();
-      b.setCollectionName(COLLECTION_MERGE);
-      b.setResultAttribute("merge1");
-      b.setMergeType(MergeBatch.MergeType.JOIN);
-      b.setJoin(" - ");
-      b.setAttributes(new ArrayList<>());
-      b.getAttributes().add("param1");
-      b.getAttributes().add("param2");
-      b.getAttributes().add("param3");
-
-      mongoDbStorage.batch(b);
-
-      System.out.println(mongoDbStorage.search(COLLECTION_MERGE, "{}", "{}", 0, 100));
    }
 
    @Test
