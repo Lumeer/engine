@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.api.batch;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,27 +31,31 @@ public class MergeBatch extends AbstractCollectionBatch {
       DOCUMENT, JOIN, SUM;
    }
 
-   private Set<String> attributes;
+   private List<String> attributes;
 
    private String resultAttribute;
+
+   private String join;
 
    private MergeType mergeType = MergeType.DOCUMENT;
 
    public MergeBatch() {
    }
 
-   public MergeBatch(final String collectionName, final Set<String> attributes, final String resultAttribute, final MergeType mergeType) {
+   public MergeBatch(final String collectionName, final List<String> attributes, final String resultAttribute, final String join, final MergeType mergeType, boolean keepOriginal) {
       this.collectionName = collectionName;
       this.attributes = attributes;
       this.resultAttribute = resultAttribute;
+      this.join = join;
       this.mergeType = mergeType;
+      this.keepOriginal = keepOriginal;
    }
 
-   public Set<String> getAttributes() {
+   public List<String> getAttributes() {
       return attributes;
    }
 
-   public void setAttributes(final Set<String> attributes) {
+   public void setAttributes(final List<String> attributes) {
       this.attributes = attributes;
    }
 
@@ -60,6 +65,14 @@ public class MergeBatch extends AbstractCollectionBatch {
 
    public void setResultAttribute(final String resultAttribute) {
       this.resultAttribute = resultAttribute;
+   }
+
+   public String getJoin() {
+      return join;
+   }
+
+   public void setJoin(final String join) {
+      this.join = join;
    }
 
    public MergeType getMergeType() {
@@ -81,24 +94,28 @@ public class MergeBatch extends AbstractCollectionBatch {
 
       final MergeBatch that = (MergeBatch) o;
 
-      if (collectionName != null ? !collectionName.equals(that.collectionName) : that.collectionName != null) {
-         return false;
-      }
-      if (mergeType != null ? !mergeType.equals(that.mergeType) : that.mergeType != null) {
+      if (keepOriginal != that.keepOriginal) {
          return false;
       }
       if (attributes != null ? !attributes.equals(that.attributes) : that.attributes != null) {
          return false;
       }
-      return resultAttribute != null ? resultAttribute.equals(that.resultAttribute) : that.resultAttribute == null;
+      if (resultAttribute != null ? !resultAttribute.equals(that.resultAttribute) : that.resultAttribute != null) {
+         return false;
+      }
+      if (join != null ? !join.equals(that.join) : that.join != null) {
+         return false;
+      }
+      return mergeType == that.mergeType;
    }
 
    @Override
    public int hashCode() {
-      int result = collectionName != null ? collectionName.hashCode() : 0;
-      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
+      int result = attributes != null ? attributes.hashCode() : 0;
       result = 31 * result + (resultAttribute != null ? resultAttribute.hashCode() : 0);
+      result = 31 * result + (join != null ? join.hashCode() : 0);
       result = 31 * result + (mergeType != null ? mergeType.hashCode() : 0);
+      result = 31 * result + (keepOriginal ? 1 : 0);
       return result;
    }
 
@@ -108,7 +125,9 @@ public class MergeBatch extends AbstractCollectionBatch {
             + "collectionName='" + collectionName + '\''
             + ", attributes=" + attributes
             + ", resultAttribute='" + resultAttribute + '\''
+            + ", join='" + join + '\''
             + ", mergeType='" + mergeType + '\''
+            + ", keepOriginal='" + keepOriginal + '\''
             + '}';
    }
 }

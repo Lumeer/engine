@@ -19,17 +19,21 @@ package io.lumeer.mongodb;/*
  */
 
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.batch.MergeBatch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.model.Filters;
+import org.bson.BsonDocument;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

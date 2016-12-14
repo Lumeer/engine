@@ -124,7 +124,7 @@ public class DocumentFacade implements Serializable {
       if (dataDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      for (String key : LumeerConst.Document.METADATA_KEYS) {
+      for (String key : LumeerConst.Document.PURGE_METADATA_KEYS) {
          dataDocument.remove(key);
       }
       return dataDocument;

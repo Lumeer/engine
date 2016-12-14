@@ -26,8 +26,25 @@ import java.util.List;
  */
 public class SplitBatch extends AbstractCollectionBatch {
 
+   /**
+    * Splitting string.
+    */
    private String delimiter = ",";
 
+   /**
+    * Attribute to split.
+    */
+   private String attribute;
+
+   /**
+    * When true, the individual parts are also trimmed.
+    */
+   private boolean trim = true;
+
+   /**
+    * List of resulting attributes names. If the original attribute splits into more parts,
+    * all the extra parts are added to the last attribute.
+    */
    private List<String> splitAttributes;
 
    //https://docs.mongodb.com/manual/reference/operator/aggregation/arrayElemAt/#exp._S_arrayElemAt
@@ -37,10 +54,21 @@ public class SplitBatch extends AbstractCollectionBatch {
    public SplitBatch() {
    }
 
-   public SplitBatch(final String collectionName, final String delimiter, final List<String> splitAttributes) {
+   public SplitBatch(final String collectionName, final String attribute, final String delimiter, final boolean trim, final List<String> splitAttributes, final boolean keepOriginal) {
       this.collectionName = collectionName;
+      this.attribute = attribute;
       this.delimiter = delimiter;
+      this.trim = trim;
       this.splitAttributes = splitAttributes;
+      this.keepOriginal = keepOriginal;
+   }
+
+   public String getAttribute() {
+      return attribute;
+   }
+
+   public void setAttribute(final String attribute) {
+      this.attribute = attribute;
    }
 
    public String getDelimiter() {
@@ -49,6 +77,14 @@ public class SplitBatch extends AbstractCollectionBatch {
 
    public void setDelimiter(final String delimiter) {
       this.delimiter = delimiter;
+   }
+
+   public boolean isTrim() {
+      return trim;
+   }
+
+   public void setTrim(final boolean trim) {
+      this.trim = trim;
    }
 
    public List<String> getSplitAttributes() {
@@ -70,6 +106,15 @@ public class SplitBatch extends AbstractCollectionBatch {
 
       final SplitBatch that = (SplitBatch) o;
 
+      if (keepOriginal != that.keepOriginal) {
+         return false;
+      }
+      if (trim != that.trim) {
+         return false;
+      }
+      if (attribute != null ? !attribute.equals(that.attribute) : that.attribute != null) {
+         return false;
+      }
       if (collectionName != null ? !collectionName.equals(that.collectionName) : that.collectionName != null) {
          return false;
       }
@@ -82,8 +127,11 @@ public class SplitBatch extends AbstractCollectionBatch {
    @Override
    public int hashCode() {
       int result = collectionName != null ? collectionName.hashCode() : 0;
+      result = 31 * result + (attribute != null ? attribute.hashCode() : 0);
       result = 31 * result + (delimiter != null ? delimiter.hashCode() : 0);
       result = 31 * result + (splitAttributes != null ? splitAttributes.hashCode() : 0);
+      result = 31 * result + (keepOriginal ? 1 : 0);
+      result = 31 * result + (trim ? 1 : 0);
       return result;
    }
 
@@ -91,8 +139,11 @@ public class SplitBatch extends AbstractCollectionBatch {
    public String toString() {
       return "SplitBatch{"
             + "collectionName='" + collectionName + '\''
-            + "delimiter='" + delimiter + '\''
+            + ", attribute='" + attribute + '\''
+            + ", delimiter='" + delimiter + '\''
+            + ", trim='" + trim + '\''
             + ", splitAttributes=" + splitAttributes
+            + ", keepOriginal='" + keepOriginal + '\''
             + '}';
    }
 }

@@ -309,4 +309,33 @@ public class SecurityFacadeTest extends Arquillian {
       securityFacade.removeRightsWrite(dataDocument, "user1");
       Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 0);
    }
+
+   @Test
+   public void testAddingSameRights() throws Exception{
+      DataDocument dataDocument = new DataDocument();
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserName());
+      securityFacade.setRightsExecute(dataDocument, "user1");
+      securityFacade.setRightsExecute(dataDocument, "user1");
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 1);
+      dataDocument = new DataDocument();
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserName());
+      securityFacade.setRightsWrite(dataDocument, "user1");
+      securityFacade.setRightsWrite(dataDocument, "user1");
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 2);
+      dataDocument = new DataDocument();
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserName());
+      securityFacade.setRightsRead(dataDocument, "user1");
+      securityFacade.setRightsRead(dataDocument, "user1");
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 4);
+      securityFacade.removeRightsExecute(dataDocument,"user1");
+      securityFacade.removeRightsWrite(dataDocument,"user1");
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 4);
+      dataDocument = new DataDocument();
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserName());
+      securityFacade.setRightsExecute(dataDocument, "user1");
+      securityFacade.setRightsWrite(dataDocument,"user1");
+      securityFacade.removeRightsRead(dataDocument, "user1");
+      System.out.println(dataDocument.toString());
+      Assert.assertEquals(dataDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS).get("user1"), 3);
+   }
 }

@@ -72,7 +72,7 @@ public class ViewService {
     *       The view description.
     * @return Id of the newly created view.
     */
-   @PUT
+   @POST
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    @Produces(MediaType.APPLICATION_JSON)
@@ -88,7 +88,7 @@ public class ViewService {
     * @param view
     *       The view descriptor.
     */
-   @POST
+   @PUT
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateView(final ViewDao view) {
@@ -105,7 +105,7 @@ public class ViewService {
     * @param configuration
     *       Configuration string, can specify either JSON or just a plain string.
     */
-   @POST
+   @PUT
    @Path("/{id}/configure/{attribute}")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute, final String configuration) {
@@ -143,7 +143,7 @@ public class ViewService {
     *       The name of the newly created view.
     * @return The id of the newly created view.
     */
-   @PUT
+   @POST
    @Path("/{id}/clone/{newName}")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
@@ -177,7 +177,7 @@ public class ViewService {
     * @param accessRights
     *       The rights to set.
     */
-   @POST
+   @PUT
    @Path("/{id}/rights")
    @Produces(MediaType.APPLICATION_JSON)
    public void setViewAccessRights(final @PathParam("id") int id, final String accessRights) {

@@ -21,9 +21,12 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.batch.AbstractCollectionBatch;
 import io.lumeer.engine.api.batch.Batch;
-import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.batch.MergeBatch;
+import io.lumeer.engine.api.batch.SplitBatch;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.controller.BatchFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 
 import javax.enterprise.context.RequestScoped;
@@ -44,21 +47,37 @@ import javax.ws.rs.core.MediaType;
 public class BatchService {
 
    @Inject
-   private DataStorage dataStorage;
+   private BatchFacade batchFacade;
 
-   @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
    /**
-    * Runs a batch operation.
+    * Runs a merge batch operation.
     *
     * @param batch
     *       The batch operation to run.
     */
    @POST
-   @Path("/")
+   @Path("/merge")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void runBatch(final Batch batch) {
+   public void runMergeBatch(final MergeBatch batch) throws DbException {
+      runBatch(batch);
+   }
+
+   /**
+    * Runs a split batch operation.
+    *
+    * @param batch
+    *       The batch operation to run.
+    */
+   @POST
+   @Path("/split")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void runSplitBatch(final SplitBatch batch) throws DbException {
+      runBatch(batch);
+   }
+
+   private void runBatch(final Batch batch) throws DbException {
       try {
          if (batch instanceof AbstractCollectionBatch) {
             final AbstractCollectionBatch collectionBatch = (AbstractCollectionBatch) batch;
@@ -68,6 +87,6 @@ public class BatchService {
          throw new NotAcceptableException("Cannot determine collection name in the system: ", e);
       }
 
-      dataStorage.batch(batch);
+      batchFacade.executeBatch(batch);
    }
 }

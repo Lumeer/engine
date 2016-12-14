@@ -20,7 +20,6 @@
 package io.lumeer.mongodb;
 
 import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.batch.Batch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
@@ -339,18 +338,31 @@ public class MongoDbStorage implements DataStorage {
 
       MongoCollection<Document> collection = database.getCollection(collectionName);
       FindIterable<Document> documents = filter != null ? collection.find(BsonDocument.parse(filter)) : collection.find();
-      documents.sort(sort != null ? BsonDocument.parse(sort) : null)
-            .skip(skip)
-            .limit(limit)
-            .into(new ArrayList<>())
-            .forEach(d -> {
-               MongoUtils.replaceId(d);
-               DataDocument raw = new DataDocument(d);
-               MongoUtils.convertNestedAndListDocuments(raw);
-               result.add(raw);
-            });
+      if (sort != null && !sort.isEmpty()) {
+         documents = documents.sort(BsonDocument.parse(sort));
+      }
+      if (skip > 0) {
+         documents = documents.skip(skip);
+      }
+      if (limit > 0) {
+         documents = documents.limit(limit);
+      }
+
+      documents.into(new ArrayList<>()).forEach(d -> {
+         MongoUtils.replaceId(d);
+         DataDocument raw = new DataDocument(d);
+         MongoUtils.convertNestedAndListDocuments(raw);
+         result.add(raw);
+      });
 
       return result;
+   }
+
+   @Override
+   public long count(final String collectionName, final String filter) {
+      MongoCollection<Document> collection = database.getCollection(collectionName);
+
+      return filter != null ? collection.count(BsonDocument.parse(filter)) : collection.count();
    }
 
    @Override
@@ -399,7 +411,6 @@ public class MongoDbStorage implements DataStorage {
          output.put("$out", query.getOutput());
          stages.add(output);
       }
-
 
       query.getCollections().forEach(collection -> {
          result.addAll(aggregate(collection, stages.toArray(new DataDocument[stages.size()])));
@@ -500,10 +511,5 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void dropIndex(final String collectionName, final String indexName) {
       database.getCollection(collectionName).dropIndex(indexName);
-   }
-
-   @Override
-   public void batch(final Batch batch) {
-      // TODO implement batch
    }
 }

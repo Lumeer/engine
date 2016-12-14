@@ -46,6 +46,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -119,10 +120,9 @@ public class CollectionService implements Serializable {
    }
 
    @POST
-   @Path("/{collectionName}/search/filter/{filter}/sort/{sort}/skip/{skip}/limit/{limit}")
+   @Path("/{collectionName}/search/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @PathParam("filter") String filter, final @PathParam("sort") String sort, final @PathParam("skip") int skip, final @PathParam("limit") int limit) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
-      // TODO: is the path representation correct?
+   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @QueryParam("filter") String filter, final @QueryParam("sort") String sort, final @QueryParam("skip") int skip, final @QueryParam("limit") int limit) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
@@ -130,12 +130,10 @@ public class CollectionService implements Serializable {
    }
 
    @POST
-   @Path("/{collectionName}/search/{query}")
+   @Path("/{collectionName}/search/query/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @PathParam("query") String query) {
-      // TODO: is the path representation correct?
-      // TODO: collectionName is not used
-      if (collectionName == null || query == null) {
+   public List<DataDocument> search(final @QueryParam("query") String query) {
+      if (query == null) {
          throw new IllegalArgumentException();
       }
       return searchFacade.search(query);

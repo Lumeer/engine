@@ -30,6 +30,7 @@ import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
 import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
 
 import java.io.Serializable;
@@ -71,6 +72,9 @@ public class DocumentService implements Serializable {
    @Inject
    private SecurityFacade securityFacade;
 
+   @Inject
+   private UserFacade userFacade;
+
    @POST
    @Path("/collections/{collectionName}")
    @Produces(MediaType.APPLICATION_JSON)
@@ -102,14 +106,12 @@ public class DocumentService implements Serializable {
    }
 
    @PUT
-   @Path("/{documentId}/collections/{collectionName}")
+   @Path("/collections/{collectionName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final DataDocument updatedDocument) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, InvalidDocumentKeyException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException {
-      if (collectionName == null || documentId == null || updatedDocument == null) {
+   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, InvalidDocumentKeyException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException {
+      if (collectionName == null || updatedDocument == null) {
          throw new IllegalArgumentException();
       }
-      // TODO: could be the id parameter included in updateDocument in request body?
-      updatedDocument.put("_id", documentId);
       documentFacade.updateDocument(getInternalName(collectionName), updatedDocument);
    }
 
@@ -163,16 +165,14 @@ public class DocumentService implements Serializable {
       return versionFacade.getOldDocumentVersion(getInternalName(collectionName), documentId, versionId);
    }
 
-   @GET
+/*   @GET
    @Path("/{documentId}/rights/collections/{collectionName}")
    @Produces(MediaType.APPLICATION_JSON)
    public boolean readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      // TODO: user in the request body?
-      // return securityFacade.checkForAddRights(collectionName, documentId, ?user?);
-      return false;
+      return securityFacade.checkForAddRights(collectionName, documentId, userFacade.getUserEmail());
    }
 
    @PUT
@@ -181,9 +181,9 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      // TODO: which metod to use?
-      // TODO: access rights to request body? any bean?
-   }
+      // which metod to use?
+      // access rights to request body? any dao?
+   }*/
 
    private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
