@@ -73,6 +73,8 @@ public class MongoDbStorage implements DataStorage {
 
    private MongoDatabase database;
    private MongoClient mongoClient = null;
+   private List<String> collectionCache = null;
+   private long cacheLastUpdated = 0L;
 
    @Inject
    @Named("dataStorageConnection")
@@ -118,7 +120,11 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public List<String> getAllCollections() {
-      return database.listCollectionNames().into(new ArrayList<>());
+      if (collectionCache == null || cacheLastUpdated + 5000 < System.currentTimeMillis()) {
+         collectionCache = database.listCollectionNames().into(new ArrayList<>());
+         cacheLastUpdated = System.currentTimeMillis();
+      }
+      return collectionCache;
    }
 
    @Override
@@ -128,12 +134,15 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void dropCollection(final String collectionName) {
+      if (collectionCache != null) {
+         collectionCache.remove(collectionName);
+      }
       database.getCollection(collectionName).drop();
    }
 
    @Override
    public boolean hasCollection(final String collectionName) {
-      return database.listCollectionNames().into(new HashSet<>()).contains(collectionName);
+      return getAllCollections().contains(collectionName);
    }
 
    @Override

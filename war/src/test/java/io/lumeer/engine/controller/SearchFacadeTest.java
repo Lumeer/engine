@@ -72,21 +72,21 @@ public class SearchFacadeTest extends Arquillian {
    public void testSearch() throws Exception {
       setUpCollection(COLLECTION_SEARCH);
 
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 20; i++) {
          DataDocument insertedDocument = new DataDocument();
          documentFacade.createDocument(COLLECTION_SEARCH, insertedDocument);
       }
 
-      List<DataDocument> searchDocuments = searchFacade.search(COLLECTION_SEARCH, null, null, 100, 100);
+      List<DataDocument> searchDocuments = searchFacade.search(COLLECTION_SEARCH, null, null, 5, 5);
 
-      Assert.assertEquals(searchDocuments.size(), 100);
+      Assert.assertEquals(searchDocuments.size(), 5);
    }
 
    @Test
    public void testRawSearch() throws Exception {
       setUpCollection(COLLECTION_SEARCH_RAW);
 
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 20; i++) {
          DataDocument insertedDocument = new DataDocument();
          documentFacade.createDocument(COLLECTION_SEARCH_RAW, insertedDocument);
       }
@@ -96,7 +96,7 @@ public class SearchFacadeTest extends Arquillian {
       List<DataDocument> searchDocuments = searchFacade.search(query);
 
       // run() method returns 101 entries due to it is a default value of "batchSize" query key
-      Assert.assertEquals(searchDocuments.size(), 101);
+      Assert.assertEquals(searchDocuments.size(), 20);
    }
 
    @Test
