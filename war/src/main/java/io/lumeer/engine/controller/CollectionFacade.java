@@ -27,6 +27,7 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -52,12 +53,7 @@ public class CollectionFacade implements Serializable {
 
    private static final long serialVersionUID = 8967474543742743308L;
 
-   private final String ID_COLUMN_KEY = "_id";
-   private final String DEFAULT_COLUMN_VALUE = "";
-   private final String DEFAULT_COLUMN_TYPE = "";
-
    @Inject
-   // @Named("mongoDbStorage") // we have only one implementation, so mongo is automatically injected
    private DataStorage dataStorage;
 
    @Inject
@@ -65,6 +61,9 @@ public class CollectionFacade implements Serializable {
 
    @Inject
    private LinkingFacade linkingFacade;
+
+   @Inject
+   private UserFacade userFacade;
 
    // cache of collections - keys are internal names, values are original names
    private Map<String, String> collections;
@@ -74,16 +73,16 @@ public class CollectionFacade implements Serializable {
     *
     * @return the map of collection names. Keys are internal names, values are original names.
     * @throws CollectionNotFoundException
-    *       when
+    *       when metadata collection for some collection is not found
     * @throws CollectionMetadataDocumentNotFoundException
-    *       when
+    *       when original name for some collection is not found in metadata collection
     */
    public Map<String, String> getAllCollections() throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (this.collections == null) {
          List<String> collectionsAll = dataStorage.getAllCollections();
          collections = new HashMap<>();
 
-         // filters out metadata collections
+         // filters out metadata, shadow and other collections
          for (String collection : collectionsAll) {
             if (collectionMetadataFacade.isUserCollection(collection)) {
                String originalCollectionName = collectionMetadataFacade.getOriginalCollectionName(collection);
@@ -101,13 +100,13 @@ public class CollectionFacade implements Serializable {
     *       name of the collection to create (name given by user)
     * @return name of internal collection
     * @throws CollectionAlreadyExistsException
-    *       if collection already exists in db
+    *       if collection with created internal name already exists
     * @throws UserCollectionAlreadyExistsException
-    *       when
+    *       when collection with given user name already exists
     * @throws CollectionNotFoundException
-    *       when
+    *       when metadata for some other collection is not found (we check all other collections user names to ensure the given one is unique)
     * @throws CollectionMetadataDocumentNotFoundException
-    *       when
+    *       when user name for some other collection is not found
     */
    public String createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       String internalCollectionName = collectionMetadataFacade.createInternalName(collectionOriginalName);
@@ -131,10 +130,15 @@ public class CollectionFacade implements Serializable {
     *       internal name of the collection to update
     * @throws CollectionNotFoundException
     *       if collection was not found in database
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
     */
-   public void dropCollection(final String collectionName) throws CollectionNotFoundException {
-      // TODO: check access rights
+   public void dropCollection(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+            throw new UnauthorizedAccessException();
+         }
+
          linkingFacade.dropCollectionLinks(collectionName);
          dropCollectionMetadata(collectionName);
          dataStorage.dropCollection(collectionName);
@@ -154,10 +158,14 @@ public class CollectionFacade implements Serializable {
     * @return list of all documents from metadata collection
     * @throws CollectionNotFoundException
     *       if collection was not found in database
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read the collection
     */
-   public List<DataDocument> readCollectionMetadata(final String collectionName) throws CollectionNotFoundException {
-      // TODO: check access rights
+   public List<DataDocument> readCollectionMetadata(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
+         if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
+            throw new UnauthorizedAccessException();
+         }
          return dataStorage.search(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), null, null, 0, 0);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -172,10 +180,14 @@ public class CollectionFacade implements Serializable {
     * @return list of names of all attributes in a collection
     * @throws CollectionNotFoundException
     *       if collection was not found in database
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read the collection
     */
-   public List<String> readCollectionAttributes(final String collectionName) throws CollectionNotFoundException {
-      // TODO: check access rights
+   public List<String> readCollectionAttributes(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
+         if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
+            throw new UnauthorizedAccessException();
+         }
          return collectionMetadataFacade.getCollectionAttributesNames(collectionName);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -221,6 +233,7 @@ public class CollectionFacade implements Serializable {
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.
+    * Access rights are not checked there because the method is to be used by HintFacade.
     *
     * @param collectionName
     *       the internal name of the collection where documents contain the given attribute
@@ -230,10 +243,9 @@ public class CollectionFacade implements Serializable {
     * @throws CollectionNotFoundException
     *       if collection was not found in database
     * @throws AttributeNotFoundException
-    *       if attribute was not found in collection
+    *       if attribute was not found in metadata collection
     */
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException {
-      // TODO: check access rights
       if (dataStorage.hasCollection(collectionName)) {
          if (isCollectionAttribute(collectionName, attributeName)) {
             return dataStorage.getAttributeValues(collectionName, attributeName);
@@ -246,37 +258,6 @@ public class CollectionFacade implements Serializable {
    }
 
    /**
-    * Modifies all existing documents in given collection by adding a new attribute.
-    *
-    * @param collectionName
-    *       internal name of the collection where the new attribute should be added
-    * @param attributeName
-    *       name of the attribute to add
-    * @throws AttributeAlreadyExistsException
-    *       if attribute already exists in collection
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
-    */
-   //   public void addOrIncrementAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
-   //      if (isDatabaseCollection(collectionName)) {
-   //         if (collectionMetadataFacade.addCollectionAttribute(collectionName, attributeName, DEFAULT_COLUMN_TYPE, -1)) { // true if attribute doesn't exist in the collection
-   //            List<DataDocument> documents = getAllDocuments(collectionName);
-   //
-   //            for (DataDocument document : documents) {
-   //               String id = document.get(ID_COLUMN_KEY).toString();
-   //
-   //               document.put(attributeName, DEFAULT_COLUMN_VALUE); // blank attribute value
-   //               dataStorage.updateDocument(collectionName, document, id, -1);
-   //            }
-   //         } else {
-   //            throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(attributeName, collectionName));
-   //         }
-   //      } else {
-   //         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-   //      }
-   //   }
-
-   /**
     * Removes given attribute from all existing document specified by its id.
     *
     * @param collectionName
@@ -285,24 +266,23 @@ public class CollectionFacade implements Serializable {
     *       name of the attribute to remove
     * @throws CollectionNotFoundException
     *       if collection was not found in database
-    * @throws AttributeNotFoundException
-    *       if attribute was not found in collection
     * @throws CollectionMetadataDocumentNotFoundException
     *       when metadata about attribute was not found
+    * @throws UnauthorizedAccessException when current user is not allowed to write to the collection
     */
-   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException, CollectionMetadataDocumentNotFoundException {
-      // TODO: check access rights
+   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
-         if (collectionMetadataFacade.dropCollectionAttribute(collectionName, attributeName)) { // true if attribute exists in the collection metadata
-            List<DataDocument> documents = getAllDocuments(collectionName);
 
-            for (DataDocument document : documents) {
-               String id = document.get(ID_COLUMN_KEY).toString();
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+            throw new UnauthorizedAccessException();
+         }
 
-               dataStorage.dropAttribute(collectionName, id, attributeName);
-            }
-         } else {
-            throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
+         collectionMetadataFacade.dropCollectionAttribute(collectionName, attributeName);
+         List<DataDocument> documents = getAllDocuments(collectionName);
+
+         for (DataDocument document : documents) {
+            String id = document.getId();
+            dataStorage.dropAttribute(collectionName, id, attributeName);
          }
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -324,10 +304,15 @@ public class CollectionFacade implements Serializable {
     *       when attribute with new name already exists
     * @throws CollectionMetadataDocumentNotFoundException
     *       when attribute with old name does not exist
+    * @throws UnauthorizedAccessException when current user is not allowed to write to the collection
     */
-   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
-      // TODO: check access rights
+   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
+
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+            throw new UnauthorizedAccessException();
+         }
+
          collectionMetadataFacade.renameCollectionAttribute(collectionName, origName, newName);
          dataStorage.renameAttribute(collectionName, origName, newName);
       } else {
@@ -363,7 +348,7 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     */
    private boolean isCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException {
-      return readCollectionAttributes(collectionName).contains(attributeName);
+      return collectionMetadataFacade.getCollectionAttributesNames(collectionName).contains(attributeName);
    }
 
 }

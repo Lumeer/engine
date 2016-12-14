@@ -22,6 +22,7 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
@@ -307,7 +308,7 @@ public class CollectionServiceTest extends Arquillian {
       // TODO:
    }
 
-   private void dropUsedCollections() throws CollectionNotFoundException {
+   private void dropUsedCollections() throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))) {
          collectionFacade.dropCollection(internalName(DUMMY_COLLECTION_1));
       }

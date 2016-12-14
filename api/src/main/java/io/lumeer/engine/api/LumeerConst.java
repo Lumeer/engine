@@ -89,6 +89,7 @@ public final class LumeerConst {
       public static final String VIEW_INTERNAL_NAME_KEY = "internal-name";
       public static final String VIEW_REAL_NAME_KEY = "name";
       public static final String VIEW_SEQUENCE_NUMBER_KEY = "sequence-number";
+      public static final String VIEW_TYPE_KEY = "type";
 
       public static final String VIEW_USER_RIGHTS_KEY = Document.USER_RIGHTS;
       //public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
@@ -103,7 +104,8 @@ public final class LumeerConst {
             VIEW_CREATE_DATE_KEY,
             VIEW_CREATE_USER_KEY,
             VIEW_USER_RIGHTS_KEY,
-            VIEW_USER_RIGHTS_KEY
+            VIEW_USER_RIGHTS_KEY,
+            VIEW_TYPE_KEY
       );
    }
 
@@ -137,5 +139,9 @@ public final class LumeerConst {
 
       public static final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
       public static final String COLLECTION_LOCK_UPDATED_KEY = "updated";
+
+      public static final String COLLECTION_RIGHTS_META_TYPE_VALUE = "rights";
+      public static final String COLLECTION_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
+      public static final String COLLECTION_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
    }
 }

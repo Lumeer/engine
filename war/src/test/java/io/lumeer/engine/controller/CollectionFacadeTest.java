@@ -56,7 +56,7 @@ public class CollectionFacadeTest extends Arquillian {
    private final String COLLECTION_CREATE_AND_DROP = "CollectionFacadeCollectionCreateAndDrop";
    private final String COLLECTION_READ_COLLECTION_METADATA = "CollectionFacadeReadCollectionCollectionMetadata";
    private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionFacadeReadCollectionCollectionAttributes";
-   private final String COLLECTION_DROP_COLLECTION_METADATA = "CollectionFacadeCollectionDropCollectionMetadata";
+   private final String COLLECTION_DROP_COLLECTION_ATTRIBUTE = "CollectionFacadeCollectionDropCollectionAttribute";
    private final String COLLECTION_GET_ATTRIBUTE_VALUES = "CollectionFacadeCollectionGetAttributeValues";
    private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionFacadeCollectionRenameAttribute";
 
@@ -107,7 +107,7 @@ public class CollectionFacadeTest extends Arquillian {
 
       List<DataDocument> metadata = collectionFacade.readCollectionMetadata(collection);
 
-      Assert.assertEquals(metadata.size(), 3); // 3 documents: attribute, name, lock
+      Assert.assertEquals(metadata.size(), 4); // 4 documents: attribute, name, lock, rights
    }
 
    @Test
@@ -127,19 +127,6 @@ public class CollectionFacadeTest extends Arquillian {
       Assert.assertTrue(attributes.contains(a1));
       Assert.assertTrue(attributes.contains(a2));
    }
-
-   //   @Test
-   //   public void testDropCollectionMetadata() throws Exception {
-   //      boolean isDropped = true;
-   //      collectionFacade.createCollection(COLLECTION_DROP_COLLECTION_METADATA);
-   //      collectionFacade.dropCollectionMetadata(internalName(COLLECTION_DROP_COLLECTION_METADATA));
-   //      collectionFacade.dropCollection(internalName(COLLECTION_DROP_COLLECTION_METADATA));
-   //      if (dataStorage.getAllCollections().contains(COLLECTION_DROP_COLLECTION_METADATA_METADATA_COLLECTION)) {
-   //         isDropped = false;
-   //      }
-   //
-   //      Assert.assertTrue(isDropped);
-   //   }
 
    @Test
    public void testGetAttributeValues() throws Exception {
@@ -176,20 +163,44 @@ public class CollectionFacadeTest extends Arquillian {
       Assert.assertFalse(values.contains(v3));
    }
 
-   //   @Test
-   //   public void testAddAndDropAttribute() throws Exception {
-   //      collectionFacade.createCollection(DUMMY_COLLECTION1_ORIGINAL_NAME);
-   //
-   //      fillDatabaseDummyEntries(DUMMY_COLLECTION1);
-   //
-   //      collectionFacade.addAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
-   //      Assert.assertTrue(isEveryDocumentFilledByNewAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
-   //
-   //      collectionFacade.dropAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY);
-   //      Assert.assertFalse(isEveryDocumentFilledByNewAttribute(DUMMY_COLLECTION1, DUMMY_NEW_KEY));
-   //
-   //      collectionFacade.dropCollection(DUMMY_COLLECTION1);
-   //   }
+   @Test
+   public void testDropAttribute() throws Exception {
+      setUpCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
+
+      collectionFacade.createCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
+      String collection = internalName(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
+
+      String attribute1 = "attribute-to-drop";
+      String attribute2 = "attribute";
+      String value = "value";
+
+      DataDocument doc1 = new DataDocument();
+      doc1.put(attribute1, value);
+      doc1.put(attribute2, value);
+      DataDocument doc2 = new DataDocument();
+      doc2.put(attribute1, value);
+      doc2.put(attribute2, value);
+      DataDocument doc3 = new DataDocument();
+      doc3.put(attribute1, value);
+      doc3.put(attribute2, value);
+
+      dataStorage.createDocument(collection, doc1);
+      dataStorage.createDocument(collection, doc2);
+      dataStorage.createDocument(collection, doc3);
+
+      // we have to add attributes to metadata because we test them in getAttributeValues
+      for (int i = 0; i < 3; i++) {
+         collectionMetadataFacade.addOrIncrementAttribute(collection, attribute1);
+         collectionMetadataFacade.addOrIncrementAttribute(collection, attribute2);
+      }
+
+      collectionFacade.dropAttribute(collection, attribute1);
+
+      List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
+      for (int i = 0; i < 3; i++) {
+         Assert.assertFalse(documents.get(i).containsKey(attribute1));
+      }
+   }
 
    @Test
    public void testRenameAttribute() throws Exception {
