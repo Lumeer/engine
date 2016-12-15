@@ -39,6 +39,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
@@ -174,6 +175,24 @@ public class MongoDbStorage implements DataStorage {
             throw e;
          }
       }
+   }
+
+   @Override
+   public DataDocument readDocumentIncludeAttrs(final String collectionName, final String documentId, final List<String> attributes) {
+      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
+      Bson projection = Projections.include(attributes);
+      Document document = database.getCollection(collectionName).find(filter).projection(projection).first();
+
+      if (document == null) {
+         return null;
+      }
+
+      // converts id to string
+      MongoUtils.replaceId(document);
+      DataDocument readed = new DataDocument(document);
+      MongoUtils.convertNestedAndListDocuments(readed);
+
+      return readed;
    }
 
    @Override

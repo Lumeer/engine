@@ -281,7 +281,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
-      String documentId = attributeDocument.get("_id").toString();
+      String documentId = attributeDocument.getId();
 
       Map<String, Object> metadata = new HashMap<>();
       if (!newName.isEmpty()) {
@@ -332,7 +332,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
-      String documentId = attributeDocument.get("_id").toString();
+      String documentId = attributeDocument.getId();
 
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, newType);
@@ -402,7 +402,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
-      String documentId = attributeDocument.get("_id").toString();
+      String documentId = attributeDocument.getId();
       dataStorage.dropDocument(metadataCollectionName, documentId);
    }
 
@@ -445,7 +445,7 @@ public class CollectionMetadataFacade implements Serializable {
       List<DataDocument> attributeInfo = dataStorage.run(query);
       if (!attributeInfo.isEmpty()) { // in case somebody did that sooner, we may have nothing to remove
          DataDocument attributeDocument = attributeInfo.get(0);
-         String documentId = attributeDocument.get("_id").toString();
+         String documentId = attributeDocument.getId();
 
          // we check if this was the last document with the attribute
          if (attributeDocument.getLong(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY) == 1) {
@@ -628,7 +628,7 @@ public class CollectionMetadataFacade implements Serializable {
       String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
       List<DataDocument> lockInfo = dataStorage.run(query);
       DataDocument lockDocument = lockInfo.get(0);
-      String id = lockDocument.get("_id").toString();
+      String id = lockDocument.getId();
 
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, newTime);

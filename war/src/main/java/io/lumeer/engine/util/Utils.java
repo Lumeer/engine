@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.util;
 
+import io.lumeer.engine.api.LumeerConst;
+
 import java.text.DateFormat;
 import java.text.Normalizer;
 import java.text.ParseException;
@@ -157,5 +159,9 @@ public class Utils {
       }
       String s = string.toLowerCase();
       return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
+   }
+
+   public static boolean isAttributeNameValid(String attributeName) {
+      return attributeName.equals(LumeerConst.Document.ID) || !(attributeName.startsWith("$") || attributeName.startsWith("_") || attributeName.contains("."));
    }
 }

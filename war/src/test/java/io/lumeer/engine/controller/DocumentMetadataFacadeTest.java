@@ -90,7 +90,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
 
       Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_BY_USER_KEY));
       Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_DATE_KEY));
-      Assert.assertEquals(2, documentMetadata.size());
+      Assert.assertEquals(documentMetadata.size(), 4);
    }
 
    @Test
@@ -116,7 +116,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
       dataStorage.createCollection(collection);
       dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
 
-      DataDocument document = new DataDocument(new HashMap<>());
+      DataDocument document = new DataDocument("a", 1).append("b", 2).append("c", 3);
       return documentFacade.createDocument(collection, document);
    }
 

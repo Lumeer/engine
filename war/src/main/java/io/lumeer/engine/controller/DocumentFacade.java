@@ -66,8 +66,8 @@ public class DocumentFacade implements Serializable {
    @Inject
    private Event<DropDocument> dropDocumentEvent;
 
-   //@Inject
-   private String userName = "testUser";
+   @Inject
+   private UserFacade userFacade;
 
    /**
     * Creates and inserts a new document to specified collection.
@@ -90,7 +90,7 @@ public class DocumentFacade implements Serializable {
       }
       DataDocument doc = checkDocumentKeysValidity(document);
       doc.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
-      doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userName);
+      doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
       String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
@@ -150,14 +150,14 @@ public class DocumentFacade implements Serializable {
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
-      String documentId = updatedDocument.getString("_id");
+      String documentId = updatedDocument.getId();
       DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
       if (existingDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       DataDocument upd = checkDocumentKeysValidity(updatedDocument);
       upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userName);
+      upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
       versionFacade.newDocumentVersion(collectionName, upd);
 
       // we add new attributes of updated document to collection metadata
@@ -265,33 +265,29 @@ public class DocumentFacade implements Serializable {
    private DataDocument checkDocumentKeysValidity(DataDocument dataDocument) throws InvalidDocumentKeyException {
       DataDocument ndd = new DataDocument();
       for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
-         String key = entry.getKey().trim();
-         if (isKeyInvalid(key)) {
-            throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKey(key));
+         String attributeName = entry.getKey().trim();
+         if (!Utils.isAttributeNameValid(attributeName)) {
+            throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKey(attributeName));
          }
          Object value = entry.getValue();
          if (MongoUtils.isDataDocument(value)) {
-            ndd.put(key, checkDocumentKeysValidity((DataDocument) value));
+            ndd.put(attributeName, checkDocumentKeysValidity((DataDocument) value));
          } else if (MongoUtils.isList(value)) {
             List l = (List) entry.getValue();
             if (!l.isEmpty() && MongoUtils.isDataDocument(l.get(0))) {
                ArrayList<DataDocument> docs = new ArrayList<>();
-               ndd.put(key, docs);
+               ndd.put(attributeName, docs);
                for (Object o : l) {
                   docs.add(checkDocumentKeysValidity((DataDocument) o));
                }
             } else {
-               ndd.put(key, l);
+               ndd.put(attributeName, l);
             }
          } else {
-            ndd.put(key, value);
+            ndd.put(attributeName, value);
          }
       }
       return ndd;
-   }
-
-   private boolean isKeyInvalid(String key) {
-      return !key.equals("_id") && (key.startsWith("$") || key.startsWith("_") || key.contains("."));
    }
 
 }
