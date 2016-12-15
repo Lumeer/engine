@@ -121,8 +121,8 @@ public final class LumeerConst {
 
       public static final String COLLECTION_ATTRIBUTES_META_TYPE_VALUE = "attributes";
 
-      public static final String COLLECTION_ATTRIBUTE_NAME_KEY = "name";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "type";
+      public static final String COLLECTION_ATTRIBUTE_NAME_KEY = "attribute-name";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "attribute-type";
 
       public static final String COLLECTION_ATTRIBUTE_TYPE_NUMBER = "number";
       public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date";
@@ -135,9 +135,8 @@ public final class LumeerConst {
                   COLLECTION_ATTRIBUTE_TYPE_STRING,
                   COLLECTION_ATTRIBUTE_TYPE_LIST);
 
-      public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
-
-      public static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "count";
+      public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "attribute-constraints";
+      public static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "attribute-count";
 
       public static final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
       public static final String COLLECTION_REAL_NAME_KEY = "name";

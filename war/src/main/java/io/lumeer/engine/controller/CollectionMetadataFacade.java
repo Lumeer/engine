@@ -190,6 +190,16 @@ public class CollectionMetadataFacade implements Serializable {
       metadataLock.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
       metadataLock.put(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, Utils.getCurrentTimeString());
       dataStorage.createDocument(metadataCollectionName, new DataDocument(metadataLock));
+
+      // we create indexes on frequently used fields
+      String indexType = "1";
+      Map<String, String> indexAttributes = new HashMap<>();
+      indexAttributes.put(LumeerConst.Collection.META_TYPE_KEY, indexType);
+      indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, indexType);
+      indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, indexType);
+      indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, indexType);
+
+      dataStorage.createIndex(metadataCollectionName, indexAttributes);
    }
 
    /**
@@ -675,8 +685,14 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws CollectionMetadataDocumentNotFoundException
     *       when metadata of an attribute is not found
     */
-   public String checkAttributeValue(String collectionName, String attribute, String valueString) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException {
-      List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
+   public String checkAttributeValue(String collectionName, String attribute, String valueString) throws CollectionNotFoundException {
+      List<String> constraintConfigurations = null;
+      try {
+         constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
+      } catch (CollectionMetadataDocumentNotFoundException e) { // attribute metadata was not found, therefore the value must be valid, because the attribute is new
+         return valueString;
+      }
+
       ConstraintManager constraintManager = null;
       try {
          constraintManager = new ConstraintManager(constraintConfigurations);
@@ -895,21 +911,21 @@ public class CollectionMetadataFacade implements Serializable {
 
    private DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName) {
       return new DataDocument()
-         .append("findAndModify", metadataCollectionName)
-         .append("query",
-            new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-            .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName))
-         .append("update",
-            new DataDocument("$setOnInsert",
+            .append("findAndModify", metadataCollectionName)
+            .append("query",
                   new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-                  .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName)
-                  .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING)
-                  .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
-            )
-            .append("$inc",
-                  new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY, 1)))
-         .append("new", true)
-         .append("upsert", true);
+                        .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName))
+            .append("update",
+                  new DataDocument("$setOnInsert",
+                        new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
+                              .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName)
+                              .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING)
+                              .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
+                  )
+                        .append("$inc",
+                              new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY, 1)))
+            .append("new", true)
+            .append("upsert", true);
    }
 
    /**
