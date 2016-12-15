@@ -20,12 +20,15 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -34,6 +37,8 @@ import io.lumeer.mongodb.MongoUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +61,9 @@ public class DocumentFacade implements Serializable {
 
    @Inject
    private VersionFacade versionFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
 
    @Inject
    private DocumentMetadataFacade documentMetadataFacade;
@@ -83,22 +91,31 @@ public class DocumentFacade implements Serializable {
     *       if create was not succesful
     * @throws InvalidDocumentKeyException
     *       if one of document's key contains illegal character
+    * @throws UnauthorizedAccessException
+    *       if user doesn't have rights to create document
+    * @throws InvalidConstraintException
+    *       if one of document's value doesn't satisfy constraint
     */
-   public String createDocument(final String collectionName, final DataDocument document) throws CollectionNotFoundException, UnsuccessfulOperationException, InvalidDocumentKeyException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+   public String createDocument(final String collectionName, final DataDocument document) throws CollectionNotFoundException, UnsuccessfulOperationException, InvalidDocumentKeyException, UnauthorizedAccessException, InvalidConstraintException {
+      checkCollectionForWrite(collectionName);
       DataDocument doc = checkDocumentKeysValidity(document);
+      // check constraints
+      checkConstraints(collectionName, doc);
+      // add metadata attributes
       doc.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
       doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
+      // TODO doc.put(LumeerConst.Document.USER_RIGHTS, Collections.singletonList(new DataDocument("user", userFacade.getUserEmail()).append("rights", 7))); (need methods..)
+      // TODO check and convert types (need methods..)
       String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
       }
       // we add all document attributes to collection metadata
       for (String attribute : doc.keySet()) {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         if (!LumeerConst.Document.METADATA_KEYS.contains(attribute)) {
+            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         }
       }
       return documentId;
    }
@@ -115,14 +132,17 @@ public class DocumentFacade implements Serializable {
     *       if collection is not found in database
     * @throws DocumentNotFoundException
     *       if document is not found in database
+    * @throws UnauthorizedAccessException
+    *       if user doesn't have rights to read document
     */
-   public DataDocument readDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+   public DataDocument readDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnauthorizedAccessException {
+      checkCollectionForRead(collectionName);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
       if (dataDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      if (!securityFacade.checkForRead(dataDocument, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
       }
       for (String key : LumeerConst.Document.PURGE_METADATA_KEYS) {
          dataDocument.remove(key);
@@ -145,24 +165,32 @@ public class DocumentFacade implements Serializable {
     *       if document was not updated succesfully
     * @throws InvalidDocumentKeyException
     *       if one of document's key contains illegal character
+    * @throws UnauthorizedAccessException
+    *       if user doesn't have rights to update document
+    * @throws InvalidConstraintException
+    *       if one of document's value doesn't satisfy constraint
     */
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException, UnauthorizedAccessException, InvalidConstraintException {
+      checkCollectionForWrite(collectionName);
+
       String documentId = updatedDocument.getId();
       DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
       if (existingDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
+      if (!securityFacade.checkForWrite(existingDocument, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
+      }
       DataDocument upd = checkDocumentKeysValidity(updatedDocument);
+      checkConstraints(collectionName, updatedDocument);
       upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
+      // TODO check types and convert documents (need methods..)
       versionFacade.newDocumentVersion(collectionName, upd);
 
       // we add new attributes of updated document to collection metadata
       for (String attribute : upd.keySet()) {
-         if (!existingDocument.containsKey(attribute)) {
+         if (!existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)) {
             collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
          }
       }
@@ -181,21 +209,24 @@ public class DocumentFacade implements Serializable {
     *       if document is not found in database
     * @throws UnsuccessfulOperationException
     *       if document stay in collection after drop
+    * @throws UnauthorizedAccessException
+    *       if user doesn't have rights to drop document
     */
-   public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+   public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException, UnauthorizedAccessException {
+      checkCollectionForWrite(collectionName);
+
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
       if (dataDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      // TODO swap with backUp method
-      versionFacade.newDocumentVersion(collectionName, dataDocument);
+      if (!securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
+      }
+
+      versionFacade.backUp(collectionName, documentId);
       dataStorage.dropDocument(collectionName, documentId);
 
-      final DataDocument checkDataDocument = dataStorage.readDocument(collectionName, documentId);
-      if (checkDataDocument != null) {
+      if (dataStorage.collectionHasDocument(collectionName, documentId)) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.dropDocumentUnsuccesfulString());
       } else {
          dropDocumentEvent.fire(new DropDocument(collectionName, dataDocument));
@@ -219,13 +250,16 @@ public class DocumentFacade implements Serializable {
     *       if collection is not found in database
     * @throws DocumentNotFoundException
     *       if document is not found in database
+    * @throws UnauthorizedAccessException
+    *       if user doesn't have rights to drop attribute
     */
-   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws CollectionNotFoundException, DocumentNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws CollectionNotFoundException, DocumentNotFoundException, UnauthorizedAccessException {
+      checkCollectionForWrite(collectionName);
       if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
       }
       dataStorage.dropAttribute(collectionName, documentId, attributeName);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
@@ -243,14 +277,17 @@ public class DocumentFacade implements Serializable {
     *       if collection is not found in database
     * @throws DocumentNotFoundException
     *       if document is not found in database
+    * @throws UnauthorizedAccessException
+    *       if user doesn't have rights to read document attributes
     */
-   public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+   public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnauthorizedAccessException {
+      checkCollectionForRead(collectionName);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
       if (dataDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      if (!securityFacade.checkForRead(dataDocument, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
       }
       Set<String> documentAttributes = new HashSet<>();
       // filter out metadata attributes
@@ -260,6 +297,35 @@ public class DocumentFacade implements Serializable {
          }
       }
       return documentAttributes;
+   }
+
+   private void checkCollectionForRead(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
+      }
+   }
+
+   private void checkCollectionForWrite(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
+      }
+   }
+
+   private void checkConstraints(final String collectionName, final DataDocument doc) throws InvalidConstraintException, CollectionNotFoundException {
+      for (String attribute : doc.keySet()) {
+         String value = collectionMetadataFacade.checkAttributeValue(collectionName, attribute, doc.get(attribute).toString());
+         if (value == null) {
+            throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKey(attribute));
+         } else {
+            doc.replace(attribute, value);
+         }
+      }
    }
 
    private DataDocument checkDocumentKeysValidity(DataDocument dataDocument) throws InvalidDocumentKeyException {

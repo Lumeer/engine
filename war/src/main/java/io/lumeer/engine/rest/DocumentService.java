@@ -19,11 +19,13 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
@@ -79,7 +81,7 @@ public class DocumentService implements Serializable {
    @Path("/collections/{collectionName}")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws UnsuccessfulOperationException, CollectionNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException {
+   public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws UnsuccessfulOperationException, CollectionNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, InvalidConstraintException {
       if (collectionName == null || document == null) {
          throw new IllegalArgumentException();
       }
@@ -89,7 +91,7 @@ public class DocumentService implements Serializable {
    @GET
    @Path("/{documentId}/collections/{collectionName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
@@ -98,7 +100,7 @@ public class DocumentService implements Serializable {
 
    @DELETE
    @Path("/{documentId}/collections/{collectionName}")
-   public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, DocumentNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException {
+   public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, DocumentNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
@@ -108,7 +110,7 @@ public class DocumentService implements Serializable {
    @PUT
    @Path("/collections/{collectionName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, InvalidDocumentKeyException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, InvalidDocumentKeyException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, InvalidConstraintException {
       if (collectionName == null || updatedDocument == null) {
          throw new IllegalArgumentException();
       }

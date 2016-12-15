@@ -19,12 +19,14 @@ package io.lumeer.engine.controller;/*
  */
 
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 
@@ -110,7 +112,7 @@ public class DocumentMetadataFacadeTest extends Arquillian {
       Assert.assertFalse(documentMetadataFacade.readDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId).containsKey(DUMMY_META_KEY));
    }
 
-   private String setupCollectionAndCreateNewDocument(final String collection) throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException, UserCollectionAlreadyExistsException, CollectionMetadataDocumentNotFoundException, InvalidDocumentKeyException {
+   private String setupCollectionAndCreateNewDocument(final String collection) throws CollectionAlreadyExistsException, CollectionNotFoundException, UnsuccessfulOperationException, UserCollectionAlreadyExistsException, CollectionMetadataDocumentNotFoundException, InvalidDocumentKeyException, UnauthorizedAccessException, InvalidConstraintException {
       dataStorage.dropCollection(collection);
       dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
       dataStorage.createCollection(collection);

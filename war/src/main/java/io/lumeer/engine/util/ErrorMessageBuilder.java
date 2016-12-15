@@ -40,6 +40,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_UPDATE_UNSUCCESFUL = "The document was not successfully updated.";
    private static final String ERROR_INVALID_METADATA_KEY = "The key  \"{0}\" is not metadata attribute";
    private static final String ERROR_INVALID_DOCUMENT_KEY = "The key  \"{0}\" is not valid";
+   private static final String ERROR_INVALID_CONSTRAINT_KEY = "Invalid value for attribute: \"{0}\"";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
    private static final String ERROR_LINK_ALREADY_EXISTS = "Link between documents already exists";
 
@@ -94,6 +95,11 @@ public class ErrorMessageBuilder {
    public static String invalidDocumentKey(String key) {
       return MessageFormat.format(ERROR_INVALID_DOCUMENT_KEY, key);
    }
+
+   public static String invalidConstraintKey(String key) {
+      return MessageFormat.format(ERROR_INVALID_CONSTRAINT_KEY, key);
+   }
+
 
    public static String nullKey() {
       return ERROR_NULL_KEY;

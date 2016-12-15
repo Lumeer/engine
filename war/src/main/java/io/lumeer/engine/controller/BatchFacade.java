@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.batch.Batch;
 import io.lumeer.engine.api.batch.MergeBatch;
 import io.lumeer.engine.api.batch.SplitBatch;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
@@ -49,7 +50,7 @@ public class BatchFacade implements Serializable {
    @Inject
    private DocumentFacade documentFacade;
 
-   public void executeBatch(final Batch batch) throws DbException {
+   public void executeBatch(final Batch batch) throws DbException, InvalidConstraintException {
       // first check collection size
       if (dataStorage.count(batch.getCollectionName(), null) > 10000) {
          throw new UnsupportedOperationException("Cannot run a batch process on collections with more than 10000 documents.");
@@ -62,7 +63,7 @@ public class BatchFacade implements Serializable {
       }
    }
 
-   private void internalExecuteBatch(final MergeBatch batch) throws DbException {
+   private void internalExecuteBatch(final MergeBatch batch) throws DbException, InvalidConstraintException {
       List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, -1, -1);
 
       for (final DataDocument doc : documents) {
@@ -159,7 +160,7 @@ public class BatchFacade implements Serializable {
       }
    }
 
-   private void internalExecuteBatch(final SplitBatch batch) throws DbException {
+   private void internalExecuteBatch(final SplitBatch batch) throws DbException, InvalidConstraintException {
       List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, -1, -1);
 
       for (final DataDocument doc : documents) {

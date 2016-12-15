@@ -23,6 +23,7 @@ import io.lumeer.engine.api.batch.AbstractCollectionBatch;
 import io.lumeer.engine.api.batch.Batch;
 import io.lumeer.engine.api.batch.MergeBatch;
 import io.lumeer.engine.api.batch.SplitBatch;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
@@ -60,7 +61,7 @@ public class BatchService {
    @POST
    @Path("/merge")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void runMergeBatch(final MergeBatch batch) throws DbException {
+   public void runMergeBatch(final MergeBatch batch) throws DbException, InvalidConstraintException {
       runBatch(batch);
    }
 
@@ -73,11 +74,11 @@ public class BatchService {
    @POST
    @Path("/split")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void runSplitBatch(final SplitBatch batch) throws DbException {
+   public void runSplitBatch(final SplitBatch batch) throws DbException, InvalidConstraintException {
       runBatch(batch);
    }
 
-   private void runBatch(final Batch batch) throws DbException {
+   private void runBatch(final Batch batch) throws DbException, InvalidConstraintException {
       try {
          if (batch instanceof AbstractCollectionBatch) {
             final AbstractCollectionBatch collectionBatch = (AbstractCollectionBatch) batch;

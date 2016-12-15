@@ -20,6 +20,11 @@ package io.lumeer.engine.controller;/*
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -65,42 +70,45 @@ public class DocumentFacadeTest extends Arquillian {
    private CollectionMetadataFacade collectionMetadataFacade;
 
    @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
    private DataStorage dataStorage;
 
    @Test
    public void testCreateAndDropDocument() throws Exception {
-      setUpCollection(COLLECTION_CREATE_AND_DROP);
+      String coll = setUpCollection(COLLECTION_CREATE_AND_DROP);
 
-      DataDocument document = new DataDocument(new HashMap<>());
-      String documentId = documentFacade.createDocument(COLLECTION_CREATE_AND_DROP, document);
-      DataDocument inserted = documentFacade.readDocument(COLLECTION_CREATE_AND_DROP, documentId);
+      DataDocument document = new DataDocument();
+      String documentId = documentFacade.createDocument(coll, document);
+      DataDocument inserted = documentFacade.readDocument(coll, documentId);
       Assert.assertNotNull(inserted);
 
-      documentFacade.dropDocument(COLLECTION_CREATE_AND_DROP, documentId);
-      Assert.assertNull(dataStorage.readDocument(COLLECTION_CREATE_AND_DROP, documentId));
+      documentFacade.dropDocument(coll, documentId);
+      Assert.assertNull(dataStorage.readDocument(coll, documentId));
    }
 
    @Test
    public void testReadAndUpdateDocument() throws Exception {
-      setUpCollection(COLLECTION_READ_AND_UPDATE);
+      String coll = setUpCollection(COLLECTION_READ_AND_UPDATE);
 
       DataDocument document = new DataDocument(DUMMY_KEY1, DUMMY_VALUE1);
-      String documentId = documentFacade.createDocument(COLLECTION_READ_AND_UPDATE, document);
-      DataDocument inserted = documentFacade.readDocument(COLLECTION_READ_AND_UPDATE, documentId);
+      String documentId = documentFacade.createDocument(coll, document);
+      DataDocument inserted = documentFacade.readDocument(coll, documentId);
       Assert.assertNotNull(inserted);
       Assert.assertEquals(inserted.getString(ID_KEY), documentId);
 
       String changed = DUMMY_VALUE1 + "_changed";
       inserted.put(DUMMY_KEY1, changed);
-      documentFacade.updateDocument(COLLECTION_READ_AND_UPDATE, inserted);
-      DataDocument updated = dataStorage.readDocument(COLLECTION_READ_AND_UPDATE, documentId);
+      documentFacade.updateDocument(coll, inserted);
+      DataDocument updated = dataStorage.readDocument(coll, documentId);
       Assert.assertNotNull(updated);
       Assert.assertEquals(updated.getString(DUMMY_KEY1), changed);
    }
 
    @Test
    public void testGetAttributes() throws Exception {
-      setUpCollection(COLLECTION_GETATTRS_AND_DROPATTR);
+      String coll = setUpCollection(COLLECTION_GETATTRS_AND_DROPATTR);
 
       DataDocument document = new DataDocument();
       document.put("a", 1);
@@ -108,23 +116,23 @@ public class DocumentFacadeTest extends Arquillian {
       document.put("c", 3);
       document.put("d", 4);
 
-      String docId = dataStorage.createDocument(COLLECTION_GETATTRS_AND_DROPATTR, document);
+      String docId = dataStorage.createDocument(coll, document);
 
-      Set<String> attrs = documentFacade.getDocumentAttributes(COLLECTION_GETATTRS_AND_DROPATTR, docId);
+      Set<String> attrs = documentFacade.getDocumentAttributes(coll, docId);
       Assert.assertTrue(attrs.contains("a"));
       Assert.assertTrue(attrs.contains("c"));
       Assert.assertFalse(attrs.contains("x"));
       Assert.assertFalse(attrs.contains("g"));
 
-      documentFacade.dropAttribute(COLLECTION_GETATTRS_AND_DROPATTR, docId, "a");
-      documentFacade.dropAttribute(COLLECTION_GETATTRS_AND_DROPATTR, docId, "d");
+      documentFacade.dropAttribute(coll, docId, "a");
+      documentFacade.dropAttribute(coll, docId, "d");
 
       DataDocument update = new DataDocument(ID_KEY, docId);
       update.put("f", 2);
       update.put("x", 10);
-      documentFacade.updateDocument(COLLECTION_GETATTRS_AND_DROPATTR, update);
+      documentFacade.updateDocument(coll, update);
 
-      attrs = documentFacade.getDocumentAttributes(COLLECTION_GETATTRS_AND_DROPATTR, docId);
+      attrs = documentFacade.getDocumentAttributes(coll, docId);
 
       Assert.assertFalse(attrs.contains("a"));
       Assert.assertFalse(attrs.contains("d"));
@@ -133,11 +141,18 @@ public class DocumentFacadeTest extends Arquillian {
 
    }
 
-   private void setUpCollection(final String collection) {
-      dataStorage.dropCollection(collection);
-      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
-      dataStorage.createCollection(collection);
-      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
+   private String setUpCollection(final String collection) {
+      try {
+         collectionFacade.dropCollection(collectionMetadataFacade.getInternalCollectionName(collection));
+      } catch (DbException e) {
+         // nothing to do
+      }
+      try {
+         return collectionFacade.createCollection(collection);
+      } catch (DbException e) {
+         e.printStackTrace();
+      }
+      return null;
    }
 
 }

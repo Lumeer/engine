@@ -137,7 +137,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       String name = originalCollectionName.trim();
-      name = name.replace(' ', '_').toLowerCase();
+      name = name.replace(' ', '_');
       name = Utils.normalize(name);
       name = name.replaceAll("[^_a-z0-9]+", "");
       name = LumeerConst.Collection.COLLECTION_NAME_PREFIX + name;
@@ -609,8 +609,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       DataDocument nameDocument = lockInfo.get(0);
-      String lock = nameDocument.getString(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY);
-      return lock;
+      return nameDocument.getString(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY);
    }
 
    /**
@@ -682,14 +681,10 @@ public class CollectionMetadataFacade implements Serializable {
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata of an attribute is not found
     */
    public String checkAttributeValue(String collectionName, String attribute, String valueString) throws CollectionNotFoundException {
-      List<String> constraintConfigurations = null;
-      try {
-         constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
-      } catch (CollectionMetadataDocumentNotFoundException e) { // attribute metadata was not found, therefore the value must be valid, because the attribute is new
+      List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
+      if (constraintConfigurations == null) {
          return valueString;
       }
 
@@ -734,21 +729,24 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
 
-      return getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
+      List<String> attr = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
+      if (attr == null) {
+         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
+      }
+      return attr;
    }
 
    // to be used only internally, when checking attribute value
-   private List<String> getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(String collectionName, String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   private List<String> getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(String collectionName, String attributeName) throws CollectionNotFoundException {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributesInfo = dataStorage.run(query);
       if (attributesInfo.isEmpty()) { // metadata for the attribute was not found
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
+         return null;
       }
 
       DataDocument attributeInfo = attributesInfo.get(0);
-      List<String> constraintConfigurations = attributeInfo.getArrayList(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, String.class);
 
-      return constraintConfigurations;
+      return attributeInfo.getArrayList(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, String.class);
    }
 
    /**
@@ -885,8 +883,7 @@ public class CollectionMetadataFacade implements Serializable {
             .append("\":\"")
             .append(metaTypeValue)
             .append("\"}}");
-      String query = sb.toString();
-      return query;
+      return sb.toString();
    }
 
    // returns MongoDb query for getting info about specific attribute
@@ -905,8 +902,7 @@ public class CollectionMetadataFacade implements Serializable {
             .append("\":\"")
             .append(attributeName)
             .append("\"}}");
-      String findAttributeQuery = sb.toString();
-      return findAttributeQuery;
+      return sb.toString();
    }
 
    private DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName) {
