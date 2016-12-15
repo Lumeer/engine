@@ -135,7 +135,7 @@ public class CollectionFacade implements Serializable {
     */
    public void dropCollection(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
-         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
             throw new UnauthorizedAccessException();
          }
 
@@ -163,7 +163,7 @@ public class CollectionFacade implements Serializable {
     */
    public List<DataDocument> readCollectionMetadata(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
-         if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
+         if (!collectionMetadataFacade.checkCollectionForRead(collectionName, getCurrentUser())) {
             throw new UnauthorizedAccessException();
          }
          return dataStorage.search(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), null, null, 0, 0);
@@ -185,7 +185,7 @@ public class CollectionFacade implements Serializable {
     */
    public List<String> readCollectionAttributes(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
-         if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
+         if (!collectionMetadataFacade.checkCollectionForRead(collectionName, getCurrentUser())) {
             throw new UnauthorizedAccessException();
          }
          return collectionMetadataFacade.getCollectionAttributesNames(collectionName);
@@ -273,7 +273,7 @@ public class CollectionFacade implements Serializable {
    public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
 
-         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
             throw new UnauthorizedAccessException();
          }
 
@@ -309,7 +309,7 @@ public class CollectionFacade implements Serializable {
    public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
 
-         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
             throw new UnauthorizedAccessException();
          }
 
@@ -349,6 +349,10 @@ public class CollectionFacade implements Serializable {
     */
    private boolean isCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException {
       return collectionMetadataFacade.getCollectionAttributesNames(collectionName).contains(attributeName);
+   }
+
+   private String getCurrentUser() {
+      return userFacade.getUserEmail();
    }
 
 }

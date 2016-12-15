@@ -53,6 +53,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_VIEW_METADATA_VALUE_NOT_FOUND = "The metadata value for key \"{1}\" for view \"{0}\" does not exist.";
    private static final String ERROR_VIEW_USERNAME_ALREADY_EXISTS = "The view with username \"{0}\" already exists.";
    private static final String ERROR_VIEW_META_IMMUTABLE = "The metadata key \"{1}\" for view \"{0}\" cannot be changed.";
+   private static final String ERROR_VIEW_META_SPECIAL = "The metadata key \"{1}\" for view \"{0}\" can be changed only with special method.";
 
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
@@ -122,11 +123,11 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_COLLECTION_METADATA_NOT_FOUND, metadataType, collection);
    }
 
-   public static String viewMetadataNotFoundString(String viewId) {
+   public static String viewMetadataNotFoundString(int viewId) {
       return MessageFormat.format(ERROR_VIEW_METADATA_NOT_FOUND, viewId);
    }
 
-   public static String viewMetadataValueNotFoundString(String viewId, String valueKey) {
+   public static String viewMetadataValueNotFoundString(int viewId, String valueKey) {
       return MessageFormat.format(ERROR_VIEW_METADATA_VALUE_NOT_FOUND, viewId, valueKey);
    }
 
@@ -134,8 +135,12 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_VIEW_USERNAME_ALREADY_EXISTS, viewName);
    }
 
-   public static String viewMetaImmutableString(String viewName, String metaKey) {
-      return MessageFormat.format(ERROR_VIEW_META_IMMUTABLE, viewName, metaKey);
+   public static String viewMetaImmutableString(int viewId, String metaKey) {
+      return MessageFormat.format(ERROR_VIEW_META_IMMUTABLE, viewId, metaKey);
+   }
+
+   public static String viewMetaSpecialString(int viewId, String metaKey) {
+      return MessageFormat.format(ERROR_VIEW_META_SPECIAL, viewId, metaKey);
    }
 
 }

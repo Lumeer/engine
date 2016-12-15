@@ -86,10 +86,11 @@ public final class LumeerConst {
       public static final String VIEW_METADATA_COLLECTION_NAME = "viewmetadatacollection";
       public static final String VIEW_SEQUENCE_NAME = "view-sequence";
 
-      public static final String VIEW_INTERNAL_NAME_KEY = "internal-name";
-      public static final String VIEW_REAL_NAME_KEY = "name";
-      public static final String VIEW_SEQUENCE_NUMBER_KEY = "sequence-number";
+      public static final String VIEW_NAME_KEY = "name";
+      public static final String VIEW_ID_KEY = "view-id";
       public static final String VIEW_TYPE_KEY = "type";
+      public static final String VIEW_TYPE_DEFAULT_VALUE = "default";
+      public static final String VIEW_CONFIGURATION_KEY = "configuration";
 
       public static final String VIEW_USER_RIGHTS_KEY = Document.USER_RIGHTS;
       //public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
@@ -99,13 +100,17 @@ public final class LumeerConst {
       public static final String VIEW_UPDATE_USER_KEY = Document.UPDATED_BY_USER_KEY;
 
       public static final List<String> VIEW_IMMUTABLE_KEYS = Arrays.asList(
-            VIEW_INTERNAL_NAME_KEY,
-            VIEW_SEQUENCE_NUMBER_KEY,
+            VIEW_ID_KEY,
             VIEW_CREATE_DATE_KEY,
             VIEW_CREATE_USER_KEY,
             VIEW_USER_RIGHTS_KEY,
-            VIEW_USER_RIGHTS_KEY,
-            VIEW_TYPE_KEY
+            VIEW_USER_RIGHTS_KEY
+      );
+
+      public static final List<String> VIEW_SPECIAL_KEYS = Arrays.asList(
+            VIEW_NAME_KEY,
+            VIEW_TYPE_KEY,
+            VIEW_CONFIGURATION_KEY
       );
    }
 
