@@ -30,13 +30,14 @@ import javax.jms.TextMessage;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@MessageDriven(mappedName = "TaskProcessor", activationConfig = {
+/*@MessageDriven(mappedName = "TaskProcessor", activationConfig = {
       @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
       @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-      @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/TaskQueue") })
-public class TaskProcessorBean implements MessageListener {
+      @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/TaskQueue") })*/
+public class TaskProcessorBean {
+//public class TaskProcessorBean implements MessageListener {
 
-   @Resource
+   /*@Resource
    private MessageDrivenContext mdc;
 
    @Override
@@ -44,5 +45,5 @@ public class TaskProcessorBean implements MessageListener {
       if (message instanceof TextMessage) {
          System.out.println("Processing incoming message: " + message.toString());
       }
-   }
+   }*/
 }

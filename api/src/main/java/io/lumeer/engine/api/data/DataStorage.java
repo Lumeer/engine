@@ -125,6 +125,19 @@ public interface DataStorage extends Serializable {
    void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws UnsuccessfulOperationException;
 
    /**
+    * Reads the specified document in given collection by its id
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the read document
+    * @param attributes
+    *       list of attribute names
+    * @return the DataDocument object representing the read document containg only specified attributes
+    */
+   DataDocument readDocumentIncludeAttrs(final String collectionName, final String documentId, final List<String> attributes);
+
+   /**
     * Reads the specified document in given collection by its id.
     *
     * @param collectionName
@@ -294,6 +307,16 @@ public interface DataStorage extends Serializable {
     * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
     */
    List<DataDocument> run(final String command);
+
+   /**
+    * Executes a command to find and return documents.
+    *
+    * @param command
+    *       the database find command specified as a DataDocument
+    * @return the list of the found documents
+    * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
+    */
+   List<DataDocument> run(final DataDocument command);
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.

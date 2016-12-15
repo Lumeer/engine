@@ -25,8 +25,13 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
+import io.lumeer.mongodb.MongoUtils;
+
+import com.mongodb.client.model.Filters;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -92,7 +97,14 @@ public class DocumentMetadataFacade implements Serializable {
       if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
       }
-      return readDocumentMetadata(collectionName, documentId).get(key);
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      DataDocument documentMetadata = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, Collections.singletonList(key));
+      if (documentMetadata == null) {
+         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
+      }
+      return documentMetadata.get(key);
    }
 
    /**
@@ -112,18 +124,9 @@ public class DocumentMetadataFacade implements Serializable {
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
-      DataDocument document = dataStorage.readDocument(collectionName, documentId);
-      if (document == null) {
+      DataDocument documentMetadata = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, LumeerConst.Document.METADATA_KEYS);
+      if (documentMetadata == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      Iterator<Map.Entry<String, Object>> iter = document.entrySet().iterator();
-      // filter out non-metadata attributes with  values
-      Map<String, Object> documentMetadata = new HashMap<>();
-      while (iter.hasNext()) {
-         Map.Entry<String, Object> entry = iter.next();
-         if (entry.getKey().startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-            documentMetadata.put(entry.getKey(), entry.getValue());
-         }
       }
       return documentMetadata;
    }

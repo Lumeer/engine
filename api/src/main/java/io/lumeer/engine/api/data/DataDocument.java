@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.api.data;
 
+import io.lumeer.engine.api.LumeerConst;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -35,7 +37,6 @@ public class DataDocument extends LinkedHashMap<String, Object> {
    /**
     * Name of the document attribute that carries its id.
     */
-   public static final String DOCUMENT_ID_ATTR = "_id";
    private static final String KEY_SEPARATOR = ".";
 
    public DataDocument() {
@@ -52,12 +53,26 @@ public class DataDocument extends LinkedHashMap<String, Object> {
    }
 
    /**
+    * Puts the key and value in the document and returns this.
+    *
+    * @param key
+    *       The key to set.
+    * @param value
+    *       The value to set in the key.
+    * @return Instance of this.
+    */
+   public DataDocument append(final String key, final Object value) {
+      put(key, value);
+      return this;
+   }
+
+   /**
     * Gets the document id.
     *
     * @return The document id.
     */
    public String getId() {
-      return getString(DOCUMENT_ID_ATTR);
+      return getString(LumeerConst.Document.ID);
    }
 
    /**

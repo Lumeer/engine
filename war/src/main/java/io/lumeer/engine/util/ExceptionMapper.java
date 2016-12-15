@@ -25,6 +25,7 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
 
    @Override
    public Response toResponse(final Exception e) {
+      e.printStackTrace();
 
       // 400 - BAD REQUEST
       if (e instanceof UserCollectionAlreadyExistsException || e instanceof CollectionAlreadyExistsException ||
@@ -52,7 +53,7 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
 
       // ILLEGAL ARGUMENT
       if (e instanceof IllegalArgumentException) {
-         return Response.status(Response.Status.BAD_REQUEST).entity("Illegal argument.").type(MediaType.TEXT_PLAIN).build();
+         return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       if (e instanceof UnsupportedOperationException) {

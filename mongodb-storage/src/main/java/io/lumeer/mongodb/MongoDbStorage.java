@@ -39,10 +39,12 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -73,6 +75,8 @@ public class MongoDbStorage implements DataStorage {
 
    private MongoDatabase database;
    private MongoClient mongoClient = null;
+   private List<String> collectionCache = null;
+   private long cacheLastUpdated = 0L;
 
    @Inject
    @Named("dataStorageConnection")
@@ -118,22 +122,32 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public List<String> getAllCollections() {
-      return database.listCollectionNames().into(new ArrayList<>());
+      if (collectionCache == null || cacheLastUpdated + 5000 < System.currentTimeMillis()) {
+         collectionCache = database.listCollectionNames().into(new ArrayList<>());
+         cacheLastUpdated = System.currentTimeMillis();
+      }
+      return collectionCache;
    }
 
    @Override
    public void createCollection(final String collectionName) {
+      if (collectionCache != null) {
+         collectionCache.add(collectionName);
+      }
       database.createCollection(collectionName);
    }
 
    @Override
    public void dropCollection(final String collectionName) {
+      if (collectionCache != null) {
+         collectionCache.remove(collectionName);
+      }
       database.getCollection(collectionName).drop();
    }
 
    @Override
    public boolean hasCollection(final String collectionName) {
-      return database.listCollectionNames().into(new HashSet<>()).contains(collectionName);
+      return getAllCollections().contains(collectionName);
    }
 
    @Override
@@ -161,6 +175,24 @@ public class MongoDbStorage implements DataStorage {
             throw e;
          }
       }
+   }
+
+   @Override
+   public DataDocument readDocumentIncludeAttrs(final String collectionName, final String documentId, final List<String> attributes) {
+      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
+      Bson projection = Projections.include(attributes);
+      Document document = database.getCollection(collectionName).find(filter).projection(projection).first();
+
+      if (document == null) {
+         return null;
+      }
+
+      // converts id to string
+      MongoUtils.replaceId(document);
+      DataDocument readed = new DataDocument(document);
+      MongoUtils.convertNestedAndListDocuments(readed);
+
+      return readed;
    }
 
    @Override
@@ -316,9 +348,18 @@ public class MongoDbStorage implements DataStorage {
    @SuppressWarnings("unchecked")
    @Override
    public List<DataDocument> run(final String command) {
+      return run(BsonDocument.parse(command));
+   }
+
+   @Override
+   public List<DataDocument> run(final DataDocument command) {
+      return run(MongoUtils.dataDocumentToDocument(command));
+   }
+
+   private List<DataDocument> run(final Bson command) {
       final List<DataDocument> result = new ArrayList<>();
 
-      Document cursor = (Document) database.runCommand(BsonDocument.parse(command)).get(CURSOR_KEY);
+      Document cursor = (Document) database.runCommand(command).get(CURSOR_KEY);
 
       if (cursor != null) {
          ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
@@ -331,6 +372,7 @@ public class MongoDbStorage implements DataStorage {
 
       return result;
    }
+
 
    @Override
    public List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit) {
