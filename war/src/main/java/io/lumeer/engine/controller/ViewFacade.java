@@ -121,7 +121,8 @@ public class ViewFacade implements Serializable {
             LumeerConst.View.VIEW_ID_KEY,
             LumeerConst.View.VIEW_CREATE_USER_KEY,
             LumeerConst.View.VIEW_CREATE_DATE_KEY,
-            LumeerConst.View.VIEW_USER_RIGHTS_KEY);
+            LumeerConst.View.VIEW_USER_RIGHTS_KEY,
+            LumeerConst.Document.ID);
 
       for (String key : viewDocument.keySet()) { // we copy all attributes of original view document except those which are listed in nonChangingKeys
          if (nonChangingKeys.contains(key)) {
@@ -130,6 +131,8 @@ public class ViewFacade implements Serializable {
 
          viewCopy.put(key, viewDocument.get(key));
       }
+
+      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, viewCopy, viewCopy.getId(), -1);
       return viewCopyId;
    }
 
@@ -236,7 +239,12 @@ public class ViewFacade implements Serializable {
     *       when current user is not allowed to read the view
     */
    public Object getViewConfigurationAttribute(int viewId, String attributeName) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
-      return getViewMetadataValue(viewId, LumeerConst.View.VIEW_CONFIGURATION_KEY + "." + attributeName);
+      //return getViewMetadataValue(viewId, LumeerConst.View.VIEW_CONFIGURATION_KEY + "." + attributeName);
+      Object value = getViewConfiguration(viewId).get(attributeName);
+      if (value == null) {
+         throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataValueNotFoundString(viewId, "configuration." + attributeName));
+      }
+      return value;
    }
 
    /**
@@ -335,9 +343,9 @@ public class ViewFacade implements Serializable {
             .append(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
             .append("\",filter:{\"")
             .append(LumeerConst.View.VIEW_ID_KEY)
-            .append("\":\"")
+            .append("\":")
             .append(viewId)
-            .append("\"}}");
+            .append("}}");
       String viewMetaQuery = sb.toString();
       return viewMetaQuery;
    }

@@ -187,7 +187,7 @@ public class ViewFacadeTest extends Arquillian {
       setUpCollection();
       int view = viewFacade.createView(SET_GET_CONFIGURATION_ATTRIBUTE_VIEW);
 
-      viewFacade.setViewConfiguration(view, new DataDocument());
+      viewFacade.setViewConfiguration(view, new DataDocument("intro key", "intro value"));
       String attribute = "configuration attribute";
       String value = "configuration value";
 
