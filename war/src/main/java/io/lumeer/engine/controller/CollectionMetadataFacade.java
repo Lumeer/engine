@@ -130,8 +130,10 @@ public class CollectionMetadataFacade implements Serializable {
     * @param originalCollectionName
     *       name given by user
     * @return internal collection name
+    * @throws UserCollectionAlreadyExistsException
+    *       when collection with given original name already exists
     */
-   public String createInternalName(String originalCollectionName) throws UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public String createInternalName(String originalCollectionName) throws UserCollectionAlreadyExistsException {
       if (checkIfUserCollectionExists(originalCollectionName)) {
          throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(originalCollectionName));
       }
@@ -815,8 +817,10 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * @param collectionName internal collection name
-    * @param user user name
+    * @param collectionName
+    *       internal collection name
+    * @param user
+    *       user name
     * @return true if user can read the collection
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
@@ -827,8 +831,10 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * @param collectionName internal collection name
-    * @param user user name
+    * @param collectionName
+    *       internal collection name
+    * @param user
+    *       user name
     * @return true if user can write to the collection
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
@@ -839,8 +845,10 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * @param collectionName internal collection name
-    * @param user user name
+    * @param collectionName
+    *       internal collection name
+    * @param user
+    *       user name
     * @return true if user can "exexute" the collection (can change access rights)
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
@@ -934,12 +942,18 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws CollectionMetadataDocumentNotFoundException
     * @throws CollectionNotFoundException
     */
-   private boolean checkIfUserCollectionExists(String originalCollectionName) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException {
+   private boolean checkIfUserCollectionExists(String originalCollectionName) {
       List<String> collections = dataStorage.getAllCollections();
       for (String c : collections) {
          if (isUserCollection(c)) {
-            if (getOriginalCollectionName(c).equals(originalCollectionName)) {
-               return true;
+            try {
+               if (getOriginalCollectionName(c).equals(originalCollectionName)) {
+                  return true;
+               }
+            } catch (CollectionMetadataDocumentNotFoundException e) {
+               // we do nothing - original name for the collection c was not found, so it does not exist
+            } catch (CollectionNotFoundException e) {
+               // we do nothing - metadata for the collection c was not found, so its original name does not exist
             }
          }
       }

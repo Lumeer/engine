@@ -96,6 +96,21 @@ public class ViewFacade implements Serializable {
       return viewId;
    }
 
+   /**
+    * Creates a copy of the view. User must have read right to original view, and will have read, write and execute rights on the copy.
+    *
+    * @param viewId
+    *       id of view to be copied
+    * @param newName
+    *       name of the copy of the view
+    * @return id of view copy
+    * @throws ViewMetadataNotFoundException
+    *       when metadata about copied view was not found
+    * @throws ViewAlreadyExistsException
+    *       when view with given name already exists
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read copied view
+    */
    public int copyView(int viewId, String newName) throws ViewMetadataNotFoundException, ViewAlreadyExistsException, UnauthorizedAccessException {
       DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
       int viewCopyId = createView(newName); // we create new initial metadata for view copy
@@ -199,7 +214,6 @@ public class ViewFacade implements Serializable {
     *       view id
     * @param configuration
     *       view configuration
-    * @throws UnsuccessfulOperationException
     * @throws ViewMetadataNotFoundException
     *       when view metadata was not found
     * @throws UnauthorizedAccessException
@@ -248,6 +262,8 @@ public class ViewFacade implements Serializable {
     * @return DataDocument with all metadata about given view
     * @throws ViewMetadataNotFoundException
     *       when view metadata was not found
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read the view
     */
    public DataDocument getViewMetadata(int viewId) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
       DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
@@ -267,6 +283,8 @@ public class ViewFacade implements Serializable {
     * @return specific value from view metadata
     * @throws ViewMetadataNotFoundException
     *       when view metadata was not found
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read the view
     */
    public Object getViewMetadataValue(int viewId, String metaKey) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
       Object value = getViewMetadata(viewId).get(metaKey); // access rights are checked in getViewMetadata
@@ -289,6 +307,8 @@ public class ViewFacade implements Serializable {
     *       when view metadata was not found
     * @throws UnsuccessfulOperationException
     *       when metadata cannot be set
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the view
     */
    public void setViewMetadataValue(int viewId, String metaKey, Object value) throws ViewMetadataNotFoundException, UnsuccessfulOperationException, UnauthorizedAccessException {
       DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
@@ -346,8 +366,12 @@ public class ViewFacade implements Serializable {
       return viewList.get(0);
    }
 
-   // sets info about one view without checking access rights or special metadata keys
-   private void setViewMetadataValueWithoutChecks(DataDocument viewDocument, String metaKey, Object value) throws ViewMetadataNotFoundException {
+   // sets info about one view without checking special metadata keys
+   private void setViewMetadataValueWithoutChecks(DataDocument viewDocument, String metaKey, Object value) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      if (!securityFacade.checkForWrite(viewDocument, getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
+
       String id = viewDocument.getId();
       Map<String, Object> metadataMap = new HashMap<>();
       metadataMap.put(metaKey, value);
