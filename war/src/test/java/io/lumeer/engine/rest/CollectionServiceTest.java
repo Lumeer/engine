@@ -67,7 +67,7 @@ public class CollectionServiceTest extends Arquillian {
 
    private final String DUMMY_COLLECTION_1 = "testCollection1";
    private final String DUMMY_COLLECTION_2 = "testCollection2";
-   private final String DUMMY_COLLECTION_3 = "newTestCollection";
+   private final String DUMMY_COLLECTION_3 = "testCollection3";
 
    @Inject
    private DataStorage dataStorage;
@@ -92,7 +92,7 @@ public class CollectionServiceTest extends Arquillian {
    @Test
    public void testRestClient() throws Exception {
       final Client client = ClientBuilder.newBuilder().build();
-      // the path prefix '/lumeer-engine/' does not work in test classes
+      // the path prefix '/lumeer-engine/' does not work properly in test classes
       Response response = client.target(TARGET_URI).path("/lumeer-engine/rest/collections/").request(MediaType.APPLICATION_JSON_TYPE).buildGet().invoke();
    }
 
@@ -106,7 +106,7 @@ public class CollectionServiceTest extends Arquillian {
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
       ArrayList<String> collections = response.readEntity(ArrayList.class);
-      Assert.assertTrue(collections.equals(new ArrayList<String>(collectionFacade.getAllCollections().keySet())) && response.getStatus() == Response.Status.OK.getStatusCode());
+      Assert.assertTrue(collections.equals(new ArrayList<String>(collectionFacade.getAllCollections().values())) && response.getStatus() == Response.Status.OK.getStatusCode());
       response.close();
       client.close();
    }
@@ -119,7 +119,7 @@ public class CollectionServiceTest extends Arquillian {
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       String internalName = response.readEntity(String.class);
-      Assert.assertTrue(dataStorage.hasCollection(internalName) && response.getStatus() == Response.Status.OK.getStatusCode() && internalName.equals(internalName(DUMMY_COLLECTION_1)));
+      Assert.assertTrue(dataStorage.hasCollection(internalName) && response.getStatus() == Response.Status.OK.getStatusCode() && internalName.equals(getInternalName(DUMMY_COLLECTION_1)));
       response.close();
 
       // #2 collection already exists, status code = 400
@@ -136,37 +136,14 @@ public class CollectionServiceTest extends Arquillian {
       // #1 nothing to delete, status code = 404
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1).request().buildDelete().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
+      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
             && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 collection exists, ready to delete, status code = 204
       collectionFacade.createCollection(DUMMY_COLLECTION_1);
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1).request().buildDelete().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1)) && response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
-      client.close();
-      response2.close();
-   }
-
-   @Test
-   public void testDropAttribute() throws Exception {
-      dropUsedCollections();
-      final String requestBody = "testAttributeToAdd";
-
-      // #1 the given collection does not exist, status code = 404
-      final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/").request().method("DELETE", Entity.entity(requestBody, MediaType.APPLICATION_JSON));
-      Assert.assertTrue(!dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
-            && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
-      response.close();
-
-      // #2 the given collection and attribute exists, ready to drop the attribute, status code = 204
-      collectionFacade.createCollection(DUMMY_COLLECTION_1);
-      collectionMetadataFacade.addOrIncrementAttribute(internalName(DUMMY_COLLECTION_1), requestBody);
-      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/").request().method("DELETE", Entity.entity(requestBody, MediaType.APPLICATION_JSON));
-      Assert.assertTrue(dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
-            && response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && !collectionMetadataFacade.getCollectionAttributesNames(internalName(DUMMY_COLLECTION_1)).contains(requestBody));
+      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1)) && response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
       client.close();
       response2.close();
    }
@@ -181,32 +158,55 @@ public class CollectionServiceTest extends Arquillian {
 
       // #1 the given collection does not exist, status code = 400 or 404
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/rename/" + oldAttributeName + "/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
             && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attribute exists, ready to rename the attribute, status code = 204
       collectionFacade.createCollection(DUMMY_COLLECTION_1);
-      collectionMetadataFacade.addOrIncrementAttribute(internalName(DUMMY_COLLECTION_1), oldAttributeName);
-      collectionMetadataFacade.addOrIncrementAttribute(internalName(DUMMY_COLLECTION_1), dummyAttributeName);
+      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(DUMMY_COLLECTION_1), oldAttributeName);
+      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(DUMMY_COLLECTION_1), dummyAttributeName);
 
-      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/rename/" + oldAttributeName + "/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
+      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      Assert.assertTrue(dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
             && response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && collectionMetadataFacade.getCollectionAttributesNames(internalName(DUMMY_COLLECTION_1)).contains(newAttributeName)
-            && !collectionMetadataFacade.getCollectionAttributesNames(internalName(DUMMY_COLLECTION_1)).contains(oldAttributeName));
+            && collectionMetadataFacade.getCollectionAttributesNames(getInternalName(DUMMY_COLLECTION_1)).contains(newAttributeName)
+            && !collectionMetadataFacade.getCollectionAttributesNames(getInternalName(DUMMY_COLLECTION_1)).contains(oldAttributeName));
       client.close();
       response2.close();
    }
 
    @Test
-   public void testQuerySearch() throws Exception {
-      // TODO:
+   public void testDropAttribute() throws Exception {
+      dropUsedCollections();
+      final String attributeName = "testAttributeToAdd";
+
+      // #1 the given collection does not exist, status code = 404
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/" + attributeName).request().buildDelete().invoke();
+      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
+            && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      response.close();
+
+      // #2 the given collection and attribute exists, ready to drop the attribute, status code = 204
+      collectionFacade.createCollection(DUMMY_COLLECTION_1);
+      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(DUMMY_COLLECTION_1), attributeName);
+      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/" + attributeName).request().buildDelete().invoke();
+      Assert.assertTrue(dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
+            && response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
+            && !collectionMetadataFacade.getCollectionAttributesNames(getInternalName(DUMMY_COLLECTION_1)).contains(attributeName));
+      client.close();
+      response2.close();
    }
 
    @Test
    public void testOptionSearch() throws Exception {
+      // TODO:
+   }
+
+   @Test
+   public void testQuerySearch() throws Exception {
       // TODO:
    }
 
@@ -222,21 +222,32 @@ public class CollectionServiceTest extends Arquillian {
       // #1 no metadata collection exists, status code = 404
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/meta/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1)) && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1)) && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the metadata collection of the given collection exists
       collectionFacade.createCollection(DUMMY_COLLECTION_1);
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/meta/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       ArrayList<DataDocument> collectionMetadata = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode() && collectionMetadata.equals(collectionFacade.readCollectionMetadata(internalName(DUMMY_COLLECTION_1))));
+      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode() && collectionMetadata.equals(collectionFacade.readCollectionMetadata(getInternalName(DUMMY_COLLECTION_1))));
       response2.close();
       client.close();
    }
 
    @Test
    public void testUpdateCollectionMetadata() throws Exception {
-      // TODO:
+      dropUsedCollections();
+
+      final String attributeName = "newMetaAttribute";
+      final int value = 100;
+      final Client client = ClientBuilder.newBuilder().build();
+
+      collectionFacade.createCollection(DUMMY_COLLECTION_1);
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
+      // TODO: check the attribute and find out if the value was updated
+      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+      client.close();
    }
 
    @Test
@@ -250,52 +261,22 @@ public class CollectionServiceTest extends Arquillian {
       // #1 if the given collection does not exist, status code = 404
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
+      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
             && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attributes exists, status code = 200
       collectionFacade.createCollection(DUMMY_COLLECTION_1);
-      collectionMetadataFacade.addOrIncrementAttribute(internalName(DUMMY_COLLECTION_1), dummyAttribute1);
-      collectionMetadataFacade.addOrIncrementAttribute(internalName(DUMMY_COLLECTION_1), dummyAttribute2);
-      collectionMetadataFacade.addOrIncrementAttribute(internalName(DUMMY_COLLECTION_1), dummyAttribute3);
+      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(DUMMY_COLLECTION_1), dummyAttribute1);
+      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(DUMMY_COLLECTION_1), dummyAttribute2);
+      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(DUMMY_COLLECTION_1), dummyAttribute3);
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       ArrayList<String> collectionAttributes = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
+      Assert.assertTrue(dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
             && response2.getStatus() == Response.Status.OK.getStatusCode()
-            && collectionAttributes.equals(collectionFacade.readCollectionAttributes(internalName(DUMMY_COLLECTION_1))));
+            && collectionAttributes.equals(collectionFacade.readCollectionAttributes(getInternalName(DUMMY_COLLECTION_1))));
       client.close();
       response2.close();
-   }
-
-   @Test
-   public void testGetDocumentVersion() throws Exception {
-      dropUsedCollections();
-
-      String documentId;
-      int versionId;
-
-      // #1 if the given collection does not exist, status code = 404
-     /* final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/documents/" + documentId + "versions/" + versionId).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
-            && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
-      response.close();
-
-      // #2 the given collection and attributes exists, status code = 200
-      collectionFacade.createCollection(DUMMY_COLLECTION_1);
-      DataDocument document = new DataDocument();
-      document.put("dummyKey", "dummyValue");
-      documentFacade.createDocument(DUMMY_COLLECTION_1, document);*/
-      // TODO:
-
-      /* Response response2 = client.target("http://localhost:8080").path("CollectionServiceTest/rest/collections/" + DUMMY_COLLECTION_1 + "/documents/" + documentId + "/versions/" + versionId).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      ArrayList<String> collectionAttributes = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))
-            && response2.getStatus() == Response.Status.OK.getStatusCode()
-            && collectionAttributes.equals(collectionFacade.readCollectionAttributes(internalName(DUMMY_COLLECTION_1))));
-      client.close();
-      response2.close();*/
    }
 
    @Test
@@ -308,22 +289,64 @@ public class CollectionServiceTest extends Arquillian {
       // TODO:
    }
 
+   @Test
+   public void testSetAndReadAttributeType() throws Exception {
+      dropUsedCollections();
+
+      final Client client = ClientBuilder.newBuilder().build();
+      final String attributeName = "dummyAttribute";
+      final String newType = "number";
+
+      collectionFacade.createCollection(DUMMY_COLLECTION_1);
+      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(DUMMY_COLLECTION_1), attributeName);
+
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/" + attributeName + "/types/" + newType).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      boolean wasSuccessful = response.readEntity(Boolean.class);
+      Assert.assertTrue(dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
+            && response.getStatus() == Response.Status.OK.getStatusCode()
+            && wasSuccessful);
+      response.close();
+
+      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + DUMMY_COLLECTION_1 + "/attributes/" + attributeName + "/types").request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      String attributeType = response2.readEntity(String.class);
+      Assert.assertTrue(dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))
+            && response2.getStatus() == Response.Status.OK.getStatusCode()
+            && attributeType.equals(newType));
+      response2.close();
+      client.close();
+   }
+
+   @Test
+   public void testSetAttributeConstraint() throws Exception {
+      // TODO:
+   }
+
+   @Test
+   public void testReadAttributeConstraint() throws Exception {
+      // TODO:
+   }
+
+   @Test
+   public void testDropAttributeConstraint() throws Exception {
+      // TODO:
+   }
+
    private void dropUsedCollections() throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (dataStorage.hasCollection(internalName(DUMMY_COLLECTION_1))) {
-         collectionFacade.dropCollection(internalName(DUMMY_COLLECTION_1));
+      if (dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_1))) {
+         collectionFacade.dropCollection(getInternalName(DUMMY_COLLECTION_1));
       }
 
-      if (dataStorage.hasCollection(internalName(DUMMY_COLLECTION_2))) {
-         collectionFacade.dropCollection(internalName(DUMMY_COLLECTION_2));
+      if (dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_2))) {
+         collectionFacade.dropCollection(getInternalName(DUMMY_COLLECTION_2));
       }
 
-      if (dataStorage.hasCollection(internalName(DUMMY_COLLECTION_3))) {
-         collectionFacade.dropCollection(internalName(DUMMY_COLLECTION_3));
+      if (dataStorage.hasCollection(getInternalName(DUMMY_COLLECTION_3))) {
+         collectionFacade.dropCollection(getInternalName(DUMMY_COLLECTION_3));
       }
 
    }
 
-   private String internalName(String collectionOriginalName) {
+   private String getInternalName(String collectionOriginalName) {
       return "collection." + collectionOriginalName.toLowerCase() + "_0";
    }
 }

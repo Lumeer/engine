@@ -53,11 +53,15 @@ import javax.ws.rs.core.MediaType;
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@Path("/documents")
+// TODO: test the path
+@Path("/collections/{collectionName}/documents")
 @RequestScoped
 public class DocumentService implements Serializable {
 
    private static final long serialVersionUID = 5645433756019847986L;
+
+   @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
 
    @Inject
    private DocumentFacade documentFacade;
@@ -66,19 +70,16 @@ public class DocumentService implements Serializable {
    private DocumentMetadataFacade documentMetadataFacade;
 
    @Inject
-   private VersionFacade versionFacade;
-
-   @Inject
-   private CollectionMetadataFacade collectionMetadataFacade;
-
-   @Inject
    private SecurityFacade securityFacade;
+
+   @Inject
+   private VersionFacade versionFacade;
 
    @Inject
    private UserFacade userFacade;
 
    @POST
-   @Path("/collections/{collectionName}")
+   @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
    public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws UnsuccessfulOperationException, CollectionNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, InvalidConstraintException {
@@ -89,7 +90,7 @@ public class DocumentService implements Serializable {
    }
 
    @GET
-   @Path("/{documentId}/collections/{collectionName}")
+   @Path("/{documentId}")
    @Produces(MediaType.APPLICATION_JSON)
    public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || documentId == null) {
@@ -99,7 +100,7 @@ public class DocumentService implements Serializable {
    }
 
    @DELETE
-   @Path("/{documentId}/collections/{collectionName}")
+   @Path("/{documentId}")
    public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, DocumentNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
@@ -108,7 +109,7 @@ public class DocumentService implements Serializable {
    }
 
    @PUT
-   @Path("/collections/{collectionName}")
+   @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, InvalidDocumentKeyException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, InvalidConstraintException {
       if (collectionName == null || updatedDocument == null) {
@@ -118,7 +119,7 @@ public class DocumentService implements Serializable {
    }
 
    @POST
-   @Path("/{documentId}/meta/{attributeName}/collections/{collectionName}")
+   @Path("/{documentId}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
    public void addDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName, final Object value) throws CollectionNotFoundException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || documentId == null || attributeName == null || value == null) {
@@ -128,7 +129,7 @@ public class DocumentService implements Serializable {
    }
 
    @GET
-   @Path("/{documentId}/meta//collections/{collectionName}")
+   @Path("/{documentId}/meta")
    @Produces(MediaType.APPLICATION_JSON)
    public Map<String, Object> readDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || documentId == null) {
@@ -138,7 +139,7 @@ public class DocumentService implements Serializable {
    }
 
    @PUT
-   @Path("/{documentId}/meta/collections/{collectionName}")
+   @Path("/{documentId}/meta")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final DataDocument metadata) throws CollectionNotFoundException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || documentId == null || metadata == null) {
@@ -148,7 +149,7 @@ public class DocumentService implements Serializable {
    }
 
    @GET
-   @Path("/{documentId}/versions/collections/{collectionName}")
+   @Path("/{documentId}/versions")
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> searchHistoryChanges(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || documentId == null) {
@@ -158,34 +159,34 @@ public class DocumentService implements Serializable {
    }
 
    @POST
-   @Path("/{documentId}/versions/{versionId}/collections/{collectionName}")
-   @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument getDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, DocumentNotFoundException {
+   @Path("/{documentId}/versions/{versionId}")
+   public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId)
+         throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, DocumentNotFoundException, UnauthorizedAccessException, UnsuccessfulOperationException, InvalidDocumentKeyException, VersionUpdateConflictException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      return versionFacade.getOldDocumentVersion(getInternalName(collectionName), documentId, versionId);
+      versionFacade.revertDocumentVersion(getInternalName(collectionName), documentFacade.readDocument(getInternalName(collectionName), documentId), versionId);
    }
 
-/*   @GET
-   @Path("/{documentId}/rights/collections/{collectionName}")
+   @GET
+   @Path("/{documentId}/rights")
    @Produces(MediaType.APPLICATION_JSON)
-   public boolean readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException {
+   public void readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      return securityFacade.checkForAddRights(collectionName, documentId, userFacade.getUserEmail());
+      // TODO: implement method in facade to manage access rights of the given entry (Jano)
    }
 
    @PUT
-   @Path("/{documentId}/rights/collections/{collectionName}")
+   @Path("/{documentId}/rights")
+   @Consumes(MediaType.APPLICATION_JSON)
    public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      // which metod to use?
-      // access rights to request body? any dao?
-   }*/
+      // TODO: implement method in facade to manage access rights of the given entry (Jano)
+   }
 
    private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
