@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
@@ -31,6 +32,7 @@ import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
 
 import java.io.Serializable;
@@ -69,16 +71,19 @@ public class CollectionService implements Serializable {
    private SearchFacade searchFacade;
 
    @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
    private VersionFacade versionFacade;
 
    @Inject
-   private SecurityFacade securityFacade;
+   private UserFacade userFacade;
 
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    public List<String> getAllCollections() throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
-      return new ArrayList<>(collectionFacade.getAllCollections().keySet());
+      return new ArrayList<>(collectionFacade.getAllCollections().values());
    }
 
    @POST
@@ -100,23 +105,22 @@ public class CollectionService implements Serializable {
       collectionFacade.dropCollection(getInternalName(name));
    }
 
-   @DELETE
-   @Path("/{collectionName}/attributes/")
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void dropAttribute(final @PathParam("collectionName") String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeNotFoundException, UnauthorizedAccessException {
-      if (collectionName == null || attributeName == null) {
-         throw new IllegalArgumentException();
-      }
-      collectionFacade.dropAttribute(getInternalName(collectionName), attributeName);
-   }
-
    @PUT
-   @Path("/{collectionName}/attributes/rename/{oldName}/{newName}")
+   @Path("/{collectionName}/attributes/{oldName}/rename/{newName}")
    public void renameAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeAlreadyExistsException {
       if (collectionName == null || oldName == null || newName == null
             || (collectionMetadataFacade.renameCollectionAttribute(getInternalName(collectionName), oldName, newName) == false)) {
          throw new IllegalArgumentException();
       }
+   }
+
+   @DELETE
+   @Path("/{collectionName}/attributes/{attributeName}")
+   public void dropAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeNotFoundException, UnauthorizedAccessException {
+      if (collectionName == null || attributeName == null) {
+         throw new IllegalArgumentException();
+      }
+      collectionFacade.dropAttribute(getInternalName(collectionName), attributeName);
    }
 
    @POST
@@ -130,7 +134,7 @@ public class CollectionService implements Serializable {
    }
 
    @POST
-   @Path("/{collectionName}/search/query/")
+   @Path("/{collectionName}/run/")
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> search(final @QueryParam("query") String query) {
       if (query == null) {
@@ -142,11 +146,11 @@ public class CollectionService implements Serializable {
    @POST
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) {
+   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      // TODO: there is no method for adding metadata by the given attributeName
+      // TODO: create specific method to facade (Alica)
    }
 
    @GET
@@ -162,13 +166,12 @@ public class CollectionService implements Serializable {
    @PUT
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) {
-      // TODO: value in the request body?
-      // TODO: which method to use?
+   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) {
+      // TODO: create specific method to facade (Alica)
    }
 
    @GET
-   @Path("/{collectionName}/attributes/")
+   @Path("/{collectionName}/attributes")
    @Produces(MediaType.APPLICATION_JSON)
    public List<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null) {
@@ -181,19 +184,71 @@ public class CollectionService implements Serializable {
    @Path("/{collectionName}/rights")
    @Produces(MediaType.APPLICATION_JSON)
    public DataDocument readAccessRights(final @PathParam("collectionName") String collectionName) {
-      // TODO: implement method in facade to manage access rights
+      // TODO: implement method in facade to manage access rights of the given collection (Alica)
       return null;
    }
 
    @PUT
    @Path("/{collectionName}/rights")
    public void updateAccessRights(final @PathParam("collectionName") String collectionName) {
-      // TODO: implement method in facade to manage access rights
+      // TODO: implement method in facade to manage access rights of the given collection (Alica)
    }
 
-   // TODO: As a REST client I would like to be able to set, read and update attribute type, attribute integrity checks and format.
+   @PUT
+   @Path("/{collectionName}/attributes/{attributeName}/types/{newType}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public boolean setAttributeType(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final @PathParam("newType") String newType) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionName == null || attributeName == null || newType == null) {
+         throw new IllegalArgumentException();
+      }
 
-   private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      if (collectionMetadataFacade.retypeCollectionAttribute(getInternalName(collectionName), attributeName, newType) == false) {
+         // TODO: throws exception with message "The type is invalid, valid types are <list>"
+      }
+      return true;
+   }
+
+   @GET
+   @Path("/{collectionName}/attributes/{attributeName}/types")
+   @Produces(MediaType.APPLICATION_JSON)
+   public String readAttributeType(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionName == null || attributeName == null) {
+         throw new IllegalArgumentException();
+      }
+      return collectionMetadataFacade.getAttributeType(getInternalName(collectionName), attributeName);
+   }
+
+   @PUT
+   @Path("/{collectionName}/attributes/{attributeName}/constraints")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void setAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException, InvalidConstraintException, UnauthorizedAccessException {
+      if (collectionName == null || attributeName == null || constraintConfiguration == null) {
+         throw new IllegalArgumentException();
+      }
+      collectionMetadataFacade.addAttributeConstraint(getInternalName(collectionName), attributeName, constraintConfiguration);
+   }
+
+   @GET
+   @Path("/{collectionName}/attributes/{attributeName}/constraints")
+   @Produces(MediaType.APPLICATION_JSON)
+   public List<String> readAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionName == null || attributeName == null) {
+         throw new IllegalArgumentException();
+      }
+      return collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(collectionName), attributeName);
+   }
+
+   @DELETE
+   @Path("/{collectionName}/attributes/{attributeName}/constraints")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void dropAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionName == null || attributeName == null || constraintConfiguration == null) {
+         throw new IllegalArgumentException();
+      }
+      collectionMetadataFacade.dropAttributeConstraint(getInternalName(collectionName), attributeName, constraintConfiguration);
+   }
+
+   private String getInternalName(final String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
    }
 }
