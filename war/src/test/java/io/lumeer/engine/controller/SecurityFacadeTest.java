@@ -381,10 +381,25 @@ public class SecurityFacadeTest extends Arquillian {
    @Test
    public void testNoRights() throws Exception {
       DataDocument dataDocument = new DataDocument();
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER));
       Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER));
       Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER));
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, TEST_USER));
+      Assert.assertTrue(securityFacade.checkForRead(dataDocument, userFacade.getUserEmail()));
+      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail()));
+      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, userFacade.getUserEmail()));
+      Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, userFacade.getUserEmail()));
+
+      securityFacade.addMetaData(dataDocument);
+      Assert.assertFalse(securityFacade.checkForRead(dataDocument, TEST_USER));
+      Assert.assertFalse(securityFacade.checkForWrite(dataDocument, TEST_USER));
+      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, TEST_USER));
+      Assert.assertFalse(securityFacade.checkForAddRights(dataDocument, TEST_USER));
+      Assert.assertFalse(securityFacade.checkForRead(dataDocument, userFacade.getUserEmail()));
+      Assert.assertFalse(securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail()));
+      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, userFacade.getUserEmail()));
+      Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, userFacade.getUserEmail()));
    }
 
    private void addRights(DataDocument dataDocument, String email, Integer rights) {

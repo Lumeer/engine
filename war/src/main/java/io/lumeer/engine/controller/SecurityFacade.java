@@ -58,6 +58,11 @@ public class SecurityFacade implements Serializable {
    private final int WRITE = 2;
    private final int EXECUTE = 1;
 
+   /* change EMPTY_LIST to 0 to specify no rights if no user is presented in array of rights but list exists
+      change EMPTY_LIST to -1 to specify all rights for all user if no user is presented in array of rights but list exists
+    */
+   private final int EMPTY_LIST = 0;
+   private final int NULL_LIST = -1;
    // TODO add users group ...
    private DataDocument readGroupRights(DataDocument dataDocument) {
       return null;
@@ -367,10 +372,10 @@ public class SecurityFacade implements Serializable {
    private int recordValue(DataDocument dataDocument, String email) {
       List<DataDocument> arrayList = readList(dataDocument);
       if (arrayList == null) {
-         return -1;
+         return NULL_LIST;
       }
       if (arrayList.size() == 0) {
-         return -1;
+         return EMPTY_LIST;
       }
       for (DataDocument dataDoc : arrayList) {
          if (dataDoc.containsValue(email)) {
