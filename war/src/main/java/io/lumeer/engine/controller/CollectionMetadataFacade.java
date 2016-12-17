@@ -815,36 +815,39 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * @param collectionName
-    * @param user
+    * @param collectionName internal collection name
+    * @param user user name
     * @return true if user can read the collection
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
     */
    public boolean checkCollectionForRead(String collectionName, String user) throws CollectionNotFoundException {
-      return securityFacade.checkForRead(getAccessRightsDocument(collectionName), user);
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      return rights == null || securityFacade.checkForRead(rights, user);
    }
 
    /**
-    * @param collectionName
-    * @param user
+    * @param collectionName internal collection name
+    * @param user user name
     * @return true if user can write to the collection
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
     */
    public boolean checkCollectionForWrite(String collectionName, String user) throws CollectionNotFoundException {
-      return securityFacade.checkForWrite(getAccessRightsDocument(collectionName), user);
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      return rights == null || securityFacade.checkForWrite(rights, user);
    }
 
    /**
-    * @param collectionName
-    * @param user
+    * @param collectionName internal collection name
+    * @param user user name
     * @return true if user can "exexute" the collection (can change access rights)
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
     */
    public boolean checkCollectionForExecute(String collectionName, String user) throws CollectionNotFoundException {
-      return securityFacade.checkForExecute(getAccessRightsDocument(collectionName), user);
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      return rights == null || securityFacade.checkForExecute(rights, user);
    }
 
    // returns whole access rights document - to be used only internally
@@ -853,7 +856,7 @@ public class CollectionMetadataFacade implements Serializable {
       List<DataDocument> rightsInfo = dataStorage.run(query);
 
       if (rightsInfo.isEmpty()) {
-         throw new IllegalStateException("Access rights could not be verified because they were not found.");
+         return null;
       }
 
       return rightsInfo.get(0);
