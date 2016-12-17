@@ -201,7 +201,7 @@ public class CollectionMetadataFacade implements Serializable {
       indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, indexType);
       indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, indexType);
 
-      dataStorage.createIndex(metadataCollectionName, indexAttributes);
+      //dataStorage.createIndex(metadataCollectionName, indexAttributes);
    }
 
    /**
@@ -460,7 +460,7 @@ public class CollectionMetadataFacade implements Serializable {
          String documentId = attributeDocument.getId();
 
          // we check if this was the last document with the attribute
-         if (attributeDocument.getLong(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY) == 1) {
+         if (attributeDocument.getInteger(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY) == 1) {
             dataStorage.dropDocument(metadataCollectionName, documentId);
          } else {
             dataStorage.incrementAttributeValueBy(metadataCollectionName, documentId, LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY, -1);
@@ -489,7 +489,7 @@ public class CollectionMetadataFacade implements Serializable {
       List<DataDocument> countInfo = dataStorage.run(query);
       if (!countInfo.isEmpty()) {
          DataDocument countDocument = countInfo.get(0);
-         return countDocument.getLong(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY);
+         return countDocument.getInteger(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY);
       } else {
          return 0; // the attribute does not exist
       }
