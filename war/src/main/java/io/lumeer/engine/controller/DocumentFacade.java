@@ -24,21 +24,18 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
-import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 import io.lumeer.mongodb.MongoUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -299,7 +296,7 @@ public class DocumentFacade implements Serializable {
 
    private void checkConstraints(final String collectionName, final DataDocument doc) throws InvalidConstraintException {
       for (String attribute : doc.keySet()) {
-         String value = collectionMetadataFacade.checkAttributeValue(collectionName, attribute, doc.get(attribute).toString());
+         Object value = collectionMetadataFacade.checkAndConvertAttributeValue(collectionName, attribute, doc.get(attribute).toString());
          if (value == null) {
             throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKey(attribute));
          } else {

@@ -707,7 +707,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       value converted to String
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     */
-   public String checkAttributeValue(String collectionName, String attribute, String valueString) {
+   public Object checkAndConvertAttributeValue(String collectionName, String attribute, String valueString) {
       List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
       valueString = checkAttributeConstraints(valueString, constraintConfigurations);
       if (valueString == null) { // value does not satisfy constraints and could not be fixed
@@ -715,61 +715,54 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       String type = getAttributeTypeWithoutAccessRightsCheck(collectionName, attribute);
-      if (!checkAttributeType(valueString, type)) { // value is invalid for the type
-         return null;
-      }
-
-      return valueString;
+      return checkAttributeTypeAndConvert(valueString, type);
    }
 
    /**
-    * Calls checkAttributeValue(String collectionName, String attribute, String valueString) on every attribute of given document.
+    * Calls checkAndConvertAttributeValue(String collectionName, String attribute, String valueString) on every attribute of given document.
     *
     * @param collectionName
     *       internal collection name
     * @param document
     *       document with attributes and their values to check
-    * @return map of results, key is attribute name and value is result of checkAttributeValue on that attribute
+    * @return map of results, key is attribute name and value is result of checkAndConvertAttributeValue on that attribute
     */
-   public Map<String, String> checkAttributesValues(String collectionName, DataDocument document) {
-      Map<String, String> results = new HashMap<>();
+   public Map<String, Object> checkAndConvertAttributesValues(String collectionName, DataDocument document) {
+      Map<String, Object> results = new HashMap<>();
 
       Set<String> attributes = document.keySet();
       for (String attribute : attributes) {
          String value = document.get(attribute).toString();
-         results.put(attribute, checkAttributeValue(collectionName, attribute, value));
+         results.put(attribute, checkAndConvertAttributeValue(collectionName, attribute, value));
       }
 
       return results;
    }
 
-   // checks whether value is of given type
-   private boolean checkAttributeType(String valueString, String type) {
+   // checks whether value is of given type and converts it to given type
+   private Object checkAttributeTypeAndConvert(String valueString, String type) {
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT)) {
          try {
-            Integer.parseInt(valueString);
-            return true;
+            return Integer.parseInt(valueString);
          } catch (NumberFormatException e) {
-            return false;
+            return null;
          }
       }
 
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_LONG)) {
          try {
-            Long.parseLong(valueString);
-            return true;
+            return Long.parseLong(valueString);
          } catch (NumberFormatException e) {
-            return false;
+            return null;
          }
       }
 
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DOUBLE)) {
          try {
-            //valueString = valueString.replace(',','.'); // in case coma is used instead of decimal dot
-            Double.parseDouble(valueString);
-            return true;
+            valueString = valueString.replace(',', '.'); // in case coma is used instead of decimal dot
+            return Double.parseDouble(valueString);
          } catch (NumberFormatException e) {
-            return false;
+            return null;
          }
       }
 
@@ -778,14 +771,17 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         return true; // we accept everything - it just has to satisfy the constraints
+         return valueString; // we accept everything - it just has to satisfy the constraints
       }
 
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN)) { // we accept "true" and "false" ignoring the case
-         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES.contains(valueString.toLowerCase());
+         if (LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES.contains(valueString.toLowerCase())) {
+            return Boolean.parseBoolean(valueString);
+         }
+         return null;
       }
 
-      return true; // for a string, we accept everything
+      return valueString; // for a string, we accept everything
    }
 
    // checks whether value satisfies all constraints
@@ -942,7 +938,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param user
     *       user name
-    * @return true if user can "exexute" the collection (can change access rights)
+    * @return true if user can "execute" the collection (can change access rights)
     */
    public boolean checkCollectionForExecute(String collectionName, String user) {
       DataDocument rights = getAccessRightsDocument(collectionName);

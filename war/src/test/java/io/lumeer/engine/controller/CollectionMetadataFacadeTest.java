@@ -358,9 +358,9 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String intValueInvalidConstraint = "2";
       String intValueInvalidType = "123456789012345"; // this is too long value
 
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeInt, intValueValid), intValueValid);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeInt, intValueInvalidConstraint), null);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeInt, intValueInvalidType), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueValid), Integer.parseInt(intValueValid));
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidConstraint), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidType), null);
 
       // check value of type long
       String attributeLong = "long";
@@ -370,8 +370,8 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String longValueValid = "4";
       String longValueInvalid = Long.toString(Long.MAX_VALUE).concat("0"); // too long for Long
 
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeLong, longValueValid), longValueValid);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeLong, longValueInvalid), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeLong, longValueValid), Long.parseLong(longValueValid));
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeLong, longValueInvalid), null);
 
       // check value of type double
       String attributeDouble = "double";
@@ -380,29 +380,27 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       String doubleValueValidInt = "4";
       String doubleValueValidDot = "3.14";
-      //String doubleValueValidComa = "3,14";
+      String doubleValueValidComa = "3,14";
       String doubleValueInvalid = "3.14.3.14";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueValidInt), doubleValueValidInt);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueValidDot), doubleValueValidDot);
-      //Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueValidComa), doubleValueValidComa);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueInvalid), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidInt), Double.parseDouble(doubleValueValidInt));
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidDot), Double.parseDouble(doubleValueValidDot));
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidComa), Double.parseDouble(doubleValueValidDot)); // coma is replaced by dot
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueInvalid), null);
 
       // check value of type decimal
       // TODO
 
-      // check value of type date - we accept yyyy.MM.dd and yyyy.MM.dd HH.mm
+      // check value of type date - everything is accepted because there are no constraints
       String attributeDate = "date";
       collectionMetadataFacade.addOrIncrementAttribute(collection, attributeDate);
       collectionMetadataFacade.retypeCollectionAttribute(collection, attributeDate, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE);
 
       String dateValueValid1 = "2016.12.18";
       String dateValueValid2 = "2016.12.18 14.01";
-      String dateValueInvalid = "2016.12.18 14.01.00";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDate, dateValueValid1), dateValueValid1);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDate, dateValueValid2), dateValueValid2);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDate, dateValueInvalid), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid1), dateValueValid1);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid2), dateValueValid2);
 
       // check value of type boolean
       String attributeBoolean = "boolean";
@@ -415,11 +413,11 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String booleanValueValid4 = "fAlSe";
       String booleanValueInvalid = "yes";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid1), booleanValueValid1);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid2), booleanValueValid2);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid3), booleanValueValid3);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid4), booleanValueValid4);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueInvalid), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid1), true);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid2), true);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid3), false);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid4), false);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueInvalid), null);
 
       // check value of type string
       String attributeString = "string";
@@ -428,8 +426,8 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String stringValueValid1 = "everything we put in string";
       String stringValueValid2 = "should be always valid";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeString, stringValueValid1), stringValueValid1);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeString, stringValueValid2), stringValueValid2);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid1), stringValueValid1);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid2), stringValueValid2);
    }
 
    @Test
