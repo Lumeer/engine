@@ -708,13 +708,18 @@ public class CollectionMetadataFacade implements Serializable {
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     */
    public String checkAttributeValue(String collectionName, String attribute, String valueString) {
+      List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
+      valueString = checkAttributeConstraints(valueString, constraintConfigurations);
+      if (valueString == null) { // value does not satisfy constraints and could not be fixed
+         return null;
+      }
+
       String type = getAttributeTypeWithoutAccessRightsCheck(collectionName, attribute);
       if (!checkAttributeType(valueString, type)) { // value is invalid for the type
          return null;
       }
 
-      List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
-      return checkAttributeConstraints(valueString, constraintConfigurations);
+      return valueString;
    }
 
    /**
