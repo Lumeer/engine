@@ -114,7 +114,7 @@ public class LinkingFacade implements Serializable {
    }
 
    /**
-    * Check if link exist between two documents
+    * Checks whether a link exist between two documents.
     *
     * @param firstCollectionName
     *       the name of the first document's collection
@@ -126,6 +126,7 @@ public class LinkingFacade implements Serializable {
     *       the id of the second document
     * @throws CollectionNotFoundException
     *       if first or second collection is not found in database
+    * @return True iff the link exists.
     */
    public boolean linkExistsBetweenDocuments(String firstCollectionName, String firstDocumentId, String secondCollectionName, String secondDocumentId) throws CollectionNotFoundException {
       if (!dataStorage.hasCollection(firstCollectionName)) {

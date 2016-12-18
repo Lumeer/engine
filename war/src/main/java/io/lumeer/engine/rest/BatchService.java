@@ -57,6 +57,10 @@ public class BatchService {
     *
     * @param batch
     *       The batch operation to run.
+    * @throws DbException
+    *       When there was an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       When the new change did not pass the constraint criteria.
     */
    @POST
    @Path("/merge")
@@ -70,6 +74,10 @@ public class BatchService {
     *
     * @param batch
     *       The batch operation to run.
+    * @throws DbException
+    *       When there was an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       When the new change did not pass the constraint criteria.
     */
    @POST
    @Path("/split")

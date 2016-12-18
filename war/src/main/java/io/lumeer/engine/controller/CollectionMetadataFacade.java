@@ -366,8 +366,6 @@ public class CollectionMetadataFacade implements Serializable {
     * @return type of the attribute, default (String) if attribute is not found
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the collection
     */

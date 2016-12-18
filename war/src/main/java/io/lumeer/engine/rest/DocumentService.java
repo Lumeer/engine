@@ -23,6 +23,7 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
@@ -101,7 +102,7 @@ public class DocumentService implements Serializable {
 
    @DELETE
    @Path("/{documentId}")
-   public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, DocumentNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
@@ -111,7 +112,7 @@ public class DocumentService implements Serializable {
    @PUT
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, VersionUpdateConflictException, UnsuccessfulOperationException, InvalidDocumentKeyException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, InvalidConstraintException {
+   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
       if (collectionName == null || updatedDocument == null) {
          throw new IllegalArgumentException();
       }

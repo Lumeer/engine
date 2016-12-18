@@ -26,6 +26,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
@@ -157,20 +158,12 @@ public class DocumentFacade implements Serializable {
     *       the name of the collection where the existing document is located
     * @param updatedDocument
     *       the DataDocument object representing a document with changes to update
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in database
-    * @throws UnsuccessfulOperationException
-    *       if document was not updated succesfully
-    * @throws InvalidDocumentKeyException
-    *       if one of document's key contains illegal character
-    * @throws UnauthorizedAccessException
-    *       if user doesn't have rights to update document
+    * @throws DbException
+    *       When there is an error working with the data storage.
     * @throws InvalidConstraintException
     *       if one of document's value doesn't satisfy constraint
     */
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException, UnauthorizedAccessException, InvalidConstraintException {
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
       checkCollectionForWrite(collectionName);
 
       String documentId = updatedDocument.getId();
@@ -203,16 +196,10 @@ public class DocumentFacade implements Serializable {
     *       the name of the collection where the document is located
     * @param documentId
     *       the id of the document to drop
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in database
-    * @throws UnsuccessfulOperationException
-    *       if document stay in collection after drop
-    * @throws UnauthorizedAccessException
-    *       if user doesn't have rights to drop document
+    * @throws DbException
+    *       When there is an error working with the database.
     */
-   public void dropDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnsuccessfulOperationException, VersionUpdateConflictException, InvalidDocumentKeyException, UnauthorizedAccessException {
+   public void dropDocument(final String collectionName, final String documentId) throws DbException {
       checkCollectionForWrite(collectionName);
 
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);

@@ -66,6 +66,8 @@ public class SearchFacade implements Serializable {
     *       the number of documents to skip
     * @param limit
     *       the maximum number of documents to return
+    * @throws CollectionNotFoundException
+    *       When the collection in which we want to search does not exist. TODO Think about simply returning an empty result.
     * @return the list of the found documents
     */
    public List<DataDocument> search(String collectionName, String filter, String sort, int skip, int limit) throws CollectionNotFoundException {
@@ -91,8 +93,8 @@ public class SearchFacade implements Serializable {
     * Queries the data storage in a flexible way. Allows for none or multiple collection names to be specified,
     * automatically sets limit to default values.
     *
-    * @param query
-    * @return
+    * @param query Query to execute.
+    * @return The query result.
     * @throws InvalidQueryException
     *       When it was not possible to execute the query.
     */

@@ -140,6 +140,8 @@ public class LinkingService {
     *       The link role.
     * @param documentId
     *       The source/target document id.
+    * @param targetDocumentId
+    *       The document that the link leads to.
     * @param linkDirection
     *       Which link direction to work with.
     * @return Required links.
