@@ -30,7 +30,7 @@ import java.util.List;
 public final class LumeerConst {
 
    public static final String LUMEER_VERSION = "1.0";
-   public static final String METADATA_VERSION_KEY = "_metadata-version";
+   public static final String METADATA_VERSION_KEY = "_meta-version";
 
    public static final String DB_HOST_PROPERTY = "db_host";
    public static final String DB_PORT_PROPERTY = "db_port";
@@ -155,5 +155,14 @@ public final class LumeerConst {
       public static final String COLLECTION_RIGHTS_META_TYPE_VALUE = "rights";
       public static final String COLLECTION_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
       public static final String COLLECTION_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
+   }
+
+   public static class Security {
+      public static final String RULE = "rule";
+      public static final String USER_ID = "user_email";
+
+      public static final int READ = 4;
+      public static final int WRITE = 2;
+      public static final int EXECUTE = 1;
    }
 }

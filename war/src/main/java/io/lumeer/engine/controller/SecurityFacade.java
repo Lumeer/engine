@@ -46,17 +46,11 @@ public class SecurityFacade implements Serializable {
    @Inject
    UserFacade user;
 
-   private final String RULE = "rule";
-   private final String USER_ID = "user_email";
    private final int READ_BP = 2;
    private final int WRITE_BP = 1;
    private final int EXECUTE_BP = 0;
    private final int NO_RIGHTS = -1;
    private final int NOT_FOUND = 0;
-
-   private final int READ = 4;
-   private final int WRITE = 2;
-   private final int EXECUTE = 1;
 
    /* change EMPTY_LIST to 0 to specify no rights if no user is presented in array of rights but list exists
       change EMPTY_LIST to -1 to specify all rights for all user if no user is presented in array of rights but list exists
@@ -252,7 +246,7 @@ public class SecurityFacade implements Serializable {
       int value = recordValue(dataDocument, userName);
       if (checkForAddRights(dataDocument, user.getUserEmail())) {
          if (!checkForRead(dataDocument, userName) || (value == NO_RIGHTS)) {
-            setRights(dataDocument, READ, userName, value);
+            setRights(dataDocument, LumeerConst.Security.READ, userName, value);
          }
       }
       return dataDocument;
@@ -271,7 +265,7 @@ public class SecurityFacade implements Serializable {
       int value = recordValue(dataDocument, userName);
       if (checkForAddRights(dataDocument, user.getUserEmail())) {
          if (!checkForWrite(dataDocument, userName) || (value == NO_RIGHTS)) {
-            setRights(dataDocument, WRITE, userName, value);
+            setRights(dataDocument, LumeerConst.Security.WRITE, userName, value);
          }
       }
       return dataDocument;
@@ -290,7 +284,7 @@ public class SecurityFacade implements Serializable {
       int value = recordValue(dataDocument, userName);
       if (checkForAddRights(dataDocument, user.getUserEmail())) {
          if (!checkForExecute(dataDocument, userName) || (value == NO_RIGHTS)) {
-            setRights(dataDocument, EXECUTE, userName, value);
+            setRights(dataDocument, LumeerConst.Security.EXECUTE, userName, value);
          }
       }
       return dataDocument;
@@ -309,7 +303,7 @@ public class SecurityFacade implements Serializable {
       int value = recordValue(dataDocument, userName);
       if (checkForAddRights(dataDocument, user.getUserEmail())) {
          if (checkForExecute(dataDocument, userName) || (value == NO_RIGHTS)) {
-            setRights(dataDocument, (-1) * EXECUTE, userName, value);
+            setRights(dataDocument, (-1) * LumeerConst.Security.EXECUTE, userName, value);
          }
       }
       return dataDocument;
@@ -328,7 +322,7 @@ public class SecurityFacade implements Serializable {
       int value = recordValue(dataDocument, userName);
       if (checkForAddRights(dataDocument, user.getUserEmail())) {
          if (checkForWrite(dataDocument, userName) || (value == NO_RIGHTS)) {
-            setRights(dataDocument, (-1) * WRITE, userName, value);
+            setRights(dataDocument, (-1) * LumeerConst.Security.WRITE, userName, value);
          }
       }
       return dataDocument;
@@ -347,7 +341,7 @@ public class SecurityFacade implements Serializable {
       int value = recordValue(dataDocument, userName);
       if (checkForAddRights(dataDocument, user.getUserEmail())) {
          if (checkForRead(dataDocument, userName) || (value == NO_RIGHTS)) {
-            setRights(dataDocument, (-1) * READ, userName, value);
+            setRights(dataDocument, (-1) * LumeerConst.Security.READ, userName, value);
          }
       }
       return dataDocument;
@@ -379,7 +373,7 @@ public class SecurityFacade implements Serializable {
       }
       for (DataDocument dataDoc : arrayList) {
          if (dataDoc.containsValue(email)) {
-            return dataDoc.getInteger(RULE);
+            return dataDoc.getInteger(LumeerConst.Security.RULE);
          }
       }
       return 0;
@@ -389,7 +383,7 @@ public class SecurityFacade implements Serializable {
       List<DataDocument> arrayList = readList(dataDocument);
       for (DataDocument datadoc : arrayList) {
          if (datadoc.containsValue(email)) {
-            datadoc.replace(RULE, newInteger);
+            datadoc.replace(LumeerConst.Security.RULE, newInteger);
          }
       }
       dataDocument.replace(LumeerConst.Document.USER_RIGHTS, arrayList);
@@ -398,8 +392,8 @@ public class SecurityFacade implements Serializable {
    private void putToList(DataDocument dataDocument, String email, int rights) {
       List<DataDocument> arrayList = readList(dataDocument);
       DataDocument newRule = new DataDocument();
-      newRule.put(USER_ID, email);
-      newRule.put(RULE, rights);
+      newRule.put(LumeerConst.Security.USER_ID, email);
+      newRule.put(LumeerConst.Security.RULE, rights);
       arrayList.add(newRule);
       dataDocument.replace(LumeerConst.Document.USER_RIGHTS, arrayList);
    }
@@ -444,7 +438,7 @@ public class SecurityFacade implements Serializable {
       HashMap<String, Integer> map = new HashMap<String, Integer>();
       List<DataDocument> arrayList = readList(dataDocument);
       for (DataDocument dataDoc : arrayList) {
-         map.put(dataDoc.getString(USER_ID), dataDoc.getInteger(RULE));
+         map.put(dataDoc.getString(LumeerConst.Security.USER_ID), dataDoc.getInteger(LumeerConst.Security.RULE));
       }
       return map;
    }

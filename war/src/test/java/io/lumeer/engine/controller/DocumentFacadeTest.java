@@ -18,6 +18,7 @@ package io.lumeer.engine.controller;/*
  * -----------------------------------------------------------------------/
  */
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
@@ -37,6 +38,8 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -96,7 +99,14 @@ public class DocumentFacadeTest extends Arquillian {
       String documentId = documentFacade.createDocument(coll, document);
       DataDocument inserted = documentFacade.readDocument(coll, documentId);
       Assert.assertNotNull(inserted);
-      Assert.assertEquals(inserted.getString(ID_KEY), documentId);
+      Assert.assertEquals(inserted.getId(), documentId);
+
+      for (Iterator<Map.Entry<String, Object>> it = inserted.entrySet().iterator(); it.hasNext(); ) {
+         Map.Entry<String, Object> entry = it.next();
+         if (entry.getKey().startsWith(LumeerConst.Document.METADATA_PREFIX)) {
+            it.remove();
+         }
+      }
 
       String changed = DUMMY_VALUE1 + "_changed";
       inserted.put(DUMMY_KEY1, changed);

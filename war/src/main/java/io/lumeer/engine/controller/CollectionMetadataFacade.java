@@ -919,10 +919,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user name
     * @return true if user can read the collection
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public boolean checkCollectionForRead(String collectionName, String user) throws CollectionNotFoundException {
+   public boolean checkCollectionForRead(String collectionName, String user) {
       DataDocument rights = getAccessRightsDocument(collectionName);
       return rights == null || securityFacade.checkForRead(rights, user);
    }
@@ -933,10 +931,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user name
     * @return true if user can write to the collection
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public boolean checkCollectionForWrite(String collectionName, String user) throws CollectionNotFoundException {
+   public boolean checkCollectionForWrite(String collectionName, String user) {
       DataDocument rights = getAccessRightsDocument(collectionName);
       return rights == null || securityFacade.checkForWrite(rights, user);
    }
@@ -947,10 +943,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user name
     * @return true if user can "exexute" the collection (can change access rights)
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public boolean checkCollectionForExecute(String collectionName, String user) throws CollectionNotFoundException {
+   public boolean checkCollectionForExecute(String collectionName, String user) {
       DataDocument rights = getAccessRightsDocument(collectionName);
       return rights == null || securityFacade.checkForExecute(rights, user);
    }

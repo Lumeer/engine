@@ -83,21 +83,11 @@ public class DocumentService implements Serializable {
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws UnsuccessfulOperationException, CollectionNotFoundException, InvalidDocumentKeyException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, InvalidConstraintException {
+   public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws DbException, InvalidConstraintException {
       if (collectionName == null || document == null) {
          throw new IllegalArgumentException();
       }
       return documentFacade.createDocument(getInternalName(collectionName), document);
-   }
-
-   @GET
-   @Path("/{documentId}")
-   @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, DocumentNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
-      if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
-      }
-      return documentFacade.readDocument(getInternalName(collectionName), documentId);
    }
 
    @DELETE
@@ -107,6 +97,16 @@ public class DocumentService implements Serializable {
          throw new IllegalArgumentException();
       }
       documentFacade.dropDocument(getInternalName(collectionName), documentId);
+   }
+
+   @GET
+   @Path("/{documentId}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
+      if (collectionName == null || documentId == null) {
+         throw new IllegalArgumentException();
+      }
+      return documentFacade.readDocument(getInternalName(collectionName), documentId);
    }
 
    @PUT
@@ -162,7 +162,7 @@ public class DocumentService implements Serializable {
    @POST
    @Path("/{documentId}/versions/{versionId}")
    public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId)
-         throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, DocumentNotFoundException, UnauthorizedAccessException, UnsuccessfulOperationException, InvalidDocumentKeyException, VersionUpdateConflictException {
+         throws DbException, VersionUpdateConflictException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }

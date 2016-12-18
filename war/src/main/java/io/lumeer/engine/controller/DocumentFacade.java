@@ -79,26 +79,20 @@ public class DocumentFacade implements Serializable {
    private UserFacade userFacade;
 
    /**
-    * Creates and inserts a new document to specified collection.
+    * Creates and inserts a new document to specified collection and create collection if not exists
     *
     * @param collectionName
     *       the name of the collection where the document will be created
     * @param document
     *       the DataDocument object representing a document to be created
     * @return the id of the newly created document
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws UnsuccessfulOperationException
-    *       if create was not succesful
-    * @throws InvalidDocumentKeyException
-    *       if one of document's key contains illegal character
-    * @throws UnauthorizedAccessException
-    *       if user doesn't have rights to create document
+    * @throws DbException
+    *       When there is an error working with the database.
     * @throws InvalidConstraintException
     *       if one of document's value doesn't satisfy constraint
     */
-   public String createDocument(final String collectionName, final DataDocument document) throws CollectionNotFoundException, UnsuccessfulOperationException, InvalidDocumentKeyException, UnauthorizedAccessException, InvalidConstraintException {
-      checkCollectionForWrite(collectionName);
+   public String createDocument(final String collectionName, final DataDocument document) throws DbException, InvalidConstraintException {
+      checkCollectionForWriteBenevolent(collectionName);
       DataDocument doc = checkDocumentKeysValidity(document);
       // check constraints
       checkConstraints(collectionName, doc);
@@ -106,7 +100,7 @@ public class DocumentFacade implements Serializable {
       doc.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
       doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
-      // TODO doc.put(LumeerConst.Document.USER_RIGHTS, Collections.singletonList(new DataDocument("user", userFacade.getUserEmail()).append("rights", 7))); (need methods..)
+      doc.put(LumeerConst.Document.USER_RIGHTS, Collections.singletonList(new DataDocument(LumeerConst.Security.USER_ID, userFacade.getUserEmail()).append(LumeerConst.Security.RULE, LumeerConst.Security.WRITE + LumeerConst.Security.EXECUTE + LumeerConst.Security.READ)));
       // TODO check and convert types (need methods..)
       String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
@@ -129,14 +123,12 @@ public class DocumentFacade implements Serializable {
     * @param documentId
     *       the id of the read document
     * @return the DataDocument object representing the read document
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in database
+    * @throws DbException
+    *       When there is an error working with the database.
     * @throws UnauthorizedAccessException
     *       if user doesn't have rights to read document
     */
-   public DataDocument readDocument(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnauthorizedAccessException {
+   public DataDocument readDocument(final String collectionName, final String documentId) throws DbException {
       checkCollectionForRead(collectionName);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
       if (dataDocument == null) {
@@ -152,7 +144,7 @@ public class DocumentFacade implements Serializable {
    }
 
    /**
-    * Modifies an existing document in given collection by its id.
+    * Modifies an existing document in given collection by its id and create collection if not exists
     *
     * @param collectionName
     *       the name of the collection where the existing document is located
@@ -164,7 +156,7 @@ public class DocumentFacade implements Serializable {
     *       if one of document's value doesn't satisfy constraint
     */
    public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
-      checkCollectionForWrite(collectionName);
+      checkCollectionForWriteBenevolent(collectionName);
 
       String documentId = updatedDocument.getId();
       DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
@@ -233,14 +225,10 @@ public class DocumentFacade implements Serializable {
     *       the id of the document
     * @param attributeName
     *       the name of attribute to drop
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in database
-    * @throws UnauthorizedAccessException
-    *       if user doesn't have rights to drop attribute
+    * @throws DbException
+    *       When there is an error working with the database.
     */
-   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws CollectionNotFoundException, DocumentNotFoundException, UnauthorizedAccessException {
+   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws DbException {
       checkCollectionForWrite(collectionName);
       if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
@@ -260,14 +248,10 @@ public class DocumentFacade implements Serializable {
     * @param documentId
     *       the id of the document to drop
     * @return set containing document attributes
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in database
-    * @throws UnauthorizedAccessException
-    *       if user doesn't have rights to read document attributes
+    * @throws DbException
+    *       When there is an error working with the database.
     */
-   public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws CollectionNotFoundException, DocumentNotFoundException, UnauthorizedAccessException {
+   public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws DbException {
       checkCollectionForRead(collectionName);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
       if (dataDocument == null) {
@@ -295,6 +279,15 @@ public class DocumentFacade implements Serializable {
       }
    }
 
+   private void checkCollectionForWriteBenevolent(final String collectionName) throws UnauthorizedAccessException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         return;
+      }
+      if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
+      }
+   }
+
    private void checkCollectionForWrite(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -304,7 +297,7 @@ public class DocumentFacade implements Serializable {
       }
    }
 
-   private void checkConstraints(final String collectionName, final DataDocument doc) throws InvalidConstraintException, CollectionNotFoundException {
+   private void checkConstraints(final String collectionName, final DataDocument doc) throws InvalidConstraintException {
       for (String attribute : doc.keySet()) {
          String value = collectionMetadataFacade.checkAttributeValue(collectionName, attribute, doc.get(attribute).toString());
          if (value == null) {
