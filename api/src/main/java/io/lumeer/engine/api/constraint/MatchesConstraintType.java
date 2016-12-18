@@ -54,7 +54,7 @@ public class MatchesConstraintType implements ConstraintType {
 
       }
 
-      throw new InvalidConstraintException("Missing pattern parameter 'match' constraint: " + constraintConfiguration);
+      throw new InvalidConstraintException("Missing pattern parameter for 'match' constraint: " + constraintConfiguration);
    }
 
    @Override
