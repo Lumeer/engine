@@ -23,7 +23,6 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -66,9 +65,9 @@ public class SearchFacade implements Serializable {
     *       the number of documents to skip
     * @param limit
     *       the maximum number of documents to return
+    * @return the list of the found documents
     * @throws CollectionNotFoundException
     *       When the collection in which we want to search does not exist. TODO Think about simply returning an empty result.
-    * @return the list of the found documents
     */
    public List<DataDocument> search(String collectionName, String filter, String sort, int skip, int limit) throws CollectionNotFoundException {
       if (!dataStorage.hasCollection(collectionName)) {
@@ -93,7 +92,8 @@ public class SearchFacade implements Serializable {
     * Queries the data storage in a flexible way. Allows for none or multiple collection names to be specified,
     * automatically sets limit to default values.
     *
-    * @param query Query to execute.
+    * @param query
+    *       Query to execute.
     * @return The query result.
     * @throws InvalidQueryException
     *       When it was not possible to execute the query.
@@ -111,7 +111,7 @@ public class SearchFacade implements Serializable {
          if (collections.size() == 0) {
             collections.addAll(collectionFacade.getAllCollections().keySet());
          }
-      } catch (CollectionNotFoundException | CollectionMetadataDocumentNotFoundException e) {
+      } catch (CollectionNotFoundException e) {
          throw new InvalidQueryException("Search asks for collections that are not available: ", e);
       }
 

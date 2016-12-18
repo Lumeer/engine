@@ -72,12 +72,8 @@ public class CollectionFacade implements Serializable {
     * Returns a Map object of collection names in the database except of metadata collections.
     *
     * @return the map of collection names. Keys are internal names, values are original names.
-    * @throws CollectionNotFoundException
-    *       when metadata collection for some collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when original name for some collection is not found in metadata collection
     */
-   public Map<String, String> getAllCollections() throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public Map<String, String> getAllCollections() {
       if (this.collections == null) {
          List<String> collectionsAll = dataStorage.getAllCollections();
          collections = new HashMap<>();
@@ -85,7 +81,16 @@ public class CollectionFacade implements Serializable {
          // filters out metadata, shadow and other collections
          for (String collection : collectionsAll) {
             if (collectionMetadataFacade.isUserCollection(collection)) {
-               String originalCollectionName = collectionMetadataFacade.getOriginalCollectionName(collection);
+               String originalCollectionName = null;
+               try {
+                  originalCollectionName = collectionMetadataFacade.getOriginalCollectionName(collection);
+               }
+               // metadata was not found for some user collection, so we won't inform about that collection
+               catch (CollectionMetadataDocumentNotFoundException e) {
+                  continue;
+               } catch (CollectionNotFoundException e) {
+                  continue;
+               }
                collections.put(collection, originalCollectionName);
             }
          }
@@ -104,11 +109,9 @@ public class CollectionFacade implements Serializable {
     * @throws UserCollectionAlreadyExistsException
     *       when collection with given user name already exists
     * @throws CollectionNotFoundException
-    *       when metadata for some other collection is not found (we check all other collections user names to ensure the given one is unique)
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when user name for some other collection is not found
+    *       when newly created metadata collection for the collection was not found and initial metadata could not be created
     */
-   public String createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public String createCollection(final String collectionOriginalName) throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException {
       String internalCollectionName = collectionMetadataFacade.createInternalName(collectionOriginalName);
 
       if (!dataStorage.hasCollection(internalCollectionName)) {
@@ -266,11 +269,10 @@ public class CollectionFacade implements Serializable {
     *       name of the attribute to remove
     * @throws CollectionNotFoundException
     *       if collection was not found in database
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata about attribute was not found
-    * @throws UnauthorizedAccessException when current user is not allowed to write to the collection
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
     */
-   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
 
          if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
@@ -302,11 +304,10 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when attribute with old name does not exist
-    * @throws UnauthorizedAccessException when current user is not allowed to write to the collection
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
     */
-   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, UnauthorizedAccessException {
       if (dataStorage.hasCollection(collectionName)) {
 
          if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {

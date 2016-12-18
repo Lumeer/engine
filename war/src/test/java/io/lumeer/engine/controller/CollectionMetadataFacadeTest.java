@@ -24,7 +24,6 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.Utils;
 
@@ -188,13 +187,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       Assert.assertTrue(pass);
 
       // we try to rename non existing attribute
-      pass = false;
-      try {
-         collectionMetadataFacade.renameCollectionAttribute(collection, oldName, "attribute 3");
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         pass = true;
-      }
-      Assert.assertTrue(pass);
+      Assert.assertFalse(collectionMetadataFacade.renameCollectionAttribute(collection, oldName, "attribute 3"));
    }
 
    @Test
@@ -219,13 +212,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       Assert.assertFalse(retype);
 
       // we try to retype non existing attribute
-      boolean pass = false;
-      try {
-         collectionMetadataFacade.retypeCollectionAttribute(collection, "attribute2", LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING);
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         pass = true;
-      }
-      Assert.assertTrue(pass);
+      Assert.assertFalse(collectionMetadataFacade.retypeCollectionAttribute(collection, "attribute2", LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING));
    }
 
    @Test
@@ -243,14 +230,8 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       Assert.assertTrue(columns.isEmpty());
 
-      // we try to drop non existing attribute
-      boolean pass = false;
-      try {
-         collectionMetadataFacade.dropCollectionAttribute(collection, "attribute2");
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         pass = true;
-      }
-      Assert.assertTrue(pass);
+      // we try to drop non existing attribute - nothing happens
+      collectionMetadataFacade.dropCollectionAttribute(collection, "attribute2");
    }
 
    @Test

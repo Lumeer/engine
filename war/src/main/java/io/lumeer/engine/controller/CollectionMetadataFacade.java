@@ -36,6 +36,7 @@ import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -266,20 +267,20 @@ public class CollectionMetadataFacade implements Serializable {
     *       old attribute name
     * @param newName
     *       new attribute name
-    * @return true if rename is successful
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
+    * @return true if rename is successful, false if some metadata do not exist and the rename could not be performed
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
     */
-   public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
+   public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) throws AttributeAlreadyExistsException {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
+
+      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+         return false;
+      }
 
       String query = queryCollectionAttributeInfo(collectionName, newName);
       List<DataDocument> newAttributeInfo = dataStorage.run(query);
+
       // check if the attribute with new name already exists in the collection
       if (!newAttributeInfo.isEmpty()) {
          throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newName, collectionName));
@@ -290,8 +291,7 @@ public class CollectionMetadataFacade implements Serializable {
 
       // the old attribute does not exist
       if (attributeInfo.isEmpty()) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, oldName));
-
+         return false;
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
@@ -317,21 +317,20 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @param newType
     *       new attribute type
-    * @return true if retype is successful, false if new type is not valid
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
+    * @return true if retype is successful, false if new type is not valid or when metadata about attribute was not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to write to the collection
     */
-   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) throws UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
 
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
+
+      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+         return false;
+      }
 
       if (!LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES.contains(newType)) { // new type must be from our list
          return false;
@@ -342,7 +341,7 @@ public class CollectionMetadataFacade implements Serializable {
 
       // attribute metadata does not exist
       if (attributeInfo.isEmpty()) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, attributeName));
+         return false;
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
@@ -364,12 +363,10 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       attribute name
     * @return type of the attribute, default (String) if attribute is not found
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the collection
     */
-   public String getAttributeType(String collectionName, String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException {
+   public String getAttributeType(String collectionName, String attributeName) throws UnauthorizedAccessException {
       if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
@@ -377,8 +374,15 @@ public class CollectionMetadataFacade implements Serializable {
       return getAttributeTypeWithoutAccessRightsCheck(collectionName, attributeName);
    }
 
-   private String getAttributeTypeWithoutAccessRightsCheck(String collectionName, String attributeName) throws CollectionNotFoundException {
+   private String getAttributeTypeWithoutAccessRightsCheck(String collectionName, String attributeName) {
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+
+      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING;
+      }
+
       List<DataDocument> attributesInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
+
       if (attributesInfo.isEmpty()) { // attribute does not exist, we return default (String)
          return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING;
       }
@@ -393,28 +397,28 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Deletes an attribute from collection metadata.
-    * This method should be called only when also renaming attribute in documents, and access rights should be checked there so they are not checked twice.
+    * Deletes an attribute from collection metadata. Nothing is done if attribute metadata is not found, just return.
+    * This method should be called only when also renaming attribute in documents, and access rights should be checked
+    * there so they are not checked twice.
     *
     * @param collectionName
     *       internal collection name
     * @param attributeName
     *       attribute to be deleted
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
     */
-   public void dropCollectionAttribute(String collectionName, String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public void dropCollectionAttribute(String collectionName, String attributeName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
+
+      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+         return;
+      }
 
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.run(query);
 
       // attribute metadata does not exist
       if (attributeInfo.isEmpty()) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, attributeName));
+         return;
       }
 
       DataDocument attributeDocument = attributeInfo.get(0);
@@ -424,40 +428,42 @@ public class CollectionMetadataFacade implements Serializable {
 
    /**
     * Adds attribute to metadata collection, if the attribute already isn't there.
-    * Otherwise just increments count.
+    * Otherwise just increments count. Nothing is done if metadata collection does not exist.
     * This should be called only when adding/updating document, so we do not check access rights here
     *
     * @param collectionName
     *       internal collection name
     * @param attribute
     *       set of attributes' names
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public void addOrIncrementAttribute(String collectionName, String attribute) throws CollectionNotFoundException {
+   public void addOrIncrementAttribute(String collectionName, String attribute) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
+      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+         return;
+      }
 
       dataStorage.run(updateCollectionAttributeCountQuery(metadataCollectionName, attribute));
    }
 
    /**
-    * Drops attribute if there is no document with that
-    * attribute in the collection (count is 1). Otherwise just decrements count.
+    * Drops attribute if there is no document with that attribute in the collection (count is 1),
+    * otherwise just decrements count. Nothing is done if attribute metadata is not found, just return.
     * This should be called only when adding/updating document, so we do not check access rights here
     *
     * @param collectionName
     *       internal collection name
     * @param attribute
     *       set of attributes' names
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public void dropOrDecrementAttribute(String collectionName, String attribute) throws CollectionNotFoundException {
+   public void dropOrDecrementAttribute(String collectionName, String attribute) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
+
+      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+         return;
+      }
 
       String query = queryCollectionAttributeInfo(collectionName, attribute);
+
       List<DataDocument> attributeInfo = dataStorage.run(query);
       if (!attributeInfo.isEmpty()) { // in case somebody did that sooner, we may have nothing to remove
          DataDocument attributeDocument = attributeInfo.get(0);
@@ -479,16 +485,21 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param attributeName
     *       attribute name
-    * @return attribute count
+    * @return attribute count, zero if the attribute does not exist
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the collection
     */
-   public long getAttributeCount(String collectionName, String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException {
+   public long getAttributeCount(String collectionName, String attributeName) throws UnauthorizedAccessException {
       if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
+
+      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
+         return 0;
+      }
+
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> countInfo = dataStorage.run(query);
       if (!countInfo.isEmpty()) {
@@ -536,17 +547,20 @@ public class CollectionMetadataFacade implements Serializable {
     * @return internal representation of collection name
     * @throws UserCollectionNotFoundException
     *       when collection with given user name is not found
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
     */
-   public String getInternalCollectionName(String originalCollectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public String getInternalCollectionName(String originalCollectionName) throws UserCollectionNotFoundException {
       List<String> collections = dataStorage.getAllCollections();
       for (String c : collections) {
          if (isUserCollection(c)) {
-            if (getOriginalCollectionName(c).equals(originalCollectionName)) {
-               return c;
+            try {
+               if (getOriginalCollectionName(c).equals(originalCollectionName)) {
+                  return c;
+               }
+               // we do not care if some other collection does not have original name or some problem with metadata
+            } catch (CollectionMetadataDocumentNotFoundException e) {
+               continue;
+            } catch (CollectionNotFoundException e) {
+               continue;
             }
          }
       }
@@ -560,21 +574,22 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param collectionOriginalName
     *       name given by user
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     * @throws UserCollectionAlreadyExistsException
     *       when collection with given user name already exists
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to write to the collection
+    * @return true if the rename is successful, false if metadata collection was not found and the rename could not be performed
     */
-   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws CollectionNotFoundException, UserCollectionAlreadyExistsException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public boolean setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException, UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionInternalName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
       if (checkIfUserCollectionExists(collectionOriginalName)) {
          throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
+      }
+
+      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionInternalName))) { // metadata collection does not exist
+         return false;
       }
 
       String query = queryOneValueFromCollectionMetadata(collectionInternalName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
@@ -587,6 +602,8 @@ public class CollectionMetadataFacade implements Serializable {
 
       DataDocument metadataDocument = new DataDocument(metadata);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionInternalName), metadataDocument, id, -1);
+
+      return true;
    }
 
    /**
@@ -602,10 +619,12 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the collection
     */
-   public String getCollectionLockTime(String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public String getCollectionLockTime(String collectionName) throws UnauthorizedAccessException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
+
+      checkIfMetadataCollectionExists(collectionMetadataCollectionName(collectionName));
 
       String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
       List<DataDocument> lockInfo = dataStorage.run(query);
@@ -625,18 +644,20 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param newTime
     *       String representation of the time of the last update of collection lock
-    * @return true if set was successful
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
+    * @return true if set was successful, false if time format is wrong or metadata collection does not exist
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to write to the collection
     */
-   public boolean setCollectionLockTime(String collectionName, String newTime) throws CollectionNotFoundException, UnauthorizedAccessException {
+   public boolean setCollectionLockTime(String collectionName, String newTime) throws UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
 
       if (!Utils.isValidDateFormat(newTime)) { // time format is not valid
+         return false;
+      }
+
+      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
          return false;
       }
 
@@ -685,10 +706,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param valueString
     *       value converted to String
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public String checkAttributeValue(String collectionName, String attribute, String valueString) throws CollectionNotFoundException {
+   public String checkAttributeValue(String collectionName, String attribute, String valueString) {
       String type = getAttributeTypeWithoutAccessRightsCheck(collectionName, attribute);
       if (!checkAttributeType(valueString, type)) { // value is invalid for the type
          return null;
@@ -698,7 +717,16 @@ public class CollectionMetadataFacade implements Serializable {
       return checkAttributeConstraints(valueString, constraintConfigurations);
    }
 
-   public Map<String, String> checkAttributesValues(String collectionName, DataDocument document) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   /**
+    * Calls checkAttributeValue(String collectionName, String attribute, String valueString) on every attribute of given document.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param document
+    *       document with attributes and their values to check
+    * @return map of results, key is attribute name and value is result of checkAttributeValue on that attribute
+    */
+   public Map<String, String> checkAttributesValues(String collectionName, DataDocument document) {
       Map<String, String> results = new HashMap<>();
 
       Set<String> attributes = document.keySet();
@@ -756,7 +784,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // checks whether value satisfies all constraints
-   private String checkAttributeConstraints(String valueString, List<String> constraintConfigurations) throws CollectionNotFoundException {
+   private String checkAttributeConstraints(String valueString, List<String> constraintConfigurations) {
       if (constraintConfigurations == null || constraintConfigurations.isEmpty()) { // there are no constraints
          return valueString;
       }
@@ -789,28 +817,28 @@ public class CollectionMetadataFacade implements Serializable {
     *       collection internal name
     * @param attributeName
     *       name of the attribute
-    * @return list of constraint configurations for given attribute
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
+    * @return list of constraint configurations for given attribute, empty list if constraints were not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the collection
     */
-   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) throws UnauthorizedAccessException {
       if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
 
-      List<String> attr = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
-      if (attr == null) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
+      List<String> constraints = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
+      if (constraints == null) {
+         return Collections.emptyList();
       }
-      return attr;
+      return constraints;
    }
 
    // to be used only internally, when checking attribute value
-   private List<String> getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(String collectionName, String attributeName) throws CollectionNotFoundException {
+   private List<String> getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(String collectionName, String attributeName) {
+      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
+         return null;
+      }
+
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributesInfo = dataStorage.run(query);
       if (attributesInfo.isEmpty()) { // metadata for the attribute was not found
@@ -872,14 +900,10 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @param constraintConfiguration
     *       constraint configuration to be removed
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata document for attribute is not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to write to the collection
     */
-   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
@@ -931,7 +955,11 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // returns whole access rights document - to be used only internally
-   private DataDocument getAccessRightsDocument(String collectionName) throws CollectionNotFoundException {
+   private DataDocument getAccessRightsDocument(String collectionName) {
+      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
+         return null;
+      }
+
       String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE);
       List<DataDocument> rightsInfo = dataStorage.run(query);
 
@@ -943,7 +971,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // returns id of the document with info about given attribute
-   private String getAttributeDocumentId(String collectionName, String attributeName) throws CollectionNotFoundException {
+   private String getAttributeDocumentId(String collectionName, String attributeName) {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.run(query);
       if (!attributeInfo.isEmpty()) {
@@ -955,10 +983,8 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // returns MongoDb query for getting specific metadata value
-   private String queryOneValueFromCollectionMetadata(String collectionName, String metaTypeValue) throws CollectionNotFoundException {
+   private String queryOneValueFromCollectionMetadata(String collectionName, String metaTypeValue) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
-
       StringBuilder sb = new StringBuilder("{find:\"")
             .append(metadataCollectionName)
             .append("\",filter:{\"")
@@ -970,10 +996,8 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // returns MongoDb query for getting info about specific attribute
-   private String queryCollectionAttributeInfo(String collectionName, String attributeName) throws CollectionNotFoundException {
+   private String queryCollectionAttributeInfo(String collectionName, String attributeName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
-
       StringBuilder sb = new StringBuilder("{find:\"")
             .append(metadataCollectionName)
             .append("\",filter:{\"")
