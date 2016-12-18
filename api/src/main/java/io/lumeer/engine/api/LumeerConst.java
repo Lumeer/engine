@@ -124,16 +124,24 @@ public final class LumeerConst {
       public static final String COLLECTION_ATTRIBUTE_NAME_KEY = "attribute-name";
       public static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "attribute-type";
 
-      public static final String COLLECTION_ATTRIBUTE_TYPE_NUMBER = "number";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = ""; // empty is default and is considered String
-      public static final String COLLECTION_ATTRIBUTE_TYPE_LIST = "list";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_INT = "int";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_LONG = "long";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_DOUBLE = "double";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_DECIMAL = "decimal";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date"; // we accept yyyy.MM.dd and yyyy.MM.dd HH.mm.ss
+      public static final String COLLECTION_ATTRIBUTE_TYPE_BOOLEAN = "bool";
+      public static final List<String> COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES = Arrays.asList("true", "false");
+      public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "string";
+      // public static final String COLLECTION_ATTRIBUTE_TYPE_LIST = "list";
       // public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested"; // TODO
-      public static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES =
-            Arrays.asList(COLLECTION_ATTRIBUTE_TYPE_NUMBER,
-                  COLLECTION_ATTRIBUTE_TYPE_DATE,
-                  COLLECTION_ATTRIBUTE_TYPE_STRING,
-                  COLLECTION_ATTRIBUTE_TYPE_LIST);
+      public static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES = Arrays.asList(
+            COLLECTION_ATTRIBUTE_TYPE_INT,
+            COLLECTION_ATTRIBUTE_TYPE_LONG,
+            COLLECTION_ATTRIBUTE_TYPE_DOUBLE,
+            COLLECTION_ATTRIBUTE_TYPE_DECIMAL,
+            COLLECTION_ATTRIBUTE_TYPE_DATE,
+            COLLECTION_ATTRIBUTE_TYPE_BOOLEAN,
+            COLLECTION_ATTRIBUTE_TYPE_STRING);
 
       public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "attribute-constraints";
       public static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "attribute-count";

@@ -207,7 +207,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
 
-      String oldType = LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_NUMBER;
+      String oldType = LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT;
       boolean retype = collectionMetadataFacade.retypeCollectionAttribute(collection, name, oldType);
       Assert.assertEquals(collectionMetadataFacade.getAttributeType(collection, name), oldType);
       Assert.assertTrue(retype);
@@ -363,21 +363,92 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       collectionFacade.createCollection(COLLECTION_CHECK_ATTRIBUTE_VALUE);
       String collection = internalName(COLLECTION_CHECK_ATTRIBUTE_VALUE);
 
-      String attribute = "attribute 1";
-      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
+      // check value of type int and also its constraints
+      String attributeInt = "int";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeInt);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attributeInt, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT);
 
-      String constraint1 = "isNumber";
-      String constraint2 = "lessThan:3";
-      collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint1);
-      collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint2);
+      String constraint1 = "greaterThan:3";
+      String constraint2 = "lessThan:8";
+      collectionMetadataFacade.addAttributeConstraint(collection, attributeInt, constraint1);
+      collectionMetadataFacade.addAttributeConstraint(collection, attributeInt, constraint2);
 
-      String valueValid = "2";
-      String valueInvalid1 = "4";
-      String valueInvalid2 = "a";
+      String intValueValid = "4";
+      String intValueInvalidConstraint = "2";
+      String intValueInvalidType = "123456789012345"; // this is too long value
 
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attribute, valueValid), "2");
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attribute, valueInvalid1), null);
-      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attribute, valueInvalid2), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeInt, intValueValid), intValueValid);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeInt, intValueInvalidConstraint), null);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeInt, intValueInvalidType), null);
+
+      // check value of type long
+      String attributeLong = "long";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeLong);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attributeLong, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_LONG);
+
+      String longValueValid = "4";
+      String longValueInvalid = Long.toString(Long.MAX_VALUE).concat("0"); // too long for Long
+
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeLong, longValueValid), longValueValid);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeLong, longValueInvalid), null);
+
+      // check value of type double
+      String attributeDouble = "double";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeDouble);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attributeDouble, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DOUBLE);
+
+      String doubleValueValidInt = "4";
+      String doubleValueValidDot = "3.14";
+      //String doubleValueValidComa = "3,14";
+      String doubleValueInvalid = "3.14.3.14";
+
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueValidInt), doubleValueValidInt);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueValidDot), doubleValueValidDot);
+      //Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueValidComa), doubleValueValidComa);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDouble, doubleValueInvalid), null);
+
+      // check value of type decimal
+      // TODO
+
+      // check value of type date - we accept yyyy.MM.dd and yyyy.MM.dd HH.mm
+      String attributeDate = "date";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeDate);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attributeDate, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE);
+
+      String dateValueValid1 = "2016.12.18";
+      String dateValueValid2 = "2016.12.18 14.01";
+      String dateValueInvalid = "2016.12.18 14.01.00";
+
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDate, dateValueValid1), dateValueValid1);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDate, dateValueValid2), dateValueValid2);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeDate, dateValueInvalid), null);
+
+      // check value of type boolean
+      String attributeBoolean = "boolean";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeBoolean);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attributeBoolean, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN);
+
+      String booleanValueValid1 = "true";
+      String booleanValueValid2 = "True";
+      String booleanValueValid3 = "FALSE";
+      String booleanValueValid4 = "fAlSe";
+      String booleanValueInvalid = "yes";
+
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid1), booleanValueValid1);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid2), booleanValueValid2);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid3), booleanValueValid3);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueValid4), booleanValueValid4);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeBoolean, booleanValueInvalid), null);
+
+      // check value of type string
+      String attributeString = "string";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeDate); // type is set to string by default
+
+      String stringValueValid1 = "everything we put in string";
+      String stringValueValid2 = "should be always valid";
+
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeString, stringValueValid1), stringValueValid1);
+      Assert.assertEquals(collectionMetadataFacade.checkAttributeValue(collection, attributeString, stringValueValid2), stringValueValid2);
    }
 
    @Test

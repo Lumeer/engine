@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Produces;
@@ -114,7 +115,7 @@ public class CollectionMetadataFacade implements Serializable {
    //  },
    // {
    // “meta-type” : “rights”,
-   // “create-user” : “me”,
+   // “create-user” : “me@mail.com”,
    // ... access rights by SecurityFacade ...
    //  }
 
@@ -144,8 +145,7 @@ public class CollectionMetadataFacade implements Serializable {
       name = name.replaceAll("[^_a-z0-9]+", "");
       name = LumeerConst.Collection.COLLECTION_NAME_PREFIX + name;
       int i = 0;
-      List<String> allCollections = dataStorage.getAllCollections();
-      while (allCollections.contains(name + "_" + i)) {
+      while (dataStorage.hasCollection(name + "_" + i)) {
          i++;
       }
       name = name + "_" + i;
@@ -201,6 +201,7 @@ public class CollectionMetadataFacade implements Serializable {
       indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, indexType);
       indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, indexType);
 
+      // TODO: What is index type? "1" does not work - BSONParseException
       //dataStorage.createIndex(metadataCollectionName, indexAttributes);
    }
 
@@ -256,7 +257,8 @@ public class CollectionMetadataFacade implements Serializable {
 
    /**
     * Renames existing attribute in collection metadata.
-    * This method should be called only when also renaming attribute in documents, and access rights should be checked there so they are not checked twice.
+    * This method should be called only when also renaming attribute in documents,
+    * and access rights should be checked there so they are not checked twice.
     *
     * @param collectionName
     *       internal collection name
@@ -361,7 +363,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param attributeName
     *       attribute name
-    * @return type of the attribute
+    * @return type of the attribute, default (String) if attribute is not found
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
     * @throws CollectionMetadataDocumentNotFoundException
@@ -369,20 +371,24 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the collection
     */
-   public String getAttributeType(String collectionName, String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public String getAttributeType(String collectionName, String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
 
+      return getAttributeTypeWithoutAccessRightsCheck(collectionName, attributeName);
+   }
+
+   private String getAttributeTypeWithoutAccessRightsCheck(String collectionName, String attributeName) throws CollectionNotFoundException {
       List<DataDocument> attributesInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
-      if (attributesInfo.isEmpty()) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeMetadataDocumentNotFoundString(collectionName, attributeName));
+      if (attributesInfo.isEmpty()) { // attribute does not exist, we return default (String)
+         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING;
       }
 
       DataDocument attributeInfo = attributesInfo.get(0);
       String type = attributeInfo.get(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY).toString();
-      if (type == null) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.attributeMetadataNotFoundString(collectionName, attributeName, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY));
+      if (type == null) { // if type is not found, we return string as default
+         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING;
       }
 
       return type;
@@ -672,7 +678,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Checks whether value satisfies all constraints and tries to fix it when possible.
+    * Checks whether value is of good type and satisfies all constraints (and tries to fix it when possible).
     *
     * @param collectionName
     *       internal collection name
@@ -685,8 +691,75 @@ public class CollectionMetadataFacade implements Serializable {
     *       when metadata collection is not found
     */
    public String checkAttributeValue(String collectionName, String attribute, String valueString) throws CollectionNotFoundException {
+      String type = getAttributeTypeWithoutAccessRightsCheck(collectionName, attribute);
+      if (!checkAttributeType(valueString, type)) { // value is invalid for the type
+         return null;
+      }
+
       List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
-      if (constraintConfigurations == null) {
+      return checkAttributeConstraints(valueString, constraintConfigurations);
+   }
+
+   public Map<String, String> checkAttributesValues(String collectionName, DataDocument document) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      Map<String, String> results = new HashMap<>();
+
+      Set<String> attributes = document.keySet();
+      for (String attribute : attributes) {
+         String value = document.get(attribute).toString();
+         results.put(attribute, checkAttributeValue(collectionName, attribute, value));
+      }
+
+      return results;
+   }
+
+   // checks whether value is of given type
+   private boolean checkAttributeType(String valueString, String type) {
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT)) {
+         try {
+            Integer.parseInt(valueString);
+            return true;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_LONG)) {
+         try {
+            Long.parseLong(valueString);
+            return true;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DOUBLE)) {
+         try {
+            //valueString = valueString.replace(',','.'); // in case coma is used instead of decimal dot
+            Double.parseDouble(valueString);
+            return true;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DECIMAL)) {
+         // TODO
+      }
+
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) { // we accept yyyy.MM.dd and yyyy.MM.dd HH.mm
+         return Utils.isValidDateFormatJustDate(valueString) || Utils.isValidDateFormatDateAndTimeMinutes(valueString);
+      }
+
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN)) { // we accept "true" and "false" ignoring the case
+         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES.contains(valueString.toLowerCase());
+      }
+
+      return true; // for a string, we accept everything
+   }
+
+   // checks whether value satisfies all constraints
+   private String checkAttributeConstraints(String valueString, List<String> constraintConfigurations) throws CollectionNotFoundException {
+      if (constraintConfigurations == null || constraintConfigurations.isEmpty()) { // there are no constraints
          return valueString;
       }
 
@@ -774,7 +847,8 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
 
-      List<String> existingConstraints = getAttributeConstraintsConfigurations(collectionName, attributeName);
+      // user may be permitted to write, but might not be permitted to read
+      List<String> existingConstraints = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
 
       ConstraintManager constraintManager = null;
       try {
@@ -935,13 +1009,7 @@ public class CollectionMetadataFacade implements Serializable {
             .append("upsert", true);
    }
 
-   /**
-    * @param originalCollectionName
-    *       user name of the collection
-    * @return true if collection with given user name already exists
-    * @throws CollectionMetadataDocumentNotFoundException
-    * @throws CollectionNotFoundException
-    */
+   // checks whether collection with given user name already exists
    private boolean checkIfUserCollectionExists(String originalCollectionName) {
       List<String> collections = dataStorage.getAllCollections();
       for (String c : collections) {
@@ -951,31 +1019,28 @@ public class CollectionMetadataFacade implements Serializable {
                   return true;
                }
             } catch (CollectionMetadataDocumentNotFoundException e) {
-               // we do nothing - original name for the collection c was not found, so it does not exist
+               return false; // original name for the collection c was not found, so it does not exist
             } catch (CollectionNotFoundException e) {
-               // we do nothing - metadata for the collection c was not found, so its original name does not exist
+               return false; // metadata for the collection c was not found, so its original name does not exist
             }
          }
       }
       return false;
    }
 
-   /**
-    * Checks whether metadata collection exists
-    *
-    * @param metadataCollectionName
-    * @throws CollectionNotFoundException
-    */
+   // checks whether metadata collection exists
    private void checkIfMetadataCollectionExists(String metadataCollectionName) throws CollectionNotFoundException {
       if (!dataStorage.hasCollection(metadataCollectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(metadataCollectionName));
       }
    }
 
+   // initializes constraint manager
    private void initConstraintManager(ConstraintManager constraintManager) {
       constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US")));
    }
 
+   // returns current user email
    private String getCurrentUser() {
       return userFacade.getUserEmail();
    }
