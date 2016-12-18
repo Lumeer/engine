@@ -777,8 +777,8 @@ public class CollectionMetadataFacade implements Serializable {
          // TODO
       }
 
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) { // we accept yyyy.MM.dd and yyyy.MM.dd HH.mm
-         return Utils.isValidDateFormatJustDate(valueString) || Utils.isValidDateFormatDateAndTimeMinutes(valueString);
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
+         return true; // we accept everything - it just has to satisfy the constraints
       }
 
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN)) { // we accept "true" and "false" ignoring the case
@@ -864,16 +864,12 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @param constraintConfiguration
     *       string with constraint configuration
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when attribute does not exist
     * @throws InvalidConstraintException
     *       when new constraint is not valid or is in conflict with existing constraints
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to write to the collection
     */
-   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, InvalidConstraintException, UnauthorizedAccessException {
+   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException, UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
