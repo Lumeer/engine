@@ -25,10 +25,6 @@ import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundExceptio
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
-import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
-import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
-import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
@@ -37,6 +33,7 @@ import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.RequestScoped;
@@ -54,7 +51,6 @@ import javax.ws.rs.core.MediaType;
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-// TODO: test the path
 @Path("/collections/{collectionName}/documents")
 @RequestScoped
 public class DocumentService implements Serializable {
@@ -162,7 +158,7 @@ public class DocumentService implements Serializable {
    @POST
    @Path("/{documentId}/versions/{versionId}")
    public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId)
-         throws DbException, VersionUpdateConflictException {
+         throws DbException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
@@ -172,11 +168,11 @@ public class DocumentService implements Serializable {
    @GET
    @Path("/{documentId}/rights")
    @Produces(MediaType.APPLICATION_JSON)
-   public void readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException {
+   public HashMap readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      // TODO: implement method in facade to manage access rights of the given entry (Jano)
+      return securityFacade.readRightList(getInternalName(collectionName), documentId);
    }
 
    @PUT
@@ -186,7 +182,7 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      // TODO: implement method in facade to manage access rights of the given entry (Jano)
+      // TODO: how to?
    }
 
    private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {

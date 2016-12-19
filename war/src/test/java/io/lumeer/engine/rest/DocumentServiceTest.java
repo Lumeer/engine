@@ -1,11 +1,31 @@
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.controller.CollectionFacade;
+import io.lumeer.engine.controller.DocumentFacade;
+import io.lumeer.engine.controller.DocumentMetadataFacade;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
@@ -22,6 +42,181 @@ public class DocumentServiceTest extends Arquillian {
                        .addAsResource("defaults-dev.properties");
    }
 
-   // TODO: tests
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private DataStorage dataStorage;
+
+   @Inject
+   private DocumentFacade documentFacade;
+
+   @Inject
+   private DocumentMetadataFacade documentMetadataFacade;
+
+   private final String TARGET_URI = "http://localhost:8080";
+
+   private final String COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT = "DocumentServiceCollectionCreateReadUpdateAndDropDocument";
+   private final String COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA = "DocumentServiceCollectionAddReadAndUpdateDocumentMetadata";
+   private final String COLLECTION_SEARCH_HISTORY_CHANGES = "DocumentServiceCollectionSearchHistoryChanges";
+   private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
+
+   @Test
+   public void testRegister() throws Exception {
+      Assert.assertNotNull(documentFacade);
+   }
+
+   @Test
+   public void testCreateReadUpdateAndDropDocument() throws Exception {
+      setUpCollections(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
+      final Client client = ClientBuilder.newBuilder().build();
+
+      // 200 - the document will be inserted into the given collection
+      collectionFacade.createCollection(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
+      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT)).request().buildPost(Entity.json(new DataDocument())).invoke();
+      String documentId = response.readEntity(String.class);
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode()
+            && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId) != null);
+      response.close();
+
+      // 200 - read the given document by its id
+      Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + documentId).request().buildGet().invoke();
+      DataDocument document = response2.readEntity(DataDocument.class);
+      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
+            && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).equals(document));
+      response2.close();
+
+      // 204 - update the document
+      DataDocument updatedDocument = new DataDocument();
+      updatedDocument.put("_id", documentId);
+      updatedDocument.put("name", "updatedDocument");
+      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT)).request().buildPut(Entity.json(updatedDocument)).invoke();
+      Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
+            && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).getString("name").equals("updatedDocument"));
+      response3.close();
+
+      // 204 - drop the given document by its id
+      Response response4 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + documentId).request().buildDelete().invoke();
+      Assert.assertTrue(response4.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
+      response4.close();
+
+      client.close();
+   }
+
+   @Test
+   public void testAddReadAndUpdateDocumentMetadata() throws Exception {
+      setUpCollections(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA);
+      final Client client = ClientBuilder.newBuilder().build();
+      final String attributeName = "_meta-update-user";
+      final Object metaObjectValue = 123;
+
+      collectionFacade.createCollection(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA);
+      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), new DataDocument());
+
+      // 204 - add the document metadata
+      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta/" + attributeName).request().buildPost(Entity.entity(metaObjectValue, MediaType.APPLICATION_JSON)).invoke();
+      Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), documentId);
+      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && documentMetadata.get(attributeName).equals(metaObjectValue));
+      response.close();
+
+      // 200 - read the document metadata
+      Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta/").request().buildGet().invoke();
+      Map<String, Object> metaDocument = response2.readEntity(Map.class);
+      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode() && metaDocument.equals(documentMetadata));
+      response2.close();
+
+      // 204 - update the document metadata
+      DataDocument updatedMetaDocument = new DataDocument();
+      updatedMetaDocument.put(attributeName, "updatedValue");
+      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta").request().buildPut(Entity.json(updatedMetaDocument)).invoke();
+      Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
+            && documentMetadataFacade.readDocumentMetadata(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), documentId).get(attributeName).equals("updatedValue"));
+      response3.close();
+
+      client.close();
+   }
+
+   @Test
+   public void testSearchHistoryChanges() throws Exception {
+      setUpCollections(COLLECTION_SEARCH_HISTORY_CHANGES);
+      final Client client = ClientBuilder.newBuilder().build();
+
+      collectionFacade.createCollection(COLLECTION_SEARCH_HISTORY_CHANGES);
+      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_SEARCH_HISTORY_CHANGES), new DataDocument());
+
+      // only document exists, no changes in the past, code 200, listsize = 1
+      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_SEARCH_HISTORY_CHANGES) + documentId + "/versions/").request().buildGet().invoke();
+      List<DataDocument> changedDocuments = response.readEntity(ArrayList.class);
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && changedDocuments.size() == 1);
+      response.close();
+
+      // two changes performed in the past + original document, code 200, listsize = 3
+      DataDocument documentVersionOne = new DataDocument("_id", documentId);
+      DataDocument documentVersionTwo = new DataDocument("_id", documentId);
+      documentVersionOne.put("dummyVersionOneAttribute", 1);
+      documentVersionTwo.put("dummyVersionTwoAttribute", 2);
+      documentFacade.updateDocument(getInternalName(COLLECTION_SEARCH_HISTORY_CHANGES), documentVersionOne);
+      documentFacade.updateDocument(getInternalName(COLLECTION_SEARCH_HISTORY_CHANGES), documentVersionTwo);
+
+      Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_SEARCH_HISTORY_CHANGES) + documentId + "/versions/").request().buildGet().invoke();
+      List<DataDocument> changedDocuments2 = response2.readEntity(ArrayList.class);
+      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode() && changedDocuments2.size() == 3);
+      response2.close();
+
+      client.close();
+   }
+
+   @Test
+   public void testRevertDocumentVersion() throws Exception {
+      setUpCollections(COLLECTION_REVERT_DOCUMENT_VERSION);
+      final Client client = ClientBuilder.newBuilder().build();
+
+      collectionFacade.createCollection(COLLECTION_REVERT_DOCUMENT_VERSION);
+      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), new DataDocument());
+      DataDocument documentVersionOne = new DataDocument("_id", documentId);
+      DataDocument documentVersionTwo = new DataDocument("_id", documentId);
+      documentVersionOne.put("dummyVersionOneAttribute", 1);
+      documentVersionTwo.put("dummyVersionTwoAttribute", 2);
+      documentFacade.updateDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentVersionOne);
+      documentFacade.updateDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentVersionTwo);
+
+      DataDocument documentVersion2 = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
+      int versionTwo = documentVersion2.getInteger(LumeerConst.METADATA_VERSION_KEY);
+      Assert.assertTrue(versionTwo == 2);
+
+      // TODO: There is an error inside the VersionFacade method revertDocumentVersion - update is not able to remove fields
+      /* Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_REVERT_DOCUMENT_VERSION) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      DataDocument currentDocument = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
+      int versionThree = currentDocument.getInteger(LumeerConst.METADATA_VERSION_KEY);
+      boolean isFirstVersion = !currentDocument.containsKey("dummyVersionTwoAttribute");
+      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && versionThree == 3 && isFirstVersion);
+      response.close(); */
+
+      client.close();
+   }
+
+   @Test
+   public void testReadAccessRights() throws Exception {
+      // TODO:
+   }
+
+   @Test
+   public void testUpdateAccessRights() throws Exception {
+      // TODO:
+   }
+
+   private void setUpCollections(final String collectionName) throws DbException {
+      if (dataStorage.hasCollection(getInternalName(collectionName))) {
+         collectionFacade.dropCollection(getInternalName(collectionName));
+      }
+   }
+
+   private String setPathPrefix(final String collectionName) {
+      return "DocumentServiceTest/rest/collections/" + collectionName + "/documents/";
+   }
+
+   private String getInternalName(final String collectionOriginalName) {
+      return "collection." + collectionOriginalName.toLowerCase() + "_0";
+   }
 
 }
