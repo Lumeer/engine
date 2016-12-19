@@ -19,9 +19,9 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -30,7 +30,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -55,20 +54,17 @@ public class LinkingFacadeTest extends Arquillian {
                        .addAsResource("defaults-dev.properties");
    }
 
-   private final String COLLECTION_SINGLE_LINKS_I = "collectionSingleLinksI";
-   private final String COLLECTION_SINGLE_LINKS_II = "collectionSingleLinksII";
-   private final String COLLECTION_SINGLE_LINKS_III = "collectionSingleLinksIII";
-   private final String COLLECTION_COLL_LINKS_I = "collectionCollLinksI";
-   private final String COLLECTION_COLL_LINKS_II = "collectionCollLinksII";
-   private final String COLLECTION_COLL_LINKS_III = "collectionCollLinksIII";
-   private final String COLLECTION_ALL_LINKS_I = "collectionAllLinksI";
-   private final String COLLECTION_ALL_LINKS_II = "collectionAllLinksII";
-   private final String COLLECTION_ALL_LINKS_III = "collectionAllLinksIII";
+   private final String COLLECTION_READ_DROP_DOC_BY_DOC_I = "collectionReadDropDocByDocI";
+   private final String COLLECTION_READ_DROP_DOC_BY_DOC_II = "collectionReadDropDocByDocII";
+   private final String COLLECTION_READ_DROP_DOC_BY_DOC_III = "collectionReadDropDocByDocIII";
+   private final String COLLECTION_READ_DROP_COLL_I = "collectionCreateDropCollectionsI";
+   private final String COLLECTION_READ_DROP_COLL_II = "collectionCreateDropCollectionsII";
+   private final String COLLECTION_READ_DROP_COLL_III = "collectionCreateDropCollectionsIII";
+   private final String COLLECTION_READ_DROP_ALL_I = "collectionCreateDropAllI";
+   private final String COLLECTION_READ_DROP_ALL_II = "collectionCreateDropAllII";
+   private final String COLLECTION_READ_DROP_ALL_III = "collectionCreateDropAllIII";
 
-   private final String COLLECTION_EXCEPTION_LINKS_I = "collectionExceptionLinksI";
-   private final String COLLECTION_EXCEPTION_LINKS_II = "collectionExceptionLinksII";
-
-   private final int NUM_DOCUMENTS = 5;
+   private final int NUM_DOCUMENTS = 3;
 
    @Inject
    private LinkingFacade linkingFacade;
@@ -77,92 +73,178 @@ public class LinkingFacadeTest extends Arquillian {
    private DataStorage dataStorage;
 
    @Test
-   public void testSingleLinkCRD() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_SINGLE_LINKS_I, COLLECTION_SINGLE_LINKS_II, COLLECTION_SINGLE_LINKS_III);
+   public void testReadAndDropDocByDoc() throws Exception {
+      List<String> collections = Arrays.asList(COLLECTION_READ_DROP_DOC_BY_DOC_I, COLLECTION_READ_DROP_DOC_BY_DOC_II, COLLECTION_READ_DROP_DOC_BY_DOC_III);
       Map<String, List<String>> ids = createTestData(collections);
 
-      String col1Id1 = ids.get(COLLECTION_SINGLE_LINKS_I).get(2);
-      String col2Id1 = ids.get(COLLECTION_SINGLE_LINKS_II).get(0);
-      String col2Id2 = ids.get(COLLECTION_SINGLE_LINKS_II).get(1);
-      String col3Id1 = ids.get(COLLECTION_SINGLE_LINKS_III).get(2);
-      String col3Id2 = ids.get(COLLECTION_SINGLE_LINKS_III).get(3);
+      String col1Id1 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_I).get(0);
+      String col2Id1 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_II).get(0);
+      String col3Id1 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_III).get(2);
+      String col3Id2 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_III).get(1);
 
-      linkingFacade.createDocWithDocLink(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, col2Id1);
-      linkingFacade.createDocWithDocLink(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, col2Id2);
-      linkingFacade.createDocWithDocLink(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, col3Id1);
-      linkingFacade.createDocWithDocLink(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, col3Id2);
-      Assert.assertTrue(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, col2Id1));
-      Assert.assertTrue(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, col2Id2));
-      Assert.assertTrue(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, col3Id1));
-      Assert.assertTrue(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, col3Id2));
-      Assert.assertFalse(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, ids.get(COLLECTION_SINGLE_LINKS_II).get(4)));
-      Assert.assertFalse(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, ids.get(COLLECTION_SINGLE_LINKS_III).get(0)));
+      String role1 = "role1";
+      String role2 = "role2";
+      String role3 = "role3";
 
-      linkingFacade.dropDocWithDocLink(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, col2Id1);
-      linkingFacade.dropDocWithDocLink(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, col3Id1);
-      Assert.assertFalse(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, col2Id1));
-      Assert.assertTrue(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_II, col2Id2));
-      Assert.assertFalse(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, col3Id1));
-      Assert.assertTrue(linkingFacade.linkExistsBetweenDocuments(COLLECTION_SINGLE_LINKS_I, col1Id1, COLLECTION_SINGLE_LINKS_III, col3Id2));
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
+
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+
+      List<DataDocument> links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 1);
+      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 2);
+      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertEquals(links.size(), 2);
+      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertTrue(links.isEmpty());
+
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 3);
+      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 1);
+      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertTrue(links.isEmpty());
+
+      links = linkingFacade.readDocByDocLinks(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id2, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+
    }
 
    @Test
-   public void testCollectionLinkCRD() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_COLL_LINKS_I, COLLECTION_COLL_LINKS_II, COLLECTION_COLL_LINKS_III);
+   public void testCreateDropCollections() throws Exception {
+      List<String> collections = Arrays.asList(COLLECTION_READ_DROP_COLL_I, COLLECTION_READ_DROP_COLL_II, COLLECTION_READ_DROP_COLL_III);
       Map<String, List<String>> ids = createTestData(collections);
 
-      String col1Id1 = ids.get(COLLECTION_COLL_LINKS_I).get(2);
-      String col2Id1 = ids.get(COLLECTION_COLL_LINKS_II).get(0);
-      String col2Id2 = ids.get(COLLECTION_COLL_LINKS_II).get(1);
-      String col3Id1 = ids.get(COLLECTION_COLL_LINKS_III).get(2);
-      String col3Id2 = ids.get(COLLECTION_COLL_LINKS_III).get(3);
-      String col3Id3 = ids.get(COLLECTION_COLL_LINKS_III).get(4);
+      String col1Id1 = ids.get(COLLECTION_READ_DROP_COLL_I).get(0);
+      String col2Id1 = ids.get(COLLECTION_READ_DROP_COLL_II).get(0);
+      String col3Id1 = ids.get(COLLECTION_READ_DROP_COLL_III).get(0);
+      String col3Id2 = ids.get(COLLECTION_READ_DROP_COLL_III).get(1);
+      String col3Id3 = ids.get(COLLECTION_READ_DROP_COLL_III).get(2);
 
-      linkingFacade.createDocWithColletionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_II, Arrays.asList(col2Id1, col2Id2));
-      linkingFacade.createDocWithColletionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_III, Arrays.asList(col3Id1, col3Id2, col3Id3));
-      Assert.assertEquals(2, linkingFacade.readDocWithCollectionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_II).size());
-      Assert.assertEquals(3, linkingFacade.readDocWithCollectionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_III).size());
+      String role1 = "role1";
+      String role2 = "role2";
+      String role3 = "role3";
 
-      linkingFacade.dropDocWithCollectionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_II);
-      Assert.assertTrue(linkingFacade.readDocWithCollectionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_II).isEmpty());
-      Assert.assertFalse(linkingFacade.readDocWithCollectionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_III).isEmpty());
-      linkingFacade.dropDocWithCollectionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_III);
-      Assert.assertTrue(linkingFacade.readDocWithCollectionLinks(COLLECTION_COLL_LINKS_I, col1Id1, COLLECTION_COLL_LINKS_III).isEmpty());
-   }
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
 
-   @Test
-   public void testAllLinkCRD() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_ALL_LINKS_I, COLLECTION_ALL_LINKS_II, COLLECTION_ALL_LINKS_III);
-      Map<String, List<String>> ids = createTestData(collections);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
-      String col1Id1 = ids.get(COLLECTION_ALL_LINKS_I).get(2);
-      String col2Id1 = ids.get(COLLECTION_ALL_LINKS_II).get(0);
-      String col2Id2 = ids.get(COLLECTION_ALL_LINKS_II).get(1);
-      String col3Id1 = ids.get(COLLECTION_ALL_LINKS_III).get(2);
-      String col3Id2 = ids.get(COLLECTION_ALL_LINKS_III).get(3);
-      String col3Id3 = ids.get(COLLECTION_ALL_LINKS_III).get(4);
+      List<DataDocument> links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, role1, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 1);
 
-      linkingFacade.createDocWithColletionLinks(COLLECTION_ALL_LINKS_I, col1Id1, COLLECTION_ALL_LINKS_II, Arrays.asList(col2Id1, col2Id2));
-      linkingFacade.createDocWithColletionLinks(COLLECTION_ALL_LINKS_I, col1Id1, COLLECTION_ALL_LINKS_III, Arrays.asList(col3Id1, col3Id2, col3Id3));
-      Map<String, List<DataDocument>> links = linkingFacade.readAllDocumentLinks(COLLECTION_ALL_LINKS_I, col1Id1);
-      Assert.assertFalse(links.isEmpty());
-      Assert.assertEquals(2, links.get(COLLECTION_ALL_LINKS_II).size());
-      Assert.assertEquals(3, links.get(COLLECTION_ALL_LINKS_III).size());
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 2);
 
-      linkingFacade.dropAllDocumentLinks(COLLECTION_ALL_LINKS_I, col1Id1);
-      links = linkingFacade.readAllDocumentLinks(COLLECTION_ALL_LINKS_I, col1Id1);
+      linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 5);
+
+      linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 2);
+
+      linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 2);
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(links.size(), 3);
+      linkingFacade.dropCollectionLinks(COLLECTION_READ_DROP_COLL_I, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertTrue(links.isEmpty());
+      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
       Assert.assertTrue(links.isEmpty());
    }
 
-   @Test(expectedExceptions = LinkAlreadyExistsException.class)
-   public void testLinkException() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_EXCEPTION_LINKS_I, COLLECTION_EXCEPTION_LINKS_II);
+   @Test
+   public void testCreateDropAll() throws Exception {
+      List<String> collections = Arrays.asList(COLLECTION_READ_DROP_ALL_I, COLLECTION_READ_DROP_ALL_II, COLLECTION_READ_DROP_ALL_III);
       Map<String, List<String>> ids = createTestData(collections);
 
-      String col1Id1 = ids.get(COLLECTION_EXCEPTION_LINKS_I).get(2);
-      String col2Id1 = ids.get(COLLECTION_EXCEPTION_LINKS_II).get(0);
-      linkingFacade.createDocWithDocLink(COLLECTION_EXCEPTION_LINKS_I, col1Id1, COLLECTION_EXCEPTION_LINKS_II, col2Id1);
-      linkingFacade.createDocWithDocLink(COLLECTION_EXCEPTION_LINKS_I, col1Id1, COLLECTION_EXCEPTION_LINKS_II, col2Id1);
+      String col1Id1 = ids.get(COLLECTION_READ_DROP_ALL_I).get(0);
+      String col2Id1 = ids.get(COLLECTION_READ_DROP_ALL_II).get(0);
+      String col3Id1 = ids.get(COLLECTION_READ_DROP_ALL_III).get(0);
+      String col3Id2 = ids.get(COLLECTION_READ_DROP_ALL_III).get(1);
+      String col3Id3 = ids.get(COLLECTION_READ_DROP_ALL_III).get(2);
+
+      String role1 = "role1";
+      String role2 = "role2";
+      String role3 = "role3";
+
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+
+      List<DataDocument> links = linkingFacade.readDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertEquals(links.size(), 4);
+      links = linkingFacade.readDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertEquals(links.size(), 8);
+
+      linkingFacade.dropAllDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertTrue(links.isEmpty());
+
+      links = linkingFacade.readDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertEquals(links.size(), 4);
+
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertEquals(links.size(), 7);
+
+      linkingFacade.dropAllDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertTrue(links.isEmpty());
    }
 
    private Map<String, List<String>> createTestData(List<String> collections) {

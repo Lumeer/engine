@@ -26,6 +26,7 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.controller.CollectionFacade;
@@ -98,7 +99,7 @@ public class CollectionService implements Serializable {
 
    @DELETE
    @Path("/{name}")
-   public void dropCollection(final @PathParam("name") String name) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void dropCollection(final @PathParam("name") String name) throws DbException {
       if (name == null) {
          throw new IllegalArgumentException();
       }

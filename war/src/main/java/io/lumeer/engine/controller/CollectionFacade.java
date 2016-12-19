@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.CollectionEvent;
@@ -27,6 +28,7 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -131,18 +133,17 @@ public class CollectionFacade implements Serializable {
     *
     * @param collectionName
     *       internal name of the collection to update
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
+    * @throws DbException
+    *       When there is an error working with the database.
     */
-   public void dropCollection(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
+   public void dropCollection(final String collectionName) throws DbException {
       if (dataStorage.hasCollection(collectionName)) {
          if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
             throw new UnauthorizedAccessException();
          }
 
-         linkingFacade.dropCollectionLinks(collectionName);
+         linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.FROM);
+         linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
          dropCollectionMetadata(collectionName);
          dataStorage.dropCollection(collectionName);
          dataStorage.dropCollection(collectionName + ".shadow"); // TODO: find more intelligent way to drop shadow collection

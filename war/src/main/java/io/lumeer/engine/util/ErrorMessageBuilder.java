@@ -43,6 +43,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_INVALID_CONSTRAINT_KEY = "Invalid value for attribute: \"{0}\"";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
    private static final String ERROR_LINK_ALREADY_EXISTS = "Link between documents already exists";
+   private static final String ERROR_PARAM_CANNOT_BE_NULL = "The param  \"{0}\" can not be null.";
 
    private static final String ERROR_USER_COLLECTION_NOT_FOUND = "The user collection \"{0}\" does not exist.";
    private static final String ERROR_USER_COLLECTION_ALREADY_EXISTS = "The user collection \"{0}\" already exists.";
@@ -98,6 +99,10 @@ public class ErrorMessageBuilder {
 
    public static String invalidConstraintKey(String key) {
       return MessageFormat.format(ERROR_INVALID_CONSTRAINT_KEY, key);
+   }
+
+   public static String paramCanNotBeNull(String key) {
+      return MessageFormat.format(ERROR_PARAM_CANNOT_BE_NULL, key);
    }
 
 

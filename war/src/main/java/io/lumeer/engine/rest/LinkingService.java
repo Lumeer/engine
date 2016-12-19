@@ -116,8 +116,8 @@ public class LinkingService {
    @GET
    @Path("/{role}/documents/{id}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkDao> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LinkDirection linkDirection) {
-      final List<LinkDao> links = new ArrayList<>();
+   public List<DataDocument> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LinkDirection linkDirection) {
+      final List<DataDocument> links = new ArrayList<>();
       // TODO translate user collection names
 
       if (linkDirection == null || linkDirection == LinkDirection.BOTH || linkDirection == LinkDirection.FROM) {

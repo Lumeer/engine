@@ -56,17 +56,25 @@ public final class LumeerConst {
    public static class Linking {
       public static final String PREFIX = "_linking";
 
+      /**
+       * Which direction of link to work with.
+       */
+      public enum LinkDirection {
+         BOTH, FROM, TO;
+      }
+
       public class MainTable {
          public static final String NAME = "_system-linking";
-         public static final String ATTR_COL1 = "collection1";
-         public static final String ATTR_COL2 = "collection2";
+         public static final String ATTR_FROM_COLLECTION = "from_collection";
+         public static final String ATTR_TO_COLLECTION = "to_collection";
          public static final String ATTR_COL_NAME = "collection_name";
-         public static final String ATTR_COUNT = "count";
+         public static final String ATTR_ROLE = "role";
       }
 
       public class LinkingTable {
-         public static final String ATTR_DOC1 = "id_doc1";
-         public static final String ATTR_DOC2 = "id_doc2";
+         public static final String ATTR_FROM_ID = "from_id";
+         public static final String ATTR_TO_ID = "to_id";
+         public static final String ATTR_ATTRIBUTES = "attributes";
       }
    }
 
