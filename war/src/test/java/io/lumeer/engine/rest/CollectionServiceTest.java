@@ -187,9 +187,10 @@ public class CollectionServiceTest extends Arquillian {
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       List<String> attributeNames = collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE));
+      boolean containsNewAttribute = attributeNames.contains(newAttributeName);
+      boolean containsOldAttribute = attributeNames.contains(oldAttributeName);
       Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && attributeNames.contains(newAttributeName)
-            && !attributeNames.contains(oldAttributeName));
+            && containsNewAttribute && !containsOldAttribute);
       response2.close();
 
       client.close();
@@ -210,8 +211,10 @@ public class CollectionServiceTest extends Arquillian {
       collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
       collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_DROP_ATTRIBUTE), attributeName);
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_ATTRIBUTE + "/attributes/" + attributeName).request().buildDelete().invoke();
+      List<String> attributeNames = collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_DROP_ATTRIBUTE));
+      boolean containsKey = attributeNames.contains(attributeName);
       Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && !collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_DROP_ATTRIBUTE)).contains(attributeName));
+            && !containsKey);
       response2.close();
 
       client.close();
@@ -256,8 +259,9 @@ public class CollectionServiceTest extends Arquillian {
       collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_METADATA + "/meta/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       ArrayList<DataDocument> collectionMetadata = response2.readEntity(ArrayList.class);
+      List<DataDocument> metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_READ_COLLECTION_METADATA));
       Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
-            && collectionMetadata.equals(collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_READ_COLLECTION_METADATA))));
+            && collectionMetadata.equals(metadata));
       response2.close();
 
       client.close();

@@ -32,7 +32,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -363,7 +362,6 @@ public class SecurityFacadeTest extends Arquillian {
       securityFacade.setRightsWrite(dataDocument, TEST_USER2);
       securityFacade.setRightsExecute(dataDocument, TEST_USER2);
       securityFacade.setRightsRead(dataDocument, TEST_USER2);
-      print(securityFacade.readRightList(dataDocument).toString());
       Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 7);
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
