@@ -429,12 +429,15 @@ public class SecurityFacade implements Serializable {
    }
 
    /**Read all rules of access list and return in as hashmap
-    * @param dataDocument
-    *       document where are all rules stored
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
     * @return
     *       return hashmap of all rules
     */
-   public HashMap readRightList(DataDocument dataDocument) {
+   public HashMap readRightList(String collectionName, String documentId) {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
       HashMap<String, Integer> map = new HashMap<String, Integer>();
       List<DataDocument> arrayList = readList(dataDocument);
       for (DataDocument dataDoc : arrayList) {
