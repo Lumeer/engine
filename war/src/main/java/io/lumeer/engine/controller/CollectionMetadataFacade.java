@@ -486,8 +486,6 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       attribute name
     * @return attribute count, zero if the attribute does not exist
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the collection
     */

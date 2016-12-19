@@ -528,17 +528,8 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void createIndex(final String collectionName, final Map<String, String> indexAttributes) {
-      final StringBuilder indexJson = new StringBuilder();
-      indexAttributes.forEach((k, v) -> {
-         if (indexJson.length() > 0) {
-            indexJson.append(", ");
-         }
-         indexJson.append(k);
-         indexJson.append(":");
-         indexJson.append(v);
-      });
-      database.getCollection(collectionName).createIndex(BsonDocument.parse("{" + indexJson.toString() + "}"));
+   public void createIndex(final String collectionName, final DataDocument indexAttributes) {
+      database.getCollection(collectionName).createIndex(MongoUtils.dataDocumentToDocument(indexAttributes));
    }
 
    @Override

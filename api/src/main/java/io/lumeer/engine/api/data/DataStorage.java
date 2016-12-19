@@ -411,7 +411,7 @@ public interface DataStorage extends Serializable {
     * @param indexAttributes
     *       Names of atributes and their index types to create index on.
     */
-   void createIndex(final String collectionName, final Map<String, String> indexAttributes);
+   void createIndex(final String collectionName, final DataDocument indexAttributes);
 
    /**
     * Lists all indexes on the given collection.

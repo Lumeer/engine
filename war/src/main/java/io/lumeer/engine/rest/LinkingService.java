@@ -62,6 +62,8 @@ public class LinkingService {
     * @param linkDirection
     *       Which link direction to work with.
     * @return All link types between given collections.
+    * @throws DbException
+    *       When there is an issue when communicating with the data storage.
     */
    @GET
    @Path("/")
@@ -91,6 +93,8 @@ public class LinkingService {
     * @param linkDirection
     *       Which link direction to work with.
     * @return All links of given role from/to the given collection.
+    * @throws DbException
+    *       When there is an issue when communicating with the data storage.
     */
    @GET
    @Path("/{role}")
@@ -122,6 +126,8 @@ public class LinkingService {
     * @param linkDirection
     *       Which link direction to work with.
     * @return Required links.
+    * @throws DbException
+    *       When there is an issue when communicating with the data storage.
     */
    @GET
    @Path("/{role}/documents/{id}")
@@ -155,6 +161,8 @@ public class LinkingService {
     * @param linkDirection
     *       Which link direction to work with.
     * @return Required links.
+    * @throws DbException
+    *       When there is an issue when communicating with the data storage.
     */
    @GET
    @Path("/{role}/documents/{id}/target/{targetId}")
@@ -186,6 +194,8 @@ public class LinkingService {
     *       The source/target document id.
     * @param linkDirection
     *       Which link direction to work with.
+    * @throws DbException
+    *       When there is an issue when communicating with the data storage.
     */
    @DELETE
    @Path("/{role}/documents/{id}")
@@ -215,6 +225,8 @@ public class LinkingService {
     *       The target/source document id.
     * @param linkDirection
     *       Which link direction to work with.
+    * @throws DbException
+    *       When there is an issue when communicating with the data storage.
     */
    @DELETE
    @Path("/{role}/documents/{id}/targets/{targetId}")
@@ -246,6 +258,8 @@ public class LinkingService {
     *       The target document id.
     * @param attributes
     *       The link attributes.
+    * @throws DbException
+    *       When there is an issue when communicating with the data storage.
     */
    @POST
    @Path("/{role}/collections/{targetCollection}")

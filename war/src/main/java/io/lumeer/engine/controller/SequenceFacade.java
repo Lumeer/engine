@@ -20,10 +20,10 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import java.io.Serializable;
-import java.util.Collections;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
@@ -57,7 +57,7 @@ public class SequenceFacade implements Serializable {
    public void init() {
       if (!dataStorage.hasCollection(SEQUENCE_COLLECTION)) {
          dataStorage.createCollection(SEQUENCE_COLLECTION);
-         dataStorage.createIndex(SEQUENCE_COLLECTION, Collections.singletonMap(SEQUENCE_INDEX_ATTR, "1"));
+         dataStorage.createIndex(SEQUENCE_COLLECTION, new DataDocument(SEQUENCE_INDEX_ATTR, "1"));
       }
    }
 
