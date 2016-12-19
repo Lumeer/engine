@@ -27,6 +27,8 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
+import io.lumeer.engine.rest.dao.LinkDao;
+import io.lumeer.engine.rest.dao.LinkTypeDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
 
@@ -88,6 +90,64 @@ public class LinkingFacade implements Serializable {
    }
 
    // TODO onDropCollection
+
+   /**
+    * Read all link types for selected collection
+    *
+    * @param collectionName
+    *       the name of the  collection
+    * @param linkDirection
+    *       direction of link
+    * @return list of all link types
+    * @throws DbException
+    *       When there is an error working with the database.
+    */
+   public List<LinkTypeDao> getLinkTypes(final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+      checkCollectionForRead(collectionName);
+      List<LinkTypeDao> links = new ArrayList<>();
+      List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, null, linkDirection);
+      for (DataDocument lt : linkingTables) {
+         String fromCollectionName = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
+         String toCollectionName = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
+         String role = lt.getString(LumeerConst.Linking.MainTable.ATTR_ROLE);
+         LinkTypeDao dao = new LinkTypeDao(fromCollectionName, toCollectionName, role);
+         links.add(dao);
+      }
+
+      return links;
+   }
+
+   /**
+    * Read all links for selected collection
+    *
+    * @param collectionName
+    *       the name of the  collection
+    * @param linkDirection
+    *       direction of link
+    * @param role
+    *       role name
+    * @return list of all links
+    * @throws DbException
+    *       When there is an error working with the database.
+    */
+   public List<LinkDao> getLinks(final String collectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+      checkCollectionForRead(collectionName);
+      List<LinkDao> links = new ArrayList<>();
+      List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, role, linkDirection);
+      for (DataDocument lt : linkingTables) {
+         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
+         String fromCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
+         String toCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
+         List<DataDocument> ls = dataStorage.search(colName, null, null, 0, 0);
+         for (DataDocument l : ls) {
+            String fromId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID);
+            String toId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_TO_ID);
+            DataDocument attrs = l.getDataDocument(LumeerConst.Linking.LinkingTable.ATTR_ATTRIBUTES);
+            links.add(new LinkDao(fromCollection, toCollection, role, fromId, toId, attrs));
+         }
+      }
+      return links;
+   }
 
    /**
     * Read all linking documents for specified document

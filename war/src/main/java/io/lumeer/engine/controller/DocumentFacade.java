@@ -92,13 +92,13 @@ public class DocumentFacade implements Serializable {
       checkCollectionForWriteBenevolent(collectionName);
       DataDocument doc = checkDocumentKeysValidity(document);
       // check constraints
-      checkConstraints(collectionName, doc);
+      checkConstraintsAndConvert(collectionName, doc);
       // add metadata attributes
       doc.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
       doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
       doc.put(LumeerConst.Document.USER_RIGHTS, Collections.singletonList(new DataDocument(LumeerConst.Security.USER_ID, userFacade.getUserEmail()).append(LumeerConst.Security.RULE, LumeerConst.Security.WRITE + LumeerConst.Security.EXECUTE + LumeerConst.Security.READ)));
-      // TODO check and convert types (need methods..)
+
       String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
@@ -164,10 +164,9 @@ public class DocumentFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       DataDocument upd = checkDocumentKeysValidity(updatedDocument);
-      checkConstraints(collectionName, updatedDocument);
+      checkConstraintsAndConvert(collectionName, updatedDocument);
       upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
-      // TODO check types and convert documents (need methods..)
       versionFacade.newDocumentVersion(collectionName, upd);
 
       // we add new attributes of updated document to collection metadata
@@ -294,7 +293,7 @@ public class DocumentFacade implements Serializable {
       }
    }
 
-   private void checkConstraints(final String collectionName, final DataDocument doc) throws InvalidConstraintException {
+   private void checkConstraintsAndConvert(final String collectionName, final DataDocument doc) throws InvalidConstraintException {
       for (String attribute : doc.keySet()) {
          Object value = collectionMetadataFacade.checkAndConvertAttributeValue(collectionName, attribute, doc.get(attribute).toString());
          if (value == null) {
