@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +95,8 @@ public class LinkingFacadeTest extends Arquillian {
 
       String role1 = "role1";
 
+      dropLinkingCollections(Collections.singletonList(role1), collections);
+
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id1, COLLECTION_GETLINKTYPES_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id2, COLLECTION_GETLINKTYPES_II, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id1, COLLECTION_GETLINKTYPES_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
@@ -118,6 +121,8 @@ public class LinkingFacadeTest extends Arquillian {
 
       String role1 = "role1";
 
+      dropLinkingCollections(Collections.singletonList(role1), collections);
+
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id1, COLLECTION_GETLINKS_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id2, COLLECTION_GETLINKS_II, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id1, COLLECTION_GETLINKS_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
@@ -141,6 +146,8 @@ public class LinkingFacadeTest extends Arquillian {
       String role1 = "role1";
       String role2 = "role2";
       String role3 = "role3";
+
+      dropLinkingCollections(Arrays.asList(role1, role2, role3), collections);
 
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
@@ -206,6 +213,8 @@ public class LinkingFacadeTest extends Arquillian {
       String role2 = "role2";
       String role3 = "role3";
 
+      dropLinkingCollections(Arrays.asList(role1, role2, role3), collections);
+
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
@@ -270,6 +279,8 @@ public class LinkingFacadeTest extends Arquillian {
       String role2 = "role2";
       String role3 = "role3";
 
+      dropLinkingCollections(Arrays.asList(role1, role2, role3), collections);
+
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
@@ -316,6 +327,23 @@ public class LinkingFacadeTest extends Arquillian {
          ids.put(col, collIds);
       }
       return ids;
+   }
+
+   private void dropLinkingCollections(final List<String> roles, final List<String> collections) {
+      for (String role : roles) {
+         for (String col1 : collections) {
+            for (String col2 : collections) {
+               if (col1.equals(col2)) {
+                  continue;
+               }
+               dataStorage.dropCollection(buildCollectionName(col1, col2, role));
+            }
+         }
+      }
+   }
+
+   private String buildCollectionName(final String firstCollectionName, final String secondCollectionName, final String role) {
+      return LumeerConst.Linking.PREFIX + "_" + firstCollectionName + "_" + secondCollectionName + "_" + role;
    }
 
 }
