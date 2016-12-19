@@ -170,6 +170,7 @@ public class SecurityFacadeTest extends Arquillian {
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_READ, dataDocument);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_READ, id);
+      print(securityFacade.readRightList(SECURITY_TEST_COLLECTION_READ,id).toString());
       Assert.assertFalse(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER));
       Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER4));
       Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER5));
