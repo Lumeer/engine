@@ -19,11 +19,10 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
@@ -180,8 +179,7 @@ public class CollectionServiceTest extends Arquillian {
       // #1 the given collection does not exist, status code = 400 or 404
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(COLLECTION_RENAME_ATTRIBUTE))
-            && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attribute exists, ready to rename the attribute, status code = 204
@@ -190,8 +188,7 @@ public class CollectionServiceTest extends Arquillian {
       collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_RENAME_ATTRIBUTE), dummyAttributeName);
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(dataStorage.hasCollection(getInternalName(COLLECTION_RENAME_ATTRIBUTE))
-            && response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
+      Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
             && collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE)).contains(newAttributeName)
             && !collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE)).contains(oldAttributeName));
       response2.close();
@@ -207,16 +204,14 @@ public class CollectionServiceTest extends Arquillian {
       // #1 the given collection does not exist, status code = 404
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_ATTRIBUTE + "/attributes/" + attributeName).request().buildDelete().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(COLLECTION_DROP_ATTRIBUTE))
-            && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attribute exists, ready to drop the attribute, status code = 204
       collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
       collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_DROP_ATTRIBUTE), attributeName);
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_ATTRIBUTE + "/attributes/" + attributeName).request().buildDelete().invoke();
-      Assert.assertTrue(dataStorage.hasCollection(getInternalName(COLLECTION_DROP_ATTRIBUTE))
-            && response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
+      Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
             && !collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_DROP_ATTRIBUTE)).contains(attributeName));
       response2.close();
 
@@ -255,14 +250,15 @@ public class CollectionServiceTest extends Arquillian {
 
       // #1 no metadata collection exists, status code = 404
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_METADATA + "/meta/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(COLLECTION_READ_COLLECTION_METADATA)) && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the metadata collection of the given collection exists
       collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_METADATA + "/meta/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       ArrayList<DataDocument> collectionMetadata = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode() && collectionMetadata.equals(collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_READ_COLLECTION_METADATA))));
+      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
+            && collectionMetadata.equals(collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_READ_COLLECTION_METADATA))));
       response2.close();
 
       client.close();
@@ -295,8 +291,7 @@ public class CollectionServiceTest extends Arquillian {
 
       // #1 if the given collection does not exist, status code = 404
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_ATTRIBUTES + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES))
-            && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attributes exists, status code = 200
@@ -307,8 +302,7 @@ public class CollectionServiceTest extends Arquillian {
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_ATTRIBUTES + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       ArrayList<String> collectionAttributes = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(dataStorage.hasCollection(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES))
-            && response2.getStatus() == Response.Status.OK.getStatusCode()
+      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
             && collectionAttributes.equals(collectionFacade.readCollectionAttributes(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES))));
       response2.close();
 
@@ -331,7 +325,7 @@ public class CollectionServiceTest extends Arquillian {
 
       final Client client = ClientBuilder.newBuilder().build();
       final String attributeName = "dummyAttribute";
-      final String newType = "number";
+      final String newType = LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES.get(0);
 
       collectionFacade.createCollection(COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE);
       collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE), attributeName);
@@ -339,16 +333,14 @@ public class CollectionServiceTest extends Arquillian {
       // set attribute type
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE + "/attributes/" + attributeName + "/types/" + newType).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       boolean wasSuccessful = response.readEntity(Boolean.class);
-      Assert.assertTrue(dataStorage.hasCollection(getInternalName(COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE))
-            && response.getStatus() == Response.Status.OK.getStatusCode()
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode()
             && wasSuccessful);
       response.close();
 
       // read attribute type
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE + "/attributes/" + attributeName + "/types").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       String attributeType = response2.readEntity(String.class);
-      Assert.assertTrue(dataStorage.hasCollection(getInternalName(COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE))
-            && response2.getStatus() == Response.Status.OK.getStatusCode()
+      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
             && attributeType.equals(newType));
       response2.close();
 
