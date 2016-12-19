@@ -431,4 +431,9 @@ public interface DataStorage extends Serializable {
     *       The name of an index to drop.
     */
    void dropIndex(final String collectionName, final String indexName);
+
+   /**
+    * Invalidates all caches.
+    */
+   void invalidateCaches();
 }

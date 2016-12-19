@@ -554,4 +554,9 @@ public class MongoDbStorage implements DataStorage {
    public void dropIndex(final String collectionName, final String indexName) {
       database.getCollection(collectionName).dropIndex(indexName);
    }
+
+   @Override
+   public void invalidateCaches() {
+      collectionCache = null;
+   }
 }
