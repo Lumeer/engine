@@ -82,16 +82,6 @@ public class HintFacade implements Serializable {
       hintsList.add(hintEx.runHintDetect(hint));
    }
 
-   public void runHint(String hintName, String collectionName, DataDocument dataDocument) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
-      hint.setUser(userFacade.getUserName());
-      hint.setCollection(collectionName);
-      hint.setDocument(dataDocument);
-      hintsList.add(hintEx.runHintDetect(hint));
-   }
-
-
-
    public boolean haveHint() {
       if (hintsList.isEmpty()) {
          return false;
