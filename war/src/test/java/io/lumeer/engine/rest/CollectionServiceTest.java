@@ -174,7 +174,6 @@ public class CollectionServiceTest extends Arquillian {
 
       final String oldAttributeName = "testAttribute";
       final String newAttributeName = "testNewAttribute";
-      final String dummyAttributeName = "dummyTestAttribute";
 
       // #1 the given collection does not exist, status code = 400 or 404
       final Client client = ClientBuilder.newBuilder().build();
@@ -185,12 +184,12 @@ public class CollectionServiceTest extends Arquillian {
       // #2 the given collection and attribute exists, ready to rename the attribute, status code = 204
       collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
       collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_RENAME_ATTRIBUTE), oldAttributeName);
-      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_RENAME_ATTRIBUTE), dummyAttributeName);
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      List<String> attributeNames = collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE));
       Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE)).contains(newAttributeName)
-            && !collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE)).contains(oldAttributeName));
+            && attributeNames.contains(newAttributeName)
+            && !attributeNames.contains(oldAttributeName));
       response2.close();
 
       client.close();
