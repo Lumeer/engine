@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
- * Copyright (C) 2016 the original author or authors.
+ * Copyright (C) 2016 - 2017 the original author or authors.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,33 +20,11 @@
 package io.lumeer.engine.api.event;
 
 /**
- * An event that occurs when there is an update to a collection.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-abstract public class CollectionEvent {
+public class ChangeCollectionName extends CollectionEvent {
 
-   private String userName;
-
-   private String internalName;
-
-   public CollectionEvent(final String userName, final String internalName) {
-      this.userName = userName;
-   }
-
-   public String getUserName() {
-      return userName;
-   }
-
-   public void setUserName(final String userName) {
-      this.userName = userName;
-   }
-
-   public String getInternalName() {
-      return internalName;
-   }
-
-   public void setInternalName(final String internalName) {
-      this.internalName = internalName;
+   public ChangeCollectionName(final String userName, final String internalName) {
+      super(userName, internalName);
    }
 }

@@ -22,7 +22,9 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.event.CollectionEvent;
+import io.lumeer.engine.api.event.ChangeCollectionName;
+import io.lumeer.engine.api.event.CreateCollection;
+import io.lumeer.engine.api.event.DropCollection;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.Reception;
 import javax.inject.Inject;
@@ -66,6 +69,12 @@ public class CollectionFacade implements Serializable {
 
    @Inject
    private UserFacade userFacade;
+
+   @Inject
+   private Event<CreateCollection> createCollectionEvent;
+
+   @Inject
+   private Event<DropCollection> dropCollectionEvent;
 
    // cache of collections - keys are internal names, values are original names
    private Map<String, String> collections;
@@ -120,11 +129,12 @@ public class CollectionFacade implements Serializable {
          dataStorage.createCollection(internalCollectionName);
          dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(internalCollectionName)); // creates metadata collection
          collectionMetadataFacade.createInitialMetadata(internalCollectionName, collectionOriginalName);
-
-         collections = null;
       } else {
          throw new CollectionAlreadyExistsException(ErrorMessageBuilder.collectionAlreadyExistsString(internalCollectionName));
       }
+
+      createCollectionEvent.fire(new CreateCollection(collectionOriginalName, internalCollectionName));
+
       return internalCollectionName;
    }
 
@@ -148,7 +158,7 @@ public class CollectionFacade implements Serializable {
          dataStorage.dropCollection(collectionName);
          dataStorage.dropCollection(collectionName + ".shadow"); // TODO: find more intelligent way to drop shadow collection
 
-         collections = null;
+         dropCollectionEvent.fire(new DropCollection(null, collectionName));
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -322,9 +332,22 @@ public class CollectionFacade implements Serializable {
       }
    }
 
-   public void onCollectionEvent(@Observes(notifyObserver = Reception.IF_EXISTS) final CollectionEvent event) {
-      // we do not care which collection got changed, we just invalidate our cache
-      collections = null;
+   public void onCollectionCreate(@Observes(notifyObserver = Reception.IF_EXISTS) final CreateCollection event) {
+      if (collections != null) {
+         collections.put(event.getInternalName(), event.getUserName());
+      }
+   }
+
+   public void onCollectionDrop(@Observes(notifyObserver = Reception.IF_EXISTS) final DropCollection event) {
+      if (collections != null) {
+         collections.remove(event.getInternalName());
+      }
+   }
+
+   public void onCollectionRename(@Observes(notifyObserver = Reception.IF_EXISTS) final ChangeCollectionName event) {
+      if (collections != null) {
+         collections.put(event.getInternalName(), event.getUserName());
+      }
    }
 
    /**

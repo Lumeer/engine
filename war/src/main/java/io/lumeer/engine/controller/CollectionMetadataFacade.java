@@ -25,6 +25,7 @@ import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
@@ -44,6 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -66,6 +68,9 @@ public class CollectionMetadataFacade implements Serializable {
 
    @Inject
    private SecurityFacade securityFacade;
+
+   @Inject
+   private Event<ChangeCollectionName> changeCollectionNameEvent;
 
    private ConstraintManager constraintManager;
 
@@ -600,6 +605,8 @@ public class CollectionMetadataFacade implements Serializable {
 
       DataDocument metadataDocument = new DataDocument(metadata);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionInternalName), metadataDocument, id, -1);
+
+      changeCollectionNameEvent.fire(new ChangeCollectionName(collectionOriginalName, collectionInternalName));
 
       return true;
    }
