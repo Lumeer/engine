@@ -50,6 +50,7 @@ public class BatchService {
    @Inject
    private BatchFacade batchFacade;
 
+   @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
    /**
@@ -90,9 +91,9 @@ public class BatchService {
       try {
          if (batch instanceof AbstractCollectionBatch) {
             final AbstractCollectionBatch collectionBatch = (AbstractCollectionBatch) batch;
-            collectionBatch.setCollectionName(collectionMetadataFacade.getOriginalCollectionName(collectionBatch.getCollectionName()));
+            collectionBatch.setCollectionName(collectionMetadataFacade.getInternalCollectionName(collectionBatch.getCollectionName()));
          }
-      } catch (CollectionMetadataDocumentNotFoundException | CollectionNotFoundException e) {
+      } catch (CollectionNotFoundException e) {
          throw new NotAcceptableException("Cannot determine collection name in the system: ", e);
       }
 

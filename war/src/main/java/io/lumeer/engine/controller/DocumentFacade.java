@@ -163,7 +163,7 @@ public class DocumentFacade implements Serializable {
       if (!securityFacade.checkForWrite(existingDocument, userFacade.getUserEmail())) {
          throw new UnauthorizedAccessException();
       }
-      DataDocument upd = checkDocumentKeysValidity(updatedDocument);
+      final DataDocument upd = cleanInvalidAttributes(updatedDocument);
       checkConstraintsAndConvert(collectionName, updatedDocument);
       upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
@@ -327,6 +327,35 @@ public class DocumentFacade implements Serializable {
             }
          } else {
             ndd.put(attributeName, value);
+         }
+      }
+      return ndd;
+   }
+
+   private DataDocument cleanInvalidAttributes(final DataDocument dataDocument) {
+      final DataDocument ndd = new DataDocument();
+
+      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
+         final String attributeName = entry.getKey().trim();
+         if (Utils.isAttributeNameValid(attributeName)) {
+            final Object value = entry.getValue();
+
+            if (MongoUtils.isDataDocument(value)) {
+               ndd.put(attributeName, cleanInvalidAttributes((DataDocument) value));
+            } else if (MongoUtils.isList(value)) {
+               List l = (List) entry.getValue();
+               if (!l.isEmpty() && MongoUtils.isDataDocument(l.get(0))) {
+                  ArrayList<DataDocument> docs = new ArrayList<>();
+                  ndd.put(attributeName, docs);
+                  for (Object o : l) {
+                     docs.add(cleanInvalidAttributes((DataDocument) o));
+                  }
+               } else {
+                  ndd.put(attributeName, l);
+               }
+            } else {
+               ndd.put(attributeName, value);
+            }
          }
       }
       return ndd;

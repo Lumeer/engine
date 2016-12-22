@@ -153,7 +153,14 @@ public class BatchFacade implements Serializable {
          }
 
          if (!batch.isKeepOriginal()) {
-            batch.getAttributes().forEach(doc::remove);
+            batch.getAttributes().forEach(a -> {
+               try {
+                  documentFacade.dropAttribute(batch.getCollectionName(), doc.getId(), a);
+               } catch (DbException e) {
+                  // nps, we cannot do m ore
+               }
+               doc.remove(a); // TODO check - for future compatibility but has no effect now
+            });
          }
 
          documentFacade.updateDocument(batch.getCollectionName(), doc);
@@ -176,7 +183,8 @@ public class BatchFacade implements Serializable {
          }
 
          if (!batch.isKeepOriginal()) {
-            doc.remove(batch.getAttribute());
+            documentFacade.dropAttribute(batch.getCollectionName(), doc.getId(), batch.getAttribute());
+            doc.remove(batch.getAttribute()); // TODO check - for future compatibility
          }
 
          documentFacade.updateDocument(batch.getCollectionName(), doc);

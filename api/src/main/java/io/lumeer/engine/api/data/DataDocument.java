@@ -76,6 +76,15 @@ public class DataDocument extends LinkedHashMap<String, Object> {
    }
 
    /**
+    * Sets the document id.
+    *
+    * @param id The document id.
+    */
+   public void setId(final String id) {
+      put(LumeerConst.Document.ID, id);
+   }
+
+   /**
     * Gets the value of the given key as an Integer.
     *
     * @param key
