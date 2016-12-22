@@ -79,13 +79,17 @@ public class CollectionFacade implements Serializable {
    // cache of collections - keys are internal names, values are original names
    private Map<String, String> collections;
 
+   private long cacheLastUpdated = 0L;
+
    /**
     * Returns a Map object of collection names in the database except of metadata collections.
     *
     * @return the map of collection names. Keys are internal names, values are original names.
     */
    public Map<String, String> getAllCollections() {
-      if (this.collections == null) {
+      if (this.collections == null || cacheLastUpdated + 5000 < System.currentTimeMillis()) {
+         cacheLastUpdated = System.currentTimeMillis();
+
          List<String> collectionsAll = dataStorage.getAllCollections();
          collections = new HashMap<>();
 
