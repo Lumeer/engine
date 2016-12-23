@@ -200,15 +200,11 @@ public class CollectionMetadataFacade implements Serializable {
       dataStorage.createDocument(metadataCollectionName, new DataDocument(metadataLock));
 
       // we create indexes on frequently used fields
-      String indexType = "1";
-      Map<String, String> indexAttributes = new HashMap<>();
-      indexAttributes.put(LumeerConst.Collection.META_TYPE_KEY, indexType);
-      indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, indexType);
-      indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, indexType);
-      indexAttributes.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, indexType);
-
-      // TODO: What is index type? "1" does not work - BSONParseException
-      //dataStorage.createIndex(metadataCollectionName, indexAttributes);
+      int indexType = 1;
+      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.META_TYPE_KEY, indexType));
+      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, indexType));
+      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, indexType));
+      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, indexType));
    }
 
    /**
