@@ -170,10 +170,48 @@ public interface DataStorage extends Serializable {
     *       the DataDocument object representing a document with changes to update
     * @param documentId
     *       the id of the existing document in given collection
+    */
+   void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId);
+
+   /**
+    * Modifies an existing document in given collection by its id and version. If updated document contains non-existing columns, they will be added into database.
+    *
+    * @param collectionName
+    *       the name of the collection where the existing document is located
+    * @param updatedDocument
+    *       the DataDocument object representing a document with changes to update
+    * @param documentId
+    *       the id of the existing document in given collection
     * @param targetVersion
     *       The version of document to update. Use -1 for disable filter for version attribute.
     */
    void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId, int targetVersion);
+
+   /**
+    * Replace an existing document in given collection by its id.
+    *
+    * @param collectionName
+    *       the name of the collection where the existing document is located
+    * @param replaceDocument
+    *       the DataDocument object representing a document
+    * @param documentId
+    *       the id of the existing document in given collection
+    */
+   void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String documentId);
+
+   /**
+    * Replace an existing document in given collection by its id and version
+    *
+    * @param collectionName
+    *       the name of the collection where the existing document is located
+    * @param replaceDocument
+    *       the DataDocument object representing a document
+    * @param documentId
+    *       the id of the existing document in given collection
+    * @param targetVersion
+    *       The version of document to replace. Use -1 for disable filter for version attribute.
+    */
+   void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String documentId, int targetVersion);
 
    /**
     * Drops an existing document in given collection by its id.
