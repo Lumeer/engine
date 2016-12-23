@@ -40,6 +40,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -679,9 +680,12 @@ public class CollectionMetadataFacade implements Serializable {
 
    /**
     * Gets document with custom metadata.
-    * @param collectionName internal name
+    *
+    * @param collectionName
+    *       internal name
     * @return DataDocument with all custom metadata values
-    * @throws UnauthorizedAccessException when current user is not allowed to read the collection
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read the collection
     */
    public DataDocument getCustomMetadata(String collectionName) throws UnauthorizedAccessException {
       if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
@@ -822,27 +826,31 @@ public class CollectionMetadataFacade implements Serializable {
 
       // Date type is special - we maintain it with constraint, so we have to do special check here.
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         // If there exist no constraint for the date, it means that it passed constraint test, although it can be invalid,
-         // so we will to check it against default time and date format.
-         if (constraintConfigurations.isEmpty()) {
-            try {
-               return Utils.getDate(valueString);
-            } catch (ParseException e) { // date could not be parsed
-               return null;
-            }
-         } else {
-            // we take the last constraint, because string could be fixed according to that constraint
-            String constraint = constraintConfigurations.get(constraintConfigurations.size() - 1);
-            String format = constraint.split(":", 2)[1];
-            try {
-               return new SimpleDateFormat(format).parse(valueString);
-            } catch (ParseException e) { // date could not be parsed
-               return null;
-            }
-         }
+         return checkValueDateAndConvert(valueString, constraintConfigurations);
       }
 
       return checkAttributeTypeAndConvert(valueString, type);
+   }
+
+   private Date checkValueDateAndConvert(String valueString, List<String> constraintConfigurations) {
+      // If there exist no constraint for the date, it means that it passes constraint test, although it can be invalid,
+      // so we will to check it against default time and date format.
+      if (constraintConfigurations.isEmpty()) {
+         try {
+            return Utils.getDate(valueString);
+         } catch (ParseException e) { // date could not be parsed
+            return null;
+         }
+      } else {
+         // we take the last constraint, because string could be fixed according to that constraint
+         String constraint = constraintConfigurations.get(constraintConfigurations.size() - 1);
+         String format = constraint.split(":", 2)[1];
+         try {
+            return new SimpleDateFormat(format).parse(valueString);
+         } catch (ParseException e) { // date could not be parsed
+            return null;
+         }
+      }
    }
 
    /**
@@ -908,6 +916,20 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       return valueString; // for a string, we accept everything
+   }
+
+   /**
+    * @param value
+    *       value to be checked
+    * @param type
+    *       type to be checked
+    * @return true if value satisfies given type
+    */
+   public Object checkValueTypeAndConvert(String value, String type) {
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
+         return checkValueDateAndConvert(value, Collections.EMPTY_LIST);
+      }
+      return checkAttributeTypeAndConvert(value, type);
    }
 
    // checks whether value satisfies all constraints
@@ -991,7 +1013,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to write to the collection
     */
-   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException, UnauthorizedAccessException {
+   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws UnauthorizedAccessException, InvalidConstraintException {
       if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }

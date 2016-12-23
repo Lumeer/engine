@@ -20,6 +20,9 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.constraint.Constraint;
+import io.lumeer.engine.api.constraint.ConstraintManager;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.ChangeCollectionName;
@@ -36,6 +39,7 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -331,6 +335,137 @@ public class CollectionFacade implements Serializable {
 
          collectionMetadataFacade.renameCollectionAttribute(collectionName, origName, newName);
          dataStorage.renameAttribute(collectionName, origName, newName);
+      } else {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+   }
+
+   /**
+    * Retypes given attribute. That means changing type in metadata and converting all existing values of the attribute to new type.
+    *
+    * @param collectionName
+    *       internal name
+    * @param attributeName
+    *       attribute name
+    * @param newType
+    *       new type
+    * @return true if retype was successful, false if new type is not valid or some values in collection cannot be converted to new type
+    * @throws CollectionNotFoundException
+    *       if collection was not found in database
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
+    */
+   public boolean retypeAttribute(final String collectionName, final String attributeName, final String newType) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (dataStorage.hasCollection(collectionName)) {
+
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
+            throw new UnauthorizedAccessException();
+         }
+
+         if (!LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES.contains(newType)) { // new type is not from our list
+            return false;
+         }
+
+         List<DataDocument> allDocuments = getAllDocuments(collectionName);
+         boolean isValid = true;
+         for (DataDocument document : allDocuments) {
+            if (collectionMetadataFacade.checkValueTypeAndConvert(document.get(attributeName).toString(), newType) == null) {
+               isValid = false; // we have found invalid value, so the retype cannot be done
+               break;
+            }
+         }
+
+         if (isValid) {
+            collectionMetadataFacade.retypeCollectionAttribute(collectionName, attributeName, newType);
+            // TODO: How to use BatchFacade to retype value in all documents?
+            for (DataDocument document : allDocuments) {
+               Object newValue = collectionMetadataFacade.checkValueTypeAndConvert(document.get(attributeName).toString(), newType);
+               String id = document.getId();
+               dataStorage.updateDocument(collectionName, new DataDocument(attributeName, newValue), id);
+            }
+            return true;
+         } else {
+            return false;
+         }
+      } else {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+   }
+
+   /**
+    * Adds new constraint for given attribute.
+    *
+    * @param collectionName
+    *       internal name
+    * @param attributeName
+    *       attribute name
+    * @param constraintConfiguration
+    *       string with constraint configuration
+    * @return true if add is successful, false if some of existing values in collection does not satisfy new constraint
+    * @throws CollectionNotFoundException
+    *       if collection was not found in database
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
+    * @throws InvalidConstraintException
+    *       when given constraint configuration is not valid
+    */
+   public boolean addAttributeConstraint(final String collectionName, final String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, UnauthorizedAccessException, InvalidConstraintException {
+      if (dataStorage.hasCollection(collectionName)) {
+
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
+            throw new UnauthorizedAccessException();
+         }
+
+         // we check if attribute value in all existing documents satisfies new constraint
+         ConstraintManager constraintManager = new ConstraintManager(Arrays.asList(constraintConfiguration));
+
+         List<DataDocument> allDocuments = getAllDocuments(collectionName);
+         boolean isValid = true;
+         for (DataDocument document : allDocuments) {
+            // TODO: fix fixable value
+            String value = document.get(attributeName).toString();
+            if (value == null) { // document does not contain given attribute
+               continue;
+            }
+            if (!(constraintManager.isValid(value) == Constraint.ConstraintResult.VALID)) {
+               isValid = false; // we have found invalid value, so the constraint cannot be added
+               break;
+            }
+         }
+
+         if (isValid) {
+            collectionMetadataFacade.addAttributeConstraint(collectionName, attributeName, constraintConfiguration);
+            return true;
+         } else {
+            return false;
+         }
+      } else {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+   }
+
+   /**
+    * Drops given constraint configuration from attribute list of constraints
+    *
+    * @param collectionName
+    *       internal name
+    * @param attributeName
+    *       attribute name
+    * @param constraintConfiguration
+    *       constraint configuration to drop
+    * @throws CollectionNotFoundException
+    *       if collection was not found in database
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
+    */
+   public void dropAttributeConstraint(final String collectionName, final String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (dataStorage.hasCollection(collectionName)) {
+
+         if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
+            throw new UnauthorizedAccessException();
+         }
+
+         collectionMetadataFacade.dropAttributeConstraint(collectionName, attributeName, constraintConfiguration);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }

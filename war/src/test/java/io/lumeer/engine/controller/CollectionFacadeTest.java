@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
@@ -59,6 +60,8 @@ public class CollectionFacadeTest extends Arquillian {
    private final String COLLECTION_DROP_COLLECTION_ATTRIBUTE = "CollectionFacadeCollectionDropCollectionAttribute";
    private final String COLLECTION_GET_ATTRIBUTE_VALUES = "CollectionFacadeCollectionGetAttributeValues";
    private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionFacadeCollectionRenameAttribute";
+   private final String COLLECTION_RETYPE_ATTRIBUTE = "CollectionFacadeCollectionRetypeAttribute";
+   private final String COLLECTION_ADD_DROP_CONSTRAINT = "CollectionFacadeCollectionAddDropConstraint";
 
    private final String DUMMY_KEY1 = "key1";
    private final String DUMMY_KEY2 = "key2";
@@ -78,8 +81,8 @@ public class CollectionFacadeTest extends Arquillian {
    public void testGetAllCollections() throws Exception {
       setUpCollection(COLLECTION_GET_ALL_COLLECTIONS);
 
-      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS);
-      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_GET_ALL_COLLECTIONS)));
+      String collection = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS);
+      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(collection));
    }
 
    @Test
@@ -88,21 +91,20 @@ public class CollectionFacadeTest extends Arquillian {
 
       Assert.assertFalse(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_CREATE_AND_DROP)));
 
-      collectionFacade.createCollection(COLLECTION_CREATE_AND_DROP);
-      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_CREATE_AND_DROP)));
+      String collection = collectionFacade.createCollection(COLLECTION_CREATE_AND_DROP);
+      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(collection));
 
-      collectionFacade.dropCollection(internalName(COLLECTION_CREATE_AND_DROP));
-      Assert.assertFalse(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_CREATE_AND_DROP)));
+      collectionFacade.dropCollection(collection);
+      Assert.assertFalse(collectionFacade.getAllCollections().keySet().contains(collection));
    }
 
    @Test
    public void testReadCollectionMetadata() throws Exception {
       setUpCollection(COLLECTION_READ_COLLECTION_METADATA);
 
-      collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
+      String collection = collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
 
       String name = "attribute 1";
-      String collection = internalName(COLLECTION_READ_COLLECTION_METADATA);
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
 
       List<DataDocument> metadata = collectionFacade.readCollectionMetadata(collection);
@@ -116,9 +118,8 @@ public class CollectionFacadeTest extends Arquillian {
 
       String a1 = "attribute1";
       String a2 = "attribute2";
-      String collection = internalName(COLLECTION_READ_COLLECTION_ATTRIBUTES);
 
-      collectionFacade.createCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
+      String collection = collectionFacade.createCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
       collectionMetadataFacade.addOrIncrementAttribute(collection, a1);
       collectionMetadataFacade.addOrIncrementAttribute(collection, a2);
 
@@ -132,8 +133,7 @@ public class CollectionFacadeTest extends Arquillian {
    public void testGetAttributeValues() throws Exception {
       setUpCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
 
-      collectionFacade.createCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
-      String collection = internalName(COLLECTION_GET_ATTRIBUTE_VALUES);
+      String collection = collectionFacade.createCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
 
       String a1 = "attribute";
       String a2 = "dummyattribute";
@@ -167,8 +167,7 @@ public class CollectionFacadeTest extends Arquillian {
    public void testDropAttribute() throws Exception {
       setUpCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
 
-      collectionFacade.createCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
-      String collection = internalName(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
 
       String attribute1 = "attribute-to-drop";
       String attribute2 = "attribute";
@@ -206,8 +205,7 @@ public class CollectionFacadeTest extends Arquillian {
    public void testRenameAttribute() throws Exception {
       setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
 
-      collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
-      String collection = internalName(COLLECTION_RENAME_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
 
       String name = "attribute 1";
       String newName = "new attribute 1";
@@ -234,20 +232,69 @@ public class CollectionFacadeTest extends Arquillian {
    }
 
    @Test
+   public void testRetypeAttribute() throws Exception {
+      setUpCollection(COLLECTION_RETYPE_ATTRIBUTE);
+
+      String collection = collectionFacade.createCollection(COLLECTION_RETYPE_ATTRIBUTE);
+
+      String attribute = "attribute to retype";
+      String value1 = "42";
+      String value2 = "bad value";
+      String newType = LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT;
+
+      DataDocument doc1 = new DataDocument();
+      doc1.put(attribute, value1);
+      dataStorage.createDocument(collection, doc1);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
+      Assert.assertTrue(collectionFacade.retypeAttribute(collection, attribute, newType)); // retype to int
+
+      Assert.assertTrue(collectionFacade.retypeAttribute(collection, attribute, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING)); // retype back to string
+
+      DataDocument doc2 = new DataDocument();
+      doc2.put(attribute, value2);
+      dataStorage.createDocument(collection, doc2);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
+      Assert.assertFalse(collectionFacade.retypeAttribute(collection, attribute, newType)); // retype to int
+
+   }
+
+   @Test
+   public void testAddDropConstraint() throws Exception {
+      setUpCollection(COLLECTION_ADD_DROP_CONSTRAINT);
+
+      String collection = collectionFacade.createCollection(COLLECTION_ADD_DROP_CONSTRAINT);
+
+      String attribute = "attribute";
+      int value1 = 5;
+      int value2 = 10;
+      String constraint1 = "lessThan:7";
+
+      String newType = LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT;
+
+      DataDocument doc1 = new DataDocument();
+      doc1.put(attribute, value1);
+      dataStorage.createDocument(collection, doc1);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attribute, newType);
+
+      Assert.assertTrue(collectionFacade.addAttributeConstraint(collection, attribute, constraint1));
+      collectionFacade.dropAttributeConstraint(collection, attribute, constraint1);
+
+      DataDocument doc2 = new DataDocument();
+      doc2.put(attribute, value2);
+      dataStorage.createDocument(collection, doc2);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
+
+      Assert.assertFalse(collectionFacade.addAttributeConstraint(collection, attribute, constraint1));
+   }
+
+   @Test
    public void testOnCollectionEvent() throws Exception {
 
    }
 
    private String internalName(String collectionOriginalName) {
       return "collection." + collectionOriginalName.toLowerCase() + "_0";
-   }
-
-   private DataDocument createDummyDocument() {
-      DataDocument dataDocument = new DataDocument();
-      dataDocument.put(DUMMY_KEY1, DUMMY_VALUE1);
-      dataDocument.put(DUMMY_KEY2, DUMMY_VALUE2);
-
-      return dataDocument;
    }
 
    private boolean isEveryDocumentFilledByNewAttribute(String collection, String attributeName) {
