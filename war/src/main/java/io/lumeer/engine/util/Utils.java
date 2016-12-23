@@ -35,15 +35,6 @@ public class Utils {
    private static final String DATE_FORMAT = "yyyy.MM.dd HH.mm.ss.SSS";
    private static final DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
-   private static final String DATE_FORMAT_JUST_DATE = "yyyy.MM.dd";
-   private static final DateFormat dateFormatJustDate = new SimpleDateFormat(DATE_FORMAT_JUST_DATE);
-
-   private static final String DATE_FORMAT_DATE_AND_TIME_MINUTES = "yyyy.MM.dd HH.mm";
-   private static final DateFormat dateFormatDateAndTimeMinutes = new SimpleDateFormat(DATE_FORMAT_DATE_AND_TIME_MINUTES);
-
-   private static final String DATE_FORMAT_DATE_AND_TIME_SECONDS = "yyyy.MM.dd HH.mm.ss";
-   private static final DateFormat dateFormatDateAndTimeSeconds = new SimpleDateFormat(DATE_FORMAT_DATE_AND_TIME_SECONDS);
-
    private Utils() {
       // to prevent initialization
    }
@@ -83,63 +74,6 @@ public class Utils {
       try {
          Date date = dateFormat.parse(dateString);
          if (!dateString.equals(dateFormat.format(date))) {
-            return false;
-         }
-      } catch (ParseException ex) {
-         return false;
-      }
-      return true;
-   }
-
-   /**
-    * Checks if date in string is in format yyyy.MM.dd
-    *
-    * @param dateString
-    *       string with date to check
-    * @return true if date string is in valid format, otherwise false
-    */
-   public static boolean isValidDateFormatJustDate(String dateString) {
-      try {
-         Date date = dateFormatJustDate.parse(dateString);
-         if (!dateString.equals(dateFormatJustDate.format(date))) {
-            return false;
-         }
-      } catch (ParseException ex) {
-         return false;
-      }
-      return true;
-   }
-
-   /**
-    * Checks if date in string is in format yyyy.MM.dd HH.mm
-    *
-    * @param dateString
-    *       string with date to check
-    * @return true if date string is in valid format, otherwise false
-    */
-   public static boolean isValidDateFormatDateAndTimeMinutes(String dateString) {
-      try {
-         Date date = dateFormatDateAndTimeMinutes.parse(dateString);
-         if (!dateString.equals(dateFormatDateAndTimeMinutes.format(date))) {
-            return false;
-         }
-      } catch (ParseException ex) {
-         return false;
-      }
-      return true;
-   }
-
-   /**
-    * Checks if date in string is in format yyyy.MM.dd HH.mm.ss
-    *
-    * @param dateString
-    *       string with date to check
-    * @return true if date string is in valid format, otherwise false
-    */
-   public static boolean isValidDateFormatDateAndTimeSeconds(String dateString) {
-      try {
-         Date date = dateFormatDateAndTimeSeconds.parse(dateString);
-         if (!dateString.equals(dateFormatDateAndTimeSeconds.format(date))) {
             return false;
          }
       } catch (ParseException ex) {

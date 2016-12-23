@@ -36,6 +36,8 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -817,6 +819,29 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       String type = getAttributeTypeWithoutAccessRightsCheck(collectionName, attribute);
+
+      // Date type is special - we maintain it with constraint, so we have to do special check here.
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
+         // If there exist no constraint for the date, it means that it passed constraint test, although it can be invalid,
+         // so we will to check it against default time and date format.
+         if (constraintConfigurations.isEmpty()) {
+            try {
+               return Utils.getDate(valueString);
+            } catch (ParseException e) { // date could not be parsed
+               return null;
+            }
+         } else {
+            // we take the last constraint, because string could be fixed according to that constraint
+            String constraint = constraintConfigurations.get(constraintConfigurations.size() - 1);
+            String format = constraint.split(":", 2)[1];
+            try {
+               return new SimpleDateFormat(format).parse(valueString);
+            } catch (ParseException e) { // date could not be parsed
+               return null;
+            }
+         }
+      }
+
       return checkAttributeTypeAndConvert(valueString, type);
    }
 
@@ -872,9 +897,8 @@ public class CollectionMetadataFacade implements Serializable {
          // TODO
       }
 
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         return valueString; // we accept everything - it just has to satisfy the constraints
-      }
+      // Date is special and its format is maintained in checkAttributeValue
+      // if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE))
 
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN)) { // we accept "true" and "false" ignoring the case
          if (LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES.contains(valueString.toLowerCase())) {
@@ -1126,6 +1150,7 @@ public class CollectionMetadataFacade implements Serializable {
 
    // checks whether collection with given user name already exists
    private boolean checkIfUserCollectionExists(String originalCollectionName) {
+      dataStorage.invalidateCaches(); // cache can be 5 seconds old, so we firstly invalidate it
       List<String> collections = dataStorage.getAllCollections();
       for (String c : collections) {
          if (isUserCollection(c)) {
