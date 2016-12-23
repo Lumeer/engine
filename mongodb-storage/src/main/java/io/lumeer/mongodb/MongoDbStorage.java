@@ -241,9 +241,9 @@ public class MongoDbStorage implements DataStorage {
       }
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
       if (targetVersion >= 0) {
-         filter.append(LumeerConst.METADATA_VERSION_KEY, updatedDocument.getInteger(LumeerConst.METADATA_VERSION_KEY));
+         filter.append(LumeerConst.METADATA_VERSION_KEY, toUpdate.getInteger(LumeerConst.METADATA_VERSION_KEY));
       }
-      BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
+      BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(toUpdate));
       database.getCollection(collectionName).updateOne(filter, updateBson);
    }
 
@@ -262,7 +262,7 @@ public class MongoDbStorage implements DataStorage {
       if (targetVersion >= 0) {
          filter.append(LumeerConst.METADATA_VERSION_KEY, toReplace.getInteger(LumeerConst.METADATA_VERSION_KEY));
       }
-      Document replaceDoc = new Document(replaceDocument);
+      Document replaceDoc = new Document(toReplace);
       database.getCollection(collectionName).replaceOne(filter, replaceDoc);
    }
 

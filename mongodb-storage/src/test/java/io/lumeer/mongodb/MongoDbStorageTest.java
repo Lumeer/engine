@@ -193,7 +193,7 @@ public class MongoDbStorageTest {
       changeDummyDocumentValues(readedDocument);
       readedDocument.put(LumeerConst.METADATA_VERSION_KEY, 1);
 
-      mongoDbStorage.updateDocument(COLLECTION_UPDATE_DOCUMENT, readedDocument, documentId, -1);
+      mongoDbStorage.updateDocument(COLLECTION_UPDATE_DOCUMENT, readedDocument, documentId);
       DataDocument readedAfterInsDocument = mongoDbStorage.readDocument(COLLECTION_UPDATE_DOCUMENT, documentId);
 
       Assert.assertNotEquals(readedAfterInsDocument.getString(DUMMY_KEY1), DUMMY_VALUE1);
