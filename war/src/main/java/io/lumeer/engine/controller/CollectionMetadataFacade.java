@@ -306,7 +306,7 @@ public class CollectionMetadataFacade implements Serializable {
       if (!newName.isEmpty()) {
          metadata.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, newName);
          DataDocument metadataDocument = new DataDocument(metadata);
-         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId, -1);
+         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
          return true;
       }
 
@@ -355,7 +355,7 @@ public class CollectionMetadataFacade implements Serializable {
       Map<String, Object> metadata = new HashMap<>();
       metadata.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, newType);
       DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId, -1);
+      dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
 
       return true;
    }
@@ -604,7 +604,7 @@ public class CollectionMetadataFacade implements Serializable {
       metadata.put(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
 
       DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionInternalName), metadataDocument, id, -1);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionInternalName), metadataDocument, id);
 
       changeCollectionNameEvent.fire(new ChangeCollectionName(collectionOriginalName, collectionInternalName));
 
@@ -675,7 +675,7 @@ public class CollectionMetadataFacade implements Serializable {
       metadata.put(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, newTime);
 
       DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id);
       return true;
    }
 

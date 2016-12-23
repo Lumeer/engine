@@ -132,7 +132,7 @@ public class ViewFacade implements Serializable {
          viewCopy.put(key, viewDocument.get(key));
       }
 
-      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, viewCopy, viewCopy.getId(), -1);
+      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, viewCopy, viewCopy.getId());
       return viewCopyId;
    }
 
@@ -389,7 +389,7 @@ public class ViewFacade implements Serializable {
       String date = Utils.getCurrentTimeString();
       metadataMap.put(LumeerConst.View.VIEW_UPDATE_DATE_KEY, date);
 
-      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadataMap), id, -1);
+      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadataMap), id);
    }
 
    private String getCurrentUser() {

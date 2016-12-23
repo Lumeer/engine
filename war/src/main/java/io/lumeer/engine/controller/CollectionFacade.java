@@ -227,7 +227,7 @@ public class CollectionFacade implements Serializable {
    @Deprecated // CollectionMetadataFacade provides specific methods for metadata update
    public void updateCollectionMetadata(final String collectionName, final DataDocument element, String elementId) throws CollectionNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
-         dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), element, elementId, -1);
+         dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), element, elementId);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }

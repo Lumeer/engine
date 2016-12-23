@@ -133,7 +133,7 @@ public class VersionFacade implements Serializable {
       createMetadata(document);
       int oldVersion = backUp(collectionName, document.getId());
       document.replace(LumeerConst.METADATA_VERSION_KEY, oldVersion + 1);
-      dataStorage.updateDocument(collectionName, document, document.getId(), -1);
+      dataStorage.updateDocument(collectionName, document, document.getId());
       DataDocument readed = dataStorage.readDocument(collectionName, id);
       if (!readed.keySet().containsAll(document.keySet())) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.updateDocumentUnsuccesfulString());
@@ -233,7 +233,7 @@ public class VersionFacade implements Serializable {
       int newVersion = newDocumentVersion(collectionName, document);
       newDocument.replace(LumeerConst.METADATA_VERSION_KEY, newVersion);
       Object idN = newDocument.get(METADATA_ID_KEY);
-      dataStorage.updateDocument(collectionName, newDocument, idN.toString(), -1);
+      dataStorage.updateDocument(collectionName, newDocument, idN.toString());
       newDocument.put(METADATA_ID_KEY, idN);
       DataDocument readed = dataStorage.readDocument(collectionName, newDocument.getId());
       if (!readed.keySet().containsAll(newDocument.keySet())) {

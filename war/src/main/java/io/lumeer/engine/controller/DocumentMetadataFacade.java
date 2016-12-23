@@ -184,7 +184,7 @@ public class DocumentMetadataFacade implements Serializable {
             throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
          }
       }
-      dataStorage.updateDocument(collectionName, metadata, documentId, -1);
+      dataStorage.updateDocument(collectionName, metadata, documentId);
    }
 
    /**

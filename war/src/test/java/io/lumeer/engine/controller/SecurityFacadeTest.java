@@ -177,7 +177,7 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER6));
       Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER7));
       addRights(dataDocument, TEST_USER, 2);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_READ, dataDocument, id, -1);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_READ, dataDocument, id);
       Assert.assertFalse(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER));
    }
 
@@ -200,7 +200,7 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER6));
       Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER7));
       addRights(dataDocument, TEST_USER, 4);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument, id, -1);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument, id);
       Assert.assertFalse(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER));
    }
 
@@ -223,7 +223,7 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER5));
       Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER7));
       addRights(dataDocument, TEST_USER, 4);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument, id, -1);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument, id);
       Assert.assertFalse(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER));
    }
 
@@ -246,10 +246,10 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER5));
       Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER7));
       addRights(dataDocument, TEST_USER, 2);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id, -1);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id);
       Assert.assertFalse(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER));
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, TEST_USER);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id, -1);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id);
       Assert.assertTrue(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER));
    }
 
