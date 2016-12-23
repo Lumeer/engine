@@ -36,6 +36,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -79,6 +80,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
    private final String COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionAddOrIncrementAttribute";
    private final String COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropOrDecrementAttribute";
    private final String COLLECTION_CHECK_ATTRIBUTE_VALUE = "CollectionMetadataFacadeCollectionCheckAttributeValue";
+   private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
    private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
 
    @Test
@@ -428,6 +430,32 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid1), stringValueValid1);
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid2), stringValueValid2);
+   }
+
+   @Test
+   public void testGetSetDropCustomMetadata() throws Exception {
+      setUpCollection(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
+
+      collectionFacade.createCollection(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
+      String collection = internalName(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
+
+      // there is no custom metadata - we should obtain empty list
+      Assert.assertTrue(collectionMetadataFacade.getCustomMetadata(collection).isEmpty());
+      Assert.assertFalse(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList("key")));
+
+      String metaKey1 = "meta key 1";
+      String metaValue1 = "value 1";
+
+      // we set one custom value
+      Assert.assertTrue(collectionMetadataFacade.setCustomMetadata(collection, new DataDocument(metaKey1, metaValue1)));
+      Assert.assertEquals(collectionMetadataFacade.getCustomMetadata(collection).get(metaKey1).toString(), metaValue1);
+
+      // we try to drop non existing key, but dropAttribute does not return value, so we do not know it
+      Assert.assertTrue(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList("random key")));
+
+      // we drop existing key and after that it is not there
+      Assert.assertTrue(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList(metaKey1)));
+      Assert.assertFalse(collectionMetadataFacade.getCustomMetadata(collection).containsKey(metaKey1));
    }
 
    @Test

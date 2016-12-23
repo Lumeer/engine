@@ -163,6 +163,8 @@ public final class LumeerConst {
       public static final String COLLECTION_RIGHTS_META_TYPE_VALUE = "rights";
       public static final String COLLECTION_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
       public static final String COLLECTION_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
+
+      public static final String COLLECTION_CUSTOM_META_TYPE_VALUE = "custom";
    }
 
    public static class Security {
