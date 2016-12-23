@@ -87,17 +87,21 @@ public class MongoDbStorage implements DataStorage {
    private String storageDatabase;
 
    @Inject
+   @Named("dataStorageUseSsl")
+   private Boolean storageUseSsl;
+
+   @Inject
    private Logger log;
 
    @PostConstruct
    public void connect() {
       if (mongoClient == null) {
-         connect(storageConnection, storageDatabase);
+         connect(storageConnection, storageDatabase, storageUseSsl);
       }
    }
 
    @Override
-   public void connect(final List<StorageConnection> connections, final String database) {
+   public void connect(final List<StorageConnection> connections, final String database, final Boolean useSsl) {
       final List<ServerAddress> addresses = new ArrayList<>();
       final List<MongoCredential> credentials = new ArrayList<>();
 
@@ -108,7 +112,13 @@ public class MongoDbStorage implements DataStorage {
          }
       });
 
-      this.mongoClient = new MongoClient(addresses, credentials, (new MongoClientOptions.Builder()).connectTimeout(30000).build());
+      final MongoClientOptions.Builder optionsBuilder = (new MongoClientOptions.Builder()).connectTimeout(30000);
+
+      if (useSsl) {
+         optionsBuilder.sslEnabled(true).socketFactory(NaiveTrustManager.getSocketFactory()).sslInvalidHostNameAllowed(true);
+      }
+
+      this.mongoClient = new MongoClient(addresses, credentials, optionsBuilder.build());
       this.database = mongoClient.getDatabase(database);
    }
 

@@ -37,10 +37,10 @@ import java.util.Set;
  */
 public interface DataStorage extends Serializable {
 
-   void connect(final List<StorageConnection> connections, final String database);
+   void connect(final List<StorageConnection> connections, final String database, final Boolean useSsl);
 
-   default void connect(final StorageConnection connection, final String database) {
-      connect(Collections.singletonList(connection), database);
+   default void connect(final StorageConnection connection, final String database, final Boolean useSsl) {
+      connect(Collections.singletonList(connection), database, useSsl);
    }
 
    void disconnect();

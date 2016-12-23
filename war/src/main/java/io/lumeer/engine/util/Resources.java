@@ -75,7 +75,8 @@ public class Resources {
             Integer.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PORT_PROPERTY)),
             defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USER_PROPERTY),
             defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY)),
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY));
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY),
+            Boolean.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USE_SSL)));
 
       return storage;
    }

@@ -37,12 +37,14 @@ public final class LumeerConst {
    public static final String DB_NAME_PROPERTY = "db_name";
    public static final String DB_USER_PROPERTY = "db_user";
    public static final String DB_PASSWORD_PROPERTY = "db_passwd";
+   public static final String DB_USE_SSL = "db_ssl";
 
    public static final String SYSTEM_DB_HOST_PROPERTY = "sys_db_host";
    public static final String SYSTEM_DB_PORT_PROPERTY = "sys_db_port";
    public static final String SYSTEM_DB_NAME_PROPERTY = "sys_db_name";
    public static final String SYSTEM_DB_USER_PROPERTY = "sys_db_user";
    public static final String SYSTEM_DB_PASSWORD_PROPERTY = "sys_db_passwd";
+   public static final String SYSTEM_DB_USE_SSL = "sys_db_ssl";
 
    public static final String USER_LOCALE_PROPERTY = "locale";
 

@@ -70,6 +70,12 @@ public class ConfigurationFacade implements Serializable {
       return getConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
    }
 
+   @Produces
+   @Named("dataStorageUseSsl")
+   public Boolean getDataStorageUseSsl() {
+      return Boolean.valueOf(getConfigurationString(LumeerConst.DB_USE_SSL).orElse("false"));
+   }
+
    /**
     * Returns an Optional String value of the given key.
     *
