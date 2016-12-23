@@ -225,7 +225,7 @@ public class CollectionMetadataFacade implements Serializable {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       checkIfMetadataCollectionExists(metadataCollectionName);
 
-      String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
       List<DataDocument> attributesInfoDocuments = dataStorage.run(query);
 
       List<String> attributes = new ArrayList<>();
@@ -257,7 +257,7 @@ public class CollectionMetadataFacade implements Serializable {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       checkIfMetadataCollectionExists(metadataCollectionName);
 
-      String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
       return dataStorage.run(query);
    }
 
@@ -525,7 +525,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       when metadata collection is not found
     */
    public String getOriginalCollectionName(String collectionName) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException {
-      String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
       List<DataDocument> nameInfo = dataStorage.run(query);
 
       if (nameInfo.isEmpty()) {
@@ -577,11 +577,11 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param collectionOriginalName
     *       name given by user
+    * @return true if the rename is successful, false if metadata collection was not found and the rename could not be performed
     * @throws UserCollectionAlreadyExistsException
     *       when collection with given user name already exists
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to write to the collection
-    * @return true if the rename is successful, false if metadata collection was not found and the rename could not be performed
     */
    public boolean setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException, UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionInternalName), getCurrentUser())) {
@@ -595,7 +595,7 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryOneValueFromCollectionMetadata(collectionInternalName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
+      String query = queryDocumentFromCollectionMetadata(collectionInternalName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
       List<DataDocument> nameInfo = dataStorage.run(query);
       DataDocument nameDocument = nameInfo.get(0);
       String id = nameDocument.getId();
@@ -631,7 +631,7 @@ public class CollectionMetadataFacade implements Serializable {
 
       checkIfMetadataCollectionExists(collectionMetadataCollectionName(collectionName));
 
-      String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
       List<DataDocument> lockInfo = dataStorage.run(query);
 
       if (lockInfo.isEmpty()) {
@@ -666,7 +666,7 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
       List<DataDocument> lockInfo = dataStorage.run(query);
       DataDocument lockDocument = lockInfo.get(0);
       String id = lockDocument.getId();
@@ -676,6 +676,107 @@ public class CollectionMetadataFacade implements Serializable {
 
       DataDocument metadataDocument = new DataDocument(metadata);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
+      return true;
+   }
+
+   /**
+    * Gets document with custom metadata.
+    * @param collectionName internal name
+    * @return DataDocument with all custom metadata values
+    * @throws UnauthorizedAccessException when current user is not allowed to read the collection
+    */
+   public DataDocument getCustomMetadata(String collectionName) throws UnauthorizedAccessException {
+      if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
+         return new DataDocument(); // return blank document
+      }
+
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
+      List<DataDocument> customMetadataList = dataStorage.run(query);
+
+      if (customMetadataList.isEmpty()) {
+         return new DataDocument(); // return blank document
+      }
+
+      return customMetadataList.get(0);
+   }
+
+   /**
+    * Adds all pairs key:value to custom metadata
+    *
+    * @param collectionName
+    *       internal name
+    * @param metadataDocument
+    *       document with metadata values
+    * @return true when update was successful, false when metadata collection does not exist
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
+    */
+   public boolean setCustomMetadata(String collectionName, DataDocument metadataDocument) throws UnauthorizedAccessException {
+      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
+         return false;
+      }
+
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
+      List<DataDocument> customMetadataList = dataStorage.run(query);
+
+      if (customMetadataList.isEmpty()) { // document with custom metadata does not exist - we create it
+         metadataDocument.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
+         dataStorage.createDocument(collectionMetadataCollectionName(collectionName), metadataDocument);
+         return true;
+      }
+
+      DataDocument customMetadataDocument = customMetadataList.get(0);
+      String id = customMetadataDocument.getId();
+
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
+
+      return true;
+   }
+
+   /**
+    * Drops all custom metadata values associated with given keys.
+    *
+    * @param collectionName
+    *       internal name
+    * @param keys
+    *       list of metadata keys to drop
+    * @return false when metadata collection or custom metadata document does not exist, true otherwise
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to write to the collection
+    */
+   public boolean dropCustomMetadata(String collectionName, List<String> keys) throws UnauthorizedAccessException {
+      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
+
+      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+
+      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+         return false;
+      }
+
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
+      List<DataDocument> customMetadataList = dataStorage.run(query);
+
+      if (customMetadataList.isEmpty()) { // document with custom metadata does not exist - we have nothing to drop
+         return false;
+      }
+
+      DataDocument customMetadataDocument = customMetadataList.get(0);
+      String id = customMetadataDocument.getId();
+
+      for (String key : keys) {
+         dataStorage.dropAttribute(metadataCollectionName, id, key);
+      }
+
       return true;
    }
 
@@ -956,7 +1057,7 @@ public class CollectionMetadataFacade implements Serializable {
          return null;
       }
 
-      String query = queryOneValueFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE);
+      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE);
       List<DataDocument> rightsInfo = dataStorage.run(query);
 
       if (rightsInfo.isEmpty()) {
@@ -978,8 +1079,8 @@ public class CollectionMetadataFacade implements Serializable {
       }
    }
 
-   // returns MongoDb query for getting specific metadata value
-   private String queryOneValueFromCollectionMetadata(String collectionName, String metaTypeValue) {
+   // returns MongoDb query for getting specific metadata document
+   private String queryDocumentFromCollectionMetadata(String collectionName, String metaTypeValue) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       StringBuilder sb = new StringBuilder("{find:\"")
             .append(metadataCollectionName)
