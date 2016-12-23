@@ -32,6 +32,7 @@ abstract public class CollectionEvent {
 
    public CollectionEvent(final String userName, final String internalName) {
       this.userName = userName;
+      this.internalName = internalName;
    }
 
    public String getUserName() {
