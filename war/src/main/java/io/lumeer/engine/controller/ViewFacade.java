@@ -26,10 +26,12 @@ import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
+import io.lumeer.engine.rest.dao.ViewDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -337,6 +339,41 @@ public class ViewFacade implements Serializable {
       setViewMetadataValueWithoutChecks(viewDocument, metaKey, value);
    }
 
+   /**
+    * @return list of ViewDao for all views
+    */
+   public List<ViewDao> getAllViews() {
+      List<DataDocument> views = getViewsMetadata();
+      return createListOfDaos(views);
+
+   }
+
+   /**
+    * @param type
+    *       type of the view
+    * @return list of ViewDao for all views of given type
+    */
+   public List<ViewDao> getAllViewsOfType(String type) {
+      List<DataDocument> views = getViewsOfTypeMetadata(type);
+      return createListOfDaos(views);
+   }
+
+   // creates list of daos from list of documents
+   private List<ViewDao> createListOfDaos(List<DataDocument> views) {
+      List<ViewDao> viewsDaos = new ArrayList<>();
+      for (DataDocument view : views) {
+         ViewDao viewDao = new ViewDao(
+               view.getInteger(LumeerConst.View.VIEW_ID_KEY),
+               view.getString(LumeerConst.View.VIEW_NAME_KEY),
+               view.getString(LumeerConst.View.VIEW_TYPE_KEY),
+               view.getDataDocument(LumeerConst.View.VIEW_CONFIGURATION_KEY)
+         );
+         viewsDaos.add(viewDao);
+      }
+
+      return viewsDaos;
+   }
+
    // returns MongoDb query for getting metadata for one given view
    private String queryOneViewMetadata(int viewId) {
       StringBuilder sb = new StringBuilder("{find:\"")
@@ -353,6 +390,19 @@ public class ViewFacade implements Serializable {
    // gets info about all views
    private List<DataDocument> getViewsMetadata() {
       return dataStorage.search(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, null, null, 0, 0);
+   }
+
+   // gets info about all views of given type
+   private List<DataDocument> getViewsOfTypeMetadata(String type) {
+      StringBuilder sb = new StringBuilder("{find:\"")
+            .append(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
+            .append("\",filter:{\"")
+            .append(LumeerConst.View.VIEW_TYPE_KEY)
+            .append("\":\"")
+            .append(type)
+            .append("\"}}");
+      String viewMetaQuery = sb.toString();
+      return dataStorage.run(viewMetaQuery);
    }
 
    private boolean checkIfViewNameExists(String originalViewName) {

@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
+import io.lumeer.engine.rest.dao.ViewDao;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -75,6 +76,10 @@ public class ViewFacadeTest extends Arquillian {
    private final String SET_GET_CONFIGURATION_ATTRIBUTE_VIEW = "viewSetGetConfigurationAttribute";
    private final String GET_METADATA_VIEW = "viewGetMetadata";
    private final String GET_METADATA_VALUE_VIEW = "viewGetMetadataValue";
+   private final String GET_ALL_VIEWS_VIEW_1 = "viewGetAllViews1";
+   private final String GET_ALL_VIEWS_VIEW_2 = "viewGetAllViews2";
+   private final String GET_ALL_VIEWS_OF_TYPE_VIEW_1 = "viewGetAllViewsOfType1";
+   private final String GET_ALL_VIEWS_OF_TYPE_VIEW_2 = "viewGetAllViewsOfType2";
 
    @Test
    public void testCreateView() throws Exception {
@@ -243,6 +248,34 @@ public class ViewFacadeTest extends Arquillian {
          pass = true;
       }
       Assert.assertTrue(pass);
+   }
+
+   @Test
+   public void testGetAllViews() throws Exception {
+      setUpCollection();
+      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_VIEW_1);
+      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_VIEW_2);
+
+      List<ViewDao> views = viewFacade.getAllViews();
+      Assert.assertEquals(views.size(), 2);
+      Assert.assertTrue(views.get(0).getId() == viewId1 || views.get(0).getId() == viewId2);
+   }
+
+   @Test
+   public void testGetAllViewsOfType() throws Exception {
+      setUpCollection();
+      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_1);
+      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_2);
+
+      String type = "type";
+      viewFacade.setViewType(viewId1, type);
+
+      List<ViewDao> views = viewFacade.getAllViewsOfType(type);
+      Assert.assertEquals(views.size(), 1);
+      Assert.assertEquals(views.get(0).getId(), viewId1);
+
+      views = viewFacade.getAllViewsOfType("non existing type");
+      Assert.assertEquals(views.size(), 0);
    }
 
    private void setUpCollection() {
