@@ -37,6 +37,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -59,6 +60,8 @@ public class DocumentFacadeTest extends Arquillian {
    }
 
    private final String COLLECTION_CREATE_AND_DROP = "collectionCreateAndDrop";
+   private final String COLLECTION_REPLACE = "collectionReplace";
+   private final String COLLECTION_REVERT = "collectionRevert";
    private final String COLLECTION_READ_AND_UPDATE = "collectionReadAndUpdate";
    private final String COLLECTION_GETATTRS_AND_DROPATTR = "collectionGetAttrsAndDropAttr";
 
@@ -89,6 +92,69 @@ public class DocumentFacadeTest extends Arquillian {
 
       documentFacade.dropDocument(coll, documentId);
       Assert.assertNull(dataStorage.readDocument(coll, documentId));
+   }
+
+   @Test
+   public void testRevertDocument() throws Exception {
+      String coll = setUpCollection(COLLECTION_REVERT);
+      String attr = "a";
+      DataDocument document = new DataDocument(attr, "0");
+      String documentId = documentFacade.createDocument(coll, document);
+
+      DataDocument document1 = new DataDocument(attr, "1");
+      document1.setId(documentId);
+      documentFacade.updateDocument(coll, document1);
+
+      DataDocument document2 = new DataDocument(attr, "2");
+      document2.setId(documentId);
+      documentFacade.updateDocument(coll, document2);
+
+      DataDocument document3 = new DataDocument(attr, "3");
+      document3.setId(documentId);
+      documentFacade.updateDocument(coll, document3);
+
+      DataDocument readed = documentFacade.readDocument(coll, documentId);
+      Assert.assertEquals(readed.getString(attr), "3");
+
+      documentFacade.revertDocument(coll, documentId, 0);
+      readed = documentFacade.readDocument(coll, documentId);
+      Assert.assertEquals(readed.getString(attr), "0");
+
+      documentFacade.revertDocument(coll, documentId, 1);
+      readed = documentFacade.readDocument(coll, documentId);
+      Assert.assertEquals(readed.getString(attr), "1");
+
+      documentFacade.revertDocument(coll, documentId, 2);
+      readed = documentFacade.readDocument(coll, documentId);
+      Assert.assertEquals(readed.getString(attr), "2");
+
+      documentFacade.revertDocument(coll, documentId, 3);
+      readed = documentFacade.readDocument(coll, documentId);
+      Assert.assertEquals(readed.getString(attr), "3");
+   }
+
+   @Test
+   public void testReplaceDocument() throws Exception {
+      String coll = setUpCollection(COLLECTION_REPLACE);
+
+      DataDocument document = new DataDocument("a", 1).append("b", 2).append("c", 3);
+      String documentId = documentFacade.createDocument(coll, document);
+
+      DataDocument replace = new DataDocument("d", 4).append("e", 5).append("f", 6);
+      replace.setId(documentId);
+      documentFacade.replaceDocument(coll, replace);
+
+      DataDocument readed = documentFacade.readDocument(coll, documentId);
+
+      Assert.assertTrue(!readed.containsKey("a"));
+      Assert.assertTrue(!readed.containsKey("b"));
+      Assert.assertTrue(!readed.containsKey("c"));
+
+      Assert.assertTrue(readed.containsKey("d"));
+      Assert.assertTrue(readed.containsKey("e"));
+      Assert.assertTrue(readed.containsKey("f"));
+      Assert.assertTrue(readed.containsKey(LumeerConst.Document.USER_RIGHTS));
+
    }
 
    @Test

@@ -138,7 +138,7 @@ public class VersionFacadeTest extends Arquillian {
       String documentId = dataStorage.createDocument(TEST_GET_OLD_DOC, dataDocument);
       dataDocument = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
       versionFacade.newDocumentVersion(TEST_GET_OLD_DOC, dataDocument);
-      DataDocument testDocument = versionFacade.getOldDocumentVersion(TEST_GET_OLD_DOC, dataDocument, 1);
+      DataDocument testDocument = versionFacade.readOldDocumentVersion(TEST_GET_OLD_DOC, dataDocument, 1);
       dataDocument = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
       testDocument.replace(VERSION_STRING, 2);
       Assert.assertTrue(testForEquiv(testDocument, dataDocument));
