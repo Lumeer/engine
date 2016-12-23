@@ -20,12 +20,14 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.ViewDao;
 
 import org.bson.Document;
 
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -45,6 +47,9 @@ import javax.ws.rs.core.MediaType;
 @RequestScoped
 public class ViewService {
 
+   @Inject
+   private ViewFacade viewFacade;
+
    /**
     * Gets a complete list of all views. Filters the views by type when parameter is not empty.
     *
@@ -57,12 +62,10 @@ public class ViewService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<ViewDao> getAllViews(final @QueryParam("typeName") String typeName) {
       if (typeName == null || typeName.isEmpty()) {
-         // TODO return all available views
+         return viewFacade.getAllViews();
       } else {
-         // TODO return only views of the given type
+         return viewFacade.getAllViewsOfType(typeName);
       }
-
-      return null;
    }
 
    /**
