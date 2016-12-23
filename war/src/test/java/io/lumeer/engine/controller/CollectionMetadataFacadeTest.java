@@ -36,6 +36,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
@@ -346,6 +347,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       collectionFacade.createCollection(COLLECTION_CHECK_ATTRIBUTE_VALUE);
       String collection = internalName(COLLECTION_CHECK_ATTRIBUTE_VALUE);
 
+
       // check value of type int and also its constraints
       String attributeInt = "int";
       collectionMetadataFacade.addOrIncrementAttribute(collection, attributeInt);
@@ -363,6 +365,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueValid), Integer.parseInt(intValueValid));
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidConstraint), null);
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidType), null);
+
 
       // check value of type long
       String attributeLong = "long";
@@ -398,11 +401,23 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       collectionMetadataFacade.addOrIncrementAttribute(collection, attributeDate);
       collectionMetadataFacade.retypeCollectionAttribute(collection, attributeDate, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE);
 
-      String dateValueValid1 = "2016.12.18";
-      String dateValueValid2 = "2016.12.18 14.01";
+      // at first, there is no constraint for date, so the string value is checked against default format
+      String dateValueValid1 = "2016.12.18 14.34.00.000"; // default date and time format from Utils
+      String dateValueInvalid1 = "2016.12.18 14.34.00";
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid1), Utils.getDate(dateValueValid1));
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid1), null);
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid1), dateValueValid1);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid2), dateValueValid2);
+      // we add constraint (chosen from DateTimeConstraintType)
+      String format = "HH:mm:ss";
+      String constraint3 = "time:" + format;
+      collectionMetadataFacade.addAttributeConstraint(collection, attributeDate, constraint3);
+      SimpleDateFormat sdf = new SimpleDateFormat(format);
+
+      String dateValueValid2 = "14:34:00";
+      String dateValueInvalid2 = "14:34";
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid2), sdf.parse(dateValueValid2));
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid2), null);
+
 
       // check value of type boolean
       String attributeBoolean = "boolean";

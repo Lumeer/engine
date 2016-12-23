@@ -136,7 +136,7 @@ public final class LumeerConst {
       public static final String COLLECTION_ATTRIBUTE_TYPE_LONG = "long";
       public static final String COLLECTION_ATTRIBUTE_TYPE_DOUBLE = "double";
       public static final String COLLECTION_ATTRIBUTE_TYPE_DECIMAL = "decimal";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date"; // we accept yyyy.MM.dd and yyyy.MM.dd HH.mm.ss
+      public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date"; // we accept yyyy.MM.dd HH.mm.ss.SSS as default
       public static final String COLLECTION_ATTRIBUTE_TYPE_BOOLEAN = "bool";
       public static final List<String> COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES = Arrays.asList("true", "false");
       public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "string";
