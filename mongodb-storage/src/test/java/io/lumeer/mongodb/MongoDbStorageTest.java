@@ -65,6 +65,7 @@ public class MongoDbStorageTest {
    private final String COLLECTION_CREATE_AND_READ_DOCUMENT = "collectionCreateAndReadDocument";
    private final String COLLECTION_CREATE_AND_READ_OLD_DOCUMENT = "collectionCreateAndReadOldDocument";
    private final String COLLECTION_UPDATE_DOCUMENT = "collectionUpdateDocument";
+   private final String COLLECTION_REPLACE_DOCUMENT = "collectionReplaceDocument";
    private final String COLLECTION_DROP_DOCUMENT = "collectionDropDocument";
    private final String COLLECTION_DROP_MANY = "collectionDropMany";
    private final String COLLECTION_DROP_ATTRIBUTE = "collectionRemoveAttribute";
@@ -101,6 +102,7 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_SEARCH);
       mongoDbStorage.dropCollection(COLLECTION_RUN);
       mongoDbStorage.dropCollection(COLLECTION_RENAME_ATTRIBUTE);
+      mongoDbStorage.dropCollection(COLLECTION_REPLACE_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_INC_ATTR_VALUE_BY);
       mongoDbStorage.dropCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
       mongoDbStorage.dropCollection(COLLECTION_NESTED_DOCUMENTS);
@@ -199,6 +201,26 @@ public class MongoDbStorageTest {
       Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY1), DUMMY_CHANGED_VALUE1);
       Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY2), DUMMY_CHANGED_VALUE2);
       Assert.assertEquals(readedAfterInsDocument.getInteger(LumeerConst.METADATA_VERSION_KEY).intValue(), 1);
+   }
+
+   @Test
+   public void testReplaceDocument() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_REPLACE_DOCUMENT);
+
+      DataDocument insertedDocument = new DataDocument("a", 1).append("b", 2).append("c", 3);
+      String documentId = mongoDbStorage.createDocument(COLLECTION_REPLACE_DOCUMENT, insertedDocument);
+
+      DataDocument replaceDocument = new DataDocument("d", 4).append("e", 5).append("f", 6);
+      mongoDbStorage.replaceDocument(COLLECTION_REPLACE_DOCUMENT, replaceDocument, documentId);
+
+      DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_REPLACE_DOCUMENT, documentId);
+      Assert.assertTrue(!readedDocument.containsKey("a"));
+      Assert.assertTrue(!readedDocument.containsKey("b"));
+      Assert.assertTrue(!readedDocument.containsKey("c"));
+
+      Assert.assertTrue(readedDocument.containsKey("d"));
+      Assert.assertTrue(readedDocument.containsKey("e"));
+      Assert.assertTrue(readedDocument.containsKey("f"));
    }
 
    @Test

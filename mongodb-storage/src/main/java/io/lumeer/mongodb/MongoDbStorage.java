@@ -229,17 +229,41 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId) {
+      updateDocument(collectionName, updatedDocument, documentId, -1);
+   }
+
+   @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId, final int targetVersion) {
-      if (updatedDocument.containsKey(LumeerConst.Document.ID)) {
-         updatedDocument.remove(LumeerConst.Document.ID);
+      DataDocument toUpdate = new DataDocument(updatedDocument);
+      if (toUpdate.containsKey(LumeerConst.Document.ID)) {
+         toUpdate.remove(LumeerConst.Document.ID);
       }
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
       if (targetVersion >= 0) {
          filter.append(LumeerConst.METADATA_VERSION_KEY, updatedDocument.getInteger(LumeerConst.METADATA_VERSION_KEY));
       }
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(updatedDocument));
-      updatedDocument.put(LumeerConst.Document.ID, documentId);
       database.getCollection(collectionName).updateOne(filter, updateBson);
+   }
+
+   @Override
+   public void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String documentId) {
+      replaceDocument(collectionName, replaceDocument, documentId, -1);
+   }
+
+   @Override
+   public void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String documentId, int targetVersion) {
+      DataDocument toReplace = new DataDocument(replaceDocument);
+      if (toReplace.containsKey(LumeerConst.Document.ID)) {
+         toReplace.remove(LumeerConst.Document.ID);
+      }
+      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
+      if (targetVersion >= 0) {
+         filter.append(LumeerConst.METADATA_VERSION_KEY, toReplace.getInteger(LumeerConst.METADATA_VERSION_KEY));
+      }
+      Document replaceDoc = new Document(replaceDocument);
+      database.getCollection(collectionName).replaceOne(filter, replaceDoc);
    }
 
    @Override
@@ -372,7 +396,6 @@ public class MongoDbStorage implements DataStorage {
 
       return result;
    }
-
 
    @Override
    public List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit) {
