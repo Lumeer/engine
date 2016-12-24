@@ -202,6 +202,7 @@ public class DocumentFacade implements Serializable {
       });
       repl.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       repl.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
+      versionFacade.backUp(collectionName, documentId);
       dataStorage.replaceDocument(collectionName, repl, documentId);
 
       // add new attributes of updated document to collection metadata
@@ -306,6 +307,7 @@ public class DocumentFacade implements Serializable {
       if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
          throw new UnauthorizedAccessException();
       }
+      versionFacade.backUp(collectionName, documentId);
       dataStorage.dropAttribute(collectionName, documentId, attributeName);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
    }
