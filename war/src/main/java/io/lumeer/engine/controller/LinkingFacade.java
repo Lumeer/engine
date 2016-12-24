@@ -102,7 +102,7 @@ public class LinkingFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public List<LinkTypeDao> getLinkTypes(final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkTypeDao> readLinkTypes(final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       checkCollectionForRead(collectionName);
       List<LinkTypeDao> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, null, linkDirection);
@@ -130,8 +130,9 @@ public class LinkingFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public List<LinkDao> getLinks(final String collectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkDao> readLinks(final String collectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       checkCollectionForRead(collectionName);
+
       List<LinkDao> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, role, linkDirection);
       for (DataDocument lt : linkingTables) {
@@ -139,13 +140,43 @@ public class LinkingFacade implements Serializable {
          String fromCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
          String toCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
          List<DataDocument> ls = dataStorage.search(colName, null, null, 0, 0);
-         for (DataDocument l : ls) {
-            String fromId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID);
-            String toId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_TO_ID);
-            DataDocument attrs = l.getDataDocument(LumeerConst.Linking.LinkingTable.ATTR_ATTRIBUTES);
-            links.add(new LinkDao(fromCollection, toCollection, role, fromId, toId, attrs));
-         }
+         links.addAll(convertLinkDaosFromDocuments(ls, fromCollection, toCollection, role));
       }
+      return links;
+   }
+
+   /**
+    * Read all links between two documents
+    *
+    * @param fromCollectionName
+    *       the name of the first document's collection
+    * @param fromId
+    *       the id of the first document
+    * @param toCollectionName
+    *       the name of the second document's collection
+    * @param toId
+    *       the id of the second document
+    * @param role
+    *       role name
+    * @param linkDirection
+    *       direction of link
+    * @return list of all links
+    * @throws DbException
+    *       When there is an error working with the database.
+    */
+   public List<LinkDao> readDocByDocLinks(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+      checkCollectionForRead(fromCollectionName);
+
+      List<LinkDao> links = new ArrayList<>();
+      List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
+      for (DataDocument lt : linkingTables) {
+         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
+         String fromCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
+         String toCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
+         List<DataDocument> ls = readLinkingDocumentsFromTo(colName, fromId, toId, linkDirection);
+         links.addAll(convertLinkDaosFromDocuments(ls, fromCollection, toCollection, role));
+      }
+
       return links;
    }
 
@@ -164,7 +195,7 @@ public class LinkingFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public List<DataDocument> readDocumentLinks(final String fromCollectionName, final String fromDocumentId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<DataDocument> readDocumentLinksDocs(final String fromCollectionName, final String fromDocumentId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       checkCollectionForRead(fromCollectionName);
 
       List<DataDocument> links = new ArrayList<>();
@@ -194,12 +225,11 @@ public class LinkingFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public List<DataDocument> readDocByDocLinks(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<DataDocument> readDocByDocLinksDocs(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       checkCollectionForRead(fromCollectionName);
 
       List<DataDocument> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
-      System.out.println(linkingTables.size());
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          List<DataDocument> linkingDocuments = readLinkingDocumentsFromTo(colName, fromId, toId, linkDirection);
@@ -416,6 +446,17 @@ public class LinkingFacade implements Serializable {
       List<DataDocument> linkingDocuments = readLinkingDocumentsFrom(colName, fromDocumentId, linkDirection);
       String readCollectionName = linkDirection == LumeerConst.Linking.LinkDirection.FROM ? lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION) : lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
       return readDocumentsFromLinkingDocumentsFrom(linkingDocuments, readCollectionName, linkDirection);
+   }
+
+   private List<LinkDao> convertLinkDaosFromDocuments(final List<DataDocument> ls, final String fromCollection, final String toCollection, final String role) {
+      List<LinkDao> links = new ArrayList<>();
+      for (DataDocument l : ls) {
+         String fromId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID);
+         String toId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_TO_ID);
+         DataDocument attrs = l.getDataDocument(LumeerConst.Linking.LinkingTable.ATTR_ATTRIBUTES);
+         links.add(new LinkDao(fromCollection, toCollection, role, fromId, toId, attrs));
+      }
+      return links;
    }
 
    private void dropAllDocs(final String collectionName, final String documentId, final LumeerConst.Linking.LinkDirection linkDirection) {

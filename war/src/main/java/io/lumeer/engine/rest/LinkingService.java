@@ -44,6 +44,7 @@ import javax.ws.rs.core.MediaType;
  * Takes care of links between documents.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 @Path("/collections/{collectionName}/links")
 public class LinkingService {
@@ -73,11 +74,17 @@ public class LinkingService {
 
       final List<LinkTypeDao> links = new ArrayList<>();
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         links.addAll(linkingFacade.getLinkTypes(internalCollectionName, LumeerConst.Linking.LinkDirection.FROM));
+         links.addAll(linkingFacade.readLinkTypes(internalCollectionName, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         links.addAll(linkingFacade.getLinkTypes(internalCollectionName, LumeerConst.Linking.LinkDirection.TO));
+         links.addAll(linkingFacade.readLinkTypes(internalCollectionName, LumeerConst.Linking.LinkDirection.TO));
+      }
+
+      // translate internal collection names
+      for (LinkTypeDao linkTypeDao : links) {
+         linkTypeDao.setFromCollection(getOriginalName(linkTypeDao.getFromCollection()));
+         linkTypeDao.setToCollection(getOriginalName(linkTypeDao.getToCollection()));
       }
 
       return links;
@@ -104,11 +111,17 @@ public class LinkingService {
       final List<LinkDao> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         links.addAll(linkingFacade.getLinks(internalCollectionName, role, LumeerConst.Linking.LinkDirection.FROM));
+         links.addAll(linkingFacade.readLinks(internalCollectionName, role, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         links.addAll(linkingFacade.getLinks(internalCollectionName, role, LumeerConst.Linking.LinkDirection.TO));
+         links.addAll(linkingFacade.readLinks(internalCollectionName, role, LumeerConst.Linking.LinkDirection.TO));
+      }
+
+      // translate internal collection names
+      for (LinkDao linkDao : links) {
+         linkDao.setFromCollection(getOriginalName(linkDao.getFromCollection()));
+         linkDao.setToCollection(getOriginalName(linkDao.getToCollection()));
       }
 
       return links;
@@ -137,11 +150,11 @@ public class LinkingService {
       final List<DataDocument> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         links.addAll(linkingFacade.readDocumentLinks(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM));
+         links.addAll(linkingFacade.readDocumentLinksDocs(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         links.addAll(linkingFacade.readDocumentLinks(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.TO));
+         links.addAll(linkingFacade.readDocumentLinksDocs(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.TO));
       }
 
       return links;
@@ -152,6 +165,8 @@ public class LinkingService {
     *
     * @param collectionName
     *       The source/target collection.
+    * @param targetCollection
+    *       The target collection.
     * @param role
     *       The link role.
     * @param documentId
@@ -165,19 +180,19 @@ public class LinkingService {
     *       When there is an issue when communicating with the data storage.
     */
    @GET
-   @Path("/{role}/documents/{id}/target/{targetId}")
+   @Path("/{role}/collections/{targetCollection}/documents/{id}/target/{targetId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkDao> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkDao> getDocumentsLinks(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      final List<LinkDao> links = new ArrayList<>();
-      // TODO translate user collection names
+      String internalTargetCollectionName = getInternalName(targetCollection);
 
+      final List<LinkDao> links = new ArrayList<>();
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         // TODO přidat do links dokumenty z vazby role vychházející z kolekce collectionName z dokumentu _id kamkoliv
+         links.addAll(linkingFacade.readDocByDocLinks(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         // TODO přidat do links dokumenty z vazby role směřující do kolekce collectionName do dokumentu _id odkudkoliv
+         links.addAll(linkingFacade.readDocByDocLinks(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.TO));
       }
 
       return links;
@@ -217,6 +232,8 @@ public class LinkingService {
     *
     * @param collectionName
     *       The source/target collection.
+    * @param targetCollection
+    *       The target collection.
     * @param role
     *       The link role.
     * @param documentId
@@ -229,17 +246,18 @@ public class LinkingService {
     *       When there is an issue when communicating with the data storage.
     */
    @DELETE
-   @Path("/{role}/documents/{id}/targets/{targetId}")
+   @Path("/{role}/collections/{targetCollection}/documents/{id}/targets/{targetId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public void deleteLink(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public void deleteLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      // TODO translate user collection names
+      String internalTargetCollectionName = getInternalName(targetCollection);
+
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         // TODO smazat z links dokument targetId z vazby role vychházející z kolekce collectionName z dokumentu _id
+         linkingFacade.dropDocWithDocLink(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM);
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         // TODO smazat z links dokument targetId z vazby role směřující do kolekce collectionName do dokumentu _id
+         linkingFacade.dropDocWithDocLink(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.TO);
       }
    }
 
@@ -277,5 +295,9 @@ public class LinkingService {
 
    private String getInternalName(String collectionOriginalName) throws DbException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
+   }
+
+   private String getOriginalName(final String fromCollection) throws DbException {
+      return collectionMetadataFacade.getOriginalCollectionName(fromCollection);
    }
 }
