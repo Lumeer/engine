@@ -281,7 +281,7 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       String lock = collectionMetadataFacade.getCollectionLockTime(collection);
 
       Assert.assertEquals(name, COLLECTION_CREATE_INITIAL_METADATA);
-      Assert.assertNotEquals(lock, "");
+      Assert.assertEquals(lock, "");
    }
 
    @Test

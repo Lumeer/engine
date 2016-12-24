@@ -199,7 +199,7 @@ public class CollectionMetadataFacade implements Serializable {
       // set lock - we don't use setCollectionLockTime, because that methods assumes document with lock already exists
       Map<String, Object> metadataLock = new HashMap<>();
       metadataLock.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
-      metadataLock.put(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, Utils.getCurrentTimeString());
+      metadataLock.put(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, "");
       dataStorage.createDocument(metadataCollectionName, new DataDocument(metadataLock));
 
       // we create indexes on frequently used fields
@@ -615,7 +615,7 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param collectionName
     *       internal collection name
-    * @return String representation of the time of the last update of collection lock
+    * @return String representation of the time of the last update of collection lock, empty string if lock is not set
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
     * @throws CollectionMetadataDocumentNotFoundException
