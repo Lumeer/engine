@@ -63,6 +63,8 @@ public class LinkingFacadeTest extends Arquillian {
    private final String COLLECTION_GETLINKTYPES_I = "collectionGetLinkTypesI";
    private final String COLLECTION_GETLINKTYPES_II = "collectionGetLinkTypesII";
    private final String COLLECTION_GETLINKTYPES_III = "collectionGetLinkTypesIII";
+   private final String COLLECTION_GETDOCUMENTSLINKS_I = "collectionGetDocumentsLinksI";
+   private final String COLLECTION_GETDOCUMENTSLINKS_II = "collectionGetDocumentsLinksII";
    private final String COLLECTION_READ_DROP_DOC_BY_DOC_I = "collectionReadDropDocByDocI";
    private final String COLLECTION_READ_DROP_DOC_BY_DOC_II = "collectionReadDropDocByDocII";
    private final String COLLECTION_READ_DROP_DOC_BY_DOC_III = "collectionReadDropDocByDocIII";
@@ -131,6 +133,38 @@ public class LinkingFacadeTest extends Arquillian {
       List<LinkDao> linkTypes = linkingFacade.readLinks(COLLECTION_GETLINKS_I, role1, LumeerConst.Linking.LinkDirection.FROM);
       Assert.assertEquals(linkTypes.size(), 2);
 
+   }
+
+   @Test
+   public void testGetDocumentsLinks() throws Exception {
+      List<String> collections = Arrays.asList(COLLECTION_GETDOCUMENTSLINKS_I, COLLECTION_GETDOCUMENTSLINKS_II);
+      Map<String, List<String>> ids = createTestData(collections);
+
+      String col1Id1 = ids.get(COLLECTION_GETDOCUMENTSLINKS_I).get(0);
+      String col1Id2 = ids.get(COLLECTION_GETDOCUMENTSLINKS_I).get(1);
+      String col2Id1 = ids.get(COLLECTION_GETDOCUMENTSLINKS_II).get(0);
+      String col2Id2 = ids.get(COLLECTION_GETDOCUMENTSLINKS_II).get(1);
+
+      String role1 = "role1";
+
+      dropLinkingCollections(Collections.singletonList(role1), collections);
+
+      linkingFacade.createDocWithDocLink(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createDocWithDocLink(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+
+      linkingFacade.createDocWithDocLink(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+
+      List<LinkDao> linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(linkTypes.size(), 1);
+
+      linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertEquals(linkTypes.size(), 1);
+
+      linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, role1, LumeerConst.Linking.LinkDirection.FROM);
+      Assert.assertEquals(linkTypes.size(), 1);
+
+      linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, role1, LumeerConst.Linking.LinkDirection.TO);
+      Assert.assertEquals(linkTypes.size(), 0);
    }
 
    @Test

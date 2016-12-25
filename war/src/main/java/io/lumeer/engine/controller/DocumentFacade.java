@@ -204,6 +204,7 @@ public class DocumentFacade implements Serializable {
       repl.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
       versionFacade.backUp(collectionName, documentId);
       dataStorage.replaceDocument(collectionName, repl, documentId);
+      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
 
       // add new attributes of updated document to collection metadata
       repl.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -309,6 +310,7 @@ public class DocumentFacade implements Serializable {
       }
       versionFacade.backUp(collectionName, documentId);
       dataStorage.dropAttribute(collectionName, documentId, attributeName);
+      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
    }
 
