@@ -32,6 +32,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -69,7 +70,7 @@ public class LinkingService {
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkTypeDao> getLinkTypes(final @PathParam("collectionName") String collectionName, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkTypeDao> getLinkTypes(final @PathParam("collectionName") String collectionName, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
 
       final List<LinkTypeDao> links = new ArrayList<>();
@@ -106,7 +107,7 @@ public class LinkingService {
    @GET
    @Path("/{role}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkDao> getLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkDao> getLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       final List<LinkDao> links = new ArrayList<>();
 
@@ -145,7 +146,7 @@ public class LinkingService {
    @GET
    @Path("/{role}/documents/{id}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<DataDocument> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       final List<DataDocument> links = new ArrayList<>();
 
@@ -182,7 +183,8 @@ public class LinkingService {
    @GET
    @Path("/{role}/collections/{targetCollection}/documents/{id}/target/{targetId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkDao> getDocumentsLinks(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkDao> getDocumentsLinks(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
+         throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
 
@@ -215,7 +217,7 @@ public class LinkingService {
    @DELETE
    @Path("/{role}/documents/{id}")
    @Produces(MediaType.APPLICATION_JSON)
-   public void deleteLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public void deleteLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -248,7 +250,8 @@ public class LinkingService {
    @DELETE
    @Path("/{role}/collections/{targetCollection}/documents/{id}/targets/{targetId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public void deleteLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public void deleteLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
+         throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
 
@@ -276,21 +279,27 @@ public class LinkingService {
     *       The target document id.
     * @param attributes
     *       The link attributes.
+    * @param linkDirection
+    *       Which link direction to work with.
     * @throws DbException
     *       When there is an issue when communicating with the data storage.
     */
    @POST
-   @Path("/{role}/collections/{targetCollection}")
-   @Produces(MediaType.APPLICATION_JSON)
+   @Path("/{role}/collections/{targetCollection}/documents/{id}/targets/{targetId}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @QueryParam("fromId") String fromId, final @QueryParam("toId") String toId, final DataDocument attributes) throws DbException {
+   public void addLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String fromId, final @PathParam("targetId") String toId, final DataDocument attributes, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
+         throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
 
-      // it is possible to use the method without ids just to create the link with the given role
-      if (!((fromId == null || fromId.isEmpty()) && (toId == null || toId.isEmpty()))) {
+      if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          linkingFacade.createDocWithDocLink(internalCollectionName, fromId, internalTargetCollectionName, toId, attributes, role, LumeerConst.Linking.LinkDirection.FROM);
       }
+
+      if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
+         linkingFacade.createDocWithDocLink(internalCollectionName, fromId, internalTargetCollectionName, toId, attributes, role, LumeerConst.Linking.LinkDirection.TO);
+      }
+
    }
 
    private String getInternalName(String collectionOriginalName) throws DbException {

@@ -63,6 +63,10 @@ public final class LumeerConst {
        */
       public enum LinkDirection {
          BOTH, FROM, TO;
+
+         public static LinkDirection fromString(final String s) {
+            return LinkDirection.valueOf(s);
+         }
       }
 
       public class MainTable {
