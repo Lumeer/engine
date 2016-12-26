@@ -19,8 +19,6 @@
  */
 package io.lumeer.engine.controller;
 
-import java.io.Serializable;
-
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -33,12 +31,12 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
-
 import org.bson.types.ObjectId;
 
+import java.io.Serializable;
+import java.util.List;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import java.util.List;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
@@ -233,7 +231,8 @@ public class VersionFacade implements Serializable {
       int newVersion = newDocumentVersion(collectionName, document);
       newDocument.replace(LumeerConst.METADATA_VERSION_KEY, newVersion);
       String idN = newDocument.getId();
-      dataStorage.updateDocument(collectionName, newDocument, idN);
+      // dataStorage.updateDocument(collectionName, newDocument, idN);
+      dataStorage.replaceDocument(collectionName, newDocument, idN);
       newDocument.put(METADATA_ID_KEY, idN);
       DataDocument readed = dataStorage.readDocument(collectionName, newDocument.getId());
       if (!readed.keySet().containsAll(newDocument.keySet())) {

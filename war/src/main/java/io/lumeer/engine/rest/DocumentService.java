@@ -158,11 +158,12 @@ public class DocumentService implements Serializable {
    @POST
    @Path("/{documentId}/versions/{versionId}")
    public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId)
-         throws DbException {
+         throws DbException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      versionFacade.revertDocumentVersion(getInternalName(collectionName), documentFacade.readDocument(getInternalName(collectionName), documentId), versionId);
+      //versionFacade.revertDocumentVersion(getInternalName(collectionName), documentFacade.readDocument(getInternalName(collectionName), documentId), versionId);
+      documentFacade.revertDocument(getInternalName(collectionName), documentId, versionId);
    }
 
    @GET
@@ -182,7 +183,12 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      // TODO: how to?
+      // TODO:
+      // securityFacade.setRightsRead()
+      // securityFacade.setRightsWrite()
+      // securityFacade.setRightsExecute()
+
+
    }
 
    private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {

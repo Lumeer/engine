@@ -7,6 +7,7 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
+import io.lumeer.engine.controller.UserFacade;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -18,6 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -54,12 +56,16 @@ public class DocumentServiceTest extends Arquillian {
    @Inject
    private DocumentMetadataFacade documentMetadataFacade;
 
+   @Inject
+   private UserFacade userFacade;
+
    private final String TARGET_URI = "http://localhost:8080";
 
    private final String COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT = "DocumentServiceCollectionCreateReadUpdateAndDropDocument";
    private final String COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA = "DocumentServiceCollectionAddReadAndUpdateDocumentMetadata";
    private final String COLLECTION_SEARCH_HISTORY_CHANGES = "DocumentServiceCollectionSearchHistoryChanges";
    private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
+   private final String COLLECTION_READ_ACCESS_RIGHTS = "DocumentServiceCollectionrReadAccessRights";
 
    @Test
    public void testRegister() throws Exception {
@@ -184,20 +190,32 @@ public class DocumentServiceTest extends Arquillian {
       int versionTwo = documentVersion2.getInteger(LumeerConst.METADATA_VERSION_KEY);
       Assert.assertTrue(versionTwo == 2);
 
-      // TODO: There is an error inside the VersionFacade method revertDocumentVersion - update is not able to remove fields
-      /* Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_REVERT_DOCUMENT_VERSION) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_REVERT_DOCUMENT_VERSION) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       DataDocument currentDocument = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
       int versionThree = currentDocument.getInteger(LumeerConst.METADATA_VERSION_KEY);
       boolean isFirstVersion = !currentDocument.containsKey("dummyVersionTwoAttribute");
       Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && versionThree == 3 && isFirstVersion);
-      response.close(); */
+      response.close();
 
       client.close();
    }
 
    @Test
    public void testReadAccessRights() throws Exception {
-      // TODO:
+      setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
+      final Client client = ClientBuilder.newBuilder().build();
+      final int DEFAULT_INT_RULE = 7;
+
+      collectionFacade.createCollection(COLLECTION_READ_ACCESS_RIGHTS);
+      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_READ_ACCESS_RIGHTS), new DataDocument());
+
+      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_READ_ACCESS_RIGHTS) + documentId + "/rights").request().buildGet().invoke();
+      HashMap rights = response.readEntity(HashMap.class);
+      int ruleNumber = (int) rights.get(userFacade.getUserEmail());
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && ruleNumber == DEFAULT_INT_RULE);
+      response.close();
+
+      client.close();
    }
 
    @Test
