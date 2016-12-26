@@ -8,11 +8,17 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
+import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
+import io.lumeer.engine.api.exception.NullParameterException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
+import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
+import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
@@ -31,7 +37,9 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
       if (e instanceof UserCollectionAlreadyExistsException || e instanceof CollectionAlreadyExistsException ||
             e instanceof AttributeNotFoundException || e instanceof AttributeAlreadyExistsException ||
             e instanceof InvalidQueryException || e instanceof InvalidDocumentKeyException ||
-            e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException) {
+            e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException ||
+            e instanceof NullParameterException || e instanceof LinkAlreadyExistsException ||
+            e instanceof ViewAlreadyExistsException ) {
          return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
@@ -41,8 +49,9 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
       }
 
       // 404 - NOT FOUND
-      if (e instanceof CollectionNotFoundException || e instanceof CollectionMetadataDocumentNotFoundException ||
-            e instanceof DocumentNotFoundException) {
+      if (e instanceof UserCollectionNotFoundException || e instanceof CollectionNotFoundException ||
+            e instanceof CollectionMetadataDocumentNotFoundException || e instanceof DocumentNotFoundException ||
+            e instanceof ViewMetadataNotFoundException) {
          return Response.status(Response.Status.NOT_FOUND).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
