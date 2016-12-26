@@ -19,7 +19,11 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
+import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
+import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.ViewDao;
 
@@ -79,10 +83,8 @@ public class ViewService {
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    @Produces(MediaType.APPLICATION_JSON)
-   public int createView(final ViewDao view) {
-      // TODO create view
-      // TODO return ID of the newly created view
-      return 0;
+   public int createView(final ViewDao view) throws ViewAlreadyExistsException {
+      return viewFacade.createView(view.getName(), view.getType(), view.getConfiguration());
    }
 
    /**
@@ -94,8 +96,15 @@ public class ViewService {
    @PUT
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateView(final ViewDao view) {
+   public void updateView(final ViewDao view) throws ViewMetadataNotFoundException, UnauthorizedAccessException, ViewAlreadyExistsException {
       // TODO update view with id view.id
+      DataDocument viewDocument = viewFacade.getViewMetadata(view.getId());
+
+      if (view.getName() != null && !view.getName().equals(viewDocument.getString(LumeerConst.View.VIEW_NAME_KEY))) {
+         viewFacade.setViewName(view.getId(), view.getName());
+      }
+
+      viewFacade.setViewConfiguration(view.getId(), view.getConfiguration());
    }
 
    /**
@@ -111,12 +120,19 @@ public class ViewService {
    @PUT
    @Path("/{id}/configure/{attribute}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute, final String configuration) {
+   public void updateViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute, final String configuration) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      DataDocument value = null;
+
       try {
-         final DataDocument value = new DataDocument(Document.parse(configuration));
-         // TODO it is a document, update configuration - ViewDao.getConfiguration().put(attribute, value)
+         value = new DataDocument(Document.parse(configuration));
       } catch (Throwable t) {
-         // TODO it is not a JSON, simply use configuration as a string - ViewDao.getConfiguration().put(attribute, configuration)
+         value = null;
+      }
+
+      if (value != null) {
+         viewFacade.setViewConfigurationAttribute(id, attribute, value);
+      } else {
+         viewFacade.setViewConfigurationAttribute(id, attribute, configuration);
       }
    }
 
@@ -132,9 +148,8 @@ public class ViewService {
    @GET
    @Path("/{id}/configure/{attribute}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Object readViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute) {
-      // TODO return ViewDao.getConfiguration().get(attribute)
-      return null;
+   public Object readViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      return viewFacade.getViewConfigurationAttribute(id, attribute);
    }
 
    /**
@@ -150,10 +165,8 @@ public class ViewService {
    @Path("/{id}/clone/{newName}")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public int cloneView(final @PathParam("id") int id, final @PathParam("newName") String newName) {
-      // TODO copy the view with id under a new name and return the new id
-
-      return 0;
+   public int cloneView(final @PathParam("id") int id, final @PathParam("newName") String newName) throws ViewAlreadyExistsException, UnauthorizedAccessException, ViewMetadataNotFoundException {
+      return viewFacade.copyView(id, newName);
    }
 
    /**

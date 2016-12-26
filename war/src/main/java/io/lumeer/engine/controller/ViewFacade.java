@@ -33,6 +33,7 @@ import io.lumeer.engine.util.Utils;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,11 +63,13 @@ public class ViewFacade implements Serializable {
     *
     * @param originalViewName
     *       name given by user
+    * @param viewType
+    *       The type of the view.
     * @return view id
     * @throws ViewAlreadyExistsException
     *       when view with given name already exists
     */
-   public int createView(String originalViewName) throws ViewAlreadyExistsException {
+   public int createView(final String originalViewName, final String viewType, final DataDocument configuration) throws ViewAlreadyExistsException {
       if (checkIfViewNameExists(originalViewName)) {
          throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
       }
@@ -77,14 +80,11 @@ public class ViewFacade implements Serializable {
 
       int viewId = sequenceFacade.getNext(LumeerConst.View.VIEW_SEQUENCE_NAME); // generates id
       metadata.put(LumeerConst.View.VIEW_ID_KEY, viewId);
-
-      String createUser = getCurrentUser();
+      final String createUser = getCurrentUser();
       metadata.put(LumeerConst.View.VIEW_CREATE_USER_KEY, createUser);
-
-      String date = Utils.getCurrentTimeString();
-      metadata.put(LumeerConst.View.VIEW_CREATE_DATE_KEY, date);
-
-      metadata.put(LumeerConst.View.VIEW_TYPE_KEY, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE); // sets view type to default
+      metadata.put(LumeerConst.View.VIEW_CREATE_DATE_KEY, new Date());
+      metadata.put(LumeerConst.View.VIEW_TYPE_KEY, viewType); // sets view type to default
+      metadata.put(LumeerConst.View.VIEW_CONFIGURATION_KEY, configuration);
 
       DataDocument metadataDocument = new DataDocument(metadata);
 
@@ -114,28 +114,8 @@ public class ViewFacade implements Serializable {
     *       when current user is not allowed to read copied view
     */
    public int copyView(int viewId, String newName) throws ViewMetadataNotFoundException, ViewAlreadyExistsException, UnauthorizedAccessException {
-      DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
-      int viewCopyId = createView(newName); // we create new initial metadata for view copy
-      DataDocument viewCopy = getViewMetadata(viewCopyId);
-
-      List<String> nonChangingKeys = Arrays.asList(
-            LumeerConst.View.VIEW_NAME_KEY,
-            LumeerConst.View.VIEW_ID_KEY,
-            LumeerConst.View.VIEW_CREATE_USER_KEY,
-            LumeerConst.View.VIEW_CREATE_DATE_KEY,
-            LumeerConst.View.VIEW_USER_RIGHTS_KEY,
-            LumeerConst.Document.ID);
-
-      for (String key : viewDocument.keySet()) { // we copy all attributes of original view document except those which are listed in nonChangingKeys
-         if (nonChangingKeys.contains(key)) {
-            continue;
-         }
-
-         viewCopy.put(key, viewDocument.get(key));
-      }
-
-      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, viewCopy, viewCopy.getId());
-      return viewCopyId;
+      final DataDocument originalView = getViewMetadataWithoutAccessCheck(viewId);
+      return createView(newName, originalView.getString(LumeerConst.View.VIEW_TYPE_KEY), originalView.getDataDocument(LumeerConst.View.VIEW_CONFIGURATION_KEY));
    }
 
    /**
