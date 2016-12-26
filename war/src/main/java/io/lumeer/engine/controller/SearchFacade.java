@@ -129,7 +129,10 @@ public class SearchFacade implements Serializable {
 
       for (final String collection : collections) {
          internalQuery.setCollections(Collections.singleton(collection));
-         result.addAll(dataStorage.query(internalQuery));
+         dataStorage.query(internalQuery).stream().forEach(d -> {
+            d.put(LumeerConst.Document.COLLECTION_NAME, collection);
+            result.add(d);
+         });
       }
 
       return result;
