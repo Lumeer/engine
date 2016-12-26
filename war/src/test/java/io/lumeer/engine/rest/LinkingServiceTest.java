@@ -103,7 +103,7 @@ public class LinkingServiceTest extends Arquillian {
                                 .invoke();
       int status = response.getStatus();
       response.close();
-      Assert.assertTrue(status == Response.Status.NO_CONTENT.getStatusCode() || status == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertTrue(status == Response.Status.NO_CONTENT.getStatusCode());// || status == Response.Status.NOT_FOUND.getStatusCode());
 
    }
 

@@ -84,7 +84,7 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testCreateView() throws Exception {
       setUpCollection();
-      int viewId = viewFacade.createView(CREATE_INITIAL_METADATA_VIEW);
+      int viewId = viewFacade.createView(CREATE_INITIAL_METADATA_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
       List<DataDocument> list = dataStorage.search(collection, null, null, 0, 0);
       Map<String, Object> metadata = null;
 
@@ -104,7 +104,7 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testCopyView() throws Exception {
       setUpCollection();
-      int view = viewFacade.createView(VIEW_TO_BE_COPIED);
+      int view = viewFacade.createView(VIEW_TO_BE_COPIED, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       String key = "key";
       String value = "value";
@@ -133,7 +133,7 @@ public class ViewFacadeTest extends Arquillian {
    public void testSetGetViewType() throws Exception {
       setUpCollection();
 
-      int view = viewFacade.createView(SET_GET_TYPE_VIEW);
+      int view = viewFacade.createView(SET_GET_TYPE_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
       Assert.assertEquals(viewFacade.getViewType(view), LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE);
 
       String newType = "new type";
@@ -145,7 +145,7 @@ public class ViewFacadeTest extends Arquillian {
    public void testSetGetViewName() throws Exception {
       setUpCollection();
 
-      int view = viewFacade.createView(SET_GET_NAME_VIEW);
+      int view = viewFacade.createView(SET_GET_NAME_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
       Assert.assertEquals(viewFacade.getViewName(view), SET_GET_NAME_VIEW);
 
       String newName = "new name";
@@ -153,7 +153,7 @@ public class ViewFacadeTest extends Arquillian {
       Assert.assertEquals(viewFacade.getViewName(view), newName);
 
       // we create one more view
-      viewFacade.createView(SET_GET_NAME_VIEW_2);
+      viewFacade.createView(SET_GET_NAME_VIEW_2, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       // we try to rename our first view to already existing name (second view)
       boolean pass = false;
@@ -168,7 +168,7 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testSetGetViewConfiguration() throws Exception {
       setUpCollection();
-      int view = viewFacade.createView(SET_GET_CONFIGURATION_VIEW);
+      int view = viewFacade.createView(SET_GET_CONFIGURATION_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       // we try to get non existing configuration
       boolean pass = false;
@@ -190,7 +190,7 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testSetGetViewConfigurationAttribute() throws Exception {
       setUpCollection();
-      int view = viewFacade.createView(SET_GET_CONFIGURATION_ATTRIBUTE_VIEW);
+      int view = viewFacade.createView(SET_GET_CONFIGURATION_ATTRIBUTE_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       viewFacade.setViewConfiguration(view, new DataDocument("intro key", "intro value"));
       String attribute = "configuration attribute";
@@ -214,7 +214,7 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testGetViewMetadata() throws Exception {
       setUpCollection();
-      int viewId = viewFacade.createView(GET_METADATA_VIEW);
+      int viewId = viewFacade.createView(GET_METADATA_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
       DataDocument metadata = viewFacade.getViewMetadata(viewId);
       Assert.assertTrue(metadata.containsValue(GET_METADATA_VIEW));
       Assert.assertTrue(metadata.containsValue(viewId));
@@ -223,7 +223,7 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testSetGetViewMetadataValue() throws Exception {
       setUpCollection();
-      int viewId = viewFacade.createView(GET_METADATA_VALUE_VIEW);
+      int viewId = viewFacade.createView(GET_METADATA_VALUE_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       String key = "key";
       String value = "value";
@@ -253,8 +253,8 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testGetAllViews() throws Exception {
       setUpCollection();
-      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_VIEW_1);
-      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_VIEW_2);
+      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_VIEW_1, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
+      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_VIEW_2, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       List<ViewDao> views = viewFacade.getAllViews();
       Assert.assertEquals(views.size(), 2);
@@ -264,8 +264,8 @@ public class ViewFacadeTest extends Arquillian {
    @Test
    public void testGetAllViewsOfType() throws Exception {
       setUpCollection();
-      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_1);
-      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_2);
+      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_1, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
+      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_2, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       String type = "type";
       viewFacade.setViewType(viewId1, type);

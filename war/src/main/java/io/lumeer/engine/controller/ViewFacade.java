@@ -84,7 +84,7 @@ public class ViewFacade implements Serializable {
       metadata.put(LumeerConst.View.VIEW_CREATE_USER_KEY, createUser);
       metadata.put(LumeerConst.View.VIEW_CREATE_DATE_KEY, new Date());
       metadata.put(LumeerConst.View.VIEW_TYPE_KEY, viewType); // sets view type to default
-      metadata.put(LumeerConst.View.VIEW_CONFIGURATION_KEY, configuration);
+      metadata.put(LumeerConst.View.VIEW_CONFIGURATION_KEY, configuration != null ? configuration : new DataDocument());
 
       DataDocument metadataDocument = new DataDocument(metadata);
 
