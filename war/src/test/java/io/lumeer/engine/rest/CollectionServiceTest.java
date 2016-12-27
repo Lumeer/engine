@@ -73,6 +73,7 @@ public class CollectionServiceTest extends Arquillian {
    private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionServiceCollectionRenameAttribute";
    private final String COLLECTION_DROP_ATTRIBUTE = "CollectionServiceCollectionDropAttribute";
    private final String COLLECTION_OPTION_SEARCH = "CollectionServiceCollectionOptionSearch";
+   private final String COLLECTION_ADD_COLLECTION_METADATA = "CollectionServiceCollectionAddCollectionMetadata";
    private final String COLLECTION_READ_COLLECTION_METADATA = "CollectionServiceCollectionReadCollectionMetadata";
    private final String COLLECTION_UPDATE_COLLECTION_METADATA = "CollectionServiceCollectionUpdateCollectionMetadata";
    private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionServiceCollectionReadCollectionAttributes";
@@ -242,7 +243,17 @@ public class CollectionServiceTest extends Arquillian {
 
    @Test
    public void testAddCollectionMetadata() throws Exception {
-      // TODO:
+      // TODO: uncomment after the rest method will be implemented
+      /*setUpCollections(COLLECTION_ADD_COLLECTION_METADATA);
+      final Client client = ClientBuilder.newBuilder().build();
+
+      String attributeName = "";
+      DataDocument value = new DataDocument("metaAttribute", 100);
+      collectionFacade.createCollection(COLLECTION_ADD_COLLECTION_METADATA);
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
+      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+      client.close();*/
    }
 
    @Test
@@ -352,12 +363,11 @@ public class CollectionServiceTest extends Arquillian {
 
    @Test
    public void testSetReadAndDropAttributeConstraint() throws Exception {
-      // TODO: uncomment after constraint configuration example will be known
-      /*setUpCollections(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
+      setUpCollections(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
 
       final Client client = ClientBuilder.newBuilder().build();
-      final String constraintConfiguration = ""; // TODO: constraint example
-      final String attributeName = "dummyAttribute";
+      final String constraintConfiguration = "case:lower";
+      final String attributeName = "dummyAttributeName";
 
       collectionFacade.createCollection(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
       collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName);
@@ -377,10 +387,10 @@ public class CollectionServiceTest extends Arquillian {
       // drop attribute constraint
       Response response3 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT + "/attributes/" + attributeName + "/constraints").request(MediaType.APPLICATION_JSON).build("DELETE", Entity.json(constraintConfiguration)).invoke();
       Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName).equals(null));
+            && collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName).size() == 0);
       response3.close();
 
-      client.close();*/
+      client.close();
    }
 
    private void setUpCollections(final String collectionName) throws DbException {
