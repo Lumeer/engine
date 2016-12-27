@@ -20,6 +20,7 @@
 package io.lumeer.engine.util;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
@@ -44,6 +45,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
    private static final String ERROR_LINK_ALREADY_EXISTS = "Link between documents already exists";
    private static final String ERROR_PARAM_CANNOT_BE_NULL = "The param  \"{0}\" can not be null.";
+   private static final String ERROR_INVALID_COLLECTION_ATTRIBUTE_TYPE = "The type \"{0}\" is invalid. Valid types are: \"{1}\".";
 
    private static final String ERROR_USER_COLLECTION_NOT_FOUND = "The user collection \"{0}\" does not exist.";
    private static final String ERROR_USER_COLLECTION_ALREADY_EXISTS = "The user collection \"{0}\" already exists.";
@@ -105,7 +107,6 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_PARAM_CANNOT_BE_NULL, key);
    }
 
-
    public static String nullKey() {
       return ERROR_NULL_KEY;
    }
@@ -152,6 +153,10 @@ public class ErrorMessageBuilder {
 
    public static String viewMetaSpecialString(int viewId, String metaKey) {
       return MessageFormat.format(ERROR_VIEW_META_SPECIAL, viewId, metaKey);
+   }
+
+   public static String invalidCollectionAttributeType(String newType, List<String> types) {
+      return MessageFormat.format(ERROR_INVALID_COLLECTION_ATTRIBUTE_TYPE, newType, types);
    }
 
 }

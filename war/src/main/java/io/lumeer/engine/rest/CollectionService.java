@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
@@ -27,6 +28,7 @@ import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.api.exception.InvalidCollectionAttributeTypeException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.controller.CollectionFacade;
@@ -35,6 +37,7 @@ import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -198,13 +201,13 @@ public class CollectionService implements Serializable {
    @PUT
    @Path("/{collectionName}/attributes/{attributeName}/types/{newType}")
    @Produces(MediaType.APPLICATION_JSON)
-   public boolean setAttributeType(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final @PathParam("newType") String newType) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
+   public boolean setAttributeType(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final @PathParam("newType") String newType) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException, InvalidCollectionAttributeTypeException {
       if (collectionName == null || attributeName == null || newType == null) {
          throw new IllegalArgumentException();
       }
 
       if (collectionMetadataFacade.retypeCollectionAttribute(getInternalName(collectionName), attributeName, newType) == false) {
-         // TODO: throws exception with message "The type is invalid, valid types are <list>"
+         throw new InvalidCollectionAttributeTypeException(ErrorMessageBuilder.invalidCollectionAttributeType(newType, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES));
       }
       return true;
    }

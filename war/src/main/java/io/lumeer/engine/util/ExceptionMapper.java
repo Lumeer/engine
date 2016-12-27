@@ -6,6 +6,7 @@ import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.InvalidCollectionAttributeTypeException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
@@ -18,7 +19,6 @@ import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 
-import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
@@ -39,7 +39,7 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
             e instanceof InvalidQueryException || e instanceof InvalidDocumentKeyException ||
             e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException ||
             e instanceof NullParameterException || e instanceof LinkAlreadyExistsException ||
-            e instanceof ViewAlreadyExistsException ) {
+            e instanceof ViewAlreadyExistsException || e instanceof InvalidCollectionAttributeTypeException) {
          return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
