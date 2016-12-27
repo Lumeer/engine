@@ -121,10 +121,14 @@ public class SearchFacade implements Serializable {
 
       if (query.getLimit() == null) {
          internalQuery.setLimit(configurationFacade.getConfigurationInteger(LumeerConst.DEFAULT_LIMIT_PROPERTY).orElse(100) / collections.size());
+      } else {
+         internalQuery.setLimit(query.getLimit());
       }
 
       if (query.getSkip() == null) {
          internalQuery.setSkip(0);
+      } else {
+         internalQuery.setSkip(query.getSkip());
       }
 
       for (final String collection : collections) {

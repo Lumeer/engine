@@ -150,11 +150,11 @@ public class CollectionService implements Serializable {
    @POST
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) {
-      if (collectionName == null || attributeName == null) {
+   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+      DataDocument metadataDocument = new DataDocument(attributeName, metadata);
+      if (collectionName == null || attributeName == null || !collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
          throw new IllegalArgumentException();
       }
-      // TODO: create specific method to facade (Alica)
    }
 
    @GET
@@ -170,8 +170,11 @@ public class CollectionService implements Serializable {
    @PUT
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) {
-      // TODO: create specific method to facade (Alica)
+   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+      DataDocument metadataDocument = new DataDocument(attributeName, value);
+      if (collectionName == null || attributeName == null || !collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
+         throw new IllegalArgumentException();
+      }
    }
 
    @GET

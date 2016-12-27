@@ -73,6 +73,7 @@ public class CollectionServiceTest extends Arquillian {
    private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionServiceCollectionRenameAttribute";
    private final String COLLECTION_DROP_ATTRIBUTE = "CollectionServiceCollectionDropAttribute";
    private final String COLLECTION_OPTION_SEARCH = "CollectionServiceCollectionOptionSearch";
+   private final String COLLECTION_QUERY_SEARCH = "CollectionServiceCollectionQuerySearch";
    private final String COLLECTION_ADD_COLLECTION_METADATA = "CollectionServiceCollectionAddCollectionMetadata";
    private final String COLLECTION_READ_COLLECTION_METADATA = "CollectionServiceCollectionReadCollectionMetadata";
    private final String COLLECTION_UPDATE_COLLECTION_METADATA = "CollectionServiceCollectionUpdateCollectionMetadata";
@@ -223,37 +224,44 @@ public class CollectionServiceTest extends Arquillian {
 
    @Test
    public void testOptionSearch() throws Exception {
-     /* setUpCollections(COLLECTION_OPTION_SEARCH);
+      setUpCollections(COLLECTION_OPTION_SEARCH);
       final Client client = ClientBuilder.newBuilder().build();
 
       // TODO:
       // filter, sort, skip, limit
-      collectionFacade.createCollection(COLLECTION_OPTION_SEARCH);
+     /* collectionFacade.createCollection(COLLECTION_OPTION_SEARCH);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_OPTION_SEARCH + "/search/").queryParam("filter", "name:CollectionServiceCollectionOptionSearch").request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> searchedDocuments = response.readEntity(ArrayList.class);
       Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode());
       response.close();
+
       client.close();*/
    }
 
    @Test
    public void testQuerySearch() throws Exception {
       // TODO:
+      setUpCollections(COLLECTION_QUERY_SEARCH);
+      final Client client = ClientBuilder.newBuilder().build();
+
+      client.close();
    }
 
    @Test
    public void testAddCollectionMetadata() throws Exception {
-      // TODO: uncomment after the rest method will be implemented
-      /*setUpCollections(COLLECTION_ADD_COLLECTION_METADATA);
+      setUpCollections(COLLECTION_ADD_COLLECTION_METADATA);
       final Client client = ClientBuilder.newBuilder().build();
 
-      String attributeName = "";
-      DataDocument value = new DataDocument("metaAttribute", 100);
+      String attributeName = "metaAttribute";
+      DataDocument value = new DataDocument("columnSize", 100);
       collectionFacade.createCollection(COLLECTION_ADD_COLLECTION_METADATA);
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
+      List<DataDocument> metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_ADD_COLLECTION_METADATA));
+      DataDocument readMetaDoc = (DataDocument) metadata.get(3).get(attributeName);
+      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readMetaDoc.equals(value));
       response.close();
-      client.close();*/
+
+      client.close();
    }
 
    @Test
@@ -280,18 +288,26 @@ public class CollectionServiceTest extends Arquillian {
 
    @Test
    public void testUpdateCollectionMetadata() throws Exception {
-      // TODO: uncomment after the rest method will be implemented
-      /*setUpCollections(COLLECTION_UPDATE_COLLECTION_METADATA);
-
-      final String attributeName = "newMetaAttribute";
-      final int value = 100;
+      setUpCollections(COLLECTION_UPDATE_COLLECTION_METADATA);
       final Client client = ClientBuilder.newBuilder().build();
+      final String columnSizeAttributeName = "columnSize";
+      final int value = 100;
+      final int updatedValue = 500;
 
       collectionFacade.createCollection(COLLECTION_UPDATE_COLLECTION_METADATA);
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
+      List<DataDocument> metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
+      int readValue = metadata.get(3).getInteger(columnSizeAttributeName);
+      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readValue == value);
       response.close();
-      client.close();*/
+
+      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(updatedValue, MediaType.APPLICATION_JSON)).invoke();
+      List<DataDocument> updatedMetadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
+      int readUpdatedValue = updatedMetadata.get(3).getInteger(columnSizeAttributeName);
+      Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readUpdatedValue == updatedValue);
+      response2.close();
+
+      client.close();
    }
 
    @Test

@@ -187,8 +187,6 @@ public class DocumentService implements Serializable {
       // securityFacade.setRightsRead()
       // securityFacade.setRightsWrite()
       // securityFacade.setRightsExecute()
-
-
    }
 
    private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
