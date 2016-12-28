@@ -225,7 +225,7 @@ public class ViewFacadeTest extends Arquillian {
    public void testGetAllViewsOfType() throws Exception {
       setUpCollection();
       int viewId1 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_1, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
-      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_2, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
+      viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_2, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       String type = "type";
       viewFacade.setViewType(viewId1, type);
@@ -243,7 +243,6 @@ public class ViewFacadeTest extends Arquillian {
       // so we have to drop collection before every test, because we
       // cannot drop it before whole test suite (inject in @BeforeClass does not work)
       dataStorage.dropCollection(collection);
-      dataStorage.createCollection(collection);
    }
 
    private String getCurrentUser() {

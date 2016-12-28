@@ -68,6 +68,15 @@ public class ViewFacade implements Serializable {
     *       when view with given name already exists
     */
    public int createView(final String originalViewName, final String viewType, final DataDocument configuration) throws ViewAlreadyExistsException {
+      if (!dataStorage.hasCollection(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)) {
+         dataStorage.createCollection(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME);
+         // we create indexes on frequently used fields
+         int indexType = 1;
+         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_ID_KEY, indexType));
+         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_TYPE_KEY, indexType));
+         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_NAME_KEY, indexType));
+      }
+
       if (checkIfViewNameExists(originalViewName)) {
          throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
       }
