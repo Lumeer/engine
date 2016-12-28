@@ -27,7 +27,6 @@ import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.rest.dao.ViewDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
-import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -376,6 +375,20 @@ public class ViewFacade implements Serializable {
       return viewList.get(0);
    }
 
+   /**
+    * Updates access rights of a view.
+    *
+    * @param viewDocument
+    *       The view document with updated rights.
+    * @throws ViewMetadataNotFoundException
+    *       The view was not found in the database.
+    * @throws UnauthorizedAccessException
+    *       The user is not authorized to updated access rights.
+    */
+   public void updateViewAccessRights(final DataDocument viewDocument) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      setViewMetadataValueWithoutChecks(viewDocument, LumeerConst.Document.USER_RIGHTS, viewDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS));
+   }
+
    // sets info about one view without checking special metadata keys
    private void setViewMetadataValueWithoutChecks(DataDocument viewDocument, String metaKey, Object value) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(viewDocument, getCurrentUser())) {
@@ -388,8 +401,7 @@ public class ViewFacade implements Serializable {
 
       // with every change, we change update user and date
       metadataMap.put(LumeerConst.View.VIEW_UPDATE_USER_KEY, getCurrentUser());
-      String date = Utils.getCurrentTimeString();
-      metadataMap.put(LumeerConst.View.VIEW_UPDATE_DATE_KEY, date);
+      metadataMap.put(LumeerConst.View.VIEW_UPDATE_DATE_KEY, new Date());
 
       dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadataMap), id);
    }
