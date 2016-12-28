@@ -22,6 +22,9 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
+import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ConfigurationFacade;
 
@@ -51,6 +54,9 @@ public class WhisperService {
    private DataStorage dataStorage;
 
    @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
    @Inject
@@ -72,25 +78,33 @@ public class WhisperService {
    @Produces(MediaType.APPLICATION_JSON)
    public Set<String> getPossibleCollectionNames(@QueryParam("collectionName") final String collectionName) {
       if (collectionName == null || collectionName.isEmpty()) {
-         // return user names of all user collections
-         return Collections.emptySet();
+         return collectionFacade.getAllCollections().values().stream().collect(Collectors.toSet());
       } else {
-         // return user names of all user collections starting with the collectionName ignoring case
-         return Collections.emptySet();
-         //return dataStorage.getAllCollections().stream().filter(name -> name.startsWith(prefix)).collect(Collectors.toSet());
-
+         return collectionFacade.getAllCollections().values().stream().filter(name -> name.toLowerCase(locale).startsWith(collectionName.toLowerCase(locale))).collect(Collectors.toSet());
       }
    }
 
    @GET
    @Path("/collection/{collectionName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionAttributeNames(@PathParam("collectionName") final String userCollectionName, @QueryParam("attributeName") final String attributeName) {
-      // returns empty set if user collection name does not exsits
-      // returns all collection attributes (except for meta data) if attributeName is null or empty
-      // return all collections attributes (except for meta data) starting with the attributeName ignoring case
+   public Set<String> getPossibleCollectionAttributeNames(@PathParam("collectionName") final String userCollectionName, @QueryParam("attributeName") final String attributeName) throws CollectionNotFoundException {
+      // returns empty set if user collection name does not exists
+      String internalCollectionName = null;
+      try {
+         internalCollectionName = collectionMetadataFacade.getInternalCollectionName(userCollectionName);
+      } catch (UserCollectionNotFoundException e) {
+         return Collections.emptySet();
+      }
 
-      return Collections.emptySet();
+      if (attributeName == null || attributeName.isEmpty()) {
+         return collectionMetadataFacade.getCollectionAttributesNames(internalCollectionName).stream().collect(Collectors.toSet());
+      } else {
+         return collectionMetadataFacade.getCollectionAttributesNames(internalCollectionName)
+                                        .stream()
+                                        .filter(name -> name.toLowerCase(locale)
+                                                            .startsWith(attributeName.toLowerCase(locale)))
+                                        .collect(Collectors.toSet());
+      }
    }
 
    /**
