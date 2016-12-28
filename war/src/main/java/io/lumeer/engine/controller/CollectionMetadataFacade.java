@@ -163,7 +163,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Creates initial metadata in metadata collection - adds original name and initial time lock.
+    * Creates initial metadata in metadata collection - adds original name and initial time lock and access rights for creator.
     *
     * @param internalCollectionName
     *       internal collection name
@@ -1091,6 +1091,114 @@ public class CollectionMetadataFacade implements Serializable {
    public boolean checkCollectionForExecute(String collectionName, String user) {
       DataDocument rights = getAccessRightsDocument(collectionName);
       return rights == null || securityFacade.checkForExecute(rights, user);
+   }
+
+   /**
+    * Sets read right.
+    *
+    * @param collectionName
+    *       internal name
+    * @param user
+    *       user to set right for
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to change rights for the collection
+    */
+   public void addCollectionRead(String collectionName, String user) throws UnauthorizedAccessException {
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      if (!securityFacade.checkForExecute(rights, user)) {
+         throw new UnauthorizedAccessException();
+      }
+      securityFacade.setRightsRead(rights, user);
+   }
+
+   /**
+    * Sets write right.
+    *
+    * @param collectionName
+    *       internal name
+    * @param user
+    *       user to set right for
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to change rights for the collection
+    */
+   public void addCollectionWrite(String collectionName, String user) throws UnauthorizedAccessException {
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      if (!securityFacade.checkForExecute(rights, user)) {
+         throw new UnauthorizedAccessException();
+      }
+      securityFacade.setRightsWrite(rights, user);
+   }
+
+   /**
+    * Sets execute (right to change rights) right.
+    *
+    * @param collectionName
+    *       internal name
+    * @param user
+    *       user to set right for
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to change rights for the collection
+    */
+   public void addCollectionExecute(String collectionName, String user) throws UnauthorizedAccessException {
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      if (!securityFacade.checkForExecute(rights, user)) {
+         throw new UnauthorizedAccessException();
+      }
+      securityFacade.setRightsExecute(rights, user);
+   }
+
+   /**
+    * Removes read right.
+    *
+    * @param collectionName
+    *       internal name
+    * @param user
+    *       user whose right is removed
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to change rights for the collection
+    */
+   public void removeCollectionRead(String collectionName, String user) throws UnauthorizedAccessException {
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      if (!securityFacade.checkForExecute(rights, user)) {
+         throw new UnauthorizedAccessException();
+      }
+      securityFacade.removeRightsRead(rights, user);
+   }
+
+   /**
+    * Removes write right.
+    *
+    * @param collectionName
+    *       internal name
+    * @param user
+    *       user whose right is removed
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to change rights for the collection
+    */
+   public void removeCollectionWrite(String collectionName, String user) throws UnauthorizedAccessException {
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      if (!securityFacade.checkForExecute(rights, user)) {
+         throw new UnauthorizedAccessException();
+      }
+      securityFacade.removeRightsWrite(rights, user);
+   }
+
+   /**
+    * Removes execute (right to change rights) right.
+    *
+    * @param collectionName
+    *       internal name
+    * @param user
+    *       user whose right is removed
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to change rights for the collection
+    */
+   public void removeCollectionExecute(String collectionName, String user) throws UnauthorizedAccessException {
+      DataDocument rights = getAccessRightsDocument(collectionName);
+      if (!securityFacade.checkForExecute(rights, user)) {
+         throw new UnauthorizedAccessException();
+      }
+      securityFacade.removeRightsExecute(rights, user);
    }
 
    // returns whole access rights document - to be used only internally
