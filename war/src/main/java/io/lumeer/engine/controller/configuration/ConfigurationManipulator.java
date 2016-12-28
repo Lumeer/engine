@@ -74,8 +74,6 @@ public class ConfigurationManipulator implements Serializable {
    private static final String CONFIG_KEY = "config";
    private static final String ID_KEY = "_id";
 
-   private static final int TARGET_VERSION_DISABLED = -1;
-
    @Inject
    @SystemDataStorage
    private DataStorage systemDataStorage;
@@ -127,7 +125,7 @@ public class ConfigurationManipulator implements Serializable {
          String id = configuration.get().getString(ID_KEY);
          configuration.get().remove(CONFIG_KEY);
          configuration.get().put(CONFIG_KEY, new DataDocument());
-         systemDataStorage.updateDocument(collectionName, configuration.get(), id, TARGET_VERSION_DISABLED);
+         systemDataStorage.updateDocument(collectionName, configuration.get(), id);
       } else {
          createSimpleConfigurationEntry(collectionName, nameValue);
       }
@@ -241,7 +239,7 @@ public class ConfigurationManipulator implements Serializable {
       newConfiguration.put(CONFIG_KEY, configDocument);
 
       if (configuration.isPresent()) {
-         systemDataStorage.updateDocument(collectionName, newConfiguration, id, TARGET_VERSION_DISABLED);
+         systemDataStorage.updateDocument(collectionName, newConfiguration, id);
       } else {
          systemDataStorage.createDocument(collectionName, newConfiguration);
       }

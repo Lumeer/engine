@@ -738,7 +738,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument customMetadataDocument = customMetadataList.get(0);
       String id = customMetadataDocument.getId();
 
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id, -1);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id);
 
       return true;
    }
