@@ -247,19 +247,19 @@ public class MongoDbStorageTest {
       String dropManyKey = "dropManyKey";
       String value1 = "v1";
       String value2 = "v2";
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 100; i++) {
          DataDocument insertedDocument = createDummyDocument();
          insertedDocument.put(dropManyKey, i % 2 == 0 ? value1 : value2);
          mongoDbStorage.createDocument(COLLECTION_DROP_MANY, insertedDocument);
       }
 
       List<DataDocument> docs = mongoDbStorage.search(COLLECTION_DROP_MANY, null, null, 0, 0);
-      Assert.assertEquals(docs.size(), 1000);
+      Assert.assertEquals(docs.size(), 100);
 
       mongoDbStorage.dropManyDocuments(COLLECTION_DROP_MANY, MongoUtils.convertBsonToJson(Filters.eq(dropManyKey, value1)));
 
       docs = mongoDbStorage.search(COLLECTION_DROP_MANY, null, null, 0, 0);
-      Assert.assertEquals(docs.size(), 500);
+      Assert.assertEquals(docs.size(), 50);
    }
 
    @Test
@@ -281,21 +281,21 @@ public class MongoDbStorageTest {
    public void testSearch() throws Exception {
       mongoDbStorage.createCollection(COLLECTION_SEARCH);
 
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 100; i++) {
          DataDocument insertedDocument = createDummyDocument();
          mongoDbStorage.createDocument(COLLECTION_SEARCH, insertedDocument);
       }
 
-      List<DataDocument> searchDocuments = mongoDbStorage.search(COLLECTION_SEARCH, null, null, 100, 100);
+      List<DataDocument> searchDocuments = mongoDbStorage.search(COLLECTION_SEARCH, null, null, 10, 10);
 
-      Assert.assertEquals(searchDocuments.size(), 100);
+      Assert.assertEquals(searchDocuments.size(), 10);
    }
 
    @Test
    public void testRun() throws Exception {
       mongoDbStorage.createCollection(COLLECTION_RUN);
 
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 200; i++) {
          DataDocument insertedDocument = createDummyDocument();
          mongoDbStorage.createDocument(COLLECTION_RUN, insertedDocument);
       }
