@@ -57,7 +57,7 @@ public class SequenceFacade implements Serializable {
    public void init() {
       if (!dataStorage.hasCollection(SEQUENCE_COLLECTION)) {
          dataStorage.createCollection(SEQUENCE_COLLECTION);
-         dataStorage.createIndex(SEQUENCE_COLLECTION, new DataDocument(SEQUENCE_INDEX_ATTR, "1"));
+         dataStorage.createIndex(SEQUENCE_COLLECTION, new DataDocument(SEQUENCE_INDEX_ATTR, 1));
       }
    }
 
