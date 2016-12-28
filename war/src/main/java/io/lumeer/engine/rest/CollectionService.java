@@ -197,6 +197,7 @@ public class CollectionService implements Serializable {
 
    @PUT
    @Path("/{collectionName}/rights")
+   @Consumes(MediaType.APPLICATION_JSON)
    public void updateAccessRights(final @PathParam("collectionName") String collectionName) {
       // TODO: implement method in facade to manage access rights of the given collection (Alica)
    }

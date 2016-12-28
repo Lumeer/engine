@@ -20,6 +20,7 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
@@ -226,23 +227,39 @@ public class CollectionServiceTest extends Arquillian {
    public void testOptionSearch() throws Exception {
       setUpCollections(COLLECTION_OPTION_SEARCH);
       final Client client = ClientBuilder.newBuilder().build();
+      final int limit = 5;
 
-      // TODO:
-      // filter, sort, skip, limit
-     /* collectionFacade.createCollection(COLLECTION_OPTION_SEARCH);
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_OPTION_SEARCH + "/search/").queryParam("filter", "name:CollectionServiceCollectionOptionSearch").request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      collectionFacade.createCollection(COLLECTION_OPTION_SEARCH);
+      createDummyEntries(COLLECTION_OPTION_SEARCH);
+
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_OPTION_SEARCH + "/search/")
+                                .queryParam("filter", null)
+                                .queryParam("sort", null)
+                                .queryParam("skip", 0)
+                                .queryParam("limit", limit)
+                                .request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> searchedDocuments = response.readEntity(ArrayList.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode());
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && searchedDocuments.size() == limit);
       response.close();
 
-      client.close();*/
+      client.close();
    }
 
    @Test
    public void testQuerySearch() throws Exception {
-      // TODO:
       setUpCollections(COLLECTION_QUERY_SEARCH);
       final Client client = ClientBuilder.newBuilder().build();
+      //final String query = "{find:" + "\"" + COLLECTION_QUERY_SEARCH + "\"" + ", limit : 5}";
+      final String query = "find: \"" + getInternalName(COLLECTION_QUERY_SEARCH) + "\""; // TODO: correct query representation?
+
+      collectionFacade.createCollection(COLLECTION_QUERY_SEARCH);
+      createDummyEntries(COLLECTION_QUERY_SEARCH);
+
+      /*Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_QUERY_SEARCH + "/run/").queryParam("query", query).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+
+      List<DataDocument> searchedDocuments = response.readEntity(ArrayList.class);
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode());
+      response.close();*/
 
       client.close();
    }
@@ -407,6 +424,12 @@ public class CollectionServiceTest extends Arquillian {
       response3.close();
 
       client.close();
+   }
+
+   private void createDummyEntries(final String collectionName) throws DbException, InvalidConstraintException {
+      for (int i = 0; i < 10; i++) {
+         documentFacade.createDocument(getInternalName(collectionName), new DataDocument("dummyAttribute", i));
+      }
    }
 
    private void setUpCollections(final String collectionName) throws DbException {
