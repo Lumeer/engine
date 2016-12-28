@@ -22,7 +22,6 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.rest.dao.ViewDao;
@@ -75,7 +74,6 @@ public class ViewFacadeTest extends Arquillian {
    private final String SET_GET_CONFIGURATION_VIEW = "viewSetGetConfiguration";
    private final String SET_GET_CONFIGURATION_ATTRIBUTE_VIEW = "viewSetGetConfigurationAttribute";
    private final String GET_METADATA_VIEW = "viewGetMetadata";
-   private final String GET_METADATA_VALUE_VIEW = "viewGetMetadataValue";
    private final String GET_ALL_VIEWS_VIEW_1 = "viewGetAllViews1";
    private final String GET_ALL_VIEWS_VIEW_2 = "viewGetAllViews2";
    private final String GET_ALL_VIEWS_OF_TYPE_VIEW_1 = "viewGetAllViewsOfType1";
@@ -106,10 +104,6 @@ public class ViewFacadeTest extends Arquillian {
       setUpCollection();
       int view = viewFacade.createView(VIEW_TO_BE_COPIED, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
-      String key = "key";
-      String value = "value";
-      viewFacade.setViewMetadataValue(view, key, value);
-
       // we try to copy view with already existing name
       boolean pass = false;
       try {
@@ -122,7 +116,6 @@ public class ViewFacadeTest extends Arquillian {
       int copy = viewFacade.copyView(view, COPIED_VIEW);
 
       Assert.assertNotEquals(view, copy); // copy should have a new id
-      Assert.assertEquals(viewFacade.getViewMetadataValue(copy, key), value); // custom key from original view should also be in new view
       Assert.assertEquals(viewFacade.getViewName(copy), COPIED_VIEW); // copy should have a new name
       Assert.assertNotEquals(
             viewFacade.getViewMetadataValue(view, LumeerConst.View.VIEW_CREATE_DATE_KEY),
@@ -171,20 +164,17 @@ public class ViewFacadeTest extends Arquillian {
       int view = viewFacade.createView(SET_GET_CONFIGURATION_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       // we try to get non existing configuration
-      boolean pass = false;
-      try {
-         viewFacade.getViewConfiguration(view);
-      } catch (ViewMetadataNotFoundException e) {
-         pass = true;
-      }
-      Assert.assertTrue(pass);
+      DataDocument configuration = viewFacade.getViewConfiguration(view);
+      Assert.assertTrue(configuration.isEmpty());
 
       String attribute = "configuration attribute";
       String value = "configuration value";
       viewFacade.setViewConfiguration(view, new DataDocument(attribute, value));
 
-      Assert.assertTrue(viewFacade.getViewConfiguration(view).containsKey(attribute));
-      Assert.assertTrue(viewFacade.getViewConfiguration(view).containsValue(value));
+      configuration = viewFacade.getViewConfiguration(view);
+
+      Assert.assertTrue(configuration.containsKey(attribute));
+      Assert.assertTrue(configuration.containsValue(value));
    }
 
    @Test
@@ -218,36 +208,6 @@ public class ViewFacadeTest extends Arquillian {
       DataDocument metadata = viewFacade.getViewMetadata(viewId);
       Assert.assertTrue(metadata.containsValue(GET_METADATA_VIEW));
       Assert.assertTrue(metadata.containsValue(viewId));
-   }
-
-   @Test
-   public void testSetGetViewMetadataValue() throws Exception {
-      setUpCollection();
-      int viewId = viewFacade.createView(GET_METADATA_VALUE_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
-
-      String key = "key";
-      String value = "value";
-
-      // we try to get non existing value
-      boolean pass = false;
-      try {
-         viewFacade.getViewMetadataValue(viewId, key);
-      } catch (ViewMetadataNotFoundException e) {
-         pass = true;
-      }
-      Assert.assertTrue(pass);
-
-      viewFacade.setViewMetadataValue(viewId, key, value);
-      Assert.assertEquals(viewFacade.getViewMetadataValue(viewId, key), value);
-
-      // we try to modify key that is immutable
-      pass = false;
-      try {
-         viewFacade.setViewMetadataValue(viewId, LumeerConst.View.VIEW_CREATE_DATE_KEY, "hmm");
-      } catch (UnsuccessfulOperationException e) {
-         pass = true;
-      }
-      Assert.assertTrue(pass);
    }
 
    @Test

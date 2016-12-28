@@ -23,7 +23,6 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
-import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.rest.dao.ViewDao;
@@ -32,7 +31,6 @@ import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -282,41 +280,6 @@ public class ViewFacade implements Serializable {
          throw new ViewMetadataNotFoundException(ErrorMessageBuilder.viewMetadataValueNotFoundString(viewId, metaKey));
       }
       return value;
-   }
-
-   /**
-    * Sets view metadata value. If the given key does not exist, it is created. Otherwise it is just updated
-    *
-    * @param viewId
-    *       view id
-    * @param metaKey
-    *       key of value we want to set
-    * @param value
-    *       value we want to set
-    * @throws ViewMetadataNotFoundException
-    *       when view metadata was not found
-    * @throws UnsuccessfulOperationException
-    *       when metadata cannot be set
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the view
-    */
-   public void setViewMetadataValue(int viewId, String metaKey, Object value) throws ViewMetadataNotFoundException, UnsuccessfulOperationException, UnauthorizedAccessException {
-      DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
-
-      String user = getCurrentUser();
-      if (!securityFacade.checkForWrite(viewDocument, user)) {
-         throw new UnauthorizedAccessException();
-      }
-
-      if (LumeerConst.View.VIEW_IMMUTABLE_KEYS.contains(metaKey)) { // we check whether the meta key is not between fields that cannot be changed
-         throw new UnsuccessfulOperationException(ErrorMessageBuilder.viewMetaImmutableString(viewId, metaKey));
-      }
-
-      if (LumeerConst.View.VIEW_SPECIAL_KEYS.contains(metaKey)) { // we check whether the meta key is not between fields that can be changed only through special methods
-         throw new UnsuccessfulOperationException(ErrorMessageBuilder.viewMetaSpecialString(viewId, metaKey));
-      }
-
-      setViewMetadataValueWithoutChecks(viewDocument, metaKey, value);
    }
 
    /**
