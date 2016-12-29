@@ -1207,8 +1207,20 @@ public class CollectionMetadataFacade implements Serializable {
       dataStorage.updateDocument(collectionName, rights, rights.getId());
    }
 
+   /**
+    * Gets access rights for all users.
+    *
+    * @param collectionName
+    *       internal name
+    * @return DataDocument with access rights to the collection
+    */
+   public DataDocument getAllAccessRights(String collectionName) {
+      // TODO: Who will have the permission to view all rights?
+      return getAccessRightsDocument(collectionName);
+   }
+
    // returns whole access rights document - to be used only internally
-   private DataDocument getAccessRightsDocument(String collectionName) {
+   public DataDocument getAccessRightsDocument(String collectionName) {
       if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
          return null;
       }
