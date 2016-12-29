@@ -1220,7 +1220,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // returns whole access rights document - to be used only internally
-   public DataDocument getAccessRightsDocument(String collectionName) {
+   private DataDocument getAccessRightsDocument(String collectionName) {
       if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
          return null;
       }
