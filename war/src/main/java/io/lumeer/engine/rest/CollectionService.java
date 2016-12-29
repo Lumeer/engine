@@ -37,6 +37,7 @@ import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -190,16 +191,40 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/{collectionName}/rights")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readAccessRights(final @PathParam("collectionName") String collectionName) {
-      // TODO: implement method in facade to manage access rights of the given collection (Alica)
-      return null;
+   public DataDocument readAccessRights(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      if (collectionName == null) {
+         throw new IllegalArgumentException();
+      }
+      return collectionMetadataFacade.getAllAccessRights(getInternalName(collectionName));
    }
 
    @PUT
    @Path("/{collectionName}/rights")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateAccessRights(final @PathParam("collectionName") String collectionName) {
-      // TODO: implement method in facade to manage access rights of the given collection (Alica)
+   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final AccessRightsDao accessRights) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+      if (collectionName == null || accessRights == null) {
+         throw new IllegalArgumentException();
+      }
+
+      final String user = userFacade.getUserEmail();
+
+      if (accessRights.isRead()) {
+         collectionMetadataFacade.addCollectionRead(getInternalName(collectionName), user);
+      } else {
+         collectionMetadataFacade.removeCollectionRead(getInternalName(collectionName), user);
+      }
+
+      if (accessRights.isWrite()) {
+         collectionMetadataFacade.addCollectionWrite(getInternalName(collectionName), user);
+      } else {
+         collectionMetadataFacade.removeCollectionWrite(getInternalName(collectionName), user);
+      }
+
+      if (accessRights.isExecute()) {
+         collectionMetadataFacade.addCollectionExecute(getInternalName(collectionName), user);
+      } else {
+         collectionMetadataFacade.removeCollectionExecute(getInternalName(collectionName), user);
+      }
    }
 
    @PUT
