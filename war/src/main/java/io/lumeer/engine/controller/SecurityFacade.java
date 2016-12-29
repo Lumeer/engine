@@ -253,6 +253,25 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
+    * Set rights for execute in database.
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *    throws if document not found in database
+    */
+   public boolean setRightsRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName,documentId);
+      setRightsRead(dataDocument,userName);
+      dataStorage.updateDocument(collectionName,dataDocument,documentId);
+      return checkForRead(collectionName,documentId,userName);
+   }
+
+   /**
     * Set write rights to dataDocument for userName.
     *
     * @param dataDocument
@@ -269,6 +288,25 @@ public class SecurityFacade implements Serializable {
          }
       }
       return dataDocument;
+   }
+
+   /**
+    * Set rights for execute in database.
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *    throws if document not found in database
+    */
+   public boolean setRightsWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName,documentId);
+      setRightsWrite(dataDocument,userName);
+      dataStorage.updateDocument(collectionName,dataDocument,documentId);
+      return checkForWrite(collectionName,documentId,userName);
    }
 
    /**
@@ -291,6 +329,25 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
+    * Set rights for execute in database.
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *    throws if document not found in database
+    */
+   public boolean setRightsExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName,documentId);
+      setRightsExecute(dataDocument,userName);
+      dataStorage.updateDocument(collectionName,dataDocument,documentId);
+      return checkForExecute(collectionName,documentId,userName);
+   }
+
+   /**
     * Remove execute rights to dataDocument for userName.
     *
     * @param dataDocument
@@ -307,6 +364,25 @@ public class SecurityFacade implements Serializable {
          }
       }
       return dataDocument;
+   }
+
+   /**
+    * Remove rights for execute in database.
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *    throws if document not found in database
+    */
+   public boolean removeRightsExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName,documentId);
+      removeRightsExecute(dataDocument,userName);
+      dataStorage.updateDocument(collectionName,dataDocument,documentId);
+      return !checkForExecute(collectionName,documentId,userName);
    }
 
    /**
@@ -329,6 +405,25 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
+    * Remove rights for write in database.
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *    throws if document not found in database
+    */
+   public boolean removeRightsWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName,documentId);
+      removeRightsWrite(dataDocument,userName);
+      dataStorage.updateDocument(collectionName,dataDocument,documentId);
+      return !checkForWrite(collectionName,documentId,userName);
+   }
+
+   /**
     * Remove read rights to dataDocument for userName.
     *
     * @param dataDocument
@@ -345,6 +440,25 @@ public class SecurityFacade implements Serializable {
          }
       }
       return dataDocument;
+   }
+
+   /**
+    * Remove rights for read in database.
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *    throws if document not found in database
+    */
+   public boolean removeRightsRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName,documentId);
+      removeRightsRead(dataDocument,userName);
+      dataStorage.updateDocument(collectionName,dataDocument,documentId);
+      return !checkForRead(collectionName,documentId,userName);
    }
 
    private boolean checkMetadata(DataDocument dataDocument) {
