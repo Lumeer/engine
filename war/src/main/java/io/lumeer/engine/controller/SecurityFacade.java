@@ -23,6 +23,8 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
+import io.lumeer.engine.rest.dao.ViewDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -558,5 +560,32 @@ public class SecurityFacade implements Serializable {
          map.put(dataDoc.getString(LumeerConst.Security.USER_ID), dataDoc.getInteger(LumeerConst.Security.RULE));
       }
       return map;
+   }
+
+   /**
+    * Return data access object of access rights.
+    * @param dataDocument
+    *       where access rights are stored
+    * @param email
+    *       user email (identificator)
+    * @return data access object
+    */
+   public AccessRightsDao getDao(DataDocument dataDocument, String email){
+      AccessRightsDao accessRightsDao = new AccessRightsDao(checkForRead(dataDocument,email),checkForWrite(dataDocument,email),checkForExecute(dataDocument,email),email);
+      return accessRightsDao;
+   }
+
+   /**
+    * Return data access object of access rights.
+    * @param collectionName
+    *       collection name where document is stored
+    * @param documentId
+    *       document id
+    * @param email
+    *       user email
+    * @return data access object
+    */
+   public AccessRightsDao getDao(String collectionName, String documentId, String email){
+      return getDao(dataStorage.readDocument(collectionName,documentId),email);
    }
 }
