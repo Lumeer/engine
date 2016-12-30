@@ -1109,7 +1109,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.setRightsRead(rights, user);
-      dataStorage.updateDocument(collectionName, rights, rights.getId());
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1128,7 +1128,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.setRightsWrite(rights, user);
-      dataStorage.updateDocument(collectionName, rights, rights.getId());
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1147,7 +1147,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.setRightsExecute(rights, user);
-      dataStorage.updateDocument(collectionName, rights, rights.getId());
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1166,7 +1166,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.removeRightsRead(rights, user);
-      dataStorage.updateDocument(collectionName, rights, rights.getId());
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1185,7 +1185,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.removeRightsWrite(rights, user);
-      dataStorage.updateDocument(collectionName, rights, rights.getId());
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1204,7 +1204,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.removeRightsExecute(rights, user);
-      dataStorage.updateDocument(collectionName, rights, rights.getId());
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
