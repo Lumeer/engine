@@ -25,12 +25,14 @@ import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundExceptio
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -179,14 +181,19 @@ public class DocumentService implements Serializable {
    @PUT
    @Path("/{documentId}/rights")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) {
-      if (collectionName == null || documentId == null) {
+   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final AccessRightsDao accessRights) throws DbException, InvalidConstraintException {
+      if (collectionName == null || documentId == null || accessRights == null) {
          throw new IllegalArgumentException();
       }
-      // TODO:
-      // securityFacade.setRightsRead()
-      // securityFacade.setRightsWrite()
-      // securityFacade.setRightsExecute()
+
+      final String user = userFacade.getUserEmail();
+      final DataDocument document = documentFacade.readDocument(getInternalName(collectionName), documentId);
+
+      if (securityFacade.checkForAddRights(document, user)) {
+         securityFacade.setDao(getInternalName(collectionName), documentId, accessRights);
+      } else {
+         throw new UnauthorizedAccessException("Cannot set user rights on this document.");
+      }
    }
 
    private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
