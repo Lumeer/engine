@@ -27,6 +27,9 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
+import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -81,6 +84,8 @@ public class CollectionServiceTest extends Arquillian {
    private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionServiceCollectionReadCollectionAttributes";
    private final String COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE = "CollectionServiceCollectionSetAndReadAttributeType";
    private final String COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT = "CollectionServiceCollectionSetReadAndDropAttributeConstraint";
+   private final String COLLECTION_READ_ACCESS_RIGHTS = "CollectionServiceCollectionReadAccessRights";
+   private final String COLLECTION_UPDATE_ACCESS_RIGHTS = "CollectionServiceCollectionuUpdateAccessRights";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -96,6 +101,12 @@ public class CollectionServiceTest extends Arquillian {
 
    @Inject
    private DocumentFacade documentFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
 
    @Test
    public void testRegister() throws Exception {
@@ -256,7 +267,6 @@ public class CollectionServiceTest extends Arquillian {
       createDummyEntries(COLLECTION_QUERY_SEARCH);
 
       /*Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_QUERY_SEARCH + "/run/").queryParam("query", query).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-
       List<DataDocument> searchedDocuments = response.readEntity(ArrayList.class);
       Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode());
       response.close();*/
@@ -358,12 +368,31 @@ public class CollectionServiceTest extends Arquillian {
 
    @Test
    public void testReadAccessRights() throws Exception {
-      // TODO:
+      setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
+      final Client client = ClientBuilder.newBuilder().build();
+
+      collectionFacade.createCollection(COLLECTION_READ_ACCESS_RIGHTS);
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      DataDocument accessRights = response.readEntity(DataDocument.class);
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && !accessRights.isEmpty());
+      response.close();
+      client.close();
    }
 
    @Test
    public void testUpdateAccessRights() throws Exception {
-      // TODO:
+      setUpCollections(COLLECTION_UPDATE_ACCESS_RIGHTS);
+      final Client client = ClientBuilder.newBuilder().build();
+      final String user = userFacade.getUserEmail();
+      final AccessRightsDao accessRights = new AccessRightsDao(true, true, false, user);
+
+      collectionFacade.createCollection(COLLECTION_UPDATE_ACCESS_RIGHTS);
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(accessRights, MediaType.APPLICATION_JSON)).invoke();
+      DataDocument metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS)).get(1);
+      AccessRightsDao readAccessRights = securityFacade.getDao(collectionMetadataFacade.collectionMetadataCollectionName(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS)), metadata.getId(), user);
+      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readAccessRights.isWrite() && readAccessRights.isRead() && !readAccessRights.isExecute());
+      response.close();
+      client.close();
    }
 
    @Test
