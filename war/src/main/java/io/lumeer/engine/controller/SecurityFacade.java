@@ -25,17 +25,14 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.ViewDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import javax.xml.crypto.Data;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
@@ -622,13 +619,14 @@ public class SecurityFacade implements Serializable {
       return getDao((DataDocument) dmf.readDocumentMetadata(collectionName, documentId), email);
    }
 
-   /**Set rights to be same as data access object
+   /**
+    * Set rights to be same as data access object
+    *
     * @param dataDocument
-    *     data document where rights to be set
+    *       data document where rights to be set
     * @param accessRightsDao
-    *      how data should see
-    * @return
-    *    data document with set rights
+    *       how data should see
+    * @return data document with set rights
     */
    public DataDocument setDao(DataDocument dataDocument, AccessRightsDao accessRightsDao) {
       if (accessRightsDao.isExecute()) {
@@ -639,7 +637,7 @@ public class SecurityFacade implements Serializable {
       if (accessRightsDao.isRead()) {
          setRightsRead(dataDocument, accessRightsDao.getUserName());
       } else {
-         removeRightsExecute(dataDocument, accessRightsDao.getUserName());
+         removeRightsRead(dataDocument, accessRightsDao.getUserName());
       }
       if (accessRightsDao.isWrite()) {
          setRightsWrite(dataDocument, accessRightsDao.getUserName());
@@ -652,6 +650,7 @@ public class SecurityFacade implements Serializable {
    /**
     * Set rights to be same as data access object.
     * This is not atomic!
+    *
     * @param collectionName
     *       collection name where data document is
     * @param documentId
@@ -666,16 +665,15 @@ public class SecurityFacade implements Serializable {
    /**
     * Set rights to be same as data access object with
     * check. Can be slow. This is not atomic!
+    *
     * @param collectionName
     *       collection name where data document is
     * @param documentId
     *       data document id
     * @param accessRightsDao
     *       data access object
-    * @return
-    *       true if all data was updated successful
-    *
-    * */
+    * @return true if all data was updated successful
+    */
    public boolean setDaoCheck(String collectionName, String documentId, AccessRightsDao accessRightsDao) {
       dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentId), accessRightsDao), documentId);
       DataDocument dataDoc = dataStorage.readDocument(collectionName, documentId);
