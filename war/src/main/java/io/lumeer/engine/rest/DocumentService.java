@@ -35,7 +35,6 @@ import io.lumeer.engine.controller.VersionFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.RequestScoped;
@@ -168,7 +167,7 @@ public class DocumentService implements Serializable {
       documentFacade.revertDocument(getInternalName(collectionName), documentId, versionId);
    }
 
-   @GET
+  /* @GET
    @Path("/{documentId}/rights")
    @Produces(MediaType.APPLICATION_JSON)
    public HashMap readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
@@ -176,6 +175,16 @@ public class DocumentService implements Serializable {
          throw new IllegalArgumentException();
       }
       return securityFacade.readRightList(getInternalName(collectionName), documentId);
+   }*/
+
+   @GET
+   @Path("/{documentId}/rights")
+   @Produces(MediaType.APPLICATION_JSON)
+   public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      if (collectionName == null || documentId == null) {
+         throw new IllegalArgumentException();
+      }
+      return securityFacade.getDaoList(getInternalName(collectionName), documentId);
    }
 
    @PUT

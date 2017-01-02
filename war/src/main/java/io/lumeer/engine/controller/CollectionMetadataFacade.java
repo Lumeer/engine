@@ -963,6 +963,8 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
+    * Reads constraint for the given attribute.
+    *
     * @param collectionName
     *       collection internal name
     * @param attributeName

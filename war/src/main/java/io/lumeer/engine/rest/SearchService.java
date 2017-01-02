@@ -46,6 +46,16 @@ public class SearchService implements Serializable {
    @Inject
    private SearchFacade searchFacade;
 
+   /**
+    * Queries the data storage in a flexible way. Allows for none or multiple collection names to be specified,
+    * automatically sets limit to default values.
+    *
+    * @param query
+    *       Query to execute
+    * @return The query result.
+    * @throws InvalidQueryException
+    *       When it was not possible to execute the query.
+    */
    @POST
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)

@@ -150,7 +150,7 @@ public class CollectionFacade implements Serializable {
     * Drops the collection including its metadata collection with the specified name.
     *
     * @param collectionName
-    *       internal name of the collection to update
+    *       internal name of the collection to drop
     * @throws DbException
     *       When there is an error working with the database.
     */

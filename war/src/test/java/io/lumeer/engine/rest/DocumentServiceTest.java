@@ -21,13 +21,13 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -206,7 +206,7 @@ public class DocumentServiceTest extends Arquillian {
       client.close();
    }
 
-   @Test
+ /*  @Test
    public void testReadAccessRights() throws Exception {
       setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
       final Client client = ClientBuilder.newBuilder().build();
@@ -221,6 +221,29 @@ public class DocumentServiceTest extends Arquillian {
       Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && ruleNumber == DEFAULT_INT_RULE);
       response.close();
 
+      client.close();
+   }*/
+
+   @Test
+   public void testReadAccessRights() throws Exception {
+      setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
+      final Client client = ClientBuilder.newBuilder().build();
+      final String user = userFacade.getUserEmail();
+      final AccessRightsDao DEFAULT_ACCESS_RIGHT = new AccessRightsDao(true, true, true, user);
+
+      collectionFacade.createCollection(COLLECTION_READ_ACCESS_RIGHTS);
+      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_READ_ACCESS_RIGHTS), new DataDocument());
+
+      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_READ_ACCESS_RIGHTS) + documentId + "/rights").request().buildGet().invoke();
+      List<AccessRightsDao> rights = response.readEntity(new GenericType<List<AccessRightsDao>>() {
+      });
+      AccessRightsDao readRights = rights.get(0);
+      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode()
+            && readRights.isRead() == DEFAULT_ACCESS_RIGHT.isRead()
+            && readRights.isWrite() == DEFAULT_ACCESS_RIGHT.isWrite()
+            && readRights.isExecute() == DEFAULT_ACCESS_RIGHT.isExecute()
+            && readRights.getUserName().equals(DEFAULT_ACCESS_RIGHT.getUserName()));
+      response.close();
       client.close();
    }
 
