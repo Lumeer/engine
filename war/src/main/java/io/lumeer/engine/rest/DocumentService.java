@@ -242,6 +242,19 @@ public class DocumentService implements Serializable {
       documentMetadataFacade.updateDocumentMetadata(getInternalName(collectionName), documentId, metadata);
    }
 
+   /**
+    * Read all versions from shadow collection and normal collection, returns it as a list.
+    *
+    * @param collectionName
+    *       collection name where document is stored
+    * @param documentId
+    *       id of the document
+    * @return list of documents from shadow with same id
+    * @throws CollectionNotFoundException
+    *       When the collection was not found in database.
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       When the metadata collection of the given collection was not found in database.
+    */
    @GET
    @Path("/{documentId}/versions")
    @Produces(MediaType.APPLICATION_JSON)
@@ -252,6 +265,20 @@ public class DocumentService implements Serializable {
       return versionFacade.getDocumentVersions(getInternalName(collectionName), documentId);
    }
 
+   /**
+    * Reverts old version of the given document.
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       id of document to revert
+    * @param versionId
+    *       old version to be reverted
+    * @throws DbException
+    *       When there is an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       If one of document's value doesn't satisfy constraint or type.
+    */
    @POST
    @Path("/{documentId}/versions/{versionId}")
    public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId)
@@ -273,6 +300,19 @@ public class DocumentService implements Serializable {
       return securityFacade.readRightList(getInternalName(collectionName), documentId);
    }*/
 
+   /**
+    * Gets access rights for all users of the given document.
+    *
+    * @param collectionName
+    *       name of the collection
+    * @param documentId
+    *       id of the given document
+    * @return list of access rights of the given collection
+    * @throws CollectionNotFoundException
+    *       When the collection was not found in database.
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       When the metadata collection of the given collection was not found in database.
+    */
    @GET
    @Path("/{documentId}/rights")
    @Produces(MediaType.APPLICATION_JSON)
@@ -283,10 +323,22 @@ public class DocumentService implements Serializable {
       return securityFacade.getDaoList(getInternalName(collectionName), documentId);
    }
 
+   /**
+    * Updates access rights of the given document for currently logged user.
+    *
+    * @param collectionName
+    *       name of the collection
+    * @param documentId
+    *       id of the given document
+    * @param accessRights
+    *       new access rights of the logged user
+    * @throws DbException
+    *       When there is an error working with the database.
+    */
    @PUT
    @Path("/{documentId}/rights")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final AccessRightsDao accessRights) throws DbException, InvalidConstraintException {
+   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final AccessRightsDao accessRights) throws DbException {
       if (collectionName == null || documentId == null || accessRights == null) {
          throw new IllegalArgumentException();
       }
