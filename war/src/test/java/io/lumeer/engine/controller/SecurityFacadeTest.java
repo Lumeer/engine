@@ -429,6 +429,11 @@ public class SecurityFacadeTest extends Arquillian {
       System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(2).toString());
       System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(3).toString());
       System.out.println(securityFacade.readQueryString("test@gmail.com"));
+      System.out.println("========= dao from document===========");
+      System.out.println(securityFacade.getDaoList(dataDocument).get(0).toString());
+      System.out.println(securityFacade.getDaoList(dataDocument).get(1).toString());
+      System.out.println(securityFacade.getDaoList(dataDocument).get(2).toString());
+      System.out.println(securityFacade.getDaoList(dataDocument).get(3).toString());
    }
 
    private void addRights(DataDocument dataDocument, String email, Integer rights) {
