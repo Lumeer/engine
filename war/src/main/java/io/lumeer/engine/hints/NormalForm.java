@@ -21,9 +21,7 @@ package io.lumeer.engine.hints;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.push.PushMessage;
-import io.lumeer.mongodb.MongoUtils;
-
-import org.apache.commons.codec.binary.StringUtils;
+import io.lumeer.engine.push.PushService;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -34,14 +32,15 @@ import java.util.Map;
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
-public class ValueTypeHint implements Hint {
+public class NormalForm implements Hint {
 
    private DataDocument dataDocument;
    private String userName;
    private String collectionName;
    private List<Object> objects;
-   private String wrongValue;
    private Date date;
+
+   private String wrongArg;
 
    @Override
    public Hint call() throws Exception {
@@ -49,52 +48,28 @@ public class ValueTypeHint implements Hint {
       if (dataDocument != null) {
          return testOneDocument(dataDocument);
       }
-      return new ValueTypeHint();
+      return new NormalForm();
    }
 
-   private ValueTypeHint testOneDocument(DataDocument dataDocument) {
+   private NormalForm testOneDocument(DataDocument dataDocument) {
       Iterator<Map.Entry<String, Object>> iter = dataDocument.entrySet().iterator();
       Map<String, Object> documentMetadata = new HashMap<>();
       while (iter.hasNext()) {
          Map.Entry<String, Object> entry = iter.next();
-         if (!(entry.getValue() instanceof Integer)){
-            if (isInteger(entry.getValue().toString(),10)){
-               ValueTypeHint vtp = new ValueTypeHint();
-               vtp.setWrongValue(entry.getKey());
-               vtp.setDocument(dataDocument);
-               if (collectionName != null){
-                  vtp.setCollection(collectionName);
-               }
-               if (userName != null){
-                  vtp.setUser(userName);
-               }
-               return vtp;
+         if (entry.getValue().toString().contains(" ")){
+            NormalForm nf = new NormalForm();
+            nf.setWrongArg(entry.getKey());
+            nf.setDocument(dataDocument);
+            if (collectionName != null){
+               nf.setCollection(collectionName);
             }
+            if (userName != null){
+               nf.setUser(userName);
+            }
+            return nf;
          }
       }
       return null;
-   }
-
-   private void setWrongValue(String wrongValue){
-      this.wrongValue = wrongValue;
-   }
-
-   private static boolean isInteger(String s, int radix) {
-      if(s.isEmpty()) return false;
-      if ((s.charAt(0) == '"') && (s.charAt(s.length() - 1) == '"')){
-         StringBuilder sb = new StringBuilder(s);
-         sb.deleteCharAt(0);
-         sb.deleteCharAt(s.length() - 1);
-         s = sb.toString();
-      }
-      for(int i = 0; i < s.length(); i++) {
-         if(i == 0 && s.charAt(i) == '-') {
-            if(s.length() == 1) return false;
-            else continue;
-         }
-         if(Character.digit(s.charAt(i),radix) < 0) return false;
-      }
-      return true;
    }
 
    @Override
@@ -107,6 +82,9 @@ public class ValueTypeHint implements Hint {
       return true;
    }
 
+   public void setWrongArg(String wrongArg){
+      this.wrongArg = wrongArg;
+   }
 
    public void setDocument(DataDocument dataDocument) {
       this.dataDocument = dataDocument;
@@ -129,6 +107,6 @@ public class ValueTypeHint implements Hint {
 
    @Override
    public PushMessage getMessage() {
-      return new PushMessage("Hint message","Hint","You have wrong integer saved in: " + wrongValue );
+      return new PushMessage("Hint message","Hint","You have space in: " + wrongArg );
    }
 }

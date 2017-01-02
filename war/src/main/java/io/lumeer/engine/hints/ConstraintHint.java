@@ -21,9 +21,6 @@ package io.lumeer.engine.hints;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.push.PushMessage;
-import io.lumeer.mongodb.MongoUtils;
-
-import org.apache.commons.codec.binary.StringUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -34,7 +31,7 @@ import java.util.Map;
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
  */
-public class ValueTypeHint implements Hint {
+public class ConstraintHint implements Hint {
 
    private DataDocument dataDocument;
    private String userName;
@@ -47,31 +44,13 @@ public class ValueTypeHint implements Hint {
    public Hint call() throws Exception {
       date = new Date();
       if (dataDocument != null) {
-         return testOneDocument(dataDocument);
+         return contstraintCheck(dataDocument);
       }
-      return new ValueTypeHint();
+      return null;
    }
 
-   private ValueTypeHint testOneDocument(DataDocument dataDocument) {
-      Iterator<Map.Entry<String, Object>> iter = dataDocument.entrySet().iterator();
-      Map<String, Object> documentMetadata = new HashMap<>();
-      while (iter.hasNext()) {
-         Map.Entry<String, Object> entry = iter.next();
-         if (!(entry.getValue() instanceof Integer)){
-            if (isInteger(entry.getValue().toString(),10)){
-               ValueTypeHint vtp = new ValueTypeHint();
-               vtp.setWrongValue(entry.getKey());
-               vtp.setDocument(dataDocument);
-               if (collectionName != null){
-                  vtp.setCollection(collectionName);
-               }
-               if (userName != null){
-                  vtp.setUser(userName);
-               }
-               return vtp;
-            }
-         }
-      }
+   private ConstraintHint contstraintCheck(DataDocument dataDocument) {
+
       return null;
    }
 
@@ -79,23 +58,7 @@ public class ValueTypeHint implements Hint {
       this.wrongValue = wrongValue;
    }
 
-   private static boolean isInteger(String s, int radix) {
-      if(s.isEmpty()) return false;
-      if ((s.charAt(0) == '"') && (s.charAt(s.length() - 1) == '"')){
-         StringBuilder sb = new StringBuilder(s);
-         sb.deleteCharAt(0);
-         sb.deleteCharAt(s.length() - 1);
-         s = sb.toString();
-      }
-      for(int i = 0; i < s.length(); i++) {
-         if(i == 0 && s.charAt(i) == '-') {
-            if(s.length() == 1) return false;
-            else continue;
-         }
-         if(Character.digit(s.charAt(i),radix) < 0) return false;
-      }
-      return true;
-   }
+
 
    @Override
    public boolean isApplicable() {

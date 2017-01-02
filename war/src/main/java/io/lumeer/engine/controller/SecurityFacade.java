@@ -748,4 +748,9 @@ public class SecurityFacade implements Serializable {
       // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } })
       return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$gte : 4}}} }";
    }
+
+   public String writeQueryString(String email){
+      // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$in : [2,3,6,7]}} } })
+      return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$in : [6,7]}}} }";
+   }
 }

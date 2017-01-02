@@ -20,7 +20,9 @@
 package io.lumeer.engine.hints;
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.push.PushMessage;
 
+import java.util.Date;
 import java.util.concurrent.Callable;
 
 /**
@@ -31,9 +33,9 @@ public interface Hint extends Callable {
    Hint call() throws Exception;
    boolean isApplicable();
    boolean apply();
-   void sendNotification();
    void setDocument(DataDocument datadocument);
    void setCollection(String collectionName);
    void setUser(String username);
-
+   Date getCreateDate();
+   PushMessage getMessage();
 }
