@@ -572,6 +572,15 @@ public class SecurityFacade implements Serializable {
       return map;
    }
 
+   public HashMap readRightList(DataDocument dataDocument) {
+      HashMap<String, Integer> map = new HashMap<String, Integer>();
+      List<DataDocument> arrayList = readList(dataDocument);
+      for (DataDocument dataDoc : arrayList) {
+         map.put(dataDoc.getString(LumeerConst.Security.USER_ID), dataDoc.getInteger(LumeerConst.Security.RULE));
+      }
+      return map;
+   }
+
    /**
     * Return data access object of access rights.
     *
@@ -586,10 +595,39 @@ public class SecurityFacade implements Serializable {
       return accessRightsDao;
    }
 
+   /**
+    * Return Data access object of Access Rights type from collection.
+    * @param collectionName
+    *       Collection name where datadocument is stored
+    * @param documentId
+    *       Document id
+    * @return
+    *       data access object.
+    */
    public List<AccessRightsDao> getDaoList(String collectionName, String documentId) {
       List<AccessRightsDao> list = new ArrayList<>();
       DataDocument dataDoc = dataStorage.readDocument(collectionName,documentId);
       HashMap<String,Integer> hashMap = readRightList(collectionName, documentId);
+      for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
+         boolean read = checkForRead(dataDoc,entry.getKey());
+         boolean write = checkForWrite(dataDoc, entry.getKey());
+         boolean execute = checkForExecute(dataDoc, entry.getKey());
+         AccessRightsDao ard = new AccessRightsDao(read,write,execute, entry.getKey());
+         list.add(ard);
+      }
+      return list;
+   }
+
+   /**Return Data access object of Access Rights type from datadocument.
+    * @param dataDocument
+    *       dataDocument, from which dao wanted
+    * @return
+    *       data access object of access rights type
+    */
+   public List<AccessRightsDao> getDaoList(DataDocument dataDocument) {
+      List<AccessRightsDao> list = new ArrayList<>();
+      DataDocument dataDoc = dataDocument;
+      HashMap<String,Integer> hashMap = readRightList(dataDoc);
       for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
          boolean read = checkForRead(dataDoc,entry.getKey());
          boolean write = checkForWrite(dataDoc, entry.getKey());
@@ -697,6 +735,15 @@ public class SecurityFacade implements Serializable {
             & (accessRightsDao.isExecute() == checkForExecute(dataDoc, accessRightsDao.getUserName()));
    }
 
+   /**
+    * Return query string for search and limit user
+    * without rights.
+    * Example: {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } }.
+    * @param email
+    *       email of username
+    * @return
+    *       return string as in example
+    */
    public String readQueryString(String email){
       // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } })
       return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$gte : 4}}} }";
