@@ -32,6 +32,7 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
@@ -1212,11 +1213,11 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param collectionName
     *       internal name
-    * @return DataDocument with access rights to the collection
+    * @return list of AccessRightsDao (Daos for all users)
     */
-   public DataDocument getAllAccessRights(String collectionName) {
+   public List<AccessRightsDao> getAllAccessRights(String collectionName) {
       // TODO: Who will have the permission to view all rights?
-      return getAccessRightsDocument(collectionName);
+      return securityFacade.getDaoList(getAccessRightsDocument(collectionName));
    }
 
    // returns whole access rights document - to be used only internally
