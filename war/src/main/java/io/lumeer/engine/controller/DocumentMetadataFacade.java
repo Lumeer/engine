@@ -25,15 +25,9 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
-import io.lumeer.mongodb.MongoUtils;
-
-import com.mongodb.client.model.Filters;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
@@ -139,9 +133,9 @@ public class DocumentMetadataFacade implements Serializable {
     * @param documentId
     *       the id of the read document
     * @param key
-    *       the id of the read document
+    *       the meta attribute to put
     * @param value
-    *       the id of the read document
+    *       the meta value of the given attribute
     * @throws CollectionNotFoundException
     *       if collection is not found in database
     * @throws DocumentNotFoundException
@@ -164,7 +158,7 @@ public class DocumentMetadataFacade implements Serializable {
     * @param documentId
     *       the id of the read document
     * @param metadata
-    *       map with medatada attributes and its values
+    *       map with medatadata attributes and its values
     * @throws CollectionNotFoundException
     *       if collection is not found in database
     * @throws DocumentNotFoundException

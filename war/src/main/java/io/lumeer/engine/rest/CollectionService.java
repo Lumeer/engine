@@ -30,6 +30,7 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidCollectionAttributeTypeException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
+import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.SearchFacade;
@@ -551,12 +552,10 @@ public class CollectionService implements Serializable {
     * @param collectionOriginalName
     *       original name of the collection given by user
     * @return internal name of the given collection
-    * @throws CollectionNotFoundException
-    *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
+    * @throws UserCollectionNotFoundException
+    *       When the given user collection does not exist.
     */
-   private String getInternalName(final String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   private String getInternalName(final String collectionOriginalName) throws UserCollectionNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
    }
 }
