@@ -243,13 +243,13 @@ public class DocumentService implements Serializable {
    }
 
    /**
-    * Read all versions from shadow collection and normal collection, returns it as a list.
+    * Read all versions of the given document and returns it as a list.
     *
     * @param collectionName
     *       collection name where document is stored
     * @param documentId
     *       id of the document
-    * @return list of documents from shadow with same id
+    * @return list of documents in different version
     * @throws CollectionNotFoundException
     *       When the collection was not found in database.
     * @throws CollectionMetadataDocumentNotFoundException
