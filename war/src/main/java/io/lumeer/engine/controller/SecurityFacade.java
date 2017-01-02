@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -585,6 +586,20 @@ public class SecurityFacade implements Serializable {
       return accessRightsDao;
    }
 
+   public List<AccessRightsDao> getDaoList(String collectionName, String documentId) {
+      List<AccessRightsDao> list = new ArrayList<>();
+      DataDocument dataDoc = dataStorage.readDocument(collectionName,documentId);
+      HashMap<String,Integer> hashMap = readRightList(collectionName, documentId);
+      for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
+         boolean read = checkForRead(dataDoc,entry.getKey());
+         boolean write = checkForWrite(dataDoc, entry.getKey());
+         boolean execute = checkForExecute(dataDoc, entry.getKey());
+         AccessRightsDao ard = new AccessRightsDao(read,write,execute, entry.getKey());
+         list.add(ard);
+      }
+      return list;
+   }
+
    /**
     * Return data access object of access rights.
     *
@@ -680,5 +695,10 @@ public class SecurityFacade implements Serializable {
       return (accessRightsDao.isWrite() == checkForWrite(dataDoc, accessRightsDao.getUserName()))
             & (accessRightsDao.isRead() == checkForRead(dataDoc, accessRightsDao.getUserName()))
             & (accessRightsDao.isExecute() == checkForExecute(dataDoc, accessRightsDao.getUserName()));
+   }
+
+   public String readQueryString(String email){
+      // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } })
+      return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$gte : 4}}} }";
    }
 }
