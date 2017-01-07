@@ -52,6 +52,9 @@ public class SearchFacade implements Serializable {
    @Inject
    private ConfigurationFacade configurationFacade;
 
+   @Inject
+   private SecurityFacade securityFacade;
+
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
     *
@@ -115,12 +118,14 @@ public class SearchFacade implements Serializable {
          throw new InvalidQueryException("Search asks for collections that are not available: ", e);
       }
 
-      internalQuery.setFilters(query.getFilters());
+      final DataDocument readRightsFilter = securityFacade.getReadRightsQueryFilter();
+      readRightsFilter.putAll(query.getFilters());
+      internalQuery.setFilters(readRightsFilter);
       internalQuery.setProjections(query.getProjections());
       internalQuery.setSorting(query.getSorting());
 
       if (query.getLimit() == null) {
-         internalQuery.setLimit(configurationFacade.getConfigurationInteger(LumeerConst.DEFAULT_LIMIT_PROPERTY).orElse(100) / collections.size());
+         internalQuery.setLimit(configurationFacade.getConfigurationInteger(LumeerConst.DEFAULT_LIMIT_PROPERTY).orElse(100));
       } else {
          internalQuery.setLimit(query.getLimit());
       }

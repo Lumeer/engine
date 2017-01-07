@@ -42,13 +42,13 @@ import javax.inject.Inject;
 public class SecurityFacade implements Serializable {
 
    @Inject
-   DataStorage dataStorage;
+   private DataStorage dataStorage;
 
    @Inject
-   UserFacade user;
+   private UserFacade user;
 
    @Inject
-   DocumentMetadataFacade dmf;
+   private DocumentMetadataFacade dmf;
 
    private final int READ_BP = 2;
    private final int WRITE_BP = 1;
@@ -747,6 +747,15 @@ public class SecurityFacade implements Serializable {
    public String readQueryString(String email){
       // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } })
       return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$gte : 4}}} }";
+   }
+
+   /**
+    * Returns a filter part for a query that limits search results only for the documents where the current user has
+    * read rights.
+    * @return The query filter to limit returned documents only to those where the current user has read rights.
+    */
+   public DataDocument getReadRightsQueryFilter() {
+      return new DataDocument("_meta-rights", new DataDocument("$elemMatch", new DataDocument("user_email", user.getUserEmail()).append("rule", new DataDocument("$gte", 4))));
    }
 
    public String writeQueryString(String email){
