@@ -22,6 +22,7 @@ package io.lumeer.engine.hints;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.UserFacade;
+import io.lumeer.engine.push.PushService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -44,46 +45,75 @@ public class HintFacade implements Serializable {
    @Inject
    UserFacade userFacade;
 
+   @Inject
+   PushService pushService;
+
    private List<Future<Hint>> hintsList = new ArrayList<>();
    private List<Hint> activeHints = new ArrayList<>();
+
+
    public void getHint() throws ExecutionException, InterruptedException {
       Hint hint = null;
       if (!hintsList.isEmpty()) {
          for (Future<Hint> future : hintsList) {
             if (future.isDone()) {
                hint = future.get();
-               hintsList.remove(future);
-               break;
+               if (hint != null) {
+                  hintsList.remove(future);
+                  activeHints.add(hint);
+                  pushService.publishMessageToCurrentUser("", hint.getMessage());
+                  break;
+               } else {
+                  hintsList.remove(future);
+               }
             }
          }
       }
-      if (hint != null) {
-         hint.sendNotification();
+   }
+
+   public void removeOldHints(){
+
+   }
+
+   public String getHintText() throws ExecutionException, InterruptedException {
+      Hint hint = null;
+      if (!hintsList.isEmpty()) {
+         for (Future<Hint> future : hintsList) {
+            if (future.isDone()) {
+               hint = future.get();
+               if (hint != null) {
+                  hintsList.remove(future);
+                  activeHints.add(hint);
+                  return hint.getMessage().getMessage();
+               }
+            }
+         }
       }
+      return "No hint";
    }
 
    public void runHint(String hintName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
+      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints." + hintName).newInstance();
       hint.setUser(userFacade.getUserName());
       hintsList.add(hintEx.runHintDetect(hint));
    }
 
    public void runHint(String hintName, DataDocument dataDocument) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
+      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints."  + hintName).newInstance();
       hint.setUser(userFacade.getUserName());
       hint.setDocument(dataDocument);
       hintsList.add(hintEx.runHintDetect(hint));
    }
 
    public void runHint(String hintName, String collectionName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
+      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints."  + hintName).newInstance();
       hint.setUser(userFacade.getUserName());
       hint.setCollection(collectionName);
       hintsList.add(hintEx.runHintDetect(hint));
    }
 
    public void runHint(String hintName, String collectionName, DataDocument dataDocument) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints.hintName").newInstance();
+      Hint hint = (Hint) Class.forName("io.lumeer.engine.hints."  + hintName).newInstance();
       hint.setUser(userFacade.getUserName());
       hint.setCollection(collectionName);
       hint.setDocument(dataDocument);

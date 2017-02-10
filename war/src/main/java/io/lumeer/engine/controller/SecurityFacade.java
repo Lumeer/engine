@@ -22,7 +22,9 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -32,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import javax.xml.crypto.Data;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
@@ -41,10 +42,13 @@ import javax.xml.crypto.Data;
 public class SecurityFacade implements Serializable {
 
    @Inject
-   DataStorage dataStorage;
+   private DataStorage dataStorage;
 
    @Inject
-   UserFacade user;
+   private UserFacade user;
+
+   @Inject
+   private DocumentMetadataFacade dmf;
 
    private final int READ_BP = 2;
    private final int WRITE_BP = 1;
@@ -57,6 +61,7 @@ public class SecurityFacade implements Serializable {
     */
    private final int EMPTY_LIST = 0;
    private final int NULL_LIST = -1;
+
    // TODO add users group ...
    private DataDocument readGroupRights(DataDocument dataDocument) {
       return null;
@@ -253,6 +258,26 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
+    * Set rights for execute in database.
+    *
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *       throws if document not found in database
+    */
+   public boolean setRightsRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      setRightsRead(dataDocument, userName);
+      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      return checkForRead(collectionName, documentId, userName);
+   }
+
+   /**
     * Set write rights to dataDocument for userName.
     *
     * @param dataDocument
@@ -269,6 +294,26 @@ public class SecurityFacade implements Serializable {
          }
       }
       return dataDocument;
+   }
+
+   /**
+    * Set rights for execute in database.
+    *
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *       throws if document not found in database
+    */
+   public boolean setRightsWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      setRightsWrite(dataDocument, userName);
+      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      return checkForWrite(collectionName, documentId, userName);
    }
 
    /**
@@ -291,6 +336,26 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
+    * Set rights for execute in database.
+    *
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *       throws if document not found in database
+    */
+   public boolean setRightsExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      setRightsExecute(dataDocument, userName);
+      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      return checkForExecute(collectionName, documentId, userName);
+   }
+
+   /**
     * Remove execute rights to dataDocument for userName.
     *
     * @param dataDocument
@@ -307,6 +372,26 @@ public class SecurityFacade implements Serializable {
          }
       }
       return dataDocument;
+   }
+
+   /**
+    * Remove rights for execute in database.
+    *
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *       throws if document not found in database
+    */
+   public boolean removeRightsExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      removeRightsExecute(dataDocument, userName);
+      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      return !checkForExecute(collectionName, documentId, userName);
    }
 
    /**
@@ -329,6 +414,26 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
+    * Remove rights for write in database.
+    *
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *       throws if document not found in database
+    */
+   public boolean removeRightsWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      removeRightsWrite(dataDocument, userName);
+      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      return !checkForWrite(collectionName, documentId, userName);
+   }
+
+   /**
     * Remove read rights to dataDocument for userName.
     *
     * @param dataDocument
@@ -345,6 +450,26 @@ public class SecurityFacade implements Serializable {
          }
       }
       return dataDocument;
+   }
+
+   /**
+    * Remove rights for read in database.
+    *
+    * @param collectionName
+    *       collection where document is stored
+    * @param documentId
+    *       id of document
+    * @param userName
+    *       username of user rights
+    * @return true if update successful
+    * @throws DocumentNotFoundException
+    *       throws if document not found in database
+    */
+   public boolean removeRightsRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      removeRightsRead(dataDocument, userName);
+      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      return !checkForRead(collectionName, documentId, userName);
    }
 
    private boolean checkMetadata(DataDocument dataDocument) {
@@ -417,24 +542,25 @@ public class SecurityFacade implements Serializable {
 
    /**
     * Read one integer as access rule of document
+    *
     * @param dataDocument
     *       document where this integer is stored
     * @param email
     *       user email which identify one user
-    * @return
-    *       integer as rule of access (linux system rule)
+    * @return integer as rule of access (linux system rule)
     */
    public int readRightInteger(DataDocument dataDocument, String email) {
       return recordValue(dataDocument, email);
    }
 
-   /**Read all rules of access list and return in as hashmap
+   /**
+    * Read all rules of access list and return in as hashmap
+    *
     * @param collectionName
     *       collection where document is stored
     * @param documentId
     *       id of document
-    * @return
-    *       return hashmap of all rules
+    * @return return hashmap of all rules
     */
    public HashMap readRightList(String collectionName, String documentId) {
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
@@ -444,5 +570,196 @@ public class SecurityFacade implements Serializable {
          map.put(dataDoc.getString(LumeerConst.Security.USER_ID), dataDoc.getInteger(LumeerConst.Security.RULE));
       }
       return map;
+   }
+
+   public HashMap readRightList(DataDocument dataDocument) {
+      HashMap<String, Integer> map = new HashMap<String, Integer>();
+      List<DataDocument> arrayList = readList(dataDocument);
+      for (DataDocument dataDoc : arrayList) {
+         map.put(dataDoc.getString(LumeerConst.Security.USER_ID), dataDoc.getInteger(LumeerConst.Security.RULE));
+      }
+      return map;
+   }
+
+   /**
+    * Return data access object of access rights.
+    *
+    * @param dataDocument
+    *       where access rights are stored
+    * @param email
+    *       user email (identificator)
+    * @return data access object
+    */
+   public AccessRightsDao getDao(DataDocument dataDocument, String email) {
+      AccessRightsDao accessRightsDao = new AccessRightsDao(checkForRead(dataDocument, email), checkForWrite(dataDocument, email), checkForExecute(dataDocument, email), email);
+      return accessRightsDao;
+   }
+
+   /**
+    * Return Data access object of Access Rights type from collection.
+    * @param collectionName
+    *       Collection name where datadocument is stored
+    * @param documentId
+    *       Document id
+    * @return
+    *       data access object.
+    */
+   public List<AccessRightsDao> getDaoList(String collectionName, String documentId) {
+      List<AccessRightsDao> list = new ArrayList<>();
+      DataDocument dataDoc = dataStorage.readDocument(collectionName,documentId);
+      HashMap<String,Integer> hashMap = readRightList(collectionName, documentId);
+      for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
+         boolean read = checkForRead(dataDoc,entry.getKey());
+         boolean write = checkForWrite(dataDoc, entry.getKey());
+         boolean execute = checkForExecute(dataDoc, entry.getKey());
+         AccessRightsDao ard = new AccessRightsDao(read,write,execute, entry.getKey());
+         list.add(ard);
+      }
+      return list;
+   }
+
+   /**Return Data access object of Access Rights type from datadocument.
+    * @param dataDocument
+    *       dataDocument, from which dao wanted
+    * @return
+    *       data access object of access rights type
+    */
+   public List<AccessRightsDao> getDaoList(DataDocument dataDocument) {
+      List<AccessRightsDao> list = new ArrayList<>();
+      DataDocument dataDoc = dataDocument;
+      HashMap<String,Integer> hashMap = readRightList(dataDoc);
+      for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
+         boolean read = checkForRead(dataDoc,entry.getKey());
+         boolean write = checkForWrite(dataDoc, entry.getKey());
+         boolean execute = checkForExecute(dataDoc, entry.getKey());
+         AccessRightsDao ard = new AccessRightsDao(read,write,execute, entry.getKey());
+         list.add(ard);
+      }
+      return list;
+   }
+
+   /**
+    * Return data access object of access rights.
+    *
+    * @param collectionName
+    *       collection name where document is stored
+    * @param documentId
+    *       document id
+    * @param email
+    *       user email
+    * @return data access object
+    */
+   public AccessRightsDao getDao(String collectionName, String documentId, String email) {
+      return getDao(dataStorage.readDocument(collectionName, documentId), email);
+   }
+
+   /**
+    * This is not tested and maybe not stable
+    *
+    * @param collectionName
+    *       collection name where document is stored
+    * @param documentId
+    *       document id
+    * @param email
+    *       user email
+    * @return data access object
+    * @throws CollectionNotFoundException
+    *       if collection not found
+    * @throws DocumentNotFoundException
+    *       if document not found
+    */
+   public AccessRightsDao getDaoCached(String collectionName, String documentId, String email) throws CollectionNotFoundException, DocumentNotFoundException {
+      return getDao((DataDocument) dmf.readDocumentMetadata(collectionName, documentId), email);
+   }
+
+   /**
+    * Set rights to be same as data access object
+    *
+    * @param dataDocument
+    *       data document where rights to be set
+    * @param accessRightsDao
+    *       how data should see
+    * @return data document with set rights
+    */
+   public DataDocument setDao(DataDocument dataDocument, AccessRightsDao accessRightsDao) {
+      if (accessRightsDao.isExecute()) {
+         setRightsExecute(dataDocument, accessRightsDao.getUserName());
+      } else {
+         removeRightsExecute(dataDocument, accessRightsDao.getUserName());
+      }
+      if (accessRightsDao.isRead()) {
+         setRightsRead(dataDocument, accessRightsDao.getUserName());
+      } else {
+         removeRightsRead(dataDocument, accessRightsDao.getUserName());
+      }
+      if (accessRightsDao.isWrite()) {
+         setRightsWrite(dataDocument, accessRightsDao.getUserName());
+      } else {
+         removeRightsWrite(dataDocument, accessRightsDao.getUserName());
+      }
+      return dataDocument;
+   }
+
+   /**
+    * Set rights to be same as data access object.
+    * This is not atomic!
+    *
+    * @param collectionName
+    *       collection name where data document is
+    * @param documentId
+    *       data document id
+    * @param accessRightsDao
+    *       data access object
+    */
+   public void setDao(String collectionName, String documentId, AccessRightsDao accessRightsDao) {
+      dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentId), accessRightsDao), documentId);
+   }
+
+   /**
+    * Set rights to be same as data access object with
+    * check. Can be slow. This is not atomic!
+    *
+    * @param collectionName
+    *       collection name where data document is
+    * @param documentId
+    *       data document id
+    * @param accessRightsDao
+    *       data access object
+    * @return true if all data was updated successful
+    */
+   public boolean setDaoCheck(String collectionName, String documentId, AccessRightsDao accessRightsDao) {
+      dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentId), accessRightsDao), documentId);
+      DataDocument dataDoc = dataStorage.readDocument(collectionName, documentId);
+      return (accessRightsDao.isWrite() == checkForWrite(dataDoc, accessRightsDao.getUserName()))
+            & (accessRightsDao.isRead() == checkForRead(dataDoc, accessRightsDao.getUserName()))
+            & (accessRightsDao.isExecute() == checkForExecute(dataDoc, accessRightsDao.getUserName()));
+   }
+
+   /**
+    * Return query string for search and limit user
+    * without rights.
+    * Example: {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } }.
+    * @param email
+    *       email of username
+    * @return
+    *       return string as in example
+    */
+   public String readQueryString(String email){
+      // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } })
+      return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$gte : 4}}} }";
+   }
+
+   /**
+    * Returns a filter part for a query that limits search results only for the documents where the current user has
+    * read rights.
+    * @return The query filter to limit returned documents only to those where the current user has read rights.
+    */
+   public DataDocument getReadRightsQueryFilter() {
+      return new DataDocument("_meta-rights", new DataDocument("$elemMatch", new DataDocument("user_email", user.getUserEmail()).append("rule", new DataDocument("$gte", 4))));
+   }
+
+   public String writeQueryString(String email){
+      // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$in : [2,3,6,7]}} } })
+      return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$in : [6,7]}}} }";
    }
 }

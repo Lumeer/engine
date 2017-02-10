@@ -401,6 +401,41 @@ public class SecurityFacadeTest extends Arquillian {
       Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, userFacade.getUserEmail()));
    }
 
+   @Test
+   public void testReadDaoList() throws Exception {
+      DataDocument dataDocument = new DataDocument();
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
+      securityFacade.setRightsExecute(dataDocument,"test@gmail.com");
+      securityFacade.setRightsRead(dataDocument, "test@gmail.com");
+      securityFacade.setRightsWrite(dataDocument,"test@gmail.com");
+
+      securityFacade.setRightsRead(dataDocument, "test2@gmail.com");
+      securityFacade.setRightsWrite(dataDocument,"test2@gmail.com");
+
+      securityFacade.setRightsExecute(dataDocument,"test4@gmail.com");
+      securityFacade.setRightsRead(dataDocument, "test4@gmail.com");
+
+      securityFacade.setRightsExecute(dataDocument,"test3@gmail.com");
+      securityFacade.setRightsWrite(dataDocument,"test3@gmail.com");
+
+      if (dataStorage.hasCollection("securityFacadeTestList")){
+         dataStorage.dropCollection("securityFacadeTestList");
+      }
+      dataStorage.createCollection("securityFacadeTestList");
+      String id = dataStorage.createDocument("securityFacadeTestList",dataDocument);
+      System.out.println("=================================");
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(0).toString());
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(1).toString());
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(2).toString());
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(3).toString());
+      System.out.println(securityFacade.readQueryString("test@gmail.com"));
+      System.out.println("========= dao from document===========");
+      System.out.println(securityFacade.getDaoList(dataDocument).get(0).toString());
+      System.out.println(securityFacade.getDaoList(dataDocument).get(1).toString());
+      System.out.println(securityFacade.getDaoList(dataDocument).get(2).toString());
+      System.out.println(securityFacade.getDaoList(dataDocument).get(3).toString());
+   }
+
    private void addRights(DataDocument dataDocument, String email, Integer rights) {
       List<DataDocument> arrayList = readList(dataDocument);
       DataDocument newRule = new DataDocument();

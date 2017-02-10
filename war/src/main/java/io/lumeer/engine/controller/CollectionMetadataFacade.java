@@ -32,6 +32,7 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
@@ -932,6 +933,8 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
+    * Reads constraint for the given attribute.
+    *
     * @param collectionName
     *       collection internal name
     * @param attributeName
@@ -1076,6 +1079,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.setRightsRead(rights, user);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1094,6 +1098,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.setRightsWrite(rights, user);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1112,6 +1117,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.setRightsExecute(rights, user);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1130,6 +1136,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.removeRightsRead(rights, user);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1148,6 +1155,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.removeRightsWrite(rights, user);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
 
    /**
@@ -1166,6 +1174,19 @@ public class CollectionMetadataFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
       securityFacade.removeRightsExecute(rights, user);
+      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
+   }
+
+   /**
+    * Gets access rights for all users.
+    *
+    * @param collectionName
+    *       internal name
+    * @return list of AccessRightsDao (Daos for all users)
+    */
+   public List<AccessRightsDao> getAllAccessRights(String collectionName) {
+      // TODO: Who will have the permission to view all rights?
+      return securityFacade.getDaoList(getAccessRightsDocument(collectionName));
    }
 
    // returns whole access rights document - to be used only internally

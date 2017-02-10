@@ -252,7 +252,7 @@ public class DocumentFacade implements Serializable {
    }
 
    /**
-    * Revert old version of document
+    * Reverts old version of document.
     *
     * @param collectionName
     *       the name of the collection

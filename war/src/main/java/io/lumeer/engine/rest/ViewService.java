@@ -24,7 +24,10 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
+import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.rest.dao.ViewDao;
 
 import org.bson.Document;
@@ -53,6 +56,12 @@ public class ViewService {
 
    @Inject
    private ViewFacade viewFacade;
+
+   @Inject
+   private UserFacade userFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
 
    /**
     * Gets a complete list of all views. Filters the views by type when parameter is not empty.
@@ -179,10 +188,13 @@ public class ViewService {
    @GET
    @Path("/{id}/rights")
    @Produces(MediaType.APPLICATION_JSON)
-   public String getViewAccessRights(final @PathParam("id") int id) {
-      // TODO return access rights
+   public AccessRightsDao getViewAccessRights(final @PathParam("id") int id) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      final String user = userFacade.getUserEmail();
+      final DataDocument view = viewFacade.getViewMetadata(id);
 
-      return "";
+      return new AccessRightsDao(securityFacade.checkForRead(view, user),
+            securityFacade.checkForWrite(view, user), securityFacade.checkForExecute(view, user),
+            user);
    }
 
    /**
@@ -195,8 +207,33 @@ public class ViewService {
     */
    @PUT
    @Path("/{id}/rights")
-   @Produces(MediaType.APPLICATION_JSON)
-   public void setViewAccessRights(final @PathParam("id") int id, final String accessRights) {
-      // TODO set access rights
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void setViewAccessRights(final @PathParam("id") int id, final AccessRightsDao accessRights) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+      final String user = userFacade.getUserEmail();
+      final DataDocument view = viewFacade.getViewMetadata(id);
+
+      if (securityFacade.checkForAddRights(view, user)) {
+         if (accessRights.isRead()) {
+            securityFacade.setRightsRead(view, accessRights.getUserName());
+         } else {
+            securityFacade.removeRightsRead(view, accessRights.getUserName());
+         }
+
+         if (accessRights.isWrite()) {
+            securityFacade.setRightsWrite(view, accessRights.getUserName());
+         } else {
+            securityFacade.removeRightsWrite(view, accessRights.getUserName());
+         }
+
+         if (accessRights.isExecute()) {
+            securityFacade.setRightsExecute(view, accessRights.getUserName());
+         } else {
+            securityFacade.removeRightsExecute(view, accessRights.getUserName());
+         }
+
+         viewFacade.updateViewAccessRights(view);
+      } else {
+         throw new UnauthorizedAccessException("Cannot set user rights on this view.");
+      }
    }
 }

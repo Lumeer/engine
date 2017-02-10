@@ -311,7 +311,7 @@ public class VersionFacade implements Serializable {
     *       collection where document is stored
     * @param documentId
     *       id of document
-    * @return lis of documents from shadow with same id
+    * @return list of documents from shadow with same id
     * @throws CollectionNotFoundException
     *       if collection does not exists
     */

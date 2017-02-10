@@ -25,15 +25,17 @@ import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundExceptio
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
+import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
+import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.RequestScoped;
@@ -75,6 +77,19 @@ public class DocumentService implements Serializable {
    @Inject
    private UserFacade userFacade;
 
+   /**
+    * Creates and inserts a new document to specified collection. The method creates the given collection if does not exist.
+    *
+    * @param collectionName
+    *       the name of the collection where the document will be created
+    * @param document
+    *       the DataDocument object representing a document to be created
+    * @return the id of the newly created document
+    * @throws DbException
+    *       When there is an error working with the database.
+    * @throws InvalidConstraintException
+    *       If one of document's value does not satisfy constraint or type.
+    */
    @POST
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
@@ -86,6 +101,16 @@ public class DocumentService implements Serializable {
       return documentFacade.createDocument(getInternalName(collectionName), document);
    }
 
+   /**
+    * Drops an existing document in given collection by its id.
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the document to drop
+    * @throws DbException
+    *       When there is an error working with the database.
+    */
    @DELETE
    @Path("/{documentId}")
    public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
@@ -95,6 +120,17 @@ public class DocumentService implements Serializable {
       documentFacade.dropDocument(getInternalName(collectionName), documentId);
    }
 
+   /**
+    * Reads the specified document in given collection by its id.
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the read document
+    * @return the DataDocument object representing the read document
+    * @throws DbException
+    *       When there is an error working with the database.
+    */
    @GET
    @Path("/{documentId}")
    @Produces(MediaType.APPLICATION_JSON)
@@ -105,6 +141,18 @@ public class DocumentService implements Serializable {
       return documentFacade.readDocument(getInternalName(collectionName), documentId);
    }
 
+   /**
+    * Modifies an existing document in given collection by its id and create collection if not exists.
+    *
+    * @param collectionName
+    *       the name of the collection where the existing document is located
+    * @param updatedDocument
+    *       the DataDocument object representing a document with changes to update
+    * @throws DbException
+    *       When there is an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       If one of document's value doesn't satisfy constraint or type.
+    */
    @PUT
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
@@ -115,6 +163,24 @@ public class DocumentService implements Serializable {
       documentFacade.updateDocument(getInternalName(collectionName), updatedDocument);
    }
 
+   /**
+    * Put attribute and value to document metadata.
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the read document
+    * @param attributeName
+    *       the meta attribute to put
+    * @param value
+    *       the value of the given attribute
+    * @throws CollectionNotFoundException
+    *       When the collection was not found in database.
+    * @throws DocumentNotFoundException
+    *       If document was not found in the collection.
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       When the metadata collection of the given collection was not found in database.
+    */
    @POST
    @Path("/{documentId}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
@@ -125,6 +191,21 @@ public class DocumentService implements Serializable {
       documentMetadataFacade.putDocumentMetadata(getInternalName(collectionName), documentId, attributeName, value);
    }
 
+   /**
+    * Reads the metadata keys and values of specified document.
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the read document
+    * @return the map where key is name of metadata attribute and its value
+    * @throws CollectionNotFoundException
+    *       When the collection was not found in database.
+    * @throws DocumentNotFoundException
+    *       When the document was not found in the collection.
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       When the metadata collection of the given collection was not found in database.
+    */
    @GET
    @Path("/{documentId}/meta")
    @Produces(MediaType.APPLICATION_JSON)
@@ -135,6 +216,22 @@ public class DocumentService implements Serializable {
       return documentMetadataFacade.readDocumentMetadata(getInternalName(collectionName), documentId);
    }
 
+   /**
+    * Put attributes and its values to document metadata.
+    *
+    * @param collectionName
+    *       the name of the collection where the document is located
+    * @param documentId
+    *       the id of the read document
+    * @param metadata
+    *       map with medatadata attributes and its values
+    * @throws CollectionNotFoundException
+    *       When the collection was not found in database.
+    * @throws DocumentNotFoundException
+    *       When the document was not found in the collection.
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       When the metadata collection of the given collection was not found in database.
+    */
    @PUT
    @Path("/{documentId}/meta")
    @Consumes(MediaType.APPLICATION_JSON)
@@ -145,6 +242,19 @@ public class DocumentService implements Serializable {
       documentMetadataFacade.updateDocumentMetadata(getInternalName(collectionName), documentId, metadata);
    }
 
+   /**
+    * Read all versions of the given document and returns it as a list.
+    *
+    * @param collectionName
+    *       collection name where document is stored
+    * @param documentId
+    *       id of the document
+    * @return list of documents in different version
+    * @throws CollectionNotFoundException
+    *       When the collection was not found in database.
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       When the metadata collection of the given collection was not found in database.
+    */
    @GET
    @Path("/{documentId}/versions")
    @Produces(MediaType.APPLICATION_JSON)
@@ -155,6 +265,20 @@ public class DocumentService implements Serializable {
       return versionFacade.getDocumentVersions(getInternalName(collectionName), documentId);
    }
 
+   /**
+    * Reverts old version of the given document.
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       id of document to revert
+    * @param versionId
+    *       old version to be reverted
+    * @throws DbException
+    *       When there is an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       If one of document's value doesn't satisfy constraint or type.
+    */
    @POST
    @Path("/{documentId}/versions/{versionId}")
    public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId)
@@ -166,7 +290,7 @@ public class DocumentService implements Serializable {
       documentFacade.revertDocument(getInternalName(collectionName), documentId, versionId);
    }
 
-   @GET
+  /* @GET
    @Path("/{documentId}/rights")
    @Produces(MediaType.APPLICATION_JSON)
    public HashMap readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
@@ -174,22 +298,71 @@ public class DocumentService implements Serializable {
          throw new IllegalArgumentException();
       }
       return securityFacade.readRightList(getInternalName(collectionName), documentId);
-   }
+   }*/
 
-   @PUT
+   /**
+    * Gets access rights for all users of the given document.
+    *
+    * @param collectionName
+    *       name of the collection
+    * @param documentId
+    *       id of the given document
+    * @return list of access rights of the given collection
+    * @throws CollectionNotFoundException
+    *       When the collection was not found in database.
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       When the metadata collection of the given collection was not found in database.
+    */
+   @GET
    @Path("/{documentId}/rights")
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) {
+   @Produces(MediaType.APPLICATION_JSON)
+   public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      // TODO:
-      // securityFacade.setRightsRead()
-      // securityFacade.setRightsWrite()
-      // securityFacade.setRightsExecute()
+      return securityFacade.getDaoList(getInternalName(collectionName), documentId);
    }
 
-   private String getInternalName(String collectionOriginalName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   /**
+    * Updates access rights of the given document for currently logged user.
+    *
+    * @param collectionName
+    *       name of the collection
+    * @param documentId
+    *       id of the given document
+    * @param accessRights
+    *       new access rights of the logged user
+    * @throws DbException
+    *       When there is an error working with the database.
+    */
+   @PUT
+   @Path("/{documentId}/rights")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final AccessRightsDao accessRights) throws DbException {
+      if (collectionName == null || documentId == null || accessRights == null) {
+         throw new IllegalArgumentException();
+      }
+
+      final String user = userFacade.getUserEmail();
+      final DataDocument document = documentFacade.readDocument(getInternalName(collectionName), documentId);
+
+      if (securityFacade.checkForAddRights(document, user)) {
+         securityFacade.setDao(getInternalName(collectionName), documentId, accessRights);
+      } else {
+         throw new UnauthorizedAccessException("Cannot set user rights on this document.");
+      }
+   }
+
+   /**
+    * Returns internal name of the given collection stored in the database.
+    *
+    * @param collectionOriginalName
+    *       original name of the collection given by user
+    * @return internal name of the given collection
+    * @throws UserCollectionNotFoundException
+    *       When the given user collection does not exist.
+    */
+   private String getInternalName(String collectionOriginalName) throws UserCollectionNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
    }
 }
