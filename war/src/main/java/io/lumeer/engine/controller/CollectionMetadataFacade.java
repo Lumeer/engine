@@ -177,19 +177,15 @@ public class CollectionMetadataFacade implements Serializable {
       checkIfMetadataCollectionExists(metadataCollectionName);
 
       // set name - we don't use setOriginalCollectionName, because that methods assumes document with name already exists
-      Map<String, Object> metadataName = new HashMap<>();
-      metadataName.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
-      metadataName.put(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
-      dataStorage.createDocument(metadataCollectionName, new DataDocument(metadataName));
+      DataDocument metadataName = new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE)
+            .append(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
+      dataStorage.createDocument(metadataCollectionName, metadataName);
 
       // set create user and date and access rights for him
-      Map<String, Object> metadataRights = new HashMap<>();
-      metadataRights.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE);
-      metadataRights.put(LumeerConst.Collection.COLLECTION_CREATE_DATE_KEY, Utils.getCurrentTimeString());
-
       String user = getCurrentUser();
-      metadataRights.put(LumeerConst.Collection.COLLECTION_CREATE_USER_KEY, user);
-      DataDocument metadataDocument = new DataDocument(metadataRights);
+      DataDocument metadataDocument = new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE)
+            .append(LumeerConst.Collection.COLLECTION_CREATE_DATE_KEY, Utils.getCurrentTimeString())
+            .append(LumeerConst.Collection.COLLECTION_CREATE_USER_KEY, user);
 
       securityFacade.setRightsRead(metadataDocument, user);
       securityFacade.setRightsWrite(metadataDocument, user);
@@ -197,10 +193,9 @@ public class CollectionMetadataFacade implements Serializable {
       dataStorage.createDocument(metadataCollectionName, metadataDocument);
 
       // set lock - we don't use setCollectionLockTime, because that methods assumes document with lock already exists
-      Map<String, Object> metadataLock = new HashMap<>();
-      metadataLock.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
-      metadataLock.put(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, "");
-      dataStorage.createDocument(metadataCollectionName, new DataDocument(metadataLock));
+      DataDocument metadataLock = new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE)
+            .append(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, "");
+      dataStorage.createDocument(metadataCollectionName, metadataLock);
 
       // we create indexes on frequently used fields
       int indexType = 1;
@@ -229,8 +224,8 @@ public class CollectionMetadataFacade implements Serializable {
 
       List<String> attributes = new ArrayList<>();
 
-      for (int i = 0; i < attributesInfoDocuments.size(); i++) {
-         String name = attributesInfoDocuments.get(i).getString(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY);
+      for (DataDocument attributesInfoDocument : attributesInfoDocuments) {
+         String name = attributesInfoDocument.getString(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY);
          attributes.add(name);
       }
 
@@ -301,11 +296,8 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument attributeDocument = attributeInfo.get(0);
       String documentId = attributeDocument.getId();
 
-      Map<String, Object> metadata = new HashMap<>();
       if (!newName.isEmpty()) {
-         metadata.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, newName);
-         DataDocument metadataDocument = new DataDocument(metadata);
-         dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
+         dataStorage.updateDocument(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, newName), documentId);
          return true;
       }
 
@@ -351,10 +343,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument attributeDocument = attributeInfo.get(0);
       String documentId = attributeDocument.getId();
 
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, newType);
-      DataDocument metadataDocument = new DataDocument(metadata);
-      dataStorage.updateDocument(metadataCollectionName, metadataDocument, documentId);
+      dataStorage.updateDocument(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, newType), documentId);
 
       return true;
    }
@@ -504,12 +493,7 @@ public class CollectionMetadataFacade implements Serializable {
 
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> countInfo = dataStorage.run(query);
-      if (!countInfo.isEmpty()) {
-         DataDocument countDocument = countInfo.get(0);
-         return countDocument.getInteger(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY);
-      } else {
-         return 0; // the attribute does not exist
-      }
+      return countInfo.isEmpty() ? 0 : countInfo.get(0).getInteger(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY);
    }
 
    /**
@@ -559,9 +543,7 @@ public class CollectionMetadataFacade implements Serializable {
                   return c;
                }
                // we do not care if some other collection does not have original name or some problem with metadata
-            } catch (CollectionMetadataDocumentNotFoundException e) {
-               continue;
-            } catch (CollectionNotFoundException e) {
+            } catch (CollectionMetadataDocumentNotFoundException | CollectionNotFoundException e) {
                continue;
             }
          }
@@ -599,10 +581,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument nameDocument = nameInfo.get(0);
       String id = nameDocument.getId();
 
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
-
-      DataDocument metadataDocument = new DataDocument(metadata);
+      DataDocument metadataDocument = new DataDocument(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionInternalName), metadataDocument, id);
 
       changeCollectionNameEvent.fire(new ChangeCollectionName(collectionOriginalName, collectionInternalName));
@@ -670,10 +649,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument lockDocument = lockInfo.get(0);
       String id = lockDocument.getId();
 
-      Map<String, Object> metadata = new HashMap<>();
-      metadata.put(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, newTime);
-
-      DataDocument metadataDocument = new DataDocument(metadata);
+      DataDocument metadataDocument = new DataDocument(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, newTime);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id);
       return true;
    }
@@ -797,11 +773,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if the name is a name of "classical" collection containing data from user
     */
    public boolean isUserCollection(String collectionName) {
-      if (collectionName.length() < LumeerConst.Collection.COLLECTION_NAME_PREFIX.length()) {
-         return false;
-      }
-      String prefix = collectionName.substring(0, LumeerConst.Collection.COLLECTION_NAME_PREFIX.length());
-      return LumeerConst.Collection.COLLECTION_NAME_PREFIX.equals(prefix) && !collectionName.endsWith(".shadow"); // VersionFacade adds suffix
+      return collectionName != null && collectionName.length() >= LumeerConst.Collection.COLLECTION_NAME_PREFIX.length() && collectionName.startsWith(LumeerConst.Collection.COLLECTION_NAME_PREFIX) && !collectionName.endsWith(".shadow");
    }
 
    /**
@@ -927,7 +899,7 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public Object checkValueTypeAndConvert(String value, String type) {
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         return checkValueDateAndConvert(value, Collections.EMPTY_LIST);
+         return checkValueDateAndConvert(value, Collections.emptyList());
       }
       return checkAttributeTypeAndConvert(value, type);
    }
@@ -953,9 +925,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       if (result == Constraint.ConstraintResult.FIXABLE) {
-         String fixedValue = null;
-         fixedValue = constraintManager.fix(valueString);
-         return fixedValue;
+         return constraintManager.fix(valueString);
       }
 
       return valueString;
@@ -976,10 +946,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       List<String> constraints = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
-      if (constraints == null) {
-         return Collections.emptyList();
-      }
-      return constraints;
+      return constraints == null ? Collections.emptyList() : constraints;
    }
 
    // to be used only internally, when checking attribute value
@@ -1210,23 +1177,14 @@ public class CollectionMetadataFacade implements Serializable {
       String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE);
       List<DataDocument> rightsInfo = dataStorage.run(query);
 
-      if (rightsInfo.isEmpty()) {
-         return null;
-      }
-
-      return rightsInfo.get(0);
+      return rightsInfo.isEmpty() ? null : rightsInfo.get(0);
    }
 
    // returns id of the document with info about given attribute
    private String getAttributeDocumentId(String collectionName, String attributeName) {
       String query = queryCollectionAttributeInfo(collectionName, attributeName);
       List<DataDocument> attributeInfo = dataStorage.run(query);
-      if (!attributeInfo.isEmpty()) {
-         DataDocument attributeDocument = attributeInfo.get(0);
-         return attributeDocument.getId();
-      } else { // attribute doesn't exist
-         return null;
-      }
+      return attributeInfo.isEmpty() ? null : attributeInfo.get(0).getId();
    }
 
    // returns MongoDb query for getting specific metadata document

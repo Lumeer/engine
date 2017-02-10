@@ -40,6 +40,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -221,17 +222,17 @@ public class CollectionFacade implements Serializable {
     *
     * @param collectionName
     *       internal collection name
-    * @param element
+    * @param document
     *       DataDocument with data to be updated
-    * @param elementId
+    * @param documentId
     *       id of document to be updated
     * @throws CollectionNotFoundException
     *       if collection was not found in database
     */
    @Deprecated // CollectionMetadataFacade provides specific methods for metadata update
-   public void updateCollectionMetadata(final String collectionName, final DataDocument element, String elementId) throws CollectionNotFoundException {
+   public void updateCollectionMetadata(final String collectionName, final DataDocument document, String documentId) throws CollectionNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
-         dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), element, elementId);
+         dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), document, documentId);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -417,10 +418,9 @@ public class CollectionFacade implements Serializable {
          }
 
          // we check if attribute value in all existing documents satisfies new constraint
-         ConstraintManager constraintManager = new ConstraintManager(Arrays.asList(constraintConfiguration));
+         ConstraintManager constraintManager = new ConstraintManager(Collections.singletonList(constraintConfiguration));
 
          List<DataDocument> allDocuments = getAllDocuments(collectionName);
-         boolean isValid = true;
          for (DataDocument document : allDocuments) {
             // TODO: fix fixable value
             String value = document.get(attributeName).toString();
@@ -428,17 +428,12 @@ public class CollectionFacade implements Serializable {
                continue;
             }
             if (!(constraintManager.isValid(value) == Constraint.ConstraintResult.VALID)) {
-               isValid = false; // we have found invalid value, so the constraint cannot be added
-               break;
+               return false; // we have found invalid value, so the constraint cannot be added
             }
          }
 
-         if (isValid) {
-            collectionMetadataFacade.addAttributeConstraint(collectionName, attributeName, constraintConfiguration);
-            return true;
-         } else {
-            return false;
-         }
+         collectionMetadataFacade.addAttributeConstraint(collectionName, attributeName, constraintConfiguration);
+         return true;
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
