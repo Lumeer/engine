@@ -402,7 +402,7 @@ public class LinkingFacade implements Serializable {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       if (role == null) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.paramCanNotBeNull(LumeerConst.Linking.MainTable.ATTR_ROLE));
+         throw new IllegalArgumentException(ErrorMessageBuilder.paramCanNotBeNullString(LumeerConst.Linking.MainTable.ATTR_ROLE));
       }
       String collectionName = checkOrCreateLinkInSystemCollection(firstCollectionName, secondCollectionName, role, linkDirection);
       createLinkIfNotExists(collectionName, firstDocumentId, secondDocumentId, attributes, linkDirection);

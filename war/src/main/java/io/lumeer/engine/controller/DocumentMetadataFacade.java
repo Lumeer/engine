@@ -89,7 +89,7 @@ public class DocumentMetadataFacade implements Serializable {
     */
    public Object getDocumentMetadata(String collectionName, String documentId, String key) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
       if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -145,7 +145,7 @@ public class DocumentMetadataFacade implements Serializable {
     */
    public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
       if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       updateDocumentMetadata(collectionName, documentId, new DataDocument(key, value));
    }
@@ -175,7 +175,7 @@ public class DocumentMetadataFacade implements Serializable {
       }
       for (String key : metadata.keySet()) {
          if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-            throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+            throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
          }
       }
       dataStorage.updateDocument(collectionName, metadata, documentId);
@@ -205,7 +205,7 @@ public class DocumentMetadataFacade implements Serializable {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       dataStorage.dropAttribute(collectionName, documentId, key);
    }

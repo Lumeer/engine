@@ -39,7 +39,6 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -273,7 +272,7 @@ public class CollectionFacade implements Serializable {
          if (isCollectionAttribute(collectionName, attributeName)) {
             return dataStorage.getAttributeValues(collectionName, attributeName);
          } else {
-            throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundString(attributeName, collectionName));
+            throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundInColString(attributeName, collectionName));
          }
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));

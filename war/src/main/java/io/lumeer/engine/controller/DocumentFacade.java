@@ -164,7 +164,7 @@ public class DocumentFacade implements Serializable {
       checkConstraintsAndConvert(collectionName, updatedDocument);
       upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
-      versionFacade.newDocumentVersion(collectionName, upd);
+      versionFacade.newDocumentVersion(collectionName, existingDocument, upd);
 
       // we add new attributes of updated document to collection metadata
       upd.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -202,7 +202,7 @@ public class DocumentFacade implements Serializable {
       });
       repl.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
       repl.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
-      versionFacade.backUp(collectionName, documentId);
+      versionFacade.backUp(collectionName, existingDocument);
       dataStorage.replaceDocument(collectionName, repl, documentId);
       dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
 
@@ -237,7 +237,7 @@ public class DocumentFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
 
-      versionFacade.backUp(collectionName, documentId);
+      versionFacade.backUp(collectionName, dataDocument);
       dataStorage.dropDocument(collectionName, documentId);
 
       if (dataStorage.collectionHasDocument(collectionName, documentId)) {
@@ -276,7 +276,7 @@ public class DocumentFacade implements Serializable {
       DataDocument revertDocument = versionFacade.readOldDocumentVersion(collectionName, documentId, revertVersion);
       checkConstraintsAndConvert(collectionName, revertDocument);
 
-      versionFacade.revertDocumentVersion(collectionName, existingDocument, revertVersion);
+      versionFacade.revertDocumentVersion(collectionName, existingDocument, revertDocument);
 
       // add new attributes of updated document to collection metadata
       revertDocument.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -302,13 +302,16 @@ public class DocumentFacade implements Serializable {
     */
    public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws DbException {
       checkCollectionForWrite(collectionName);
-      if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
+
+      DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
+      if (existingDocument == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
+
       if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
          throw new UnauthorizedAccessException();
       }
-      versionFacade.backUp(collectionName, documentId);
+      versionFacade.backUp(collectionName, existingDocument);
       dataStorage.dropAttribute(collectionName, documentId, attributeName);
       dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
@@ -371,7 +374,7 @@ public class DocumentFacade implements Serializable {
       for (String attribute : doc.keySet()) {
          Object value = collectionMetadataFacade.checkAndConvertAttributeValue(collectionName, attribute, doc.get(attribute).toString());
          if (value == null) {
-            throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKey(attribute));
+            throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));
          } else {
             doc.replace(attribute, value);
          }
@@ -383,7 +386,7 @@ public class DocumentFacade implements Serializable {
       for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
          String attributeName = entry.getKey().trim();
          if (!Utils.isAttributeNameValid(attributeName)) {
-            throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKey(attributeName));
+            throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKeyString(attributeName));
          }
          Object value = entry.getValue();
          if (MongoUtils.isDataDocument(value)) {
