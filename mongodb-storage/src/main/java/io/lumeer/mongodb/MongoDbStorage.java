@@ -510,8 +510,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void incrementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      BasicDBObject updateBson = new BasicDBObject("$inc", new BasicDBObject(new Document(attributeName, incBy)));
-      database.getCollection(collectionName).updateOne(filter, updateBson);
+      database.getCollection(collectionName).updateOne(filter, inc(attributeName, incBy));
    }
 
    @Override
