@@ -297,7 +297,7 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      return securityFacade.readRightList(getInternalName(collectionName), documentId);
+      return securityFacade.readRightsMap(getInternalName(collectionName), documentId);
    }*/
 
    /**

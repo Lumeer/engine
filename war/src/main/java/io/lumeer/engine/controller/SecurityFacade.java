@@ -1,22 +1,22 @@
 /*
- * -----------------------------------------------------------------------\
- * Lumeer
- *  
- * Copyright (C) 2016 - 2017 the original author or authors.
- *  
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * -----------------------------------------------------------------------/
- */
+* -----------------------------------------------------------------------\
+* Lumeer
+*  
+* Copyright (C) 2016 - 2017 the original author or authors.
+*  
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+* -----------------------------------------------------------------------/
+*/
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.LumeerConst;
@@ -29,6 +29,8 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,10 +141,7 @@ public class SecurityFacade implements Serializable {
    }
 
    private List<String> buildMetaList() {
-      List<String> arrayList = new ArrayList<>();
-      arrayList.add(LumeerConst.Document.CREATE_BY_USER_KEY);
-      arrayList.add(LumeerConst.Document.USER_RIGHTS);
-      return arrayList;
+      return Arrays.asList(LumeerConst.Document.CREATE_BY_USER_KEY, LumeerConst.Document.USER_RIGHTS);
    }
 
    /**
@@ -477,8 +476,7 @@ public class SecurityFacade implements Serializable {
    }
 
    public void addMetaData(DataDocument dataDocument) {
-      List<DataDocument> list = new ArrayList<>();
-      dataDocument.put(LumeerConst.Document.USER_RIGHTS, list);
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, Collections.emptyList());
    }
 
    private List<DataDocument> readList(DataDocument dataDocument) {
@@ -506,6 +504,9 @@ public class SecurityFacade implements Serializable {
 
    private void replaceInList(DataDocument dataDocument, String email, int newInteger) {
       List<DataDocument> arrayList = readList(dataDocument);
+      if (arrayList == null) {
+         return;
+      }
       for (DataDocument datadoc : arrayList) {
          if (datadoc.containsValue(email)) {
             datadoc.replace(LumeerConst.Security.RULE, newInteger);
@@ -516,9 +517,11 @@ public class SecurityFacade implements Serializable {
 
    private void putToList(DataDocument dataDocument, String email, int rights) {
       List<DataDocument> arrayList = readList(dataDocument);
-      DataDocument newRule = new DataDocument();
-      newRule.put(LumeerConst.Security.USER_ID, email);
-      newRule.put(LumeerConst.Security.RULE, rights);
+      if (arrayList == null) {
+         return;
+      }
+      DataDocument newRule = new DataDocument(LumeerConst.Security.USER_ID, email)
+            .append(LumeerConst.Security.RULE, rights);
       arrayList.add(newRule);
       dataDocument.replace(LumeerConst.Document.USER_RIGHTS, arrayList);
    }
@@ -562,19 +565,17 @@ public class SecurityFacade implements Serializable {
     *       id of document
     * @return return hashmap of all rules
     */
-   public HashMap readRightList(String collectionName, String documentId) {
+   public Map<String, Integer> readRightsMap(String collectionName, String documentId) {
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
-      HashMap<String, Integer> map = new HashMap<String, Integer>();
-      List<DataDocument> arrayList = readList(dataDocument);
-      for (DataDocument dataDoc : arrayList) {
-         map.put(dataDoc.getString(LumeerConst.Security.USER_ID), dataDoc.getInteger(LumeerConst.Security.RULE));
-      }
-      return map;
+      return readRightsMap(dataDocument);
    }
 
-   public HashMap readRightList(DataDocument dataDocument) {
-      HashMap<String, Integer> map = new HashMap<String, Integer>();
+   public Map<String, Integer> readRightsMap(DataDocument dataDocument) {
       List<DataDocument> arrayList = readList(dataDocument);
+      if (arrayList == null) {
+         return Collections.emptyMap();
+      }
+      HashMap<String, Integer> map = new HashMap<>();
       for (DataDocument dataDoc : arrayList) {
          map.put(dataDoc.getString(LumeerConst.Security.USER_ID), dataDoc.getInteger(LumeerConst.Security.RULE));
       }
@@ -591,48 +592,38 @@ public class SecurityFacade implements Serializable {
     * @return data access object
     */
    public AccessRightsDao getDao(DataDocument dataDocument, String email) {
-      AccessRightsDao accessRightsDao = new AccessRightsDao(checkForRead(dataDocument, email), checkForWrite(dataDocument, email), checkForExecute(dataDocument, email), email);
-      return accessRightsDao;
+      return new AccessRightsDao(checkForRead(dataDocument, email), checkForWrite(dataDocument, email), checkForExecute(dataDocument, email), email);
    }
 
    /**
     * Return Data access object of Access Rights type from collection.
+    *
     * @param collectionName
     *       Collection name where datadocument is stored
     * @param documentId
     *       Document id
-    * @return
-    *       data access object.
+    * @return data access object.
     */
    public List<AccessRightsDao> getDaoList(String collectionName, String documentId) {
-      List<AccessRightsDao> list = new ArrayList<>();
-      DataDocument dataDoc = dataStorage.readDocument(collectionName,documentId);
-      HashMap<String,Integer> hashMap = readRightList(collectionName, documentId);
-      for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
-         boolean read = checkForRead(dataDoc,entry.getKey());
-         boolean write = checkForWrite(dataDoc, entry.getKey());
-         boolean execute = checkForExecute(dataDoc, entry.getKey());
-         AccessRightsDao ard = new AccessRightsDao(read,write,execute, entry.getKey());
-         list.add(ard);
-      }
-      return list;
+      DataDocument dataDoc = dataStorage.readDocument(collectionName, documentId);
+      return getDaoList(dataDoc);
    }
 
-   /**Return Data access object of Access Rights type from datadocument.
+   /**
+    * Return Data access object of Access Rights type from datadocument.
+    *
     * @param dataDocument
     *       dataDocument, from which dao wanted
-    * @return
-    *       data access object of access rights type
+    * @return data access object of access rights type
     */
    public List<AccessRightsDao> getDaoList(DataDocument dataDocument) {
+      Map<String, Integer> hashMap = readRightsMap(dataDocument);
       List<AccessRightsDao> list = new ArrayList<>();
-      DataDocument dataDoc = dataDocument;
-      HashMap<String,Integer> hashMap = readRightList(dataDoc);
       for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
-         boolean read = checkForRead(dataDoc,entry.getKey());
-         boolean write = checkForWrite(dataDoc, entry.getKey());
-         boolean execute = checkForExecute(dataDoc, entry.getKey());
-         AccessRightsDao ard = new AccessRightsDao(read,write,execute, entry.getKey());
+         boolean read = checkForRead(dataDocument, entry.getKey());
+         boolean write = checkForWrite(dataDocument, entry.getKey());
+         boolean execute = checkForExecute(dataDocument, entry.getKey());
+         AccessRightsDao ard = new AccessRightsDao(read, write, execute, entry.getKey());
          list.add(ard);
       }
       return list;
@@ -739,12 +730,12 @@ public class SecurityFacade implements Serializable {
     * Return query string for search and limit user
     * without rights.
     * Example: {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } }.
+    *
     * @param email
     *       email of username
-    * @return
-    *       return string as in example
+    * @return return string as in example
     */
-   public String readQueryString(String email){
+   public String readQueryString(String email) {
       // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$gte : 4}} } })
       return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$gte : 4}}} }";
    }
@@ -752,13 +743,14 @@ public class SecurityFacade implements Serializable {
    /**
     * Returns a filter part for a query that limits search results only for the documents where the current user has
     * read rights.
+    *
     * @return The query filter to limit returned documents only to those where the current user has read rights.
     */
    public DataDocument getReadRightsQueryFilter() {
       return new DataDocument("_meta-rights", new DataDocument("$elemMatch", new DataDocument("user_email", user.getUserEmail()).append("rule", new DataDocument("$gte", 4))));
    }
 
-   public String writeQueryString(String email){
+   public String writeQueryString(String email) {
       // GENERATE: ....find(  {"_meta-rights" : { $elemMatch: { "user_email" : "test@gmail.com", "rule" : {$in : [2,3,6,7]}} } })
       return "{\"" + LumeerConst.Document.USER_RIGHTS + "\" : { $elemMatch: { \"" + LumeerConst.Document.CREATE_BY_USER_KEY + "\" : \"" + email + "\", \"rule\" : {$in : [6,7]}}} }";
    }
