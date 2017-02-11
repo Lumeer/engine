@@ -19,6 +19,11 @@
  */
 package io.lumeer.mongodb;
 
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Sorts.*;
+import static com.mongodb.client.model.Updates.*;
+
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -37,11 +42,9 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -285,19 +288,18 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void renameAttribute(final String collectionName, final String oldName, final String newName) {
-      database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), Updates.rename(oldName, newName));
+      database.getCollection(collectionName).updateMany(BsonDocument.parse("{}"), rename(oldName, newName));
    }
 
    @Override
    public void dropAttribute(final String collectionName, final String documentId, final String attributeName) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      BasicDBObject updateBson = new BasicDBObject("$unset", new BasicDBObject(attributeName, 1));
-      database.getCollection(collectionName).updateOne(filter, updateBson);
+      database.getCollection(collectionName).updateOne(filter, unset(attributeName));
    }
 
    public <T> void addItemToArray(final String collectionName, final String documentId, final String attributeName, final T item) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, Updates.push(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+      database.getCollection(collectionName).updateOne(filter, push(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
    }
 
    public <T> void addItemsToArray(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
@@ -315,12 +317,12 @@ public class MongoDbStorage implements DataStorage {
 
    private <T> void addItemsToArrayInternal(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, Updates.pushEach(attributeName, items));
+      database.getCollection(collectionName).updateOne(filter, pushEach(attributeName, items));
    }
 
    public <T> void removeItemFromArray(final String collectionName, final String documentId, final String attributeName, final T item) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, Updates.pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+      database.getCollection(collectionName).updateOne(filter, pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
    }
 
    public <T> void removeItemsFromArray(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
@@ -338,21 +340,21 @@ public class MongoDbStorage implements DataStorage {
 
    private <T> void removeItemsFromArrayInternal(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, Updates.pullAll(attributeName, items));
+      database.getCollection(collectionName).updateOne(filter, pullAll(attributeName, items));
    }
 
    @Override
    public Set<String> getAttributeValues(final String collectionName, final String attributeName) {
       // skip non existing values
-      final Document match = new Document("$match", new Document(attributeName, new Document("$exists", true)));
+      Bson match = match(exists(attributeName));
       // define grouping by out attributeName
-      final Document group = new Document("$group", new Document(LumeerConst.Document.ID, "$" + attributeName));
+      Bson group = group("$" + attributeName, Collections.emptyList());
       // sorting by id, descending, from the newest entry to oldest one
-      final Document sort = new Document("$sort", new Document(LumeerConst.Document.ID, -1));
+      Bson sort = sort(descending(LumeerConst.Document.ID));
       // limit...
-      final Document limit = new Document("$limit", 100);
+      Bson limit = limit(100);
       // this projection adds attribute with desired name, and hides _id attribute
-      final Document project = new Document("$project", new Document(attributeName, "$_id").append(LumeerConst.Document.ID, 0));
+      Bson project = project(new Document(attributeName, "$_id").append(LumeerConst.Document.ID, 0));
 
       AggregateIterable<Document> aggregate = database.getCollection(collectionName).aggregate(Arrays.asList(match, group, sort, limit, project));
       Set<String> attributeValues = new HashSet<>();
@@ -481,7 +483,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public List<DataDocument> aggregate(final String collectionName, final DataDocument... stages) {
       if (stages == null || stages.length == 0) {
-         return Collections.EMPTY_LIST;
+         return Collections.emptyList();
       }
 
       final List<DataDocument> result = new LinkedList<>();
@@ -517,7 +519,7 @@ public class MongoDbStorage implements DataStorage {
       final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
       options.returnDocument(ReturnDocument.AFTER);
 
-      final Document doc = database.getCollection(collectionName).findOneAndUpdate(Filters.eq(indexAttribute, index), Updates.inc("seq", 1),
+      final Document doc = database.getCollection(collectionName).findOneAndUpdate(eq(indexAttribute, index), inc("seq", 1),
             options);
 
       if (doc == null) { // the sequence did not exist
@@ -533,7 +535,7 @@ public class MongoDbStorage implements DataStorage {
       final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
       options.returnDocument(ReturnDocument.AFTER);
 
-      final Document doc = database.getCollection(collectionName).findOneAndUpdate(Filters.eq(indexAttribute, index), Updates.set("seq", 0),
+      final Document doc = database.getCollection(collectionName).findOneAndUpdate(eq(indexAttribute, index), set("seq", 0),
             options);
 
       if (doc == null) {
