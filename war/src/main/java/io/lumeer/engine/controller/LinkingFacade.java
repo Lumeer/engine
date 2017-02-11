@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static com.mongodb.client.model.Filters.*;
+
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -31,8 +33,6 @@ import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
-
-import com.mongodb.client.model.Filters;
 
 import org.bson.conversions.Bson;
 
@@ -88,8 +88,6 @@ public class LinkingFacade implements Serializable {
       dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, LumeerConst.Linking.LinkDirection.FROM);
       dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, LumeerConst.Linking.LinkDirection.TO);
    }
-
-   // TODO onDropCollection
 
    /**
     * Read all link types for selected collection
@@ -507,20 +505,19 @@ public class LinkingFacade implements Serializable {
    }
 
    private String fromTablesColNameFilter(final String collectionName, final String role) {
-      Bson filterRaw = role == null || role.isEmpty() ? Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName) :
-            Filters.and(
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName),
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
+      Bson filterRaw = role == null || role.isEmpty()
+            ? eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName)
+            : and(eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName),
+            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
       return MongoUtils.convertBsonToJson(filterRaw);
    }
 
    private String fromTablesFilter(final String firstCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
       String collParam = linkDirection == LumeerConst.Linking.LinkDirection.FROM ? LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION : LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION;
-      Bson filterRaw = role == null || role.isEmpty() ? Filters.eq(collParam, firstCollectionName) :
-            Filters.and(
-                  Filters.eq(collParam, firstCollectionName),
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role)
-            );
+      Bson filterRaw = role == null || role.isEmpty()
+            ? eq(collParam, firstCollectionName)
+            : and(eq(collParam, firstCollectionName),
+            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
       return MongoUtils.convertBsonToJson(filterRaw);
    }
 
@@ -534,35 +531,29 @@ public class LinkingFacade implements Serializable {
          fromCollectionName = secondCollectionName;
          toCollectionName = firstCollectionName;
       }
-      Bson filterRaw = role == null ?
-            Filters.and(
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName)) :
-            Filters.and(
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName),
-                  Filters.eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
+      Bson filterRaw = role == null
+            ? and(eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
+            eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName))
+            : and(eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
+            eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName),
+            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
       return MongoUtils.convertBsonToJson(filterRaw);
    }
 
    private String fromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM ?
-            Filters.and(
-                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId),
-                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, toId)
-            ) :
-            Filters.and(
-                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, toId),
-                  Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId)
-            );
+      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM
+            ? and(eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId),
+            eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, toId))
+            : and(eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, toId),
+            eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId)
+      );
       return MongoUtils.convertBsonToJson(filterRaw);
    }
 
    private String fromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM ?
-            Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId)
-            :
-            Filters.eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId);
+      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM
+            ? eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId)
+            : eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId);
       return MongoUtils.convertBsonToJson(filterRaw);
    }
 

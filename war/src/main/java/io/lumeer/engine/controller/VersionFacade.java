@@ -25,8 +25,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
-import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
-import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
