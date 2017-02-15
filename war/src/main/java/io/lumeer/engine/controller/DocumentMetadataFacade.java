@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
+import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -37,9 +38,6 @@ import javax.inject.Inject;
  */
 @SessionScoped
 public class DocumentMetadataFacade implements Serializable {
-
-   @Inject
-   private DataStorage dataStorage;
 
    // example of document metadata structure:
    // -------------------------------------
@@ -69,6 +67,9 @@ public class DocumentMetadataFacade implements Serializable {
    //	   ]
    //	… (rest of the document) …
    // }
+
+   @Inject
+   private DataStorage dataStorage;
 
    /**
     * Reads specified metadata value
@@ -208,6 +209,16 @@ public class DocumentMetadataFacade implements Serializable {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       dataStorage.dropAttribute(collectionName, documentId, key);
+   }
+
+   public void putInitDocumentMetadataInternally(DataDocument dataDocument, String userEmail) {
+      dataDocument.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userEmail);
+   }
+
+   public void putUpdateDocumentMetadataInternally(DataDocument dataDocument, String userEmail) {
+      dataDocument.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
+      dataDocument.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userEmail);
    }
 
 }

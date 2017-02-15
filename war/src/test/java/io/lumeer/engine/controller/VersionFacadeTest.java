@@ -50,7 +50,7 @@ public class VersionFacadeTest extends Arquillian {
                        .addAsResource("defaults-dev.properties");
    }
 
-   private final String VERSION_STRING = LumeerConst.METADATA_VERSION_KEY;
+   private final String VERSION_STRING = LumeerConst.Document.METADATA_VERSION_KEY;
    private final String TEST_READ_VERSION = "versionTestReadVersion";
    private final String TEST_NEW_VERSION = "versionTestNewVersion";
    private final String TEST_NEW_VERSION_N = "versionTestNewVersionNoMeta";

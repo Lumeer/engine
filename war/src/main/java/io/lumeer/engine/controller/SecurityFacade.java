@@ -544,6 +544,18 @@ public class SecurityFacade implements Serializable {
    }
 
    /**
+    * Sets full rights to document internally
+    *
+    * @param dataDocument
+    *       document to set rigthts
+    * @param userEmail
+    *       user email which identify one user
+    */
+   public void putFullRightsInternally(DataDocument dataDocument, String userEmail) {
+      dataDocument.put(LumeerConst.Document.USER_RIGHTS, Collections.singletonList(new DataDocument(LumeerConst.Security.USER_ID, userEmail).append(LumeerConst.Security.RULE, LumeerConst.Security.WRITE + LumeerConst.Security.EXECUTE + LumeerConst.Security.READ)));
+   }
+
+   /**
     * Read one integer as access rule of document
     *
     * @param dataDocument

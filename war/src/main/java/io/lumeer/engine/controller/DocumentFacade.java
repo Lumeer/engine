@@ -36,7 +36,6 @@ import io.lumeer.mongodb.MongoUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -95,10 +94,9 @@ public class DocumentFacade implements Serializable {
       // check constraints
       checkConstraintsAndConvert(collectionName, doc);
       // add metadata attributes
-      doc.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
-      doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
-      doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
-      doc.put(LumeerConst.Document.USER_RIGHTS, Collections.singletonList(new DataDocument(LumeerConst.Security.USER_ID, userFacade.getUserEmail()).append(LumeerConst.Security.RULE, LumeerConst.Security.WRITE + LumeerConst.Security.EXECUTE + LumeerConst.Security.READ)));
+      documentMetadataFacade.putInitDocumentMetadataInternally(doc, userFacade.getUserEmail());
+      versionFacade.putInitDocumentVersionInternally(doc);
+      securityFacade.putFullRightsInternally(doc, userFacade.getUserEmail());
 
       String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
@@ -162,8 +160,7 @@ public class DocumentFacade implements Serializable {
       }
       final DataDocument upd = cleanInvalidAttributes(updatedDocument);
       checkConstraintsAndConvert(collectionName, updatedDocument);
-      upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
+      documentMetadataFacade.putUpdateDocumentMetadataInternally(upd, userFacade.getUserEmail());
       versionFacade.newDocumentVersion(collectionName, existingDocument, upd);
 
       // we add new attributes of updated document to collection metadata
@@ -204,7 +201,7 @@ public class DocumentFacade implements Serializable {
       repl.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
       versionFacade.backUp(collectionName, existingDocument);
       dataStorage.replaceDocument(collectionName, repl, documentId);
-      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
+      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.Document.METADATA_VERSION_KEY, 1);
 
       // add new attributes of updated document to collection metadata
       repl.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -313,7 +310,7 @@ public class DocumentFacade implements Serializable {
       }
       versionFacade.backUp(collectionName, existingDocument);
       dataStorage.dropAttribute(collectionName, documentId, attributeName);
-      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
+      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.Document.METADATA_VERSION_KEY, 1);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
    }
 

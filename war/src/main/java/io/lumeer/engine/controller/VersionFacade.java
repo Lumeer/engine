@@ -51,7 +51,7 @@ public class VersionFacade implements Serializable {
    private DataStorage dataStorage;
 
    public String getVersionMetadataString() {
-      return LumeerConst.METADATA_VERSION_KEY;
+      return LumeerConst.Document.METADATA_VERSION_KEY;
    }
 
    /**
@@ -86,10 +86,10 @@ public class VersionFacade implements Serializable {
     * @return integer, document version
     */
    public int getDocumentVersion(DataDocument document) {
-      if (document.getInteger(LumeerConst.METADATA_VERSION_KEY) == null) {
+      if (document.getInteger(LumeerConst.Document.METADATA_VERSION_KEY) == null) {
          return 0;
       }
-      return document.getInteger(LumeerConst.METADATA_VERSION_KEY);
+      return document.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
    }
 
    /**
@@ -123,7 +123,7 @@ public class VersionFacade implements Serializable {
       }
       createMetadata(newDocument);
       int oldVersion = backUp(collectionName, actualDocument);
-      newDocument.replace(LumeerConst.METADATA_VERSION_KEY, oldVersion + 1);
+      newDocument.replace(LumeerConst.Document.METADATA_VERSION_KEY, oldVersion + 1);
       dataStorage.updateDocument(collectionName, newDocument, id);
       return oldVersion + 1;
    }
@@ -135,8 +135,8 @@ public class VersionFacade implements Serializable {
     *       document where to create metadata
     */
    private void createMetadata(DataDocument document) {
-      if (!document.containsKey(LumeerConst.METADATA_VERSION_KEY)) {
-         document.put(LumeerConst.METADATA_VERSION_KEY, 0);
+      if (!document.containsKey(LumeerConst.Document.METADATA_VERSION_KEY)) {
+         document.put(LumeerConst.Document.METADATA_VERSION_KEY, 0);
       }
    }
 
@@ -199,7 +199,7 @@ public class VersionFacade implements Serializable {
          throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());
       }
       int oldVersion = backUp(collectionName, actualDocument);
-      newDocument.replace(LumeerConst.METADATA_VERSION_KEY, oldVersion + 1);
+      newDocument.replace(LumeerConst.Document.METADATA_VERSION_KEY, oldVersion + 1);
       dataStorage.replaceDocument(collectionName, newDocument, id);
    }
 
@@ -285,5 +285,9 @@ public class VersionFacade implements Serializable {
             .append(collectionName + SHADOW + ".delete")
             .append("\"}");
       dataStorage.run(sb.toString());
+   }
+
+   public void putInitDocumentVersionInternally(DataDocument dataDocument) {
+      dataDocument.put(LumeerConst.Document.METADATA_VERSION_KEY, 0);
    }
 }
