@@ -21,6 +21,7 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
@@ -34,10 +35,12 @@ import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -77,6 +80,9 @@ public class DocumentService implements Serializable {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   private DataStorage dataStorage;
+
    /**
     * Creates and inserts a new document to specified collection. The method creates the given collection if does not exist.
     *
@@ -98,7 +104,9 @@ public class DocumentService implements Serializable {
       if (collectionName == null || document == null) {
          throw new IllegalArgumentException();
       }
-      return documentFacade.createDocument(getInternalName(collectionName), document);
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      return documentFacade.createDocument(internalCollectionName, document);
    }
 
    /**
@@ -117,7 +125,11 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      documentFacade.dropDocument(getInternalName(collectionName), documentId);
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      checkDocumentForWrite(internalCollectionName, documentId);
+
+      documentFacade.dropDocument(internalCollectionName, documentId);
    }
 
    /**
@@ -138,7 +150,11 @@ public class DocumentService implements Serializable {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      return documentFacade.readDocument(getInternalName(collectionName), documentId);
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      checkDocumentForRead(internalCollectionName, documentId);
+
+      return documentFacade.readDocument(internalCollectionName, documentId);
    }
 
    /**
@@ -154,13 +170,43 @@ public class DocumentService implements Serializable {
     *       If one of document's value doesn't satisfy constraint or type.
     */
    @PUT
-   @Path("/")
+   @Path("/update/")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
-      if (collectionName == null || updatedDocument == null) {
+      if (collectionName == null || updatedDocument == null || updatedDocument.getId() == null) {
          throw new IllegalArgumentException();
       }
-      documentFacade.updateDocument(getInternalName(collectionName), updatedDocument);
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      checkDocumentForWrite(internalCollectionName, updatedDocument.getId());
+
+      documentFacade.updateDocument(internalCollectionName, updatedDocument);
+   }
+
+   /**
+    * Replace an existing document in given collection by its id and create collection if not exists.
+    *
+    * @param collectionName
+    *       the name of the collection where the existing document is located
+    * @param replaceDocument
+    *       the DataDocument object representing a replacing document
+    * @throws DbException
+    *       When there is an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       If one of document's value doesn't satisfy constraint or type.
+    */
+   @PUT
+   @Path("/replace/")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void replaceDocument(final @PathParam("collectionName") String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException {
+      if (collectionName == null || replaceDocument == null || replaceDocument.getId() == null) {
+         throw new IllegalArgumentException();
+      }
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      checkDocumentForWrite(internalCollectionName, replaceDocument.getId());
+
+      documentFacade.replaceDocument(internalCollectionName, replaceDocument);
    }
 
    /**
@@ -272,7 +318,7 @@ public class DocumentService implements Serializable {
     *       the name of the collection
     * @param documentId
     *       id of document to revert
-    * @param versionId
+    * @param version
     *       old version to be reverted
     * @throws DbException
     *       When there is an error working with the data storage.
@@ -280,14 +326,75 @@ public class DocumentService implements Serializable {
     *       If one of document's value doesn't satisfy constraint or type.
     */
    @POST
-   @Path("/{documentId}/versions/{versionId}")
-   public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("versionId") int versionId)
+   @Path("/{documentId}/versions/{version}")
+   public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("version") int version)
          throws DbException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
-      //versionFacade.revertDocumentVersion(getInternalName(collectionName), documentFacade.readDocument(getInternalName(collectionName), documentId), versionId);
-      documentFacade.revertDocument(getInternalName(collectionName), documentId, versionId);
+
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      checkDocumentForWrite(internalCollectionName, documentId);
+
+      documentFacade.revertDocument(internalCollectionName, documentId, version);
+   }
+
+   /**
+    * Drops specific document's attribute
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       id of document
+    * @param attributeName
+    *       attribute to delete
+    * @throws DbException
+    *       When there is an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       If one of document's value doesn't satisfy constraint or type.
+    */
+   @DELETE
+   @Path("/{documentId}/attribute/{attributeName}")
+   public void dropDocumentAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName)
+         throws DbException, InvalidConstraintException {
+      if (collectionName == null || documentId == null || attributeName == null) {
+         throw new IllegalArgumentException();
+      }
+
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      checkDocumentForWrite(internalCollectionName, documentId);
+
+      documentFacade.dropAttribute(internalCollectionName, documentId, attributeName);
+   }
+
+   /**
+    * Get attributes of document
+    *
+    * @param collectionName
+    *       the name of the collection
+    * @param documentId
+    *       id of document
+    * @return set of document's attributes
+    * @throws DbException
+    *       When there is an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       If one of document's value doesn't satisfy constraint or type.
+    */
+   @GET
+   @Path("/{documentId}/attributes/")
+   public Set<String> readDocumentAttributes(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId)
+         throws DbException, InvalidConstraintException {
+      if (collectionName == null || documentId == null) {
+         throw new IllegalArgumentException();
+      }
+
+      String internalCollectionName = getInternalName(collectionName);
+      checkCollectionExistency(internalCollectionName);
+      checkDocumentForRead(internalCollectionName, documentId);
+
+      return documentFacade.getDocumentAttributes(collectionName, documentId);
    }
 
   /* @GET
@@ -365,4 +472,23 @@ public class DocumentService implements Serializable {
    private String getInternalName(String collectionOriginalName) throws UserCollectionNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
    }
+
+   private void checkCollectionExistency(final String collectionName) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+   }
+
+   private void checkDocumentForWrite(final String collectionName, final String documentId) throws UnauthorizedAccessException, DocumentNotFoundException {
+      if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
+      }
+   }
+
+   private void checkDocumentForRead(final String collectionName, final String documentId) throws DocumentNotFoundException, UnauthorizedAccessException {
+      if (!securityFacade.checkForRead(collectionName, documentId, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
+      }
+   }
+
 }

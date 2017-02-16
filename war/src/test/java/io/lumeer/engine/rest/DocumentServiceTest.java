@@ -102,7 +102,7 @@ public class DocumentServiceTest extends Arquillian {
       DataDocument updatedDocument = new DataDocument();
       updatedDocument.put("_id", documentId);
       updatedDocument.put("name", "updatedDocument");
-      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT)).request().buildPut(Entity.json(updatedDocument)).invoke();
+      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT + "/update")).request().buildPut(Entity.json(updatedDocument)).invoke();
       Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
             && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).getString("name").equals("updatedDocument"));
       response3.close();
