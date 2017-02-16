@@ -106,25 +106,58 @@ public class VersionFacade implements Serializable {
     *       After that it is possible to change data and save it
     * @param actualDocument
     *       existing document
+    * @param replace
+    *       whether perform replace or update
     * @return integer, new version of document
-    * @throws DocumentNotFoundException
-    *       if document not found in database while backup
-    *       was done
     * @throws VersionUpdateConflictException
     *       if there are two updatest at same time, means if in
     *       shadow collection already exists document with same version
     * @throws AttributeNotFoundException
     *       if document doesnt containst id
     */
-   public int newDocumentVersion(String collectionName, DataDocument actualDocument, DataDocument newDocument) throws DocumentNotFoundException, VersionUpdateConflictException, AttributeNotFoundException {
-      String id = newDocument.getId();
+   public int newDocumentVersion(String collectionName, DataDocument actualDocument, DataDocument newDocument, boolean replace) throws VersionUpdateConflictException, AttributeNotFoundException {
+      String id = actualDocument.getId();
       if (id == null) {
          throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());
       }
       createMetadata(newDocument);
       int oldVersion = backUp(collectionName, actualDocument);
       newDocument.replace(LumeerConst.Document.METADATA_VERSION_KEY, oldVersion + 1);
-      dataStorage.updateDocument(collectionName, newDocument, id);
+      if (replace) {
+         dataStorage.replaceDocument(collectionName, newDocument, id);
+      } else {
+         dataStorage.updateDocument(collectionName, newDocument, id);
+      }
+      return oldVersion + 1;
+   }
+
+   /**
+    * Create shadow collection if not created. Backup document with
+    * same id as document in collection. Then replace document in
+    * collection with document from input. This method is atomic.
+    * As lock there is document in shadow collection.
+    *
+    * @param collectionName
+    *       collection name, where document is stored
+    * @param actualDocument
+    *       document, which will be stored in SHADOW collection
+    * @param attributeName
+    *       name of attribute to drop
+    * @return integer, new version of document
+    * @throws VersionUpdateConflictException
+    *       if there are two updatest at same time, means if in
+    *       shadow collection already exists document with same version
+    * @throws AttributeNotFoundException
+    *       if document doesnt containst id
+    */
+   public int dropDocumentAttribute(String collectionName, DataDocument actualDocument, String attributeName) throws AttributeNotFoundException, VersionUpdateConflictException {
+      String id = actualDocument.getId();
+      if (id == null) {
+         throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());
+      }
+      int oldVersion = backUp(collectionName, actualDocument);
+      dataStorage.dropAttribute(collectionName, id, attributeName);
+      dataStorage.incrementAttributeValueBy(collectionName, id, LumeerConst.Document.METADATA_VERSION_KEY, 1);
       return oldVersion + 1;
    }
 
@@ -185,15 +218,13 @@ public class VersionFacade implements Serializable {
     *       document to be saved with newDocumentVersion
     * @param newDocument
     *       document to be reverted to
-    * @throws DocumentNotFoundException
-    *       if input document not found in database
     * @throws VersionUpdateConflictException
     *       if there already exist document in shadows collection
     *       with same id
     * @throws AttributeNotFoundException
     *       if document does not contains id
     */
-   public void revertDocumentVersion(String collectionName, DataDocument actualDocument, DataDocument newDocument) throws DocumentNotFoundException, VersionUpdateConflictException, AttributeNotFoundException {
+   public void revertDocumentVersion(String collectionName, DataDocument actualDocument, DataDocument newDocument) throws VersionUpdateConflictException, AttributeNotFoundException {
       String id = actualDocument.getId();
       if (id == null) {
          throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());

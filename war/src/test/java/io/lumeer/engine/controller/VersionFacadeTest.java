@@ -89,7 +89,7 @@ public class VersionFacadeTest extends Arquillian {
       String documentId = dataStorage.createDocument(TEST_NEW_VERSION, dataDocument);
       dataDocument.put("dog", "dog");
       dataDocument.setId(documentId);
-      versionFacade.newDocumentVersion(TEST_NEW_VERSION, dataStorage.readDocument(TEST_NEW_VERSION, documentId), dataDocument);
+      versionFacade.newDocumentVersion(TEST_NEW_VERSION, dataStorage.readDocument(TEST_NEW_VERSION, documentId), dataDocument, false);
       Assert.assertEquals(dataStorage.readDocument(TEST_NEW_VERSION, documentId).getInteger(VERSION_STRING).intValue(), 2);
       Assert.assertEquals(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 1)), 1);
       Assert.assertEquals(dataStorage.readOldDocument(shadow, documentId, 1).getString("dog"), "cat");
@@ -101,7 +101,7 @@ public class VersionFacadeTest extends Arquillian {
       DataDocument dataDocument = createEmptyDocument();
       String documentId = dataStorage.createDocument(TEST_NEW_VERSION_N, dataDocument);
       dataDocument.setId(documentId);
-      versionFacade.newDocumentVersion(TEST_NEW_VERSION_N, dataStorage.readDocument(TEST_NEW_VERSION_N, documentId), dataDocument);
+      versionFacade.newDocumentVersion(TEST_NEW_VERSION_N, dataStorage.readDocument(TEST_NEW_VERSION_N, documentId), dataDocument, false);
 
       Assert.assertEquals((int) dataStorage.readDocument(TEST_NEW_VERSION_N, documentId).getInteger(VERSION_STRING), 1);
       Assert.assertEquals(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 0)), 0);
@@ -114,7 +114,7 @@ public class VersionFacadeTest extends Arquillian {
       String documentId = dataStorage.createDocument(TEST_CHANGED, dataDocument);
       dataDocument.setId(documentId);
       dataDocument.replace("dog", "pig");
-      versionFacade.newDocumentVersion(TEST_CHANGED, dataStorage.readDocument(TEST_CHANGED, documentId), dataDocument);
+      versionFacade.newDocumentVersion(TEST_CHANGED, dataStorage.readDocument(TEST_CHANGED, documentId), dataDocument, false);
 
       DataDocument fromDb = dataStorage.readDocument(TEST_CHANGED, documentId);
       Assert.assertEquals(fromDb.getInteger(VERSION_STRING).intValue(), 2);
@@ -133,7 +133,7 @@ public class VersionFacadeTest extends Arquillian {
       DataDocument actual;
       for (int i = 1; i < 10; i++) {
          actual = dataStorage.readDocument(TEST_MULTIPLE_VERSION, documentId);
-         versionFacade.newDocumentVersion(TEST_MULTIPLE_VERSION, actual, dataDocument);
+         versionFacade.newDocumentVersion(TEST_MULTIPLE_VERSION, actual, dataDocument, false);
       }
       Assert.assertEquals(versionFacade.getDocumentVersions(TEST_MULTIPLE_VERSION, documentId).size(), 10);
       dataStorage.dropOldDocument(shadow, documentId, 1);
@@ -147,7 +147,7 @@ public class VersionFacadeTest extends Arquillian {
       String documentId = dataStorage.createDocument(TEST_GET_OLD_DOC, dataDocument);
       DataDocument actual = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
       dataDocument.setId(documentId);
-      versionFacade.newDocumentVersion(TEST_GET_OLD_DOC, actual, dataDocument);
+      versionFacade.newDocumentVersion(TEST_GET_OLD_DOC, actual, dataDocument, false);
       DataDocument testDocument = versionFacade.readOldDocumentVersion(TEST_GET_OLD_DOC, dataDocument, 1);
       dataDocument = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
       testDocument.replace(VERSION_STRING, 2);
@@ -167,7 +167,7 @@ public class VersionFacadeTest extends Arquillian {
       DataDocument actual = dataStorage.readDocument(TEST_REVERT, documentId);
       dataDocument = new DataDocument(actual);
       dataDocument.replace("dog", "pig");
-      versionFacade.newDocumentVersion(TEST_REVERT, actual, dataDocument);
+      versionFacade.newDocumentVersion(TEST_REVERT, actual, dataDocument, false);
       DataDocument oldDoc = versionFacade.readOldDocumentVersion(TEST_REVERT, documentId, 1);
       versionFacade.revertDocumentVersion(TEST_REVERT, dataDocument, oldDoc);
       DataDocument newDoc = dataStorage.readDocument(TEST_REVERT, documentId);

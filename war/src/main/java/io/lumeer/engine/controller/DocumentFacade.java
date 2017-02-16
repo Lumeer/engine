@@ -161,7 +161,7 @@ public class DocumentFacade implements Serializable {
       final DataDocument upd = cleanInvalidAttributes(updatedDocument);
       checkConstraintsAndConvert(collectionName, updatedDocument);
       documentMetadataFacade.putUpdateDocumentMetadataInternally(upd, userFacade.getUserEmail());
-      versionFacade.newDocumentVersion(collectionName, existingDocument, upd);
+      versionFacade.newDocumentVersion(collectionName, existingDocument, upd, false);
 
       // we add new attributes of updated document to collection metadata
       upd.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -197,11 +197,8 @@ public class DocumentFacade implements Serializable {
       LumeerConst.Document.METADATA_KEYS.stream().filter(existingDocument::containsKey).forEach(metaKey -> {
          repl.put(metaKey, existingDocument.get(metaKey));
       });
-      repl.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      repl.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
-      versionFacade.backUp(collectionName, existingDocument);
-      dataStorage.replaceDocument(collectionName, repl, documentId);
-      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.Document.METADATA_VERSION_KEY, 1);
+      documentMetadataFacade.putUpdateDocumentMetadataInternally(repl, userFacade.getUserEmail());
+      versionFacade.newDocumentVersion(collectionName, existingDocument, repl, true);
 
       // add new attributes of updated document to collection metadata
       repl.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -308,9 +305,7 @@ public class DocumentFacade implements Serializable {
       if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
          throw new UnauthorizedAccessException();
       }
-      versionFacade.backUp(collectionName, existingDocument);
-      dataStorage.dropAttribute(collectionName, documentId, attributeName);
-      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.Document.METADATA_VERSION_KEY, 1);
+      versionFacade.dropDocumentAttribute(collectionName, existingDocument, attributeName);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
    }
 
