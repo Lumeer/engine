@@ -56,7 +56,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -178,7 +177,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void createOldDocument(final String collectionName, final DataDocument dataDocument, final String documentId, final int version) throws UnsuccessfulOperationException {
       Document doc = new Document(dataDocument);
-      doc.put(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(LumeerConst.METADATA_VERSION_KEY, version));
+      doc.put(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(LumeerConst.Document.METADATA_VERSION_KEY, version));
       try {
          database.getCollection(collectionName).insertOne(doc);
       } catch (MongoWriteException e) {
@@ -228,7 +227,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public DataDocument readOldDocument(final String collectionName, final String documentId, final int version) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(
-            LumeerConst.METADATA_VERSION_KEY, version));
+            LumeerConst.Document.METADATA_VERSION_KEY, version));
       Document document = database.getCollection(collectionName).find(filter).first();
 
       if (document == null) {
@@ -277,7 +276,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void dropOldDocument(final String collectionName, final String documentId, final int version) {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(
-            LumeerConst.METADATA_VERSION_KEY, version));
+            LumeerConst.Document.METADATA_VERSION_KEY, version));
       database.getCollection(collectionName).deleteOne(filter);
    }
 
