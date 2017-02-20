@@ -30,7 +30,6 @@ import java.util.List;
 public final class LumeerConst {
 
    public static final String LUMEER_VERSION = "1.0";
-   public static final String METADATA_VERSION_KEY = "_meta-version";
 
    public static final String DB_HOST_PROPERTY = "db_host";
    public static final String DB_PORT_PROPERTY = "db_port";
@@ -93,6 +92,7 @@ public final class LumeerConst {
       public static final String UPDATED_BY_USER_KEY = METADATA_PREFIX + "update-user";
       public static final String USER_RIGHTS = METADATA_PREFIX + "rights";
       public static final String COLLECTION_NAME = METADATA_PREFIX + "collection"; // used in cases where we need to note the source collection in the document
+      public static final String METADATA_VERSION_KEY = METADATA_PREFIX + "version";
       public static final List<String> METADATA_KEYS = Arrays.asList(METADATA_VERSION_KEY, CREATE_DATE_KEY, UPDATE_DATE_KEY, CREATE_BY_USER_KEY, UPDATED_BY_USER_KEY, USER_RIGHTS);
       public static final List<String> PURGE_METADATA_KEYS = Arrays.asList(CREATE_DATE_KEY, UPDATE_DATE_KEY, CREATE_BY_USER_KEY, UPDATED_BY_USER_KEY);
    }

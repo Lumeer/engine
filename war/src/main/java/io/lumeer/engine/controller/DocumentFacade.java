@@ -36,7 +36,6 @@ import io.lumeer.mongodb.MongoUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -90,15 +89,13 @@ public class DocumentFacade implements Serializable {
     *       if one of document's value doesn't satisfy constraint or type
     */
    public String createDocument(final String collectionName, final DataDocument document) throws DbException, InvalidConstraintException {
-      checkCollectionForWriteBenevolent(collectionName);
       DataDocument doc = checkDocumentKeysValidity(document);
       // check constraints
       checkConstraintsAndConvert(collectionName, doc);
       // add metadata attributes
-      doc.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
-      doc.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
-      doc.put(LumeerConst.METADATA_VERSION_KEY, 0);
-      doc.put(LumeerConst.Document.USER_RIGHTS, Collections.singletonList(new DataDocument(LumeerConst.Security.USER_ID, userFacade.getUserEmail()).append(LumeerConst.Security.RULE, LumeerConst.Security.WRITE + LumeerConst.Security.EXECUTE + LumeerConst.Security.READ)));
+      documentMetadataFacade.putInitDocumentMetadataInternally(doc, userFacade.getUserEmail());
+      versionFacade.putInitDocumentVersionInternally(doc);
+      securityFacade.putFullRightsInternally(doc, userFacade.getUserEmail());
 
       String documentId = dataStorage.createDocument(collectionName, doc);
       if (documentId == null) {
@@ -125,16 +122,7 @@ public class DocumentFacade implements Serializable {
     *       if user doesn't have rights to read document
     */
    public DataDocument readDocument(final String collectionName, final String documentId) throws DbException {
-      checkCollectionForRead(collectionName);
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
-      if (dataDocument == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (!securityFacade.checkForRead(dataDocument, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-      LumeerConst.Document.PURGE_METADATA_KEYS.forEach(dataDocument::remove);
-      return dataDocument;
+      return dataStorage.readDocument(collectionName, documentId);
    }
 
    /**
@@ -150,21 +138,12 @@ public class DocumentFacade implements Serializable {
     *       if one of document's value doesn't satisfy constraint or type
     */
    public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
-      checkCollectionForWriteBenevolent(collectionName);
+      DataDocument existingDocument = dataStorage.readDocument(collectionName, updatedDocument.getId());
 
-      String documentId = updatedDocument.getId();
-      DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
-      if (existingDocument == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (!securityFacade.checkForWrite(existingDocument, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
       final DataDocument upd = cleanInvalidAttributes(updatedDocument);
       checkConstraintsAndConvert(collectionName, updatedDocument);
-      upd.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      upd.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
-      versionFacade.newDocumentVersion(collectionName, upd);
+      documentMetadataFacade.putUpdateDocumentMetadataInternally(upd, userFacade.getUserEmail());
+      versionFacade.newDocumentVersion(collectionName, existingDocument, upd, false);
 
       // we add new attributes of updated document to collection metadata
       upd.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -185,26 +164,14 @@ public class DocumentFacade implements Serializable {
     *       if one of document's value doesn't satisfy constraint or type
     */
    public void replaceDocument(final String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException {
-      checkCollectionForWriteBenevolent(collectionName);
-
-      String documentId = replaceDocument.getId();
-      DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
-      if (existingDocument == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (!securityFacade.checkForWrite(existingDocument, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
+      DataDocument existingDocument = dataStorage.readDocument(collectionName, replaceDocument.getId());
       final DataDocument repl = cleanInvalidAttributes(replaceDocument);
       checkConstraintsAndConvert(collectionName, replaceDocument);
       LumeerConst.Document.METADATA_KEYS.stream().filter(existingDocument::containsKey).forEach(metaKey -> {
          repl.put(metaKey, existingDocument.get(metaKey));
       });
-      repl.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
-      repl.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userFacade.getUserEmail());
-      versionFacade.backUp(collectionName, documentId);
-      dataStorage.replaceDocument(collectionName, repl, documentId);
-      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
+      documentMetadataFacade.putUpdateDocumentMetadataInternally(repl, userFacade.getUserEmail());
+      versionFacade.newDocumentVersion(collectionName, existingDocument, repl, true);
 
       // add new attributes of updated document to collection metadata
       repl.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -227,17 +194,9 @@ public class DocumentFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void dropDocument(final String collectionName, final String documentId) throws DbException {
-      checkCollectionForWrite(collectionName);
-
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
-      if (dataDocument == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (!securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
 
-      versionFacade.backUp(collectionName, documentId);
+      versionFacade.backUp(collectionName, dataDocument);
       dataStorage.dropDocument(collectionName, documentId);
 
       if (dataStorage.collectionHasDocument(collectionName, documentId)) {
@@ -266,17 +225,12 @@ public class DocumentFacade implements Serializable {
     *       if one of document's value doesn't satisfy constraint or type
     */
    public void revertDocument(final String collectionName, final String documentId, final int revertVersion) throws DbException, InvalidConstraintException {
-      checkCollectionForWrite(collectionName);
-
       DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
-      if (existingDocument == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
 
       DataDocument revertDocument = versionFacade.readOldDocumentVersion(collectionName, documentId, revertVersion);
       checkConstraintsAndConvert(collectionName, revertDocument);
 
-      versionFacade.revertDocumentVersion(collectionName, existingDocument, revertVersion);
+      versionFacade.revertDocumentVersion(collectionName, existingDocument, revertDocument);
 
       // add new attributes of updated document to collection metadata
       revertDocument.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
@@ -301,16 +255,9 @@ public class DocumentFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws DbException {
-      checkCollectionForWrite(collectionName);
-      if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-      versionFacade.backUp(collectionName, documentId);
-      dataStorage.dropAttribute(collectionName, documentId, attributeName);
-      dataStorage.incrementAttributeValueBy(collectionName, documentId, LumeerConst.METADATA_VERSION_KEY, 1);
+      DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
+
+      versionFacade.dropDocumentAttribute(collectionName, existingDocument, attributeName);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
    }
 
@@ -326,52 +273,18 @@ public class DocumentFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws DbException {
-      checkCollectionForRead(collectionName);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
-      if (dataDocument == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (!securityFacade.checkForRead(dataDocument, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
       Set<String> documentAttributes = new HashSet<>();
       // filter out metadata attributes
       documentAttributes.addAll(dataDocument.keySet().stream().filter(key -> !key.startsWith(LumeerConst.Document.METADATA_PREFIX)).collect(Collectors.toList()));
       return documentAttributes;
    }
 
-   private void checkCollectionForRead(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkCollectionForWriteBenevolent(final String collectionName) throws UnauthorizedAccessException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         return;
-      }
-      if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkCollectionForWrite(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
    private void checkConstraintsAndConvert(final String collectionName, final DataDocument doc) throws InvalidConstraintException {
       for (String attribute : doc.keySet()) {
          Object value = collectionMetadataFacade.checkAndConvertAttributeValue(collectionName, attribute, doc.get(attribute).toString());
          if (value == null) {
-            throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKey(attribute));
+            throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));
          } else {
             doc.replace(attribute, value);
          }
@@ -383,7 +296,7 @@ public class DocumentFacade implements Serializable {
       for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
          String attributeName = entry.getKey().trim();
          if (!Utils.isAttributeNameValid(attributeName)) {
-            throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKey(attributeName));
+            throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKeyString(attributeName));
          }
          Object value = entry.getValue();
          if (MongoUtils.isDataDocument(value)) {

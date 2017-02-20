@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
+import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -37,9 +38,6 @@ import javax.inject.Inject;
  */
 @SessionScoped
 public class DocumentMetadataFacade implements Serializable {
-
-   @Inject
-   private DataStorage dataStorage;
 
    // example of document metadata structure:
    // -------------------------------------
@@ -70,6 +68,9 @@ public class DocumentMetadataFacade implements Serializable {
    //	… (rest of the document) …
    // }
 
+   @Inject
+   private DataStorage dataStorage;
+
    /**
     * Reads specified metadata value
     *
@@ -89,7 +90,7 @@ public class DocumentMetadataFacade implements Serializable {
     */
    public Object getDocumentMetadata(String collectionName, String documentId, String key) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
       if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       if (!dataStorage.hasCollection(collectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -145,7 +146,7 @@ public class DocumentMetadataFacade implements Serializable {
     */
    public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
       if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       updateDocumentMetadata(collectionName, documentId, new DataDocument(key, value));
    }
@@ -175,7 +176,7 @@ public class DocumentMetadataFacade implements Serializable {
       }
       for (String key : metadata.keySet()) {
          if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-            throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+            throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
          }
       }
       dataStorage.updateDocument(collectionName, metadata, documentId);
@@ -205,9 +206,19 @@ public class DocumentMetadataFacade implements Serializable {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKey(key));
+         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       dataStorage.dropAttribute(collectionName, documentId, key);
+   }
+
+   public void putInitDocumentMetadataInternally(DataDocument dataDocument, String userEmail) {
+      dataDocument.put(LumeerConst.Document.CREATE_DATE_KEY, Utils.getCurrentTimeString());
+      dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userEmail);
+   }
+
+   public void putUpdateDocumentMetadataInternally(DataDocument dataDocument, String userEmail) {
+      dataDocument.put(LumeerConst.Document.UPDATE_DATE_KEY, Utils.getCurrentTimeString());
+      dataDocument.put(LumeerConst.Document.UPDATED_BY_USER_KEY, userEmail);
    }
 
 }

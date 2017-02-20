@@ -102,9 +102,11 @@ public class DocumentServiceTest extends Arquillian {
       DataDocument updatedDocument = new DataDocument();
       updatedDocument.put("_id", documentId);
       updatedDocument.put("name", "updatedDocument");
-      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT)).request().buildPut(Entity.json(updatedDocument)).invoke();
+      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + "update/").request().buildPut(Entity.json(updatedDocument)).invoke();
+
       Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
             && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).getString("name").equals("updatedDocument"));
+
       response3.close();
 
       // 204 - drop the given document by its id
@@ -193,12 +195,12 @@ public class DocumentServiceTest extends Arquillian {
       documentFacade.updateDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentVersionTwo);
 
       DataDocument documentVersion2 = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
-      int versionTwo = documentVersion2.getInteger(LumeerConst.METADATA_VERSION_KEY);
+      int versionTwo = documentVersion2.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
       Assert.assertTrue(versionTwo == 2);
 
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_REVERT_DOCUMENT_VERSION) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       DataDocument currentDocument = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
-      int versionThree = currentDocument.getInteger(LumeerConst.METADATA_VERSION_KEY);
+      int versionThree = currentDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
       boolean isFirstVersion = !currentDocument.containsKey("dummyVersionTwoAttribute");
       Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && versionThree == 3 && isFirstVersion);
       response.close();

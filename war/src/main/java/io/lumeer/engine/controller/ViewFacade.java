@@ -80,19 +80,14 @@ public class ViewFacade implements Serializable {
          throw new ViewAlreadyExistsException(ErrorMessageBuilder.viewUsernameAlreadyExistsString(originalViewName));
       }
 
-      Map<String, Object> metadata = new HashMap<>();
-
-      metadata.put(LumeerConst.View.VIEW_NAME_KEY, originalViewName);
-
       int viewId = sequenceFacade.getNext(LumeerConst.View.VIEW_SEQUENCE_NAME); // generates id
-      metadata.put(LumeerConst.View.VIEW_ID_KEY, viewId);
       final String createUser = getCurrentUser();
-      metadata.put(LumeerConst.View.VIEW_CREATE_USER_KEY, createUser);
-      metadata.put(LumeerConst.View.VIEW_CREATE_DATE_KEY, new Date());
-      metadata.put(LumeerConst.View.VIEW_TYPE_KEY, viewType); // sets view type to default
-      metadata.put(LumeerConst.View.VIEW_CONFIGURATION_KEY, configuration != null ? configuration : new DataDocument());
-
-      DataDocument metadataDocument = new DataDocument(metadata);
+      DataDocument metadataDocument = new DataDocument(LumeerConst.View.VIEW_NAME_KEY, originalViewName)
+            .append(LumeerConst.View.VIEW_ID_KEY, viewId)
+            .append(LumeerConst.View.VIEW_CREATE_USER_KEY, createUser)
+            .append(LumeerConst.View.VIEW_CREATE_DATE_KEY, new Date())
+            .append(LumeerConst.View.VIEW_TYPE_KEY, viewType) // sets view type to default
+            .append(LumeerConst.View.VIEW_CONFIGURATION_KEY, configuration != null ? configuration : new DataDocument());
 
       // create user has complete access
       securityFacade.setRightsRead(metadataDocument, createUser);
@@ -395,15 +390,12 @@ public class ViewFacade implements Serializable {
          throw new UnauthorizedAccessException();
       }
 
+      DataDocument metadataDocument = new DataDocument(metaKey, value)
+            .append(LumeerConst.View.VIEW_UPDATE_USER_KEY, getCurrentUser())    // with every change, we change update user and date
+            .append(LumeerConst.View.VIEW_UPDATE_DATE_KEY, new Date());
+
       String id = viewDocument.getId();
-      Map<String, Object> metadataMap = new HashMap<>();
-      metadataMap.put(metaKey, value);
-
-      // with every change, we change update user and date
-      metadataMap.put(LumeerConst.View.VIEW_UPDATE_USER_KEY, getCurrentUser());
-      metadataMap.put(LumeerConst.View.VIEW_UPDATE_DATE_KEY, new Date());
-
-      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(metadataMap), id);
+      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, metadataDocument, id);
    }
 
    private String getCurrentUser() {

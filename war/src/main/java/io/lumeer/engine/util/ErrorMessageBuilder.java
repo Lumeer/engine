@@ -33,7 +33,8 @@ public class ErrorMessageBuilder {
 
    private static final String ERROR_COLLECTION_NOT_FOUND = "The collection \"{0}\" does not exist.";
    private static final String ERROR_COLLECTION_ALREADY_EXISTS = "The collection \"{0}\" already exists.";
-   private static final String ERROR_ATTRIBUTE_NOT_FOUND = "The attribute \"{0}\" does not exist in collection \"{1}\".";
+   private static final String ERROR_ATTRIBUTE_NOT_FOUND_IN_COLLECTION = "The attribute \"{0}\" does not exist in collection \"{1}\".";
+   private static final String ERROR_ID_NOT_FOUND = "The id does not exist in document";
    private static final String ERROR_ATTRIBUTE_ALREADY_EXISTS = "The attribute \"{0}\" already exists in collection \"{1}\".";
    private static final String ERROR_DOCUMENT_NOT_FOUND = "Document does not exist.";
    private static final String ERROR_CREATE_UNSUCCESFUL = "The document could not be created.";
@@ -67,8 +68,8 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_COLLECTION_ALREADY_EXISTS, collection);
    }
 
-   public static String attributeNotFoundString(String attribute, String collection) {
-      return MessageFormat.format(ERROR_ATTRIBUTE_NOT_FOUND, attribute, collection);
+   public static String attributeNotFoundInColString(String attribute, String collection) {
+      return MessageFormat.format(ERROR_ATTRIBUTE_NOT_FOUND_IN_COLLECTION, attribute, collection);
    }
 
    public static String attributeAlreadyExistsString(String attribute, String collection) {
@@ -91,27 +92,27 @@ public class ErrorMessageBuilder {
       return ERROR_UPDATE_UNSUCCESFUL;
    }
 
-   public static String invalidMetadataKey(String key) {
+   public static String invalidMetadataKeyString(String key) {
       return MessageFormat.format(ERROR_INVALID_METADATA_KEY, key);
    }
 
-   public static String invalidDocumentKey(String key) {
+   public static String invalidDocumentKeyString(String key) {
       return MessageFormat.format(ERROR_INVALID_DOCUMENT_KEY, key);
    }
 
-   public static String invalidConstraintKey(String key) {
+   public static String invalidConstraintKeyString(String key) {
       return MessageFormat.format(ERROR_INVALID_CONSTRAINT_KEY, key);
    }
 
-   public static String paramCanNotBeNull(String key) {
+   public static String paramCanNotBeNullString(String key) {
       return MessageFormat.format(ERROR_PARAM_CANNOT_BE_NULL, key);
    }
 
-   public static String nullKey() {
+   public static String nullKeyString() {
       return ERROR_NULL_KEY;
    }
 
-   public static String linkAlreadyExists() {
+   public static String linkAlreadyExistsString() {
       return ERROR_LINK_ALREADY_EXISTS;
    }
 
@@ -155,8 +156,12 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_VIEW_META_SPECIAL, viewId, metaKey);
    }
 
-   public static String invalidCollectionAttributeType(String newType, List<String> types) {
+   public static String invalidCollectionAttributeTypeString(String newType, List<String> types) {
       return MessageFormat.format(ERROR_INVALID_COLLECTION_ATTRIBUTE_TYPE, newType, types);
+   }
+
+   public static String idNotFoundString() {
+      return ERROR_ID_NOT_FOUND;
    }
 
 }

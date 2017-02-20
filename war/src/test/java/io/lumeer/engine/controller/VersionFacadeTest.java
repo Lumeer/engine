@@ -50,7 +50,7 @@ public class VersionFacadeTest extends Arquillian {
                        .addAsResource("defaults-dev.properties");
    }
 
-   private final String VERSION_STRING = LumeerConst.METADATA_VERSION_KEY;
+   private final String VERSION_STRING = LumeerConst.Document.METADATA_VERSION_KEY;
    private final String TEST_READ_VERSION = "versionTestReadVersion";
    private final String TEST_NEW_VERSION = "versionTestNewVersion";
    private final String TEST_NEW_VERSION_N = "versionTestNewVersionNoMeta";
@@ -87,8 +87,10 @@ public class VersionFacadeTest extends Arquillian {
       String shadow = createCollection(TEST_NEW_VERSION);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(TEST_NEW_VERSION, dataDocument);
-      versionFacade.newDocumentVersion(TEST_NEW_VERSION, dataStorage.readDocument(TEST_NEW_VERSION, documentId));
-      Assert.assertEquals((int) dataStorage.readDocument(TEST_NEW_VERSION, documentId).getInteger(VERSION_STRING), 2);
+      dataDocument.put("dog", "dog");
+      dataDocument.setId(documentId);
+      versionFacade.newDocumentVersion(TEST_NEW_VERSION, dataStorage.readDocument(TEST_NEW_VERSION, documentId), dataDocument, false);
+      Assert.assertEquals(dataStorage.readDocument(TEST_NEW_VERSION, documentId).getInteger(VERSION_STRING).intValue(), 2);
       Assert.assertEquals(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 1)), 1);
       Assert.assertEquals(dataStorage.readOldDocument(shadow, documentId, 1).getString("dog"), "cat");
    }
@@ -96,8 +98,11 @@ public class VersionFacadeTest extends Arquillian {
    @Test
    public void testWithoutMeta() throws Exception {
       String shadow = createCollection(TEST_NEW_VERSION_N);
-      String documentId = dataStorage.createDocument(TEST_NEW_VERSION_N, createEmptyDocument());
-      versionFacade.newDocumentVersion(TEST_NEW_VERSION_N, dataStorage.readDocument(TEST_NEW_VERSION_N, documentId));
+      DataDocument dataDocument = createEmptyDocument();
+      String documentId = dataStorage.createDocument(TEST_NEW_VERSION_N, dataDocument);
+      dataDocument.setId(documentId);
+      versionFacade.newDocumentVersion(TEST_NEW_VERSION_N, dataStorage.readDocument(TEST_NEW_VERSION_N, documentId), dataDocument, false);
+
       Assert.assertEquals((int) dataStorage.readDocument(TEST_NEW_VERSION_N, documentId).getInteger(VERSION_STRING), 1);
       Assert.assertEquals(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 0)), 0);
    }
@@ -107,11 +112,13 @@ public class VersionFacadeTest extends Arquillian {
       String shadow = createCollection(TEST_CHANGED);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(TEST_CHANGED, dataDocument);
-      dataDocument = dataStorage.readDocument(TEST_CHANGED, documentId);
+      dataDocument.setId(documentId);
       dataDocument.replace("dog", "pig");
-      versionFacade.newDocumentVersion(TEST_CHANGED, dataDocument);
-      Assert.assertEquals((int) dataStorage.readDocument(TEST_CHANGED, documentId).getInteger(VERSION_STRING), 2);
-      Assert.assertEquals(dataStorage.readDocument(TEST_CHANGED, documentId).getString("dog"), "pig");
+      versionFacade.newDocumentVersion(TEST_CHANGED, dataStorage.readDocument(TEST_CHANGED, documentId), dataDocument, false);
+
+      DataDocument fromDb = dataStorage.readDocument(TEST_CHANGED, documentId);
+      Assert.assertEquals(fromDb.getInteger(VERSION_STRING).intValue(), 2);
+      Assert.assertEquals(fromDb.getString("dog"), "pig");
       DataDocument oldDoc = dataStorage.readOldDocument(shadow, documentId, 1);
       Assert.assertEquals((int) oldDoc.getInteger(VERSION_STRING), 1);
       Assert.assertEquals(oldDoc.getString("dog"), "cat");
@@ -122,9 +129,11 @@ public class VersionFacadeTest extends Arquillian {
       String shadow = createCollection(TEST_MULTIPLE_VERSION);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(TEST_MULTIPLE_VERSION, dataDocument);
-      dataDocument = dataStorage.readDocument(TEST_MULTIPLE_VERSION, documentId);
+      dataDocument.setId(documentId);
+      DataDocument actual;
       for (int i = 1; i < 10; i++) {
-         versionFacade.newDocumentVersion(TEST_MULTIPLE_VERSION, dataDocument);
+         actual = dataStorage.readDocument(TEST_MULTIPLE_VERSION, documentId);
+         versionFacade.newDocumentVersion(TEST_MULTIPLE_VERSION, actual, dataDocument, false);
       }
       Assert.assertEquals(versionFacade.getDocumentVersions(TEST_MULTIPLE_VERSION, documentId).size(), 10);
       dataStorage.dropOldDocument(shadow, documentId, 1);
@@ -136,8 +145,9 @@ public class VersionFacadeTest extends Arquillian {
       String shadow = createCollection(TEST_GET_OLD_DOC);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(TEST_GET_OLD_DOC, dataDocument);
-      dataDocument = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
-      versionFacade.newDocumentVersion(TEST_GET_OLD_DOC, dataDocument);
+      DataDocument actual = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
+      dataDocument.setId(documentId);
+      versionFacade.newDocumentVersion(TEST_GET_OLD_DOC, actual, dataDocument, false);
       DataDocument testDocument = versionFacade.readOldDocumentVersion(TEST_GET_OLD_DOC, dataDocument, 1);
       dataDocument = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
       testDocument.replace(VERSION_STRING, 2);
@@ -154,10 +164,12 @@ public class VersionFacadeTest extends Arquillian {
       String shadow = createCollection(TEST_REVERT);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(TEST_REVERT, dataDocument);
-      dataDocument = dataStorage.readDocument(TEST_REVERT, documentId);
+      DataDocument actual = dataStorage.readDocument(TEST_REVERT, documentId);
+      dataDocument = new DataDocument(actual);
       dataDocument.replace("dog", "pig");
-      versionFacade.newDocumentVersion(TEST_REVERT, dataDocument);
-      versionFacade.revertDocumentVersion(TEST_REVERT, dataDocument, 1);
+      versionFacade.newDocumentVersion(TEST_REVERT, actual, dataDocument, false);
+      DataDocument oldDoc = versionFacade.readOldDocumentVersion(TEST_REVERT, documentId, 1);
+      versionFacade.revertDocumentVersion(TEST_REVERT, dataDocument, oldDoc);
       DataDocument newDoc = dataStorage.readDocument(TEST_REVERT, documentId);
       Assert.assertEquals(versionFacade.getDocumentVersion(newDoc), 3);
       Assert.assertEquals(newDoc.getString("dog"), "cat");
@@ -169,9 +181,9 @@ public class VersionFacadeTest extends Arquillian {
       createCollection(TEST_EXCEPTION);
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(TEST_EXCEPTION, dataDocument);
-      dataStorage.readDocument(TEST_EXCEPTION, documentId);
-      versionFacade.backUp(TEST_EXCEPTION, documentId);
-      versionFacade.backUp(TEST_EXCEPTION, documentId);
+      dataDocument = dataStorage.readDocument(TEST_EXCEPTION, documentId);
+      versionFacade.backUp(TEST_EXCEPTION, dataDocument);
+      versionFacade.backUp(TEST_EXCEPTION, dataDocument);
    }
 
    /* @Test
@@ -184,7 +196,7 @@ public class VersionFacadeTest extends Arquillian {
     }
  */
    private boolean testForEquiv(DataDocument doc, DataDocument equivalent) {
-      return doc.keySet().containsAll(equivalent.keySet());
+      return doc.keySet().containsAll(equivalent.keySet()) && doc.size() == equivalent.size();
    }
 
    private DataDocument createTestDocument() {

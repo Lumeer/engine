@@ -19,21 +19,17 @@ package io.lumeer.mongodb;/*
  */
 
 import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.batch.MergeBatch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.model.Filters;
-import org.bson.BsonDocument;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -192,7 +188,7 @@ public class MongoDbStorageTest {
 
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_UPDATE_DOCUMENT, documentId);
       changeDummyDocumentValues(readedDocument);
-      readedDocument.put(LumeerConst.METADATA_VERSION_KEY, 1);
+      readedDocument.put(LumeerConst.Document.METADATA_VERSION_KEY, 1);
 
       mongoDbStorage.updateDocument(COLLECTION_UPDATE_DOCUMENT, readedDocument, documentId);
       DataDocument readedAfterInsDocument = mongoDbStorage.readDocument(COLLECTION_UPDATE_DOCUMENT, documentId);
@@ -201,7 +197,7 @@ public class MongoDbStorageTest {
       Assert.assertNotEquals(readedAfterInsDocument.getString(DUMMY_KEY2), DUMMY_VALUE2);
       Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY1), DUMMY_CHANGED_VALUE1);
       Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY2), DUMMY_CHANGED_VALUE2);
-      Assert.assertEquals(readedAfterInsDocument.getInteger(LumeerConst.METADATA_VERSION_KEY).intValue(), 1);
+      Assert.assertEquals(readedAfterInsDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY).intValue(), 1);
    }
 
    @Test
@@ -562,7 +558,7 @@ public class MongoDbStorageTest {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put(DUMMY_KEY1, DUMMY_VALUE1);
       dataDocument.put(DUMMY_KEY2, DUMMY_VALUE2);
-      dataDocument.put(LumeerConst.METADATA_VERSION_KEY, 0);
+      dataDocument.put(LumeerConst.Document.METADATA_VERSION_KEY, 0);
       return dataDocument;
    }
 

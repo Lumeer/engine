@@ -437,7 +437,7 @@ public class CollectionService implements Serializable {
       }
 
       if (collectionMetadataFacade.retypeCollectionAttribute(getInternalName(collectionName), attributeName, newType) == false) {
-         throw new InvalidCollectionAttributeTypeException(ErrorMessageBuilder.invalidCollectionAttributeType(newType, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES));
+         throw new InvalidCollectionAttributeTypeException(ErrorMessageBuilder.invalidCollectionAttributeTypeString(newType, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES));
       }
       return true;
    }
