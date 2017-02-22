@@ -19,7 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -27,7 +28,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
@@ -101,9 +101,9 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public List<LinkTypeDao> readLinkTypes(final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForRead(collectionName);
       List<LinkTypeDao> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, null, linkDirection);
+
       for (DataDocument lt : linkingTables) {
          String fromCollectionName = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
          String toCollectionName = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
@@ -129,10 +129,9 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public List<LinkDao> readLinks(final String collectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForRead(collectionName);
-
       List<LinkDao> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, role, linkDirection);
+
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          String fromCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
@@ -163,10 +162,9 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public List<LinkDao> readDocByDocLinks(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForRead(fromCollectionName);
-
       List<LinkDao> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
+
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          String fromCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
@@ -194,10 +192,9 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public List<DataDocument> readDocumentLinksDocs(final String fromCollectionName, final String fromDocumentId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForRead(fromCollectionName);
-
       List<DataDocument> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFrom(fromCollectionName, role, linkDirection);
+
       for (DataDocument lt : linkingTables) {
          links.addAll(getDataDocumentsFromLinks(fromDocumentId, linkDirection, lt));
       }
@@ -281,9 +278,8 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void dropAllDocumentLinks(final String fromCollectionName, final String documentId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForWrite(fromCollectionName);
-
       List<DataDocument> linkingTables = readLinkingTablesFrom(fromCollectionName, role, linkDirection);
+
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          dropAllDocs(colName, documentId, linkDirection);
@@ -304,9 +300,8 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void dropCollectionLinks(final String collectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForWrite(collectionName);
-
       List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, role, linkDirection);
+
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          dataStorage.dropCollection(colName);
@@ -333,10 +328,8 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void dropDocWithDocLink(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForWrite(fromCollectionName);
-      checkCollectionForWrite(toCollectionName);
-
       List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
+
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          dropAllDocs(colName, fromId, toId, linkDirection);
@@ -393,18 +386,8 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void createDocWithDocLink(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final DataDocument attributes, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForWrite(firstCollectionName);
-      checkCollectionForWrite(secondCollectionName);
-
-      if (!(dataStorage.collectionHasDocument(firstCollectionName, firstDocumentId) && dataStorage.collectionHasDocument(secondCollectionName, secondDocumentId))) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (role == null) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.paramCanNotBeNullString(LumeerConst.Linking.MainTable.ATTR_ROLE));
-      }
       String collectionName = checkOrCreateLinkInSystemCollection(firstCollectionName, secondCollectionName, role, linkDirection);
       createLinkIfNotExists(collectionName, firstDocumentId, secondDocumentId, attributes, linkDirection);
-
    }
 
    private void createLinkIfNotExists(final String collectionName, final String firstDocumentId, final String secondDocumentId, final DataDocument attributes, final LumeerConst.Linking.LinkDirection linkDirection) {

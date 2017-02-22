@@ -25,7 +25,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
-import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -73,9 +72,6 @@ public class SearchFacade implements Serializable {
     *       When the collection in which we want to search does not exist. TODO Think about simply returning an empty result.
     */
    public List<DataDocument> search(String collectionName, String filter, String sort, int skip, int limit) throws CollectionNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
       return dataStorage.search(collectionName, filter, sort, skip, limit);
    }
 

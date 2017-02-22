@@ -22,6 +22,7 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
@@ -83,6 +84,9 @@ public class CollectionService implements Serializable {
 
    @Inject
    private UserFacade userFacade;
+
+   @Inject
+   private DataStorage dataStorage;
 
    /**
     * Returns a list of collection names in the database.
@@ -216,7 +220,11 @@ public class CollectionService implements Serializable {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
-      return searchFacade.search(getInternalName(collectionName), filter, sort, skip, limit);
+      String internalCollectionName = getInternalName(collectionName);
+      if (!dataStorage.hasCollection(internalCollectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      return searchFacade.search(internalCollectionName, filter, sort, skip, limit);
    }
 
    /**

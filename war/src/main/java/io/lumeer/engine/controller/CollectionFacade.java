@@ -159,6 +159,7 @@ public class CollectionFacade implements Serializable {
          if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, getCurrentUser())) {
             throw new UnauthorizedAccessException();
          }
+         checkCollectionForWrite(collectionName);
 
          linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.FROM);
          linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
@@ -480,6 +481,15 @@ public class CollectionFacade implements Serializable {
    public void onCollectionRename(@Observes(notifyObserver = Reception.IF_EXISTS) final ChangeCollectionName event) {
       if (collections != null) {
          collections.put(event.getInternalName(), event.getUserName());
+      }
+   }
+
+   private void checkCollectionForWrite(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (!dataStorage.hasCollection(collectionName)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      }
+      if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
+         throw new UnauthorizedAccessException();
       }
    }
 
