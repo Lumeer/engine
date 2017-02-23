@@ -25,6 +25,7 @@ import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
@@ -63,6 +64,9 @@ public class CollectionMetadataFacade implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dialect;
 
    @Inject
    private ConfigurationFacade configurationFacade;
@@ -430,7 +434,7 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      dataStorage.run(updateCollectionAttributeCountQuery(metadataCollectionName, attribute));
+      dataStorage.run(dialect.updateCollectionAttributeCountQuery(metadataCollectionName, attribute));
    }
 
    /**
@@ -1208,25 +1212,6 @@ public class CollectionMetadataFacade implements Serializable {
                   new DataDocument()
                         .append(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
                         .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName));
-   }
-
-   private DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName) {
-      return new DataDocument()
-            .append("findAndModify", metadataCollectionName)
-            .append("query",
-                  new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-                        .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName))
-            .append("update",
-                  new DataDocument("$setOnInsert",
-                        new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-                              .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName)
-                              .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING)
-                              .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
-                  )
-                        .append("$inc",
-                              new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY, 1)))
-            .append("new", true)
-            .append("upsert", true);
    }
 
    // checks whether collection with given user name already exists
