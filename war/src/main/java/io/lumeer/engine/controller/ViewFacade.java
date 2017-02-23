@@ -114,7 +114,11 @@ public class ViewFacade implements Serializable {
     */
    public int copyView(int viewId, String newName) throws ViewMetadataNotFoundException, ViewAlreadyExistsException, UnauthorizedAccessException {
       final DataDocument originalView = getViewMetadataWithoutAccessCheck(viewId);
-      return createView(newName, originalView.getString(LumeerConst.View.VIEW_TYPE_KEY), originalView.getDataDocument(LumeerConst.View.VIEW_CONFIGURATION_KEY));
+      if (!securityFacade.checkForRead(originalView, getCurrentUser())) {
+         return createView(newName, originalView.getString(LumeerConst.View.VIEW_TYPE_KEY), originalView.getDataDocument(LumeerConst.View.VIEW_CONFIGURATION_KEY));
+      } else {
+         throw new UnauthorizedAccessException();
+      }
    }
 
    /**
@@ -142,7 +146,7 @@ public class ViewFacade implements Serializable {
     */
    public void setViewType(int viewId, String type) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
       DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
-      setViewMetadataValueWithoutChecks(viewDocument, LumeerConst.View.VIEW_TYPE_KEY, type);
+      setViewMetadataValue(viewDocument, LumeerConst.View.VIEW_TYPE_KEY, type);
       // TODO verify if the type can be changed - maybe it can be changed only from default?
    }
 
@@ -177,7 +181,7 @@ public class ViewFacade implements Serializable {
       }
 
       DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
-      setViewMetadataValueWithoutChecks(viewDocument, LumeerConst.View.VIEW_NAME_KEY, name);
+      setViewMetadataValue(viewDocument, LumeerConst.View.VIEW_NAME_KEY, name);
    }
 
    /**
@@ -205,7 +209,7 @@ public class ViewFacade implements Serializable {
     */
    public void setViewConfiguration(int viewId, DataDocument configuration) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
       DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
-      setViewMetadataValueWithoutChecks(viewDocument, LumeerConst.View.VIEW_CONFIGURATION_KEY, configuration);
+      setViewMetadataValue(viewDocument, LumeerConst.View.VIEW_CONFIGURATION_KEY, configuration);
    }
 
    /**
@@ -242,7 +246,7 @@ public class ViewFacade implements Serializable {
     */
    public void setViewConfigurationAttribute(int viewId, String attributeName, Object attributeValue) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
       DataDocument viewDocument = getViewMetadataWithoutAccessCheck(viewId);
-      setViewMetadataValueWithoutChecks(viewDocument, LumeerConst.View.VIEW_CONFIGURATION_KEY + "." + attributeName, attributeValue);
+      setViewMetadataValue(viewDocument, LumeerConst.View.VIEW_CONFIGURATION_KEY + "." + attributeName, attributeValue);
    }
 
    /**
@@ -302,17 +306,19 @@ public class ViewFacade implements Serializable {
       return createListOfDaos(views);
    }
 
-   // creates list of daos from list of documents
+   // creates list of daos from list of documents and performs security checks
    private List<ViewDao> createListOfDaos(List<DataDocument> views) {
       List<ViewDao> viewsDaos = new ArrayList<>();
       for (DataDocument view : views) {
-         ViewDao viewDao = new ViewDao(
-               view.getInteger(LumeerConst.View.VIEW_ID_KEY),
-               view.getString(LumeerConst.View.VIEW_NAME_KEY),
-               view.getString(LumeerConst.View.VIEW_TYPE_KEY),
-               view.getDataDocument(LumeerConst.View.VIEW_CONFIGURATION_KEY)
-         );
-         viewsDaos.add(viewDao);
+         if (securityFacade.checkForRead(view, getCurrentUser())) {
+            ViewDao viewDao = new ViewDao(
+                  view.getInteger(LumeerConst.View.VIEW_ID_KEY),
+                  view.getString(LumeerConst.View.VIEW_NAME_KEY),
+                  view.getString(LumeerConst.View.VIEW_TYPE_KEY),
+                  view.getDataDocument(LumeerConst.View.VIEW_CONFIGURATION_KEY)
+            );
+            viewsDaos.add(viewDao);
+         }
       }
 
       return viewsDaos;
@@ -374,11 +380,11 @@ public class ViewFacade implements Serializable {
     *       The user is not authorized to updated access rights.
     */
    public void updateViewAccessRights(final DataDocument viewDocument) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
-      setViewMetadataValueWithoutChecks(viewDocument, LumeerConst.Document.USER_RIGHTS, viewDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS));
+      setViewMetadataValue(viewDocument, LumeerConst.Document.USER_RIGHTS, viewDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS));
    }
 
    // sets info about one view without checking special metadata keys
-   private void setViewMetadataValueWithoutChecks(DataDocument viewDocument, String metaKey, Object value) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+   private void setViewMetadataValue(DataDocument viewDocument, String metaKey, Object value) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
       if (!securityFacade.checkForWrite(viewDocument, getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
