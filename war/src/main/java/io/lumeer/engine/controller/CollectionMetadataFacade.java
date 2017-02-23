@@ -220,8 +220,7 @@ public class CollectionMetadataFacade implements Serializable {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       checkIfMetadataCollectionExists(metadataCollectionName);
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
-      List<DataDocument> attributesInfoDocuments = dataStorage.run(query);
+      List<DataDocument> attributesInfoDocuments = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE));
 
       List<String> attributes = new ArrayList<>();
 
@@ -252,8 +251,7 @@ public class CollectionMetadataFacade implements Serializable {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       checkIfMetadataCollectionExists(metadataCollectionName);
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE);
-      return dataStorage.run(query);
+      return dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE));
    }
 
    /**
@@ -278,16 +276,14 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryCollectionAttributeInfo(collectionName, newName);
-      List<DataDocument> newAttributeInfo = dataStorage.run(query);
+      List<DataDocument> newAttributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, newName));
 
       // check if the attribute with new name already exists in the collection
       if (!newAttributeInfo.isEmpty()) {
          throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newName, collectionName));
       }
 
-      query = queryCollectionAttributeInfo(collectionName, oldName);
-      List<DataDocument> attributeInfo = dataStorage.run(query);
+      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, oldName));
 
       // the old attribute does not exist
       if (attributeInfo.isEmpty()) {
@@ -333,8 +329,7 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.run(query);
+      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
 
       // attribute metadata does not exist
       if (attributeInfo.isEmpty()) {
@@ -407,8 +402,7 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.run(query);
+      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
 
       // attribute metadata does not exist
       if (attributeInfo.isEmpty()) {
@@ -456,9 +450,7 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      String query = queryCollectionAttributeInfo(collectionName, attribute);
-
-      List<DataDocument> attributeInfo = dataStorage.run(query);
+      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attribute));
       if (!attributeInfo.isEmpty()) { // in case somebody did that sooner, we may have nothing to remove
          DataDocument attributeDocument = attributeInfo.get(0);
          String documentId = attributeDocument.getId();
@@ -492,8 +484,7 @@ public class CollectionMetadataFacade implements Serializable {
          return 0;
       }
 
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> countInfo = dataStorage.run(query);
+      List<DataDocument> countInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
       return countInfo.isEmpty() ? 0 : countInfo.get(0).getInteger(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY);
    }
 
@@ -509,8 +500,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       when metadata collection is not found
     */
    public String getOriginalCollectionName(String collectionName) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException {
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
-      List<DataDocument> nameInfo = dataStorage.run(query);
+      List<DataDocument> nameInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE));
 
       if (nameInfo.isEmpty()) {
          throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE));
@@ -577,8 +567,7 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryDocumentFromCollectionMetadata(collectionInternalName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE);
-      List<DataDocument> nameInfo = dataStorage.run(query);
+      List<DataDocument> nameInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionInternalName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE));
       DataDocument nameDocument = nameInfo.get(0);
       String id = nameDocument.getId();
 
@@ -610,8 +599,7 @@ public class CollectionMetadataFacade implements Serializable {
 
       checkIfMetadataCollectionExists(collectionMetadataCollectionName(collectionName));
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
-      List<DataDocument> lockInfo = dataStorage.run(query);
+      List<DataDocument> lockInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE));
 
       if (lockInfo.isEmpty()) {
          throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE));
@@ -645,8 +633,7 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE);
-      List<DataDocument> lockInfo = dataStorage.run(query);
+      List<DataDocument> lockInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE));
       DataDocument lockDocument = lockInfo.get(0);
       String id = lockDocument.getId();
 
@@ -673,8 +660,7 @@ public class CollectionMetadataFacade implements Serializable {
          return new DataDocument(); // return blank document
       }
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
-      List<DataDocument> customMetadataList = dataStorage.run(query);
+      List<DataDocument> customMetadataList = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE));
 
       if (customMetadataList.isEmpty()) {
          return new DataDocument(); // return blank document
@@ -703,8 +689,7 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
-      List<DataDocument> customMetadataList = dataStorage.run(query);
+      List<DataDocument> customMetadataList = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE));
 
       if (customMetadataList.isEmpty()) { // document with custom metadata does not exist - we create it
          metadataDocument.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
@@ -742,8 +727,7 @@ public class CollectionMetadataFacade implements Serializable {
          return false;
       }
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
-      List<DataDocument> customMetadataList = dataStorage.run(query);
+      List<DataDocument> customMetadataList = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE));
 
       if (customMetadataList.isEmpty()) { // document with custom metadata does not exist - we have nothing to drop
          return false;
@@ -958,8 +942,7 @@ public class CollectionMetadataFacade implements Serializable {
          return null;
       }
 
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributesInfo = dataStorage.run(query);
+      List<DataDocument> attributesInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
       if (attributesInfo.isEmpty()) { // metadata for the attribute was not found
          return null;
       }
@@ -1195,47 +1178,36 @@ public class CollectionMetadataFacade implements Serializable {
          return null;
       }
 
-      String query = queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE);
-      List<DataDocument> rightsInfo = dataStorage.run(query);
+      List<DataDocument> rightsInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE));
 
       return rightsInfo.isEmpty() ? null : rightsInfo.get(0);
    }
 
    // returns id of the document with info about given attribute
    private String getAttributeDocumentId(String collectionName, String attributeName) {
-      String query = queryCollectionAttributeInfo(collectionName, attributeName);
-      List<DataDocument> attributeInfo = dataStorage.run(query);
+      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
       return attributeInfo.isEmpty() ? null : attributeInfo.get(0).getId();
    }
 
-   // returns MongoDb query for getting specific metadata document
-   private String queryDocumentFromCollectionMetadata(String collectionName, String metaTypeValue) {
+   // returns query for getting specific metadata document
+   private DataDocument queryDocumentFromCollectionMetadata(String collectionName, String metaTypeValue) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(LumeerConst.Collection.META_TYPE_KEY)
-            .append("\":\"")
-            .append(metaTypeValue)
-            .append("\"}}");
-      return sb.toString();
+      return new DataDocument()
+            .append("find", metadataCollectionName)
+            .append("filter",
+                  new DataDocument()
+                        .append(LumeerConst.Collection.META_TYPE_KEY, metaTypeValue));
    }
 
-   // returns MongoDb query for getting info about specific attribute
-   private String queryCollectionAttributeInfo(String collectionName, String attributeName) {
+   // returns query for getting info about specific attribute
+   private DataDocument queryCollectionAttributeInfo(String collectionName, String attributeName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(metadataCollectionName)
-            .append("\",filter:{\"")
-            .append(LumeerConst.Collection.META_TYPE_KEY)
-            .append("\":\"")
-            .append(LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-            .append("\",\"")
-            .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY)
-            .append("\":\"")
-            .append(attributeName)
-            .append("\"}}");
-      return sb.toString();
+      return new DataDocument()
+            .append("find", metadataCollectionName)
+            .append("filter",
+                  new DataDocument()
+                        .append(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
+                        .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName));
    }
 
    private DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName) {

@@ -31,9 +31,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -320,35 +318,30 @@ public class ViewFacade implements Serializable {
       return viewsDaos;
    }
 
-   // returns MongoDb query for getting metadata for one given view
-   private String queryOneViewMetadata(int viewId) {
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
-            .append("\",filter:{\"")
-            .append(LumeerConst.View.VIEW_ID_KEY)
-            .append("\":")
-            .append(viewId)
-            .append("}}");
-      String viewMetaQuery = sb.toString();
-      return viewMetaQuery;
+   // returns query for getting metadata for one given view
+   private DataDocument queryOneViewMetadata(int viewId) {
+      return new DataDocument()
+            .append("find", LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
+            .append("filter",
+                  new DataDocument()
+                        .append(LumeerConst.View.VIEW_ID_KEY, viewId));
    }
 
    // gets info about all views
    private List<DataDocument> getViewsMetadata() {
-      return dataStorage.search(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, null, null, 0, 0);
+      return dataStorage.run(
+            new DataDocument()
+                  .append("find", LumeerConst.View.VIEW_METADATA_COLLECTION_NAME));
    }
 
    // gets info about all views of given type
    private List<DataDocument> getViewsOfTypeMetadata(String type) {
-      StringBuilder sb = new StringBuilder("{find:\"")
-            .append(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
-            .append("\",filter:{\"")
-            .append(LumeerConst.View.VIEW_TYPE_KEY)
-            .append("\":\"")
-            .append(type)
-            .append("\"}}");
-      String viewMetaQuery = sb.toString();
-      return dataStorage.run(viewMetaQuery);
+      return dataStorage.run(
+            new DataDocument()
+                  .append("find", LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)
+                  .append("filter",
+                        new DataDocument()
+                              .append(LumeerConst.View.VIEW_TYPE_KEY, type)));
    }
 
    private boolean checkIfViewNameExists(String originalViewName) {
