@@ -114,7 +114,7 @@ public class ViewFacade implements Serializable {
     */
    public int copyView(int viewId, String newName) throws ViewMetadataNotFoundException, ViewAlreadyExistsException, UnauthorizedAccessException {
       final DataDocument originalView = getViewMetadataWithoutAccessCheck(viewId);
-      if (!securityFacade.checkForRead(originalView, getCurrentUser())) {
+      if (securityFacade.checkForRead(originalView, getCurrentUser())) {
          return createView(newName, originalView.getString(LumeerConst.View.VIEW_TYPE_KEY), originalView.getDataDocument(LumeerConst.View.VIEW_CONFIGURATION_KEY));
       } else {
          throw new UnauthorizedAccessException();
