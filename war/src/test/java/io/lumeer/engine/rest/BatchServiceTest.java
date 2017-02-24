@@ -19,19 +19,20 @@
  */
 package io.lumeer.engine.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.api.batch.SplitBatch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -45,7 +46,8 @@ import javax.ws.rs.core.Response;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class BatchServiceTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class BatchServiceTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {
@@ -60,7 +62,7 @@ public class BatchServiceTest extends Arquillian {
    private final String TARGET_URI = "http://localhost:8080/";
    private final String PATH_PREFIX = "BatchServiceTest/rest/";
    private final String COLLECTION_NAME = "Supeř Kolekce +ěščřžý";
-//   private final String PATH_PREFIX = "lumeer-engine/rest/";
+   //   private final String PATH_PREFIX = "lumeer-engine/rest/";
 
    @Test
    public void testSplitBatch() throws Exception {
@@ -73,14 +75,14 @@ public class BatchServiceTest extends Arquillian {
       final Client client = ClientBuilder.newBuilder().build();
       // the path prefix '/lumeer-engine/' does not work in test classes
       Response response = client.target(TARGET_URI)
-            .path(PATH_PREFIX + "collections/" + COLLECTION_NAME)
-            .request(MediaType.APPLICATION_JSON_TYPE)
-            .buildDelete()
-            .invoke();
+                                .path(PATH_PREFIX + "collections/" + COLLECTION_NAME)
+                                .request(MediaType.APPLICATION_JSON_TYPE)
+                                .buildDelete()
+                                .invoke();
 
       int status = response.getStatus();
       response.close();
-      Assert.assertTrue(status == 404 || status == 204);
+      assertThat(status == 404 || status == 204).isTrue();
 
       System.out.println(i++ + " " + (System.currentTimeMillis() - t));
       t = System.currentTimeMillis();
@@ -92,64 +94,65 @@ public class BatchServiceTest extends Arquillian {
                        .invoke();
       status = response.getStatus();
       response.close();
-      Assert.assertEquals(status, 200);
+      assertThat(status).isEqualTo(200);
 
       System.out.println(i++ + " " + (System.currentTimeMillis() - t));
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-            .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
-            .request(MediaType.APPLICATION_JSON_TYPE)
-            .accept(MediaType.APPLICATION_JSON_TYPE)
-            .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 1")))
-            .invoke();
+                       .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
+                       .request(MediaType.APPLICATION_JSON_TYPE)
+                       .accept(MediaType.APPLICATION_JSON_TYPE)
+                       .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 1")))
+                       .invoke();
 
       final String documentId = response.readEntity(String.class);
       response.close();
 
-      Assert.assertTrue(documentId != null && documentId.length() > 5);
+      assertThat(documentId).isNotNull();
+      assertThat(documentId.length()).isGreaterThan(5);
 
       System.out.println(i++ + " " + (System.currentTimeMillis() - t));
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-            .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
-            .request(MediaType.APPLICATION_JSON_TYPE)
-            .accept(MediaType.APPLICATION_JSON_TYPE)
-            .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 2")))
-            .invoke();
+                       .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
+                       .request(MediaType.APPLICATION_JSON_TYPE)
+                       .accept(MediaType.APPLICATION_JSON_TYPE)
+                       .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 2")))
+                       .invoke();
       response.close();
 
       System.out.println(i++ + " " + (System.currentTimeMillis() - t));
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-            .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
-            .request(MediaType.APPLICATION_JSON_TYPE)
-            .accept(MediaType.APPLICATION_JSON_TYPE)
-            .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 3")))
-            .invoke();
+                       .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
+                       .request(MediaType.APPLICATION_JSON_TYPE)
+                       .accept(MediaType.APPLICATION_JSON_TYPE)
+                       .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 3")))
+                       .invoke();
       response.close();
 
       System.out.println(i++ + " " + (System.currentTimeMillis() - t));
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-            .path(PATH_PREFIX + "batch/split/")
-            .request(MediaType.APPLICATION_JSON_TYPE)
-            .buildPost(Entity.json(new SplitBatch(COLLECTION_NAME, "attr2", ",", true, Arrays.asList("attr2a", "attr2b", "attr2c", "attr2d"), false)))
-            .invoke();
+                       .path(PATH_PREFIX + "batch/split/")
+                       .request(MediaType.APPLICATION_JSON_TYPE)
+                       .buildPost(Entity.json(new SplitBatch(COLLECTION_NAME, "attr2", ",", true, Arrays.asList("attr2a", "attr2b", "attr2c", "attr2d"), false)))
+                       .invoke();
       response.close();
 
       System.out.println(i++ + " " + (System.currentTimeMillis() - t));
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-            .path(PATH_PREFIX + "query/")
-            .request(MediaType.APPLICATION_JSON_TYPE)
-            .accept(MediaType.APPLICATION_JSON_TYPE)
-            .buildPost(Entity.json(new Query(new DataDocument("attr1", "5"))))
-            .invoke();
+                       .path(PATH_PREFIX + "query/")
+                       .request(MediaType.APPLICATION_JSON_TYPE)
+                       .accept(MediaType.APPLICATION_JSON_TYPE)
+                       .buildPost(Entity.json(new Query(new DataDocument("attr1", "5"))))
+                       .invoke();
       final List<LinkedHashMap> result = response.readEntity(List.class);
       response.close();
 
@@ -157,10 +160,10 @@ public class BatchServiceTest extends Arquillian {
       t = System.currentTimeMillis();
 
       result.forEach(data -> {
-         Assert.assertFalse(data.containsKey("attr2"));
-         Assert.assertEquals(data.get("attr2a"), "hello");
-         Assert.assertEquals(data.get("attr2b"), "how are");
-         Assert.assertFalse(data.containsKey("attr2d"));
+         assertThat(data).doesNotContainKey("attr2");
+         assertThat(data).containsEntry("attr2a", "hello");
+         assertThat(data).containsEntry("attr2b", "how are");
+         assertThat(data).doesNotContainKey("attr2d");
       });
    }
 

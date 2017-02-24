@@ -1,4 +1,4 @@
-package io.lumeer.mongodb;/*
+/*
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
@@ -17,6 +17,9 @@ package io.lumeer.mongodb;/*
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
+package io.lumeer.mongodb;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -24,9 +27,9 @@ import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.model.Filters;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -78,7 +81,7 @@ public class MongoDbStorageTest {
 
    private MongoDbStorage mongoDbStorage;
 
-   @BeforeMethod
+   @Before
    public void setUp() throws Exception {
       mongoDbStorage = new MongoDbStorage();
       mongoDbStorage.connect(new StorageConnection(DB_HOST, DB_PORT, DB_USER, DB_PASSWORD), DB_NAME, DB_SSL);
@@ -113,12 +116,12 @@ public class MongoDbStorageTest {
       int numCollections = mongoDbStorage.getAllCollections().size();
       mongoDbStorage.createCollection(COLLECTION_CREATE_AND_DROP_I);
       mongoDbStorage.createCollection(COLLECTION_CREATE_AND_DROP_II);
-      Assert.assertEquals(mongoDbStorage.getAllCollections().size(), numCollections + 2);
+      assertThat(mongoDbStorage.getAllCollections()).hasSize(numCollections + 2);
 
       numCollections = mongoDbStorage.getAllCollections().size();
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_I);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_II);
-      Assert.assertEquals(mongoDbStorage.getAllCollections().size(), numCollections - 2);
+      assertThat(mongoDbStorage.getAllCollections()).hasSize(numCollections - 2);
    }
 
    @Test
@@ -127,15 +130,15 @@ public class MongoDbStorageTest {
       mongoDbStorage.createCollection(COLLECTION_GET_ALL_COLLECTIONS_I);
       mongoDbStorage.createCollection(COLLECTION_GET_ALL__COLLECTIONS_II);
 
-      Assert.assertEquals(mongoDbStorage.getAllCollections().size(), numCollections + 2);
+      assertThat(mongoDbStorage.getAllCollections()).hasSize(numCollections + 2);
    }
 
    @Test
    public void testHasCollection() throws Exception {
       mongoDbStorage.createCollection(COLLECTION_HAS_COLLECTION);
 
-      Assert.assertTrue(mongoDbStorage.hasCollection(COLLECTION_HAS_COLLECTION));
-      Assert.assertFalse(mongoDbStorage.hasCollection("someNotExistingNameOfCollection"));
+      assertThat(mongoDbStorage.hasCollection(COLLECTION_HAS_COLLECTION)).isTrue();
+      assertThat(mongoDbStorage.hasCollection("someNotExistingNameOfCollection")).isFalse();
    }
 
    @Test
@@ -143,12 +146,10 @@ public class MongoDbStorageTest {
       mongoDbStorage.createCollection(COLLECTION_COLLECTION_HAS_DOCUMENT);
 
       String id = mongoDbStorage.createDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, createDummyDocument());
-
-      Assert.assertTrue(mongoDbStorage.collectionHasDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, id));
+      assertThat(mongoDbStorage.collectionHasDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, id)).isTrue();
 
       String dummyId = "507f191e810c19729de860ea";
-
-      Assert.assertFalse(mongoDbStorage.collectionHasDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, dummyId));
+      assertThat(mongoDbStorage.collectionHasDocument(COLLECTION_COLLECTION_HAS_DOCUMENT, dummyId)).isFalse();
    }
 
    @Test
@@ -159,8 +160,8 @@ public class MongoDbStorageTest {
       String documentId = mongoDbStorage.createDocument(COLLECTION_CREATE_AND_READ_DOCUMENT, insertedDocument);
 
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_CREATE_AND_READ_DOCUMENT, documentId);
-      Assert.assertEquals(insertedDocument.getString(DUMMY_KEY1), readedDocument.getString(DUMMY_KEY1));
-      Assert.assertEquals(insertedDocument.getString(DUMMY_KEY2), readedDocument.getString(DUMMY_KEY2));
+      assertThat(insertedDocument.getString(DUMMY_KEY1)).isEqualTo(readedDocument.getString(DUMMY_KEY1));
+      assertThat(insertedDocument.getString(DUMMY_KEY2)).isEqualTo(readedDocument.getString(DUMMY_KEY2));
    }
 
    @Test
@@ -172,11 +173,11 @@ public class MongoDbStorageTest {
       DataDocument insertedDocument = createDummyDocument();
       mongoDbStorage.createOldDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, insertedDocument, dummyKey, 1);
       DataDocument readDocument = mongoDbStorage.readOldDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, dummyKey, 1);
-      Assert.assertNotNull(readDocument);
+      assertThat(readDocument).isNotNull();
 
       mongoDbStorage.dropOldDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, dummyKey, 1);
       readDocument = mongoDbStorage.readOldDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, dummyKey, 1);
-      Assert.assertNull(readDocument);
+      assertThat(readDocument).isNull();
    }
 
    @Test
@@ -193,11 +194,13 @@ public class MongoDbStorageTest {
       mongoDbStorage.updateDocument(COLLECTION_UPDATE_DOCUMENT, readedDocument, documentId);
       DataDocument readedAfterInsDocument = mongoDbStorage.readDocument(COLLECTION_UPDATE_DOCUMENT, documentId);
 
-      Assert.assertNotEquals(readedAfterInsDocument.getString(DUMMY_KEY1), DUMMY_VALUE1);
-      Assert.assertNotEquals(readedAfterInsDocument.getString(DUMMY_KEY2), DUMMY_VALUE2);
-      Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY1), DUMMY_CHANGED_VALUE1);
-      Assert.assertEquals(readedAfterInsDocument.getString(DUMMY_KEY2), DUMMY_CHANGED_VALUE2);
-      Assert.assertEquals(readedAfterInsDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY).intValue(), 1);
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY1)).isNotEqualTo(DUMMY_VALUE1);
+      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY2)).isNotEqualTo(DUMMY_VALUE2);
+      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY1)).isEqualTo(DUMMY_CHANGED_VALUE1);
+      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY2)).isEqualTo(DUMMY_CHANGED_VALUE2);
+      assertions.assertThat(readedAfterInsDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY)).isEqualTo(1);
+      assertions.assertAll();
    }
 
    @Test
@@ -211,13 +214,15 @@ public class MongoDbStorageTest {
       mongoDbStorage.replaceDocument(COLLECTION_REPLACE_DOCUMENT, replaceDocument, documentId);
 
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_REPLACE_DOCUMENT, documentId);
-      Assert.assertTrue(!readedDocument.containsKey("a"));
-      Assert.assertTrue(!readedDocument.containsKey("b"));
-      Assert.assertTrue(!readedDocument.containsKey("c"));
 
-      Assert.assertTrue(readedDocument.containsKey("d"));
-      Assert.assertTrue(readedDocument.containsKey("e"));
-      Assert.assertTrue(readedDocument.containsKey("f"));
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(readedDocument.containsKey("a")).as("a").isFalse();
+      assertions.assertThat(readedDocument.containsKey("b")).as("b").isFalse();
+      assertions.assertThat(readedDocument.containsKey("c")).as("c").isFalse();
+      assertions.assertThat(readedDocument.containsKey("d")).as("d").isTrue();
+      assertions.assertThat(readedDocument.containsKey("e")).as("e").isTrue();
+      assertions.assertThat(readedDocument.containsKey("f")).as("f").isTrue();
+      assertions.assertAll();
    }
 
    @Test
@@ -228,12 +233,12 @@ public class MongoDbStorageTest {
       String documentId = mongoDbStorage.createDocument(COLLECTION_DROP_DOCUMENT, insertedDocument);
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_DOCUMENT, documentId);
 
-      Assert.assertNotNull(readedDocument);
+      assertThat(readedDocument).isNotNull();
 
       mongoDbStorage.dropDocument(COLLECTION_DROP_DOCUMENT, documentId);
       readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_DOCUMENT, documentId);
 
-      Assert.assertNull(readedDocument);
+      assertThat(readedDocument).isNull();
    }
 
    @Test
@@ -250,12 +255,12 @@ public class MongoDbStorageTest {
       }
 
       List<DataDocument> docs = mongoDbStorage.search(COLLECTION_DROP_MANY, null, null, 0, 0);
-      Assert.assertEquals(docs.size(), 100);
+      assertThat(docs).hasSize(100);
 
       mongoDbStorage.dropManyDocuments(COLLECTION_DROP_MANY, MongoUtils.convertBsonToJson(Filters.eq(dropManyKey, value1)));
 
       docs = mongoDbStorage.search(COLLECTION_DROP_MANY, null, null, 0, 0);
-      Assert.assertEquals(docs.size(), 50);
+      assertThat(docs).hasSize(50);
    }
 
    @Test
@@ -265,12 +270,12 @@ public class MongoDbStorageTest {
       DataDocument insertedDocument = createDummyDocument();
       String documentId = mongoDbStorage.createDocument(COLLECTION_DROP_ATTRIBUTE, insertedDocument);
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_ATTRIBUTE, documentId);
-      Assert.assertEquals(readedDocument.size(), 4);
+      assertThat(readedDocument).hasSize(4);
 
       mongoDbStorage.dropAttribute(COLLECTION_DROP_ATTRIBUTE, documentId, DUMMY_KEY1);
 
       readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_ATTRIBUTE, documentId);
-      Assert.assertEquals(readedDocument.size(), 3);
+      assertThat(readedDocument).hasSize(3);
    }
 
    @Test
@@ -283,8 +288,7 @@ public class MongoDbStorageTest {
       }
 
       List<DataDocument> searchDocuments = mongoDbStorage.search(COLLECTION_SEARCH, null, null, 10, 10);
-
-      Assert.assertEquals(searchDocuments.size(), 10);
+      assertThat(searchDocuments).hasSize(10);
    }
 
    @Test
@@ -301,7 +305,7 @@ public class MongoDbStorageTest {
       List<DataDocument> searchDocuments = mongoDbStorage.run(query);
 
       // run() method returns 101 entries due to it is a default value of "batchSize" query key
-      Assert.assertEquals(searchDocuments.size(), 101);
+      assertThat(searchDocuments).hasSize(101);
    }
 
    @Test
@@ -315,8 +319,8 @@ public class MongoDbStorageTest {
       mongoDbStorage.renameAttribute(COLLECTION_RENAME_ATTRIBUTE, DUMMY_KEY1, changedAttr);
 
       DataDocument document = mongoDbStorage.readDocument(COLLECTION_RENAME_ATTRIBUTE, id);
-      Assert.assertEquals(document.containsKey(DUMMY_KEY1), false);
-      Assert.assertEquals(document.containsKey(changedAttr), true);
+      assertThat(document.containsKey(DUMMY_KEY1)).isFalse();
+      assertThat(document.containsKey(changedAttr)).isTrue();
    }
 
    @Test
@@ -332,14 +336,14 @@ public class MongoDbStorageTest {
 
       DataDocument readDocument = mongoDbStorage.readDocument(COLLECTION_INC_ATTR_VALUE_BY, id);
 
-      Assert.assertTrue(readDocument.containsKey(incAttribute));
-      Assert.assertEquals(readDocument.getInteger(incAttribute).intValue(), 1);
+      assertThat(readDocument.containsKey(incAttribute)).isTrue();
+      assertThat(readDocument.getInteger(incAttribute)).isEqualTo(1);
 
       mongoDbStorage.incrementAttributeValueBy(COLLECTION_INC_ATTR_VALUE_BY, id, incAttribute, 10);
 
       readDocument = mongoDbStorage.readDocument(COLLECTION_INC_ATTR_VALUE_BY, id);
-      Assert.assertTrue(readDocument.containsKey(incAttribute));
-      Assert.assertEquals(readDocument.getInteger(incAttribute).intValue(), 11);
+      assertThat(readDocument.containsKey(incAttribute)).isTrue();
+      assertThat(readDocument.getInteger(incAttribute)).isEqualTo(11);
    }
 
    @Test
@@ -357,10 +361,10 @@ public class MongoDbStorageTest {
       }
 
       Set<String> attributeValues1 = mongoDbStorage.getAttributeValues(COLLECTION_GET_ATTRIBUTE_VALUES, DUMMY_KEY1);
-      Assert.assertEquals(attributeValues1.size(), Math.min(numDummyKey1, 100));
+      assertThat(attributeValues1).hasSize(Math.min(numDummyKey1, 100));
 
       Set<String> attributeValues2 = mongoDbStorage.getAttributeValues(COLLECTION_GET_ATTRIBUTE_VALUES, DUMMY_KEY2);
-      Assert.assertEquals(attributeValues2.size(), Math.min(numDummyKey2, 100));
+      assertThat(attributeValues2).hasSize(Math.min(numDummyKey2, 100));
 
       // case when some attribute value is null
 
@@ -381,9 +385,7 @@ public class MongoDbStorageTest {
       mongoDbStorage.createDocument(COLLECTION_GET_ATTRIBUTE_VALUES, d2);
 
       Set<String> a1 = mongoDbStorage.getAttributeValues(COLLECTION_GET_ATTRIBUTE_VALUES, k1);
-      Assert.assertTrue(a1.contains(v1));
-      Assert.assertTrue(a1.contains(v3));
-      Assert.assertFalse(a1.contains(v2));
+      assertThat(a1).containsExactlyInAnyOrder(v1, v3);
    }
 
    @Test
@@ -413,8 +415,7 @@ public class MongoDbStorageTest {
 
       // use debug to see nested hierarchy works
       DataDocument nested = mongoDbStorage.readDocument(COLLECTION_NESTED_DOCUMENTS, id);
-
-      Assert.assertNotNull(nested);
+      assertThat(nested).isNotNull();
    }
 
    @Test
@@ -426,23 +427,23 @@ public class MongoDbStorageTest {
 
       String id = mongoDbStorage.createDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, doc);
       DataDocument fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(4, fromDb.getArrayList("a", Integer.class).size());
+      assertThat(fromDb.getArrayList("a", Integer.class)).hasSize(4);
 
       mongoDbStorage.addItemToArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", 10);
       fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(5, fromDb.getArrayList("a", Integer.class).size());
+      assertThat(fromDb.getArrayList("a", Integer.class)).hasSize(5);
 
       mongoDbStorage.addItemsToArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", Arrays.asList(5, 6, 7));
       fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(8, fromDb.getArrayList("a", Integer.class).size());
+      assertThat(fromDb.getArrayList("a", Integer.class)).hasSize(8);
 
       mongoDbStorage.removeItemFromArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", 10);
       fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(7, fromDb.getArrayList("a", Integer.class).size());
+      assertThat(fromDb.getArrayList("a", Integer.class)).hasSize(7);
 
       mongoDbStorage.removeItemsFromArray(COLLECTION_BASIC_ARRAY_MANIPULATION, id, "a", Arrays.asList(5, 6, 7));
       fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(4, fromDb.getArrayList("a", Integer.class).size());
+      assertThat(fromDb.getArrayList("a", Integer.class)).hasSize(4);
    }
 
    @Test
@@ -461,13 +462,13 @@ public class MongoDbStorageTest {
 
       String id = mongoDbStorage.createDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, d);
       DataDocument fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(2, fromDb.getArrayList("n.a", DataDocument.class).size());
+      assertThat(fromDb.getArrayList("n.a", DataDocument.class)).hasSize(2);
 
       DataDocument d3 = new DataDocument();
       d3.put("equals", "true");
       mongoDbStorage.addItemToArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", d3);
       fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(3, fromDb.getArrayList("n.a", DataDocument.class).size());
+      assertThat(fromDb.getArrayList("n.a", DataDocument.class)).hasSize(3);
 
       DataDocument d4 = new DataDocument();
       d4.put("i", true);
@@ -475,19 +476,19 @@ public class MongoDbStorageTest {
       d4.put("p", 12.3);
       mongoDbStorage.addItemsToArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", Arrays.asList(d4, d5));
       fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(5, fromDb.getArrayList("n.a", DataDocument.class).size());
+      assertThat(fromDb.getArrayList("n.a", DataDocument.class)).hasSize(5);
 
       mongoDbStorage.removeItemsFromArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", Arrays.asList(d2, d3));
       fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(3, fromDb.getArrayList("n.a", DataDocument.class).size());
+      assertThat(fromDb.getArrayList("n.a", DataDocument.class)).hasSize(3);
 
       mongoDbStorage.removeItemFromArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", d2);
       fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(3, fromDb.getArrayList("n.a", DataDocument.class).size());
+      assertThat(fromDb.getArrayList("n.a", DataDocument.class)).hasSize(3);
 
       mongoDbStorage.removeItemFromArray(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id, "n.a", d4);
       fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, id);
-      Assert.assertEquals(2, fromDb.getArrayList("n.a", DataDocument.class).size());
+      assertThat(fromDb.getArrayList("n.a", DataDocument.class)).hasSize(2);
 
    }
 
@@ -520,9 +521,9 @@ public class MongoDbStorageTest {
       q.setCollections(Collections.singleton(COLLECTION_AGGREGATE));
 
       List<DataDocument> result = mongoDbStorage.query(q);
-      Assert.assertEquals(result.size(), 1);
-      Assert.assertEquals(result.get(0).get("_id"), "{ \"param1\" : \"a\" }");
-      Assert.assertEquals(result.get(0).get("added"), 7);
+      assertThat(result).hasSize(1);
+      assertThat(result.get(0).get("_id")).isEqualTo("{ \"param1\" : \"a\" }");
+      assertThat(result.get(0).get("added")).isEqualTo(7);
 
       final DataDocument project = new DataDocument();
       final DataDocument multiply = new DataDocument();
@@ -538,20 +539,20 @@ public class MongoDbStorageTest {
 
       result = mongoDbStorage.query(q);
 
-      Assert.assertEquals(result.size(), 2);
-      Assert.assertEquals(result.get(0).get("param4"), 20);
-      Assert.assertEquals(result.get(1).get("param4"), 15);
+      assertThat(result).hasSize(2);
+      assertThat(result.get(0).get("param4")).isEqualTo(20);
+      assertThat(result.get(1).get("param4")).isEqualTo(15);
 
       q.setSkip(1);
       result = mongoDbStorage.query(q);
-      Assert.assertEquals(result.size(), 1);
-      Assert.assertEquals(result.get(0).get("param4"), 15);
+      assertThat(result).hasSize(1);
+      assertThat(result.get(0).get("param4")).isEqualTo(15);
 
       q.setSkip(0);
       q.setLimit(1);
       result = mongoDbStorage.query(q);
-      Assert.assertEquals(result.size(), 1);
-      Assert.assertEquals(result.get(0).get("param4"), 20);
+      assertThat(result).hasSize(1);
+      assertThat(result.get(0).get("param4")).isEqualTo(20);
    }
 
    private DataDocument createDummyDocument() {

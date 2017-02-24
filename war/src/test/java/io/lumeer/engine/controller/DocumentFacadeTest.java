@@ -1,4 +1,4 @@
-package io.lumeer.engine.controller;/*
+/*
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
@@ -17,28 +17,23 @@ package io.lumeer.engine.controller;/*
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
+package io.lumeer.engine.controller;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +42,8 @@ import javax.inject.Inject;
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-public class DocumentFacadeTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class DocumentFacadeTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {

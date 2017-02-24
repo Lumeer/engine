@@ -28,13 +28,14 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.Utils;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,7 +46,8 @@ import javax.inject.Inject;
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
-public class CollectionMetadataFacadeTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class CollectionMetadataFacadeTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {
@@ -348,7 +350,6 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       collectionFacade.createCollection(COLLECTION_CHECK_ATTRIBUTE_VALUE);
       String collection = internalName(COLLECTION_CHECK_ATTRIBUTE_VALUE);
 
-
       // check value of type int and also its constraints
       String attributeInt = "int";
       collectionMetadataFacade.addOrIncrementAttribute(collection, attributeInt);
@@ -366,7 +367,6 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueValid), Integer.parseInt(intValueValid));
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidConstraint), null);
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidType), null);
-
 
       // check value of type long
       String attributeLong = "long";

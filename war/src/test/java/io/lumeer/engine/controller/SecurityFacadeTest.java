@@ -24,13 +24,14 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -38,7 +39,8 @@ import javax.inject.Inject;
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
  */
-public class SecurityFacadeTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class SecurityFacadeTest {
 
    /*
    Tieto testy som nepisal optimalne, ale tak,

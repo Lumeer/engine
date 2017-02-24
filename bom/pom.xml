@@ -81,7 +81,6 @@
       <version.log4j>2.6.2</version.log4j>
       <version.jms-api>2.0.1</version.jms-api>
       <version.mqtt>1.14</version.mqtt>
-      <version.testng>6.9.10</version.testng>
       <version.websocket-api>1.1</version.websocket-api>
       <version.commons.math3>3.6.1</version.commons.math3>
       <version.commons.io>2.5</version.commons.io>
@@ -116,6 +115,7 @@
       <version.amq>5.14.0</version.amq>
       <version.arquillian-jacoco>1.0.0.Alpha8</version.arquillian-jacoco>
       <version.mockito>1.10.19</version.mockito>
+      <version.junit>4.12</version.junit>
 
       <java.level>1.8</java.level>
    </properties>
@@ -189,12 +189,11 @@
             <version>${version.groovy}</version>
          </dependency>
 
-         <!-- Test NG -->
+         <!-- Testing -->
          <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${version.testng}</version>
-            <scope>test</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
          </dependency>
          <dependency>
             <groupId>org.assertj</groupId>
