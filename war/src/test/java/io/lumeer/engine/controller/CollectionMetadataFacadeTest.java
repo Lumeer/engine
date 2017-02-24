@@ -37,6 +37,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
@@ -418,7 +419,6 @@ public class CollectionMetadataFacadeTest extends Arquillian {
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid2), sdf.parse(dateValueValid2));
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid2), null);
 
-
       // check value of type boolean
       String attributeBoolean = "boolean";
       collectionMetadataFacade.addOrIncrementAttribute(collection, attributeBoolean);
@@ -445,6 +445,41 @@ public class CollectionMetadataFacadeTest extends Arquillian {
 
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid1), stringValueValid1);
       Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid2), stringValueValid2);
+
+      // check value of type list
+      String attributeList = "list";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeList);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attributeList, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_LIST);
+
+      List<Object> listValueValid1 = new ArrayList<>();
+      List<Object> listValueValid2 = Arrays.asList("hello", "world");
+      List<Object> listValueValid3 = null;
+
+      Object listValueInvalid1 = "hmmm";
+
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid1), listValueValid1);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid2), listValueValid2);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid3), listValueValid3);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueInvalid1), null);
+
+      // check value of type nested
+      String attributeNested = "nested";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeNested);
+      collectionMetadataFacade.retypeCollectionAttribute(collection, attributeNested, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_NESTED);
+
+      DataDocument nestedValueValid1 = new DataDocument();
+      DataDocument nestedValueValid2 = new DataDocument().append("hello", "world");
+      DataDocument nestedValueValid3 = new DataDocument().append("document", new DataDocument("hello", "world"));
+      DataDocument nestedValueValid4 = null;
+
+      Object nestedValueInvalid1 = "hmmm";
+
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid1), nestedValueValid1);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid2), nestedValueValid2);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid3), nestedValueValid3);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid4), nestedValueValid4);
+      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueInvalid1), null);
+
    }
 
    @Test

@@ -203,7 +203,7 @@ public class CollectionMetadataFacade implements Serializable {
       dataStorage.createDocument(metadataCollectionName, metadataLock);
 
       // we create indexes on frequently used fields
-      int indexType = 1;
+      int indexType = 1; // specifies ascending or descending index - https://docs.mongodb.com/manual/core/index-single/
       dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.META_TYPE_KEY, indexType));
       dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, indexType));
       dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, indexType));
@@ -772,14 +772,14 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param attribute
     *       attribute name
-    * @param valueString
-    *       value converted to String
+    * @param valueObject
+    *       attribute value
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     */
-   public Object checkAndConvertAttributeValue(String collectionName, String attribute, String valueString) {
+   public Object checkAndConvertAttributeValue(String collectionName, String attribute, Object valueObject) {
       List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
-      valueString = checkAttributeConstraints(valueString, constraintConfigurations);
-      if (valueString == null) { // value does not satisfy constraints and could not be fixed
+      valueObject = checkAttributeConstraints(valueObject, constraintConfigurations);
+      if (valueObject == null) { // value does not satisfy constraints and could not be fixed
          return null;
       }
 
@@ -787,10 +787,10 @@ public class CollectionMetadataFacade implements Serializable {
 
       // Date type is special - we maintain it with constraint, so we have to do special check here.
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         return checkValueDateAndConvert(valueString, constraintConfigurations);
+         return checkValueDateAndConvert(valueObject.toString(), constraintConfigurations);
       }
 
-      return checkAttributeTypeAndConvert(valueString, type);
+      return checkAttributeTypeAndConvert(valueObject, type);
    }
 
    private Date checkValueDateAndConvert(String valueString, List<String> constraintConfigurations) {
@@ -828,7 +828,7 @@ public class CollectionMetadataFacade implements Serializable {
 
       Set<String> attributes = document.keySet();
       for (String attribute : attributes) {
-         String value = document.get(attribute).toString();
+         Object value = document.get(attribute);
          results.put(attribute, checkAndConvertAttributeValue(collectionName, attribute, value));
       }
 
@@ -836,7 +836,25 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // checks whether value is of given type and converts it to given type
-   private Object checkAttributeTypeAndConvert(String valueString, String type) {
+   private Object checkAttributeTypeAndConvert(Object valueObject, String type) {
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_LIST)) {
+         if (valueObject instanceof List) {
+            return valueObject;
+         } else {
+            return null;
+         }
+      }
+
+      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_NESTED)) {
+         if (valueObject instanceof DataDocument) {
+            return valueObject;
+         } else {
+            return null;
+         }
+      }
+
+      String valueString = valueObject.toString();
+
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT)) {
          try {
             return Integer.parseInt(valueString);
@@ -876,7 +894,7 @@ public class CollectionMetadataFacade implements Serializable {
          return null;
       }
 
-      return valueString; // for a string, we accept everything
+      return valueString; // for a string, we accept everything, so we do not check it here
    }
 
    /**
@@ -894,9 +912,9 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // checks whether value satisfies all constraints
-   private String checkAttributeConstraints(String valueString, List<String> constraintConfigurations) {
+   private Object checkAttributeConstraints(Object valueObject, List<String> constraintConfigurations) {
       if (constraintConfigurations == null || constraintConfigurations.isEmpty()) { // there are no constraints
-         return valueString;
+         return valueObject;
       }
 
       ConstraintManager constraintManager = null;
@@ -907,6 +925,7 @@ public class CollectionMetadataFacade implements Serializable {
          throw new IllegalStateException("Illegal constraint prefix collision: ", e);
       }
 
+      String valueString = valueObject.toString();
       Constraint.ConstraintResult result = constraintManager.isValid(valueString);
 
       if (result == Constraint.ConstraintResult.INVALID) {

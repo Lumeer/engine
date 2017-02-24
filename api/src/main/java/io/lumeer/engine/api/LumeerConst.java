@@ -113,20 +113,6 @@ public final class LumeerConst {
       public static final String VIEW_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
       public static final String VIEW_UPDATE_DATE_KEY = Document.UPDATE_DATE_KEY;
       public static final String VIEW_UPDATE_USER_KEY = Document.UPDATED_BY_USER_KEY;
-
-      public static final List<String> VIEW_IMMUTABLE_KEYS = Arrays.asList(
-            VIEW_ID_KEY,
-            VIEW_CREATE_DATE_KEY,
-            VIEW_CREATE_USER_KEY,
-            VIEW_USER_RIGHTS_KEY,
-            VIEW_USER_RIGHTS_KEY
-      );
-
-      public static final List<String> VIEW_SPECIAL_KEYS = Arrays.asList(
-            VIEW_NAME_KEY,
-            VIEW_TYPE_KEY,
-            VIEW_CONFIGURATION_KEY
-      );
    }
 
    public static class Collection {
@@ -147,8 +133,8 @@ public final class LumeerConst {
       public static final String COLLECTION_ATTRIBUTE_TYPE_BOOLEAN = "bool";
       public static final List<String> COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES = Arrays.asList("true", "false");
       public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "string";
-      // public static final String COLLECTION_ATTRIBUTE_TYPE_LIST = "list";
-      // public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested"; // TODO
+      public static final String COLLECTION_ATTRIBUTE_TYPE_LIST = "list";
+      public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested";
       public static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES = Arrays.asList(
             COLLECTION_ATTRIBUTE_TYPE_INT,
             COLLECTION_ATTRIBUTE_TYPE_LONG,
@@ -156,7 +142,9 @@ public final class LumeerConst {
             COLLECTION_ATTRIBUTE_TYPE_DECIMAL,
             COLLECTION_ATTRIBUTE_TYPE_DATE,
             COLLECTION_ATTRIBUTE_TYPE_BOOLEAN,
-            COLLECTION_ATTRIBUTE_TYPE_STRING);
+            COLLECTION_ATTRIBUTE_TYPE_STRING,
+            COLLECTION_ATTRIBUTE_TYPE_LIST,
+            COLLECTION_ATTRIBUTE_TYPE_NESTED);
 
       public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "attribute-constraints";
       public static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "attribute-count";
@@ -172,6 +160,8 @@ public final class LumeerConst {
       public static final String COLLECTION_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
 
       public static final String COLLECTION_CUSTOM_META_TYPE_VALUE = "custom";
+
+      public static final String COLLECTION_SHADOW_SUFFIX = ".shadow";
    }
 
    public static class Security {
