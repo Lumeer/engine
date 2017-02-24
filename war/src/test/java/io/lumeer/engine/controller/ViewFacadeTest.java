@@ -27,13 +27,14 @@ import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.rest.dao.ViewDao;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,8 @@ import javax.inject.Inject;
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
-public class ViewFacadeTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class ViewFacadeTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {

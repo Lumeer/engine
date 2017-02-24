@@ -19,26 +19,29 @@
  */
 package io.lumeer.engine.hints;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.mongodb.MongoUtils;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
  */
-public class HintTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class HintTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {
@@ -62,46 +65,44 @@ public class HintTest extends Arquillian {
    @Test
    public void testNormalFormHintDocument() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      dataDocument.put("pes","macka a pes");
-      hintFacade.runHint("NormalForm",dataDocument);
+      dataDocument.put("pes", "macka a pes");
+      hintFacade.runHint("NormalForm", dataDocument);
       try {
          Thread.sleep(1000);
-      } catch(InterruptedException ex) {
+      } catch (InterruptedException ex) {
          Thread.currentThread().interrupt();
       }
       String response = hintFacade.getHintText();
       System.out.println("====================");
       System.out.println(response);
-      Assert.assertEquals("You have space in: pes",response);
+      assertThat(response).isEqualTo("You have space in: pes");
    }
 
    @Test
    public void testValueType() throws Exception {
-      if (dataStorage.hasCollection(VALUE_DATABASE)){
+      if (dataStorage.hasCollection(VALUE_DATABASE)) {
          dataStorage.dropCollection(VALUE_DATABASE);
       }
       dataStorage.createCollection(VALUE_DATABASE);
 
       DataDocument dataDocument = new DataDocument();
       dataDocument.put("number", 10);
-      dataDocument.put("numberString","9");
+      dataDocument.put("numberString", "9");
       dataDocument.put("uvodzovky", "\"");
-      String id = dataStorage.createDocument(VALUE_DATABASE,dataDocument);
+      String id = dataStorage.createDocument(VALUE_DATABASE, dataDocument);
       DataDocument dataDocumentDatabase = dataStorage.readDocument(VALUE_DATABASE, id);
       System.out.println("=======================");
       System.out.println(MongoUtils.dataDocumentToDocument(dataDocument).toJson().toString());
-      hintFacade.runHint("ValueTypeHint",dataDocumentDatabase);
+      hintFacade.runHint("ValueTypeHint", dataDocumentDatabase);
       try {
          Thread.sleep(1000);
-      } catch(InterruptedException ex) {
+      } catch (InterruptedException ex) {
          Thread.currentThread().interrupt();
       }
       String response = hintFacade.getHintText();
       System.out.println("====================");
       System.out.println(response);
-      Assert.assertEquals("You have wrong integer saved in: numberString",response);
-
+      assertThat(response).isEqualTo("You have wrong integer saved in: numberString");
    }
-
 
 }
