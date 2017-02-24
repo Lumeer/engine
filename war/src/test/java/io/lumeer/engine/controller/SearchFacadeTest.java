@@ -24,15 +24,14 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -40,7 +39,8 @@ import javax.inject.Inject;
 /**
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
  */
-public class SearchFacadeTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class SearchFacadeTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {

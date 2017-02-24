@@ -25,14 +25,15 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Optional;
 import javax.inject.Inject;
@@ -40,7 +41,8 @@ import javax.inject.Inject;
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-public class ConfigurationFacadeTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class ConfigurationFacadeTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {
@@ -91,7 +93,7 @@ public class ConfigurationFacadeTest extends Arquillian {
 
    private DataDocument dummyDataDocument;
 
-   @BeforeMethod
+   @Before
    public void setUp() throws Exception {
       if (isDatabaseCollection(COLLECTION_USER_CONFIG)) {
          systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
