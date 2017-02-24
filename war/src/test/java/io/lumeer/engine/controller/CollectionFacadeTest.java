@@ -63,11 +63,6 @@ public class CollectionFacadeTest extends Arquillian {
    private final String COLLECTION_RETYPE_ATTRIBUTE = "CollectionFacadeCollectionRetypeAttribute";
    private final String COLLECTION_ADD_DROP_CONSTRAINT = "CollectionFacadeCollectionAddDropConstraint";
 
-   private final String DUMMY_KEY1 = "key1";
-   private final String DUMMY_KEY2 = "key2";
-   private final String DUMMY_VALUE1 = "param1";
-   private final String DUMMY_VALUE2 = "param2";
-
    @Inject
    private CollectionFacade collectionFacade;
 
@@ -209,13 +204,14 @@ public class CollectionFacadeTest extends Arquillian {
 
       String name = "attribute 1";
       String newName = "new attribute 1";
+      String value = "value";
 
       DataDocument doc1 = new DataDocument();
-      doc1.put(name, DUMMY_VALUE1);
+      doc1.put(name, value);
       DataDocument doc2 = new DataDocument();
-      doc2.put(name, DUMMY_VALUE1);
+      doc2.put(name, value);
       DataDocument doc3 = new DataDocument();
-      doc3.put(name, DUMMY_VALUE1);
+      doc3.put(name, value);
 
       dataStorage.createDocument(collection, doc1);
       dataStorage.createDocument(collection, doc2);

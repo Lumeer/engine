@@ -39,6 +39,7 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -165,7 +166,7 @@ public class CollectionFacade implements Serializable {
          linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
          dropCollectionMetadata(collectionName);
          dataStorage.dropCollection(collectionName);
-         dataStorage.dropCollection(collectionName + ".shadow"); // TODO: find more intelligent way to drop shadow collection
+         dataStorage.dropCollection(collectionName + LumeerConst.Collection.COLLECTION_SHADOW_SUFFIX); // TODO: find more intelligent way to drop shadow collection
 
          dropCollectionEvent.fire(new DropCollection(null, collectionName));
       } else {
@@ -212,27 +213,6 @@ public class CollectionFacade implements Serializable {
             throw new UnauthorizedAccessException();
          }
          return collectionMetadataFacade.getCollectionAttributesNames(collectionName);
-      } else {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-   }
-
-   /**
-    * Modifies a metadata collection of given collection.
-    *
-    * @param collectionName
-    *       internal collection name
-    * @param document
-    *       DataDocument with data to be updated
-    * @param documentId
-    *       id of document to be updated
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
-    */
-   @Deprecated // CollectionMetadataFacade provides specific methods for metadata update
-   public void updateCollectionMetadata(final String collectionName, final DataDocument document, String documentId) throws CollectionNotFoundException {
-      if (dataStorage.hasCollection(collectionName)) {
-         dataStorage.updateDocument(collectionMetadataFacade.collectionMetadataCollectionName(collectionName), document, documentId);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -368,21 +348,22 @@ public class CollectionFacade implements Serializable {
          }
 
          List<DataDocument> allDocuments = getAllDocuments(collectionName);
+         List<Object> newValues = new ArrayList<>();
          boolean isValid = true;
          for (DataDocument document : allDocuments) {
-            if (collectionMetadataFacade.checkValueTypeAndConvert(document.get(attributeName).toString(), newType) == null) {
+            Object newValue = collectionMetadataFacade.checkValueTypeAndConvert(document.get(attributeName), newType);
+            if (newValue == null) {
                isValid = false; // we have found invalid value, so the retype cannot be done
                break;
             }
+            newValues.add(newValue);
          }
 
          if (isValid) {
             collectionMetadataFacade.retypeCollectionAttribute(collectionName, attributeName, newType);
             // TODO: How to use BatchFacade to retype value in all documents?
-            for (DataDocument document : allDocuments) {
-               Object newValue = collectionMetadataFacade.checkValueTypeAndConvert(document.get(attributeName).toString(), newType);
-               String id = document.getId();
-               dataStorage.updateDocument(collectionName, new DataDocument(attributeName, newValue), id);
+            for (int i = 0; i < allDocuments.size(); i++) {
+               dataStorage.updateDocument(collectionName, new DataDocument(attributeName, newValues.get(i)), allDocuments.get(i).getId());
             }
             return true;
          } else {

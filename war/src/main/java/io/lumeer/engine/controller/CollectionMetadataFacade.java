@@ -904,9 +904,9 @@ public class CollectionMetadataFacade implements Serializable {
     *       type to be checked
     * @return true if value satisfies given type
     */
-   public Object checkValueTypeAndConvert(String value, String type) {
+   public Object checkValueTypeAndConvert(Object value, String type) {
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         return checkValueDateAndConvert(value, Collections.emptyList());
+         return checkValueDateAndConvert(value.toString(), Collections.emptyList());
       }
       return checkAttributeTypeAndConvert(value, type);
    }

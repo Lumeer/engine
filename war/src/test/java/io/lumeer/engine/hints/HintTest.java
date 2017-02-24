@@ -19,12 +19,9 @@
  */
 package io.lumeer.engine.hints;
 
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.controller.CollectionFacade;
-import io.lumeer.engine.controller.VersionFacade;
 import io.lumeer.mongodb.MongoUtils;
 
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -45,7 +42,7 @@ public class HintTest extends Arquillian {
 
    @Deployment
    public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "VersionFacadeTest.war")
+      return ShrinkWrap.create(WebArchive.class, "HintTest.war")
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
