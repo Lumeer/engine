@@ -244,14 +244,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return list of DataDocuments, each with info about one attribute
     * @throws CollectionNotFoundException
     *       when metadata collection is not found
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to read the collection
     */
-   public List<DataDocument> getCollectionAttributesInfo(String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public List<DataDocument> getCollectionAttributesInfo(String collectionName) throws CollectionNotFoundException {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
       checkIfMetadataCollectionExists(metadataCollectionName);
 
@@ -315,14 +309,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param newType
     *       new attribute type
     * @return true if retype is successful, false if new type is not valid or when metadata about attribute was not found
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
     */
-   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
 
       if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
@@ -356,18 +344,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       attribute name
     * @return type of the attribute, default (String) if attribute is not found
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to read the collection
     */
-   public String getAttributeType(String collectionName, String attributeName) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
-      return getAttributeTypeWithoutAccessRightsCheck(collectionName, attributeName);
-   }
-
-   private String getAttributeTypeWithoutAccessRightsCheck(String collectionName, String attributeName) {
+   public String getAttributeType(String collectionName, String attributeName) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
 
       if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
@@ -391,8 +369,7 @@ public class CollectionMetadataFacade implements Serializable {
 
    /**
     * Deletes an attribute from collection metadata. Nothing is done if attribute metadata is not found, just return.
-    * This method should be called only when also renaming attribute in documents, and access rights should be checked
-    * there so they are not checked twice.
+    * This method should be called only when also renaming attribute in documents.
     *
     * @param collectionName
     *       internal collection name
@@ -421,7 +398,7 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Adds attribute to metadata collection, if the attribute already isn't there.
     * Otherwise just increments count. Nothing is done if metadata collection does not exist.
-    * This should be called only when adding/updating document, so we do not check access rights here
+    * This should be called only when adding/updating document.
     *
     * @param collectionName
     *       internal collection name
@@ -440,7 +417,7 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Drops attribute if there is no document with that attribute in the collection (count is 1),
     * otherwise just decrements count. Nothing is done if attribute metadata is not found, just return.
-    * This should be called only when adding/updating document, so we do not check access rights here
+    * This should be called only when adding/updating document.
     *
     * @param collectionName
     *       internal collection name
@@ -476,14 +453,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       attribute name
     * @return attribute count, zero if the attribute does not exist
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to read the collection
     */
-   public long getAttributeCount(String collectionName, String attributeName) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public long getAttributeCount(String collectionName, String attributeName) {
       if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
          return 0;
       }
@@ -556,13 +527,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if the rename is successful, false if metadata collection was not found and the rename could not be performed
     * @throws UserCollectionAlreadyExistsException
     *       when collection with given user name already exists
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
     */
-   public boolean setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException, UnauthorizedAccessException {
-      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionInternalName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
+   public boolean setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException {
       if (checkIfUserCollectionExists(collectionOriginalName)) {
          throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
       }
@@ -593,14 +559,8 @@ public class CollectionMetadataFacade implements Serializable {
     *       when metadata collection is not found
     * @throws CollectionMetadataDocumentNotFoundException
     *       when document in metadata collection is not found
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to read the collection
     */
-   public String getCollectionLockTime(String collectionName) throws UnauthorizedAccessException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
-      if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public String getCollectionLockTime(String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       checkIfMetadataCollectionExists(collectionMetadataCollectionName(collectionName));
 
       List<DataDocument> lockInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE));
@@ -621,14 +581,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param newTime
     *       String representation of the time of the last update of collection lock
     * @return true if set was successful, false if time format is wrong or metadata collection does not exist
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
     */
-   public boolean setCollectionLockTime(String collectionName, String newTime) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public boolean setCollectionLockTime(String collectionName, String newTime) {
       if (!Utils.isValidDateFormat(newTime)) { // time format is not valid
          return false;
       }
@@ -652,14 +606,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal name
     * @return DataDocument with all custom metadata values
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to read the collection
     */
-   public DataDocument getCustomMetadata(String collectionName) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public DataDocument getCustomMetadata(String collectionName) {
       if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
          return new DataDocument(); // return blank document
       }
@@ -681,14 +629,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param metadataDocument
     *       document with metadata values
     * @return true when update was successful, false when metadata collection does not exist
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
     */
-   public boolean setCustomMetadata(String collectionName, DataDocument metadataDocument) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public boolean setCustomMetadata(String collectionName, DataDocument metadataDocument) {
       if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
          return false;
       }
@@ -717,14 +659,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param keys
     *       list of metadata keys to drop
     * @return false when metadata collection or custom metadata document does not exist, true otherwise
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
     */
-   public boolean dropCustomMetadata(String collectionName, List<String> keys) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public boolean dropCustomMetadata(String collectionName, List<String> keys) {
       String metadataCollectionName = collectionMetadataCollectionName(collectionName);
 
       if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
@@ -783,7 +719,7 @@ public class CollectionMetadataFacade implements Serializable {
          return null;
       }
 
-      String type = getAttributeTypeWithoutAccessRightsCheck(collectionName, attribute);
+      String type = getAttributeType(collectionName, attribute);
 
       // Date type is special - we maintain it with constraint, so we have to do special check here.
       if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
@@ -947,14 +883,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       name of the attribute
     * @return list of constraint configurations for given attribute, empty list if constraints were not found
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to read the collection
     */
-   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForRead(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) {
       List<String> constraints = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
       return constraints == null ? Collections.emptyList() : constraints;
    }
@@ -986,14 +916,8 @@ public class CollectionMetadataFacade implements Serializable {
     *       string with constraint configuration
     * @throws InvalidConstraintException
     *       when new constraint is not valid or is in conflict with existing constraints
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
     */
-   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws UnauthorizedAccessException, InvalidConstraintException {
-      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException {
       // user may be permitted to write, but might not be permitted to read
       List<String> existingConstraints = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
 
@@ -1021,14 +945,8 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @param constraintConfiguration
     *       constraint configuration to be removed
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to write to the collection
     */
-   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws UnauthorizedAccessException {
-      if (!securityFacade.checkForWrite(getAccessRightsDocument(collectionName), getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
+   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) {
       String attributeDocumentId = getAttributeDocumentId(collectionName, attributeName);
       dataStorage.removeItemFromArray(collectionMetadataCollectionName(collectionName), attributeDocumentId, LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, constraintConfiguration);
    }
@@ -1062,9 +980,9 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @param user
     *       user name
-    * @return true if user can "execute" the collection (can change access rights)
+    * @return true if user can change access rights to collection
     */
-   public boolean checkCollectionForExecute(String collectionName, String user) {
+   public boolean checkCollectionForAccessChange(String collectionName, String user) {
       DataDocument rights = getAccessRightsDocument(collectionName);
       return rights == null || securityFacade.checkForExecute(rights, user);
    }
@@ -1081,9 +999,6 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public void addCollectionRead(String collectionName, String user) throws UnauthorizedAccessException {
       DataDocument rights = getAccessRightsDocument(collectionName);
-      if (!securityFacade.checkForExecute(rights, user)) {
-         throw new UnauthorizedAccessException();
-      }
       securityFacade.setRightsRead(rights, user);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
@@ -1100,9 +1015,6 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public void addCollectionWrite(String collectionName, String user) throws UnauthorizedAccessException {
       DataDocument rights = getAccessRightsDocument(collectionName);
-      if (!securityFacade.checkForExecute(rights, user)) {
-         throw new UnauthorizedAccessException();
-      }
       securityFacade.setRightsWrite(rights, user);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
@@ -1117,11 +1029,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to change rights for the collection
     */
-   public void addCollectionExecute(String collectionName, String user) throws UnauthorizedAccessException {
+   public void addCollectionAccessChange(String collectionName, String user) throws UnauthorizedAccessException {
       DataDocument rights = getAccessRightsDocument(collectionName);
-      if (!securityFacade.checkForExecute(rights, user)) {
-         throw new UnauthorizedAccessException();
-      }
       securityFacade.setRightsExecute(rights, user);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
@@ -1138,9 +1047,6 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public void removeCollectionRead(String collectionName, String user) throws UnauthorizedAccessException {
       DataDocument rights = getAccessRightsDocument(collectionName);
-      if (!securityFacade.checkForExecute(rights, user)) {
-         throw new UnauthorizedAccessException();
-      }
       securityFacade.removeRightsRead(rights, user);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
@@ -1157,9 +1063,6 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public void removeCollectionWrite(String collectionName, String user) throws UnauthorizedAccessException {
       DataDocument rights = getAccessRightsDocument(collectionName);
-      if (!securityFacade.checkForExecute(rights, user)) {
-         throw new UnauthorizedAccessException();
-      }
       securityFacade.removeRightsWrite(rights, user);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
@@ -1174,11 +1077,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to change rights for the collection
     */
-   public void removeCollectionExecute(String collectionName, String user) throws UnauthorizedAccessException {
+   public void removeCollectionAccessChange(String collectionName, String user) throws UnauthorizedAccessException {
       DataDocument rights = getAccessRightsDocument(collectionName);
-      if (!securityFacade.checkForExecute(rights, user)) {
-         throw new UnauthorizedAccessException();
-      }
       securityFacade.removeRightsExecute(rights, user);
       dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
    }
@@ -1191,7 +1091,6 @@ public class CollectionMetadataFacade implements Serializable {
     * @return list of AccessRightsDao (Daos for all users)
     */
    public List<AccessRightsDao> getAllAccessRights(String collectionName) {
-      // TODO: Who will have the permission to view all rights?
       return securityFacade.getDaoList(getAccessRightsDocument(collectionName));
    }
 

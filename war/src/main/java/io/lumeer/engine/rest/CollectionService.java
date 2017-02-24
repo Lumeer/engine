@@ -141,6 +141,9 @@ public class CollectionService implements Serializable {
       if (name == null) {
          throw new IllegalArgumentException();
       }
+      if (!checkCollectionForRead(name)) {
+         throw new UnauthorizedAccessException();
+      }
       collectionFacade.dropCollection(getInternalName(name));
    }
 
@@ -161,10 +164,14 @@ public class CollectionService implements Serializable {
     *       When the metadata collection of the given collection does not exist.
     * @throws AttributeAlreadyExistsException
     *       When attribute with new name already exists.
+    * @throws UnauthorizedAccessException When current user is not allowed to write to the collection.
     */
    @PUT
    @Path("/{collectionName}/attributes/{oldName}/rename/{newName}")
-   public void renameAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeAlreadyExistsException {
+   public void renameAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeAlreadyExistsException, UnauthorizedAccessException {
+      if (!checkCollectionForWrite(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
       if (collectionName == null || oldName == null || newName == null
             || (collectionMetadataFacade.renameCollectionAttribute(getInternalName(collectionName), oldName, newName) == false)) {
          throw new IllegalArgumentException();
@@ -190,6 +197,9 @@ public class CollectionService implements Serializable {
    public void dropAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
+      }
+      if (!checkCollectionForWrite(collectionName)) {
+         throw new UnauthorizedAccessException();
       }
       collectionFacade.dropAttribute(getInternalName(collectionName), attributeName);
    }
@@ -220,6 +230,7 @@ public class CollectionService implements Serializable {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
+      // TODO: What about access rights checks here (for individual documents)?
       String internalCollectionName = getInternalName(collectionName);
       if (!dataStorage.hasCollection(internalCollectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -242,6 +253,7 @@ public class CollectionService implements Serializable {
       if (query == null) {
          throw new IllegalArgumentException();
       }
+      // TODO: What about access rights checks here (for individual documents)?
       return searchFacade.search(query);
    }
 
@@ -265,8 +277,15 @@ public class CollectionService implements Serializable {
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
    public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+      if (collectionName == null || attributeName == null) {
+         throw new IllegalArgumentException();
+      }
+      if (!checkCollectionForWrite(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
+
       DataDocument metadataDocument = new DataDocument(attributeName, metadata);
-      if (collectionName == null || attributeName == null || !collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
+      if (!collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
          throw new IllegalArgumentException();
       }
    }
@@ -291,6 +310,9 @@ public class CollectionService implements Serializable {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
+      if (!checkCollectionForRead(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
       return collectionFacade.readCollectionMetadata(getInternalName(collectionName));
    }
 
@@ -314,8 +336,15 @@ public class CollectionService implements Serializable {
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+      if (collectionName == null || attributeName == null) {
+         throw new IllegalArgumentException();
+      }
+      if (!checkCollectionForWrite(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
+
       DataDocument metadataDocument = new DataDocument(attributeName, value);
-      if (collectionName == null || attributeName == null || !collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
+      if (!collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
          throw new IllegalArgumentException();
       }
    }
@@ -339,6 +368,9 @@ public class CollectionService implements Serializable {
    public List<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
+      }
+      if (!checkCollectionForRead(collectionName)) {
+         throw new UnauthorizedAccessException();
       }
       return collectionFacade.readCollectionAttributes(getInternalName(collectionName));
    }
@@ -368,6 +400,7 @@ public class CollectionService implements Serializable {
    @Path("/{collectionName}/rights")
    @Produces(MediaType.APPLICATION_JSON)
    public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+      // TODO: Who can read access rights? Anyone or is it restricted?
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
@@ -395,6 +428,9 @@ public class CollectionService implements Serializable {
       if (collectionName == null || accessRights == null) {
          throw new IllegalArgumentException();
       }
+      if (!checkCollectionForAccessChange(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
 
       final String user = userFacade.getUserEmail();
 
@@ -411,9 +447,9 @@ public class CollectionService implements Serializable {
       }
 
       if (accessRights.isExecute()) {
-         collectionMetadataFacade.addCollectionExecute(getInternalName(collectionName), user);
+         collectionMetadataFacade.addCollectionAccessChange(getInternalName(collectionName), user);
       } else {
-         collectionMetadataFacade.removeCollectionExecute(getInternalName(collectionName), user);
+         collectionMetadataFacade.removeCollectionAccessChange(getInternalName(collectionName), user);
       }
    }
 
@@ -442,6 +478,9 @@ public class CollectionService implements Serializable {
    public boolean setAttributeType(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final @PathParam("newType") String newType) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException, InvalidCollectionAttributeTypeException {
       if (collectionName == null || attributeName == null || newType == null) {
          throw new IllegalArgumentException();
+      }
+      if (!checkCollectionForWrite(collectionName)) {
+         throw new UnauthorizedAccessException();
       }
 
       if (collectionMetadataFacade.retypeCollectionAttribute(getInternalName(collectionName), attributeName, newType) == false) {
@@ -472,6 +511,9 @@ public class CollectionService implements Serializable {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
+      if (!checkCollectionForRead(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
       return collectionMetadataFacade.getAttributeType(getInternalName(collectionName), attributeName);
    }
 
@@ -500,6 +542,9 @@ public class CollectionService implements Serializable {
       if (collectionName == null || attributeName == null || constraintConfiguration == null) {
          throw new IllegalArgumentException();
       }
+      if (!checkCollectionForWrite(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
       collectionMetadataFacade.addAttributeConstraint(getInternalName(collectionName), attributeName, constraintConfiguration);
    }
 
@@ -524,6 +569,9 @@ public class CollectionService implements Serializable {
    public List<String> readAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
+      }
+      if (!checkCollectionForRead(collectionName)) {
+         throw new UnauthorizedAccessException();
       }
       return collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(collectionName), attributeName);
    }
@@ -551,6 +599,9 @@ public class CollectionService implements Serializable {
       if (collectionName == null || attributeName == null || constraintConfiguration == null) {
          throw new IllegalArgumentException();
       }
+      if (!checkCollectionForWrite(collectionName)) {
+         throw new UnauthorizedAccessException();
+      }
       collectionMetadataFacade.dropAttributeConstraint(getInternalName(collectionName), attributeName, constraintConfiguration);
    }
 
@@ -565,5 +616,17 @@ public class CollectionService implements Serializable {
     */
    private String getInternalName(final String collectionOriginalName) throws UserCollectionNotFoundException {
       return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
+   }
+
+   private boolean checkCollectionForRead(final String collection) {
+      return collectionMetadataFacade.checkCollectionForRead(collection, userFacade.getUserEmail());
+   }
+
+   private boolean checkCollectionForWrite(final String collection) {
+      return collectionMetadataFacade.checkCollectionForWrite(collection, userFacade.getUserEmail());
+   }
+
+   private boolean checkCollectionForAccessChange(final String collection) {
+      return collectionMetadataFacade.checkCollectionForAccessChange(collection, userFacade.getUserEmail());
    }
 }

@@ -132,7 +132,8 @@ public class CollectionServiceTest extends Arquillian {
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
       ArrayList<String> collections = response.readEntity(ArrayList.class);
-      Assert.assertTrue(collections.equals(new ArrayList<String>(collectionFacade.getAllCollections().values())) && response.getStatus() == Response.Status.OK.getStatusCode());
+      Assert.assertEquals(collections, new ArrayList<String>(collectionFacade.getAllCollections().values()));
+      Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
       response.close();
       client.close();
    }
@@ -145,12 +146,15 @@ public class CollectionServiceTest extends Arquillian {
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_CREATE_COLLECTION).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       String internalName = response.readEntity(String.class);
-      Assert.assertTrue(dataStorage.hasCollection(internalName) && response.getStatus() == Response.Status.OK.getStatusCode() && internalName.equals(getInternalName(COLLECTION_CREATE_COLLECTION)));
+      Assert.assertTrue(dataStorage.hasCollection(internalName));
+      Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(internalName, getInternalName(COLLECTION_CREATE_COLLECTION));
       response.close();
 
       // #2 collection already exists, status code = 400
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_CREATE_COLLECTION).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(dataStorage.hasCollection(internalName) && response2.getStatus() == Response.Status.BAD_REQUEST.getStatusCode());
+      Assert.assertTrue(dataStorage.hasCollection(internalName));
+      Assert.assertEquals(response2.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
       response2.close();
 
       client.close();
@@ -163,8 +167,8 @@ public class CollectionServiceTest extends Arquillian {
 
       // #1 nothing to delete, status code = 404
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_COLLECTION).request().buildDelete().invoke();
-      Assert.assertTrue(!dataStorage.hasCollection(getInternalName(COLLECTION_DROP_COLLECTION))
-            && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertFalse(dataStorage.hasCollection(getInternalName(COLLECTION_DROP_COLLECTION)));
+      Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 collection exists, ready to delete, status code = 204
@@ -193,7 +197,7 @@ public class CollectionServiceTest extends Arquillian {
       // #1 the given collection does not exist, status code = 400 or 404
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attribute exists, ready to rename the attribute, status code = 204
@@ -204,8 +208,9 @@ public class CollectionServiceTest extends Arquillian {
       List<String> attributeNames = collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE));
       boolean containsNewAttribute = attributeNames.contains(newAttributeName);
       boolean containsOldAttribute = attributeNames.contains(oldAttributeName);
-      Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && containsNewAttribute && !containsOldAttribute);
+      Assert.assertEquals(response2.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertTrue(containsNewAttribute);
+      Assert.assertFalse(containsOldAttribute);
       response2.close();
 
       client.close();
@@ -219,7 +224,7 @@ public class CollectionServiceTest extends Arquillian {
       // #1 the given collection does not exist, status code = 404
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_ATTRIBUTE + "/attributes/" + attributeName).request().buildDelete().invoke();
-      Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attribute exists, ready to drop the attribute, status code = 204
@@ -228,8 +233,8 @@ public class CollectionServiceTest extends Arquillian {
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_ATTRIBUTE + "/attributes/" + attributeName).request().buildDelete().invoke();
       List<String> attributeNames = collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_DROP_ATTRIBUTE));
       boolean containsKey = attributeNames.contains(attributeName);
-      Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && !containsKey);
+      Assert.assertEquals(response2.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertFalse(containsKey);
       response2.close();
 
       client.close();
@@ -251,7 +256,8 @@ public class CollectionServiceTest extends Arquillian {
                                 .queryParam("limit", limit)
                                 .request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> searchedDocuments = response.readEntity(ArrayList.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && searchedDocuments.size() == limit);
+      Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(searchedDocuments.size(), limit);
       response.close();
 
       client.close();
@@ -286,7 +292,8 @@ public class CollectionServiceTest extends Arquillian {
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_ADD_COLLECTION_METADATA));
       DataDocument readMetaDoc = (DataDocument) metadata.get(3).get(attributeName);
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readMetaDoc.equals(value));
+      Assert.assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertEquals(readMetaDoc, value);
       response.close();
 
       client.close();
@@ -307,8 +314,8 @@ public class CollectionServiceTest extends Arquillian {
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_METADATA + "/meta/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       ArrayList<DataDocument> collectionMetadata = response2.readEntity(ArrayList.class);
       List<DataDocument> metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_READ_COLLECTION_METADATA));
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
-            && collectionMetadata.equals(metadata));
+      Assert.assertEquals(response2.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(collectionMetadata, metadata);
       response2.close();
 
       client.close();
@@ -326,13 +333,15 @@ public class CollectionServiceTest extends Arquillian {
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
       int readValue = metadata.get(3).getInteger(columnSizeAttributeName);
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readValue == value);
+      Assert.assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertEquals(readValue, value);
       response.close();
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(updatedValue, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> updatedMetadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
       int readUpdatedValue = updatedMetadata.get(3).getInteger(columnSizeAttributeName);
-      Assert.assertTrue(response2.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readUpdatedValue == updatedValue);
+      Assert.assertEquals(response2.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertEquals(readUpdatedValue, updatedValue);
       response2.close();
 
       client.close();
@@ -349,7 +358,7 @@ public class CollectionServiceTest extends Arquillian {
 
       // #1 if the given collection does not exist, status code = 404
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_ATTRIBUTES + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
+      Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
       response.close();
 
       // #2 the given collection and attributes exists, status code = 200
@@ -360,8 +369,8 @@ public class CollectionServiceTest extends Arquillian {
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_ATTRIBUTES + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       ArrayList<String> collectionAttributes = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
-            && collectionAttributes.equals(collectionFacade.readCollectionAttributes(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES))));
+      Assert.assertEquals(response2.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(collectionAttributes, collectionFacade.readCollectionAttributes(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES)));
       response2.close();
 
       client.close();
@@ -392,11 +401,11 @@ public class CollectionServiceTest extends Arquillian {
       List<AccessRightsDao> rights = response.readEntity(new GenericType<List<AccessRightsDao>>() {
       });
       AccessRightsDao readRights = rights.get(0);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode()
-            && readRights.isWrite() == DEFAULT_ACCESS_RIGHT.isWrite()
-            && readRights.isRead() == DEFAULT_ACCESS_RIGHT.isRead()
-            && readRights.isExecute() == DEFAULT_ACCESS_RIGHT.isExecute()
-            && readRights.getUserName().equals(DEFAULT_ACCESS_RIGHT.getUserName()));
+      Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(readRights.isWrite(), DEFAULT_ACCESS_RIGHT.isWrite());
+      Assert.assertEquals(readRights.isRead(), DEFAULT_ACCESS_RIGHT.isRead());
+      Assert.assertEquals(readRights.isExecute(), DEFAULT_ACCESS_RIGHT.isExecute());
+      Assert.assertEquals(readRights.getUserName(), DEFAULT_ACCESS_RIGHT.getUserName());
       response.close();
       client.close();
    }
@@ -412,7 +421,10 @@ public class CollectionServiceTest extends Arquillian {
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(accessRights, MediaType.APPLICATION_JSON)).invoke();
       DataDocument metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS)).get(1);
       AccessRightsDao readAccessRights = securityFacade.getDao(collectionMetadataFacade.collectionMetadataCollectionName(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS)), metadata.getId(), user);
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && readAccessRights.isWrite() && readAccessRights.isRead() && !readAccessRights.isExecute());
+      Assert.assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertTrue(readAccessRights.isWrite());
+      Assert.assertTrue(readAccessRights.isRead());
+      Assert.assertFalse(readAccessRights.isExecute());
       response.close();
       client.close();
    }
@@ -431,15 +443,15 @@ public class CollectionServiceTest extends Arquillian {
       // set attribute type
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE + "/attributes/" + attributeName + "/types/" + newType).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       boolean wasSuccessful = response.readEntity(Boolean.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode()
-            && wasSuccessful);
+      Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertTrue(wasSuccessful);
       response.close();
 
       // read attribute type
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE + "/attributes/" + attributeName + "/types").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       String attributeType = response2.readEntity(String.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
-            && attributeType.equals(newType));
+      Assert.assertEquals(response2.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(attributeType, newType);
       response2.close();
 
       client.close();
@@ -458,20 +470,20 @@ public class CollectionServiceTest extends Arquillian {
 
       // set attribute constraint
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT + "/attributes/" + attributeName + "/constraints").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(constraintConfiguration, MediaType.APPLICATION_JSON)).invoke();
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
       response.close();
 
       // read attribute constraint
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT + "/attributes/" + attributeName + "/constraints").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       List<String> constraints = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
-            && constraints.equals(collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName)));
+      Assert.assertEquals(response2.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(constraints, collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName));
       response2.close();
 
       // drop attribute constraint
       Response response3 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT + "/attributes/" + attributeName + "/constraints").request(MediaType.APPLICATION_JSON).build("DELETE", Entity.json(constraintConfiguration)).invoke();
-      Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName).size() == 0);
+      Assert.assertEquals(response3.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+      Assert.assertEquals(collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName).size(), 0);
       response3.close();
 
       client.close();

@@ -64,7 +64,7 @@ public class ViewService {
    private SecurityFacade securityFacade;
 
    /**
-    * Gets a complete list of all views. Filters the views by type when parameter is not empty.
+    * Gets a complete list of all views which current user can read. Filters the views by type when parameter is not empty.
     *
     * @param typeName
     *       Name of view type to filter the result (only the selected type will be returned). All views are returned when null or empty.
@@ -87,6 +87,7 @@ public class ViewService {
     * @param view
     *       The view description.
     * @return Id of the newly created view.
+    * @throws ViewAlreadyExistsException when view with given name already exists
     */
    @POST
    @Path("/")
@@ -101,6 +102,9 @@ public class ViewService {
     *
     * @param view
     *       The view descriptor.
+    * @throws ViewMetadataNotFoundException when view was not found
+    * @throws UnauthorizedAccessException when current user is not allowed to edit the view
+    * @throws ViewAlreadyExistsException when the update contains change of view name and view with given name already exists
     */
    @PUT
    @Path("/")
@@ -125,6 +129,8 @@ public class ViewService {
     *       An attribute of the view to configure.
     * @param configuration
     *       Configuration string, can specify either JSON or just a plain string.
+    * @throws ViewMetadataNotFoundException when view was not found
+    * @throws UnauthorizedAccessException when current user is not allowed to edit the view
     */
    @PUT
    @Path("/{id}/configure/{attribute}")
@@ -153,6 +159,8 @@ public class ViewService {
     * @param attribute
     *       An attribute of the view to return.
     * @return The configuration value. Either JSON or a plain string.
+    * @throws ViewMetadataNotFoundException when view was not found
+    * @throws UnauthorizedAccessException when current user is not allowed to read the view
     */
    @GET
    @Path("/{id}/configure/{attribute}")
@@ -169,6 +177,9 @@ public class ViewService {
     * @param newName
     *       The name of the newly created view.
     * @return The id of the newly created view.
+    * @throws ViewAlreadyExistsException when a view with given new name already exists
+    * @throws UnauthorizedAccessException when current user is not allowed to read copied view
+    * @throws ViewMetadataNotFoundException  when copied view was not found
     */
    @POST
    @Path("/{id}/clone/{newName}")
@@ -184,6 +195,8 @@ public class ViewService {
     * @param id
     *       The view id.
     * @return The access rights.
+    * @throws ViewMetadataNotFoundException when view was not found
+    * @throws UnauthorizedAccessException when current user is not allowed to read the view
     */
    @GET
    @Path("/{id}/rights")
@@ -192,8 +205,10 @@ public class ViewService {
       final String user = userFacade.getUserEmail();
       final DataDocument view = viewFacade.getViewMetadata(id);
 
-      return new AccessRightsDao(securityFacade.checkForRead(view, user),
-            securityFacade.checkForWrite(view, user), securityFacade.checkForExecute(view, user),
+      return new AccessRightsDao(
+            securityFacade.checkForRead(view, user),
+            securityFacade.checkForWrite(view, user),
+            securityFacade.checkForExecute(view, user),
             user);
    }
 
@@ -204,6 +219,8 @@ public class ViewService {
     *       The view id.
     * @param accessRights
     *       The rights to set.
+    * @throws ViewMetadataNotFoundException when view was not found
+    * @throws UnauthorizedAccessException when current user is not allowed to set rights for the view
     */
    @PUT
    @Path("/{id}/rights")

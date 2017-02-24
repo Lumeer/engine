@@ -59,7 +59,9 @@ public class ViewFacade implements Serializable {
     * @param originalViewName
     *       name given by user
     * @param viewType
-    *       The type of the view.
+    *       type of the view
+    * @param configuration
+    *       configuration of the view
     * @return view id
     * @throws ViewAlreadyExistsException
     *       when view with given name already exists
