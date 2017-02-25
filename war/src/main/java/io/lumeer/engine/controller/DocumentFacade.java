@@ -228,7 +228,10 @@ public class DocumentFacade implements Serializable {
       DataDocument existingDocument = dataStorage.readDocument(collectionName, documentId);
 
       DataDocument revertDocument = versionFacade.readOldDocumentVersion(collectionName, documentId, revertVersion);
+      DataDocument meta = filterAndRemoveMeta(revertDocument);
       checkConstraintsAndConvert(collectionName, revertDocument);
+      revertDocument.putAll(meta);
+      documentMetadataFacade.putUpdateDocumentMetadataInternally(revertDocument, userFacade.getUserEmail());
 
       versionFacade.revertDocumentVersion(collectionName, existingDocument, revertDocument);
 
@@ -346,6 +349,15 @@ public class DocumentFacade implements Serializable {
          }
       }
       return ndd;
+   }
+
+   private DataDocument filterAndRemoveMeta(final DataDocument dataDocument) {
+      DataDocument meta = new DataDocument();
+      LumeerConst.Document.METADATA_KEYS.stream().filter(dataDocument::containsKey).forEach(metaKey -> {
+         meta.put(metaKey, dataDocument.get(metaKey));
+         dataDocument.remove(metaKey);
+      });
+      return meta;
    }
 
 }

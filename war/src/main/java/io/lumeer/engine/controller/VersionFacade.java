@@ -292,9 +292,6 @@ public class VersionFacade implements Serializable {
     *       if collection does not exists
     */
    public List<DataDocument> getDocumentVersions(String collectionName, String documentId) throws CollectionNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
       List<DataDocument> dataDocuments = dataStorage.search(collectionName + SHADOW,
             MongoUtils.convertBsonToJson(Filters.eq("_id._id", new ObjectId(documentId)))
             , null, 0, 100);

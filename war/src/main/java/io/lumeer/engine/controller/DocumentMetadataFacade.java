@@ -81,25 +81,14 @@ public class DocumentMetadataFacade implements Serializable {
     * @param key
     *       the id of the read document
     * @return value of specified metadata attribute
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in collection
     * @throws IllegalArgumentException
     *       if key is not metadata attribute
     */
-   public Object getDocumentMetadata(String collectionName, String documentId, String key) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
+   public Object getDocumentMetadata(String collectionName, String documentId, String key) throws IllegalArgumentException {
+      if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      DataDocument documentMetadata = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, Collections.singletonList(key));
-      if (documentMetadata == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      return documentMetadata.get(key);
+      return dataStorage.readDocumentIncludeAttrs(collectionName, documentId, Collections.singletonList(key)).get(key);
    }
 
    /**
@@ -110,20 +99,9 @@ public class DocumentMetadataFacade implements Serializable {
     * @param documentId
     *       the id of the read document
     * @return the map where key is name of metadata attribute and its value
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in collection
     */
-   public Map<String, Object> readDocumentMetadata(String collectionName, String documentId) throws CollectionNotFoundException, DocumentNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      DataDocument documentMetadata = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, LumeerConst.Document.METADATA_KEYS);
-      if (documentMetadata == null) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      return documentMetadata;
+   public DataDocument readDocumentMetadata(String collectionName, String documentId) {
+      return dataStorage.readDocumentIncludeAttrs(collectionName, documentId, LumeerConst.Document.METADATA_KEYS);
    }
 
    /**
@@ -137,15 +115,13 @@ public class DocumentMetadataFacade implements Serializable {
     *       the meta attribute to put
     * @param value
     *       the meta value of the given attribute
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
     * @throws DocumentNotFoundException
     *       if document is not found in collection
     * @throws IllegalArgumentException
     *       if key is not metadata attribute
     */
-   public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
+   public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws DocumentNotFoundException, IllegalArgumentException {
+      if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       updateDocumentMetadata(collectionName, documentId, new DataDocument(key, value));
@@ -160,22 +136,12 @@ public class DocumentMetadataFacade implements Serializable {
     *       the id of the read document
     * @param metadata
     *       map with medatadata attributes and its values
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in collection
     * @throws IllegalArgumentException
     *       if key is not metadata attribute
     */
-   public void updateDocumentMetadata(String collectionName, String documentId, DataDocument metadata) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
+   public void updateDocumentMetadata(String collectionName, String documentId, DataDocument metadata) throws IllegalArgumentException {
       for (String key : metadata.keySet()) {
-         if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
+         if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
             throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
          }
       }
@@ -191,21 +157,11 @@ public class DocumentMetadataFacade implements Serializable {
     *       the id of the read document
     * @param key
     *       the id of the read document
-    * @throws CollectionNotFoundException
-    *       if collection is not found in database
-    * @throws DocumentNotFoundException
-    *       if document is not found in collection
     * @throws IllegalArgumentException
     *       if key is not metadata attribute
     */
-   public void dropDocumentMetadata(String collectionName, String documentId, String key) throws CollectionNotFoundException, DocumentNotFoundException, IllegalArgumentException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!dataStorage.collectionHasDocument(collectionName, documentId)) {
-         throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
-      }
-      if (!key.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
+   public void dropDocumentMetadata(String collectionName, String documentId, String key) throws IllegalArgumentException {
+      if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
       dataStorage.dropAttribute(collectionName, documentId, key);
