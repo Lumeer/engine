@@ -54,6 +54,7 @@ import javax.ws.rs.core.MediaType;
 
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
+ *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 @Path("/collections/{collectionName}/documents")
 @RequestScoped

@@ -121,9 +121,6 @@ public class DocumentMetadataFacade implements Serializable {
     *       if key is not metadata attribute
     */
    public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws DocumentNotFoundException, IllegalArgumentException {
-      if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
-      }
       updateDocumentMetadata(collectionName, documentId, new DataDocument(key, value));
    }
 
