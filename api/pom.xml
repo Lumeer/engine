@@ -85,13 +85,6 @@
          <artifactId>slf4j-api</artifactId>
       </dependency>
 
-      <!-- Test NG -->
-      <dependency>
-         <groupId>org.testng</groupId>
-         <artifactId>testng</artifactId>
-         <scope>test</scope>
-      </dependency>
-
       <!-- Findbugs -->
       <dependency>
          <groupId>com.google.code.findbugs</groupId>

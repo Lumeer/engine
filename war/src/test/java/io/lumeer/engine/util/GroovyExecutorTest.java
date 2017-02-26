@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.api.data.DataDocument;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;

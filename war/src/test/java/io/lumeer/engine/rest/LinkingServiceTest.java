@@ -28,13 +28,14 @@ import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +51,8 @@ import javax.ws.rs.core.Response;
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-public class LinkingServiceTest extends Arquillian {
+@RunWith(Arquillian.class)
+public class LinkingServiceTest {
 
    @Deployment
    public static Archive<?> createTestArchive() {
