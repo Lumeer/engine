@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.api.data;
 
+import io.lumeer.engine.api.LumeerConst;
+
 import java.io.Serializable;
 
 /**
@@ -28,4 +30,15 @@ public interface DataStorageDialect extends Serializable {
 
    // CollectionMetadataFacade
    DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName);
+
+   // LinkingFacade
+   String linkingFromTablesColNameFilter(final String collectionName, final String role);
+
+   String linkingFromTablesFilter(final String firstCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
+
+   String linkingFromToTablesFilter(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
+
+   String linkingFromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection);
+
+   String linkingFromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection);
 }

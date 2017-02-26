@@ -115,12 +115,10 @@ public class DocumentMetadataFacade implements Serializable {
     *       the meta attribute to put
     * @param value
     *       the meta value of the given attribute
-    * @throws DocumentNotFoundException
-    *       if document is not found in collection
     * @throws IllegalArgumentException
     *       if key is not metadata attribute
     */
-   public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws DocumentNotFoundException, IllegalArgumentException {
+   public void putDocumentMetadata(String collectionName, String documentId, String key, Object value) throws IllegalArgumentException {
       updateDocumentMetadata(collectionName, documentId, new DataDocument(key, value));
    }
 

@@ -25,6 +25,7 @@ import static com.mongodb.client.model.Filters.eq;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
@@ -67,6 +68,9 @@ public class LinkingFacade implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
@@ -221,8 +225,6 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public List<DataDocument> readDocByDocLinksDocs(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForRead(fromCollectionName);
-
       List<DataDocument> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
       for (DataDocument lt : linkingTables) {
@@ -252,9 +254,6 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public List<DataDocument> readDocWithCollectionLinks(final String fromCollectionName, final String fromDocumentId, final String toCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForRead(fromCollectionName);
-      checkCollectionForRead(toCollectionName);
-
       List<DataDocument> links = new ArrayList<>();
       List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
       for (DataDocument lt : linkingTables) {
@@ -306,7 +305,7 @@ public class LinkingFacade implements Serializable {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
          dataStorage.dropCollection(colName);
       }
-      dataStorage.dropManyDocuments(LumeerConst.Linking.MainTable.NAME, fromTablesFilter(collectionName, role, linkDirection));
+      dataStorage.dropManyDocuments(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromTablesFilter(collectionName, role, linkDirection));
    }
 
    /**
@@ -354,9 +353,6 @@ public class LinkingFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void dropDocWithCollectionLinks(final String fromCollectionName, final String fromId, final String toCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      checkCollectionForWrite(fromCollectionName);
-      checkCollectionForWrite(toCollectionName);
-
       List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
       for (DataDocument lt : linkingTables) {
          String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
@@ -391,7 +387,7 @@ public class LinkingFacade implements Serializable {
    }
 
    private void createLinkIfNotExists(final String collectionName, final String firstDocumentId, final String secondDocumentId, final DataDocument attributes, final LumeerConst.Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocuments = dataStorage.search(collectionName, fromToDocumentFilter(firstDocumentId, secondDocumentId, linkDirection), null, 0, 0);
+      List<DataDocument> linkingDocuments = dataStorage.search(collectionName, dataStorageDialect.linkingFromToDocumentFilter(firstDocumentId, secondDocumentId, linkDirection), null, 0, 0);
       if (linkingDocuments.isEmpty()) {
          String fromId;
          String toId;
@@ -441,35 +437,35 @@ public class LinkingFacade implements Serializable {
    }
 
    private void dropAllDocs(final String collectionName, final String documentId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      dataStorage.dropManyDocuments(collectionName, fromDocumentFilter(documentId, linkDirection));
+      dataStorage.dropManyDocuments(collectionName, dataStorageDialect.linkingFromDocumentFilter(documentId, linkDirection));
    }
 
    private void dropAllDocs(final String collectionName, final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      dataStorage.dropManyDocuments(collectionName, fromToDocumentFilter(fromId, toId, linkDirection));
+      dataStorage.dropManyDocuments(collectionName, dataStorageDialect.linkingFromToDocumentFilter(fromId, toId, linkDirection));
    }
 
    private void checkEmptinessAndRemoveEventually(final String collectionName, String role) {
       if (dataStorage.documentCount(collectionName) == 0) {
          dataStorage.dropCollection(collectionName);
 
-         dataStorage.dropManyDocuments(LumeerConst.Linking.MainTable.NAME, fromTablesColNameFilter(collectionName, role));
+         dataStorage.dropManyDocuments(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromTablesColNameFilter(collectionName, role));
       }
    }
 
    private List<DataDocument> readLinkingTablesFromTo(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(LumeerConst.Linking.MainTable.NAME, fromToTablesFilter(firstCollectionName, secondCollectionName, role, linkDirection), null, 0, 0);
+      return dataStorage.search(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromToTablesFilter(firstCollectionName, secondCollectionName, role, linkDirection), null, 0, 0);
    }
 
    private List<DataDocument> readLinkingTablesFrom(final String fromCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(LumeerConst.Linking.MainTable.NAME, fromTablesFilter(fromCollectionName, role, linkDirection), null, 0, 0);
+      return dataStorage.search(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromTablesFilter(fromCollectionName, role, linkDirection), null, 0, 0);
    }
 
    private List<DataDocument> readLinkingDocumentsFrom(final String collectionName, final String fromId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(collectionName, fromDocumentFilter(fromId, linkDirection), null, 0, 0);
+      return dataStorage.search(collectionName, dataStorageDialect.linkingFromDocumentFilter(fromId, linkDirection), null, 0, 0);
    }
 
    private List<DataDocument> readLinkingDocumentsFromTo(final String collectionName, final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(collectionName, fromToDocumentFilter(fromId, toId, linkDirection), null, 0, 0);
+      return dataStorage.search(collectionName, dataStorageDialect.linkingFromToDocumentFilter(fromId, toId, linkDirection), null, 0, 0);
    }
 
    private List<DataDocument> readDocumentsFromLinkingDocumentsFrom(final List<DataDocument> linkingDocuments, final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) {
@@ -485,59 +481,6 @@ public class LinkingFacade implements Serializable {
          }
       }
       return docs;
-   }
-
-   private String fromTablesColNameFilter(final String collectionName, final String role) {
-      Bson filterRaw = role == null || role.isEmpty()
-            ? eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName)
-            : and(eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return MongoUtils.convertBsonToJson(filterRaw);
-   }
-
-   private String fromTablesFilter(final String firstCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      String collParam = linkDirection == LumeerConst.Linking.LinkDirection.FROM ? LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION : LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION;
-      Bson filterRaw = role == null || role.isEmpty()
-            ? eq(collParam, firstCollectionName)
-            : and(eq(collParam, firstCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return MongoUtils.convertBsonToJson(filterRaw);
-   }
-
-   private String fromToTablesFilter(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      String fromCollectionName;
-      String toCollectionName;
-      if (linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         fromCollectionName = firstCollectionName;
-         toCollectionName = secondCollectionName;
-      } else {
-         fromCollectionName = secondCollectionName;
-         toCollectionName = firstCollectionName;
-      }
-      Bson filterRaw = role == null
-            ? and(eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName))
-            : and(eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return MongoUtils.convertBsonToJson(filterRaw);
-   }
-
-   private String fromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM
-            ? and(eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId),
-            eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, toId))
-            : and(eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, toId),
-            eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId)
-      );
-      return MongoUtils.convertBsonToJson(filterRaw);
-   }
-
-   private String fromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM
-            ? eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId)
-            : eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId);
-      return MongoUtils.convertBsonToJson(filterRaw);
    }
 
    private void createLinkingTable(final String firstCollectionName, final String secondCollectionName, final String role, final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) {
@@ -573,21 +516,4 @@ public class LinkingFacade implements Serializable {
       return LumeerConst.Linking.PREFIX + "_" + fromCollectionName + "_" + toCollectionName + "_" + role;
    }
 
-   private void checkCollectionForRead(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkCollectionForWrite(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
 }
