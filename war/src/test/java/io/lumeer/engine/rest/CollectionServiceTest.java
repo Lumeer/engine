@@ -105,13 +105,6 @@ public class CollectionServiceTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testRestClient() throws Exception {
-      final Client client = ClientBuilder.newBuilder().build();
-      // the path prefix '/lumeer-engine/' does not work properly in test classes
-      Response response = client.target(TARGET_URI).path("/lumeer-engine/rest/collections/").request(MediaType.APPLICATION_JSON_TYPE).buildGet().invoke();
-   }
-
-   @Test
    public void testGetAllCollections() throws Exception {
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_1);
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_2);
@@ -400,19 +393,6 @@ public class CollectionServiceTest extends IntegrationTestBase {
 
       client2.close();
    }
-
-   /*@Test
-   public void testReadAccessRights() throws Exception {
-      setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
-      final Client client = ClientBuilder.newBuilder().build();
-
-      collectionFacade.createCollection(COLLECTION_READ_ACCESS_RIGHTS);
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      DataDocument accessRights = response.readEntity(DataDocument.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && !accessRights.isEmpty());
-      response.close();
-      client.close();
-   }*/
 
    @Test
    public void testReadAccessRights() throws Exception {
