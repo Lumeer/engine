@@ -34,11 +34,14 @@ import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 
+import com.mongodb.util.JSON;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -281,16 +284,20 @@ public class CollectionServiceTest extends IntegrationTestBase {
    public void testQuerySearch() throws Exception {
       setUpCollections(COLLECTION_QUERY_SEARCH);
       final Client client = ClientBuilder.newBuilder().build();
-      //final String query = "{find:" + "\"" + COLLECTION_QUERY_SEARCH + "\"" + ", limit : 5}";
-      final String query = "find: \"" + getInternalName(COLLECTION_QUERY_SEARCH) + "\""; // TODO: correct query representation?
+      final DataDocument queryDoc = queryDocument(getInternalName(COLLECTION_QUERY_SEARCH)); // = "{\"find\":" + "\"" + getInternalName(COLLECTION_QUERY_SEARCH) + "\"}"
+      final String queryJson = JSON.serialize(queryDoc);
+      final String percentEncodedQuery = percentEncode(queryJson); // the best way to percent-encode a raw query
 
       collectionFacade.createCollection(COLLECTION_QUERY_SEARCH);
-      createDummyEntries(COLLECTION_QUERY_SEARCH);
+      createDummyEntries(COLLECTION_QUERY_SEARCH); // size = 10
 
-      /*Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_QUERY_SEARCH + "/run/").queryParam("query", query).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_QUERY_SEARCH + "/run/")
+                                .queryParam("query", percentEncodedQuery)
+                                .request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> searchedDocuments = response.readEntity(ArrayList.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode());
-      response.close();*/
+      Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+      Assert.assertEquals(searchedDocuments.size(), 10);
+      response.close();
 
       client.close();
    }
@@ -508,5 +515,14 @@ public class CollectionServiceTest extends IntegrationTestBase {
 
    private String getInternalName(final String collectionOriginalName) {
       return "collection." + collectionOriginalName.toLowerCase() + "_0";
+   }
+
+   private DataDocument queryDocument(final String collectionName) {
+      return new DataDocument()
+            .append("find", collectionName);
+   }
+
+   private String percentEncode(final String rawQuery) throws UnsupportedEncodingException {
+      return URLEncoder.encode(rawQuery, "UTF-8").replaceAll("\\+", "%20");
    }
 }
