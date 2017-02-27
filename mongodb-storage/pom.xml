@@ -49,9 +49,6 @@
       <version.puppycrawl>7.1</version.puppycrawl>
 
       <java.level>1.8</java.level>
-      <lumeer.db.host>ds163667.mlab.com</lumeer.db.host>
-      <lumeer.db.port>63667</lumeer.db.port>
-      <lumeer.db.name>lumeer-test</lumeer.db.name>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -132,6 +129,11 @@
          <artifactId>assertj-core</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>de.flapdoodle.embed</groupId>
+         <artifactId>de.flapdoodle.embed.mongo</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <!-- Findbugs -->
       <dependency>
@@ -187,11 +189,6 @@
                <redirectTestOutputToFile>false</redirectTestOutputToFile>
                <systemPropertyVariables>
                   <log4j.skipJansi>true</log4j.skipJansi>
-                  <lumeer.db.host>${lumeer.db.host}</lumeer.db.host>
-                  <lumeer.db.port>${lumeer.db.port}</lumeer.db.port>
-                  <lumeer.db.name>${lumeer.db.name}</lumeer.db.name>
-                  <lumeer.db.user>lumeer</lumeer.db.user>
-                  <lumeer.db.passwd>/Lumeer1</lumeer.db.passwd>
                </systemPropertyVariables>
             </configuration>
          </plugin>

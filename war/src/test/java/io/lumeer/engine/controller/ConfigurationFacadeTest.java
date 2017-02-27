@@ -19,17 +19,13 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,17 +38,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
-public class ConfigurationFacadeTest {
-
-   @Deployment
-   public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "ConfigurationFacadeTest.war")
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml")
-                       .addAsResource("defaults-ci.properties")
-                       .addAsResource("defaults-dev.properties");
-   }
+public class ConfigurationFacadeTest extends IntegrationTestBase {
 
    private final String COLLECTION_USER_CONFIG = "config.user";
    private final String COLLECTION_TEAM_CONFIG = "config.team";
@@ -70,11 +56,11 @@ public class ConfigurationFacadeTest {
    private final String DUMMY_DBURL_VALUE = "mongodb://" + DUMMY_DBHOST_VALUE;
    private final String DUMMY_VALUE = "dummyValue";
 
-   private final String DEFAULT_DBHOST_VALUE = "ds163667.mlab.com";
-   private final int DEFAULT_PORT_VALUE = 63667;
+   private final String DEFAULT_DBHOST_VALUE = "localhost";
+   private final int DEFAULT_PORT_VALUE = 27017;
    private final String DEFAULT_NOT_EXISTED_KEY = "not_existed_key";
 
-   private final int DUMMY_PORT_VALUE = 27017;
+   private final int DUMMY_PORT_VALUE = 63667;
    private final int BEFORE_SIZE_RESET = 4;
    private final int AFTER_SIZE_RESET = 0;
 
