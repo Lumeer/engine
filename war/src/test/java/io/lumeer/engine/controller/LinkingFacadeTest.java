@@ -19,18 +19,14 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,17 +43,7 @@ import javax.inject.Inject;
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
  */
 @RunWith(Arquillian.class)
-public class LinkingFacadeTest {
-
-   @Deployment
-   public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "LinkingFacadeTest.war")
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml")
-                       .addAsResource("defaults-ci.properties")
-                       .addAsResource("defaults-dev.properties");
-   }
+public class LinkingFacadeTest extends IntegrationTestBase {
 
    private final String COLLECTION_GETLINKS_I = "collectionGetLinksI";
    private final String COLLECTION_GETLINKS_II = "collectionGetLinksII";

@@ -19,17 +19,13 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,17 +36,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
  */
 @RunWith(Arquillian.class)
-public class VersionFacadeTest {
-
-   @Deployment
-   public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "VersionFacadeTest.war")
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml")
-                       .addAsResource("defaults-ci.properties")
-                       .addAsResource("defaults-dev.properties");
-   }
+public class VersionFacadeTest extends IntegrationTestBase {
 
    private final String VERSION_STRING = LumeerConst.Document.METADATA_VERSION_KEY;
    private final String TEST_READ_VERSION = "versionTestReadVersion";

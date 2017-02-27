@@ -19,16 +19,12 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +36,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
  */
 @RunWith(Arquillian.class)
-public class SecurityFacadeTest {
+public class SecurityFacadeTest extends IntegrationTestBase {
 
    /*
    Tieto testy som nepisal optimalne, ale tak,
@@ -49,15 +45,6 @@ public class SecurityFacadeTest {
    Ale tieto testy su kvalitne, testuju poriadne
    pridavanie prav.
     */
-   @Deployment
-   public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "VersionFacadeTest.war")
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml")
-                       .addAsResource("defaults-ci.properties")
-                       .addAsResource("defaults-dev.properties");
-   }
 
    private final String RULE = "rule";
    private final String USER_ID = "user_email";
@@ -407,29 +394,29 @@ public class SecurityFacadeTest {
    public void testReadDaoList() throws Exception {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
-      securityFacade.setRightsExecute(dataDocument,"test@gmail.com");
+      securityFacade.setRightsExecute(dataDocument, "test@gmail.com");
       securityFacade.setRightsRead(dataDocument, "test@gmail.com");
-      securityFacade.setRightsWrite(dataDocument,"test@gmail.com");
+      securityFacade.setRightsWrite(dataDocument, "test@gmail.com");
 
       securityFacade.setRightsRead(dataDocument, "test2@gmail.com");
-      securityFacade.setRightsWrite(dataDocument,"test2@gmail.com");
+      securityFacade.setRightsWrite(dataDocument, "test2@gmail.com");
 
-      securityFacade.setRightsExecute(dataDocument,"test4@gmail.com");
+      securityFacade.setRightsExecute(dataDocument, "test4@gmail.com");
       securityFacade.setRightsRead(dataDocument, "test4@gmail.com");
 
-      securityFacade.setRightsExecute(dataDocument,"test3@gmail.com");
-      securityFacade.setRightsWrite(dataDocument,"test3@gmail.com");
+      securityFacade.setRightsExecute(dataDocument, "test3@gmail.com");
+      securityFacade.setRightsWrite(dataDocument, "test3@gmail.com");
 
-      if (dataStorage.hasCollection("securityFacadeTestList")){
+      if (dataStorage.hasCollection("securityFacadeTestList")) {
          dataStorage.dropCollection("securityFacadeTestList");
       }
       dataStorage.createCollection("securityFacadeTestList");
-      String id = dataStorage.createDocument("securityFacadeTestList",dataDocument);
+      String id = dataStorage.createDocument("securityFacadeTestList", dataDocument);
       System.out.println("=================================");
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(0).toString());
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(1).toString());
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(2).toString());
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList",id).get(3).toString());
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(0).toString());
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(1).toString());
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(2).toString());
+      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(3).toString());
       System.out.println(securityFacade.readQueryString("test@gmail.com"));
       System.out.println("========= dao from document===========");
       System.out.println(securityFacade.getDaoList(dataDocument).get(0).toString());

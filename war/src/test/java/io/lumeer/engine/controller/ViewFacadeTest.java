@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -26,12 +27,7 @@ import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.rest.dao.ViewDao;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,17 +40,7 @@ import javax.inject.Inject;
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 @RunWith(Arquillian.class)
-public class ViewFacadeTest {
-
-   @Deployment
-   public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "ViewFacadeTest.war")
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml")
-                       .addAsResource("defaults-ci.properties")
-                       .addAsResource("defaults-dev.properties");
-   }
+public class ViewFacadeTest extends IntegrationTestBase {
 
    @Inject
    private ViewFacade viewFacade;

@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -27,12 +28,7 @@ import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,17 +48,7 @@ import javax.ws.rs.core.Response;
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 @RunWith(Arquillian.class)
-public class LinkingServiceTest {
-
-   @Deployment
-   public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "LinkingServiceTest.war")
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml")
-                       .addAsResource("defaults-ci.properties")
-                       .addAsResource("defaults-dev.properties");
-   }
+public class LinkingServiceTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080/";
 
@@ -156,7 +142,7 @@ public class LinkingServiceTest {
    }
 
    private String buildPathPrefix(final String collectionName) {
-      return "LinkingServiceTest/rest/collections/" + collectionName + "/links/";
+      return PATH_CONTEXT + "/rest/collections/" + collectionName + "/links/";
    }
 
    private String buildAddDropPrefix(final String role, final String targetCollection, final String id, final String targetId) {

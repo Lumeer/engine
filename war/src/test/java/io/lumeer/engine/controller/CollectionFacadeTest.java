@@ -19,16 +19,12 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,17 +38,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 @RunWith(Arquillian.class)
-public class CollectionFacadeTest {
-
-   @Deployment
-   public static Archive<?> createTestArchive() {
-      return ShrinkWrap.create(WebArchive.class, "CollectionFacadeTest.war")
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "io.netty")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                       .addAsWebInfResource("jboss-deployment-structure.xml")
-                       .addAsResource("defaults-ci.properties")
-                       .addAsResource("defaults-dev.properties");
-   }
+public class CollectionFacadeTest extends IntegrationTestBase {
 
    // do not change collection names, because it can mess up internal name creation in method internalName()
    private final String COLLECTION_GET_ALL_COLLECTIONS = "CollectionFacadeCollectionGetAllCollections";

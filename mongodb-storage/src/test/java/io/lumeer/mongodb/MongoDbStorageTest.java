@@ -28,7 +28,9 @@ import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.model.Filters;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -36,17 +38,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.MongodStarter;
+import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.runtime.Network;
+
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 public class MongoDbStorageTest {
 
-   private static final String DB_HOST = System.getProperty("lumeer.db.host", "ds163667.mlab.com");
+   private static final String DB_HOST = System.getProperty("lumeer.db.host", "localhost");
    private static final String DB_NAME = System.getProperty("lumeer.db.name", "lumeer-test");
-   private static final int DB_PORT = Integer.getInteger("lumeer.db.port", 63667);
-   private static final String DB_USER = System.getProperty("lumeer.db.user", "lumeer");
-   private static final String DB_PASSWORD = System.getProperty("lumeer.db.passwd", "/Lumeer1");
+   private static final int DB_PORT = Integer.getInteger("lumeer.db.port", 27017);
+   private static final String DB_USER = System.getProperty("lumeer.db.user", "");
+   private static final String DB_PASSWORD = System.getProperty("lumeer.db.passwd", "");
    private static final Boolean DB_SSL = Boolean.getBoolean("lumeer.db.ssl");
 
    private final String DUMMY_KEY1 = "key1";
@@ -79,7 +89,34 @@ public class MongoDbStorageTest {
    private final String COLLECTION_COMPLEX_ARRAY_MANIPULATION = "collectionComplexArrayManipulation";
    private final String COLLECTION_AGGREGATE = "collectionAggregate";
 
+   private static MongodExecutable mongodExecutable;
+
    private MongoDbStorage mongoDbStorage;
+
+   @BeforeClass
+   public static void startEmbeddedMongoDb() throws Exception {
+      if (!"localhost".equals(DB_HOST)) {
+         // do not start embedded MongoDB when remote database is used
+         return;
+      }
+
+      MongodStarter starter = MongodStarter.getDefaultInstance();
+
+      IMongodConfig mongodConfig = new MongodConfigBuilder()
+            .version(Version.Main.V3_4)
+            .net(new Net(DB_HOST, DB_PORT, Network.localhostIsIPv6()))
+            .build();
+
+      mongodExecutable = starter.prepare(mongodConfig);
+      mongodExecutable.start();
+   }
+
+   @AfterClass
+   public static void stopEmbeddedMongoDb() {
+      if (mongodExecutable != null) {
+         mongodExecutable.stop();
+      }
+   }
 
    @Before
    public void setUp() throws Exception {

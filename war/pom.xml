@@ -155,10 +155,21 @@
          <artifactId>assertj-core</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>de.flapdoodle.embed</groupId>
+         <artifactId>de.flapdoodle.embed.mongo</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>org.jboss.arquillian.junit</groupId>
          <artifactId>arquillian-junit-container</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.shrinkwrap.resolver</groupId>
+         <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+         <!--<version>2.2.6</version>-->
          <scope>test</scope>
       </dependency>
       <dependency>
