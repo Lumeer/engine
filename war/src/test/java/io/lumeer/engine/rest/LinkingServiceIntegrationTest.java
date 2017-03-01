@@ -49,7 +49,7 @@ import javax.ws.rs.core.Response;
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 @RunWith(Arquillian.class)
-public class LinkingServiceTest extends IntegrationTestBase {
+public class LinkingServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080/";
 

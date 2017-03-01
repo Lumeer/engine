@@ -37,7 +37,7 @@ import javax.inject.Inject;
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
  */
 @RunWith(Arquillian.class)
-public class SearchFacadeTest extends IntegrationTestBase {
+public class SearchFacadeIntegrationTest extends IntegrationTestBase {
 
    private final String COLLECTION_SEARCH = "collectionSearch";
    private final String COLLECTION_SEARCH_RAW = "collectionSearchRaw";

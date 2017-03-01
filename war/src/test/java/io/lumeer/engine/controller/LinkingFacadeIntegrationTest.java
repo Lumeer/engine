@@ -44,7 +44,7 @@ import javax.inject.Inject;
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
  */
 @RunWith(Arquillian.class)
-public class LinkingFacadeTest extends IntegrationTestBase {
+public class LinkingFacadeIntegrationTest extends IntegrationTestBase {
 
    private final String COLLECTION_GETLINKS_I = "collectionGetLinksI";
    private final String COLLECTION_GETLINKS_II = "collectionGetLinksII";

@@ -41,7 +41,7 @@ import javax.inject.Inject;
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 @RunWith(Arquillian.class)
-public class ViewFacadeTest extends IntegrationTestBase {
+public class ViewFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private ViewFacade viewFacade;

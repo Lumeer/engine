@@ -37,7 +37,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
-public class ConfigurationManipulatorTest extends IntegrationTestBase {
+public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase {
 
    private final String COLLECTION_USER_SET_CONFIGURATION = "config.user_setConfiguration";
    private final String COLLECTION_USER_GET_CONFIGURATION = "config.user_getConfiguration";
