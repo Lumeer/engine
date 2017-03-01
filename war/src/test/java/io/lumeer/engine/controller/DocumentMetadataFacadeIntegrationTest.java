@@ -39,7 +39,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
-public class DocumentMetadataFacadeTest extends IntegrationTestBase {
+public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
 
    private final String COLLECTION_GET_METADATA = "collectionGetMetadata";
    private final String COLLECTION_READ_METADATA = "collectionReadMetadata";

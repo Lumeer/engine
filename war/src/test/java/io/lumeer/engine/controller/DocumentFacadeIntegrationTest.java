@@ -40,7 +40,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
-public class DocumentFacadeTest extends IntegrationTestBase {
+public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
 
    private final String COLLECTION_CREATE_AND_DROP = "collectionCreateAndDrop";
    private final String COLLECTION_REPLACE = "collectionReplace";

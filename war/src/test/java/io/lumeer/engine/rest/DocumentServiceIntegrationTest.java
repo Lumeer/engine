@@ -52,7 +52,7 @@ import javax.ws.rs.core.Response;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
-public class DocumentServiceTest extends IntegrationTestBase {
+public class DocumentServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private CollectionFacade collectionFacade;

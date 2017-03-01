@@ -37,7 +37,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
  */
 @RunWith(Arquillian.class)
-public class HintTest extends IntegrationTestBase {
+public class HintIntegrationTest extends IntegrationTestBase {
 
    private String VALUE_DATABASE = "hintTestValue";
 

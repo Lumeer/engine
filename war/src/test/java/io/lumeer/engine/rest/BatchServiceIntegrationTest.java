@@ -43,7 +43,7 @@ import javax.ws.rs.core.Response;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RunWith(Arquillian.class)
-public class BatchServiceTest extends IntegrationTestBase {
+public class BatchServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080/";
    private final String PATH_PREFIX = PATH_CONTEXT + "/rest/";
