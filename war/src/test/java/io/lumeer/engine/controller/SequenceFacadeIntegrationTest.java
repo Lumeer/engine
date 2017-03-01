@@ -36,7 +36,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RunWith(Arquillian.class)
-public class SequenceFacadeTest extends IntegrationTestBase {
+public class SequenceFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    @SystemDataStorage

@@ -37,7 +37,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
  */
 @RunWith(Arquillian.class)
-public class VersionFacadeTest extends IntegrationTestBase {
+public class VersionFacadeIntegrationTest extends IntegrationTestBase {
 
    private final String VERSION_STRING = LumeerConst.Document.METADATA_VERSION_KEY;
    private final String TEST_READ_VERSION = "versionTestReadVersion";

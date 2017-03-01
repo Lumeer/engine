@@ -39,7 +39,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 @RunWith(Arquillian.class)
-public class CollectionFacadeTest extends IntegrationTestBase {
+public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    // do not change collection names, because it can mess up internal name creation in method internalName()
    private final String COLLECTION_GET_ALL_COLLECTIONS = "CollectionFacadeCollectionGetAllCollections";
