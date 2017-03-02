@@ -20,6 +20,7 @@
 package io.lumeer.engine.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
@@ -31,7 +32,6 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.Utils;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -80,20 +80,15 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       dataStorage.dropCollection(COLLECTION_CREATE_INTERNAL_NAME);
       dataStorage.dropCollection("meta." + COLLECTION_CREATE_INTERNAL_NAME);
 
-      Assert.assertEquals(collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME1), COLLECTION_CREATE_INTERNAL_NAME);
+      assertThat(collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME1)).isEqualTo(COLLECTION_CREATE_INTERNAL_NAME);
       collectionFacade.createCollection(CREATE_INTERNAL_NAME_ORIGINAL_NAME1);
 
       // different original name, but will be converted to the same internal as previous one
       String internalName2 = "collection.collectionmetadatafacadecollection_1_1";
       assertThat(collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME2)).isEqualTo(internalName2);
 
-      boolean pass = false;
-      try {
-         collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME1);
-      } catch (UserCollectionAlreadyExistsException e) {
-         pass = true;
-      }
-      assertThat(pass).isTrue();
+      assertThatThrownBy(() -> collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME1))
+            .isInstanceOf(UserCollectionAlreadyExistsException.class);
    }
 
    @Test
@@ -110,8 +105,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       List<String> attributes = collectionMetadataFacade.getCollectionAttributesNames(collection);
 
-      assertThat(attributes.size()).isEqualTo(2);
-      assertThat(attributes).contains(name1, name2);
+      assertThat(attributes).containsOnly(name1, name2);
    }
 
    @Test
@@ -122,7 +116,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String collection = internalName(COLLECTION_ATTRIBUTES_INFO);
 
       List<DataDocument> attributesInfo = collectionMetadataFacade.getCollectionAttributesInfo(collection);
-      Assert.assertEquals(attributesInfo.size(), 0);
+      assertThat(attributesInfo).isEmpty();
 
       String name1 = "attribute 1";
       String name2 = "attribute 2";
@@ -131,7 +125,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       attributesInfo = collectionMetadataFacade.getCollectionAttributesInfo(collection);
 
-      assertThat(attributesInfo.size()).isEqualTo(2);
+      assertThat(attributesInfo).hasSize(2);
    }
 
    @Test
@@ -152,13 +146,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       assertThat(rename).isTrue();
 
       // we try to rename attribute to name that already exists in collection
-      boolean pass = false;
-      try {
-         collectionMetadataFacade.renameCollectionAttribute(collection, oldName, newName);
-      } catch (AttributeAlreadyExistsException e) {
-         pass = true;
-      }
-      assertThat(pass).isTrue();
+      assertThatThrownBy(() -> collectionMetadataFacade.renameCollectionAttribute(collection, oldName, newName))
+            .isInstanceOf(AttributeAlreadyExistsException.class);
 
       // we try to rename non existing attribute
       assertThat(collectionMetadataFacade.renameCollectionAttribute(collection, oldName, "attribute 3")).isFalse();
@@ -234,7 +223,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
    @Test
    public void testCollectionMetadataCollectionName() {
-      Assert.assertEquals(collectionMetadataFacade.collectionMetadataCollectionName("collection"), "meta.collection");
+      assertThat(collectionMetadataFacade.collectionMetadataCollectionName("collection")).isEqualTo("meta.collection");
    }
 
    @Test
@@ -308,7 +297,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       List<String> attributeInfo = collectionMetadataFacade.getCollectionAttributesNames(collection);
 
       assertThat(count).isZero();
-      assertThat(attributeInfo.size()).isZero();
+      assertThat(attributeInfo).isEmpty();
    }
 
    @Test
@@ -388,7 +377,6 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid2)).isEqualTo(sdf.parse(dateValueValid2));
       assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid2)).isNull();
-      ;
 
       // check value of type boolean
       String attributeBoolean = "boolean";
@@ -507,14 +495,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       // we try to add dummy constraint
       String constraint3 = "dummy";
-      boolean pass = false;
-      try {
-         collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint3);
-      } catch (InvalidConstraintException e) {
-         pass = true;
-      }
-      Assert.assertTrue(pass);
-      assertThat(pass).isTrue();
+      assertThatThrownBy(() -> collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint3))
+            .isInstanceOf(InvalidConstraintException.class);
    }
 
    @Test

@@ -66,20 +66,20 @@ public class CollectionFacadeTest extends IntegrationTestBase {
       setUpCollection(COLLECTION_GET_ALL_COLLECTIONS);
 
       String collection = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS);
-      assertThat(collectionFacade.getAllCollections().keySet()).contains(collection);
+      assertThat(collectionFacade.getAllCollections()).containsKey(collection);
    }
 
    @Test
    public void testCreateAndDropCollection() throws Exception {
       setUpCollection(COLLECTION_CREATE_AND_DROP);
 
-      assertThat(collectionFacade.getAllCollections().keySet()).doesNotContain(internalName(COLLECTION_CREATE_AND_DROP));
+      assertThat(collectionFacade.getAllCollections()).doesNotContainKey(internalName(COLLECTION_CREATE_AND_DROP));
 
       String collection = collectionFacade.createCollection(COLLECTION_CREATE_AND_DROP);
-      assertThat(collectionFacade.getAllCollections().keySet()).contains(collection);
+      assertThat(collectionFacade.getAllCollections()).containsKey(collection);
 
       collectionFacade.dropCollection(collection);
-      assertThat(collectionFacade.getAllCollections().keySet()).doesNotContain(collection);
+      assertThat(collectionFacade.getAllCollections()).doesNotContainKey(collection);
    }
 
    @Test
@@ -93,7 +93,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
 
       List<DataDocument> metadata = collectionFacade.readCollectionMetadata(collection);
 
-      assertThat(metadata.size()).isEqualTo(4); // 4 documents: attribute, name, lock, rights
+      assertThat(metadata).hasSize(4); // 4 documents: attribute, name, lock, rights
    }
 
    @Test
@@ -283,7 +283,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
       List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
 
       for (DataDocument document : documents) {
-         if (!document.keySet().contains(attributeName)) {
+         if (!document.containsKey(attributeName)) {
             return false;
          }
       }
