@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
@@ -83,7 +85,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       // different original name, but will be converted to the same internal as previous one
       String internalName2 = "collection.collectionmetadatafacadecollection_1_1";
-      Assert.assertEquals(collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME2), internalName2);
+      assertThat(collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME2)).isEqualTo(internalName2);
 
       boolean pass = false;
       try {
@@ -91,7 +93,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       } catch (UserCollectionAlreadyExistsException e) {
          pass = true;
       }
-      Assert.assertTrue(pass);
+      assertThat(pass).isTrue();
    }
 
    @Test
@@ -108,9 +110,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       List<String> attributes = collectionMetadataFacade.getCollectionAttributesNames(collection);
 
-      Assert.assertEquals(attributes.size(), 2);
-      Assert.assertTrue(attributes.contains(name1));
-      Assert.assertTrue(attributes.contains(name2));
+      assertThat(attributes.size()).isEqualTo(2);
+      assertThat(attributes).contains(name1, name2);
    }
 
    @Test
@@ -130,27 +131,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       attributesInfo = collectionMetadataFacade.getCollectionAttributesInfo(collection);
 
-      Assert.assertEquals(attributesInfo.size(), 2);
+      assertThat(attributesInfo.size()).isEqualTo(2);
    }
-
-   //   @Test
-   //   public void testAddCollectionAttributeNew() throws CollectionAlreadyExistsException, CollectionNotFoundException {
-   //      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-   //      boolean add = collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-   //      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
-   //
-   //      Assert.assertTrue(add);
-   //   }
-   //
-   //   @Test
-   //   public void testAddCollectionAttributeExisting() throws CollectionAlreadyExistsException, CollectionNotFoundException {
-   //      collectionFacade.createCollection(TEST_COLLECTION_REAL_NAME);
-   //      collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-   //      boolean add = collectionMetadataFacade.addCollectionAttribute(TEST_COLLECTION_INTERNAL_NAME, "column 1", "int", -1);
-   //      collectionFacade.dropCollection(TEST_COLLECTION_INTERNAL_NAME);
-   //
-   //      Assert.assertFalse(add);
-   //   }
 
    @Test
    public void testRenameCollectionAttribute() throws Exception {
@@ -166,8 +148,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       boolean rename = collectionMetadataFacade.renameCollectionAttribute(collection, oldName, newName);
       List<String> columns = collectionMetadataFacade.getCollectionAttributesNames(collection);
 
-      Assert.assertTrue(columns.contains(newName));
-      Assert.assertTrue(rename);
+      assertThat(columns).contains(newName);
+      assertThat(rename).isTrue();
 
       // we try to rename attribute to name that already exists in collection
       boolean pass = false;
@@ -176,10 +158,10 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       } catch (AttributeAlreadyExistsException e) {
          pass = true;
       }
-      Assert.assertTrue(pass);
+      assertThat(pass).isTrue();
 
       // we try to rename non existing attribute
-      Assert.assertFalse(collectionMetadataFacade.renameCollectionAttribute(collection, oldName, "attribute 3"));
+      assertThat(collectionMetadataFacade.renameCollectionAttribute(collection, oldName, "attribute 3")).isFalse();
    }
 
    @Test
@@ -194,17 +176,17 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       String oldType = LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT;
       boolean retype = collectionMetadataFacade.retypeCollectionAttribute(collection, name, oldType);
-      Assert.assertEquals(collectionMetadataFacade.getAttributeType(collection, name), oldType);
-      Assert.assertTrue(retype);
+      assertThat(collectionMetadataFacade.getAttributeType(collection, name)).isEqualTo(oldType);
+      assertThat(retype).isTrue();
 
       // we try to retype to invalid type
       String newType = "hello";
       retype = collectionMetadataFacade.retypeCollectionAttribute(collection, name, newType);
-      Assert.assertEquals(collectionMetadataFacade.getAttributeType(collection, name), oldType);
-      Assert.assertFalse(retype);
+      assertThat(collectionMetadataFacade.getAttributeType(collection, name)).isEqualTo(oldType);
+      assertThat(retype).isFalse();
 
       // we try to retype non existing attribute
-      Assert.assertFalse(collectionMetadataFacade.retypeCollectionAttribute(collection, "attribute2", LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING));
+      assertThat(collectionMetadataFacade.retypeCollectionAttribute(collection, "attribute2", LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING)).isFalse();
    }
 
    @Test
@@ -220,7 +202,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       List<String> columns = collectionMetadataFacade.getCollectionAttributesNames(collection);
 
-      Assert.assertTrue(columns.isEmpty());
+      assertThat(columns).isEmpty();
 
       // we try to drop non existing attribute - nothing happens
       collectionMetadataFacade.dropCollectionAttribute(collection, "attribute2");
@@ -236,7 +218,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       collectionMetadataFacade.setOriginalCollectionName(collection, newName);
       String realName = collectionMetadataFacade.getOriginalCollectionName(collection);
 
-      Assert.assertEquals(newName, realName);
+      assertThat(newName).isEqualTo(realName);
    }
 
    @Test
@@ -247,7 +229,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String ourInternalName = internalName(COLLECTION_GET_INTERNAL_NAME);
       String realInternalName = collectionMetadataFacade.getInternalCollectionName(COLLECTION_GET_INTERNAL_NAME);
 
-      Assert.assertEquals(ourInternalName, realInternalName);
+      assertThat(ourInternalName).isEqualTo(realInternalName);
    }
 
    @Test
@@ -269,8 +251,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String name = collectionMetadataFacade.getOriginalCollectionName(collection);
       String lock = collectionMetadataFacade.getCollectionLockTime(collection);
 
-      Assert.assertEquals(name, COLLECTION_CREATE_INITIAL_METADATA);
-      Assert.assertEquals(lock, "");
+      assertThat(name).isEqualTo(COLLECTION_CREATE_INITIAL_METADATA);
+      assertThat(lock).isEmpty();
    }
 
    @Test
@@ -283,7 +265,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       collectionMetadataFacade.setCollectionLockTime(collection, time);
       String timeTest = collectionMetadataFacade.getCollectionLockTime(collection);
 
-      Assert.assertEquals(time, timeTest);
+      assertThat(time).isEqualTo(timeTest);
    }
 
    @Test
@@ -297,12 +279,12 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
       long count = collectionMetadataFacade.getAttributeCount(collection, name);
 
-      Assert.assertEquals(count, 1);
+      assertThat(count).isEqualTo(1);
 
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
       count = collectionMetadataFacade.getAttributeCount(collection, name);
 
-      Assert.assertEquals(count, 2);
+      assertThat(count).isEqualTo(2);
    }
 
    @Test
@@ -319,14 +301,14 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       collectionMetadataFacade.dropOrDecrementAttribute(collection, name);
       long count = collectionMetadataFacade.getAttributeCount(collection, name);
 
-      Assert.assertEquals(count, 1);
+      assertThat(count).isEqualTo(1);
 
       collectionMetadataFacade.dropOrDecrementAttribute(collection, name);
       count = collectionMetadataFacade.getAttributeCount(collection, name);
       List<String> attributeInfo = collectionMetadataFacade.getCollectionAttributesNames(collection);
 
-      Assert.assertEquals(count, 0);
-      Assert.assertEquals(attributeInfo.size(), 0);
+      assertThat(count).isZero();
+      assertThat(attributeInfo.size()).isZero();
    }
 
    @Test
@@ -350,9 +332,9 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String intValueInvalidConstraint = "2";
       String intValueInvalidType = "123456789012345"; // this is too long value
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueValid), Integer.parseInt(intValueValid));
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidConstraint), null);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidType), null);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueValid)).isEqualTo(Integer.parseInt(intValueValid));
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidConstraint)).isNull();
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeInt, intValueInvalidType)).isNull();
 
       // check value of type long
       String attributeLong = "long";
@@ -362,8 +344,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String longValueValid = "4";
       String longValueInvalid = Long.toString(Long.MAX_VALUE).concat("0"); // too long for Long
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeLong, longValueValid), Long.parseLong(longValueValid));
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeLong, longValueInvalid), null);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeLong, longValueValid)).isEqualTo(Long.parseLong(longValueValid));
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeLong, longValueInvalid)).isNull();
 
       // check value of type double
       String attributeDouble = "double";
@@ -375,10 +357,10 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String doubleValueValidComa = "3,14";
       String doubleValueInvalid = "3.14.3.14";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidInt), Double.parseDouble(doubleValueValidInt));
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidDot), Double.parseDouble(doubleValueValidDot));
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidComa), Double.parseDouble(doubleValueValidDot)); // coma is replaced by dot
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueInvalid), null);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidInt)).isEqualTo(Double.parseDouble(doubleValueValidInt));
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidDot)).isEqualTo(Double.parseDouble(doubleValueValidDot));
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueValidComa)).isEqualTo(Double.parseDouble(doubleValueValidDot)); // coma is replaced by dot
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDouble, doubleValueInvalid)).isNull();
 
       // check value of type decimal
       // TODO
@@ -391,8 +373,9 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       // at first, there is no constraint for date, so the string value is checked against default format
       String dateValueValid1 = "2016.12.18 14.34.00.000"; // default date and time format from Utils
       String dateValueInvalid1 = "2016.12.18 14.34.00";
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid1), Utils.getDate(dateValueValid1));
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid1), null);
+
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid1)).isEqualTo(Utils.getDate(dateValueValid1));
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid1)).isNull();
 
       // we add constraint (chosen from DateTimeConstraintType)
       String format = "HH:mm:ss";
@@ -402,8 +385,10 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
 
       String dateValueValid2 = "14:34:00";
       String dateValueInvalid2 = "14:34";
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid2), sdf.parse(dateValueValid2));
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid2), null);
+
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueValid2)).isEqualTo(sdf.parse(dateValueValid2));
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeDate, dateValueInvalid2)).isNull();
+      ;
 
       // check value of type boolean
       String attributeBoolean = "boolean";
@@ -416,11 +401,11 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String booleanValueValid4 = "fAlSe";
       String booleanValueInvalid = "yes";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid1), true);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid2), true);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid3), false);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid4), false);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueInvalid), null);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid1)).isEqualTo(true);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid2)).isEqualTo(true);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid3)).isEqualTo(false);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueValid4)).isEqualTo(false);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeBoolean, booleanValueInvalid)).isNull();
 
       // check value of type string
       String attributeString = "string";
@@ -429,8 +414,8 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String stringValueValid1 = "everything we put in string";
       String stringValueValid2 = "should be always valid";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid1), stringValueValid1);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid2), stringValueValid2);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid1)).isEqualTo(stringValueValid1);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeString, stringValueValid2)).isEqualTo(stringValueValid2);
 
       // check value of type list
       String attributeList = "list";
@@ -440,13 +425,12 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       List<Object> listValueValid1 = new ArrayList<>();
       List<Object> listValueValid2 = Arrays.asList("hello", "world");
       List<Object> listValueValid3 = null;
-
       Object listValueInvalid1 = "hmmm";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid1), listValueValid1);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid2), listValueValid2);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid3), listValueValid3);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueInvalid1), null);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid1)).isEqualTo(listValueValid1);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid2)).isEqualTo(listValueValid2);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueValid3)).isEqualTo(listValueValid3);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeList, listValueInvalid1)).isNull();
 
       // check value of type nested
       String attributeNested = "nested";
@@ -457,15 +441,13 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       DataDocument nestedValueValid2 = new DataDocument().append("hello", "world");
       DataDocument nestedValueValid3 = new DataDocument().append("document", new DataDocument("hello", "world"));
       DataDocument nestedValueValid4 = null;
-
       Object nestedValueInvalid1 = "hmmm";
 
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid1), nestedValueValid1);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid2), nestedValueValid2);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid3), nestedValueValid3);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid4), nestedValueValid4);
-      Assert.assertEquals(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueInvalid1), null);
-
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid1)).isEqualTo(nestedValueValid1);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid2)).isEqualTo(nestedValueValid2);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid3)).isEqualTo(nestedValueValid3);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueValid4)).isEqualTo(nestedValueValid4);
+      assertThat(collectionMetadataFacade.checkAndConvertAttributeValue(collection, attributeNested, nestedValueInvalid1)).isNull();
    }
 
    @Test
@@ -476,22 +458,22 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       String collection = internalName(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
 
       // there is no custom metadata - we should obtain empty list
-      Assert.assertTrue(collectionMetadataFacade.getCustomMetadata(collection).isEmpty());
-      Assert.assertFalse(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList("key")));
+      assertThat(collectionMetadataFacade.getCustomMetadata(collection)).isEmpty();
+      assertThat(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList("key"))).isFalse();
 
       String metaKey1 = "meta key 1";
       String metaValue1 = "value 1";
 
       // we set one custom value
-      Assert.assertTrue(collectionMetadataFacade.setCustomMetadata(collection, new DataDocument(metaKey1, metaValue1)));
-      Assert.assertEquals(collectionMetadataFacade.getCustomMetadata(collection).get(metaKey1).toString(), metaValue1);
+      assertThat(collectionMetadataFacade.setCustomMetadata(collection, new DataDocument(metaKey1, metaValue1))).isTrue();
+      assertThat(collectionMetadataFacade.getCustomMetadata(collection).get(metaKey1).toString()).isEqualTo(metaValue1);
 
-      // we try to drop non existing key, but dropAttribute does not return value, so we do not know it
-      Assert.assertTrue(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList("random key")));
+      // we try to drop non existing key, but dropAttribute in DataStorage does not return value, so we do not know it
+      assertThat(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList("random key"))).isTrue();
 
       // we drop existing key and after that it is not there
-      Assert.assertTrue(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList(metaKey1)));
-      Assert.assertFalse(collectionMetadataFacade.getCustomMetadata(collection).containsKey(metaKey1));
+      assertThat(collectionMetadataFacade.dropCustomMetadata(collection, Arrays.asList(metaKey1))).isTrue();
+      assertThat(collectionMetadataFacade.getCustomMetadata(collection)).doesNotContainKey(metaKey1);
    }
 
    @Test
@@ -505,7 +487,7 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
 
       List<String> constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
-      Assert.assertTrue(constraints.isEmpty());
+      assertThat(constraints).isEmpty();
 
       String constraint1 = "isNumber";
       String constraint2 = "lessThan:3";
@@ -513,18 +495,15 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
       collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint1);
       collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint2);
       constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
-      Assert.assertEquals(constraints.size(), 2);
-      Assert.assertTrue(constraints.contains(constraint1));
-      Assert.assertTrue(constraints.contains(constraint2));
+      assertThat(constraints).containsOnly(constraint1, constraint2);
 
       collectionMetadataFacade.dropAttributeConstraint(collection, attribute, constraint1);
       constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
-      Assert.assertEquals(constraints.size(), 1);
-      Assert.assertTrue(constraints.contains(constraint2));
+      assertThat(constraints).containsOnly(constraint2);
 
       collectionMetadataFacade.dropAttributeConstraint(collection, attribute, constraint2);
       constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attribute);
-      Assert.assertTrue(constraints.isEmpty());
+      assertThat(constraints).isEmpty();
 
       // we try to add dummy constraint
       String constraint3 = "dummy";
@@ -535,12 +514,13 @@ public class CollectionMetadataFacadeTest extends IntegrationTestBase {
          pass = true;
       }
       Assert.assertTrue(pass);
+      assertThat(pass).isTrue();
    }
 
    @Test
    public void testIsUserCollection() {
-      Assert.assertTrue(collectionMetadataFacade.isUserCollection("collection.something"));
-      Assert.assertFalse(collectionMetadataFacade.isUserCollection("something"));
+      assertThat(collectionMetadataFacade.isUserCollection("collection.something")).isTrue();
+      assertThat(collectionMetadataFacade.isUserCollection("something")).isFalse();
    }
 
    //   @Test

@@ -19,13 +19,14 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,20 +66,20 @@ public class CollectionFacadeTest extends IntegrationTestBase {
       setUpCollection(COLLECTION_GET_ALL_COLLECTIONS);
 
       String collection = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS);
-      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(collection));
+      assertThat(collectionFacade.getAllCollections().keySet()).contains(collection);
    }
 
    @Test
    public void testCreateAndDropCollection() throws Exception {
       setUpCollection(COLLECTION_CREATE_AND_DROP);
 
-      Assert.assertFalse(collectionFacade.getAllCollections().keySet().contains(internalName(COLLECTION_CREATE_AND_DROP)));
+      assertThat(collectionFacade.getAllCollections().keySet()).doesNotContain(internalName(COLLECTION_CREATE_AND_DROP));
 
       String collection = collectionFacade.createCollection(COLLECTION_CREATE_AND_DROP);
-      Assert.assertTrue(collectionFacade.getAllCollections().keySet().contains(collection));
+      assertThat(collectionFacade.getAllCollections().keySet()).contains(collection);
 
       collectionFacade.dropCollection(collection);
-      Assert.assertFalse(collectionFacade.getAllCollections().keySet().contains(collection));
+      assertThat(collectionFacade.getAllCollections().keySet()).doesNotContain(collection);
    }
 
    @Test
@@ -92,7 +93,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
 
       List<DataDocument> metadata = collectionFacade.readCollectionMetadata(collection);
 
-      Assert.assertEquals(metadata.size(), 4); // 4 documents: attribute, name, lock, rights
+      assertThat(metadata.size()).isEqualTo(4); // 4 documents: attribute, name, lock, rights
    }
 
    @Test
@@ -108,8 +109,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
 
       List<String> attributes = collectionFacade.readCollectionAttributes(collection);
 
-      Assert.assertTrue(attributes.contains(a1));
-      Assert.assertTrue(attributes.contains(a2));
+      assertThat(attributes).contains(a1, a2);
    }
 
    @Test
@@ -141,9 +141,8 @@ public class CollectionFacadeTest extends IntegrationTestBase {
 
       Set<String> values = collectionFacade.getAttributeValues(collection, a1);
 
-      Assert.assertTrue(values.contains(v1));
-      Assert.assertTrue(values.contains(v2));
-      Assert.assertFalse(values.contains(v3));
+      assertThat(values).contains(v1, v2);
+      assertThat(values).doesNotContain(v3);
    }
 
    @Test
@@ -180,7 +179,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
 
       List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
       for (int i = 0; i < 3; i++) {
-         Assert.assertFalse(documents.get(i).containsKey(attribute1));
+         assertThat(documents.get(i)).doesNotContainKey(attribute1);
       }
    }
 
@@ -212,7 +211,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
 
       collectionFacade.renameAttribute(collection, name, newName);
 
-      Assert.assertTrue(isEveryDocumentFilledByNewAttribute(collection, newName));
+      assertThat(isEveryDocumentFilledByNewAttribute(collection, newName)).isTrue();
    }
 
    @Test
@@ -230,15 +229,14 @@ public class CollectionFacadeTest extends IntegrationTestBase {
       doc1.put(attribute, value1);
       dataStorage.createDocument(collection, doc1);
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
-      Assert.assertTrue(collectionFacade.retypeAttribute(collection, attribute, newType)); // retype to int
-
-      Assert.assertTrue(collectionFacade.retypeAttribute(collection, attribute, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING)); // retype back to string
+      assertThat(collectionFacade.retypeAttribute(collection, attribute, newType)).isTrue(); // retype to int
+      assertThat(collectionFacade.retypeAttribute(collection, attribute, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING)).isTrue(); // retype back to string
 
       DataDocument doc2 = new DataDocument();
       doc2.put(attribute, value2);
       dataStorage.createDocument(collection, doc2);
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
-      Assert.assertFalse(collectionFacade.retypeAttribute(collection, attribute, newType)); // retype to int
+      assertThat(collectionFacade.retypeAttribute(collection, attribute, newType)).isFalse(); // retype to int
 
    }
 
@@ -261,7 +259,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
       collectionMetadataFacade.retypeCollectionAttribute(collection, attribute, newType);
 
-      Assert.assertTrue(collectionFacade.addAttributeConstraint(collection, attribute, constraint1));
+      assertThat(collectionFacade.addAttributeConstraint(collection, attribute, constraint1)).isTrue();
       collectionFacade.dropAttributeConstraint(collection, attribute, constraint1);
 
       DataDocument doc2 = new DataDocument();
@@ -269,7 +267,7 @@ public class CollectionFacadeTest extends IntegrationTestBase {
       dataStorage.createDocument(collection, doc2);
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
 
-      Assert.assertFalse(collectionFacade.addAttributeConstraint(collection, attribute, constraint1));
+      assertThat(collectionFacade.addAttributeConstraint(collection, attribute, constraint1)).isFalse();
    }
 
    @Test
