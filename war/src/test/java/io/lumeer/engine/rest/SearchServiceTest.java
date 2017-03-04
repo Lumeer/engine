@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
@@ -29,7 +31,6 @@ import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,6 +66,11 @@ public class SearchServiceTest extends IntegrationTestBase {
    private DocumentFacade documentFacade;
 
    @Test
+   public void testRegister() throws Exception {
+      assertThat(documentFacade).isNotNull();
+   }
+
+   @Test
    public void testRunQuery() throws Exception {
       setUpCollections(COLLECTION_QUERY_SEARCH);
       final Client client = ClientBuilder.newBuilder().build();
@@ -81,8 +87,8 @@ public class SearchServiceTest extends IntegrationTestBase {
       final Query query = new Query(collections, emptyFilters, emptyProjection, emptySorting, limit, null);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + "query/").request().buildPost(Entity.entity(query, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> matchResult = response.readEntity(ArrayList.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && matchResult.size() == limit);
-
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(matchResult).hasSize(limit);
       response.close();
       client.close();
    }
