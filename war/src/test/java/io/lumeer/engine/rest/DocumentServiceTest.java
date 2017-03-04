@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -32,7 +34,6 @@ import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -82,7 +83,7 @@ public class DocumentServiceTest extends IntegrationTestBase {
 
    @Test
    public void testRegister() throws Exception {
-      Assert.assertNotNull(documentFacade);
+      assertThat(documentFacade).isNotNull();
    }
 
    @Test
@@ -94,15 +95,15 @@ public class DocumentServiceTest extends IntegrationTestBase {
       collectionFacade.createCollection(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT)).request().buildPost(Entity.json(new DataDocument())).invoke();
       String documentId = response.readEntity(String.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode()
-            && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId) != null);
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId)).isNotNull();
       response.close();
 
       // 200 - read the given document by its id
       Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + documentId).request().buildGet().invoke();
       DataDocument document = response2.readEntity(DataDocument.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode()
-            && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).equals(document));
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId)).isEqualTo(document);
       response2.close();
 
       // 204 - update the document
@@ -110,15 +111,13 @@ public class DocumentServiceTest extends IntegrationTestBase {
       updatedDocument.put("_id", documentId);
       updatedDocument.put("name", "updatedDocument");
       Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + "update/").request().buildPut(Entity.json(updatedDocument)).invoke();
-
-      Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).getString("name").equals("updatedDocument"));
-
+      assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      assertThat(documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).getString("name")).isEqualTo("updatedDocument");
       response3.close();
 
       // 204 - drop the given document by its id
       Response response4 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + documentId).request().buildDelete().invoke();
-      Assert.assertTrue(response4.getStatus() == Response.Status.NO_CONTENT.getStatusCode());
+      assertThat(response4.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       response4.close();
 
       client.close();
@@ -137,21 +136,23 @@ public class DocumentServiceTest extends IntegrationTestBase {
       // 204 - add the document metadata
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta/" + attributeName).request().buildPost(Entity.entity(metaObjectValue, MediaType.APPLICATION_JSON)).invoke();
       Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), documentId);
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && documentMetadata.get(attributeName).equals(metaObjectValue));
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      assertThat(documentMetadata.get(attributeName)).isEqualTo(metaObjectValue);
       response.close();
 
       // 200 - read the document metadata
       Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta/").request().buildGet().invoke();
       Map<String, Object> metaDocument = response2.readEntity(Map.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode() && metaDocument.equals(documentMetadata));
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(metaDocument).isEqualTo(documentMetadata);
       response2.close();
 
       // 204 - update the document metadata
       DataDocument updatedMetaDocument = new DataDocument();
       updatedMetaDocument.put(attributeName, "updatedValue");
       Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta").request().buildPut(Entity.json(updatedMetaDocument)).invoke();
-      Assert.assertTrue(response3.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
-            && documentMetadataFacade.readDocumentMetadata(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), documentId).get(attributeName).equals("updatedValue"));
+      assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      assertThat(documentMetadataFacade.readDocumentMetadata(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), documentId).get(attributeName)).isEqualTo("updatedValue");
       response3.close();
 
       client.close();
@@ -168,7 +169,8 @@ public class DocumentServiceTest extends IntegrationTestBase {
       // only document exists, no changes in the past, code 200, listsize = 1
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_SEARCH_HISTORY_CHANGES) + documentId + "/versions/").request().buildGet().invoke();
       List<DataDocument> changedDocuments = response.readEntity(ArrayList.class);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && changedDocuments.size() == 1);
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(changedDocuments).hasSize(1);
       response.close();
 
       // two changes performed in the past + original document, code 200, listsize = 3
@@ -181,7 +183,8 @@ public class DocumentServiceTest extends IntegrationTestBase {
 
       Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_SEARCH_HISTORY_CHANGES) + documentId + "/versions/").request().buildGet().invoke();
       List<DataDocument> changedDocuments2 = response2.readEntity(ArrayList.class);
-      Assert.assertTrue(response2.getStatus() == Response.Status.OK.getStatusCode() && changedDocuments2.size() == 3);
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(changedDocuments2).hasSize(3);
       response2.close();
 
       client.close();
@@ -203,35 +206,19 @@ public class DocumentServiceTest extends IntegrationTestBase {
 
       DataDocument documentVersion2 = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
       int versionTwo = documentVersion2.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
-      Assert.assertTrue(versionTwo == 2);
+      assertThat(versionTwo).isEqualTo(2);
 
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_REVERT_DOCUMENT_VERSION) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       DataDocument currentDocument = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
       int versionThree = currentDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
       boolean isFirstVersion = !currentDocument.containsKey("dummyVersionTwoAttribute");
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && versionThree == 3 && isFirstVersion);
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      assertThat(versionThree).isEqualTo(3);
+      assertThat(isFirstVersion).isTrue();
       response.close();
 
       client.close();
    }
-
- /*  @Test
-   public void testReadAccessRights() throws Exception {
-      setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
-      final Client client = ClientBuilder.newBuilder().build();
-      final int DEFAULT_INT_RULE = 7;
-
-      collectionFacade.createCollection(COLLECTION_READ_ACCESS_RIGHTS);
-      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_READ_ACCESS_RIGHTS), new DataDocument());
-
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_READ_ACCESS_RIGHTS) + documentId + "/rights").request().buildGet().invoke();
-      HashMap rights = response.readEntity(HashMap.class);
-      int ruleNumber = (int) rights.get(userFacade.getUserEmail());
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode() && ruleNumber == DEFAULT_INT_RULE);
-      response.close();
-
-      client.close();
-   }*/
 
    @Test
    public void testReadAccessRights() throws Exception {
@@ -247,11 +234,12 @@ public class DocumentServiceTest extends IntegrationTestBase {
       List<AccessRightsDao> rights = response.readEntity(new GenericType<List<AccessRightsDao>>() {
       });
       AccessRightsDao readRights = rights.get(0);
-      Assert.assertTrue(response.getStatus() == Response.Status.OK.getStatusCode()
-            && readRights.isRead() == DEFAULT_ACCESS_RIGHT.isRead()
-            && readRights.isWrite() == DEFAULT_ACCESS_RIGHT.isWrite()
-            && readRights.isExecute() == DEFAULT_ACCESS_RIGHT.isExecute()
-            && readRights.getUserName().equals(DEFAULT_ACCESS_RIGHT.getUserName()));
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(readRights.isRead()).isEqualTo(DEFAULT_ACCESS_RIGHT.isRead());
+      assertThat(readRights.isWrite()).isEqualTo(DEFAULT_ACCESS_RIGHT.isWrite());
+      assertThat(readRights.isExecute()).isEqualTo(DEFAULT_ACCESS_RIGHT.isExecute());
+      assertThat(readRights.getUserName()).isEqualTo(DEFAULT_ACCESS_RIGHT.getUserName());
+
       response.close();
       client.close();
    }
@@ -268,7 +256,10 @@ public class DocumentServiceTest extends IntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_UPDATE_ACCESS_RIGHTS) + documentId + "/rights").request().buildPut(Entity.entity(accessRightsDao, MediaType.APPLICATION_JSON)).invoke();
       AccessRightsDao readAccessRights = securityFacade.getDao(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS), documentId, user);
-      Assert.assertTrue(response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() && !readAccessRights.isRead() && !readAccessRights.isWrite() && readAccessRights.isExecute());
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      assertThat(readAccessRights.isRead()).isFalse();
+      assertThat(readAccessRights.isWrite()).isFalse();
+      assertThat(readAccessRights.isExecute()).isTrue();
       response.close();
       client.close();
    }
