@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
@@ -27,7 +29,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,7 +65,7 @@ public class DocumentMetadataFacadeTest extends IntegrationTestBase {
    public void testGetDocumentMetadata() throws Exception {
       String documentId = setupCollectionAndCreateNewDocument(COLLECTION_GET_METADATA);
       Object metadataValue = documentMetadataFacade.getDocumentMetadata(COLLECTION_GET_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
-      Assert.assertNotNull(metadataValue);
+      assertThat(metadataValue).isNotNull();
    }
 
    @Test
@@ -72,26 +73,23 @@ public class DocumentMetadataFacadeTest extends IntegrationTestBase {
       String documentId = setupCollectionAndCreateNewDocument(COLLECTION_READ_METADATA);
       Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(COLLECTION_READ_METADATA, documentId);
 
-      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_BY_USER_KEY));
-      Assert.assertTrue(documentMetadata.containsKey(LumeerConst.Document.CREATE_DATE_KEY));
-      Assert.assertEquals(documentMetadata.size(), 5);
+      assertThat(documentMetadata).containsKey(LumeerConst.Document.CREATE_BY_USER_KEY);
+      assertThat(documentMetadata).containsKey(LumeerConst.Document.CREATE_DATE_KEY);
+      assertThat(documentMetadata).hasSize(5);
    }
 
    @Test
    public void testPutAndUpdateAndDropDocumentMetadata() throws Exception {
       String documentId = setupCollectionAndCreateNewDocument(COLLECTION_PUT_AND_UPDATE_METADATA);
       documentMetadataFacade.putDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY, DUMMY_META_VALUE);
-
-      Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString().equals(DUMMY_META_VALUE));
+      assertThat(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString()).isEqualTo(DUMMY_META_VALUE);
 
       DataDocument metadata = new DataDocument(LumeerConst.Document.CREATE_BY_USER_KEY, DUMMY_META_UPDATE_VALUE);
       documentMetadataFacade.updateDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, metadata);
-
-      Assert.assertTrue(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString().equals(DUMMY_META_UPDATE_VALUE));
+      assertThat(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString()).isEqualTo(DUMMY_META_UPDATE_VALUE);
 
       documentMetadataFacade.dropDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
-
-      Assert.assertFalse(documentMetadataFacade.readDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId).containsKey(LumeerConst.Document.CREATE_BY_USER_KEY));
+      assertThat(documentMetadataFacade.readDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId)).doesNotContainKey(LumeerConst.Document.CREATE_BY_USER_KEY);
    }
 
    private String setupCollectionAndCreateNewDocument(final String collection) throws DbException, InvalidConstraintException {
