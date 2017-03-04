@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -29,7 +31,6 @@ import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,6 +66,13 @@ public class LinkingServiceTest extends IntegrationTestBase {
    private CollectionMetadataFacade collectionMetadataFacade;
 
    @Test
+   public void testRegister() throws Exception {
+      assertThat(linkingFacade).isNotNull();
+      assertThat(collectionFacade).isNotNull();
+      assertThat(collectionMetadataFacade).isNotNull();
+   }
+
+   @Test
    public void testAddDropLink() throws Exception {
       final String collectionAddDrop1 = "lscollectionAddDropOne";
       final String collectionAddDrop2 = "lscollectionAddDropTwo";
@@ -89,10 +97,8 @@ public class LinkingServiceTest extends IntegrationTestBase {
                                 .request()
                                 .buildPost(Entity.json(new DataDocument()))
                                 .invoke();
-      int status = response.getStatus();
       response.close();
-      Assert.assertTrue(status == Response.Status.NO_CONTENT.getStatusCode());// || status == Response.Status.NOT_FOUND.getStatusCode());
-
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
    }
 
    private Map<String, List<String>> createTestData(List<String> collections) throws DbException {
