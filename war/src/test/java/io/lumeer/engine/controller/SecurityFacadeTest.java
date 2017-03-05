@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -75,19 +77,19 @@ public class SecurityFacadeTest extends IntegrationTestBase {
    @Test
    public void testCheckForReadDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isTrue();
       securityFacade.addMetaData(dataDocument);
       addRights(dataDocument, TEST_USER4, 4);
       addRights(dataDocument, TEST_USER5, 5);
       addRights(dataDocument, TEST_USER6, 6);
       addRights(dataDocument, TEST_USER7, 7);
-      Assert.assertFalse(securityFacade.checkForRead(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER4));
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER5));
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER6));
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER7));
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER4)).isTrue();
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER5)).isTrue();
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER6)).isTrue();
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 2);
-      Assert.assertFalse(securityFacade.checkForRead(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isFalse();
    }
 
    @Test
@@ -99,13 +101,13 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       addRights(dataDocument, TEST_USER3, 3);
       addRights(dataDocument, TEST_USER6, 6);
       addRights(dataDocument, TEST_USER7, 7);
-      Assert.assertFalse(securityFacade.checkForWrite(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER2));
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER3));
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER6));
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER7));
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER2)).isTrue();
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER3)).isTrue();
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER6)).isTrue();
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 4);
-      Assert.assertFalse(securityFacade.checkForWrite(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER)).isFalse();
    }
 
    @Test
@@ -117,13 +119,13 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       addRights(dataDocument, TEST_USER3, 3);
       addRights(dataDocument, TEST_USER5, 5);
       addRights(dataDocument, TEST_USER7, 7);
-      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER1));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER3));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER5));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER7));
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER1)).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER3)).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER5)).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 2);
-      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isFalse();
    }
 
    @Test
@@ -135,15 +137,15 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       addRights(dataDocument, TEST_USER3, 3);
       addRights(dataDocument, TEST_USER5, 5);
       addRights(dataDocument, TEST_USER7, 7);
-      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER1));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER3));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER5));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER7));
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER1)).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER3)).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER5)).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 2);
-      Assert.assertFalse(securityFacade.checkForAddRights(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForAddRights(dataDocument, TEST_USER)).isFalse();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, TEST_USER);
-      Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForAddRights(dataDocument, TEST_USER)).isTrue();
    }
 
    @Test
@@ -160,14 +162,14 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_READ, dataDocument);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_READ, id);
       print(securityFacade.readRightsMap(SECURITY_TEST_COLLECTION_READ, id).toString());
-      Assert.assertFalse(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER4));
-      Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER5));
-      Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER6));
-      Assert.assertTrue(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER7));
+      assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER4)).isTrue();
+      assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER5)).isTrue();
+      assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER6)).isTrue();
+      assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 2);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_READ, dataDocument, id);
-      Assert.assertFalse(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER));
+      assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER)).isFalse();
    }
 
    @Test
@@ -183,14 +185,14 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_WRITE, id);
-      Assert.assertFalse(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER2));
-      Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER3));
-      Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER6));
-      Assert.assertTrue(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER7));
+      assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER2)).isTrue();
+      assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER3)).isTrue();
+      assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER6)).isTrue();
+      assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 4);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument, id);
-      Assert.assertFalse(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER));
+      assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER)).isFalse();
    }
 
    @Test
@@ -206,14 +208,14 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_EXECUTE, id);
-      Assert.assertFalse(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER1));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER3));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER5));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER7));
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER1)).isTrue();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER3)).isTrue();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER5)).isTrue();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 4);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument, id);
-      Assert.assertFalse(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER));
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER)).isFalse();
    }
 
    @Test
@@ -229,52 +231,52 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id);
-      Assert.assertFalse(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER1));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER3));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER5));
-      Assert.assertTrue(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER7));
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER1)).isTrue();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER3)).isTrue();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER5)).isTrue();
+      assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 2);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id);
-      Assert.assertFalse(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER));
+      assertThat(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER)).isFalse();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, TEST_USER);
       dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id);
-      Assert.assertTrue(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER));
+      assertThat(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER)).isTrue();
    }
 
    @Test
    public void testSetRightsRead() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isTrue();
       DataDocument newDataDoc = securityFacade.setRightsRead(dataDocument, TEST_USER);
       print(newDataDoc);
-      Assert.assertTrue(securityFacade.checkForRead(newDataDoc, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForRead(newDataDoc, TEST_USER2));
-      Assert.assertFalse(securityFacade.checkForExecute(newDataDoc, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForWrite(newDataDoc, TEST_USER));
+      assertThat(securityFacade.checkForRead(newDataDoc, TEST_USER)).isTrue();
+      assertThat(securityFacade.checkForRead(newDataDoc, TEST_USER2)).isFalse();
+      assertThat(securityFacade.checkForExecute(newDataDoc, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForWrite(newDataDoc, TEST_USER)).isFalse();
 
    }
 
    @Test
    public void testSetRightsWrite() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER)).isTrue();
       DataDocument newDataDoc = securityFacade.setRightsWrite(dataDocument, TEST_USER);
-      Assert.assertTrue(securityFacade.checkForWrite(newDataDoc, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForRead(newDataDoc, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForExecute(newDataDoc, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForWrite(newDataDoc, TEST_USER2));
+      assertThat(securityFacade.checkForWrite(newDataDoc, TEST_USER)).isTrue();
+      assertThat(securityFacade.checkForRead(newDataDoc, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForExecute(newDataDoc, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForWrite(newDataDoc, TEST_USER2)).isFalse();
    }
 
    @Test
    public void testSetRightsExecute() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isTrue();
       DataDocument newDataDoc = securityFacade.setRightsExecute(dataDocument, TEST_USER);
-      Assert.assertTrue(securityFacade.checkForExecute(newDataDoc, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForRead(newDataDoc, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForExecute(newDataDoc, TEST_USER2));
-      Assert.assertFalse(securityFacade.checkForWrite(newDataDoc, TEST_USER));
+      assertThat(securityFacade.checkForExecute(newDataDoc, TEST_USER)).isTrue();
+      assertThat(securityFacade.checkForRead(newDataDoc, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForExecute(newDataDoc, TEST_USER2)).isFalse();
+      assertThat(securityFacade.checkForWrite(newDataDoc, TEST_USER)).isFalse();
    }
 
    @Test
@@ -283,35 +285,35 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       securityFacade.setRightsRead(dataDocument, TEST_USER);
       securityFacade.setRightsWrite(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 6);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(6);
       securityFacade.setRightsExecute(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 7);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(7);
       dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       securityFacade.setRightsRead(dataDocument, TEST_USER);
       securityFacade.setRightsExecute(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 5);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(5);
       securityFacade.setRightsWrite(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 7);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(7);
       dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       securityFacade.setRightsWrite(dataDocument, TEST_USER);
       securityFacade.setRightsExecute(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 3);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(3);
       securityFacade.setRightsRead(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 7);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(7);
       securityFacade.setRightsWrite(dataDocument, TEST_USER);
       securityFacade.setRightsExecute(dataDocument, TEST_USER);
       securityFacade.setRightsRead(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 7);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(7);
       securityFacade.removeRightsExecute(dataDocument, TEST_USER);
-      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isFalse();
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
-      Assert.assertFalse(securityFacade.checkForRead(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isFalse();
       securityFacade.removeRightsWrite(dataDocument, TEST_USER);
-      Assert.assertFalse(securityFacade.checkForWrite(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER)).isFalse();
       securityFacade.removeRightsWrite(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 0);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(0);
    }
 
    @Test
@@ -320,26 +322,26 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       securityFacade.setRightsExecute(dataDocument, TEST_USER);
       securityFacade.setRightsExecute(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 1);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(1);
       dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       securityFacade.setRightsWrite(dataDocument, TEST_USER);
       securityFacade.setRightsWrite(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 2);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(2);
       dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       securityFacade.setRightsRead(dataDocument, TEST_USER);
       securityFacade.setRightsRead(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 4);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(4);
       securityFacade.removeRightsExecute(dataDocument, TEST_USER);
       securityFacade.removeRightsWrite(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 4);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(4);
       dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
       securityFacade.setRightsExecute(dataDocument, TEST_USER);
       securityFacade.setRightsWrite(dataDocument, TEST_USER);
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 3);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(3);
    }
 
    @Test
@@ -352,42 +354,42 @@ public class SecurityFacadeTest extends IntegrationTestBase {
       securityFacade.setRightsWrite(dataDocument, TEST_USER2);
       securityFacade.setRightsExecute(dataDocument, TEST_USER2);
       securityFacade.setRightsRead(dataDocument, TEST_USER2);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 7);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(7);
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 3);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(3);
       securityFacade.removeRightsExecute(dataDocument, TEST_USER);
       securityFacade.removeRightsExecute(dataDocument, TEST_USER);
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
       securityFacade.removeRightsRead(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 2);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(2);
       securityFacade.removeRightsWrite(dataDocument, TEST_USER);
       securityFacade.removeRightsWrite(dataDocument, TEST_USER);
-      Assert.assertEquals(securityFacade.readRightInteger(dataDocument, TEST_USER), 0);
+      assertThat(securityFacade.readRightInteger(dataDocument, TEST_USER)).isEqualTo(0);
    }
 
    @Test
    public void testNoRights() throws Exception {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, userFacade.getUserEmail());
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, TEST_USER));
-      Assert.assertTrue(securityFacade.checkForRead(dataDocument, userFacade.getUserEmail()));
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail()));
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, userFacade.getUserEmail()));
-      Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, userFacade.getUserEmail()));
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isTrue();
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER)).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isTrue();
+      assertThat(securityFacade.checkForAddRights(dataDocument, TEST_USER)).isTrue();
+      assertThat(securityFacade.checkForRead(dataDocument, userFacade.getUserEmail())).isTrue();
+      assertThat(securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail())).isTrue();
+      assertThat(securityFacade.checkForExecute(dataDocument, userFacade.getUserEmail())).isTrue();
+      assertThat(securityFacade.checkForAddRights(dataDocument, userFacade.getUserEmail())).isTrue();
 
       securityFacade.addMetaData(dataDocument);
-      Assert.assertFalse(securityFacade.checkForRead(dataDocument, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForWrite(dataDocument, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForAddRights(dataDocument, TEST_USER));
-      Assert.assertFalse(securityFacade.checkForRead(dataDocument, userFacade.getUserEmail()));
-      Assert.assertFalse(securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail()));
-      Assert.assertFalse(securityFacade.checkForExecute(dataDocument, userFacade.getUserEmail()));
-      Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, userFacade.getUserEmail()));
+      assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForAddRights(dataDocument, TEST_USER)).isFalse();
+      assertThat(securityFacade.checkForRead(dataDocument, userFacade.getUserEmail())).isFalse();
+      assertThat(securityFacade.checkForWrite(dataDocument, userFacade.getUserEmail())).isFalse();
+      assertThat(securityFacade.checkForExecute(dataDocument, userFacade.getUserEmail())).isFalse();
+      assertThat(securityFacade.checkForAddRights(dataDocument, userFacade.getUserEmail())).isTrue();
    }
 
    @Test

@@ -19,13 +19,14 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,7 +66,7 @@ public class SearchFacadeTest extends IntegrationTestBase {
 
       List<DataDocument> searchDocuments = searchFacade.search(COLLECTION_SEARCH, null, null, 5, 5);
 
-      Assert.assertEquals(searchDocuments.size(), 5);
+      assertThat(searchDocuments).hasSize(5);
    }
 
    @Test
@@ -82,7 +83,7 @@ public class SearchFacadeTest extends IntegrationTestBase {
       List<DataDocument> searchDocuments = searchFacade.search(query);
 
       // run() method returns 101 entries due to it is a default value of "batchSize" query key
-      Assert.assertEquals(searchDocuments.size(), 20);
+      assertThat(searchDocuments).hasSize(20);
    }
 
    @Test

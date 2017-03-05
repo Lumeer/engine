@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -27,7 +29,6 @@ import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -93,8 +94,7 @@ public class LinkingFacadeTest extends IntegrationTestBase {
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id2, COLLECTION_GETLINKTYPES_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
 
       List<LinkTypeDao> linkTypes = linkingFacade.readLinkTypes(COLLECTION_GETLINKTYPES_I, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(linkTypes.size(), 2);
-
+      assertThat(linkTypes).hasSize(2);
    }
 
    @Test
@@ -119,8 +119,7 @@ public class LinkingFacadeTest extends IntegrationTestBase {
       linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id2, COLLECTION_GETLINKS_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
 
       List<LinkDao> linkTypes = linkingFacade.readLinks(COLLECTION_GETLINKS_I, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(linkTypes.size(), 2);
-
+      assertThat(linkTypes).hasSize(2);
    }
 
    @Test
@@ -143,16 +142,16 @@ public class LinkingFacadeTest extends IntegrationTestBase {
       linkingFacade.createDocWithDocLink(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
       List<LinkDao> linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(linkTypes.size(), 1);
+      assertThat(linkTypes).hasSize(1);
 
       linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertEquals(linkTypes.size(), 1);
+      assertThat(linkTypes).hasSize(1);
 
       linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(linkTypes.size(), 1);
+      assertThat(linkTypes).hasSize(1);
 
       linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, role1, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertEquals(linkTypes.size(), 0);
+      assertThat(linkTypes).isEmpty();
    }
 
    @Test
@@ -181,42 +180,42 @@ public class LinkingFacadeTest extends IntegrationTestBase {
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
 
       List<DataDocument> links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 1);
+      assertThat(links).hasSize(1);
       linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 2);
+      assertThat(links).hasSize(2);
       linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertEquals(links.size(), 2);
+      assertThat(links).hasSize(2);
       linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 3);
+      assertThat(links).hasSize(3);
       linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 1);
+      assertThat(links).hasSize(1);
       linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id2, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
    }
 
@@ -249,25 +248,25 @@ public class LinkingFacadeTest extends IntegrationTestBase {
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
       List<DataDocument> links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, role1, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 1);
+      assertThat(links).hasSize(1);
 
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 2);
+      assertThat(links).hasSize(2);
 
       linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 5);
+      assertThat(links).hasSize(5);
 
       linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, role1, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 2);
+      assertThat(links).hasSize(2);
 
       linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
@@ -276,14 +275,14 @@ public class LinkingFacadeTest extends IntegrationTestBase {
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 2);
+      assertThat(links).hasSize(2);
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertEquals(links.size(), 3);
+      assertThat(links).hasSize(3);
       linkingFacade.dropCollectionLinks(COLLECTION_READ_DROP_COLL_I, null, LumeerConst.Linking.LinkDirection.FROM);
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
       links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
    }
 
    @Test
@@ -314,26 +313,26 @@ public class LinkingFacadeTest extends IntegrationTestBase {
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
 
       List<DataDocument> links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertEquals(links.size(), 4);
+      assertThat(links).hasSize(4);
       links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertEquals(links.size(), 8);
+      assertThat(links).hasSize(8);
 
       linkingFacade.dropAllDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
       links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
 
       links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertEquals(links.size(), 4);
+      assertThat(links).hasSize(4);
 
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
       linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
       links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertEquals(links.size(), 7);
+      assertThat(links).hasSize(7);
 
       linkingFacade.dropAllDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
       links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      Assert.assertTrue(links.isEmpty());
+      assertThat(links).isEmpty();
    }
 
    private Map<String, List<String>> createTestData(List<String> collections) {

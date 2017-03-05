@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
@@ -48,10 +50,10 @@ public class SequenceFacadeTest extends IntegrationTestBase {
       systemDataStorage.dropCollection("_sequences");
       sequenceFacade.init();
 
-      Assert.assertEquals(sequenceFacade.getNext("abcd"), 0);
-      Assert.assertEquals(sequenceFacade.getNext("abcd"), 1);
-      Assert.assertEquals(sequenceFacade.getNext("abcd"), 2);
+      assertThat(sequenceFacade.getNext("abcd")).isEqualTo(0);
+      assertThat(sequenceFacade.getNext("abcd")).isEqualTo(1);
+      assertThat(sequenceFacade.getNext("abcd")).isEqualTo(2);
       sequenceFacade.resetSequence("abcd");
-      Assert.assertEquals(sequenceFacade.getNext("abcd"), 1);
+      assertThat(sequenceFacade.getNext("abcd")).isEqualTo(1);
    }
 }

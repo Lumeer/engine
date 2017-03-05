@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -80,11 +82,11 @@ public class ViewFacadeTest extends IntegrationTestBase {
          }
       }
 
-      Assert.assertTrue(metadata.containsValue(CREATE_INITIAL_METADATA_VIEW));
-      Assert.assertTrue(metadata.containsValue(viewId));
-      Assert.assertTrue(metadata.containsValue(getCurrentUser()));
-      Assert.assertTrue(metadata.containsKey(LumeerConst.View.VIEW_CREATE_DATE_KEY));
-      Assert.assertTrue(metadata.containsKey(LumeerConst.View.VIEW_TYPE_KEY));
+      assertThat(metadata).containsValue(CREATE_INITIAL_METADATA_VIEW);
+      assertThat(metadata).containsValue(viewId);
+      assertThat(metadata).containsValue(getCurrentUser());
+      assertThat(metadata).containsKey(LumeerConst.View.VIEW_CREATE_DATE_KEY);
+      assertThat(metadata).containsKey(LumeerConst.View.VIEW_TYPE_KEY);
    }
 
    @Test
@@ -99,15 +101,14 @@ public class ViewFacadeTest extends IntegrationTestBase {
       } catch (ViewAlreadyExistsException e) {
          pass = true;
       }
-      Assert.assertTrue(pass);
+      assertThat(pass).isTrue();
 
       int copy = viewFacade.copyView(view, COPIED_VIEW);
 
-      Assert.assertNotEquals(view, copy); // copy should have a new id
-      Assert.assertEquals(viewFacade.getViewName(copy), COPIED_VIEW); // copy should have a new name
-      Assert.assertNotEquals(
-            viewFacade.getViewMetadataValue(view, LumeerConst.View.VIEW_CREATE_DATE_KEY),
-            viewFacade.getViewMetadataValue(copy, LumeerConst.View.VIEW_CREATE_DATE_KEY)); // create date should be new for copy
+      assertThat(view).isNotEqualTo(copy); // copy should have a new id
+      assertThat(viewFacade.getViewName(copy)).isEqualTo(COPIED_VIEW); // copy should have a new name
+      assertThat(viewFacade.getViewMetadataValue(view, LumeerConst.View.VIEW_CREATE_DATE_KEY))
+            .isNotEqualTo(viewFacade.getViewMetadataValue(copy, LumeerConst.View.VIEW_CREATE_DATE_KEY)); // create date should be new for copy
    }
 
    @Test
@@ -115,11 +116,11 @@ public class ViewFacadeTest extends IntegrationTestBase {
       setUpCollection();
 
       int view = viewFacade.createView(SET_GET_TYPE_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
-      Assert.assertEquals(viewFacade.getViewType(view), LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE);
+      assertThat(viewFacade.getViewType(view)).isEqualTo(LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE);
 
       String newType = "new type";
       viewFacade.setViewType(view, newType);
-      Assert.assertEquals(viewFacade.getViewType(view), newType);
+      assertThat(viewFacade.getViewType(view)).isEqualTo(newType);
    }
 
    @Test
@@ -127,11 +128,11 @@ public class ViewFacadeTest extends IntegrationTestBase {
       setUpCollection();
 
       int view = viewFacade.createView(SET_GET_NAME_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
-      Assert.assertEquals(viewFacade.getViewName(view), SET_GET_NAME_VIEW);
+      assertThat(viewFacade.getViewName(view)).isEqualTo(SET_GET_NAME_VIEW);
 
       String newName = "new name";
       viewFacade.setViewName(view, newName);
-      Assert.assertEquals(viewFacade.getViewName(view), newName);
+      assertThat(viewFacade.getViewName(view)).isEqualTo(newName);
 
       // we create one more view
       viewFacade.createView(SET_GET_NAME_VIEW_2, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
@@ -143,7 +144,7 @@ public class ViewFacadeTest extends IntegrationTestBase {
       } catch (ViewAlreadyExistsException e) {
          pass = true;
       }
-      Assert.assertTrue(pass);
+      assertThat(pass).isTrue();
    }
 
    @Test
@@ -153,7 +154,7 @@ public class ViewFacadeTest extends IntegrationTestBase {
 
       // we try to get non existing configuration
       DataDocument configuration = viewFacade.getViewConfiguration(view);
-      Assert.assertTrue(configuration.isEmpty());
+      assertThat(configuration).isEmpty();
 
       String attribute = "configuration attribute";
       String value = "configuration value";
@@ -161,8 +162,8 @@ public class ViewFacadeTest extends IntegrationTestBase {
 
       configuration = viewFacade.getViewConfiguration(view);
 
-      Assert.assertTrue(configuration.containsKey(attribute));
-      Assert.assertTrue(configuration.containsValue(value));
+      assertThat(configuration).containsKey(attribute);
+      assertThat(configuration).containsValue(value);
    }
 
    @Test
@@ -183,10 +184,10 @@ public class ViewFacadeTest extends IntegrationTestBase {
       } catch (ViewMetadataNotFoundException e) {
          pass = true;
       }
-      Assert.assertTrue(pass);
+      assertThat(pass).isTrue();
 
       String confValue = (String) viewFacade.getViewConfigurationAttribute(view, attribute);
-      Assert.assertEquals(value, confValue);
+      assertThat(value).isEqualTo(confValue);
    }
 
    @Test
@@ -194,8 +195,8 @@ public class ViewFacadeTest extends IntegrationTestBase {
       setUpCollection();
       int viewId = viewFacade.createView(GET_METADATA_VIEW, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
       DataDocument metadata = viewFacade.getViewMetadata(viewId);
-      Assert.assertTrue(metadata.containsValue(GET_METADATA_VIEW));
-      Assert.assertTrue(metadata.containsValue(viewId));
+      assertThat(metadata).containsValue(GET_METADATA_VIEW);
+      assertThat(metadata).containsValue(viewId);
    }
 
    @Test
@@ -205,8 +206,8 @@ public class ViewFacadeTest extends IntegrationTestBase {
       int viewId2 = viewFacade.createView(GET_ALL_VIEWS_VIEW_2, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
 
       List<ViewDao> views = viewFacade.getAllViews();
-      Assert.assertEquals(views.size(), 2);
-      Assert.assertTrue(views.get(0).getId() == viewId1 || views.get(0).getId() == viewId2);
+      assertThat(views).hasSize(2);
+      assertThat(views.get(0).getId()).isIn(viewId1, viewId2);
    }
 
    @Test
@@ -219,11 +220,11 @@ public class ViewFacadeTest extends IntegrationTestBase {
       viewFacade.setViewType(viewId1, type);
 
       List<ViewDao> views = viewFacade.getAllViewsOfType(type);
-      Assert.assertEquals(views.size(), 1);
-      Assert.assertEquals(views.get(0).getId(), viewId1);
+      assertThat(views).hasSize(1);
+      assertThat(views.get(0).getId()).isEqualTo(viewId1);
 
       views = viewFacade.getAllViewsOfType("non existing type");
-      Assert.assertEquals(views.size(), 0);
+      assertThat(views).isEmpty();
    }
 
    private void setUpCollection() {

@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -26,7 +28,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,13 +62,13 @@ public class VersionFacadeTest extends IntegrationTestBase {
       createCollection(TEST_READ_VERSION);
       DataDocument dataDocument = createTestDocument();
       String id = dataStorage.createDocument(TEST_READ_VERSION, dataDocument);
-      Assert.assertEquals(versionFacade.getDocumentVersion(dataStorage.readDocument(TEST_READ_VERSION, id)), 1);
+      assertThat(versionFacade.getDocumentVersion(dataStorage.readDocument(TEST_READ_VERSION, id))).isEqualTo(1);
    }
 
    @Test
    public void testGetVersionFromDocument() throws Exception {
       DataDocument dataDocument = createTestDocument();
-      Assert.assertEquals(versionFacade.getDocumentVersion(dataDocument), 1);
+      assertThat(versionFacade.getDocumentVersion(dataDocument)).isEqualTo(1);
    }
 
    @Test
@@ -78,9 +79,9 @@ public class VersionFacadeTest extends IntegrationTestBase {
       dataDocument.put("dog", "dog");
       dataDocument.setId(documentId);
       versionFacade.newDocumentVersion(TEST_NEW_VERSION, dataStorage.readDocument(TEST_NEW_VERSION, documentId), dataDocument, false);
-      Assert.assertEquals(dataStorage.readDocument(TEST_NEW_VERSION, documentId).getInteger(VERSION_STRING).intValue(), 2);
-      Assert.assertEquals(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 1)), 1);
-      Assert.assertEquals(dataStorage.readOldDocument(shadow, documentId, 1).getString("dog"), "cat");
+      assertThat(dataStorage.readDocument(TEST_NEW_VERSION, documentId).getInteger(VERSION_STRING).intValue()).isEqualTo(2);
+      assertThat(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 1))).isEqualTo(1);
+      assertThat(dataStorage.readOldDocument(shadow, documentId, 1).getString("dog")).isEqualTo("cat");
    }
 
    @Test
@@ -91,8 +92,8 @@ public class VersionFacadeTest extends IntegrationTestBase {
       dataDocument.setId(documentId);
       versionFacade.newDocumentVersion(TEST_NEW_VERSION_N, dataStorage.readDocument(TEST_NEW_VERSION_N, documentId), dataDocument, false);
 
-      Assert.assertEquals((int) dataStorage.readDocument(TEST_NEW_VERSION_N, documentId).getInteger(VERSION_STRING), 1);
-      Assert.assertEquals(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 0)), 0);
+      assertThat(dataStorage.readDocument(TEST_NEW_VERSION_N, documentId).getInteger(VERSION_STRING).intValue()).isEqualTo(1);
+      assertThat(versionFacade.getDocumentVersion(dataStorage.readOldDocument(shadow, documentId, 0))).isEqualTo(0);
    }
 
    @Test
@@ -105,11 +106,11 @@ public class VersionFacadeTest extends IntegrationTestBase {
       versionFacade.newDocumentVersion(TEST_CHANGED, dataStorage.readDocument(TEST_CHANGED, documentId), dataDocument, false);
 
       DataDocument fromDb = dataStorage.readDocument(TEST_CHANGED, documentId);
-      Assert.assertEquals(fromDb.getInteger(VERSION_STRING).intValue(), 2);
-      Assert.assertEquals(fromDb.getString("dog"), "pig");
+      assertThat(fromDb.getInteger(VERSION_STRING).intValue()).isEqualTo(2);
+      assertThat(fromDb.getString("dog")).isEqualTo("pig");
       DataDocument oldDoc = dataStorage.readOldDocument(shadow, documentId, 1);
-      Assert.assertEquals((int) oldDoc.getInteger(VERSION_STRING), 1);
-      Assert.assertEquals(oldDoc.getString("dog"), "cat");
+      assertThat(oldDoc.getInteger(VERSION_STRING).intValue()).isEqualTo(1);
+      assertThat(oldDoc.getString("dog")).isEqualTo("cat");
    }
 
    @Test
@@ -123,9 +124,9 @@ public class VersionFacadeTest extends IntegrationTestBase {
          actual = dataStorage.readDocument(TEST_MULTIPLE_VERSION, documentId);
          versionFacade.newDocumentVersion(TEST_MULTIPLE_VERSION, actual, dataDocument, false);
       }
-      Assert.assertEquals(versionFacade.getDocumentVersions(TEST_MULTIPLE_VERSION, documentId).size(), 10);
+      assertThat(versionFacade.getDocumentVersions(TEST_MULTIPLE_VERSION, documentId)).hasSize(10);
       dataStorage.dropOldDocument(shadow, documentId, 1);
-      Assert.assertEquals(versionFacade.getDocumentVersions(TEST_MULTIPLE_VERSION, documentId).size(), 9);
+      assertThat(versionFacade.getDocumentVersions(TEST_MULTIPLE_VERSION, documentId)).hasSize(9);
    }
 
    @Test
@@ -139,12 +140,12 @@ public class VersionFacadeTest extends IntegrationTestBase {
       DataDocument testDocument = versionFacade.readOldDocumentVersion(TEST_GET_OLD_DOC, dataDocument, 1);
       dataDocument = dataStorage.readDocument(TEST_GET_OLD_DOC, documentId);
       testDocument.replace(VERSION_STRING, 2);
-      Assert.assertTrue(testForEquiv(testDocument, dataDocument));
+      assertThat(testForEquiv(testDocument, dataDocument)).isTrue();
    }
 
    @Test
    public void testNotVersion() throws Exception {
-      Assert.assertEquals(versionFacade.getDocumentVersion(new DataDocument()), 0);
+      assertThat(versionFacade.getDocumentVersion(new DataDocument())).isEqualTo(0);
    }
 
    @Test
@@ -159,9 +160,9 @@ public class VersionFacadeTest extends IntegrationTestBase {
       DataDocument oldDoc = versionFacade.readOldDocumentVersion(TEST_REVERT, documentId, 1);
       versionFacade.revertDocumentVersion(TEST_REVERT, dataDocument, oldDoc);
       DataDocument newDoc = dataStorage.readDocument(TEST_REVERT, documentId);
-      Assert.assertEquals(versionFacade.getDocumentVersion(newDoc), 3);
-      Assert.assertEquals(newDoc.getString("dog"), "cat");
-      Assert.assertEquals(dataStorage.readOldDocument(shadow, documentId, 2).getString("dog"), "pig");
+      assertThat(versionFacade.getDocumentVersion(newDoc)).isEqualTo(3);
+      assertThat(newDoc.getString("dog")).isEqualTo("cat");
+      assertThat(dataStorage.readOldDocument(shadow, documentId, 2).getString("dog")).isEqualTo("pig");
    }
 
    @Test(expected = VersionUpdateConflictException.class)
