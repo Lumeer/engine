@@ -19,13 +19,14 @@
  */
 package io.lumeer.engine.controller.configuration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -119,8 +120,8 @@ public class ConfigurationManipulatorTest extends IntegrationTestBase {
       configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, PORT_KEY, DUMMY_PORT_VALUE);
       configurationManipulator.setConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, PORT_KEY, DUMMY_PORT_VALUE);
 
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, PORT_KEY).toString(), String.valueOf(DUMMY_PORT_VALUE));
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, PORT_KEY).toString(), String.valueOf(DUMMY_PORT_VALUE));
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, PORT_KEY).toString()).isEqualTo(String.valueOf(DUMMY_PORT_VALUE));
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, PORT_KEY).toString()).isEqualTo(String.valueOf(DUMMY_PORT_VALUE));
 
       systemDataStorage.dropCollection(COLLECTION_USER_SET_CONFIGURATION);
       systemDataStorage.dropCollection(COLLECTION_TEAM_SET_CONFIGURATION);
@@ -131,15 +132,15 @@ public class ConfigurationManipulatorTest extends IntegrationTestBase {
       configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY, DUMMY_VALUE);
       configurationManipulator.setConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY, DUMMY_VALUE);
 
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY).toString(), String.valueOf(DUMMY_VALUE));
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY).toString(), String.valueOf(DUMMY_VALUE));
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
 
       // #3 if key exists, value will be updated
       configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY, DUMMY_VALUE);
       configurationManipulator.setConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY, DUMMY_VALUE);
 
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY).toString(), String.valueOf(DUMMY_VALUE));
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY).toString(), String.valueOf(DUMMY_VALUE));
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
    }
 
    @Test
@@ -148,8 +149,8 @@ public class ConfigurationManipulatorTest extends IntegrationTestBase {
       systemDataStorage.createCollection(COLLECTION_TEAM_GET_CONFIGURATION);
 
       // #1 if the system collection is empty = key-value does not exist
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY), null);
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_TEAM_GET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY), null);
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY)).isNull();
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_GET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY)).isNull();
 
       systemDataStorage.dropCollection(COLLECTION_USER_GET_CONFIGURATION);
       systemDataStorage.dropCollection(COLLECTION_TEAM_GET_CONFIGURATION);
@@ -157,8 +158,8 @@ public class ConfigurationManipulatorTest extends IntegrationTestBase {
       // #2 if the system collection is filled
       fillSystemDatabase(COLLECTION_USER_GET_CONFIGURATION, COLLECTION_TEAM_GET_CONFIGURATION);
 
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY), DUMMY_DBURL_VALUE + 2);
-      Assert.assertEquals(configurationManipulator.getConfiguration(COLLECTION_TEAM_GET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY), DUMMY_DBURL_VALUE);
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY)).isEqualTo(DUMMY_DBURL_VALUE + 2);
+      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_GET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY)).isEqualTo(DUMMY_DBURL_VALUE);
    }
 
    @Test
@@ -168,8 +169,8 @@ public class ConfigurationManipulatorTest extends IntegrationTestBase {
       configurationManipulator.resetConfiguration(COLLECTION_USER_RESET_CONFIGURATION, DUMMY_USER_NAME_VALUE);
       configurationManipulator.resetConfiguration(COLLECTION_TEAM_RESET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE);
 
-      Assert.assertEquals(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_RESET_CONFIGURATION, DUMMY_USER_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY)).size(), 0);
-      Assert.assertEquals(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_RESET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY)).size(), 0);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_RESET_CONFIGURATION, DUMMY_USER_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).hasSize(0);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_RESET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).hasSize(0);
    }
 
    @Test
@@ -179,8 +180,8 @@ public class ConfigurationManipulatorTest extends IntegrationTestBase {
       configurationManipulator.resetConfigurationAttribute(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY, DUMMY_USER_NAME_VALUE, DBURL_KEY);
       configurationManipulator.resetConfigurationAttribute(COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY, DUMMY_TEAM_NAME_VALUE, DBURL_KEY);
 
-      Assert.assertFalse(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY, DUMMY_USER_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY)).containsKey(DBURL_KEY));
-      Assert.assertFalse(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY, DUMMY_TEAM_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY)).containsKey(DBURL_KEY));
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY, DUMMY_USER_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY, DUMMY_TEAM_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
    }
 
    private void fillSystemDatabase(final String collectionUser, final String collectionTeam) {
