@@ -39,7 +39,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
-public class ConfigurationFacadeTest extends IntegrationTestBase {
+public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
    private final String COLLECTION_USER_CONFIG = "config.user";
    private final String COLLECTION_TEAM_CONFIG = "config.team";

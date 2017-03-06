@@ -49,7 +49,7 @@ import javax.ws.rs.core.Response;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
-public class SearchServiceTest extends IntegrationTestBase {
+public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
    private final String PATH_PREFIX = PATH_CONTEXT + "/rest/";

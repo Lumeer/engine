@@ -45,7 +45,7 @@ import javax.inject.Inject;
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 @RunWith(Arquillian.class)
-public class CollectionMetadataFacadeTest extends IntegrationTestBase {
+public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;

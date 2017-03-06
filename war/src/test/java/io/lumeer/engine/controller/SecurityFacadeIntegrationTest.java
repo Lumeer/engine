@@ -38,7 +38,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:kotrady.johnny@gmail.com>Jan Kotrady</a>
  */
 @RunWith(Arquillian.class)
-public class SecurityFacadeTest extends IntegrationTestBase {
+public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    /*
    Tieto testy som nepisal optimalne, ale tak,

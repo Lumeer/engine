@@ -44,11 +44,8 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-      <wildfly.bom.version>10.1.0.Final</wildfly.bom.version>
-
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
-      <version.keycloak>2.4.0.Final</version.keycloak>
 
       <java.level>1.8</java.level>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
@@ -65,7 +62,7 @@
          <dependency>
             <groupId>org.wildfly.bom</groupId>
             <artifactId>wildfly-javaee7-with-tools</artifactId>
-            <version>${wildfly.bom.version}</version>
+            <version>${version.wildfly}</version>
             <type>pom</type>
             <scope>import</scope>
          </dependency>
@@ -178,7 +175,7 @@
       </dependency>
       <dependency>
          <groupId>org.wildfly.arquillian</groupId>
-         <artifactId>wildfly-arquillian-container-managed</artifactId>
+         <artifactId>wildfly-arquillian-container-remote</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -222,12 +219,18 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>${maven.surefire.plugin.version}</version>
             <configuration>
-               <!-- Fork every test because it will launch a separate AS instance -->
-               <forkCount>1</forkCount>
-               <reuseForks>false</reuseForks>
                <redirectTestOutputToFile>false</redirectTestOutputToFile>
+               <systemPropertyVariables>
+                  <log4j.skipJansi>true</log4j.skipJansi>
+                  <lumeer.defaults>${lumeer.defaults}</lumeer.defaults>
+               </systemPropertyVariables>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
                <systemPropertyVariables>
                   <log4j.skipJansi>true</log4j.skipJansi>
                   <lumeer.defaults>${lumeer.defaults}</lumeer.defaults>
@@ -345,7 +348,7 @@
             <executions>
                <execution>
                   <id>unpack</id>
-                  <phase>process-test-classes</phase>
+                  <phase>pre-integration-test</phase>
                   <goals>
                      <goal>unpack</goal>
                   </goals>
@@ -354,10 +357,10 @@
                         <artifactItem>
                            <groupId>org.wildfly</groupId>
                            <artifactId>wildfly-dist</artifactId>
-                           <version>${wildfly.bom.version}</version>
+                           <version>${version.wildfly}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
-                           <outputDirectory>target</outputDirectory>
+                           <outputDirectory>${project.build.directory}</outputDirectory>
                         </artifactItem>
                         <artifactItem>
                            <groupId>org.keycloak</groupId>
@@ -365,12 +368,16 @@
                            <version>${version.keycloak}</version>
                            <type>zip</type>
                            <overWrite>true</overWrite>
-                           <outputDirectory>target/wildfly-10.1.0.Final</outputDirectory>
+                           <outputDirectory>${wildfly.dir}</outputDirectory>
                         </artifactItem>
                      </artifactItems>
                   </configuration>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.cargo</groupId>
+            <artifactId>cargo-maven2-plugin</artifactId>
          </plugin>
       </plugins>
       <pluginManagement>
@@ -413,11 +420,6 @@
                   <useAgent>true</useAgent>
                </configuration>
             </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-surefire-plugin</artifactId>
-               <version>${maven.surefire.plugin.version}</version>
-            </plugin>
          </plugins>
       </pluginManagement>
    </build>
@@ -435,8 +437,15 @@
          <build>
             <plugins>
                <plugin>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <version>${maven.surefire.plugin.version}</version>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <skipITs>true</skipITs>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>org.codehaus.cargo</groupId>
+                  <artifactId>cargo-maven2-plugin</artifactId>
                   <configuration>
                      <skip>true</skip>
                   </configuration>
