@@ -36,7 +36,6 @@ import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import com.mongodb.util.JSON;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -250,7 +249,6 @@ public class CollectionServiceTest extends IntegrationTestBase {
       List<String> attributeNames = collectionMetadataFacade.getCollectionAttributesNames(getInternalName(COLLECTION_DROP_ATTRIBUTE));
       boolean containsKey = attributeNames.contains(attributeName);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      Assert.assertFalse(containsKey);
       assertThat(containsKey).isFalse();
       response2.close();
 

@@ -27,7 +27,6 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -95,7 +94,7 @@ public class SecurityFacadeTest extends IntegrationTestBase {
    @Test
    public void testCheckForWriteDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      Assert.assertTrue(securityFacade.checkForWrite(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForWrite(dataDocument, TEST_USER)).isTrue();
       securityFacade.addMetaData(dataDocument);
       addRights(dataDocument, TEST_USER2, 2);
       addRights(dataDocument, TEST_USER3, 3);
@@ -113,7 +112,7 @@ public class SecurityFacadeTest extends IntegrationTestBase {
    @Test
    public void testCheckForExecuteDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      Assert.assertTrue(securityFacade.checkForExecute(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForExecute(dataDocument, TEST_USER)).isTrue();
       securityFacade.addMetaData(dataDocument);
       addRights(dataDocument, TEST_USER1, 1);
       addRights(dataDocument, TEST_USER3, 3);
@@ -131,7 +130,7 @@ public class SecurityFacadeTest extends IntegrationTestBase {
    @Test
    public void testCheckForAddRightsDataDoc() throws Exception {
       DataDocument dataDocument = new DataDocument();
-      Assert.assertTrue(securityFacade.checkForAddRights(dataDocument, TEST_USER));
+      assertThat(securityFacade.checkForAddRights(dataDocument, TEST_USER)).isTrue();
       securityFacade.addMetaData(dataDocument);
       addRights(dataDocument, TEST_USER1, 1);
       addRights(dataDocument, TEST_USER3, 3);
