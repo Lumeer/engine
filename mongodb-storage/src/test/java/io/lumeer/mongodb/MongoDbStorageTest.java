@@ -28,6 +28,7 @@ import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.model.Filters;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -146,6 +147,13 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_BASIC_ARRAY_MANIPULATION);
       mongoDbStorage.dropCollection(COLLECTION_COMPLEX_ARRAY_MANIPULATION);
       mongoDbStorage.dropCollection(COLLECTION_AGGREGATE);
+   }
+
+   @After
+   public void tearDown() {
+      if (mongoDbStorage != null) {
+         mongoDbStorage.disconnect();
+      }
    }
 
    @Test
