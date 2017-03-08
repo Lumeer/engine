@@ -21,11 +21,11 @@ $ mvn clean install
 Next switch to `war` directory and run tests disabling the `default` profile:
 
 ```
-$ mvn test -P-default
+$ mvn verify -P-default
 ```
 
 Use this to run a specified test method in your test class:
 
 ```
-$ mvn -Dtest=YourTestClass#yourTestMethod test -P-default
+$ mvn -Dit.test=YourTestClass#yourTestMethod verify -P-default
 ```

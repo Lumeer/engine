@@ -30,6 +30,8 @@ import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
@@ -40,6 +42,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -56,7 +59,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-@Path("/collections/{collectionName}/documents")
+@Path("/{organisation}/{project}/collections/{collectionName}/documents")
 @RequestScoped
 public class DocumentService implements Serializable {
 
@@ -82,6 +85,26 @@ public class DocumentService implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   @PathParam("organisation")
+   private String organisationId;
+
+   @Inject
+   @PathParam("project")
+   private String projectId;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @PostConstruct
+   public void init() {
+      organisationFacade.setOrganisationId(organisationId);
+      projectFacade.setProjectId(projectId);
+   }
 
    /**
     * Creates and inserts a new document to specified collection. The method creates the given collection if does not exist.

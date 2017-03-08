@@ -24,6 +24,8 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
@@ -33,6 +35,7 @@ import io.lumeer.engine.rest.dao.ViewDao;
 import org.bson.Document;
 
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -50,7 +53,7 @@ import javax.ws.rs.core.MediaType;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@Path("/views/")
+@Path("/{organisation}/{project}/views/")
 @RequestScoped
 public class ViewService {
 
@@ -62,6 +65,26 @@ public class ViewService {
 
    @Inject
    private SecurityFacade securityFacade;
+
+   @Inject
+   @PathParam("organisation")
+   private String organisationId;
+
+   @Inject
+   @PathParam("project")
+   private String projectId;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @PostConstruct
+   public void init() {
+      organisationFacade.setOrganisationId(organisationId);
+      projectFacade.setProjectId(projectId);
+   }
 
    /**
     * Gets a complete list of all views which current user can read. Filters the views by type when parameter is not empty.

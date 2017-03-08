@@ -27,6 +27,8 @@ import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ConfigurationFacade;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -47,7 +49,7 @@ import javax.ws.rs.core.MediaType;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@Path("/whisper")
+@Path("/{organisation}/{project}/whisper")
 public class WhisperService {
 
    @Inject
@@ -68,8 +70,25 @@ public class WhisperService {
 
    private Locale locale = Locale.getDefault();
 
+   @Inject
+   @PathParam("organisation")
+   private String organisationId;
+
+   @Inject
+   @PathParam("project")
+   private String projectId;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
    @PostConstruct
-   public void initLocale() {
+   public void init() {
+      organisationFacade.setOrganisationId(organisationId);
+      projectFacade.setProjectId(projectId);
+
       locale = Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US"));
    }
 

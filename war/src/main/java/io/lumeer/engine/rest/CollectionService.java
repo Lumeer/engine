@@ -34,6 +34,8 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
@@ -44,6 +46,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -61,7 +64,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@Path("/collections")
+@Path("/{organisation}/{project}/collections")
 @RequestScoped
 public class CollectionService implements Serializable {
 
@@ -87,6 +90,26 @@ public class CollectionService implements Serializable {
 
    @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   @PathParam("organisation")
+   private String organisationId;
+
+   @Inject
+   @PathParam("project")
+   private String projectId;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @PostConstruct
+   public void init() {
+      organisationFacade.setOrganisationId(organisationId);
+      projectFacade.setProjectId(projectId);
+   }
 
    /**
     * Returns a list of collection names in the database.

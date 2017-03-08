@@ -22,22 +22,26 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.exception.InvalidQueryException;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SearchFacade;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@Path("/query")
+@Path("/{organisation}/{project}/query")
 @RequestScoped
 public class SearchService implements Serializable {
 
@@ -45,6 +49,26 @@ public class SearchService implements Serializable {
 
    @Inject
    private SearchFacade searchFacade;
+
+   @Inject
+   @PathParam("organisation")
+   private String organisationId;
+
+   @Inject
+   @PathParam("project")
+   private String projectId;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @PostConstruct
+   public void init() {
+      organisationFacade.setOrganisationId(organisationId);
+      projectFacade.setProjectId(projectId);
+   }
 
    /**
     * Queries the data storage in a flexible way. Allows for none or multiple collection names to be specified,

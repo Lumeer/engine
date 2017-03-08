@@ -19,6 +19,9 @@ import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
@@ -29,9 +32,12 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exception> {
 
+   @Inject
+   private Logger log;
+
    @Override
    public Response toResponse(final Exception e) {
-      e.printStackTrace();
+      log.log(Level.INFO, "Exception while serving request: ", e);
 
       // 400 - BAD REQUEST
       if (e instanceof UserCollectionAlreadyExistsException || e instanceof CollectionAlreadyExistsException ||

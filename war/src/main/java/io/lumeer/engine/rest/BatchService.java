@@ -29,13 +29,17 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.BatchFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -43,7 +47,7 @@ import javax.ws.rs.core.MediaType;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@Path("/batch/")
+@Path("/{organisation}/{project}/batch/")
 @RequestScoped
 public class BatchService {
 
@@ -52,6 +56,26 @@ public class BatchService {
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
+
+   @Inject
+   @PathParam("organisation")
+   private String organisationId;
+
+   @Inject
+   @PathParam("project")
+   private String projectId;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @PostConstruct
+   public void init() {
+      organisationFacade.setOrganisationId(organisationId);
+      projectFacade.setProjectId(projectId);
+   }
 
    /**
     * Runs a merge batch operation.

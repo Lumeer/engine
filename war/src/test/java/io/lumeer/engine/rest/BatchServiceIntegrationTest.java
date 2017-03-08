@@ -46,7 +46,7 @@ import javax.ws.rs.core.Response;
 public class BatchServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080/";
-   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/";
+   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/sampleOrg/sampleProject/";
    private final String COLLECTION_NAME = "Supeř Kolekce +ěščřžý";
    //   private final String PATH_PREFIX = "lumeer-engine/rest/";
 

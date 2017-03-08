@@ -61,7 +61,7 @@ import javax.ws.rs.core.Response;
 public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
-   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/collections/";
+   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/sampleOrg/testProject/collections/";
 
    private final String COLLECTION_GET_ALL_COLLECTIONS_1 = "CollectionServiceCollectionGetAllCollections1";
    private final String COLLECTION_GET_ALL_COLLECTIONS_2 = "CollectionServiceCollectionGetAllCollections2";

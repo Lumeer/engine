@@ -271,7 +271,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String setPathPrefix(final String collectionName) {
-      return PATH_CONTEXT + "/rest/collections/" + collectionName + "/documents/";
+      return PATH_CONTEXT + "/rest/sampleOrg/sampleProj/collections/" + collectionName + "/documents/";
    }
 
    private String getInternalName(final String collectionOriginalName) {

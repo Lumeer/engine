@@ -52,7 +52,7 @@ import javax.ws.rs.core.Response;
 public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
-   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/";
+   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/sampleOrg/sampleProj/";
 
    private final String COLLECTION_QUERY_SEARCH = "SearchServiceCollectionRunQuery";
 

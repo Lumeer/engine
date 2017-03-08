@@ -28,6 +28,8 @@ import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
@@ -35,6 +37,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -53,7 +56,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-@Path("/collections/{collectionName}/links")
+@Path("/{organisation}/{project}/collections/{collectionName}/links")
 public class LinkingService {
 
    @Inject
@@ -67,6 +70,26 @@ public class LinkingService {
 
    @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   @PathParam("organisation")
+   private String organisationId;
+
+   @Inject
+   @PathParam("project")
+   private String projectId;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @PostConstruct
+   public void init() {
+      organisationFacade.setOrganisationId(organisationId);
+      projectFacade.setProjectId(projectId);
+   }
 
    /**
     * Gets all types of links between given collections.
