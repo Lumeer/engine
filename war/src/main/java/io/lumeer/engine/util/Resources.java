@@ -56,7 +56,11 @@ public class Resources {
    @Produces
    @Dependent
    public Logger produceLog(InjectionPoint injectionPoint) {
-      return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
+      return produceLog(injectionPoint.getMember().getDeclaringClass().getName());
+   }
+
+   public static Logger produceLog(final String className) {
+      return Logger.getLogger(className);
    }
 
    /**

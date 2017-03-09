@@ -26,6 +26,7 @@ import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
+import io.lumeer.engine.controller.configuration.ConfigurationManipulatorIntegrationTest;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -41,10 +42,6 @@ import javax.inject.Inject;
 @RunWith(Arquillian.class)
 public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
-   private final String COLLECTION_USER_CONFIG = "config.user";
-   private final String COLLECTION_TEAM_CONFIG = "config.team";
-
-   private final String NAME_KEY = "name";
    private final String PORT_KEY = "db_port_test";
    private final String DBHOST_KEY = "db_host_test";
    private final String DBURL_KEY = "db_url_test";
@@ -78,48 +75,79 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private UserFacade userFacade;
 
-   private DataDocument dummyDataDocument;
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Before
    public void setUp() throws Exception {
-      if (isDatabaseCollection(COLLECTION_USER_CONFIG)) {
-         systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
-      }
+      projectFacade.setProjectId("configProject");
+      organisationFacade.setOrganisationId("configOrg");
 
-      if (isDatabaseCollection(COLLECTION_TEAM_CONFIG)) {
-         systemDataStorage.dropCollection(COLLECTION_TEAM_CONFIG);
+      if (isDatabaseCollection(ConfigurationFacade.USER_CONFIG_COLLECTION)) {
+         systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
+      }
+      if (isDatabaseCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION)) {
+         systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
+      }
+      if (isDatabaseCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION)) {
+         systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
       }
    }
 
    @Test
    public void testGetConfigurationString() throws Exception {
       // #1 if both system collections are empty, default value will be returned
-      Optional defaultValue = configurationFacade.getConfigurationString(DBHOST_KEY);
+      final Optional defaultValue = configurationFacade.getConfigurationString(DBHOST_KEY);
       assertThat(defaultValue.get()).isEqualTo(DEFAULT_DBHOST_VALUE);
 
-      systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
-      systemDataStorage.dropCollection(COLLECTION_TEAM_CONFIG);
+      systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
-      // #2 if the team system collection has key-value
-      fillSystemCollection(COLLECTION_TEAM_CONFIG);
-      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE + 0);
+      // #2 if the org. system collection has key-value
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.ORGANISATION);
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
 
-      // #3 if none of system values exists in collections, neither the default value
+      systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
+
+      // #3 if the project system collection has key-value
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+
+      systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
+
+      // #4 if the user system collection has key-value
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+
+      // #5 if none of system values exists in collections, neither the default value
       assertThat(configurationFacade.getConfigurationString(DEFAULT_NOT_EXISTED_KEY)).isEqualTo(Optional.empty());
    }
 
    @Test
    public void testGetConfigurationInteger() throws Exception {
       // #1 if both system collections are empty, default value will be returned
-      Optional defaultValue = configurationFacade.getConfigurationInteger(PORT_KEY);
+      final Optional defaultValue = configurationFacade.getConfigurationInteger(PORT_KEY);
       assertThat(defaultValue.get()).isEqualTo(DEFAULT_PORT_VALUE);
 
-      systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
-      systemDataStorage.dropCollection(COLLECTION_TEAM_CONFIG);
+      systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
+      systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
       // #2 if the user system collection has key-value
-      fillSystemCollection(COLLECTION_USER_CONFIG);
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
       assertThat(configurationFacade.getConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
+
+      // #3 string key is present but cannot be obtain as integer
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).isNotEmpty();
+      assertThat(configurationFacade.getConfigurationInteger(DBHOST_KEY)).isEmpty();
 
       // #3 if none of system values exists in collections, neither the default value
       assertThat(configurationFacade.getConfigurationString(DEFAULT_NOT_EXISTED_KEY)).isEqualTo(Optional.empty());
@@ -128,8 +156,8 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testGetConfigurationDocument() throws Exception {
       // #1 if the user system collection has key-value
-      fillSystemCollection(COLLECTION_USER_CONFIG);
-      assertThat(configurationFacade.getConfigurationDocument(DOCUMENT_PROPERTY_KEY).get()).isEqualTo(dummyDataDocument);
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
+      assertThat(configurationFacade.getConfigurationDocument(DOCUMENT_PROPERTY_KEY).get()).isEqualTo(ConfigurationManipulatorIntegrationTest.createDummyDataDocument());
 
       // #3 if none of system values exists in collections, neither the default value
       assertThat(configurationFacade.getConfigurationDocument(DEFAULT_NOT_EXISTED_KEY)).isEqualTo(Optional.empty());
@@ -137,15 +165,15 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSetAndGetUserConfigurationString() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_USER_CONFIG);
+      systemDataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
       // #1 if the default value exists
       configurationFacade.setUserConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
       assertThat(configurationFacade.getUserConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
-      systemDataStorage.dropCollection(COLLECTION_USER_CONFIG);
+      systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
       // #2 if the system user collection is filled and key exists
-      fillSystemCollection(COLLECTION_USER_CONFIG);
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
       configurationFacade.setUserConfigurationString(DBURL_KEY, DUMMY_VALUE);
       assertThat(configurationFacade.getUserConfigurationString(DBURL_KEY).get()).isEqualTo(DUMMY_VALUE);
 
@@ -155,7 +183,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSetAndGetUserConfigurationInteger() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_USER_CONFIG);
+      systemDataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
       // #1 if the default value exists
       configurationFacade.setUserConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
@@ -167,128 +195,179 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSetAndGetUserConfigurationDocument() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_USER_CONFIG);
+      systemDataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
-      DataDocument dummyDocument = createDummyDataDocument();
+      final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
       configurationFacade.setUserConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
-      DataDocument document = configurationFacade.getUserConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
+      final DataDocument document = configurationFacade.getUserConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
       assertThat(dummyDocument).isEqualTo(document);
    }
 
    @Test
-   public void testSetAndGetTeamConfigurationString() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_TEAM_CONFIG);
+   public void testSetAndGetProjectConfigurationString() throws Exception {
+      systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       // #1 if the system user collection is empty
-      configurationFacade.setTeamConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
-      assertThat(configurationFacade.getTeamConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
-      systemDataStorage.dropCollection(COLLECTION_TEAM_CONFIG);
+      configurationFacade.setProjectConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getProjectConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       // #2 if the system user collection is filled and key exists
-      fillSystemCollection(COLLECTION_TEAM_CONFIG);
-      configurationFacade.setTeamConfigurationString(DBURL_KEY, DUMMY_VALUE);
-      assertThat(configurationFacade.getTeamConfigurationString(DBURL_KEY).get()).isEqualTo(DUMMY_VALUE);
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
+      configurationFacade.setProjectConfigurationString(DBURL_KEY, DUMMY_VALUE);
+      assertThat(configurationFacade.getProjectConfigurationString(DBURL_KEY).get()).isEqualTo(DUMMY_VALUE);
    }
 
    @Test
-   public void testSetAndGetTeamConfigurationInteger() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_TEAM_CONFIG);
+   public void testSetAndGetProjectConfigurationInteger() throws Exception {
+      systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
-      configurationFacade.setTeamConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
-      assertThat(configurationFacade.getTeamConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
+      configurationFacade.setProjectConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
+      assertThat(configurationFacade.getProjectConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
    }
 
    @Test
-   public void testSetAndGetTeamConfigurationDocument() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_TEAM_CONFIG);
+   public void testSetAndGetProjectConfigurationDocument() throws Exception {
+      systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
-      DataDocument dummyDocument = createDummyDataDocument();
-      configurationFacade.setTeamConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
-      DataDocument document = configurationFacade.getTeamConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
+      final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
+      configurationFacade.setProjectConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      final DataDocument document = configurationFacade.getProjectConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
+
+      assertThat(dummyDocument).isEqualTo(document);
+   }
+
+   @Test
+   public void testSetAndGetOrganisationConfigurationString() throws Exception {
+      systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
+
+      // #1 if the system user collection is empty
+      configurationFacade.setOrganisationConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getOrganisationConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
+
+      // #2 if the system user collection is filled and key exists
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.ORGANISATION);
+      configurationFacade.setOrganisationConfigurationString(DBURL_KEY, DUMMY_VALUE);
+      assertThat(configurationFacade.getOrganisationConfigurationString(DBURL_KEY).get()).isEqualTo(DUMMY_VALUE);
+   }
+
+   @Test
+   public void testSetAndGetOrganisationConfigurationInteger() throws Exception {
+      systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
+
+      configurationFacade.setOrganisationConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
+      assertThat(configurationFacade.getOrganisationConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
+   }
+
+   @Test
+   public void testSetAndGetOrganisationConfigurationDocument() throws Exception {
+      systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
+
+      final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
+      configurationFacade.setOrganisationConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      final DataDocument document = configurationFacade.getOrganisationConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
       assertThat(dummyDocument).isEqualTo(document);
    }
 
    @Test
    public void testResetUserConfiguration() throws Exception {
-      fillSystemCollection(COLLECTION_USER_CONFIG);
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
+      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/" + userFacade.getUserEmail();
 
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY))).hasSize(BEFORE_SIZE_RESET);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.USER_CONFIG_COLLECTION, id).get().get(CONFIG_DOCUMENT_KEY))).hasSize(BEFORE_SIZE_RESET);
       configurationFacade.resetUserConfiguration();
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY))).hasSize(AFTER_SIZE_RESET);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.USER_CONFIG_COLLECTION, id).get().get(CONFIG_DOCUMENT_KEY))).hasSize(AFTER_SIZE_RESET);
    }
 
    @Test
    public void testResetUserConfigurationAttribute() throws Exception {
-      fillSystemCollection(COLLECTION_USER_CONFIG);
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
+      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/" + userFacade.getUserEmail();
 
       configurationFacade.resetUserConfigurationAttribute(DBURL_KEY);
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.USER_CONFIG_COLLECTION, id).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
    }
 
    @Test
-   public void testResetTeamConfiguration() throws Exception {
-      fillSystemCollection(COLLECTION_TEAM_CONFIG);
+   public void testResetProjectConfiguration() throws Exception {
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
 
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY))).hasSize(BEFORE_SIZE_RESET);
-      configurationFacade.resetTeamConfiguration();
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY))).hasSize(AFTER_SIZE_RESET);
+      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId();
+
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, key).get().get(CONFIG_DOCUMENT_KEY))).hasSize(BEFORE_SIZE_RESET);
+      configurationFacade.resetProjectConfiguration();
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, key).get().get(CONFIG_DOCUMENT_KEY))).hasSize(AFTER_SIZE_RESET);
    }
 
    @Test
-   public void testResetTeamConfigurationAttribute() throws Exception {
-      fillSystemCollection(COLLECTION_TEAM_CONFIG);
+   public void testResetProjectConfigurationAttribute() throws Exception {
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
 
-      configurationFacade.resetTeamConfigurationAttribute(DBURL_KEY);
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_CONFIG, userFacade.getUserEmail()).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
+      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId();
+
+      configurationFacade.resetProjectConfigurationAttribute(DBURL_KEY);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, key).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
    }
 
-   private void fillSystemCollection(final String collectionName) {
-      if (collectionName != null) {
-         systemDataStorage.createCollection(collectionName);
-         // insert user entries
-         for (int i = 0; i < 5; i++) {
-            DataDocument insertedDocument = new DataDocument();
-            if (i == 0) {
-               insertedDocument.put(NAME_KEY, userFacade.getUserEmail());
-            } else {
-               insertedDocument.put(NAME_KEY, DUMMY_EMAIL_PREFIX + i + DUMMY_EMAIL_DOMAIN);
-            }
+   @Test
+   public void testResetOrganisationConfiguration() throws Exception {
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.ORGANISATION);
 
-            DataDocument config = new DataDocument();
-            config.put(DBHOST_KEY, DUMMY_DBHOST_VALUE + i);
-            config.put(PORT_KEY, DUMMY_PORT_VALUE + i);
-            config.put(DBURL_KEY, DUMMY_DBURL_VALUE + i);
-            config.put(DOCUMENT_PROPERTY_KEY, createDummyDataDocument());
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION, organisationFacade.getOrganisationId()).get().get(CONFIG_DOCUMENT_KEY))).hasSize(BEFORE_SIZE_RESET);
+      configurationFacade.resetOrganisationConfiguration();
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION, organisationFacade.getOrganisationId()).get().get(CONFIG_DOCUMENT_KEY))).hasSize(AFTER_SIZE_RESET);
+   }
 
-            insertedDocument.put(CONFIG_DOCUMENT_KEY, config);
+   @Test
+   public void testResetOrganisationConfigurationAttribute() throws Exception {
+      fillSystemCollection(ConfigurationFacade.ConfigurationLevel.ORGANISATION);
 
-            systemDataStorage.createDocument(collectionName, insertedDocument);
-         }
+      configurationFacade.resetOrganisationConfigurationAttribute(DBURL_KEY);
+      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION, organisationFacade.getOrganisationId()).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
+   }
+
+   private void fillSystemCollection(final ConfigurationFacade.ConfigurationLevel level) {
+      final String collectionName;
+      final String nameKeyValue;
+
+      switch (level) {
+         case USER:
+            collectionName = ConfigurationFacade.USER_CONFIG_COLLECTION;
+            nameKeyValue = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/" + userFacade.getUserEmail();
+            break;
+         case PROJECT:
+            collectionName = ConfigurationFacade.PROJECT_CONFIG_COLLECTION;
+            nameKeyValue = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId();
+            break;
+         case ORGANISATION:
+            collectionName = ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION;
+            nameKeyValue = organisationFacade.getOrganisationId();
+            break;
+         default:
+            return; // never happens but we can compile
       }
-   }
 
-   private DataDocument createDummyDataDocument() {
-      String dummyKey1 = "key1";
-      String dummyKey2 = "key2";
-      String dummyValue1 = "param1";
-      String dummyValue2 = "param2";
+      systemDataStorage.createCollection(collectionName);
+      // insert user entries
+      final DataDocument insertedDocument = new DataDocument();
+      insertedDocument.put(ConfigurationManipulator.NAME_KEY, nameKeyValue);
 
-      dummyDataDocument = new DataDocument();
-      dummyDataDocument.put(dummyKey1, dummyValue1);
-      dummyDataDocument.put(dummyKey2, dummyValue2);
+      final DataDocument config = new DataDocument();
+      config.put(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      config.put(PORT_KEY, DUMMY_PORT_VALUE);
+      config.put(DBURL_KEY, DUMMY_DBURL_VALUE);
+      config.put(DOCUMENT_PROPERTY_KEY, ConfigurationManipulatorIntegrationTest.createDummyDataDocument());
 
-      return dummyDataDocument;
+      insertedDocument.put(CONFIG_DOCUMENT_KEY, config);
+
+      systemDataStorage.createDocument(collectionName, insertedDocument);
    }
 
    private boolean isDatabaseCollection(final String collectionName) {
-      try {
-         return systemDataStorage.hasCollection(collectionName);
-      } catch (Exception e) {
-         // nothing to do
-      }
-      return false;
+      return systemDataStorage.hasCollection(collectionName);
    }
 
 }

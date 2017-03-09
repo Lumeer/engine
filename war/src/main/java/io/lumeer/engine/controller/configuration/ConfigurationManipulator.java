@@ -70,9 +70,9 @@ public class ConfigurationManipulator implements Serializable {
     }
     */
 
-   private static final String NAME_KEY = "name";
-   private static final String CONFIG_KEY = "config";
-   private static final String ID_KEY = "_id";
+   public static final String NAME_KEY = "name";
+   public static final String CONFIG_KEY = "config";
+   public static final String ID_KEY = "_id";
 
    @Inject
    @SystemDataStorage
