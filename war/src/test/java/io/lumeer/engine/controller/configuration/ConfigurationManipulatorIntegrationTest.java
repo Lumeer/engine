@@ -48,7 +48,6 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_TEAM_RESET_CONFIGURATION = "config.team_resetConfiguration";
    private final String COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY = "config.team_resetConfigurationAttribute";
 
-   private final String NAME_KEY = "name";
    private final String PORT_KEY = "db_port";
    private final String DBHOST_KEY = "db_host";
    private final String DBURL_KEY = "db_url";
@@ -73,8 +72,6 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
 
    @Inject
    private ConfigurationManipulator configurationManipulator;
-
-   private DataDocument dummyDataDocument;
 
    @Before
    public void setUp() throws Exception {
@@ -191,7 +188,7 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
       // insert user entries
       for (int i = 0; i < 5; i++) {
          DataDocument insertedDocument = new DataDocument();
-         insertedDocument.put(NAME_KEY, DUMMY_EMAIL_PREFIX + i + DUMMY_EMAIL_DOMAIN);
+         insertedDocument.put(ConfigurationManipulator.NAME_KEY, DUMMY_EMAIL_PREFIX + i + DUMMY_EMAIL_DOMAIN);
 
          DataDocument config = new DataDocument();
          config.put(DBHOST_KEY, DUMMY_DBHOST_VALUE + i);
@@ -206,7 +203,7 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
 
       // insert single team entry
       DataDocument insertedDocument = new DataDocument();
-      insertedDocument.put(NAME_KEY, DUMMY_TEAM_NAME_VALUE);
+      insertedDocument.put(ConfigurationManipulator.NAME_KEY, DUMMY_TEAM_NAME_VALUE);
 
       DataDocument config = new DataDocument();
       config.put(DBHOST_KEY, DUMMY_DBHOST_VALUE);
@@ -219,13 +216,13 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
       systemDataStorage.createDocument(collectionTeam, insertedDocument);
    }
 
-   private DataDocument createDummyDataDocument() {
-      String dummyKey1 = "key1";
-      String dummyKey2 = "key2";
-      String dummyValue1 = "param1";
-      String dummyValue2 = "param2";
+   public static DataDocument createDummyDataDocument() {
+      final String dummyKey1 = "key1";
+      final String dummyKey2 = "key2";
+      final String dummyValue1 = "param1";
+      final String dummyValue2 = "param2";
 
-      dummyDataDocument = new DataDocument();
+      final DataDocument dummyDataDocument = new DataDocument();
       dummyDataDocument.put(dummyKey1, dummyValue1);
       dummyDataDocument.put(dummyKey2, dummyValue2);
 
@@ -233,11 +230,6 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
    }
 
    private boolean isDatabaseCollection(final String collectionName) {
-      try {
-         return systemDataStorage.hasCollection(collectionName);
-      } catch (Exception e) {
-         // nothing to do
-      }
-      return false;
+      return systemDataStorage.hasCollection(collectionName);
    }
 }

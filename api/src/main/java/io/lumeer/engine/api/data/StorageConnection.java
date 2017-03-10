@@ -20,6 +20,7 @@
 package io.lumeer.engine.api.data;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Credentials and URL to get a database connection.
@@ -78,5 +79,37 @@ public class StorageConnection implements Serializable {
             + ", userName='" + userName + '\''
             + ", password=" + new String(password)
             + '}';
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+
+      final StorageConnection that = (StorageConnection) o;
+
+      if (port != that.port) {
+         return false;
+      }
+      if (!host.equals(that.host)) {
+         return false;
+      }
+      if (userName != null ? !userName.equals(that.userName) : that.userName != null) {
+         return false;
+      }
+      return Arrays.equals(password, that.password);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = host.hashCode();
+      result = 31 * result + port;
+      result = 31 * result + (userName != null ? userName.hashCode() : 0);
+      result = 31 * result + Arrays.hashCode(password);
+      return result;
    }
 }
