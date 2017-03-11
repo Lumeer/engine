@@ -45,10 +45,6 @@ import javax.inject.Inject;
 @SessionScoped
 public class VersionFacade implements Serializable {
 
-   private final String SHADOW = ".shadow";
-
-   public static final String METADATA_ID_KEY = "_id";
-
    private DataStorage dataStorage;
 
    @Inject
