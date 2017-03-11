@@ -26,6 +26,7 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.mongodb.MongoUtils;
 
@@ -34,6 +35,7 @@ import org.bson.types.ObjectId;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -43,8 +45,15 @@ import javax.inject.Inject;
 @SessionScoped
 public class VersionFacade implements Serializable {
 
-   @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @PostConstruct
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    public String getVersionMetadataString() {
       return LumeerConst.Document.METADATA_VERSION_KEY;

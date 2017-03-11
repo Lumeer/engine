@@ -31,9 +31,11 @@ import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,7 +59,6 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionFacade collectionFacade;
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -80,6 +81,14 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
    private final String COLLECTION_READ_ACCESS_RIGHTS = "DocumentServiceCollectionrReadAccessRights";
    private final String COLLECTION_UPDATE_ACCESS_RIGHTS = "DocumentServiceCollectionrUpdateAccessRights";
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testRegister() throws Exception {

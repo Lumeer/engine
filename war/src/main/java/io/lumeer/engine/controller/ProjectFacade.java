@@ -29,7 +29,7 @@ import javax.enterprise.context.RequestScoped;
 @RequestScoped
 public class ProjectFacade {
 
-   private String projectId;
+   private String projectId = "default";
 
    public String getProjectId() {
       return projectId;

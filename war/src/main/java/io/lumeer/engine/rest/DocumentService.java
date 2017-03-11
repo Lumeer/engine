@@ -35,6 +35,7 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -83,14 +84,11 @@ public class DocumentService implements Serializable {
    @Inject
    private UserFacade userFacade;
 
-   @Inject
    private DataStorage dataStorage;
 
-   @Inject
    @PathParam("organisation")
    private String organisationId;
 
-   @Inject
    @PathParam("project")
    private String projectId;
 
@@ -100,8 +98,13 @@ public class DocumentService implements Serializable {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
    @PostConstruct
    public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+
       organisationFacade.setOrganisationId(organisationId);
       projectFacade.setProjectId(projectId);
    }

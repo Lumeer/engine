@@ -29,6 +29,7 @@ import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ConfigurationFacade;
 import io.lumeer.engine.controller.OrganisationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -52,7 +53,6 @@ import javax.ws.rs.core.MediaType;
 @Path("/{organisation}/{project}/whisper")
 public class WhisperService {
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -70,11 +70,9 @@ public class WhisperService {
 
    private Locale locale = Locale.getDefault();
 
-   @Inject
    @PathParam("organisation")
    private String organisationId;
 
-   @Inject
    @PathParam("project")
    private String projectId;
 
@@ -84,8 +82,13 @@ public class WhisperService {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
    @PostConstruct
    public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+
       organisationFacade.setOrganisationId(organisationId);
       projectFacade.setProjectId(projectId);
 

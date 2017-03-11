@@ -275,10 +275,12 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     */
    public <T> ArrayList<T> getArrayList(final String key, final Class<T> cl) {
       List l = (List) getObject(key);
-      if (l.isEmpty()) {
-         return new ArrayList<T>();
-      } else if (l.get(0).getClass() == cl) {
-         return (ArrayList<T>) l;
+      if (l != null) {
+         if (l.isEmpty()) {
+            return new ArrayList<T>();
+         } else if (l.get(0).getClass() == cl) {
+            return (ArrayList<T>) l;
+         }
       }
       return null;
    }

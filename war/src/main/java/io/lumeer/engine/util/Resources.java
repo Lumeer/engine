@@ -19,25 +19,16 @@
  */
 package io.lumeer.engine.util;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.engine.api.data.DataStorageFactory;
 import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
-import io.lumeer.mongodb.MongoDbStorage;
 
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.Dependent;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 /**
  * This class uses CDI to alias Java EE resources, such as the persistence context, to CDI beans
@@ -48,6 +39,9 @@ public class Resources {
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
+
+   @Inject
+   private DataStorageFactory dataStorageFactory;
 
    @Resource
    @Produces
@@ -61,28 +55,6 @@ public class Resources {
 
    public static Logger produceLog(final String className) {
       return Logger.getLogger(className);
-   }
-
-   /**
-    * Produces system storage for user data etc.
-    *
-    * @return System data storage.
-    */
-   @Produces
-   @SystemDataStorage
-   @SessionScoped
-   public DataStorage getSystemDataStorage() {
-      final MongoDbStorage storage = new MongoDbStorage();
-
-      storage.connect(new StorageConnection(
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_HOST_PROPERTY),
-            Integer.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PORT_PROPERTY)),
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USER_PROPERTY),
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY)),
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY),
-            Boolean.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USE_SSL)));
-
-      return storage;
    }
 
 }

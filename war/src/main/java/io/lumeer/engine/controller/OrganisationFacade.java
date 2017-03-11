@@ -29,7 +29,7 @@ import javax.enterprise.context.RequestScoped;
 @RequestScoped
 public class OrganisationFacade {
 
-   private String organisationId;
+   private String organisationId = "ACME";
 
    public String getOrganisationId() {
       return organisationId;

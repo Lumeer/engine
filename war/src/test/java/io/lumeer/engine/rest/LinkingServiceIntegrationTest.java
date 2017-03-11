@@ -29,8 +29,10 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,7 +55,6 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080/";
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -64,6 +65,14 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testRegister() throws Exception {

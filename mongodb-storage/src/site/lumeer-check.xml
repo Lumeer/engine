@@ -142,7 +142,7 @@
       <module name="OverloadMethodsDeclarationOrder"/>
       <module name="VariableDeclarationUsageDistance"/>
       <module name="CustomImportOrder">
-         <property name="specialImportsRegExp" value="org.perfcake"/>
+         <property name="specialImportsRegExp" value="io.lumeer"/>
          <property name="sortImportsInGroupAlphabetically" value="true"/>
          <property name="customImportOrderRules" value="STATIC###SPECIAL_IMPORTS###THIRD_PARTY_PACKAGE###STANDARD_JAVA_PACKAGE"/>
       </module>

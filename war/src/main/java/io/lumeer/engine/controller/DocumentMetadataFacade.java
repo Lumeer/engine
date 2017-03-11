@@ -22,14 +22,13 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
-import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.Map;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -68,8 +67,15 @@ public class DocumentMetadataFacade implements Serializable {
    //	… (rest of the document) …
    // }
 
-   @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @PostConstruct
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    /**
     * Reads specified metadata value

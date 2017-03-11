@@ -26,11 +26,13 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -44,11 +46,18 @@ public class BatchFacade implements Serializable {
 
    private static final long serialVersionUID = -6509744496908392550L;
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
    private DocumentFacade documentFacade;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @PostConstruct
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    public void executeBatch(final Batch batch) throws DbException, InvalidConstraintException {
       // first check collection size

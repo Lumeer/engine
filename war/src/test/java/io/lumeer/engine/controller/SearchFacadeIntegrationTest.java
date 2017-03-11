@@ -25,8 +25,10 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -52,8 +54,15 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
-   @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testSearch() throws Exception {

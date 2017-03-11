@@ -25,11 +25,13 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -39,7 +41,6 @@ import javax.inject.Inject;
 @SessionScoped
 public class SearchFacade implements Serializable {
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -53,6 +54,14 @@ public class SearchFacade implements Serializable {
 
    @Inject
    private SecurityFacade securityFacade;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @PostConstruct
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.

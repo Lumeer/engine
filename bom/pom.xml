@@ -137,6 +137,12 @@
 
          <dependency>
             <groupId>io.lumeer</groupId>
+            <artifactId>simple-cache</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>io.lumeer</groupId>
             <artifactId>engine-war</artifactId>
             <version>${project.version}</version>
          </dependency>

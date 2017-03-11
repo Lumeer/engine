@@ -30,6 +30,7 @@ import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -66,7 +67,6 @@ public class LinkingFacade implements Serializable {
 
     */
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -78,11 +78,16 @@ public class LinkingFacade implements Serializable {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
    /**
     * Creates main linking table if not exists
     */
    @PostConstruct
    public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+
       if (!dataStorage.hasCollection(LumeerConst.Linking.MainTable.NAME)) {
          dataStorage.createCollection(LumeerConst.Linking.MainTable.NAME);
       }
