@@ -30,6 +30,8 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.provider.DataStorageProvider;
@@ -62,25 +64,25 @@ import javax.ws.rs.core.Response;
 @RunWith(Arquillian.class)
 public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
-   private final String TARGET_URI = "http://localhost:8080";
-   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/sampleOrg/testProject/collections/";
+   private static final String TARGET_URI = "http://localhost:8080";
+   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/ACME/default/collections/";
 
-   private final String COLLECTION_GET_ALL_COLLECTIONS_1 = "CollectionServiceCollectionGetAllCollections1";
-   private final String COLLECTION_GET_ALL_COLLECTIONS_2 = "CollectionServiceCollectionGetAllCollections2";
-   private final String COLLECTION_CREATE_COLLECTION = "CollectionServiceCollectionCreateCollection";
-   private final String COLLECTION_DROP_COLLECTION = "CollectionServiceCollectionDropCollection";
-   private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionServiceCollectionRenameAttribute";
-   private final String COLLECTION_DROP_ATTRIBUTE = "CollectionServiceCollectionDropAttribute";
-   private final String COLLECTION_OPTION_SEARCH = "CollectionServiceCollectionOptionSearch";
-   private final String COLLECTION_QUERY_SEARCH = "CollectionServiceCollectionQuerySearch";
-   private final String COLLECTION_ADD_COLLECTION_METADATA = "CollectionServiceCollectionAddCollectionMetadata";
-   private final String COLLECTION_READ_COLLECTION_METADATA = "CollectionServiceCollectionReadCollectionMetadata";
-   private final String COLLECTION_UPDATE_COLLECTION_METADATA = "CollectionServiceCollectionUpdateCollectionMetadata";
-   private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionServiceCollectionReadCollectionAttributes";
-   private final String COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE = "CollectionServiceCollectionSetAndReadAttributeType";
-   private final String COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT = "CollectionServiceCollectionSetReadAndDropAttributeConstraint";
-   private final String COLLECTION_READ_ACCESS_RIGHTS = "CollectionServiceCollectionReadAccessRights";
-   private final String COLLECTION_UPDATE_ACCESS_RIGHTS = "CollectionServiceCollectionuUpdateAccessRights";
+   private static final String COLLECTION_GET_ALL_COLLECTIONS_1 = "CollectionServiceCollectionGetAllCollections1";
+   private static final String COLLECTION_GET_ALL_COLLECTIONS_2 = "CollectionServiceCollectionGetAllCollections2";
+   private static final String COLLECTION_CREATE_COLLECTION = "CollectionServiceCollectionCreateCollection";
+   private static final String COLLECTION_DROP_COLLECTION = "CollectionServiceCollectionDropCollection";
+   private static final String COLLECTION_RENAME_ATTRIBUTE = "CollectionServiceCollectionRenameAttribute";
+   private static final String COLLECTION_DROP_ATTRIBUTE = "CollectionServiceCollectionDropAttribute";
+   private static final String COLLECTION_OPTION_SEARCH = "CollectionServiceCollectionOptionSearch";
+   private static final String COLLECTION_QUERY_SEARCH = "CollectionServiceCollectionQuerySearch";
+   private static final String COLLECTION_ADD_COLLECTION_METADATA = "CollectionServiceCollectionAddCollectionMetadata";
+   private static final String COLLECTION_READ_COLLECTION_METADATA = "CollectionServiceCollectionReadCollectionMetadata";
+   private static final String COLLECTION_UPDATE_COLLECTION_METADATA = "CollectionServiceCollectionUpdateCollectionMetadata";
+   private static final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionServiceCollectionReadCollectionAttributes";
+   private static final String COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE = "CollectionServiceCollectionSetAndReadAttributeType";
+   private static final String COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT = "CollectionServiceCollectionSetReadAndDropAttributeConstraint";
+   private static final String COLLECTION_READ_ACCESS_RIGHTS = "CollectionServiceCollectionReadAccessRights";
+   private static final String COLLECTION_UPDATE_ACCESS_RIGHTS = "CollectionServiceCollectionuUpdateAccessRights";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -105,9 +107,16 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private DataStorageProvider dataStorageProvider;
 
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
    @Before
    public void init() {
       dataStorage = dataStorageProvider.getUserStorage();
+      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/collections/";
    }
 
    @Test
@@ -217,8 +226,12 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       final String newAttributeName = "testNewAttribute";
 
       // #1 the given collection does not exist, status code = 400 or 404
-      final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target(TARGET_URI)
+                                .path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName)
+                                .request()
+                                .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                .invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
       response.close();
       client.close();

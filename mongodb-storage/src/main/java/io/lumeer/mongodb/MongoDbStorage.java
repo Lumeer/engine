@@ -84,16 +84,11 @@ public class MongoDbStorage implements DataStorage {
    }
 
    private List<String> getCollectionCache() {
-      List<String> l = collectionsCache.get();
-      System.out.println("@@@@@@@@@@@@@ GET: " + collectionsCache);
-      System.out.println(l != null ? Arrays.toString(l.toArray()) : "null");
-      return l;
+      return collectionsCache.get();
    }
 
    private void setCollectionCache(final List<String> collections) {
       collectionsCache.set(collections);
-      System.out.println("@@@@@@@@@@@@@ SET: " + collectionsCache);
-      System.out.println(Arrays.toString(collections.toArray()));
    }
 
    @Override
@@ -154,7 +149,6 @@ public class MongoDbStorage implements DataStorage {
 
             if (collections != null) {
                collections.add(collectionName);
-               //setCollectionCache(collections);
             } else {
                setCollectionCache(new ArrayList<>(Collections.singletonList(collectionName)));
             }
@@ -177,7 +171,6 @@ public class MongoDbStorage implements DataStorage {
 
             if (collections != null) {
                collections.remove(collectionName);
-               //setCollectionCache(collections);
             }
 
             database.getCollection(collectionName).drop();
@@ -191,10 +184,26 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-      database.getCollection(oldCollectionName).renameCollection(new MongoNamespace(database.getName(), newCollectionName));
-      if (collectionCache != null) {
-         collectionCache.remove(oldCollectionName);
-         collectionCache.add(newCollectionName);
+      if (collectionsCache != null) {
+         collectionsCache.lock(COLLECTION_CACHE);
+         try {
+            final List<String> collections = getCollectionCache();
+
+            if (collections != null) {
+               collections.remove(oldCollectionName);
+               collections.add(newCollectionName);
+            }
+
+            if (hasCollection(oldCollectionName)) {
+               database.getCollection(oldCollectionName).renameCollection(new MongoNamespace(database.getName(), newCollectionName));
+            }
+         } finally {
+            collectionsCache.unlock(COLLECTION_CACHE);
+         }
+      } else {
+         if (hasCollection(oldCollectionName)) {
+            database.getCollection(oldCollectionName).renameCollection(new MongoNamespace(database.getName(), newCollectionName));
+         }
       }
    }
 
@@ -219,6 +228,8 @@ public class MongoDbStorage implements DataStorage {
 
             if (collections != null) {
                collections.add(collectionName);
+            } else {
+               setCollectionCache(new ArrayList<>(Collections.singletonList(collectionName)));
             }
 
             database.getCollection(collectionName).insertOne(doc);

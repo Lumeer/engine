@@ -29,6 +29,8 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
+import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.provider.DataStorageProvider;
@@ -72,6 +74,12 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private UserFacade userFacade;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    private final String TARGET_URI = "http://localhost:8080";
 
@@ -280,7 +288,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String setPathPrefix(final String collectionName) {
-      return PATH_CONTEXT + "/rest/sampleOrg/sampleProj/collections/" + collectionName + "/documents/";
+      return PATH_CONTEXT + "/rest/" + organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/collections/" + collectionName + "/documents/";
    }
 
    private String getInternalName(final String collectionOriginalName) {

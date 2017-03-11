@@ -37,6 +37,5 @@ public class ProjectFacade {
 
    public void setProjectId(final String projectId) {
       this.projectId = projectId;
-      System.out.println("Project is now " + projectId);
    }
 }
