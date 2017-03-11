@@ -160,7 +160,8 @@ public final class LumeerConst {
 
       public static final String COLLECTION_CUSTOM_META_TYPE_VALUE = "custom";
 
-      public static final String COLLECTION_SHADOW_SUFFIX = ".shadow";
+      public static final String COLLECTION_SHADOW_PREFFIX = "_shadow";
+      public static final String COLLECTION_TRASH_PREFFIX = "_trash";
    }
 
    public static class Security {

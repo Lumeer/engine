@@ -160,7 +160,6 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_READ, dataDocument);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_READ, id);
-      print(securityFacade.readRightsMap(SECURITY_TEST_COLLECTION_READ, id).toString());
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER4)).isTrue();
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER5)).isTrue();
@@ -248,7 +247,6 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       DataDocument dataDocument = new DataDocument();
       assertThat(securityFacade.checkForRead(dataDocument, TEST_USER)).isTrue();
       DataDocument newDataDoc = securityFacade.setRightsRead(dataDocument, TEST_USER);
-      print(newDataDoc);
       assertThat(securityFacade.checkForRead(newDataDoc, TEST_USER)).isTrue();
       assertThat(securityFacade.checkForRead(newDataDoc, TEST_USER2)).isFalse();
       assertThat(securityFacade.checkForExecute(newDataDoc, TEST_USER)).isFalse();
@@ -407,23 +405,6 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
       securityFacade.setRightsExecute(dataDocument, "test3@gmail.com");
       securityFacade.setRightsWrite(dataDocument, "test3@gmail.com");
-
-      if (dataStorage.hasCollection("securityFacadeTestList")) {
-         dataStorage.dropCollection("securityFacadeTestList");
-      }
-      dataStorage.createCollection("securityFacadeTestList");
-      String id = dataStorage.createDocument("securityFacadeTestList", dataDocument);
-      System.out.println("=================================");
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(0).toString());
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(1).toString());
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(2).toString());
-      System.out.println(securityFacade.getDaoList("securityFacadeTestList", id).get(3).toString());
-      System.out.println(securityFacade.readQueryString("test@gmail.com"));
-      System.out.println("========= dao from document===========");
-      System.out.println(securityFacade.getDaoList(dataDocument).get(0).toString());
-      System.out.println(securityFacade.getDaoList(dataDocument).get(1).toString());
-      System.out.println(securityFacade.getDaoList(dataDocument).get(2).toString());
-      System.out.println(securityFacade.getDaoList(dataDocument).get(3).toString());
    }
 
    private void addRights(DataDocument dataDocument, String email, Integer rights) {
@@ -439,17 +420,4 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       return dataDocument.getArrayList(LumeerConst.Document.USER_RIGHTS, DataDocument.class);
    }
 
-   private void print(DataDocument dataDocument) {
-      System.out.println("=====================");
-      System.out.println("=====================");
-      System.out.println("=====================");
-      System.out.println(dataDocument.toString());
-   }
-
-   private void print(String dataDocument) {
-      System.out.println("=====================");
-      System.out.println("=====================");
-      System.out.println("=====================");
-      System.out.println(dataDocument);
-   }
 }

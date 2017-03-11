@@ -48,7 +48,6 @@ public class VersionFacadeIntegrationTest extends IntegrationTestBase {
    private final String TEST_GET_OLD_DOC = "versionTestGetOldDocuments";
    private final String TEST_REVERT = "versionTestRevert";
    private final String TEST_EXCEPTION = "versionTestException";
-   private final String SHADOW = ".shadow";
 
    @Inject
    public VersionFacade versionFacade;
@@ -205,11 +204,12 @@ public class VersionFacadeIntegrationTest extends IntegrationTestBase {
       if (dataStorage.hasCollection(collectionName)) {
          dataStorage.dropCollection(collectionName);
       }
-      if (dataStorage.hasCollection(collectionName + SHADOW)) {
-         dataStorage.dropCollection(collectionName + SHADOW);
+      String shadowCollectionName = versionFacade.buildShadowCollectionName(collectionName);
+      if (dataStorage.hasCollection(shadowCollectionName)) {
+         dataStorage.dropCollection(shadowCollectionName);
       }
       dataStorage.createCollection(collectionName);
-      dataStorage.createCollection(collectionName + SHADOW);
-      return collectionName + SHADOW;
+      dataStorage.createCollection(shadowCollectionName);
+      return shadowCollectionName;
    }
 }

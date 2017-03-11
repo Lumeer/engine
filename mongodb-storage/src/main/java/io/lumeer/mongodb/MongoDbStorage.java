@@ -36,6 +36,7 @@ import com.mongodb.ErrorCategory;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.AggregateIterable;
@@ -158,6 +159,15 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
+   public void renameCollection(final String oldCollectionName, final String newCollectionName) {
+      database.getCollection(oldCollectionName).renameCollection(new MongoNamespace(database.getName(), newCollectionName));
+      if (collectionCache != null) {
+         collectionCache.remove(oldCollectionName);
+         collectionCache.add(newCollectionName);
+      }
+   }
+
+   @Override
    public boolean hasCollection(final String collectionName) {
       return getAllCollections().contains(collectionName);
    }
@@ -229,7 +239,6 @@ public class MongoDbStorage implements DataStorage {
       BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(
             LumeerConst.Document.METADATA_VERSION_KEY, version));
       Document document = database.getCollection(collectionName).find(filter).first();
-
       if (document == null) {
          return null;
       }

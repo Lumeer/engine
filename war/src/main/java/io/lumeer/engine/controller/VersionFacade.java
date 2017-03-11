@@ -43,10 +43,6 @@ import javax.inject.Inject;
 @SessionScoped
 public class VersionFacade implements Serializable {
 
-   private final String SHADOW = ".shadow";
-
-   public static final String METADATA_ID_KEY = "_id";
-
    @Inject
    private DataStorage dataStorage;
 
@@ -90,6 +86,30 @@ public class VersionFacade implements Serializable {
          return 0;
       }
       return document.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
+   }
+
+   /**
+    * Move shadow collection to trash
+    *
+    * @param collectionName
+    *       name of the collection to move
+    */
+   public void trashShadowCollection(final String collectionName) {
+      String shadowCollectionName = buildShadowCollectionName(collectionName);
+      String trashShadowCollectionName = buildTrashShadowCollectionName(shadowCollectionName);
+      dataStorage.renameCollection(shadowCollectionName, trashShadowCollectionName);
+   }
+
+   /**
+    * Restore shadow collection frm trash
+    *
+    * @param collectionName
+    *       name of the collection to move
+    */
+   public void restoreShadowCollection(final String collectionName) {
+      String shadowCollectionName = buildShadowCollectionName(collectionName);
+      String trashShadowCollectionName = buildTrashShadowCollectionName(shadowCollectionName);
+      dataStorage.renameCollection(trashShadowCollectionName, shadowCollectionName);
    }
 
    /**
@@ -180,8 +200,8 @@ public class VersionFacade implements Serializable {
     *       collection name to imput.
     */
    private void createShadow(String collectionName) {
-      if (!(dataStorage.hasCollection(collectionName + SHADOW))) {
-         dataStorage.createCollection(collectionName + SHADOW);
+      if (!dataStorage.hasCollection(buildShadowCollectionName(collectionName))) {
+         dataStorage.createCollection(buildShadowCollectionName(collectionName));
       }
    }
 
@@ -200,7 +220,7 @@ public class VersionFacade implements Serializable {
       createMetadata(document);
       createShadow(collectionName);
       try {
-         dataStorage.createOldDocument(collectionName + SHADOW, document, document.getId(), getDocumentVersion(document));
+         dataStorage.createOldDocument(buildShadowCollectionName(collectionName), document, document.getId(), getDocumentVersion(document));
       } catch (Exception e) {
          throw new VersionUpdateConflictException(e.getMessage(), e.getCause());
       }
@@ -272,7 +292,7 @@ public class VersionFacade implements Serializable {
     *       if document cannot be found
     */
    public DataDocument readOldDocumentVersion(String collectionName, String documentId, int version) throws DocumentNotFoundException {
-      DataDocument data = dataStorage.readOldDocument(collectionName + SHADOW, documentId, version);
+      DataDocument data = dataStorage.readOldDocument(buildShadowCollectionName(collectionName), documentId, version);
       if (data == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -292,7 +312,7 @@ public class VersionFacade implements Serializable {
     *       if collection does not exists
     */
    public List<DataDocument> getDocumentVersions(String collectionName, String documentId) throws CollectionNotFoundException {
-      List<DataDocument> dataDocuments = dataStorage.search(collectionName + SHADOW,
+      List<DataDocument> dataDocuments = dataStorage.search(buildShadowCollectionName(collectionName),
             MongoUtils.convertBsonToJson(Filters.eq("_id._id", new ObjectId(documentId)))
             , null, 0, 100);
       DataDocument main = dataStorage.readDocument(collectionName, documentId);
@@ -300,22 +320,15 @@ public class VersionFacade implements Serializable {
       return dataDocuments;
    }
 
-   /**
-    * Add .delete tag to shadow collection
-    *
-    * @param collectionName
-    *       collection to delete
-    */
-   public void deleteVersionCollection(String collectionName) {
-      StringBuilder sb = new StringBuilder("{ renameCollection: \"")
-            .append(collectionName + SHADOW)
-            .append("\", to: \"")
-            .append(collectionName + SHADOW + ".delete")
-            .append("\"}");
-      dataStorage.run(sb.toString());
-   }
-
    public void putInitDocumentVersionInternally(DataDocument dataDocument) {
       dataDocument.put(LumeerConst.Document.METADATA_VERSION_KEY, 0);
+   }
+
+   public String buildShadowCollectionName(String collectionName) {
+      return LumeerConst.Collection.COLLECTION_SHADOW_PREFFIX + "_" + collectionName;
+   }
+
+   private String buildTrashShadowCollectionName(String shadowCollectionName) {
+      return LumeerConst.Collection.COLLECTION_TRASH_PREFFIX + "_" + shadowCollectionName;
    }
 }

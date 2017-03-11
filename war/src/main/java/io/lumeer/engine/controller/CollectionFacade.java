@@ -76,6 +76,9 @@ public class CollectionFacade implements Serializable {
    private UserFacade userFacade;
 
    @Inject
+   private VersionFacade versionFacade;
+
+   @Inject
    private Event<CreateCollection> createCollectionEvent;
 
    @Inject
@@ -161,7 +164,7 @@ public class CollectionFacade implements Serializable {
          linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
          dropCollectionMetadata(collectionName);
          dataStorage.dropCollection(collectionName);
-         dataStorage.dropCollection(collectionName + LumeerConst.Collection.COLLECTION_SHADOW_SUFFIX); // TODO: find more intelligent way to drop shadow collection
+         versionFacade.trashShadowCollection(collectionName);
 
          dropCollectionEvent.fire(new DropCollection(null, collectionName));
       } else {

@@ -69,6 +69,8 @@ public class MongoDbStorageTest {
 
    private final String COLLECTION_CREATE_AND_DROP_I = "collectionCreateAndDrop_I";
    private final String COLLECTION_CREATE_AND_DROP_II = "collectionCreateAndDrop_II";
+   private final String COLLECTION_RENAME_OLD = "collectionRenameOld";
+   private final String COLLECTION_RENAME_NEW = "collectionRenameNew";
    private final String COLLECTION_GET_ALL_COLLECTIONS_I = "collectionGetAllCollections_I";
    private final String COLLECTION_GET_ALL__COLLECTIONS_II = "collectionGetAllCollections_II";
    private final String COLLECTION_HAS_COLLECTION = "collectionHasCollection";
@@ -127,6 +129,8 @@ public class MongoDbStorageTest {
       // setup=drop collections for next use
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_I);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_II);
+      mongoDbStorage.dropCollection(COLLECTION_RENAME_OLD);
+      mongoDbStorage.dropCollection(COLLECTION_RENAME_NEW);
       mongoDbStorage.dropCollection(COLLECTION_GET_ALL_COLLECTIONS_I);
       mongoDbStorage.dropCollection(COLLECTION_GET_ALL__COLLECTIONS_II);
       mongoDbStorage.dropCollection(COLLECTION_HAS_COLLECTION);
@@ -167,6 +171,17 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_I);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_II);
       assertThat(mongoDbStorage.getAllCollections()).hasSize(numCollections - 2);
+   }
+
+   @Test
+   public void testRenameCollection() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_RENAME_OLD);
+      if (mongoDbStorage.hasCollection(COLLECTION_RENAME_NEW)) {
+         mongoDbStorage.dropCollection(COLLECTION_RENAME_NEW);
+      }
+      mongoDbStorage.renameCollection(COLLECTION_RENAME_OLD, COLLECTION_RENAME_NEW);
+      assertThat(mongoDbStorage.hasCollection(COLLECTION_RENAME_NEW)).isTrue();
+      assertThat(mongoDbStorage.hasCollection(COLLECTION_RENAME_OLD)).isFalse();
    }
 
    @Test

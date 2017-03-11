@@ -69,6 +69,16 @@ public interface DataStorage extends Serializable {
    void dropCollection(final String collectionName);
 
    /**
+    * Renames collection
+    *
+    * @param oldCollectionName
+    *       the name of the collection to rename
+    * @param newCollectionName
+    *       new name of collection
+    */
+   void renameCollection(final String oldCollectionName, final String newCollectionName);
+
+   /**
     * Checks whether the given collection already exists.
     *
     * @param collectionName
