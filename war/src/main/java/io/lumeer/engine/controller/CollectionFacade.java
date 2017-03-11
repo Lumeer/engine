@@ -36,6 +36,7 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -45,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
@@ -63,7 +65,6 @@ public class CollectionFacade implements Serializable {
 
    private static final long serialVersionUID = 8967474543742743308L;
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -88,6 +89,14 @@ public class CollectionFacade implements Serializable {
    private Map<String, String> collections;
 
    private long cacheLastUpdated = 0L;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @PostConstruct
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    /**
     * Returns a Map object of collection names in the database except of metadata collections.

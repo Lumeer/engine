@@ -50,11 +50,9 @@ public class SearchService implements Serializable {
    @Inject
    private SearchFacade searchFacade;
 
-   @Inject
    @PathParam("organisation")
    private String organisationId;
 
-   @Inject
    @PathParam("project")
    private String projectId;
 

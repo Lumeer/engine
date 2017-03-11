@@ -17,22 +17,30 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.annotation;
+package io.lumeer.engine.provider;
 
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import io.lumeer.engine.api.cache.Cache;
+import io.lumeer.engine.api.cache.CacheManager;
+import io.lumeer.engine.api.cache.CacheProvider;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-import javax.inject.Qualifier;
+import java.io.Serializable;
 
 /**
- * Annotates system data storage with user data etc.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@Qualifier
-@Retention(RUNTIME)
-@Target({ TYPE, METHOD, FIELD, PARAMETER })
-public @interface SystemDataStorage {
+public class DefaultCacheProvider implements CacheProvider, Serializable {
+
+   private String namespace;
+
+   private CacheManager cacheManager;
+
+   public void init(final String namespace, final CacheManager cacheManager) {
+      this.namespace = namespace;
+      this.cacheManager = cacheManager;
+   }
+
+   @Override
+   public <T> Cache<T> getCache(final String cacheName) {
+      return cacheManager.getCache(namespace + "/" + cacheName);
+   }
 }

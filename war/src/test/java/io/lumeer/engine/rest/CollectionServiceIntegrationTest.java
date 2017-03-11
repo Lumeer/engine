@@ -32,10 +32,12 @@ import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import com.mongodb.util.JSON;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -89,7 +91,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionService collectionService;
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -100,6 +101,14 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private UserFacade userFacade;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testRegister() throws Exception {

@@ -25,8 +25,10 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,7 +66,6 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
    private final String SECURITY_TEST_COLLECTION_EXECUTE = "securityTestCollectionExecute";
    private final String SECURITY_TEST_COLLECTION_ADD_RIGHTS = "securityTestCollectionAddRights";
 
-   @Inject
    public DataStorage dataStorage;
 
    @Inject
@@ -72,6 +73,14 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    public UserFacade userFacade;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testCheckForReadDataDoc() throws Exception {

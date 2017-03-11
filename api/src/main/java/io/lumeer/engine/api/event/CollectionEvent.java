@@ -24,7 +24,7 @@ package io.lumeer.engine.api.event;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-abstract public class CollectionEvent {
+public abstract class CollectionEvent {
 
    private String userName;
 
