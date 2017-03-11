@@ -103,6 +103,7 @@
       <module>api</module>
       <module>war</module>
       <module>mongodb-storage</module>
+      <module>simple-cache</module>
    </modules>
    <dependencyManagement>
       <dependencies>

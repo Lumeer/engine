@@ -36,10 +36,10 @@ import java.util.stream.Collectors;
  */
 public class DateTimeConstraintType implements ConstraintType {
 
-   final static private Set<String> SUGGESTIONS = new HashSet<>(Arrays.asList("yyyy/MM/dd HH:mm:ss", "HH:mm:ss", "HH:mm", "yyyy/MM/dd", "MM/dd",
+   private static final Set<String> SUGGESTIONS = new HashSet<>(Arrays.asList("yyyy/MM/dd HH:mm:ss", "HH:mm:ss", "HH:mm", "yyyy/MM/dd", "MM/dd",
          "yyyy.MM.dd G HH:mm:ss z", "EEE, MMM d, ''yy", "h:mm a", "yyyy.MMMMM.dd GGG hh:mm aaa", "EEE, d MMM yyyy HH:mm:ss Z",
          "yyMMddHHmmssZ", "yyyy-MM-dd'T'HH:mm:ss.SSSZ", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", "YYYY-'W'ww-u"));
-   final static private Set<String> REGISTERED = new HashSet<>(Arrays.asList("date", "dateTime", "time"));
+   private static final Set<String> REGISTERED = new HashSet<>(Arrays.asList("date", "dateTime", "time"));
 
    private Locale locale;
 

@@ -31,6 +31,7 @@ import io.lumeer.engine.controller.LinkingFacade;
 import io.lumeer.engine.controller.OrganisationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -68,14 +69,11 @@ public class LinkingService {
    @Inject
    private UserFacade userFacade;
 
-   @Inject
    private DataStorage dataStorage;
 
-   @Inject
    @PathParam("organisation")
    private String organisationId;
 
-   @Inject
    @PathParam("project")
    private String projectId;
 
@@ -85,8 +83,13 @@ public class LinkingService {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
    @PostConstruct
    public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+
       organisationFacade.setOrganisationId(organisationId);
       projectFacade.setProjectId(projectId);
    }

@@ -29,9 +29,11 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.Utils;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,8 +55,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    @Inject
    private CollectionFacade collectionFacade;
 
-   @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
 
    // do not change collection names, because it can mess up internal name creation in method internalName()
    private final String CREATE_INTERNAL_NAME_ORIGINAL_NAME1 = "CollectionMetadataFacadeCollečťion&-./ 1";
@@ -74,6 +78,11 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_CHECK_ATTRIBUTE_VALUE = "CollectionMetadataFacadeCollectionCheckAttributeValue";
    private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
    private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testCreateInternalName() throws Exception {

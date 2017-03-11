@@ -19,13 +19,13 @@
  */
 package io.lumeer.engine.api.data;
 
-import io.lumeer.engine.api.batch.Batch;
+import io.lumeer.engine.api.cache.CacheFactory;
+import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,6 +36,8 @@ import java.util.Set;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 public interface DataStorage extends Serializable {
+
+   void setCacheProvider(final CacheProvider cacheProvider);
 
    void connect(final List<StorageConnection> connections, final String database, final Boolean useSsl);
 
@@ -135,7 +137,7 @@ public interface DataStorage extends Serializable {
    void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws UnsuccessfulOperationException;
 
    /**
-    * Reads the specified document in given collection by its id
+    * Reads the specified document in given collection by its id.
     *
     * @param collectionName
     *       the name of the collection where the document is located
@@ -358,8 +360,10 @@ public interface DataStorage extends Serializable {
    /**
     * Counts the number of document in the collection optionally meeting the filter criteria.
     *
-    * @param collectionName The name of the collection.
-    * @param filter The filter on documents.
+    * @param collectionName
+    *       The name of the collection.
+    * @param filter
+    *       The filter on documents.
     * @return Number of documents in the collection meeting the criteria.
     */
    long count(final String collectionName, final String filter);

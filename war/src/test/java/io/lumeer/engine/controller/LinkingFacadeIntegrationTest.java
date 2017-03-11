@@ -25,10 +25,12 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -69,8 +71,15 @@ public class LinkingFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private LinkingFacade linkingFacade;
 
-   @Inject
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testGetLinkTypes() throws Exception {

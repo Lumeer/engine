@@ -19,9 +19,9 @@
  */
 package io.lumeer.engine.controller.configuration;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.mongodb.MongoUtils;
 
 import com.mongodb.client.model.Filters;
@@ -29,6 +29,7 @@ import com.mongodb.client.model.Filters;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -75,8 +76,14 @@ public class ConfigurationManipulator implements Serializable {
    public static final String ID_KEY = "_id";
 
    @Inject
-   @SystemDataStorage
+   private DataStorageProvider dataStorageProvider;
+
    private DataStorage systemDataStorage;
+
+   @PostConstruct
+   public void init() {
+      systemDataStorage = dataStorageProvider.getSystemStorage();
+   }
 
    /**
     * Removes the whole attribute located in 'config' field in configuration entry.

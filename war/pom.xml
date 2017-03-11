@@ -78,6 +78,10 @@
          <groupId>io.lumeer</groupId>
          <artifactId>mongodb-storage</artifactId>
       </dependency>
+      <dependency>
+         <groupId>io.lumeer</groupId>
+         <artifactId>simple-cache</artifactId>
+      </dependency>
 
       <dependency>
          <groupId>javax.enterprise</groupId>

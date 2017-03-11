@@ -57,11 +57,9 @@ public class BatchService {
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
-   @Inject
    @PathParam("organisation")
    private String organisationId;
 
-   @Inject
    @PathParam("project")
    private String projectId;
 

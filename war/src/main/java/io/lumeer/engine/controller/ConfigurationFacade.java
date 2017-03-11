@@ -27,6 +27,7 @@ import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 
 import java.io.Serializable;
 import java.util.Optional;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -64,8 +65,6 @@ public class ConfigurationFacade implements Serializable {
    @Inject
    private OrganisationFacade organisationFacade;
 
-   @Produces
-   @Named("dataStorageConnection")
    public StorageConnection getDataStorage() {
       return new StorageConnection(
             getConfigurationString(LumeerConst.DB_HOST_PROPERTY).orElse("localhost"),
@@ -74,16 +73,28 @@ public class ConfigurationFacade implements Serializable {
             getConfigurationString(LumeerConst.DB_PASSWORD_PROPERTY).orElse(""));
    }
 
-   @Produces
-   @Named("dataStorageDatabase")
    public String getDataStorageDatabase() {
       return getConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
    }
 
-   @Produces
-   @Named("dataStorageUseSsl")
    public Boolean getDataStorageUseSsl() {
       return Boolean.valueOf(getConfigurationString(LumeerConst.DB_USE_SSL).orElse("false"));
+   }
+
+   public StorageConnection getSystemDataStorage() {
+      return new StorageConnection(
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_HOST_PROPERTY),
+            Integer.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PORT_PROPERTY)),
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USER_PROPERTY),
+            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY));
+   }
+
+   public String getSystemDataStorageDatabase() {
+      return defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY);
+   }
+
+   public Boolean getSystemDataStorageUseSsl() {
+      return Boolean.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USE_SSL));
    }
 
    /**
@@ -109,6 +120,7 @@ public class ConfigurationFacade implements Serializable {
       try {
          return getConfigurationString(key).map(Integer::parseInt);
       } catch (NumberFormatException nfe) {
+         // TODO: Do not we want to at least trace log in such situations? Similar code fragments elsewhere.
          return Optional.empty();
       }
    }
@@ -408,6 +420,7 @@ public class ConfigurationFacade implements Serializable {
     * Resets currently logged organisation configuration. The whole organisation configuration entry will not be deleted from the system collection, just the config field!
     */
    public void resetOrganisationConfiguration() {
+      // TODO: I do not like this approach. Why do we reset configuration by setting null? We can accidentally reset the configuration when null value is passed without us noticing it.
       resetConfiguration(ConfigurationLevel.ORGANISATION, null);
    }
 

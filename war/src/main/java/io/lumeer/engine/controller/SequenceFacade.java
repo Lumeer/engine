@@ -19,9 +19,9 @@
  */
 package io.lumeer.engine.controller;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import java.io.Serializable;
 import javax.annotation.PostConstruct;
@@ -46,18 +46,21 @@ public class SequenceFacade implements Serializable {
     */
    private static final String SEQUENCE_INDEX_ATTR = "name";
 
+   private DataStorage systemDataStorage;
+
    @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
+   private DataStorageProvider dataStorageProvider;
 
    /**
     * Initializes collections needed for storing sequences.
     */
    @PostConstruct
    public void init() {
-      if (!dataStorage.hasCollection(SEQUENCE_COLLECTION)) {
-         dataStorage.createCollection(SEQUENCE_COLLECTION);
-         dataStorage.createIndex(SEQUENCE_COLLECTION, new DataDocument(SEQUENCE_INDEX_ATTR, 1));
+      systemDataStorage = dataStorageProvider.getSystemStorage();
+
+      if (!systemDataStorage.hasCollection(SEQUENCE_COLLECTION)) {
+         systemDataStorage.createCollection(SEQUENCE_COLLECTION);
+         systemDataStorage.createIndex(SEQUENCE_COLLECTION, new DataDocument(SEQUENCE_INDEX_ATTR, 1));
       }
    }
 
@@ -69,7 +72,7 @@ public class SequenceFacade implements Serializable {
     * @return The next value of the sequence.
     */
    public int getNext(final String sequenceName) {
-      return dataStorage.getNextSequenceNo(SEQUENCE_COLLECTION, SEQUENCE_INDEX_ATTR, sequenceName);
+      return systemDataStorage.getNextSequenceNo(SEQUENCE_COLLECTION, SEQUENCE_INDEX_ATTR, sequenceName);
    }
 
    /**
@@ -79,7 +82,7 @@ public class SequenceFacade implements Serializable {
     *       The name of the sequence to reset.
     */
    public void resetSequence(final String sequenceName) {
-      dataStorage.resetSequence(SEQUENCE_COLLECTION, SEQUENCE_INDEX_ATTR, sequenceName);
+      systemDataStorage.resetSequence(SEQUENCE_COLLECTION, SEQUENCE_INDEX_ATTR, sequenceName);
    }
 
 }

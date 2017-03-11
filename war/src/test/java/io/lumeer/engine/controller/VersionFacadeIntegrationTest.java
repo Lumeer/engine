@@ -26,8 +26,10 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -51,10 +53,19 @@ public class VersionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    public VersionFacade versionFacade;
-   @Inject
+
    public DataStorage dataStorage;
+
    @Inject
    public CollectionFacade collectionFacade;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testGetVersion() throws Exception {

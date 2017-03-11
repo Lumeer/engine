@@ -27,9 +27,11 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
+import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.ViewDao;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,7 +48,6 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private ViewFacade viewFacade;
 
-   @Inject
    private DataStorage dataStorage;
 
    @Inject
@@ -67,6 +68,14 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    private final String GET_ALL_VIEWS_VIEW_2 = "viewGetAllViews2";
    private final String GET_ALL_VIEWS_OF_TYPE_VIEW_1 = "viewGetAllViewsOfType1";
    private final String GET_ALL_VIEWS_OF_TYPE_VIEW_2 = "viewGetAllViewsOfType2";
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Before
+   public void init() {
+      dataStorage = dataStorageProvider.getUserStorage();
+   }
 
    @Test
    public void testCreateView() throws Exception {

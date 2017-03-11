@@ -24,7 +24,7 @@ package io.lumeer.engine.api.batch;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-abstract public class AbstractCollectionBatch implements Batch {
+public abstract class AbstractCollectionBatch implements Batch {
 
    /**
     * Name of the collection to run batch on.
