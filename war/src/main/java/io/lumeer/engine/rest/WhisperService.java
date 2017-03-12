@@ -90,7 +90,7 @@ public class WhisperService {
       dataStorage = dataStorageProvider.getUserStorage();
 
       organisationFacade.setOrganisationId(organisationId);
-      projectFacade.setProjectId(projectId);
+      projectFacade.setCurrentProjectId(projectId);
 
       locale = Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US"));
    }

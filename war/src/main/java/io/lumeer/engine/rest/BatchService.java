@@ -24,7 +24,6 @@ import io.lumeer.engine.api.batch.Batch;
 import io.lumeer.engine.api.batch.MergeBatch;
 import io.lumeer.engine.api.batch.SplitBatch;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.BatchFacade;
@@ -72,7 +71,7 @@ public class BatchService {
    @PostConstruct
    public void init() {
       organisationFacade.setOrganisationId(organisationId);
-      projectFacade.setProjectId(projectId);
+      projectFacade.setCurrentProjectId(projectId);
    }
 
    /**

@@ -86,7 +86,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    public void setUp() throws Exception {
       systemDataStorage = dataStorageProvider.getSystemStorage();
 
-      projectFacade.setProjectId("configProject");
+      projectFacade.setCurrentProjectId("configProject");
       organisationFacade.setOrganisationId("configOrg");
 
       if (isDatabaseCollection(ConfigurationFacade.USER_CONFIG_COLLECTION)) {
@@ -278,7 +278,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testResetUserConfiguration() throws Exception {
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
-      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/" + userFacade.getUserEmail();
+      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/" + userFacade.getUserEmail();
 
       assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.USER_CONFIG_COLLECTION, id).get().get(CONFIG_DOCUMENT_KEY))).hasSize(BEFORE_SIZE_RESET);
       configurationFacade.resetUserConfiguration();
@@ -288,7 +288,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testResetUserConfigurationAttribute() throws Exception {
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
-      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/" + userFacade.getUserEmail();
+      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/" + userFacade.getUserEmail();
 
       configurationFacade.resetUserConfigurationAttribute(DBURL_KEY);
       assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.USER_CONFIG_COLLECTION, id).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
@@ -298,7 +298,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    public void testResetProjectConfiguration() throws Exception {
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
 
-      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId();
+      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId();
 
       assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, key).get().get(CONFIG_DOCUMENT_KEY))).hasSize(BEFORE_SIZE_RESET);
       configurationFacade.resetProjectConfiguration();
@@ -309,7 +309,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    public void testResetProjectConfigurationAttribute() throws Exception {
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
 
-      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId();
+      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId();
 
       configurationFacade.resetProjectConfigurationAttribute(DBURL_KEY);
       assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, key).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
@@ -339,11 +339,11 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       switch (level) {
          case USER:
             collectionName = ConfigurationFacade.USER_CONFIG_COLLECTION;
-            nameKeyValue = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/" + userFacade.getUserEmail();
+            nameKeyValue = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/" + userFacade.getUserEmail();
             break;
          case PROJECT:
             collectionName = ConfigurationFacade.PROJECT_CONFIG_COLLECTION;
-            nameKeyValue = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId();
+            nameKeyValue = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId();
             break;
          case ORGANISATION:
             collectionName = ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION;

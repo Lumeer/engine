@@ -19,6 +19,10 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.data.DataDocument;
+
+import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.RequestScoped;
 
 /**
@@ -31,11 +35,76 @@ public class ProjectFacade {
 
    private String projectId = "default";
 
-   public String getProjectId() {
+   public String getCurrentProjectId() {
       return projectId;
    }
 
-   public void setProjectId(final String projectId) {
+   public void setCurrentProjectId(final String projectId) {
       this.projectId = projectId;
+   }
+
+   public Map<String, String> getProjectsMap(final String organizationName) {
+      return null;
+   }
+
+   public String getProjectId(final String projectName) {
+      return null;
+   }
+
+   public void changeProjectId(final String oldProjectId, final String newProjectId) {
+
+   }
+
+   public String getProjectName(final String projectId) {
+      return null;
+   }
+
+   public void setProjectMetadata(final String projectId, final String metaName, final String value) {
+
+   }
+
+   public String getProjectMetadata(final String projectId, final String metaName) {
+      return null;
+   }
+
+   private DataDocument getProjectMetadata(final String projectId) {
+      // helper method for getProjectMetadata
+      return null;
+   }
+
+   public void renameProject(final String projectId, final String newProjectName) {
+
+   }
+
+   public void createProject(final String projectId, final String projectName) {
+
+   }
+
+   public void deleteProject(final String projectId) {
+
+   }
+
+   public void setDefaultRolesToProject(final String projectId, final List<String> userRoleIds) {
+
+   }
+
+   public void addUserToProject(final String projectId, final String userId) {
+
+   }
+
+   public void removeUserFromProject(final String projectId, final String userId) {
+
+   }
+
+   public List<String> getProjectUsers(final String projectId) {
+      return null;
+   }
+
+   public void addUserRole(final String projectId, final String userId, final String userRoleId) {
+
+   }
+
+   public void removeUserRole(final String projectId, final String userId, final String userRoleId) {
+
    }
 }

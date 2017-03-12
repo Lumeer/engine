@@ -116,7 +116,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Before
    public void init() {
       dataStorage = dataStorageProvider.getUserStorage();
-      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/collections/";
+      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/";
    }
 
    @Test

@@ -27,11 +27,8 @@ import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 
 import java.io.Serializable;
 import java.util.Optional;
-import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 /**
  * Manipulates user configuration properties.
@@ -445,7 +442,7 @@ public class ConfigurationFacade implements Serializable {
    private void resetConfiguration(final ConfigurationLevel level, final String attributeName) {
       final String user = userFacade.getUserEmail();
       final String org = organisationFacade.getOrganisationId();
-      final String project = projectFacade.getProjectId();
+      final String project = projectFacade.getCurrentProjectId();
 
       if (attributeName != null) {
          // reset user configuration attribute
@@ -484,7 +481,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Object value of the given key
     */
    private Object getUserConfiguration(final String key) {
-      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId() + "/" + userFacade.getUserEmail();
+      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/" + userFacade.getUserEmail();
       return configurationManipulator.getConfiguration(USER_CONFIG_COLLECTION, id, key);
    }
 
@@ -496,7 +493,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Object value of the given key
     */
    private Object getProjectConfiguration(final String key) {
-      return configurationManipulator.getConfiguration(PROJECT_CONFIG_COLLECTION, organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId(), key);
+      return configurationManipulator.getConfiguration(PROJECT_CONFIG_COLLECTION, organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId(), key);
    }
 
    /**
@@ -520,7 +517,7 @@ public class ConfigurationFacade implements Serializable {
    private Object getConfiguration(final String key) {
       final String user = userFacade.getUserEmail();
       final String org = organisationFacade.getOrganisationId();
-      final String project = projectFacade.getProjectId();
+      final String project = projectFacade.getCurrentProjectId();
       Object conf = null;
 
       if ((conf = configurationManipulator.getConfiguration(USER_CONFIG_COLLECTION, org + "/" + project + "/" + user, key)) == null) {
@@ -547,7 +544,7 @@ public class ConfigurationFacade implements Serializable {
    private void setConfiguration(final ConfigurationLevel level, final String key, final Object value) {
       final String user = userFacade.getUserEmail();
       final String org = organisationFacade.getOrganisationId();
-      final String project = projectFacade.getProjectId();
+      final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
          case USER:

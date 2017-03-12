@@ -91,7 +91,7 @@ public class LinkingService {
       dataStorage = dataStorageProvider.getUserStorage();
 
       organisationFacade.setOrganisationId(organisationId);
-      projectFacade.setProjectId(projectId);
+      projectFacade.setCurrentProjectId(projectId);
    }
 
    /**
