@@ -58,7 +58,7 @@ public class CdiCacheManager implements CacheManager, Serializable {
    }
 
    public <T> Cache<T> getCache(final String name) {
-      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getProjectId();
+      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId();
       final Map<String, Cache> localCaches = caches.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
       final Cache<T> cache = localCaches.computeIfAbsent(name, k -> cacheFactory.getCache());
 

@@ -106,7 +106,7 @@ public class DocumentService implements Serializable {
       dataStorage = dataStorageProvider.getUserStorage();
 
       organisationFacade.setOrganisationId(organisationId);
-      projectFacade.setProjectId(projectId);
+      projectFacade.setCurrentProjectId(projectId);
    }
 
    /**
