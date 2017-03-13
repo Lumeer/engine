@@ -196,7 +196,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = new DataDocument()
             .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName)
             .append(LumeerConst.Collection.INTERNAL_NAME_KEY, internalCollectionName)
-            .append(LumeerConst.Collection.PROJECT_ID, projectFacade.getProjectId())
+            .append(LumeerConst.Collection.PROJECT_ID, projectFacade.getCurrentProjectId())
             .append(LumeerConst.Collection.ATTRIBUTES_KEY, new DataDocument())
             .append(LumeerConst.Collection.LAST_TIME_USED_KEY, Utils.getCurrentTimeString())
             .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())

@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -32,16 +31,12 @@ import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.Attribute;
 import io.lumeer.engine.rest.dao.CollectionMetadata;
-import io.lumeer.engine.util.Utils;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -222,7 +217,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       assertThat(metadata.getName()).isEqualTo(COLLECTION_CREATE_INITIAL_METADATA);
       assertThat(metadata.getInternalName()).isEqualTo(collection);
-      assertThat(metadata.getProjectId()).isEqualTo(projectFacade.getProjectId());
+      assertThat(metadata.getProjectId()).isEqualTo(projectFacade.getCurrentProjectId());
       assertThat(metadata.getAttributes()).isEmpty();
       assertThat(metadata.getLastTimeUsed()).isNotEmpty();
       assertThat(metadata.getRecentlyUsedDocumentIds()).isEmpty();
