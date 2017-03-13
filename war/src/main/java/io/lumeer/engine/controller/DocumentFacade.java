@@ -292,13 +292,11 @@ public class DocumentFacade implements Serializable {
       return documentAttributes;
    }
 
-   private void checkConstraintsAndConvert(final String collectionName, final DataDocument doc) throws InvalidConstraintException {
-      for (String attribute : doc.keySet()) {
-         Object value = collectionMetadataFacade.checkAndConvertAttributeValue(collectionName, attribute, doc.get(attribute).toString());
-         if (value == null) {
+   private void checkConstraintsAndConvert(final String collectionName, DataDocument doc) throws InvalidConstraintException {
+      doc = collectionMetadataFacade.checkAndConvertAttributesValues(collectionName, doc);
+      for(String attribute: doc.keySet()) {
+         if (doc.get(attribute) == null) {
             throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));
-         } else {
-            doc.replace(attribute, value);
          }
       }
    }

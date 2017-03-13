@@ -46,7 +46,9 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -136,17 +138,13 @@ public class CollectionService implements Serializable {
     * @param name
     *       name of the collection to create
     * @return name of internal collection
-    * @throws CollectionNotFoundException
-    *       When newly created metadata collection for the collection was not found and initial metadata could not be created.
-    * @throws CollectionAlreadyExistsException
-    *       If collection with created internal name already exists.
     * @throws UserCollectionAlreadyExistsException
     *       When collection with given user name already exists.
     */
    @POST
    @Path("/{name}")
    @Produces(MediaType.APPLICATION_JSON)
-   public String createCollection(final @PathParam("name") String name) throws CollectionNotFoundException, CollectionAlreadyExistsException, UserCollectionAlreadyExistsException {
+   public String createCollection(final @PathParam("name") String name) throws UserCollectionAlreadyExistsException {
       if (name == null) {
          throw new IllegalArgumentException();
       }
@@ -167,7 +165,7 @@ public class CollectionService implements Serializable {
       if (name == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForRead(name)) {
+      if (!checkCollectionForRead(getInternalName(name))) {
          throw new UnauthorizedAccessException();
       }
       collectionFacade.dropCollection(getInternalName(name));
@@ -186,22 +184,20 @@ public class CollectionService implements Serializable {
     *       new attribute name
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws AttributeAlreadyExistsException
     *       When attribute with new name already exists.
     * @throws UnauthorizedAccessException When current user is not allowed to write to the collection.
     */
    @PUT
    @Path("/{collectionName}/attributes/{oldName}/rename/{newName}")
-   public void renameAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, AttributeAlreadyExistsException, UnauthorizedAccessException {
-      if (!checkCollectionForWrite(collectionName)) {
+   public void renameAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws AttributeAlreadyExistsException, UnauthorizedAccessException, CollectionNotFoundException {
+      if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
-      if (collectionName == null || oldName == null || newName == null
-            || (collectionMetadataFacade.renameCollectionAttribute(getInternalName(collectionName), oldName, newName) == false)) {
+      if (collectionName == null || oldName == null || newName == null) {
          throw new IllegalArgumentException();
       }
+      collectionFacade.renameAttribute(getInternalName(collectionName), oldName, newName);
    }
 
    /**
@@ -213,18 +209,16 @@ public class CollectionService implements Serializable {
     *       name of the attribute to remove
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to write to the collection.
     */
    @DELETE
    @Path("/{collectionName}/attributes/{attributeName}")
-   public void dropAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void dropAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForWrite(collectionName)) {
+      if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
       collectionFacade.dropAttribute(getInternalName(collectionName), attributeName);
@@ -246,13 +240,11 @@ public class CollectionService implements Serializable {
     * @return list of the found documents
     * @throws CollectionNotFoundException
     *       When the collection in which we want to search does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     */
    @POST
    @Path("/{collectionName}/search/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @QueryParam("filter") String filter, final @QueryParam("sort") String sort, final @QueryParam("skip") int skip, final @QueryParam("limit") int limit) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @QueryParam("filter") String filter, final @QueryParam("sort") String sort, final @QueryParam("skip") int skip, final @QueryParam("limit") int limit) throws CollectionNotFoundException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
@@ -294,26 +286,22 @@ public class CollectionService implements Serializable {
     *       document with metadata values
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to write to the collection
     */
    @POST
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForWrite(collectionName)) {
+      if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
 
       DataDocument metadataDocument = new DataDocument(attributeName, metadata);
-      if (!collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
-         throw new IllegalArgumentException();
-      }
+      collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument);
    }
 
    /**
@@ -324,22 +312,20 @@ public class CollectionService implements Serializable {
     * @return list of all documents from metadata collection
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to read the collection.
     */
    @GET
    @Path("/{collectionName}/meta/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public DataDocument readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForRead(collectionName)) {
+      if (!checkCollectionForRead(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
-      return collectionFacade.readCollectionMetadata(getInternalName(collectionName));
+      return collectionMetadataFacade.getCollectionMetadataDocument(getInternalName(collectionName));
    }
 
    /**
@@ -353,26 +339,22 @@ public class CollectionService implements Serializable {
     *       value of the given meta attribute
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to write to the collection.
     */
    @PUT
    @Path("/{collectionName}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForWrite(collectionName)) {
+      if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
 
       DataDocument metadataDocument = new DataDocument(attributeName, value);
-      if (!collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument)) {
-         throw new IllegalArgumentException();
-      }
+      collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument);
    }
 
    /**
@@ -383,22 +365,20 @@ public class CollectionService implements Serializable {
     * @return list of names of all attributes in the collection
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to read the collection.
     */
    @GET
    @Path("/{collectionName}/attributes")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public Set<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForRead(collectionName)) {
+      if (!checkCollectionForRead(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
-      return collectionFacade.readCollectionAttributes(getInternalName(collectionName));
+      return collectionFacade.readCollectionAttributes(getInternalName(collectionName)).keySet();
    }
 
    /*@GET
@@ -419,13 +399,11 @@ public class CollectionService implements Serializable {
     * @return list of access rights of the given collection
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     */
    @GET
    @Path("/{collectionName}/rights")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException {
       // TODO: Who can read access rights? Anyone or is it restricted?
       if (collectionName == null) {
          throw new IllegalArgumentException();
@@ -442,19 +420,17 @@ public class CollectionService implements Serializable {
     *       new access rights of the logged user
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to change rights for the collection.
     */
    @PUT
    @Path("/{collectionName}/rights")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final AccessRightsDao accessRights) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException {
+   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final AccessRightsDao accessRights) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionName == null || accessRights == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForAccessChange(collectionName)) {
+      if (!checkCollectionForAccessChange(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
 
@@ -480,70 +456,6 @@ public class CollectionService implements Serializable {
    }
 
    /**
-    * Changes attribute type of the given attribute in collection metadata.
-    *
-    * @param collectionName
-    *       collection name
-    * @param attributeName
-    *       attribute name
-    * @param newType
-    *       new meta type
-    * @return true if retype is successful, false if new type is not valid or when metadata about attribute was not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
-    * @throws UnauthorizedAccessException
-    *       When current user is not allowed to write to the collection.
-    * @throws CollectionNotFoundException
-    *       When the given collection does not exist.
-    * @throws InvalidCollectionAttributeTypeException
-    *       When new type is not valid meta type.
-    */
-   @PUT
-   @Path("/{collectionName}/attributes/{attributeName}/types/{newType}")
-   @Produces(MediaType.APPLICATION_JSON)
-   public boolean setAttributeType(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final @PathParam("newType") String newType) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException, InvalidCollectionAttributeTypeException {
-      if (collectionName == null || attributeName == null || newType == null) {
-         throw new IllegalArgumentException();
-      }
-      if (!checkCollectionForWrite(collectionName)) {
-         throw new UnauthorizedAccessException();
-      }
-
-      if (collectionMetadataFacade.retypeCollectionAttribute(getInternalName(collectionName), attributeName, newType) == false) {
-         throw new InvalidCollectionAttributeTypeException(ErrorMessageBuilder.invalidCollectionAttributeTypeString(newType, LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES));
-      }
-      return true;
-   }
-
-   /**
-    * Reads attribute type of the given attribute in collection metadata.
-    *
-    * @param collectionName
-    *       collection name
-    * @param attributeName
-    *       attribute name
-    * @return type of the given attribute, default (String) if attribute is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
-    * @throws UnauthorizedAccessException
-    *       When current user is not allowed to read the collection.
-    * @throws CollectionNotFoundException
-    *       When the given collection does not exist.
-    */
-   @GET
-   @Path("/{collectionName}/attributes/{attributeName}/types")
-   @Produces(MediaType.APPLICATION_JSON)
-   public String readAttributeType(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
-      if (collectionName == null || attributeName == null) {
-         throw new IllegalArgumentException();
-      }
-      if (!checkCollectionForRead(collectionName)) {
-         throw new UnauthorizedAccessException();
-      }
-      return collectionMetadataFacade.getAttributeType(getInternalName(collectionName), attributeName);
-   }
-
-   /**
     * Adds new constraint for the given attribute and checks if it is valid.
     *
     * @param collectionName
@@ -552,8 +464,6 @@ public class CollectionService implements Serializable {
     *       attribute name
     * @param constraintConfiguration
     *       string with constraint configuration
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
     * @throws InvalidConstraintException
@@ -564,11 +474,11 @@ public class CollectionService implements Serializable {
    @PUT
    @Path("/{collectionName}/attributes/{attributeName}/constraints")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void setAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException, InvalidConstraintException, UnauthorizedAccessException {
+   public void setAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, InvalidConstraintException, UnauthorizedAccessException {
       if (collectionName == null || attributeName == null || constraintConfiguration == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForWrite(collectionName)) {
+      if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
       collectionMetadataFacade.addAttributeConstraint(getInternalName(collectionName), attributeName, constraintConfiguration);
@@ -582,8 +492,6 @@ public class CollectionService implements Serializable {
     * @param attributeName
     *       attribute name
     * @return list of constraint configurations for the given attribute, empty list if constraints were not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to read the collection.
     * @throws CollectionNotFoundException
@@ -592,11 +500,11 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/{collectionName}/attributes/{attributeName}/constraints")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<String> readAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
+   public List<String> readAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException, CollectionNotFoundException {
       if (collectionName == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForRead(collectionName)) {
+      if (!checkCollectionForRead(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
       return collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(collectionName), attributeName);
@@ -611,8 +519,6 @@ public class CollectionService implements Serializable {
     *       attribute name
     * @param constraintConfiguration
     *       constraint configuration to be removed
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       When the metadata collection of the given collection does not exist.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to write to the collection.
     * @throws CollectionNotFoundException
@@ -621,11 +527,11 @@ public class CollectionService implements Serializable {
    @DELETE
    @Path("/{collectionName}/attributes/{attributeName}/constraints")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void dropAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionMetadataDocumentNotFoundException, UnauthorizedAccessException, CollectionNotFoundException {
+   public void dropAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws UnauthorizedAccessException, CollectionNotFoundException {
       if (collectionName == null || attributeName == null || constraintConfiguration == null) {
          throw new IllegalArgumentException();
       }
-      if (!checkCollectionForWrite(collectionName)) {
+      if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
       collectionMetadataFacade.dropAttributeConstraint(getInternalName(collectionName), attributeName, constraintConfiguration);

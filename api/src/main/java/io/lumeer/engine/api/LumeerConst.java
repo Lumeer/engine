@@ -115,36 +115,26 @@ public final class LumeerConst {
    }
 
    public static class Collection {
-      public static final String META_TYPE_KEY = "meta-type";
-      public static final String COLLECTION_NAME_PREFIX = "collection.";
-      public static final String COLLECTION_METADATA_PREFIX = "meta.";
+      public static final String METADATA_COLLECTION = "meta.collection";
+      public static final String NAME_PREFIX = "collection.";
+      public static final String SHADOW_SUFFIX = ".shadow";
 
-      public static final String COLLECTION_ATTRIBUTES_META_TYPE_VALUE = "attributes";
+      public static final String REAL_NAME_KEY = "name";
+      public static final String INTERNAL_NAME_KEY = "internal-name";
+      public static final String PROJECT_ID = "project-id";
 
-      public static final String COLLECTION_ATTRIBUTE_NAME_KEY = "attribute-name";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_KEY = "attribute-type";
+      public static final String ATTRIBUTES_KEY = "attributes";
+      public static final String ATTRIBUTE_NAME_KEY = "attribute-name";
+      public static final String ATTRIBUTE_CONSTRAINTS_KEY = "attribute-constraints";
+      public static final String ATTRIBUTE_COUNT_KEY = "attribute-count";
 
-      public static final String COLLECTION_ATTRIBUTE_TYPE_INT = "int";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_LONG = "long";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_DOUBLE = "double";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_DECIMAL = "decimal";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_DATE = "date"; // we accept yyyy.MM.dd HH.mm.ss.SSS as default
-      public static final String COLLECTION_ATTRIBUTE_TYPE_BOOLEAN = "bool";
-      public static final List<String> COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES = Arrays.asList("true", "false");
-      public static final String COLLECTION_ATTRIBUTE_TYPE_STRING = "string";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_LIST = "list";
-      public static final String COLLECTION_ATTRIBUTE_TYPE_NESTED = "nested";
-      public static final List<String> COLLECTION_ATTRIBUTE_TYPE_VALUES = Arrays.asList(
-            COLLECTION_ATTRIBUTE_TYPE_INT,
-            COLLECTION_ATTRIBUTE_TYPE_LONG,
-            COLLECTION_ATTRIBUTE_TYPE_DOUBLE,
-            COLLECTION_ATTRIBUTE_TYPE_DECIMAL,
-            COLLECTION_ATTRIBUTE_TYPE_DATE,
-            COLLECTION_ATTRIBUTE_TYPE_BOOLEAN,
-            COLLECTION_ATTRIBUTE_TYPE_STRING,
-            COLLECTION_ATTRIBUTE_TYPE_LIST,
-            COLLECTION_ATTRIBUTE_TYPE_NESTED);
+      public static final String LAST_TIME_USED_KEY = "last-time-used";
+      public static final String RECENTLY_USED_DOCUMENTS_KEY = "recently-used-documents";
+      public static final String ATTRIBUTE_CHILDREN_KEY = "child-attributes";
+      public static final String CUSTOM_META_KEY = "custom";
 
+      public static final String CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
+      public static final String CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
       public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "attribute-constraints";
       public static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "attribute-count";
 

@@ -28,6 +28,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.provider.DataStorageProvider;
+import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -47,7 +48,6 @@ public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_READ_METADATA = "collectionReadMetadata";
    private final String COLLECTION_PUT_AND_UPDATE_METADATA = "collectionPutAndUpdateMetadata";
 
-   private final String DUMMY_META_KEY = LumeerConst.Document.METADATA_PREFIX + "key";
    private final String DUMMY_META_VALUE = "param";
    private final String DUMMY_META_UPDATE_VALUE = "paramUpdated";
 
@@ -69,6 +69,9 @@ public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
    public void init() {
       dataStorage = dataStorageProvider.getUserStorage();
    }
+
+   @Inject
+   private CollectionFacade collectionFacade;
 
    @Test
    public void testGetDocumentMetadata() throws Exception {
@@ -103,9 +106,8 @@ public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
 
    private String setupCollectionAndCreateNewDocument(final String collection) throws DbException, InvalidConstraintException {
       dataStorage.dropCollection(collection);
-      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
       dataStorage.createCollection(collection);
-      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
+      collectionMetadataFacade.createInitialMetadata(collection, collection);
 
       DataDocument document = new DataDocument("a", 1).append("b", 2).append("c", 3);
       return documentFacade.createDocument(collection, document);

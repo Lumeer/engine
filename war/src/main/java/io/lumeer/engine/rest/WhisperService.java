@@ -119,9 +119,9 @@ public class WhisperService {
       }
 
       if (attributeName == null || attributeName.isEmpty()) {
-         return collectionMetadataFacade.getCollectionAttributesNames(internalCollectionName).stream().collect(Collectors.toSet());
+         return collectionMetadataFacade.getAttributesNames(internalCollectionName).stream().collect(Collectors.toSet());
       } else {
-         return collectionMetadataFacade.getCollectionAttributesNames(internalCollectionName)
+         return collectionMetadataFacade.getAttributesNames(internalCollectionName)
                                         .stream()
                                         .filter(name -> name.toLowerCase(locale)
                                                             .startsWith(attributeName.toLowerCase(locale)))
