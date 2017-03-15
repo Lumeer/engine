@@ -6,40 +6,8 @@
 # Lumeer engine
 Lumeer Backend Engine
 
-## Running tests
+## Wiki
 
-### Unit tests
-
-Unit tests are automatically run every time you build the project using the following command:
-
-```
-$ mvn clean install
-```
-
-You may also want to run just a single test class:
-
-```
-$ mvn clean test -Dtest=YourTestClass
-```
-
-... or a specific method:
-
-```
-$ mvn clean test -Dtest=YourTestClass#yourTestMethod
-```
-
-### Integration tests
-
-Integration tests are the ones which needs a container (WildFly) to run.
-They are switched off by default because it takes more time to run them.
-To explicitly run them, use the following command:
-
-```
-$ mvn clean verify -P-default
-```
-
-You can also run just a single test class or a specific method:
-
-```
-$ mvn clean verify -P-default -Dit.test=YourTestClass#yourTestMethod
-```
+For more details, read our wiki pages:
+* [How To Contribute](https://github.com/Lumeer/engine/wiki/How-To-Contribute)
+* [Testing](https://github.com/Lumeer/engine/wiki/Testing)
