@@ -25,7 +25,6 @@ import io.lumeer.engine.api.data.DataDocument;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.xml.crypto.Data;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
@@ -41,9 +40,6 @@ public class CollectionMetadata {
    private DataDocument customMetadata;
    private String creator;
    private String createDate;
-
-   public CollectionMetadata() {
-   }
 
    public CollectionMetadata(final DataDocument metadata) {
       name = metadata.getString(LumeerConst.Collection.REAL_NAME_KEY);

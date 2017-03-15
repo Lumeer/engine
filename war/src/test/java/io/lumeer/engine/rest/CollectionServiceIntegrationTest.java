@@ -41,6 +41,7 @@ import io.lumeer.engine.rest.dao.CollectionMetadata;
 import com.mongodb.util.JSON;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -82,7 +83,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    private static final String COLLECTION_READ_COLLECTION_METADATA = "CollectionServiceCollectionReadCollectionMetadata";
    private static final String COLLECTION_UPDATE_COLLECTION_METADATA = "CollectionServiceCollectionUpdateCollectionMetadata";
    private static final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionServiceCollectionReadCollectionAttributes";
-   private static final String COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE = "CollectionServiceCollectionSetAndReadAttributeType";
    private static final String COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT = "CollectionServiceCollectionSetReadAndDropAttributeConstraint";
    private static final String COLLECTION_READ_ACCESS_RIGHTS = "CollectionServiceCollectionReadAccessRights";
    private static final String COLLECTION_UPDATE_ACCESS_RIGHTS = "CollectionServiceCollectionuUpdateAccessRights";
@@ -145,6 +145,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       client.close();
    }
 
+   @Ignore // we ignore that test because we don't use cache anymore
    @Test
    public void testGetAllCollectionsRequestCaching() throws Exception {
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_1);
@@ -334,7 +335,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       DataDocument value = new DataDocument("columnSize", 100);
       collectionFacade.createCollection(COLLECTION_ADD_COLLECTION_METADATA);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
-      CollectionMetadata metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_ADD_COLLECTION_METADATA));
+      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(getInternalName(COLLECTION_ADD_COLLECTION_METADATA));
       DataDocument readMetaDoc = metadata.getCustomMetadata().getDataDocument(attributeName);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readMetaDoc).isEqualTo(value);
@@ -377,14 +378,14 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
       collectionFacade.createCollection(COLLECTION_UPDATE_COLLECTION_METADATA);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
-      CollectionMetadata metadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
+      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
       int readValue = metadata.getCustomMetadata().getInteger(columnSizeAttributeName);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readValue).isEqualTo(value);
       response.close();
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(updatedValue, MediaType.APPLICATION_JSON)).invoke();
-      CollectionMetadata updatedMetadata = collectionFacade.readCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
+      CollectionMetadata updatedMetadata = collectionMetadataFacade.getCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
       int readUpdatedValue = updatedMetadata.getCustomMetadata().getInteger(columnSizeAttributeName);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readUpdatedValue).isEqualTo(updatedValue);

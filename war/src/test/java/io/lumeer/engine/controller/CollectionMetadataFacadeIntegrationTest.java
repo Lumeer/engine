@@ -78,6 +78,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_CREATE_INITIAL_METADATA = "CollectionMetadataFacadeCollectionCreateInitialMetadata";
    private final String COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionAddOrIncrementAttribute";
    private final String COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropOrDecrementAttribute";
+   private final String COLLECTION_LAST_TIME_USED = "CollectionMetadataFacadeCollectionLastTimeUsed";
    private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
    private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
 
@@ -100,6 +101,24 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       assertThatThrownBy(() -> collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME1))
             .isInstanceOf(UserCollectionAlreadyExistsException.class);
+   }
+
+   @Test
+   public void testCreateInitialMetadata() throws Exception {
+      String collection = internalName(COLLECTION_CREATE_INITIAL_METADATA);
+      collectionMetadataFacade.createInitialMetadata(collection, COLLECTION_CREATE_INITIAL_METADATA);
+
+      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(collection);
+
+      assertThat(metadata.getName()).as("real name").isEqualTo(COLLECTION_CREATE_INITIAL_METADATA);
+      assertThat(metadata.getInternalName()).as("internal name").isEqualTo(collection);
+      assertThat(metadata.getProjectId()).as("project id").isEqualTo(projectFacade.getCurrentProjectId());
+      assertThat(metadata.getAttributes()).as("attributes").isEmpty();
+      assertThat(metadata.getLastTimeUsed()).as("last time used").isNotEmpty();
+      assertThat(metadata.getRecentlyUsedDocumentIds()).as("recently used documents").isEmpty();
+      assertThat(metadata.getCreateDate()).as("create date").isNotEmpty();
+      assertThat(metadata.getCreator()).as("create user").isEqualTo(userFacade.getUserEmail());
+      assertThat(metadata.getCustomMetadata()).as("custom metadata").isEmpty();
    }
 
    @Test
@@ -140,7 +159,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    }
 
    @Test
-   public void testRenameCollectionAttribute() throws Exception {
+   public void testRenameAttribute() throws Exception {
       setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
 
       collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
@@ -160,13 +179,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       // we try to rename attribute to name that already exists in collection
       assertThatThrownBy(() -> collectionMetadataFacade.renameAttribute(collection, oldName2, newName))
             .isInstanceOf(AttributeAlreadyExistsException.class);
-
-      // we try to rename non existing attribute
-      // TODO
    }
 
    @Test
-   public void testDropCollectionAttribute() throws Exception {
+   public void testDropAttribute() throws Exception {
       setUpCollection(COLLECTION_DROP_ATTRIBUTE);
 
       collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
@@ -208,23 +224,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       assertThat(ourInternalName).isEqualTo(realInternalName);
    }
 
-   @Test
-   public void testCreateInitialMetadata() throws Exception {
-      String collection = internalName(COLLECTION_CREATE_INITIAL_METADATA);
-      collectionMetadataFacade.createInitialMetadata(collection, COLLECTION_CREATE_INITIAL_METADATA);
 
-      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(collection);
-
-      assertThat(metadata.getName()).isEqualTo(COLLECTION_CREATE_INITIAL_METADATA);
-      assertThat(metadata.getInternalName()).isEqualTo(collection);
-      assertThat(metadata.getProjectId()).isEqualTo(projectFacade.getCurrentProjectId());
-      assertThat(metadata.getAttributes()).isEmpty();
-      assertThat(metadata.getLastTimeUsed()).isNotEmpty();
-      assertThat(metadata.getRecentlyUsedDocumentIds()).isEmpty();
-      assertThat(metadata.getCreateDate()).isNotEmpty();
-      assertThat(metadata.getCreator()).isEqualTo(userFacade.getUserEmail());
-      assertThat(metadata.getCustomMetadata()).isEmpty();
-   }
 
    @Test
    public void testAddOrIncrementAttribute() throws Exception {
@@ -295,6 +295,17 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    }
 
    @Test
+   public void testIsUserCollection() {
+      assertThat(collectionMetadataFacade.isUserCollection("collection.something")).isTrue();
+      assertThat(collectionMetadataFacade.isUserCollection("something")).isFalse();
+   }
+
+   @Test
+   public void testCheckAndConvertAttributesValues() throws Exception {
+      // TODO !!!
+   }
+
+   @Test
    public void testGetAddDropConstraint() throws Exception {
       setUpCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
 
@@ -328,37 +339,6 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       assertThatThrownBy(() -> collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint3))
             .isInstanceOf(InvalidConstraintException.class);
    }
-
-   @Test
-   public void testIsUserCollection() {
-      assertThat(collectionMetadataFacade.isUserCollection("collection.something")).isTrue();
-      assertThat(collectionMetadataFacade.isUserCollection("something")).isFalse();
-   }
-
-   //   @Test
-   //   public void testAddGetAttributeConstraints() throws CollectionAlreadyExistsException, UserCollectionAlreadyExistsException, CollectionNotFoundException {
-   //      setUpCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
-   //
-   //      collectionFacade.createCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
-   //      String collection = internalName(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
-   //
-   //      String name = "attribute 1";
-   //      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
-   //      collectionMetadataFacade.retypeCollectionAttribute(collection, name, collectionMetadataFacade.ATTRIBUTE_TYPE_INT);
-   //
-   //      Assert.assertTrue(collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, name).isEmpty());
-   //
-   //      boolean valid = collectionMetadataFacade.addAttributeConstraint(collection, name, collectionMetadataFacade.COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GT, "10");
-   //      Assert.assertTrue(valid);
-   //
-   //      valid = collectionMetadataFacade.addAttributeConstraint(collection, name, collectionMetadataFacade.COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_GT, "a");
-   //      Assert.assertFalse(valid);
-   //
-   //      valid = collectionMetadataFacade.addAttributeConstraint(collection, name, collectionMetadataFacade.COLLECTION_ATTRIBUTE_CONSTRAINT_TYPE_REGEX, "a");
-   //      Assert.assertFalse(valid);
-   //
-   //      Assert.assertEquals(collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, name).size(), 1);
-   //   }
 
    private String internalName(String collectionOriginalName) {
       return "collection." + collectionOriginalName.toLowerCase() + "_0";

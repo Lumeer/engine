@@ -28,6 +28,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.provider.DataStorageProvider;
@@ -123,8 +124,9 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @return DataDocument with collection metadata
+    * @throws CollectionMetadataDocumentNotFoundException
     */
-   public DataDocument getCollectionMetadataDocument(String collectionName) {
+   public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       List<DataDocument> metadata = dataStorage.run(
             new DataDocument()
                   .append("find", METADATA_COLLECTION)
@@ -133,7 +135,7 @@ public class CollectionMetadataFacade implements Serializable {
                               LumeerConst.Collection.INTERNAL_NAME_KEY,
                               collectionName)));
       if (metadata == null || metadata.isEmpty()) {
-         return null;
+         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName));
       } else {
          return metadata.get(0);
       }
@@ -146,7 +148,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @return object with collection metadata
     */
-   public CollectionMetadata getCollectionMetadata(String collectionName) {
+   public CollectionMetadata getCollectionMetadata(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return new CollectionMetadata(getCollectionMetadataDocument(collectionName));
    }
 
@@ -217,7 +219,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @return set of collection attributes' names
     */
-   public Set<String> getAttributesNames(String collectionName) {
+   public Set<String> getAttributesNames(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return getAttributesInfo(collectionName).keySet();
    }
 
@@ -228,7 +230,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @return map, keys are attributes' names, values are objects with attributes info
     */
-   public Map<String, Attribute> getAttributesInfo(String collectionName) {
+   public Map<String, Attribute> getAttributesInfo(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return getCollectionMetadata(collectionName).getAttributes();
    }
 
@@ -245,33 +247,35 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
     */
-   public void renameAttribute(String collectionName, String oldName, String newName) throws AttributeAlreadyExistsException {
+   public void renameAttribute(String collectionName, String oldName, String newName) throws AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
       if (getAttributesNames(collectionName).contains(newName)) {
          throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newName, collectionName));
       }
 
-      // TODO: does not work and I just can't find out why...
-      //      DataDocument renameQuery = new DataDocument()
-      //            .append("findAndModify", METADATA_COLLECTION)
-      //            .append("query", new DataDocument(LumeerConst.Document.ID, documentId))
-      //            .append("update", new DataDocument()
-      //                  .append("rename", new DataDocument(
-      //                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldName),
-      //                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newName))));
-      //
-      //      dataStorage.run(renameQuery);
-
-      // workaround, big and ugly, but at least works
       DataDocument metadata = getCollectionMetadataDocument(collectionName);
       String documentId = metadata.getId();
-      DataDocument attribute = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTES_KEY).getDataDocument(oldName);
-      dataStorage.dropAttribute(METADATA_COLLECTION, documentId, nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldName));
-      dataStorage.updateDocument(
-            METADATA_COLLECTION,
-            new DataDocument(
-                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newName),
-                  attribute),
-            documentId);
+
+      // still does not pass the test, even with $rename
+      DataDocument renameQuery = new DataDocument()
+            .append("findAndModify", METADATA_COLLECTION)
+            .append("query", new DataDocument(LumeerConst.Document.ID, documentId))
+            .append("update", new DataDocument()
+                  .append("$rename", new DataDocument(
+                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldName),
+                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newName))));
+
+      dataStorage.run(renameQuery);
+
+      // workaround, big and ugly, but at least works
+      //
+      //      DataDocument attribute = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTES_KEY).getDataDocument(oldName);
+      //      dataStorage.dropAttribute(METADATA_COLLECTION, documentId, nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldName));
+      //      dataStorage.updateDocument(
+      //            METADATA_COLLECTION,
+      //            new DataDocument(
+      //                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newName),
+      //                  attribute),
+      //            documentId);
 
    }
 
@@ -284,7 +288,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attributeName
     *       attribute to be dropped
     */
-   public void dropAttribute(String collectionName, String attributeName) {
+   public void dropAttribute(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
       dataStorage.dropAttribute(
             METADATA_COLLECTION,
             getCollectionMetadataDocument(collectionName).getId(),
@@ -303,7 +307,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attribute
     *       set of attributes' names
     */
-   public void addOrIncrementAttribute(String collectionName, String attribute) {
+   public void addOrIncrementAttribute(String collectionName, String attribute) throws CollectionMetadataDocumentNotFoundException {
       String documentId = getCollectionMetadataDocument(collectionName).getId();
       if (getAttributesNames(collectionName).contains(attribute)) {
          dataStorage.incrementAttributeValueBy(
@@ -346,7 +350,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param attribute
     *       set of attributes' names
     */
-   public void dropOrDecrementAttribute(String collectionName, String attribute) {
+   public void dropOrDecrementAttribute(String collectionName, String attribute) throws CollectionMetadataDocumentNotFoundException {
       if (!getAttributesNames(collectionName).contains(attribute)) {
          return;
       }
@@ -366,7 +370,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Returns count for specific attribute
+    * Returns count for specific attribute.
     *
     * @param collectionName
     *       internal collection name
@@ -374,7 +378,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @return attribute count, zero if the attribute does not exist
     */
-   public int getAttributeCount(String collectionName, String attributeName) {
+   public int getAttributeCount(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
       Attribute attribute = getCollectionMetadata(collectionName).getAttributes().get(attributeName);
       if (attribute == null) {
          return 0;
@@ -383,18 +387,18 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Searches for original (given by user) collection name in metadata
+    * Searches for original (given by user) collection name in metadata.
     *
     * @param collectionName
     *       internal collection name
     * @return original collection name
     */
-   public String getOriginalCollectionName(String collectionName) {
+   public String getOriginalCollectionName(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return getCollectionMetadata(collectionName).getName();
    }
 
    /**
-    * Searches for internal representation of collection name
+    * Searches for internal representation of collection name.
     *
     * @param originalCollectionName
     *       original collection name
@@ -418,7 +422,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Sets original (given by user) collection name in metadata
+    * Sets original (given by user) collection name in metadata.
     *
     * @param collectionInternalName
     *       internal collection name
@@ -427,7 +431,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws UserCollectionAlreadyExistsException
     *       when collection with given user name already exists
     */
-   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException {
+   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
       if (checkIfUserCollectionExists(collectionOriginalName)) {
          throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
       }
@@ -445,13 +449,13 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Reads time of last collection usage
+    * Reads time of last collection usage.
     *
     * @param collectionName
     *       internal collection name
     * @return String representation of the time
     */
-   public String getLastTimeUsed(String collectionName) {
+   public String getLastTimeUsed(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return getCollectionMetadata(collectionName).getLastTimeUsed();
    }
 
@@ -461,7 +465,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     */
-   public void setLastTimeUsedNow(String collectionName) {
+   public void setLastTimeUsedNow(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionInfo = getCollectionMetadataDocument(collectionName);
       String documentId = collectionInfo.getId();
       dataStorage.updateDocument(
@@ -479,19 +483,19 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @return DataDocument with all custom metadata values
     */
-   public DataDocument getCustomMetadata(String collectionName) {
+   public DataDocument getCustomMetadata(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return getCollectionMetadata(collectionName).getCustomMetadata();
    }
 
    /**
-    * Adds all pairs key:value to custom metadata
+    * Adds all pairs key:value to custom metadata.
     *
     * @param collectionName
     *       internal name
     * @param metadata
     *       custom metadata
     */
-   public void setCustomMetadata(String collectionName, DataDocument metadata) {
+   public void setCustomMetadata(String collectionName, DataDocument metadata) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionInfo = getCollectionMetadataDocument(collectionName);
       String documentId = collectionInfo.getId();
 
@@ -512,7 +516,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param key
     *       list of metadata to drop
     */
-   public void dropCustomMetadata(String collectionName, String key) {
+   public void dropCustomMetadata(String collectionName, String key) throws CollectionMetadataDocumentNotFoundException {
       String documentId = getCollectionMetadataDocument(collectionName).getId();
       dataStorage.dropAttribute(
             METADATA_COLLECTION,
@@ -523,6 +527,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
+    * Check whether the name is name of user collection.
     * @param collectionName
     *       internal collection name
     * @return true if the name is a name of "classical" collection containing data from user
@@ -581,7 +586,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       document with attributes and their values to check
     * @return map of results, key is attribute name and value is result of checkAndConvertAttributeValue on that attribute
     */
-   public DataDocument checkAndConvertAttributesValues(String collectionName, DataDocument document) {
+   public DataDocument checkAndConvertAttributesValues(String collectionName, DataDocument document) throws CollectionMetadataDocumentNotFoundException {
       DataDocument results = new DataDocument();
 
       Set<String> attributes = document.keySet();
@@ -607,7 +612,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       name of the attribute
     * @return list of constraint configurations for given attribute, empty list if constraints were not found
     */
-   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) {
+   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
       return getCollectionMetadata(collectionName).getAttributes().get(attributeName).getConstraints();
    }
 
@@ -623,7 +628,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws InvalidConstraintException
     *       when new constraint is not valid or is in conflict with existing constraints
     */
-   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException {
+   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException, CollectionMetadataDocumentNotFoundException {
       // user may be permitted to write, but might not be permitted to read
       List<String> existingConstraints = getAttributeConstraintsConfigurations(collectionName, attributeName);
 
@@ -648,7 +653,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Removes the constraint from list of constraints for given attribute
+    * Removes the constraint from list of constraints for given attribute.
     *
     * @param collectionName
     *       internal collection name
@@ -657,7 +662,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param constraintConfiguration
     *       constraint configuration to be removed
     */
-   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) {
+   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws CollectionMetadataDocumentNotFoundException {
       dataStorage.removeItemFromArray(
             METADATA_COLLECTION,
             getCollectionMetadataDocument(collectionName).getId(),
@@ -677,7 +682,11 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if user can read the collection
     */
    public boolean checkCollectionForRead(String collectionName, String user) {
-      return securityFacade.checkForRead(getCollectionMetadataDocument(collectionName), user);
+      try {
+         return securityFacade.checkForRead(getCollectionMetadataDocument(collectionName), user);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return true; // if metadata is not found, we allow access
+      }
    }
 
    /**
@@ -688,7 +697,11 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if user can write to the collection
     */
    public boolean checkCollectionForWrite(String collectionName, String user) {
-      return securityFacade.checkForWrite(getCollectionMetadataDocument(collectionName), user);
+      try {
+         return securityFacade.checkForWrite(getCollectionMetadataDocument(collectionName), user);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return true; // if metadata is not found, we allow access
+      }
    }
 
    /**
@@ -699,7 +712,11 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if user can change access rights to collection
     */
    public boolean checkCollectionForAccessChange(String collectionName, String user) {
-      return securityFacade.checkForExecute(getCollectionMetadataDocument(collectionName), user);
+      try {
+         return securityFacade.checkForExecute(getCollectionMetadataDocument(collectionName), user);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return true; // if metadata is not found, we allow access
+      }
 
    }
 
@@ -711,7 +728,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user to set right for
     */
-   public void addCollectionRead(String collectionName, String user) {
+   public void addCollectionRead(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.setRightsRead(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
@@ -725,7 +742,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user to set right for
     */
-   public void addCollectionWrite(String collectionName, String user) {
+   public void addCollectionWrite(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.setRightsWrite(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
@@ -739,7 +756,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user to set right for
     */
-   public void addCollectionAccessChange(String collectionName, String user) {
+   public void addCollectionAccessChange(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.setRightsExecute(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
@@ -753,7 +770,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user whose right is removed
     */
-   public void removeCollectionRead(String collectionName, String user) {
+   public void removeCollectionRead(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.removeRightsRead(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
@@ -767,7 +784,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user whose right is removed
     */
-   public void removeCollectionWrite(String collectionName, String user) {
+   public void removeCollectionWrite(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.removeRightsWrite(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
@@ -781,7 +798,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param user
     *       user whose right is removed
     */
-   public void removeCollectionAccessChange(String collectionName, String user) {
+   public void removeCollectionAccessChange(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.removeRightsExecute(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
@@ -794,7 +811,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @return list of AccessRightsDao (Daos for all users)
     */
-   public List<AccessRightsDao> getAllAccessRights(String collectionName) {
+   public List<AccessRightsDao> getAllAccessRights(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return securityFacade.getDaoList(getCollectionMetadataDocument(collectionName));
    }
 
@@ -823,7 +840,7 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // returns string "parent.child"
-   private String nestedAttributeName(String parent, String child) {
+   private static String nestedAttributeName(String parent, String child) {
       return parent + "." + child;
    }
 }

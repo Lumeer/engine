@@ -22,12 +22,10 @@ package io.lumeer.engine.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.Attribute;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -49,7 +47,6 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    // do not change collection names, because it can mess up internal name creation in method internalName()
    private final String COLLECTION_GET_ALL_COLLECTIONS = "CollectionFacadeCollectionGetAllCollections";
    private final String COLLECTION_CREATE_AND_DROP = "CollectionFacadeCollectionCreateAndDrop";
-   private final String COLLECTION_READ_COLLECTION_METADATA = "CollectionFacadeReadCollectionCollectionMetadata";
    private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionFacadeReadCollectionCollectionAttributes";
    private final String COLLECTION_DROP_COLLECTION_ATTRIBUTE = "CollectionFacadeCollectionDropCollectionAttribute";
    private final String COLLECTION_GET_ATTRIBUTE_VALUES = "CollectionFacadeCollectionGetAttributeValues";
@@ -91,21 +88,9 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
       collectionFacade.dropCollection(collection);
       assertThat(collectionFacade.getAllCollections()).doesNotContainKey(collection);
-   }
 
-   @Test
-   public void testReadCollectionMetadata() throws Exception {
-      setUpCollection(COLLECTION_READ_COLLECTION_METADATA);
-
-      String collection = collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
-
-      String name = "attribute 1";
-      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
-
-      CollectionMetadata metadata = collectionFacade.readCollectionMetadata(collection);
-
-      // TODO
-      assertThat(metadata); // 4 documents: attribute, name, lock, rights
+      // when we try to remove non-existing collection, nothing happens
+      collectionFacade.dropCollection(collection);
    }
 
    @Test

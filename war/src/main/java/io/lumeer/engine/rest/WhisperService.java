@@ -22,6 +22,7 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionFacade;
@@ -117,16 +118,20 @@ public class WhisperService {
       } catch (UserCollectionNotFoundException e) {
          return Collections.emptySet();
       }
-
-      if (attributeName == null || attributeName.isEmpty()) {
-         return collectionMetadataFacade.getAttributesNames(internalCollectionName).stream().collect(Collectors.toSet());
-      } else {
-         return collectionMetadataFacade.getAttributesNames(internalCollectionName)
-                                        .stream()
-                                        .filter(name -> name.toLowerCase(locale)
-                                                            .startsWith(attributeName.toLowerCase(locale)))
-                                        .collect(Collectors.toSet());
+      try {
+         if (attributeName == null || attributeName.isEmpty()) {
+            return collectionMetadataFacade.getAttributesNames(internalCollectionName).stream().collect(Collectors.toSet());
+         } else {
+            return collectionMetadataFacade.getAttributesNames(internalCollectionName)
+                                           .stream()
+                                           .filter(name -> name.toLowerCase(locale)
+                                                               .startsWith(attributeName.toLowerCase(locale)))
+                                           .collect(Collectors.toSet());
+         }
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return Collections.EMPTY_SET;
       }
+
    }
 
    /**
