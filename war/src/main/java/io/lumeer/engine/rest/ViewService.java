@@ -32,9 +32,11 @@ import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.rest.dao.ViewDao;
 
-import org.bson.Document;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -108,7 +110,8 @@ public class ViewService {
     * @param view
     *       The view description.
     * @return Id of the newly created view.
-    * @throws ViewAlreadyExistsException when view with given name already exists
+    * @throws ViewAlreadyExistsException
+    *       when view with given name already exists
     */
    @POST
    @Path("/")
@@ -123,9 +126,12 @@ public class ViewService {
     *
     * @param view
     *       The view descriptor.
-    * @throws ViewMetadataNotFoundException when view was not found
-    * @throws UnauthorizedAccessException when current user is not allowed to edit the view
-    * @throws ViewAlreadyExistsException when the update contains change of view name and view with given name already exists
+    * @throws ViewMetadataNotFoundException
+    *       when view was not found
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to edit the view
+    * @throws ViewAlreadyExistsException
+    *       when the update contains change of view name and view with given name already exists
     */
    @PUT
    @Path("/")
@@ -150,24 +156,20 @@ public class ViewService {
     *       An attribute of the view to configure.
     * @param configuration
     *       Configuration string, can specify either JSON or just a plain string.
-    * @throws ViewMetadataNotFoundException when view was not found
-    * @throws UnauthorizedAccessException when current user is not allowed to edit the view
+    * @throws ViewMetadataNotFoundException
+    *       when view was not found
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to edit the view
     */
    @PUT
    @Path("/{id}/configure/{attribute}")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute, final String configuration) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
-      DataDocument value = null;
-
       try {
-         value = new DataDocument(Document.parse(configuration));
+         Map<String, Object> configurationData = new ObjectMapper().readValue(configuration, HashMap.class);
+         DataDocument configurationDocument = new DataDocument(configurationData);
+         viewFacade.setViewConfigurationAttribute(id, attribute, configurationDocument);
       } catch (Throwable t) {
-         value = null;
-      }
-
-      if (value != null) {
-         viewFacade.setViewConfigurationAttribute(id, attribute, value);
-      } else {
          viewFacade.setViewConfigurationAttribute(id, attribute, configuration);
       }
    }
@@ -180,8 +182,10 @@ public class ViewService {
     * @param attribute
     *       An attribute of the view to return.
     * @return The configuration value. Either JSON or a plain string.
-    * @throws ViewMetadataNotFoundException when view was not found
-    * @throws UnauthorizedAccessException when current user is not allowed to read the view
+    * @throws ViewMetadataNotFoundException
+    *       when view was not found
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read the view
     */
    @GET
    @Path("/{id}/configure/{attribute}")
@@ -198,9 +202,12 @@ public class ViewService {
     * @param newName
     *       The name of the newly created view.
     * @return The id of the newly created view.
-    * @throws ViewAlreadyExistsException when a view with given new name already exists
-    * @throws UnauthorizedAccessException when current user is not allowed to read copied view
-    * @throws ViewMetadataNotFoundException  when copied view was not found
+    * @throws ViewAlreadyExistsException
+    *       when a view with given new name already exists
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read copied view
+    * @throws ViewMetadataNotFoundException
+    *       when copied view was not found
     */
    @POST
    @Path("/{id}/clone/{newName}")
@@ -216,8 +223,10 @@ public class ViewService {
     * @param id
     *       The view id.
     * @return The access rights.
-    * @throws ViewMetadataNotFoundException when view was not found
-    * @throws UnauthorizedAccessException when current user is not allowed to read the view
+    * @throws ViewMetadataNotFoundException
+    *       when view was not found
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to read the view
     */
    @GET
    @Path("/{id}/rights")
@@ -240,8 +249,10 @@ public class ViewService {
     *       The view id.
     * @param accessRights
     *       The rights to set.
-    * @throws ViewMetadataNotFoundException when view was not found
-    * @throws UnauthorizedAccessException when current user is not allowed to set rights for the view
+    * @throws ViewMetadataNotFoundException
+    *       when view was not found
+    * @throws UnauthorizedAccessException
+    *       when current user is not allowed to set rights for the view
     */
    @PUT
    @Path("/{id}/rights")

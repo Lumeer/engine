@@ -19,9 +19,8 @@
  */
 package io.lumeer.engine.push;
 
-import io.netty.util.internal.ConcurrentSet;
-
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.websocket.CloseReason;
@@ -61,7 +60,7 @@ public class PushNotifications {
          if (session.getUserProperties().containsKey(PushService.LUMEER_AUTH_HEADER)) {
             if (message.startsWith("observe ")) {
                final String objectId = message.substring(8);
-               pushService.getObservedObjects().computeIfAbsent(objectId, k -> new ConcurrentSet<>()).add(session);
+               pushService.getObservedObjects().computeIfAbsent(objectId, k -> ConcurrentHashMap.newKeySet()).add(session);
 
                return "observing";
             }

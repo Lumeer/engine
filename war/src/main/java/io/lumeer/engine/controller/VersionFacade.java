@@ -22,16 +22,13 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
-import io.lumeer.mongodb.MongoUtils;
-
-import com.mongodb.client.model.Filters;
-import org.bson.types.ObjectId;
 
 import java.io.Serializable;
 import java.util.List;
@@ -46,6 +43,9 @@ import javax.inject.Inject;
 public class VersionFacade implements Serializable {
 
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private DataStorageProvider dataStorageProvider;
@@ -321,9 +321,8 @@ public class VersionFacade implements Serializable {
     *       if collection does not exists
     */
    public List<DataDocument> getDocumentVersions(String collectionName, String documentId) throws CollectionNotFoundException {
-      List<DataDocument> dataDocuments = dataStorage.search(buildShadowCollectionName(collectionName),
-            MongoUtils.convertBsonToJson(Filters.eq("_id._id", new ObjectId(documentId)))
-            , null, 0, 100);
+      String filter = dataStorageDialect.documentIdFilter(documentId);
+      List<DataDocument> dataDocuments = dataStorage.search(buildShadowCollectionName(collectionName), filter, null, 0, 100);
       DataDocument main = dataStorage.readDocument(collectionName, documentId);
       dataDocuments.add(main);
       return dataDocuments;

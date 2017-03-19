@@ -26,15 +26,18 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.SessionScoped;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@SessionScoped
+@ApplicationScoped
 public class MongoDbStorageDialect implements DataStorageDialect {
 
    @Override
@@ -115,4 +118,14 @@ public class MongoDbStorageDialect implements DataStorageDialect {
       return MongoUtils.convertBsonToJson(filterRaw);
    }
 
+   @Override
+   public String fieldValueFilter(final String fieldName, final Object value) {
+      Bson filterRaw = Filters.eq(fieldName, value);
+      return MongoUtils.convertBsonToJson(filterRaw);
+   }
+
+   @Override
+   public String documentIdFilter(final String documentId) {
+      return fieldValueFilter("_id._id", new ObjectId(documentId));
+   }
 }
