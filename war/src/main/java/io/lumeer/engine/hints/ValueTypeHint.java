@@ -21,9 +21,6 @@ package io.lumeer.engine.hints;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.push.PushMessage;
-import io.lumeer.mongodb.MongoUtils;
-
-import org.apache.commons.codec.binary.StringUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -57,15 +54,15 @@ public class ValueTypeHint implements Hint {
       Map<String, Object> documentMetadata = new HashMap<>();
       while (iter.hasNext()) {
          Map.Entry<String, Object> entry = iter.next();
-         if (!(entry.getValue() instanceof Integer)){
-            if (isInteger(entry.getValue().toString(),10)){
+         if (!(entry.getValue() instanceof Integer)) {
+            if (isInteger(entry.getValue().toString(), 10)) {
                ValueTypeHint vtp = new ValueTypeHint();
                vtp.setWrongValue(entry.getKey());
                vtp.setDocument(dataDocument);
-               if (collectionName != null){
+               if (collectionName != null) {
                   vtp.setCollection(collectionName);
                }
-               if (userName != null){
+               if (userName != null) {
                   vtp.setUser(userName);
                }
                return vtp;
@@ -75,24 +72,31 @@ public class ValueTypeHint implements Hint {
       return null;
    }
 
-   private void setWrongValue(String wrongValue){
+   private void setWrongValue(String wrongValue) {
       this.wrongValue = wrongValue;
    }
 
    private static boolean isInteger(String s, int radix) {
-      if(s.isEmpty()) return false;
-      if ((s.charAt(0) == '"') && (s.charAt(s.length() - 1) == '"')){
+      if (s.isEmpty()) {
+         return false;
+      }
+      if ((s.charAt(0) == '"') && (s.charAt(s.length() - 1) == '"')) {
          StringBuilder sb = new StringBuilder(s);
          sb.deleteCharAt(0);
          sb.deleteCharAt(s.length() - 1);
          s = sb.toString();
       }
-      for(int i = 0; i < s.length(); i++) {
-         if(i == 0 && s.charAt(i) == '-') {
-            if(s.length() == 1) return false;
-            else continue;
+      for (int i = 0; i < s.length(); i++) {
+         if (i == 0 && s.charAt(i) == '-') {
+            if (s.length() == 1) {
+               return false;
+            } else {
+               continue;
+            }
          }
-         if(Character.digit(s.charAt(i),radix) < 0) return false;
+         if (Character.digit(s.charAt(i), radix) < 0) {
+            return false;
+         }
       }
       return true;
    }
@@ -106,7 +110,6 @@ public class ValueTypeHint implements Hint {
    public boolean apply() {
       return true;
    }
-
 
    public void setDocument(DataDocument dataDocument) {
       this.dataDocument = dataDocument;
@@ -129,6 +132,6 @@ public class ValueTypeHint implements Hint {
 
    @Override
    public PushMessage getMessage() {
-      return new PushMessage("Hint message","Hint","You have wrong integer saved in: " + wrongValue );
+      return new PushMessage("Hint message", "Hint", "You have wrong integer saved in: " + wrongValue);
    }
 }

@@ -19,24 +19,15 @@
  */
 package io.lumeer.engine.controller;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
-import io.lumeer.engine.util.ErrorMessageBuilder;
-import io.lumeer.mongodb.MongoUtils;
-
-import org.bson.conversions.Bson;
 
 import java.io.Serializable;
 import java.util.ArrayList;

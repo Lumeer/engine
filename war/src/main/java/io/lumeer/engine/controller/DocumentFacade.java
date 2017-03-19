@@ -24,16 +24,13 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
-import io.lumeer.mongodb.MongoUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -311,11 +308,11 @@ public class DocumentFacade implements Serializable {
             throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKeyString(attributeName));
          }
          Object value = entry.getValue();
-         if (MongoUtils.isDataDocument(value)) {
+         if (isDataDocument(value)) {
             ndd.put(attributeName, checkDocumentKeysValidity((DataDocument) value));
-         } else if (MongoUtils.isList(value)) {
+         } else if (isList(value)) {
             List l = (List) entry.getValue();
-            if (!l.isEmpty() && MongoUtils.isDataDocument(l.get(0))) {
+            if (!l.isEmpty() && isDataDocument(l.get(0))) {
                ArrayList<DataDocument> docs = new ArrayList<>();
                ndd.put(attributeName, docs);
                for (Object o : l) {
@@ -339,11 +336,11 @@ public class DocumentFacade implements Serializable {
          if (Utils.isAttributeNameValid(attributeName)) {
             final Object value = entry.getValue();
 
-            if (MongoUtils.isDataDocument(value)) {
+            if (isDataDocument(value)) {
                ndd.put(attributeName, cleanInvalidAttributes((DataDocument) value));
-            } else if (MongoUtils.isList(value)) {
+            } else if (isList(value)) {
                List l = (List) entry.getValue();
-               if (!l.isEmpty() && MongoUtils.isDataDocument(l.get(0))) {
+               if (!l.isEmpty() && isDataDocument(l.get(0))) {
                   ArrayList<DataDocument> docs = new ArrayList<>();
                   ndd.put(attributeName, docs);
                   for (Object o : l) {
@@ -367,6 +364,14 @@ public class DocumentFacade implements Serializable {
          dataDocument.remove(metaKey);
       });
       return meta;
+   }
+
+   private static boolean isDataDocument(Object obj) {
+      return obj != null && obj instanceof DataDocument;
+   }
+
+   private static boolean isList(Object obj) {
+      return obj != null && obj instanceof List;
    }
 
 }
