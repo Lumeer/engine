@@ -6,12 +6,18 @@
       <property name="deploymentExportPath">target/deployments</property>
    </engine>
 
-   <container qualifier="wildfly-remote">
+   <container qualifier="wildfly-remote" default="true">
       <configuration>
          <property name="managementAddress">127.0.0.1</property>
          <property name="managementPort">9990</property>
          <property name="username">admin</property>
          <property name="password">admin1234;</property>
+      </configuration>
+   </container>
+
+   <container qualifier="wildfly-managed">
+      <configuration>
+         <property name="jbossHome">${project.build.directory}/wildfly-10.1.0.Final</property>
       </configuration>
    </container>
 </arquillian>
