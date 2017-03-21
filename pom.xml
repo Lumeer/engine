@@ -185,7 +185,6 @@
                   <deployer/>
                   <configuration>
                      <properties>
-                        <cargo.jboss.configuration>standalone-full</cargo.jboss.configuration>
                         <cargo.wildfly.script.cli.embedded.adapter-install>${wildfly.dir}/bin/adapter-install.cli</cargo.wildfly.script.cli.embedded.adapter-install>
                      </properties>
                      <users>

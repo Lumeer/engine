@@ -179,11 +179,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.wildfly.arquillian</groupId>
-         <artifactId>wildfly-arquillian-container-remote</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.wildfly</groupId>
          <artifactId>wildfly-dist</artifactId>
          <type>zip</type>
@@ -427,6 +422,12 @@
             </plugin>
          </plugins>
       </pluginManagement>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
    </build>
 
    <profiles>
@@ -457,6 +458,23 @@
                </plugin>
             </plugins>
          </build>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-managed</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+      <profile>
+         <id>tests</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
       </profile>
       <profile>
          <id>production</id>
@@ -476,6 +494,13 @@
                </plugin>
             </plugins>
          </build>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
       </profile>
       <profile>
          <id>sign</id>

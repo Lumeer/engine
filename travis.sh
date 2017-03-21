@@ -42,7 +42,7 @@ export PING_LOOP_PID=$!
 # your_build_command_2
 export LUMEER_HOME=$(pwd)/war
 export LUMEER_DEFAULTS=defaults-ci.properties
-mvn -P-default install
+mvn -Ptests install
 #mvn -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci
 #mvn -l $BUILD_OUTPUT -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci
 
