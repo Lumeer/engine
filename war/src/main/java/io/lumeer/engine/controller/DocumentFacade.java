@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
@@ -28,7 +29,6 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -50,6 +49,8 @@ import javax.inject.Inject;
 @SessionScoped
 public class DocumentFacade implements Serializable {
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -72,14 +73,6 @@ public class DocumentFacade implements Serializable {
 
    @Inject
    private UserFacade userFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @PostConstruct
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    /**
     * Creates and inserts a new document to specified collection and create collection if not exists

@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.Constraint;
 import io.lumeer.engine.api.constraint.ConstraintManager;
@@ -65,6 +66,8 @@ public class CollectionFacade implements Serializable {
 
    private static final long serialVersionUID = 8967474543742743308L;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -89,14 +92,6 @@ public class CollectionFacade implements Serializable {
    private Map<String, String> collections;
 
    private long cacheLastUpdated = 0L;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @PostConstruct
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    /**
     * Returns a Map object of collection names in the database except of metadata collections.

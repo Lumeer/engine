@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataStorage;
@@ -53,6 +54,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/{organisation}/{project}/whisper")
 public class WhisperService {
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -82,13 +85,8 @@ public class WhisperService {
    @Inject
    private ProjectFacade projectFacade;
 
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
    @PostConstruct
    public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-
       organisationFacade.setOrganisationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
 

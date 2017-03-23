@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -84,6 +85,8 @@ public class DocumentService implements Serializable {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @PathParam("organisation")
@@ -98,13 +101,8 @@ public class DocumentService implements Serializable {
    @Inject
    private ProjectFacade projectFacade;
 
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
    @PostConstruct
    public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-
       organisationFacade.setOrganisationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }

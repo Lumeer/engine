@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
@@ -40,7 +41,6 @@ import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -89,6 +89,8 @@ public class CollectionService implements Serializable {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @PathParam("organisation")
@@ -103,13 +105,8 @@ public class CollectionService implements Serializable {
    @Inject
    private ProjectFacade projectFacade;
 
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
    @PostConstruct
    public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-
       organisationFacade.setOrganisationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
@@ -190,7 +187,8 @@ public class CollectionService implements Serializable {
     *       When the metadata collection of the given collection does not exist.
     * @throws AttributeAlreadyExistsException
     *       When attribute with new name already exists.
-    * @throws UnauthorizedAccessException When current user is not allowed to write to the collection.
+    * @throws UnauthorizedAccessException
+    *       When current user is not allowed to write to the collection.
     */
    @PUT
    @Path("/{collectionName}/attributes/{oldName}/rename/{newName}")

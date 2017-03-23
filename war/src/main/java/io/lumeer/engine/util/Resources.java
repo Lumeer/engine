@@ -19,13 +19,19 @@
  */
 package io.lumeer.engine.util;
 
+import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
+import io.lumeer.engine.provider.DataStorageProvider;
 
 import java.util.logging.Logger;
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
@@ -43,6 +49,9 @@ public class Resources {
    @Inject
    private DataStorageFactory dataStorageFactory;
 
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
    @Resource
    @Produces
    private ManagedExecutorService managedExecutorService;
@@ -55,6 +64,20 @@ public class Resources {
 
    public static Logger produceLog(final String className) {
       return Logger.getLogger(className);
+   }
+
+   @Produces
+   @SystemDataStorage
+   @ApplicationScoped
+   public DataStorage getSystemDataStorage() {
+      return dataStorageProvider.getSystemStorage();
+   }
+
+   @Produces
+   @UserDataStorage
+   @RequestScoped
+   public DataStorage getDataStorage() {
+      return dataStorageProvider.getUserStorage();
    }
 
 }
