@@ -19,11 +19,14 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
 
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 
 /**
  * Manipulates with project related data.
@@ -32,6 +35,10 @@ import javax.enterprise.context.RequestScoped;
  */
 @RequestScoped
 public class ProjectFacade {
+
+   @Inject
+   @SystemDataStorage
+   private DataStorage dataStorage;
 
    private String projectId = "default";
 

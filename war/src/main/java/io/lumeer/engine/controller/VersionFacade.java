@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -42,18 +43,12 @@ import javax.inject.Inject;
 @SessionScoped
 public class VersionFacade implements Serializable {
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
    private DataStorageDialect dataStorageDialect;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @PostConstruct
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    public String getVersionMetadataString() {
       return LumeerConst.Document.METADATA_VERSION_KEY;

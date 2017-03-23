@@ -1,9 +1,9 @@
 /*
  * -----------------------------------------------------------------------\
  * Lumeer
- *  
+ *
  * Copyright (C) 2016 - 2017 the original author or authors.
- *  
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,33 +17,22 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.controller;
+package io.lumeer.engine.annotation;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataStorage;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import javax.inject.Qualifier;
 
 /**
- * Manages organisations and keeps track of currently selected organisation.
+ * Annotates system data storage with user data etc.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@RequestScoped
-public class OrganisationFacade {
-
-   @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
-
-   private String organisationId = "ACME";
-
-   public String getOrganisationId() {
-      return organisationId;
-   }
-
-   public void setOrganisationId(final String organisationId) {
-      this.organisationId = organisationId;
-   }
+@Qualifier
+@Retention(RUNTIME)
+@Target({ TYPE, METHOD, FIELD, PARAMETER })
+public @interface UserDataStorage {
 }

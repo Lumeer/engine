@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -58,6 +59,8 @@ public class LinkingFacade implements Serializable {
 
     */
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -69,16 +72,11 @@ public class LinkingFacade implements Serializable {
    @Inject
    private UserFacade userFacade;
 
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
    /**
     * Creates main linking table if not exists
     */
    @PostConstruct
    public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-
       if (!dataStorage.hasCollection(LumeerConst.Linking.MainTable.NAME)) {
          dataStorage.createCollection(LumeerConst.Linking.MainTable.NAME);
       }
