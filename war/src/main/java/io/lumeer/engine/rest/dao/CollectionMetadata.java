@@ -22,6 +22,7 @@ package io.lumeer.engine.rest.dao;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,11 +36,11 @@ public class CollectionMetadata {
    private String internalName;
    private String projectId;
    private Map<String, Attribute> attributes = new HashMap<>();
-   private String lastTimeUsed;
+   private Date lastTimeUsed;
    private List<String> recentlyUsedDocumentIds;
    private DataDocument customMetadata;
    private String creator;
-   private String createDate;
+   private Date createDate;
 
    public CollectionMetadata(final DataDocument metadata) {
       name = metadata.getString(LumeerConst.Collection.REAL_NAME_KEY);
@@ -56,11 +57,11 @@ public class CollectionMetadata {
                            .append(LumeerConst.Collection.ATTRIBUTE_NAME_KEY, attributeName)));
       }
 
-      lastTimeUsed = metadata.getString(LumeerConst.Collection.LAST_TIME_USED_KEY);
+      lastTimeUsed = metadata.getDate(LumeerConst.Collection.LAST_TIME_USED_KEY);
       recentlyUsedDocumentIds = metadata.getArrayList(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, String.class);
       customMetadata = metadata.getDataDocument(LumeerConst.Collection.CUSTOM_META_KEY);
       creator = metadata.getString(LumeerConst.Collection.CREATE_USER_KEY);
-      createDate = metadata.getString(LumeerConst.Collection.CREATE_DATE_KEY);
+      createDate = metadata.getDate(LumeerConst.Collection.CREATE_DATE_KEY);
    }
 
    public String getName() {
@@ -79,7 +80,7 @@ public class CollectionMetadata {
       return attributes;
    }
 
-   public String getLastTimeUsed() {
+   public Date getLastTimeUsed() {
       return lastTimeUsed;
    }
 
@@ -95,7 +96,7 @@ public class CollectionMetadata {
       return creator;
    }
 
-   public String getCreateDate() {
+   public Date getCreateDate() {
       return createDate;
    }
 

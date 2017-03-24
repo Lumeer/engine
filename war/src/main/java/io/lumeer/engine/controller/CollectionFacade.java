@@ -39,6 +39,7 @@ import io.lumeer.engine.rest.dao.Attribute;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -114,6 +115,23 @@ public class CollectionFacade implements Serializable {
          collections.put(
                d.getString(LumeerConst.Collection.INTERNAL_NAME_KEY),
                d.getString(LumeerConst.Collection.REAL_NAME_KEY));
+      }
+
+      return collections;
+   }
+
+   public List<String> getAllCollectionsByLastTimeUsed() {
+      List<DataDocument> result = dataStorage.run(new DataDocument()
+            .append("find", LumeerConst.Collection.METADATA_COLLECTION)
+            .append("projection", new DataDocument()
+                  .append(LumeerConst.Collection.INTERNAL_NAME_KEY, true))
+            .append("sort", new DataDocument()
+                  .append(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER)));
+
+      List<String> collections = new ArrayList<>();
+
+      for (DataDocument d : result) {
+         collections.add(d.getString(LumeerConst.Collection.INTERNAL_NAME_KEY));
       }
 
       return collections;

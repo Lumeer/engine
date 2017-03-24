@@ -49,6 +49,9 @@ public final class LumeerConst {
 
    public static final String DEFAULT_LIMIT_PROPERTY = "result_limit";
 
+   public static final int SORT_ASCENDING_ORDER = 1;
+   public static final int SORT_DESCENDING_ORDER = -1;
+
    private LumeerConst() {
       // we do not want any instances to be created
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));

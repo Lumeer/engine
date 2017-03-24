@@ -46,6 +46,8 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    // do not change collection names, because it can mess up internal name creation in method internalName()
    private final String COLLECTION_GET_ALL_COLLECTIONS = "CollectionFacadeCollectionGetAllCollections";
+   private final String COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1 = "CollectionFacadeCollectionGetAllCollectionsLastTime1";
+   private final String COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2 = "CollectionFacadeCollectionGetAllCollectionsLastTime2";
    private final String COLLECTION_CREATE_AND_DROP = "CollectionFacadeCollectionCreateAndDrop";
    private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionFacadeReadCollectionCollectionAttributes";
    private final String COLLECTION_DROP_COLLECTION_ATTRIBUTE = "CollectionFacadeCollectionDropCollectionAttribute";
@@ -75,6 +77,17 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
       String collection = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS);
       assertThat(collectionFacade.getAllCollections()).containsKey(collection);
+   }
+
+   @Test
+   public void testGetAllCollectionsByLastTimeUsed() throws Exception {
+      setUpCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1);
+      setUpCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2);
+
+      String collection1 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1);
+      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2);
+
+      assertThat(collectionFacade.getAllCollectionsByLastTimeUsed().get(1)).isEqualTo(collection1);
    }
 
    @Test

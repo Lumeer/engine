@@ -21,8 +21,10 @@ package io.lumeer.engine.rest.dao;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
-import java.util.ArrayList;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
@@ -32,25 +34,33 @@ public class Attribute {
    private String name;
    private int count;
    private List<String> constraints;
-   private List<Attribute> childAttributes = new ArrayList<>();
-
-   public Attribute() {
-   }
+   private Map<String, Attribute> childAttributes = new HashMap<>();
 
    public Attribute(final DataDocument metadata) {
       name = metadata.getString(LumeerConst.Collection.ATTRIBUTE_NAME_KEY);
       count = metadata.getInteger(LumeerConst.Collection.ATTRIBUTE_COUNT_KEY);
       constraints = metadata.getArrayList(LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY, String.class);
 
-      List<DataDocument> childAttributesDocuments = metadata.getArrayList(LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY, DataDocument.class);
-      for(DataDocument child: childAttributesDocuments) {
-         childAttributes.add(new Attribute(child));
+      DataDocument childAttributesDocument = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY);
+      for (String attributeName : childAttributesDocument.keySet()) {
+         String nameWithParent = name + "." + attributeName;
+         childAttributes.put(
+               attributeName,
+               new Attribute(
+                     childAttributesDocument
+                           .getDataDocument(attributeName)
+                           .append(
+                                 LumeerConst.Collection.ATTRIBUTE_NAME_KEY,
+                                 nameWithParent)));
       }
-
    }
 
    public String getName() {
       return name;
+   }
+
+   public String getNameWithoutParent() {
+      return name.substring(name.lastIndexOf(".") + 1);
    }
 
    public int getCount() {
@@ -61,7 +71,7 @@ public class Attribute {
       return constraints;
    }
 
-   public List<Attribute> getChildAttributes() {
+   public Map<String, Attribute> getChildAttributes() {
       return childAttributes;
    }
 

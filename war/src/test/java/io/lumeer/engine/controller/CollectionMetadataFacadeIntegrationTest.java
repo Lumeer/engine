@@ -37,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,6 +72,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_CREATE_INTERNAL_NAME = "collection.collectionmetadatafacadecollection_1_0";
    private final String COLLECTION_ATTRIBUTES_NAMES = "CollectionMetadataFacadeCollectionAttributesNames";
    private final String COLLECTION_ATTRIBUTES_INFO = "CollectionMetadataFacadeCollectionAttributesInfo";
+   private final String COLLECTION_ATTRIBUTE_INFO = "CollectionMetadataFacadeCollectionAttributeInfo";
    private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionMetadataFacadeCollectionRenameAttribute";
    private final String COLLECTION_DROP_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropAttribute";
    private final String COLLECTION_SET_ORIGINAL_NAME = "CollectionMetadataFacadeCollectionSetOriginalName";
@@ -78,6 +80,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_CREATE_INITIAL_METADATA = "CollectionMetadataFacadeCollectionCreateInitialMetadata";
    private final String COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionAddOrIncrementAttribute";
    private final String COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropOrDecrementAttribute";
+   private final String COLLECTION_CHECK_ATTRIBUTES_VALUES = "CollectionMetadataFacadeCollectionCheckAttributesValues";
    private final String COLLECTION_LAST_TIME_USED = "CollectionMetadataFacadeCollectionLastTimeUsed";
    private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
    private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
@@ -90,7 +93,6 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    @Test
    public void testCreateInternalName() throws Exception {
       dataStorage.dropCollection(COLLECTION_CREATE_INTERNAL_NAME);
-      dataStorage.dropCollection("meta." + COLLECTION_CREATE_INTERNAL_NAME);
 
       assertThat(collectionMetadataFacade.createInternalName(CREATE_INTERNAL_NAME_ORIGINAL_NAME1)).isEqualTo(COLLECTION_CREATE_INTERNAL_NAME);
       collectionFacade.createCollection(CREATE_INTERNAL_NAME_ORIGINAL_NAME1);
@@ -114,19 +116,18 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       assertThat(metadata.getInternalName()).as("internal name").isEqualTo(collection);
       assertThat(metadata.getProjectId()).as("project id").isEqualTo(projectFacade.getCurrentProjectId());
       assertThat(metadata.getAttributes()).as("attributes").isEmpty();
-      assertThat(metadata.getLastTimeUsed()).as("last time used").isNotEmpty();
+      assertThat(metadata.getLastTimeUsed()).as("last time used").isBefore(new Date());
       assertThat(metadata.getRecentlyUsedDocumentIds()).as("recently used documents").isEmpty();
-      assertThat(metadata.getCreateDate()).as("create date").isNotEmpty();
+      assertThat(metadata.getCreateDate()).as("create date").isBefore(new Date());
       assertThat(metadata.getCreator()).as("create user").isEqualTo(userFacade.getUserEmail());
       assertThat(metadata.getCustomMetadata()).as("custom metadata").isEmpty();
    }
 
    @Test
-   public void testGetCollectionAttributesNames() throws Exception {
+   public void testGetAttributesNames() throws Exception {
       setUpCollection(COLLECTION_ATTRIBUTES_NAMES);
 
-      collectionFacade.createCollection(COLLECTION_ATTRIBUTES_NAMES);
-      String collection = internalName(COLLECTION_ATTRIBUTES_NAMES);
+      String collection = collectionFacade.createCollection(COLLECTION_ATTRIBUTES_NAMES);
 
       String name1 = "attribute 1";
       String name2 = "attribute 2";
@@ -139,11 +140,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    }
 
    @Test
-   public void testGetCollectionAttributesInfo() throws Exception {
+   public void testGetAttributesInfo() throws Exception {
       setUpCollection(COLLECTION_ATTRIBUTES_INFO);
 
-      collectionFacade.createCollection(COLLECTION_ATTRIBUTES_INFO);
-      String collection = internalName(COLLECTION_ATTRIBUTES_INFO);
+      String collection = collectionFacade.createCollection(COLLECTION_ATTRIBUTES_INFO);
 
       Map<String, Attribute> attributesInfo = collectionMetadataFacade.getAttributesInfo(collection);
       assertThat(attributesInfo).isEmpty();
@@ -159,11 +159,43 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    }
 
    @Test
+   public void testGetAttributeInfo() throws Exception {
+      setUpCollection(COLLECTION_ATTRIBUTE_INFO);
+
+      String collection = collectionFacade.createCollection(COLLECTION_ATTRIBUTE_INFO);
+
+      // nested attribute
+      String parent = "attribute";
+      String child = "child";
+      String attributeName = parent + "." + child;
+      Attribute attribute = collectionMetadataFacade.getAttributeInfo(collection, attributeName);
+
+      // non existing
+      assertThat(attribute).isNull();
+
+      collectionMetadataFacade.addOrIncrementAttribute(collection, parent);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeName);
+      attribute = collectionMetadataFacade.getAttributeInfo(collection, attributeName);
+
+      // existing
+      assertThat(attribute).isNotNull();
+      assertThat(attribute.getNameWithoutParent()).isEqualTo(child);
+
+      // double nested attribute
+      String child2 = "child 2";
+      String attributeName2 = attributeName + "." + child2;
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeName2);
+      attribute = collectionMetadataFacade.getAttributeInfo(collection, attributeName2);
+
+      assertThat(attribute).isNotNull();
+      assertThat(attribute.getNameWithoutParent()).isEqualTo(child2);
+   }
+
+   @Test
    public void testRenameAttribute() throws Exception {
       setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
 
-      collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
-      String collection = internalName(COLLECTION_RENAME_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
 
       String oldName = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, oldName);
@@ -179,14 +211,22 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       // we try to rename attribute to name that already exists in collection
       assertThatThrownBy(() -> collectionMetadataFacade.renameAttribute(collection, oldName2, newName))
             .isInstanceOf(AttributeAlreadyExistsException.class);
+
+      // nested attribute
+      String oldNameNested = newName + ".child";
+      String newNameNested = newName + ".child new";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, oldNameNested);
+      collectionMetadataFacade.renameAttribute(collection, oldNameNested, newNameNested);
+      Attribute attribute = collectionMetadataFacade.getAttributeInfo(collection, newNameNested);
+
+      assertThat(attribute).isNotNull();
    }
 
    @Test
    public void testDropAttribute() throws Exception {
       setUpCollection(COLLECTION_DROP_ATTRIBUTE);
 
-      collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
-      String collection = internalName(COLLECTION_DROP_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
@@ -198,14 +238,25 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       // we try to drop non existing attribute - nothing happens
       collectionMetadataFacade.dropAttribute(collection, "attribute2");
+
+      // nested attribute
+      String nestedAttribute = name + ".child";
+      assertThat(collectionMetadataFacade.getAttributeInfo(collection, nestedAttribute)).isNull();
+
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+      collectionMetadataFacade.dropAttribute(collection, nestedAttribute);
+
+      assertThat(collectionMetadataFacade.getAttributeInfo(collection, nestedAttribute)).isNull();
+      assertThat(collectionMetadataFacade.getAttributeInfo(collection, name)).isNotNull(); // parent is not changed
+
    }
 
    @Test
    public void testSetGetOriginalCollectionName() throws Exception {
       setUpCollection(COLLECTION_SET_ORIGINAL_NAME);
 
-      collectionFacade.createCollection(COLLECTION_SET_ORIGINAL_NAME);
-      String collection = internalName(COLLECTION_SET_ORIGINAL_NAME);
+      String collection = collectionFacade.createCollection(COLLECTION_SET_ORIGINAL_NAME);
       String newName = "my great collection";
       collectionMetadataFacade.setOriginalCollectionName(collection, newName);
       String realName = collectionMetadataFacade.getOriginalCollectionName(collection);
@@ -217,21 +268,17 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    public void testGetInternalCollectionName() throws Exception {
       setUpCollection(COLLECTION_GET_INTERNAL_NAME);
 
-      collectionFacade.createCollection(COLLECTION_GET_INTERNAL_NAME);
-      String ourInternalName = internalName(COLLECTION_GET_INTERNAL_NAME);
+      String ourInternalName = collectionFacade.createCollection(COLLECTION_GET_INTERNAL_NAME);
       String realInternalName = collectionMetadataFacade.getInternalCollectionName(COLLECTION_GET_INTERNAL_NAME);
 
       assertThat(ourInternalName).isEqualTo(realInternalName);
    }
 
-
-
    @Test
    public void testAddOrIncrementAttribute() throws Exception {
       setUpCollection(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE);
 
-      collectionFacade.createCollection(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE);
-      String collection = internalName(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE);
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
@@ -243,14 +290,24 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       count = collectionMetadataFacade.getAttributeCount(collection, name);
 
       assertThat(count).isEqualTo(2);
+
+      // nested attribute
+      String nestedAttribute = name + ".child";
+      count = collectionMetadataFacade.getAttributeCount(collection, nestedAttribute);
+
+      assertThat(count).isZero();
+
+      collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+      count = collectionMetadataFacade.getAttributeCount(collection, nestedAttribute);
+
+      assertThat(count).isEqualTo(1);
    }
 
    @Test
    public void testDropOrDecrementAttribute() throws Exception {
       setUpCollection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE);
 
-      collectionFacade.createCollection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE);
-      String collection = internalName(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE);
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
@@ -267,14 +324,27 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       assertThat(count).isZero();
       assertThat(attributeInfo).isEmpty();
+
+      // nested attribute
+      String nestedAttribute = name + ".child";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+
+      collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+
+      collectionMetadataFacade.dropOrDecrementAttribute(collection, nestedAttribute);
+      collectionMetadataFacade.dropOrDecrementAttribute(collection, nestedAttribute);
+
+      count = collectionMetadataFacade.getAttributeCount(collection, nestedAttribute);
+
+      assertThat(count).isZero();
    }
 
    @Test
    public void testGetSetDropCustomMetadata() throws Exception {
       setUpCollection(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
 
-      collectionFacade.createCollection(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
-      String collection = internalName(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
+      String collection = collectionFacade.createCollection(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
 
       // there is no custom metadata - we should obtain empty list
       assertThat(collectionMetadataFacade.getCustomMetadata(collection)).isEmpty();
@@ -302,15 +372,102 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testCheckAndConvertAttributesValues() throws Exception {
-      // TODO !!!
+      setUpCollection(COLLECTION_CHECK_ATTRIBUTES_VALUES);
+
+      String collection = collectionFacade.createCollection(COLLECTION_CHECK_ATTRIBUTES_VALUES);
+
+      String attribute = "attribute";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
+      String constraint1 = "greaterThan:3";
+      collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint1);
+      int valueValid1 = 4;
+      int valueInvalid1 = 2;
+
+      String attribute2 = "attribute2";
+      String child = "child";
+      String nestedAttribute = attribute2 + "." + child;
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute2);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+      String constraint2 = "lessThan:8";
+      collectionMetadataFacade.addAttributeConstraint(collection, nestedAttribute, constraint2);
+      int valueValid2 = 4;
+      int valueInvalid2 = 9;
+
+      String attribute3 = "attribute3";
+      String nestedAttribute2 = attribute3 + "." + child;
+      String doubleChild = "double child";
+      String doubleNestedAttribute = nestedAttribute2 + "." + doubleChild;
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attribute3);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute2);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, doubleNestedAttribute);
+      String constraint3 = "isNumber";
+      collectionMetadataFacade.addAttributeConstraint(collection, doubleNestedAttribute, constraint3);
+      int valueValid3 = 5;
+      String valueInvalid3 = "a";
+
+      DataDocument validDoc = new DataDocument()
+            .append(attribute, valueValid1)
+            .append(attribute2,
+                  new DataDocument(child, valueValid2))
+            .append(attribute3,
+                  new DataDocument(child,
+                        new DataDocument(
+                              doubleChild,
+                              valueValid3)));
+
+      DataDocument invalidDoc = new DataDocument()
+            .append(attribute, valueInvalid1)
+            .append(attribute2,
+                  new DataDocument(child, valueInvalid2))
+            .append(attribute3,
+                  new DataDocument(child,
+                        new DataDocument(
+                              doubleChild,
+                              valueInvalid3)));
+
+      DataDocument validAfterConvert = collectionMetadataFacade.checkAndConvertAttributesValues(collection, validDoc);
+      DataDocument invalidAfterConvert = collectionMetadataFacade.checkAndConvertAttributesValues(collection, invalidDoc);
+
+      // we have to get values as strings, because ConstraintManager always returns strings as a result of validation
+      assertThat(validAfterConvert.getString(attribute))
+            .as("valid attribute")
+            .isEqualTo(Integer.toString(valueValid1));
+      assertThat(validAfterConvert.getDataDocument(attribute2).getString(child))
+            .as("valid nested attribute")
+            .isEqualTo(Integer.toString(valueValid2));
+      assertThat(validAfterConvert.getDataDocument(attribute3).getDataDocument(child).getString(doubleChild))
+            .as("valid double nested attribute")
+            .isEqualTo(Integer.toString(valueValid3));
+
+      assertThat(invalidAfterConvert.getString(attribute))
+            .as("invalid attribute")
+            .isNull();
+      assertThat(invalidAfterConvert.getDataDocument(attribute2).getString(child))
+            .as("invalid nested attribute")
+            .isNull();
+      assertThat(invalidAfterConvert.getDataDocument(attribute3).getDataDocument(child).getString(doubleChild))
+            .as("invalid double nested attribute")
+            .isNull();
+   }
+
+   @Test
+   public void testGetSetLastTimeUsed() throws Exception {
+      setUpCollection(COLLECTION_LAST_TIME_USED);
+
+      String collection = collectionFacade.createCollection(COLLECTION_LAST_TIME_USED);
+
+      collectionMetadataFacade.setLastTimeUsedNow(collection);
+      Date last = collectionMetadataFacade.getLastTimeUsed(collection);
+
+      assertThat(new Date()).isAfter(last);
+      assertThat(last).isAfter(collectionMetadataFacade.getCollectionMetadata(collection).getCreateDate());
    }
 
    @Test
    public void testGetAddDropConstraint() throws Exception {
       setUpCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
 
-      collectionFacade.createCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
-      String collection = internalName(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
+      String collection = collectionFacade.createCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
 
       String attribute = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
@@ -338,6 +495,13 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       String constraint3 = "dummy";
       assertThatThrownBy(() -> collectionMetadataFacade.addAttributeConstraint(collection, attribute, constraint3))
             .isInstanceOf(InvalidConstraintException.class);
+
+      // nested attribute
+      String nestedAttribute = attribute + ".child";
+      collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+      collectionMetadataFacade.addAttributeConstraint(collection, nestedAttribute, constraint1);
+      constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, nestedAttribute);
+      assertThat(constraints).containsOnly(constraint1);
    }
 
    private String internalName(String collectionOriginalName) {
@@ -346,6 +510,5 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    private void setUpCollection(String originalCollectionName) {
       dataStorage.dropCollection(internalName(originalCollectionName));
-      dataStorage.dropCollection("meta." + internalName(originalCollectionName));
    }
 }

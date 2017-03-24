@@ -145,7 +145,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       client.close();
    }
 
-   @Ignore // we ignore that test because we don't use cache anymore
+   @Ignore("we ignore that test because we don't use cache anymore")
    @Test
    public void testGetAllCollectionsRequestCaching() throws Exception {
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_1);

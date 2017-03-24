@@ -40,6 +40,10 @@ import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -200,9 +204,9 @@ public class CollectionMetadataFacade implements Serializable {
             .append(LumeerConst.Collection.INTERNAL_NAME_KEY, internalCollectionName)
             .append(LumeerConst.Collection.PROJECT_ID, projectFacade.getCurrentProjectId())
             .append(LumeerConst.Collection.ATTRIBUTES_KEY, new DataDocument())
-            .append(LumeerConst.Collection.LAST_TIME_USED_KEY, Utils.getCurrentTimeString())
+            .append(LumeerConst.Collection.LAST_TIME_USED_KEY, new Date())
             .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())
-            .append(LumeerConst.Collection.CREATE_DATE_KEY, Utils.getCurrentTimeString())
+            .append(LumeerConst.Collection.CREATE_DATE_KEY, new Date())
             .append(LumeerConst.Collection.CREATE_USER_KEY, user)
             .append(LumeerConst.Collection.CUSTOM_META_KEY, new DataDocument());
 
@@ -234,6 +238,32 @@ public class CollectionMetadataFacade implements Serializable {
       return getCollectionMetadata(collectionName).getAttributes();
    }
 
+   public Attribute getAttributeInfo(String collection, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      List<String> keys = divideAttributeName(attributeName);
+
+      Attribute attribute = getCollectionMetadata(collection).getAttributes().get(keys.get(0));
+
+      for (int i = 1; i < keys.size(); i++) {
+         if (attribute == null) {
+            break;
+         }
+         attribute = attribute.getChildAttributes().get(keys.get(i));
+      }
+
+      return attribute;
+   }
+
+   private List<String> divideAttributeName(String attribute) {
+      return Arrays.asList(attribute.split("\\."));
+   }
+
+   private String attributePath(String attribute) {
+      return attribute.replaceAll("\\.",
+            "."
+                  + LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY
+                  + ".");
+   }
+
    /**
     * Renames existing attribute in collection metadata.
     * This method should be called only when also renaming attribute in all collection documents.
@@ -248,35 +278,23 @@ public class CollectionMetadataFacade implements Serializable {
     *       when attribute with new name already exists
     */
    public void renameAttribute(String collectionName, String oldName, String newName) throws AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
-      if (getAttributesNames(collectionName).contains(newName)) {
+      if (getAttributeInfo(collectionName, newName) != null) {
          throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newName, collectionName));
       }
 
-      DataDocument metadata = getCollectionMetadataDocument(collectionName);
-      String documentId = metadata.getId();
+      String oldNamePath = attributePath(oldName);
+      String newNamePath = attributePath(newName);
 
       // still does not pass the test, even with $rename
       DataDocument renameQuery = new DataDocument()
             .append("findAndModify", METADATA_COLLECTION)
-            .append("query", new DataDocument(LumeerConst.Document.ID, documentId))
+            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName))
             .append("update", new DataDocument()
                   .append("$rename", new DataDocument(
-                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldName),
-                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newName))));
+                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldNamePath),
+                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newNamePath))));
 
       dataStorage.run(renameQuery);
-
-      // workaround, big and ugly, but at least works
-      //
-      //      DataDocument attribute = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTES_KEY).getDataDocument(oldName);
-      //      dataStorage.dropAttribute(METADATA_COLLECTION, documentId, nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldName));
-      //      dataStorage.updateDocument(
-      //            METADATA_COLLECTION,
-      //            new DataDocument(
-      //                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newName),
-      //                  attribute),
-      //            documentId);
-
    }
 
    /**
@@ -294,7 +312,7 @@ public class CollectionMetadataFacade implements Serializable {
             getCollectionMetadataDocument(collectionName).getId(),
             nestedAttributeName(
                   LumeerConst.Collection.ATTRIBUTES_KEY,
-                  attributeName));
+                  attributePath(attributeName)));
    }
 
    /**
@@ -304,29 +322,35 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param collectionName
     *       internal collection name
-    * @param attribute
-    *       set of attributes' names
+    * @param attributeName
+    *       attribute's name
     */
-   public void addOrIncrementAttribute(String collectionName, String attribute) throws CollectionMetadataDocumentNotFoundException {
+   public void addOrIncrementAttribute(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
       String documentId = getCollectionMetadataDocument(collectionName).getId();
-      if (getAttributesNames(collectionName).contains(attribute)) {
+
+      if (attribute != null) {
          dataStorage.incrementAttributeValueBy(
                METADATA_COLLECTION,
                documentId,
                nestedAttributeName(
                      nestedAttributeName(
                            LumeerConst.Collection.ATTRIBUTES_KEY,
-                           attribute),
+                           attributePath(attributeName)),
                      LumeerConst.Collection.ATTRIBUTE_COUNT_KEY),
                1);
       } else {
+         List<String> dividedName = divideAttributeName(attributeName);
          dataStorage.updateDocument(
                METADATA_COLLECTION,
                new DataDocument(
                      nestedAttributeName(
                            LumeerConst.Collection.ATTRIBUTES_KEY,
-                           attribute),
+                           attributePath(attributeName)),
                      new DataDocument()
+                           .append(
+                                 LumeerConst.Collection.ATTRIBUTE_NAME_KEY,
+                                 dividedName.get(dividedName.size() - 1))
                            .append(
                                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY,
                                  new ArrayList<String>())
@@ -334,7 +358,7 @@ public class CollectionMetadataFacade implements Serializable {
                                  LumeerConst.Collection.ATTRIBUTE_COUNT_KEY, 1)
                            .append(
                                  LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY,
-                                 new ArrayList<Attribute>())
+                                 new HashMap<String, Attribute>())
                ),
                documentId);
       }
@@ -347,13 +371,21 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param collectionName
     *       internal collection name
-    * @param attribute
+    * @param attributeName
     *       set of attributes' names
     */
-   public void dropOrDecrementAttribute(String collectionName, String attribute) throws CollectionMetadataDocumentNotFoundException {
-      if (!getAttributesNames(collectionName).contains(attribute)) {
+   public void dropOrDecrementAttribute(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
+
+      if (attribute == null) {
          return;
       }
+
+      if (attribute.getCount() <= 1L) {
+         dropAttribute(collectionName, attributeName);
+         return;
+      }
+
       String documentId = getCollectionMetadataDocument(collectionName).getId();
       dataStorage.incrementAttributeValueBy(
             METADATA_COLLECTION,
@@ -361,12 +393,9 @@ public class CollectionMetadataFacade implements Serializable {
             nestedAttributeName(
                   nestedAttributeName(
                         LumeerConst.Collection.ATTRIBUTES_KEY,
-                        attribute),
+                        attributePath(attributeName)),
                   LumeerConst.Collection.ATTRIBUTE_COUNT_KEY),
             -1);
-      if (getAttributeCount(collectionName, attribute) <= 0L) {
-         dropAttribute(collectionName, attribute);
-      }
    }
 
    /**
@@ -379,7 +408,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @return attribute count, zero if the attribute does not exist
     */
    public int getAttributeCount(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
-      Attribute attribute = getCollectionMetadata(collectionName).getAttributes().get(attributeName);
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
       if (attribute == null) {
          return 0;
       }
@@ -455,7 +484,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @return String representation of the time
     */
-   public String getLastTimeUsed(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+   public Date getLastTimeUsed(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       return getCollectionMetadata(collectionName).getLastTimeUsed();
    }
 
@@ -472,7 +501,7 @@ public class CollectionMetadataFacade implements Serializable {
             METADATA_COLLECTION,
             new DataDocument(
                   LumeerConst.Collection.LAST_TIME_USED_KEY,
-                  Utils.getCurrentTimeString()),
+                  new Date()),
             documentId);
    }
 
@@ -528,6 +557,7 @@ public class CollectionMetadataFacade implements Serializable {
 
    /**
     * Check whether the name is name of user collection.
+    *
     * @param collectionName
     *       internal collection name
     * @return true if the name is a name of "classical" collection containing data from user
@@ -541,15 +571,32 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Checks whether value satisfies all constraints (and tries to fix it when possible).
     *
-    * @param collectionName
-    *       internal collection name
     * @param attribute
     *       attribute name
     * @param valueObject
     *       attribute value
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     */
-   private Object checkAndConvertAttributeValue(String collectionName, Attribute attribute, Object valueObject) {
+   private Object checkAndConvertAttributeValue(Attribute attribute, Object valueObject) {
+      if (valueObject instanceof DataDocument) {
+
+         DataDocument beforeCheck = (DataDocument) valueObject;
+         DataDocument afterCheck = new DataDocument();
+
+         Map<String, Attribute> attributes = attribute.getChildAttributes();
+
+         for (String key : beforeCheck.keySet()) {
+            if (!attributes.keySet().contains(key)) {
+               afterCheck.put(key, beforeCheck.get(key));
+            } else {
+               Object newValue = checkAndConvertAttributeValue(attributes.get(key), beforeCheck.get(key));
+               afterCheck.put(key, newValue);
+            }
+         }
+
+         return afterCheck;
+      }
+
       List<String> constraintConfigurations = attribute.getConstraints();
       if (constraintConfigurations == null || constraintConfigurations.isEmpty()) { // there are no constraints
          return valueObject;
@@ -594,7 +641,7 @@ public class CollectionMetadataFacade implements Serializable {
       for (String a : attributes) {
          Object value = document.get(a);
          if (attributesMetadata.keySet().contains(a)) {
-            results.append(a, checkAndConvertAttributeValue(collectionName, attributesMetadata.get(a), value));
+            results.append(a, checkAndConvertAttributeValue(attributesMetadata.get(a), value));
          } else {
             results.append(a, value);
          }
@@ -613,7 +660,13 @@ public class CollectionMetadataFacade implements Serializable {
     * @return list of constraint configurations for given attribute, empty list if constraints were not found
     */
    public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
-      return getCollectionMetadata(collectionName).getAttributes().get(attributeName).getConstraints();
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
+
+      if (attribute == null) {
+         return Collections.emptyList();
+      }
+
+      return attribute.getConstraints();
    }
 
    /**
@@ -646,7 +699,7 @@ public class CollectionMetadataFacade implements Serializable {
             METADATA_COLLECTION,
             getCollectionMetadataDocument(collectionName).getId(),
             nestedAttributeName(
-                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, attributeName),
+                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName)),
                   LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
             ),
             constraintConfiguration);
@@ -667,7 +720,7 @@ public class CollectionMetadataFacade implements Serializable {
             METADATA_COLLECTION,
             getCollectionMetadataDocument(collectionName).getId(),
             nestedAttributeName(
-                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, attributeName),
+                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName)),
                   LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
             ),
             constraintConfiguration);
