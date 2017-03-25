@@ -29,7 +29,6 @@ import io.lumeer.engine.api.data.DataStorageDialect;
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-
 import javax.enterprise.context.ApplicationScoped;
 
 /**
