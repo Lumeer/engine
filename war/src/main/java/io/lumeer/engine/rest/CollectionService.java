@@ -179,11 +179,8 @@ public class CollectionService implements Serializable {
     *       When attribute with new name already exists.
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to write to the collection.
-<<<<<<< HEAD
     * @throws CollectionMetadataDocumentNotFoundException
     *       when metadata for collection was not found
-=======
->>>>>>> upstream/devel
     */
    @PUT
    @Path("/{collectionName}/attributes/{oldName}/rename/{newName}")
