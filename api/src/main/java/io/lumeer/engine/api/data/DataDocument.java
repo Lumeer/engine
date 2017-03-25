@@ -261,7 +261,13 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     *       if key nested path is not valid
     */
    public Date getDate(final String key) {
-      return (Date) getObject(key);
+      Long date = null;
+      try {
+         date = (Long) getObject(key);
+      } catch (ClassCastException e) {
+         return (Date) getObject(key);
+      }
+      return new Date(date);
    }
 
    /**
