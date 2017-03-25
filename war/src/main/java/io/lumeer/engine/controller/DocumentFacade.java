@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
@@ -29,10 +30,8 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
-import io.lumeer.mongodb.MongoUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -52,6 +50,8 @@ import javax.inject.Inject;
 @SessionScoped
 public class DocumentFacade implements Serializable {
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -74,14 +74,6 @@ public class DocumentFacade implements Serializable {
 
    @Inject
    private UserFacade userFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @PostConstruct
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    /**
     * Creates and inserts a new document to specified collection and create collection if not exists
@@ -337,11 +329,11 @@ public class DocumentFacade implements Serializable {
             throw new InvalidDocumentKeyException(ErrorMessageBuilder.invalidDocumentKeyString(attributeName));
          }
          Object value = entry.getValue();
-         if (MongoUtils.isDataDocument(value)) {
+         if (isDataDocument(value)) {
             ndd.put(attributeName, checkDocumentKeysValidity((DataDocument) value));
-         } else if (MongoUtils.isList(value)) {
+         } else if (isList(value)) {
             List l = (List) entry.getValue();
-            if (!l.isEmpty() && MongoUtils.isDataDocument(l.get(0))) {
+            if (!l.isEmpty() && isDataDocument(l.get(0))) {
                ArrayList<DataDocument> docs = new ArrayList<>();
                ndd.put(attributeName, docs);
                for (Object o : l) {
@@ -365,11 +357,11 @@ public class DocumentFacade implements Serializable {
          if (Utils.isAttributeNameValid(attributeName)) {
             final Object value = entry.getValue();
 
-            if (MongoUtils.isDataDocument(value)) {
+            if (isDataDocument(value)) {
                ndd.put(attributeName, cleanInvalidAttributes((DataDocument) value));
-            } else if (MongoUtils.isList(value)) {
+            } else if (isList(value)) {
                List l = (List) entry.getValue();
-               if (!l.isEmpty() && MongoUtils.isDataDocument(l.get(0))) {
+               if (!l.isEmpty() && isDataDocument(l.get(0))) {
                   ArrayList<DataDocument> docs = new ArrayList<>();
                   ndd.put(attributeName, docs);
                   for (Object o : l) {
@@ -393,6 +385,14 @@ public class DocumentFacade implements Serializable {
          dataDocument.remove(metaKey);
       });
       return meta;
+   }
+
+   private static boolean isDataDocument(Object obj) {
+      return obj != null && obj instanceof DataDocument;
+   }
+
+   private static boolean isList(Object obj) {
+      return obj != null && obj instanceof List;
    }
 
 }

@@ -23,8 +23,6 @@ import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.push.PushMessage;
 import io.lumeer.engine.controller.UserFacade;
 
-import io.netty.util.internal.ConcurrentSet;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -63,7 +61,7 @@ public class PushService {
    /**
     * Currently opened sessions with clients.
     */
-   private Set<Session> sessions = new ConcurrentSet<>();
+   private Set<Session> sessions = ConcurrentHashMap.newKeySet();
 
    /**
     * Authentication tokens of clients authenticated via HTTP.

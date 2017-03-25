@@ -77,6 +77,7 @@
       <dependency>
          <groupId>io.lumeer</groupId>
          <artifactId>mongodb-storage</artifactId>
+         <scope>runtime</scope>
       </dependency>
       <dependency>
          <groupId>io.lumeer</groupId>
@@ -175,11 +176,6 @@
       <dependency>
          <groupId>org.jboss.arquillian.protocol</groupId>
          <artifactId>arquillian-protocol-servlet</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.wildfly.arquillian</groupId>
-         <artifactId>wildfly-arquillian-container-remote</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -426,6 +422,12 @@
             </plugin>
          </plugins>
       </pluginManagement>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
    </build>
 
    <profiles>
@@ -456,6 +458,23 @@
                </plugin>
             </plugins>
          </build>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-managed</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+      <profile>
+         <id>tests</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
       </profile>
       <profile>
          <id>production</id>
@@ -475,6 +494,13 @@
                </plugin>
             </plugins>
          </build>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
       </profile>
       <profile>
          <id>sign</id>

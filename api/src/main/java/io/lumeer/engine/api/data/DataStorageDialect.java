@@ -41,4 +41,9 @@ public interface DataStorageDialect extends Serializable {
    String linkingFromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection);
 
    String linkingFromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection);
+
+   String fieldValueFilter(final String fieldName, final Object value);
+
+   String documentIdFilter(final String documentId);
+
 }

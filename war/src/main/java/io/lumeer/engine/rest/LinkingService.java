@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -31,7 +32,6 @@ import io.lumeer.engine.controller.LinkingFacade;
 import io.lumeer.engine.controller.OrganisationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -69,6 +69,8 @@ public class LinkingService {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @PathParam("organisation")
@@ -83,13 +85,8 @@ public class LinkingService {
    @Inject
    private ProjectFacade projectFacade;
 
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
    @PostConstruct
    public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-
       organisationFacade.setOrganisationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }

@@ -62,6 +62,11 @@ public class ConfigurationFacade implements Serializable {
    @Inject
    private OrganisationFacade organisationFacade;
 
+   /**
+    * Never ever replace the way of getting data storage here. Data storage configuration depends on this bean and this bean cannot inject it directly.
+    *
+    * @return Pre-configured data storage.
+    */
    public StorageConnection getDataStorage() {
       return new StorageConnection(
             getConfigurationString(LumeerConst.DB_HOST_PROPERTY).orElse("localhost"),
@@ -78,6 +83,11 @@ public class ConfigurationFacade implements Serializable {
       return Boolean.valueOf(getConfigurationString(LumeerConst.DB_USE_SSL).orElse("false"));
    }
 
+   /**
+    * Never ever replace the way of getting data storage here. Data storage configuration depends on this bean and this bean cannot inject it directly.
+    *
+    * @return Pre-configured system data storage.
+    */
    public StorageConnection getSystemDataStorage() {
       return new StorageConnection(
             defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_HOST_PROPERTY),

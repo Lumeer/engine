@@ -19,13 +19,13 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.ViewDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -33,7 +33,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -43,6 +42,8 @@ import javax.inject.Inject;
 @SessionScoped
 public class ViewFacade implements Serializable {
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -53,14 +54,6 @@ public class ViewFacade implements Serializable {
 
    @Inject
    private SecurityFacade securityFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @PostConstruct
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    /**
     * Creates initial metadata for the view

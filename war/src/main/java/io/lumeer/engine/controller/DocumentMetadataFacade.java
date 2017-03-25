@@ -19,16 +19,15 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.Collections;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -67,15 +66,9 @@ public class DocumentMetadataFacade implements Serializable {
    //	… (rest of the document) …
    // }
 
-   private DataStorage dataStorage;
-
    @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @PostConstruct
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
+   @UserDataStorage
+   private DataStorage dataStorage;
 
    /**
     * Reads specified metadata value

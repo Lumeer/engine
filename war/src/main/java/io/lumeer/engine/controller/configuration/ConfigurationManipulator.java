@@ -21,10 +21,8 @@ package io.lumeer.engine.controller.configuration;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.provider.DataStorageProvider;
-import io.lumeer.mongodb.MongoUtils;
-
-import com.mongodb.client.model.Filters;
 
 import java.io.Serializable;
 import java.util.List;
@@ -74,6 +72,9 @@ public class ConfigurationManipulator implements Serializable {
    public static final String NAME_KEY = "name";
    public static final String CONFIG_KEY = "config";
    public static final String ID_KEY = "_id";
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private DataStorageProvider dataStorageProvider;
@@ -188,7 +189,7 @@ public class ConfigurationManipulator implements Serializable {
             return Optional.empty();
          }
 
-         String filter = MongoUtils.convertBsonToJson(Filters.eq(NAME_KEY, nameValue));
+         String filter = dataStorageDialect.fieldValueFilter(NAME_KEY, nameValue);
          List<DataDocument> configs = systemDataStorage.search(collectionName, filter, null, 0, 0);
 
          if (!configs.isEmpty()) {
