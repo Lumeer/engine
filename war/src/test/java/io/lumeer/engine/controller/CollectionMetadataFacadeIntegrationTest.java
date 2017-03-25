@@ -84,6 +84,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_LAST_TIME_USED = "CollectionMetadataFacadeCollectionLastTimeUsed";
    private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
    private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
+   private final String COLLECTION_RECENTLY_USED_DOCUMENTS = "CollectionMetadataFacadeCollectionRecentlyUsedDocuments";
 
    @Before
    public void init() {
@@ -502,6 +503,38 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       collectionMetadataFacade.addAttributeConstraint(collection, nestedAttribute, constraint1);
       constraints = collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, nestedAttribute);
       assertThat(constraints).containsOnly(constraint1);
+   }
+
+   @Test
+   public void testGetAddRecentlyUsedDocumentsIds() throws Exception {
+      setUpCollection(COLLECTION_RECENTLY_USED_DOCUMENTS);
+
+      String collection = collectionFacade.createCollection(COLLECTION_RECENTLY_USED_DOCUMENTS);
+
+      String id1 = "id1";
+      String id2 = "id2";
+      String id3 = "id3";
+      String id4 = "id4";
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id1);
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id2);
+
+      List<String> recentlyUsed1 = collectionMetadataFacade.getRecentlyUsedDocumentsIds(collection);
+      assertThat(recentlyUsed1).containsOnly(id1, id2);
+      assertThat(recentlyUsed1.get(0)).isEqualTo(id2); // id2 is first because it was added later than id1
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id3);
+
+      List<String> recentlyUsed2 = collectionMetadataFacade.getRecentlyUsedDocumentsIds(collection);
+      assertThat(recentlyUsed2).containsOnly(id1, id2, id3);
+      assertThat(recentlyUsed2.get(0)).isEqualTo(id3); // id3 is first because it was added later than id2
+      assertThat(recentlyUsed2.get(1)).isEqualTo(id2); // id2 is first because it was added later than id1
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id4);
+
+      List<String> recentlyUsed3 = collectionMetadataFacade.getRecentlyUsedDocumentsIds(collection);
+      assertThat(recentlyUsed3).containsOnly(id2, id3, id4); // max number of ids is 3, so id1 was removed
+
    }
 
    private String internalName(String collectionOriginalName) {

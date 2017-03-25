@@ -578,6 +578,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     */
    private Object checkAndConvertAttributeValue(Attribute attribute, Object valueObject) {
+      // if the value is DataDocument, we check it recursively
       if (valueObject instanceof DataDocument) {
 
          DataDocument beforeCheck = (DataDocument) valueObject;
@@ -586,7 +587,7 @@ public class CollectionMetadataFacade implements Serializable {
          Map<String, Attribute> attributes = attribute.getChildAttributes();
 
          for (String key : beforeCheck.keySet()) {
-            if (!attributes.keySet().contains(key)) {
+            if (!attributes.keySet().contains(key)) { // attribute does not exist - no need to check anything
                afterCheck.put(key, beforeCheck.get(key));
             } else {
                Object newValue = checkAndConvertAttributeValue(attributes.get(key), beforeCheck.get(key));
@@ -640,10 +641,10 @@ public class CollectionMetadataFacade implements Serializable {
       Map<String, Attribute> attributesMetadata = getCollectionMetadata(collectionName).getAttributes();
       for (String a : attributes) {
          Object value = document.get(a);
-         if (attributesMetadata.keySet().contains(a)) {
-            results.append(a, checkAndConvertAttributeValue(attributesMetadata.get(a), value));
-         } else {
+         if (!attributesMetadata.keySet().contains(a)) { // attribute does not exist - no need to check anything
             results.append(a, value);
+         } else {
+            results.append(a, checkAndConvertAttributeValue(attributesMetadata.get(a), value));
          }
       }
 
@@ -725,6 +726,35 @@ public class CollectionMetadataFacade implements Serializable {
             ),
             constraintConfiguration);
 
+   }
+
+   public List<String> getRecentlyUsedDocumentsIds(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      CollectionMetadata metadata = getCollectionMetadata(collectionName);
+
+      if (metadata == null) {
+         return Collections.emptyList();
+      }
+
+      return metadata.getRecentlyUsedDocumentIds();
+   }
+
+   public void addRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
+      String docId = getCollectionMetadataDocument(collectionName).getId();
+      dataStorage.removeItemFromArray(METADATA_COLLECTION, docId, LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, id);
+
+      int listSize = 3; // TODO: obtain the parameter from ConfigurationFacade
+
+      DataDocument query = new DataDocument()
+            .append("findAndModify", METADATA_COLLECTION)
+            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName))
+            .append("update", new DataDocument()
+                  .append("$push", new DataDocument()
+                        .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new DataDocument()
+                              .append("$each", Arrays.asList(id))
+                              .append("$position", 0)
+                              .append("$slice", listSize))));
+
+      dataStorage.run(query);
    }
 
    /**
