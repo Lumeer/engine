@@ -195,7 +195,7 @@ public class DocumentFacade implements Serializable {
    public void dropDocument(final String collectionName, final String documentId) throws DbException {
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
 
-      versionFacade.backUp(collectionName, dataDocument);
+      versionFacade.backUpDocument(collectionName, dataDocument);
       dataStorage.dropDocument(collectionName, documentId);
 
       if (dataStorage.collectionHasDocument(collectionName, documentId)) {
