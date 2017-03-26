@@ -26,7 +26,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.ViewDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -34,7 +33,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 

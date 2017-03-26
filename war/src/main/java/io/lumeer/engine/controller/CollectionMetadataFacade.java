@@ -30,21 +30,21 @@ import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
+import io.lumeer.engine.rest.dao.Attribute;
+import io.lumeer.engine.rest.dao.CollectionMetadata;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -80,9 +80,14 @@ public class CollectionMetadataFacade implements Serializable {
    private SecurityFacade securityFacade;
 
    @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private Event<ChangeCollectionName> changeCollectionNameEvent;
 
    private ConstraintManager constraintManager;
+
+   private static final String METADATA_COLLECTION = LumeerConst.Collection.METADATA_COLLECTION;
 
    /**
     * Initializes constraint manager.
@@ -108,32 +113,39 @@ public class CollectionMetadataFacade implements Serializable {
       return constraintManager;
    }
 
-   // example of collection metadata structure:
-   // -------------------------------------
-   // {
-   //  “meta-type” : “attributes”,
-   //  “name” : “attribute1”,
-   //  “type” : “number”,
-   //  “constraints” : [constraintConfigurationString1, constraintConfigurationString1],
-   // },
-   // {
-   //  “meta-type” : “attributes”,
-   //  “name” : “attribute2”,
-   //  “type” : “”,
-   // },
-   // {
-   // “meta-type” : “name”,
-   // “name” : “This is my collection name.”
-   // },
-   // {
-   // “meta-type” : “lock”,
-   // “updated” : “2016-11-08 12:23:21”
-   //  },
-   // {
-   // “meta-type” : “rights”,
-   // “create-user” : “me@mail.com”,
-   // ... access rights by SecurityFacade ...
-   //  }
+   /**
+    * Gets metadata document of given collection.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return DataDocument with collection metadata
+    * @throws CollectionMetadataDocumentNotFoundException
+    */
+   public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      List<DataDocument> metadata = dataStorage.run(
+            new DataDocument()
+                  .append("find", METADATA_COLLECTION)
+                  .append("filter",
+                        new DataDocument(
+                              LumeerConst.Collection.INTERNAL_NAME_KEY,
+                              collectionName)));
+      if (metadata == null || metadata.isEmpty()) {
+         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName));
+      } else {
+         return metadata.get(0);
+      }
+   }
+
+   /**
+    * Gets object with collection metadata.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return object with collection metadata
+    */
+   public CollectionMetadata getCollectionMetadata(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return new CollectionMetadata(getCollectionMetadataDocument(collectionName));
+   }
 
    /**
     * Converts collection name given by user to internal representation.
@@ -142,7 +154,6 @@ public class CollectionMetadataFacade implements Serializable {
     * Diacritics are replaced by ASCII characters.
     * Everything except a-z, 0-9 and _ is removed.
     * Number is added to the end of the name to ensure it is unique.
-    * The uniqueness of user name is not checked here, but is to be checked in CollectionFacade.
     *
     * @param originalCollectionName
     *       name given by user
@@ -159,7 +170,7 @@ public class CollectionMetadataFacade implements Serializable {
       name = name.replace(' ', '_');
       name = Utils.normalize(name);
       name = name.replaceAll("[^_a-z0-9]+", "");
-      name = LumeerConst.Collection.COLLECTION_NAME_PREFIX + name;
+      name = LumeerConst.Collection.NAME_PREFIX + name;
       int i = 0;
       while (dataStorage.hasCollection(name + "_" + i)) {
          i++;
@@ -170,94 +181,83 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Creates initial metadata in metadata collection - adds original name and initial time lock and access rights for creator.
+    * Creates initial metadata in metadata collection.
     *
     * @param internalCollectionName
     *       internal collection name
-    * @param collectionOriginalName
+    * @param originalCollectionName
     *       name of collection given by user
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public void createInitialMetadata(String internalCollectionName, String collectionOriginalName) throws CollectionNotFoundException {
-      String metadataCollectionName = collectionMetadataCollectionName(internalCollectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
-
-      // set name - we don't use setOriginalCollectionName, because that methods assumes document with name already exists
-      DataDocument metadataName = new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE)
-            .append(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
-      dataStorage.createDocument(metadataCollectionName, metadataName);
-
-      // set create user and date and access rights for him
+   public void createInitialMetadata(String internalCollectionName, String originalCollectionName) {
       String user = getCurrentUser();
-      DataDocument metadataDocument = new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE)
-            .append(LumeerConst.Collection.COLLECTION_CREATE_DATE_KEY, Utils.getCurrentTimeString())
-            .append(LumeerConst.Collection.COLLECTION_CREATE_USER_KEY, user);
+      DataDocument collectionMetadata = new DataDocument()
+            .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName)
+            .append(LumeerConst.Collection.INTERNAL_NAME_KEY, internalCollectionName)
+            .append(LumeerConst.Collection.PROJECT_ID, projectFacade.getCurrentProjectId())
+            .append(LumeerConst.Collection.ATTRIBUTES_KEY, new DataDocument())
+            .append(LumeerConst.Collection.LAST_TIME_USED_KEY, new Date())
+            .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())
+            .append(LumeerConst.Collection.CREATE_DATE_KEY, new Date())
+            .append(LumeerConst.Collection.CREATE_USER_KEY, user)
+            .append(LumeerConst.Collection.CUSTOM_META_KEY, new DataDocument());
 
-      securityFacade.setRightsRead(metadataDocument, user);
-      securityFacade.setRightsWrite(metadataDocument, user);
-      securityFacade.setRightsExecute(metadataDocument, user);
-      dataStorage.createDocument(metadataCollectionName, metadataDocument);
-
-      // set lock - we don't use setCollectionLockTime, because that methods assumes document with lock already exists
-      DataDocument metadataLock = new DataDocument(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE)
-            .append(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, "");
-      dataStorage.createDocument(metadataCollectionName, metadataLock);
-
-      // we create indexes on frequently used fields
-      int indexType = 1; // specifies ascending or descending index - https://docs.mongodb.com/manual/core/index-single/
-      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.META_TYPE_KEY, indexType));
-      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, indexType));
-      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, indexType));
-      dataStorage.createIndex(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, indexType));
+      securityFacade.setRightsRead(collectionMetadata, user);
+      securityFacade.setRightsWrite(collectionMetadata, user);
+      securityFacade.setRightsExecute(collectionMetadata, user);
+      dataStorage.createDocument(METADATA_COLLECTION, collectionMetadata);
    }
 
    /**
-    * Returns list of names of collection attributes.
-    * We do not check access rights there, because the method is to be called only in CollectionFacade and they are checked there.
+    * Gets set of names of collection attributes.
     *
     * @param collectionName
     *       internal collection name
-    * @return list of collection attributes
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
+    * @return set of collection attributes' names
     */
-   public List<String> getCollectionAttributesNames(String collectionName) throws CollectionNotFoundException {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
+   public Set<String> getAttributesNames(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return getAttributesInfo(collectionName).keySet();
+   }
 
-      List<DataDocument> attributesInfoDocuments = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE));
+   /**
+    * Gets complete info about collection attributes.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return map, keys are attributes' names, values are objects with attributes info
+    */
+   public Map<String, Attribute> getAttributesInfo(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return getCollectionMetadata(collectionName).getAttributes();
+   }
 
-      List<String> attributes = new ArrayList<>();
+   public Attribute getAttributeInfo(String collection, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      List<String> keys = divideAttributeName(attributeName);
 
-      for (DataDocument attributesInfoDocument : attributesInfoDocuments) {
-         String name = attributesInfoDocument.getString(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY);
-         attributes.add(name);
+      Attribute attribute = getCollectionMetadata(collection).getAttributes().get(keys.get(0));
+
+      for (int i = 1; i < keys.size(); i++) {
+         if (attribute == null) {
+            break;
+         }
+         attribute = attribute.getChildAttributes().get(keys.get(i));
       }
 
-      return attributes;
+      return attribute;
    }
 
-   /**
-    * Gets complete info about collection attributes
-    *
-    * @param collectionName
-    *       internal collection name
-    * @return list of DataDocuments, each with info about one attribute
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    */
-   public List<DataDocument> getCollectionAttributesInfo(String collectionName) throws CollectionNotFoundException {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      checkIfMetadataCollectionExists(metadataCollectionName);
+   private List<String> divideAttributeName(String attribute) {
+      return Arrays.asList(attribute.split("\\."));
+   }
 
-      return dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE));
+   private String attributePath(String attribute) {
+      return attribute.replaceAll("\\.",
+            "."
+                  + LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY
+                  + ".");
    }
 
    /**
     * Renames existing attribute in collection metadata.
-    * This method should be called only when also renaming attribute in documents,
-    * and access rights should be checked there so they are not checked twice.
+    * This method should be called only when also renaming attribute in all collection documents.
     *
     * @param collectionName
     *       internal collection name
@@ -265,190 +265,132 @@ public class CollectionMetadataFacade implements Serializable {
     *       old attribute name
     * @param newName
     *       new attribute name
-    * @return true if rename is successful, false if some metadata do not exist and the rename could not be performed
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
     */
-   public boolean renameCollectionAttribute(String collectionName, String oldName, String newName) throws AttributeAlreadyExistsException {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-
-      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
-         return false;
-      }
-
-      List<DataDocument> newAttributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, newName));
-
-      // check if the attribute with new name already exists in the collection
-      if (!newAttributeInfo.isEmpty()) {
+   public void renameAttribute(String collectionName, String oldName, String newName) throws AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
+      if (getAttributeInfo(collectionName, newName) != null) {
          throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newName, collectionName));
       }
 
-      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, oldName));
+      String oldNamePath = attributePath(oldName);
+      String newNamePath = attributePath(newName);
 
-      // the old attribute does not exist
-      if (attributeInfo.isEmpty()) {
-         return false;
-      }
+      // still does not pass the test, even with $rename
+      DataDocument renameQuery = new DataDocument()
+            .append("findAndModify", METADATA_COLLECTION)
+            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName))
+            .append("update", new DataDocument()
+                  .append("$rename", new DataDocument(
+                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldNamePath),
+                        nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newNamePath))));
 
-      DataDocument attributeDocument = attributeInfo.get(0);
-      String documentId = attributeDocument.getId();
-
-      if (!newName.isEmpty()) {
-         dataStorage.updateDocument(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, newName), documentId);
-         return true;
-      }
-
-      return false;
-   }
-
-   /**
-    * Changes attribute type in metadata.
-    *
-    * @param collectionName
-    *       internal collection name
-    * @param attributeName
-    *       attribute name
-    * @param newType
-    *       new attribute type
-    * @return true if retype is successful, false if new type is not valid or when metadata about attribute was not found
-    */
-   public boolean retypeCollectionAttribute(String collectionName, String attributeName, String newType) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-
-      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
-         return false;
-      }
-
-      if (!LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_VALUES.contains(newType)) { // new type must be from our list
-         return false;
-      }
-
-      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
-
-      // attribute metadata does not exist
-      if (attributeInfo.isEmpty()) {
-         return false;
-      }
-
-      DataDocument attributeDocument = attributeInfo.get(0);
-      String documentId = attributeDocument.getId();
-
-      dataStorage.updateDocument(metadataCollectionName, new DataDocument(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY, newType), documentId);
-
-      return true;
-   }
-
-   /**
-    * Gets attribute type from metadata
-    *
-    * @param collectionName
-    *       internal collection name
-    * @param attributeName
-    *       attribute name
-    * @return type of the attribute, default (String) if attribute is not found
-    */
-   public String getAttributeType(String collectionName, String attributeName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-
-      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
-         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING;
-      }
-
-      List<DataDocument> attributesInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
-
-      if (attributesInfo.isEmpty()) { // attribute does not exist, we return default (String)
-         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING;
-      }
-
-      DataDocument attributeInfo = attributesInfo.get(0);
-      String type = attributeInfo.get(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_KEY).toString();
-      if (type == null) { // if type is not found, we return string as default
-         return LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_STRING;
-      }
-
-      return type;
+      dataStorage.run(renameQuery);
    }
 
    /**
     * Deletes an attribute from collection metadata. Nothing is done if attribute metadata is not found, just return.
-    * This method should be called only when also renaming attribute in documents.
+    * This method should be called only when also renaming attribute in all collection documents.
     *
     * @param collectionName
     *       internal collection name
     * @param attributeName
-    *       attribute to be deleted
+    *       attribute to be dropped
     */
-   public void dropCollectionAttribute(String collectionName, String attributeName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-
-      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
-         return;
-      }
-
-      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
-
-      // attribute metadata does not exist
-      if (attributeInfo.isEmpty()) {
-         return;
-      }
-
-      DataDocument attributeDocument = attributeInfo.get(0);
-      String documentId = attributeDocument.getId();
-      dataStorage.dropDocument(metadataCollectionName, documentId);
+   public void dropAttribute(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      dataStorage.dropAttribute(
+            METADATA_COLLECTION,
+            getCollectionMetadataDocument(collectionName).getId(),
+            nestedAttributeName(
+                  LumeerConst.Collection.ATTRIBUTES_KEY,
+                  attributePath(attributeName)));
    }
 
    /**
     * Adds attribute to metadata collection, if the attribute already isn't there.
-    * Otherwise just increments count. Nothing is done if metadata collection does not exist.
+    * Otherwise just increments count.
     * This should be called only when adding/updating document.
     *
     * @param collectionName
     *       internal collection name
-    * @param attribute
-    *       set of attributes' names
+    * @param attributeName
+    *       attribute's name
     */
-   public void addOrIncrementAttribute(String collectionName, String attribute) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
-         return;
-      }
+   public void addOrIncrementAttribute(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
+      String documentId = getCollectionMetadataDocument(collectionName).getId();
 
-      dataStorage.run(dialect.updateCollectionAttributeCountQuery(metadataCollectionName, attribute));
+      if (attribute != null) {
+         dataStorage.incrementAttributeValueBy(
+               METADATA_COLLECTION,
+               documentId,
+               nestedAttributeName(
+                     nestedAttributeName(
+                           LumeerConst.Collection.ATTRIBUTES_KEY,
+                           attributePath(attributeName)),
+                     LumeerConst.Collection.ATTRIBUTE_COUNT_KEY),
+               1);
+      } else {
+         List<String> dividedName = divideAttributeName(attributeName);
+         dataStorage.updateDocument(
+               METADATA_COLLECTION,
+               new DataDocument(
+                     nestedAttributeName(
+                           LumeerConst.Collection.ATTRIBUTES_KEY,
+                           attributePath(attributeName)),
+                     new DataDocument()
+                           .append(
+                                 LumeerConst.Collection.ATTRIBUTE_NAME_KEY,
+                                 dividedName.get(dividedName.size() - 1))
+                           .append(
+                                 LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY,
+                                 new ArrayList<String>())
+                           .append(
+                                 LumeerConst.Collection.ATTRIBUTE_COUNT_KEY, 1)
+                           .append(
+                                 LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY,
+                                 new HashMap<String, Attribute>())
+               ),
+               documentId);
+      }
    }
 
    /**
-    * Drops attribute if there is no document with that attribute in the collection (count is 1),
-    * otherwise just decrements count. Nothing is done if attribute metadata is not found, just return.
+    * Drops attribute if there is no other document with that attribute in the collection (count is 1),
+    * otherwise just decrements count.
     * This should be called only when adding/updating document.
     *
     * @param collectionName
     *       internal collection name
-    * @param attribute
+    * @param attributeName
     *       set of attributes' names
     */
-   public void dropOrDecrementAttribute(String collectionName, String attribute) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
+   public void dropOrDecrementAttribute(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
 
-      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
+      if (attribute == null) {
          return;
       }
 
-      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attribute));
-      if (!attributeInfo.isEmpty()) { // in case somebody did that sooner, we may have nothing to remove
-         DataDocument attributeDocument = attributeInfo.get(0);
-         String documentId = attributeDocument.getId();
-
-         // we check if this was the last document with the attribute
-         if (attributeDocument.getInteger(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY) == 1) {
-            dataStorage.dropDocument(metadataCollectionName, documentId);
-         } else {
-            dataStorage.incrementAttributeValueBy(metadataCollectionName, documentId, LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY, -1);
-         }
+      if (attribute.getCount() <= 1L) {
+         dropAttribute(collectionName, attributeName);
+         return;
       }
+
+      String documentId = getCollectionMetadataDocument(collectionName).getId();
+      dataStorage.incrementAttributeValueBy(
+            METADATA_COLLECTION,
+            documentId,
+            nestedAttributeName(
+                  nestedAttributeName(
+                        LumeerConst.Collection.ATTRIBUTES_KEY,
+                        attributePath(attributeName)),
+                  LumeerConst.Collection.ATTRIBUTE_COUNT_KEY),
+            -1);
    }
 
    /**
-    * Returns count for specific attribute
+    * Returns count for specific attribute.
     *
     * @param collectionName
     *       internal collection name
@@ -456,45 +398,27 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @return attribute count, zero if the attribute does not exist
     */
-   public long getAttributeCount(String collectionName, String attributeName) {
-      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
+   public int getAttributeCount(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
+      if (attribute == null) {
          return 0;
       }
-
-      List<DataDocument> countInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
-      return countInfo.isEmpty() ? 0 : countInfo.get(0).getInteger(LumeerConst.Collection.COLLECTION_ATTRIBUTE_COUNT_KEY);
+      return attribute.getCount();
    }
 
    /**
-    * Searches for original (given by user) collection name in metadata
+    * Searches for original (given by user) collection name in metadata.
     *
     * @param collectionName
     *       internal collection name
     * @return original collection name
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
     */
-   public String getOriginalCollectionName(String collectionName) throws CollectionMetadataDocumentNotFoundException, CollectionNotFoundException {
-      List<DataDocument> nameInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE));
-
-      if (nameInfo.isEmpty()) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE));
-      }
-
-      DataDocument nameDocument = nameInfo.get(0);
-      String name = nameDocument.getString(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY);
-
-      if (name == null) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE));
-      }
-
-      return name;
+   public String getOriginalCollectionName(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return getCollectionMetadata(collectionName).getName();
    }
 
    /**
-    * Searches for internal representation of collection name
+    * Searches for internal representation of collection name.
     *
     * @param originalCollectionName
     *       original collection name
@@ -503,103 +427,73 @@ public class CollectionMetadataFacade implements Serializable {
     *       when collection with given user name is not found
     */
    public String getInternalCollectionName(String originalCollectionName) throws UserCollectionNotFoundException {
-      List<String> collections = dataStorage.getAllCollections();
-      for (String c : collections) {
-         if (isUserCollection(c)) {
-            try {
-               if (getOriginalCollectionName(c).equals(originalCollectionName)) {
-                  return c;
-               }
-               // we do not care if some other collection does not have original name or some problem with metadata
-            } catch (CollectionMetadataDocumentNotFoundException | CollectionNotFoundException e) {
-               continue;
-            }
-         }
+      List<DataDocument> result = dataStorage.run(new DataDocument()
+            .append("find", METADATA_COLLECTION)
+            .append("filter", new DataDocument()
+                  .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName))
+            .append("projection", new DataDocument()
+                  .append(LumeerConst.Collection.INTERNAL_NAME_KEY, true)));
+
+      if (result.isEmpty()) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(originalCollectionName));
       }
-      throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(originalCollectionName));
+
+      return result.get(0).getString(LumeerConst.Collection.INTERNAL_NAME_KEY);
    }
 
    /**
-    * Sets original (given by user) collection name in metadata
+    * Sets original (given by user) collection name in metadata.
     *
     * @param collectionInternalName
     *       internal collection name
     * @param collectionOriginalName
     *       name given by user
-    * @return true if the rename is successful, false if metadata collection was not found and the rename could not be performed
     * @throws UserCollectionAlreadyExistsException
     *       when collection with given user name already exists
     */
-   public boolean setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException {
+   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
       if (checkIfUserCollectionExists(collectionOriginalName)) {
          throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
       }
 
-      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionInternalName))) { // metadata collection does not exist
-         return false;
-      }
-
-      List<DataDocument> nameInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionInternalName, LumeerConst.Collection.COLLECTION_REAL_NAME_META_TYPE_VALUE));
-      DataDocument nameDocument = nameInfo.get(0);
-      String id = nameDocument.getId();
-
-      DataDocument metadataDocument = new DataDocument(LumeerConst.Collection.COLLECTION_REAL_NAME_KEY, collectionOriginalName);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionInternalName), metadataDocument, id);
+      DataDocument collectionInfo = getCollectionMetadataDocument(collectionInternalName);
+      String documentId = collectionInfo.getId();
+      dataStorage.updateDocument(
+            METADATA_COLLECTION,
+            new DataDocument(
+                  LumeerConst.Collection.REAL_NAME_KEY,
+                  collectionOriginalName),
+            documentId);
 
       changeCollectionNameEvent.fire(new ChangeCollectionName(collectionOriginalName, collectionInternalName));
-
-      return true;
    }
 
    /**
-    * Reads current value of collection lock
+    * Reads time of last collection usage.
     *
     * @param collectionName
     *       internal collection name
-    * @return String representation of the time of the last update of collection lock, empty string if lock is not set
-    * @throws CollectionNotFoundException
-    *       when metadata collection is not found
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when document in metadata collection is not found
+    * @return String representation of the time
     */
-   public String getCollectionLockTime(String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
-      checkIfMetadataCollectionExists(collectionMetadataCollectionName(collectionName));
-
-      List<DataDocument> lockInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE));
-
-      if (lockInfo.isEmpty()) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE));
-      }
-
-      DataDocument nameDocument = lockInfo.get(0);
-      return nameDocument.getString(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY);
+   public Date getLastTimeUsed(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return getCollectionMetadata(collectionName).getLastTimeUsed();
    }
 
    /**
-    * Sets collection lock to new value
+    * Sets the time of last collection usage to current time
     *
     * @param collectionName
     *       internal collection name
-    * @param newTime
-    *       String representation of the time of the last update of collection lock
-    * @return true if set was successful, false if time format is wrong or metadata collection does not exist
     */
-   public boolean setCollectionLockTime(String collectionName, String newTime) {
-      if (!Utils.isValidDateFormat(newTime)) { // time format is not valid
-         return false;
-      }
-
-      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
-         return false;
-      }
-
-      List<DataDocument> lockInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_LOCK_META_TYPE_VALUE));
-      DataDocument lockDocument = lockInfo.get(0);
-      String id = lockDocument.getId();
-
-      DataDocument metadataDocument = new DataDocument(LumeerConst.Collection.COLLECTION_LOCK_UPDATED_KEY, newTime);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id);
-      return true;
+   public void setLastTimeUsedNow(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionInfo = getCollectionMetadataDocument(collectionName);
+      String documentId = collectionInfo.getId();
+      dataStorage.updateDocument(
+            METADATA_COLLECTION,
+            new DataDocument(
+                  LumeerConst.Collection.LAST_TIME_USED_KEY,
+                  new Date()),
+            documentId);
    }
 
    /**
@@ -609,248 +503,93 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @return DataDocument with all custom metadata values
     */
-   public DataDocument getCustomMetadata(String collectionName) {
-      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
-         return new DataDocument(); // return blank document
-      }
-
-      List<DataDocument> customMetadataList = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE));
-
-      if (customMetadataList.isEmpty()) {
-         return new DataDocument(); // return blank document
-      }
-
-      return customMetadataList.get(0);
+   public DataDocument getCustomMetadata(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return getCollectionMetadata(collectionName).getCustomMetadata();
    }
 
    /**
-    * Adds all pairs key:value to custom metadata
+    * Adds all pairs key:value to custom metadata.
     *
     * @param collectionName
     *       internal name
-    * @param metadataDocument
-    *       document with metadata values
-    * @return true when update was successful, false when metadata collection does not exist
+    * @param metadata
+    *       custom metadata
     */
-   public boolean setCustomMetadata(String collectionName, DataDocument metadataDocument) {
-      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
-         return false;
+   public void setCustomMetadata(String collectionName, DataDocument metadata) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionInfo = getCollectionMetadataDocument(collectionName);
+      String documentId = collectionInfo.getId();
+
+      DataDocument metadataDocument = new DataDocument();
+
+      for (String key : metadata.keySet()) {
+         metadataDocument.append(nestedAttributeName(LumeerConst.Collection.CUSTOM_META_KEY, key), metadata.get(key));
       }
 
-      List<DataDocument> customMetadataList = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE));
-
-      if (customMetadataList.isEmpty()) { // document with custom metadata does not exist - we create it
-         metadataDocument.put(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE);
-         dataStorage.createDocument(collectionMetadataCollectionName(collectionName), metadataDocument);
-         return true;
-      }
-
-      DataDocument customMetadataDocument = customMetadataList.get(0);
-      String id = customMetadataDocument.getId();
-
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), metadataDocument, id);
-
-      return true;
+      dataStorage.updateDocument(METADATA_COLLECTION, metadataDocument, documentId);
    }
 
    /**
-    * Drops all custom metadata values associated with given keys.
+    * Drops all custom metadata value associated with given key.
     *
     * @param collectionName
     *       internal name
-    * @param keys
-    *       list of metadata keys to drop
-    * @return false when metadata collection or custom metadata document does not exist, true otherwise
+    * @param key
+    *       list of metadata to drop
     */
-   public boolean dropCustomMetadata(String collectionName, List<String> keys) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-
-      if (!dataStorage.hasCollection(metadataCollectionName)) { // metadata collection does not exist
-         return false;
-      }
-
-      List<DataDocument> customMetadataList = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_CUSTOM_META_TYPE_VALUE));
-
-      if (customMetadataList.isEmpty()) { // document with custom metadata does not exist - we have nothing to drop
-         return false;
-      }
-
-      DataDocument customMetadataDocument = customMetadataList.get(0);
-      String id = customMetadataDocument.getId();
-
-      for (String key : keys) {
-         dataStorage.dropAttribute(metadataCollectionName, id, key);
-      }
-
-      return true;
+   public void dropCustomMetadata(String collectionName, String key) throws CollectionMetadataDocumentNotFoundException {
+      String documentId = getCollectionMetadataDocument(collectionName).getId();
+      dataStorage.dropAttribute(
+            METADATA_COLLECTION,
+            documentId,
+            nestedAttributeName(
+                  LumeerConst.Collection.CUSTOM_META_KEY,
+                  key));
    }
 
    /**
-    * @param collectionName
-    *       internal collection name
-    * @return name of metadata collection
-    */
-   public String collectionMetadataCollectionName(String collectionName) {
-      return LumeerConst.Collection.COLLECTION_METADATA_PREFIX + collectionName;
-   }
-
-   /**
+    * Check whether the name is name of user collection.
+    *
     * @param collectionName
     *       internal collection name
     * @return true if the name is a name of "classical" collection containing data from user
     */
    public boolean isUserCollection(String collectionName) {
-      return collectionName != null && collectionName.length() >= LumeerConst.Collection.COLLECTION_NAME_PREFIX.length() && collectionName.startsWith(LumeerConst.Collection.COLLECTION_NAME_PREFIX) && !collectionName.endsWith(".shadow");
+      return collectionName != null &&
+            collectionName.length() >= LumeerConst.Collection.NAME_PREFIX.length() &&
+            collectionName.startsWith(LumeerConst.Collection.NAME_PREFIX);
    }
 
    /**
-    * Checks whether value is of good type and satisfies all constraints (and tries to fix it when possible).
+    * Checks whether value satisfies all constraints (and tries to fix it when possible).
     *
-    * @param collectionName
-    *       internal collection name
     * @param attribute
     *       attribute name
     * @param valueObject
     *       attribute value
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     */
-   public Object checkAndConvertAttributeValue(String collectionName, String attribute, Object valueObject) {
-      List<String> constraintConfigurations = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attribute);
-      valueObject = checkAttributeConstraints(valueObject, constraintConfigurations);
-      if (valueObject == null) { // value does not satisfy constraints and could not be fixed
-         return null;
-      }
+   private Object checkAndConvertAttributeValue(Attribute attribute, Object valueObject) {
+      // if the value is DataDocument, we check it recursively
+      if (valueObject instanceof DataDocument) {
 
-      String type = getAttributeType(collectionName, attribute);
+         DataDocument beforeCheck = (DataDocument) valueObject;
+         DataDocument afterCheck = new DataDocument();
 
-      // Date type is special - we maintain it with constraint, so we have to do special check here.
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         return checkValueDateAndConvert(valueObject.toString(), constraintConfigurations);
-      }
+         Map<String, Attribute> attributes = attribute.getChildAttributes();
 
-      return checkAttributeTypeAndConvert(valueObject, type);
-   }
-
-   private Date checkValueDateAndConvert(String valueString, List<String> constraintConfigurations) {
-      // If there exist no constraint for the date, it means that it passes constraint test, although it can be invalid,
-      // so we will to check it against default time and date format.
-      if (constraintConfigurations.isEmpty()) {
-         try {
-            return Utils.getDate(valueString);
-         } catch (ParseException e) { // date could not be parsed
-            return null;
+         for (String key : beforeCheck.keySet()) {
+            if (!attributes.keySet().contains(key)) { // attribute does not exist - no need to check anything
+               afterCheck.put(key, beforeCheck.get(key));
+            } else {
+               Object newValue = checkAndConvertAttributeValue(attributes.get(key), beforeCheck.get(key));
+               afterCheck.put(key, newValue);
+            }
          }
-      } else {
-         // we take the last constraint, because string could be fixed according to that constraint
-         String constraint = constraintConfigurations.get(constraintConfigurations.size() - 1);
-         String format = constraint.split(":", 2)[1];
-         try {
-            return new SimpleDateFormat(format).parse(valueString);
-         } catch (ParseException e) { // date could not be parsed
-            return null;
-         }
-      }
-   }
 
-   /**
-    * Calls checkAndConvertAttributeValue(String collectionName, String attribute, String valueString) on every attribute of given document.
-    *
-    * @param collectionName
-    *       internal collection name
-    * @param document
-    *       document with attributes and their values to check
-    * @return map of results, key is attribute name and value is result of checkAndConvertAttributeValue on that attribute
-    */
-   public Map<String, Object> checkAndConvertAttributesValues(String collectionName, DataDocument document) {
-      Map<String, Object> results = new HashMap<>();
-
-      Set<String> attributes = document.keySet();
-      for (String attribute : attributes) {
-         Object value = document.get(attribute);
-         results.put(attribute, checkAndConvertAttributeValue(collectionName, attribute, value));
+         return afterCheck;
       }
 
-      return results;
-   }
-
-   // checks whether value is of given type and converts it to given type
-   private Object checkAttributeTypeAndConvert(Object valueObject, String type) {
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_LIST)) {
-         if (valueObject instanceof List) {
-            return valueObject;
-         } else {
-            return null;
-         }
-      }
-
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_NESTED)) {
-         if (valueObject instanceof DataDocument) {
-            return valueObject;
-         } else {
-            return null;
-         }
-      }
-
-      String valueString = valueObject.toString();
-
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_INT)) {
-         try {
-            return Integer.parseInt(valueString);
-         } catch (NumberFormatException e) {
-            return null;
-         }
-      }
-
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_LONG)) {
-         try {
-            return Long.parseLong(valueString);
-         } catch (NumberFormatException e) {
-            return null;
-         }
-      }
-
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DOUBLE)) {
-         try {
-            valueString = valueString.replace(',', '.'); // in case coma is used instead of decimal dot
-            return Double.parseDouble(valueString);
-         } catch (NumberFormatException e) {
-            return null;
-         }
-      }
-
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DECIMAL)) {
-         // TODO
-      }
-
-      // Date is special and its format is maintained in checkAttributeValue
-      // if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE))
-
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN)) { // we accept "true" and "false" ignoring the case
-         if (LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_BOOLEAN_VALUES.contains(valueString.toLowerCase())) {
-            return Boolean.parseBoolean(valueString);
-         }
-         return null;
-      }
-
-      return valueString; // for a string, we accept everything, so we do not check it here
-   }
-
-   /**
-    * @param value
-    *       value to be checked
-    * @param type
-    *       type to be checked
-    * @return true if value satisfies given type
-    */
-   public Object checkValueTypeAndConvert(Object value, String type) {
-      if (type.equals(LumeerConst.Collection.COLLECTION_ATTRIBUTE_TYPE_DATE)) {
-         return checkValueDateAndConvert(value.toString(), Collections.emptyList());
-      }
-      return checkAttributeTypeAndConvert(value, type);
-   }
-
-   // checks whether value satisfies all constraints
-   private Object checkAttributeConstraints(Object valueObject, List<String> constraintConfigurations) {
+      List<String> constraintConfigurations = attribute.getConstraints();
       if (constraintConfigurations == null || constraintConfigurations.isEmpty()) { // there are no constraints
          return valueObject;
       }
@@ -878,6 +617,32 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
+    * Checks value of every attribute of given document.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param document
+    *       document with attributes and their values to check
+    * @return map of results, key is attribute name and value is result of checkAndConvertAttributeValue on that attribute
+    */
+   public DataDocument checkAndConvertAttributesValues(String collectionName, DataDocument document) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument results = new DataDocument();
+
+      Set<String> attributes = document.keySet();
+      Map<String, Attribute> attributesMetadata = getCollectionMetadata(collectionName).getAttributes();
+      for (String a : attributes) {
+         Object value = document.get(a);
+         if (!attributesMetadata.keySet().contains(a)) { // attribute does not exist - no need to check anything
+            results.append(a, value);
+         } else {
+            results.append(a, checkAndConvertAttributeValue(attributesMetadata.get(a), value));
+         }
+      }
+
+      return results;
+   }
+
+   /**
     * Reads constraint for the given attribute.
     *
     * @param collectionName
@@ -886,25 +651,14 @@ public class CollectionMetadataFacade implements Serializable {
     *       name of the attribute
     * @return list of constraint configurations for given attribute, empty list if constraints were not found
     */
-   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) {
-      List<String> constraints = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
-      return constraints == null ? Collections.emptyList() : constraints;
-   }
+   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) throws CollectionMetadataDocumentNotFoundException {
+      Attribute attribute = getAttributeInfo(collectionName, attributeName);
 
-   // to be used only internally, when checking attribute value
-   private List<String> getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(String collectionName, String attributeName) {
-      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
-         return null;
+      if (attribute == null) {
+         return Collections.emptyList();
       }
 
-      List<DataDocument> attributesInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
-      if (attributesInfo.isEmpty()) { // metadata for the attribute was not found
-         return null;
-      }
-
-      DataDocument attributeInfo = attributesInfo.get(0);
-
-      return attributeInfo.getArrayList(LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, String.class);
+      return attribute.getConstraints();
    }
 
    /**
@@ -919,9 +673,9 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws InvalidConstraintException
     *       when new constraint is not valid or is in conflict with existing constraints
     */
-   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException {
+   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException, CollectionMetadataDocumentNotFoundException {
       // user may be permitted to write, but might not be permitted to read
-      List<String> existingConstraints = getAttributeConstraintsConfigurationsWithoutAccessRightsCheck(collectionName, attributeName);
+      List<String> existingConstraints = getAttributeConstraintsConfigurations(collectionName, attributeName);
 
       ConstraintManager constraintManager = null;
       try {
@@ -933,13 +687,18 @@ public class CollectionMetadataFacade implements Serializable {
 
       constraintManager.registerConstraint(constraintConfiguration); // if this doesn't throw an exception, the constraint is valid
 
-      // TODO: update whole array because of concurrent access?
-      String attributeDocumentId = getAttributeDocumentId(collectionName, attributeName);
-      dataStorage.addItemToArray(collectionMetadataCollectionName(collectionName), attributeDocumentId, LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, constraintConfiguration);
+      dataStorage.addItemToArray(
+            METADATA_COLLECTION,
+            getCollectionMetadataDocument(collectionName).getId(),
+            nestedAttributeName(
+                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName)),
+                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
+            ),
+            constraintConfiguration);
    }
 
    /**
-    * Removes the constraint from list of constraints for given attribute
+    * Removes the constraint from list of constraints for given attribute.
     *
     * @param collectionName
     *       internal collection name
@@ -948,9 +707,45 @@ public class CollectionMetadataFacade implements Serializable {
     * @param constraintConfiguration
     *       constraint configuration to be removed
     */
-   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) {
-      String attributeDocumentId = getAttributeDocumentId(collectionName, attributeName);
-      dataStorage.removeItemFromArray(collectionMetadataCollectionName(collectionName), attributeDocumentId, LumeerConst.Collection.COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY, constraintConfiguration);
+   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws CollectionMetadataDocumentNotFoundException {
+      dataStorage.removeItemFromArray(
+            METADATA_COLLECTION,
+            getCollectionMetadataDocument(collectionName).getId(),
+            nestedAttributeName(
+                  nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName)),
+                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
+            ),
+            constraintConfiguration);
+
+   }
+
+   public List<String> getRecentlyUsedDocumentsIds(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      CollectionMetadata metadata = getCollectionMetadata(collectionName);
+
+      if (metadata == null) {
+         return Collections.emptyList();
+      }
+
+      return metadata.getRecentlyUsedDocumentIds();
+   }
+
+   public void addRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
+      String docId = getCollectionMetadataDocument(collectionName).getId();
+      dataStorage.removeItemFromArray(METADATA_COLLECTION, docId, LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, id);
+
+      int listSize = 3; // TODO: obtain the parameter from ConfigurationFacade
+
+      DataDocument query = new DataDocument()
+            .append("findAndModify", METADATA_COLLECTION)
+            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName))
+            .append("update", new DataDocument()
+                  .append("$push", new DataDocument()
+                        .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new DataDocument()
+                              .append("$each", Arrays.asList(id))
+                              .append("$position", 0)
+                              .append("$slice", listSize))));
+
+      dataStorage.run(query);
    }
 
    /**
@@ -961,8 +756,11 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if user can read the collection
     */
    public boolean checkCollectionForRead(String collectionName, String user) {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      return rights == null || securityFacade.checkForRead(rights, user);
+      try {
+         return securityFacade.checkForRead(getCollectionMetadataDocument(collectionName), user);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return true; // if metadata is not found, we allow access
+      }
    }
 
    /**
@@ -973,8 +771,11 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if user can write to the collection
     */
    public boolean checkCollectionForWrite(String collectionName, String user) {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      return rights == null || securityFacade.checkForWrite(rights, user);
+      try {
+         return securityFacade.checkForWrite(getCollectionMetadataDocument(collectionName), user);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return true; // if metadata is not found, we allow access
+      }
    }
 
    /**
@@ -985,8 +786,12 @@ public class CollectionMetadataFacade implements Serializable {
     * @return true if user can change access rights to collection
     */
    public boolean checkCollectionForAccessChange(String collectionName, String user) {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      return rights == null || securityFacade.checkForExecute(rights, user);
+      try {
+         return securityFacade.checkForExecute(getCollectionMetadataDocument(collectionName), user);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return true; // if metadata is not found, we allow access
+      }
+
    }
 
    /**
@@ -996,13 +801,11 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @param user
     *       user to set right for
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to change rights for the collection
     */
-   public void addCollectionRead(String collectionName, String user) throws UnauthorizedAccessException {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      securityFacade.setRightsRead(rights, user);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
+   public void addCollectionRead(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
+      securityFacade.setRightsRead(collectionMetadata, user);
+      dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
    }
 
    /**
@@ -1012,29 +815,25 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @param user
     *       user to set right for
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to change rights for the collection
     */
-   public void addCollectionWrite(String collectionName, String user) throws UnauthorizedAccessException {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      securityFacade.setRightsWrite(rights, user);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
+   public void addCollectionWrite(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
+      securityFacade.setRightsWrite(collectionMetadata, user);
+      dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
    }
 
    /**
-    * Sets execute (right to change rights) right.
+    * Sets right to change rights.
     *
     * @param collectionName
     *       internal name
     * @param user
     *       user to set right for
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to change rights for the collection
     */
-   public void addCollectionAccessChange(String collectionName, String user) throws UnauthorizedAccessException {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      securityFacade.setRightsExecute(rights, user);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
+   public void addCollectionAccessChange(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
+      securityFacade.setRightsExecute(collectionMetadata, user);
+      dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
    }
 
    /**
@@ -1044,13 +843,11 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @param user
     *       user whose right is removed
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to change rights for the collection
     */
-   public void removeCollectionRead(String collectionName, String user) throws UnauthorizedAccessException {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      securityFacade.removeRightsRead(rights, user);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
+   public void removeCollectionRead(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
+      securityFacade.removeRightsRead(collectionMetadata, user);
+      dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
    }
 
    /**
@@ -1060,29 +857,25 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @param user
     *       user whose right is removed
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to change rights for the collection
     */
-   public void removeCollectionWrite(String collectionName, String user) throws UnauthorizedAccessException {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      securityFacade.removeRightsWrite(rights, user);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
+   public void removeCollectionWrite(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
+      securityFacade.removeRightsWrite(collectionMetadata, user);
+      dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
    }
 
    /**
-    * Removes execute (right to change rights) right.
+    * Removes right to change rights.
     *
     * @param collectionName
     *       internal name
     * @param user
     *       user whose right is removed
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to change rights for the collection
     */
-   public void removeCollectionAccessChange(String collectionName, String user) throws UnauthorizedAccessException {
-      DataDocument rights = getAccessRightsDocument(collectionName);
-      securityFacade.removeRightsExecute(rights, user);
-      dataStorage.updateDocument(collectionMetadataCollectionName(collectionName), rights, rights.getId());
+   public void removeCollectionAccessChange(String collectionName, String user) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
+      securityFacade.removeRightsExecute(collectionMetadata, user);
+      dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, collectionMetadata.getId());
    }
 
    /**
@@ -1092,73 +885,22 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal name
     * @return list of AccessRightsDao (Daos for all users)
     */
-   public List<AccessRightsDao> getAllAccessRights(String collectionName) {
-      return securityFacade.getDaoList(getAccessRightsDocument(collectionName));
-   }
-
-   // returns whole access rights document - to be used only internally
-   private DataDocument getAccessRightsDocument(String collectionName) {
-      if (!dataStorage.hasCollection(collectionMetadataCollectionName(collectionName))) { // metadata collection does not exist
-         return null;
-      }
-
-      List<DataDocument> rightsInfo = dataStorage.run(queryDocumentFromCollectionMetadata(collectionName, LumeerConst.Collection.COLLECTION_RIGHTS_META_TYPE_VALUE));
-
-      return rightsInfo.isEmpty() ? null : rightsInfo.get(0);
-   }
-
-   // returns id of the document with info about given attribute
-   private String getAttributeDocumentId(String collectionName, String attributeName) {
-      List<DataDocument> attributeInfo = dataStorage.run(queryCollectionAttributeInfo(collectionName, attributeName));
-      return attributeInfo.isEmpty() ? null : attributeInfo.get(0).getId();
-   }
-
-   // returns query for getting specific metadata document
-   private DataDocument queryDocumentFromCollectionMetadata(String collectionName, String metaTypeValue) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      return new DataDocument()
-            .append("find", metadataCollectionName)
-            .append("filter",
-                  new DataDocument()
-                        .append(LumeerConst.Collection.META_TYPE_KEY, metaTypeValue));
-   }
-
-   // returns query for getting info about specific attribute
-   private DataDocument queryCollectionAttributeInfo(String collectionName, String attributeName) {
-      String metadataCollectionName = collectionMetadataCollectionName(collectionName);
-      return new DataDocument()
-            .append("find", metadataCollectionName)
-            .append("filter",
-                  new DataDocument()
-                        .append(LumeerConst.Collection.META_TYPE_KEY, LumeerConst.Collection.COLLECTION_ATTRIBUTES_META_TYPE_VALUE)
-                        .append(LumeerConst.Collection.COLLECTION_ATTRIBUTE_NAME_KEY, attributeName));
+   public List<AccessRightsDao> getAllAccessRights(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return securityFacade.getDaoList(getCollectionMetadataDocument(collectionName));
    }
 
    // checks whether collection with given user name already exists
    private boolean checkIfUserCollectionExists(String originalCollectionName) {
-      dataStorage.invalidateCaches(); // cache can be 5 seconds old, so we firstly invalidate it
-      List<String> collections = dataStorage.getAllCollections();
-      for (String c : collections) {
-         if (isUserCollection(c)) {
-            try {
-               if (getOriginalCollectionName(c).equals(originalCollectionName)) {
-                  return true;
-               }
-            } catch (CollectionMetadataDocumentNotFoundException e) {
-               return false; // original name for the collection c was not found, so it does not exist
-            } catch (CollectionNotFoundException e) {
-               return false; // metadata for the collection c was not found, so its original name does not exist
-            }
-         }
-      }
-      return false;
-   }
+      List<DataDocument> result = dataStorage.run(new DataDocument()
+            .append("find", METADATA_COLLECTION)
+            .append("filter", new DataDocument()
+                  .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName)));
 
-   // checks whether metadata collection exists
-   private void checkIfMetadataCollectionExists(String metadataCollectionName) throws CollectionNotFoundException {
-      if (!dataStorage.hasCollection(metadataCollectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(metadataCollectionName));
+      if (result.isEmpty()) {
+         return false;
       }
+
+      return true;
    }
 
    // initializes constraint manager
@@ -1169,5 +911,10 @@ public class CollectionMetadataFacade implements Serializable {
    // returns current user email
    private String getCurrentUser() {
       return userFacade.getUserEmail();
+   }
+
+   // returns string "parent.child"
+   private static String nestedAttributeName(String parent, String child) {
+      return parent + "." + child;
    }
 }

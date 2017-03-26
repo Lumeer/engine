@@ -25,6 +25,7 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.event.DropDocument;
+import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
@@ -102,7 +103,11 @@ public class DocumentFacade implements Serializable {
       }
       // we add all document attributes to collection metadata
       doc.keySet().stream().filter(attribute -> !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         try {
+            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         } catch (CollectionMetadataDocumentNotFoundException e) {
+            // nothing happens - if we don't find metadata, we just don't increment attribute
+         }
       });
       return documentId;
    }
@@ -146,7 +151,11 @@ public class DocumentFacade implements Serializable {
 
       // we add new attributes of updated document to collection metadata
       upd.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         try {
+            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         } catch (CollectionMetadataDocumentNotFoundException e) {
+            // nothing happens - if we don't find metadata, we just don't increment attribute
+         }
       });
    }
 
@@ -174,11 +183,20 @@ public class DocumentFacade implements Serializable {
 
       // add new attributes of updated document to collection metadata
       repl.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         try {
+            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         } catch (CollectionMetadataDocumentNotFoundException e) {
+            // nothing happens - if we don't find metadata, we just don't increment attribute
+         }
       });
 
       existingDocument.keySet().stream().filter(attribute -> !repl.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         try {
+            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         } catch (CollectionMetadataDocumentNotFoundException e) {
+            // nothing happens - if we don't find metadata, we just don't decrement attribute
+
+         }
       });
    }
 
@@ -236,11 +254,19 @@ public class DocumentFacade implements Serializable {
 
       // add new attributes of updated document to collection metadata
       revertDocument.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         try {
+            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         } catch (CollectionMetadataDocumentNotFoundException e) {
+            // nothing happens - if we don't find metadata, we just don't increment attribute
+         }
       });
 
       existingDocument.keySet().stream().filter(attribute -> !revertDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         try {
+            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         } catch (CollectionMetadataDocumentNotFoundException e) {
+            // nothing happens - if we don't find metadata, we just don't decrement attribute
+         }
       });
    }
 
@@ -282,13 +308,15 @@ public class DocumentFacade implements Serializable {
       return documentAttributes;
    }
 
-   private void checkConstraintsAndConvert(final String collectionName, final DataDocument doc) throws InvalidConstraintException {
-      for (String attribute : doc.keySet()) {
-         Object value = collectionMetadataFacade.checkAndConvertAttributeValue(collectionName, attribute, doc.get(attribute).toString());
-         if (value == null) {
+   private void checkConstraintsAndConvert(final String collectionName, DataDocument doc) throws InvalidConstraintException {
+      try {
+         doc = collectionMetadataFacade.checkAndConvertAttributesValues(collectionName, doc);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         // nothing happens - if we don't find metadata, all values are valid
+      }
+      for(String attribute: doc.keySet()) {
+         if (doc.get(attribute) == null) {
             throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));
-         } else {
-            doc.replace(attribute, value);
          }
       }
    }

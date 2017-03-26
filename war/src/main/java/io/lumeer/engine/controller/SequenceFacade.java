@@ -22,7 +22,6 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.provider.DataStorageProvider;
 
 import java.io.Serializable;
 import javax.annotation.PostConstruct;

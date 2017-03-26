@@ -26,7 +26,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 

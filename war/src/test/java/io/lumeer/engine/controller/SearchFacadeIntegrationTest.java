@@ -22,10 +22,12 @@ package io.lumeer.engine.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.provider.DataStorageProvider;
+import io.lumeer.engine.api.exception.DbException;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -55,6 +57,9 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
    private CollectionMetadataFacade collectionMetadataFacade;
 
    private DataStorage dataStorage;
+
+   @Inject
+   private CollectionFacade collectionFacade;
 
    @Inject
    private DataStorageProvider dataStorageProvider;
@@ -108,9 +113,8 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
 
    private void setUpCollection(final String collection) {
       dataStorage.dropCollection(collection);
-      dataStorage.dropCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
       dataStorage.createCollection(collection);
-      dataStorage.createCollection(collectionMetadataFacade.collectionMetadataCollectionName(collection));
+      collectionMetadataFacade.createInitialMetadata(collection, collection);
    }
 
 }

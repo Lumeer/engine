@@ -32,7 +32,6 @@ import io.lumeer.engine.controller.LinkingFacade;
 import io.lumeer.engine.controller.OrganisationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.LinkDao;
 import io.lumeer.engine.rest.dao.LinkTypeDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
