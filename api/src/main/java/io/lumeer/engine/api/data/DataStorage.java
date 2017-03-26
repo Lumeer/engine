@@ -459,4 +459,11 @@ public interface DataStorage extends Serializable {
     * Invalidates all caches.
     */
    void invalidateCaches();
+
+   /**
+    * Gets the statistics about database usage.
+    *
+    * @return Statistics about database usage.
+    */
+   DataStorageStats getDbStats();
 }
