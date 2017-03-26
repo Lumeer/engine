@@ -93,6 +93,7 @@ public class MongoDbStorageTest {
    private final String COLLECTION_COMPLEX_ARRAY_MANIPULATION = "collectionComplexArrayManipulation";
    private final String COLLECTION_AGGREGATE = "collectionAggregate";
    private final String COLLECTION_STATS = "collectionStatistics";
+   private final String COLLECTION_CSTATS = "collectionCStatistics";
 
    private static MongodExecutable mongodExecutable;
 
@@ -634,6 +635,25 @@ public class MongoDbStorageTest {
       assertThat(dss.getIndexSize()).isGreaterThan(0);
 
       mongoDbStorage.dropCollection(COLLECTION_STATS);
+   }
+
+   @Test
+   public void collectionStatsTest() {
+      mongoDbStorage.createCollection(COLLECTION_CSTATS);
+      mongoDbStorage.createDocument(COLLECTION_CSTATS, new DataDocument("stats", 4));
+      mongoDbStorage.createIndex(COLLECTION_CSTATS, new DataDocument("stats", 1));
+
+      final DataStorageStats dss = mongoDbStorage.getCollectionStats(COLLECTION_CSTATS);
+
+      assertThat(dss.getDatabaseName()).isEqualTo(DB_NAME);
+      assertThat(dss.getCollectionName()).isEqualTo(COLLECTION_CSTATS);
+      assertThat(dss.getDocuments()).isEqualTo(1);
+      assertThat(dss.getIndexes()).isEqualTo(2);
+      assertThat(dss.getDataSize()).isGreaterThan(0);
+      assertThat(dss.getStorageSize()).isGreaterThan(0);
+      assertThat(dss.getIndexSize()).isGreaterThan(0);
+
+      mongoDbStorage.dropCollection(COLLECTION_CSTATS);
    }
 
    private DataDocument createDummyDocument() {

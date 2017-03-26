@@ -658,4 +658,22 @@ public class MongoDbStorage implements DataStorage {
 
       return dss;
    }
+
+   @Override
+   public DataStorageStats getCollectionStats(final String collectionName) {
+      final Document collStats = database.runCommand(Document.parse("{ collStats: \"" + collectionName + "\", scale: 1, verbose: false }"));
+      final DataStorageStats dss = new DataStorageStats();
+
+      final String ns = collStats.getString("ns");
+
+      dss.setDatabaseName(ns.substring(0, ns.indexOf(".")));
+      dss.setCollectionName(ns.substring(ns.indexOf(".") + 1));
+      dss.setDocuments(collStats.getInteger("count"));
+      dss.setDataSize(collStats.getInteger("size"));
+      dss.setStorageSize(collStats.getInteger("storageSize"));
+      dss.setIndexes(collStats.getInteger("nindexes"));
+      dss.setIndexSize(collStats.getInteger("totalIndexSize"));
+
+      return dss;
+   }
 }

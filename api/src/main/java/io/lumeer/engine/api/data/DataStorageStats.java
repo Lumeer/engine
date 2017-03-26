@@ -20,7 +20,7 @@
 package io.lumeer.engine.api.data;
 
 /**
- * Carries statistics about database usage.
+ * Carries statistics about database or collection usage.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
@@ -32,33 +32,38 @@ public class DataStorageStats {
    private String databaseName;
 
    /**
-    * Number of collections in the database.
+    * Name of the collection when applicable.
+    */
+   private String collectionName;
+
+   /**
+    * Number of collections in the database when applicable.
     */
    private long collections;
 
    /**
-    * Number of documents in the database.
+    * Number of documents in the database or collection.
     */
    private long documents;
 
    /**
-    * Size of actual data in the database.
+    * Size of actual data in the database or collection.
     */
    private long dataSize;
 
    /**
-    * Size allocated on the drive for the database. This is equal or larger to {@link #dataSize}.
+    * Size allocated on the drive for the database or collection. This is equal or larger to {@link #dataSize}.
     * It includes even pre-allocated space.
     */
    private long storageSize;
 
    /**
-    * Number of indexes in the database.
+    * Number of indexes in the database or collection.
     */
    private long indexes;
 
    /**
-    * Size of space allocated to store indexes.
+    * Size of space allocated to store indexes in the database or collection.
     */
    private long indexSize;
 
@@ -68,6 +73,14 @@ public class DataStorageStats {
 
    public void setDatabaseName(final String databaseName) {
       this.databaseName = databaseName;
+   }
+
+   public String getCollectionName() {
+      return collectionName;
+   }
+
+   public void setCollectionName(final String collectionName) {
+      this.collectionName = collectionName;
    }
 
    public long getCollections() {
@@ -119,6 +132,20 @@ public class DataStorageStats {
    }
 
    @Override
+   public String toString() {
+      return "DataStorageStats{" +
+            "databaseName='" + databaseName + '\'' +
+            ", collectionName='" + collectionName + '\'' +
+            ", collections=" + collections +
+            ", documents=" + documents +
+            ", dataSize=" + dataSize +
+            ", storageSize=" + storageSize +
+            ", indexes=" + indexes +
+            ", indexSize=" + indexSize +
+            '}';
+   }
+
+   @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;
@@ -147,12 +174,16 @@ public class DataStorageStats {
       if (indexSize != that.indexSize) {
          return false;
       }
-      return databaseName != null ? databaseName.equals(that.databaseName) : that.databaseName == null;
+      if (databaseName != null ? !databaseName.equals(that.databaseName) : that.databaseName != null) {
+         return false;
+      }
+      return collectionName != null ? collectionName.equals(that.collectionName) : that.collectionName == null;
    }
 
    @Override
    public int hashCode() {
       int result = databaseName != null ? databaseName.hashCode() : 0;
+      result = 31 * result + (collectionName != null ? collectionName.hashCode() : 0);
       result = 31 * result + (int) (collections ^ (collections >>> 32));
       result = 31 * result + (int) (documents ^ (documents >>> 32));
       result = 31 * result + (int) (dataSize ^ (dataSize >>> 32));
@@ -162,16 +193,4 @@ public class DataStorageStats {
       return result;
    }
 
-   @Override
-   public String toString() {
-      return "DataStorageStats{" +
-            "databaseName='" + databaseName + '\'' +
-            ", collections=" + collections +
-            ", documents=" + documents +
-            ", dataSize=" + dataSize +
-            ", storageSize=" + storageSize +
-            ", indexes=" + indexes +
-            ", indexSize=" + indexSize +
-            '}';
-   }
 }
