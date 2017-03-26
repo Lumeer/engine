@@ -26,18 +26,40 @@ package io.lumeer.engine.api.data;
  */
 public class DataStorageStats {
 
+   /**
+    * Name of the database.
+    */
    private String databaseName;
 
+   /**
+    * Number of collections in the database.
+    */
    private long collections;
 
+   /**
+    * Number of documents in the database.
+    */
    private long documents;
 
+   /**
+    * Size of actual data in the database.
+    */
    private long dataSize;
 
+   /**
+    * Size allocated on the drive for the database. This is equal or larger to {@link #dataSize}.
+    * It includes even pre-allocated space.
+    */
    private long storageSize;
 
+   /**
+    * Number of indexes in the database.
+    */
    private long indexes;
 
+   /**
+    * Size of space allocated to store indexes.
+    */
    private long indexSize;
 
    public String getDatabaseName() {
