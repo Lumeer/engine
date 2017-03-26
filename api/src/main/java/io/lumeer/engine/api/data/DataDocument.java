@@ -78,7 +78,8 @@ public class DataDocument extends LinkedHashMap<String, Object> {
    /**
     * Sets the document id.
     *
-    * @param id The document id.
+    * @param id
+    *       The document id.
     */
    public void setId(final String id) {
       put(LumeerConst.Document.ID, id);
@@ -261,13 +262,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     *       if key nested path is not valid
     */
    public Date getDate(final String key) {
-      Long date = null;
-      try {
-         date = (Long) getObject(key);
-      } catch (ClassCastException e) {
-         return (Date) getObject(key);
-      }
-      return new Date(date);
+      return (Date) getObject(key);
    }
 
    /**

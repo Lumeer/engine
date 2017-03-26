@@ -39,6 +39,7 @@ import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
+import io.lumeer.engine.rest.dao.CollectionMetadata;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -318,14 +319,14 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/{collectionName}/meta/")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
+   public CollectionMetadata readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null) {
          throw new IllegalArgumentException();
       }
       if (!checkCollectionForRead(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
       }
-      return collectionMetadataFacade.getCollectionMetadataDocument(getInternalName(collectionName));
+      return collectionMetadataFacade.getCollectionMetadata(getInternalName(collectionName));
    }
 
    /**

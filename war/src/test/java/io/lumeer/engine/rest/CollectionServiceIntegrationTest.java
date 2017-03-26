@@ -241,12 +241,12 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       client.close();
 
       // #2 the given collection and attribute exists, ready to rename the attribute, status code = 204
-      collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
-      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_RENAME_ATTRIBUTE), oldAttributeName);
+      String collection = collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, oldAttributeName);
 
       final Client client2 = ClientBuilder.newBuilder().build();
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_RENAME_ATTRIBUTE + "/attributes/" + oldAttributeName + "/rename/" + newAttributeName).request().buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      Set<String> attributeNames = collectionMetadataFacade.getAttributesNames(getInternalName(COLLECTION_RENAME_ATTRIBUTE));
+      Set<String> attributeNames = collectionMetadataFacade.getAttributesNames(collection);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(attributeNames).contains(newAttributeName);
       assertThat(attributeNames).doesNotContain(oldAttributeName);
@@ -268,11 +268,11 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       client.close();
 
       // #2 the given collection and attribute exists, ready to drop the attribute, status code = 204
-      collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
-      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_DROP_ATTRIBUTE), attributeName);
+      String collection = collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeName);
       final Client client2 = ClientBuilder.newBuilder().build();
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_ATTRIBUTE + "/attributes/" + attributeName).request().buildDelete().invoke();
-      Set<String> attributeNames = collectionMetadataFacade.getAttributesNames(getInternalName(COLLECTION_DROP_ATTRIBUTE));
+      Set<String> attributeNames = collectionMetadataFacade.getAttributesNames(collection);
       boolean containsKey = attributeNames.contains(attributeName);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(containsKey).isFalse();
@@ -333,9 +333,9 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
       String attributeName = "metaAttribute";
       DataDocument value = new DataDocument("columnSize", 100);
-      collectionFacade.createCollection(COLLECTION_ADD_COLLECTION_METADATA);
+      String collection = collectionFacade.createCollection(COLLECTION_ADD_COLLECTION_METADATA);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
-      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(getInternalName(COLLECTION_ADD_COLLECTION_METADATA));
+      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(collection);
       DataDocument readMetaDoc = metadata.getCustomMetadata().getDataDocument(attributeName);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readMetaDoc).isEqualTo(value);
@@ -357,17 +357,16 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
       final Client client2 = ClientBuilder.newBuilder().build();
       // #2 the metadata collection of the given collection exists
-      collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
+      String collection = collectionFacade.createCollection(COLLECTION_READ_COLLECTION_METADATA);
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_METADATA + "/meta/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       DataDocument collectionMetadata = response2.readEntity(DataDocument.class);
-      DataDocument metadata = collectionMetadataFacade.getCollectionMetadataDocument(getInternalName(COLLECTION_READ_COLLECTION_METADATA));
+      DataDocument metadata = collectionMetadataFacade.getCollectionMetadataDocument(collection);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      // assertThat(collectionMetadata).isEqualTo(metadata); // we do not compare whole documents, because there is a difference in date representation
-      assertThat(collectionMetadata).isNotEmpty();
-      assertThat(collectionMetadata.getDate(LumeerConst.Collection.LAST_TIME_USED_KEY))
-            .isEqualTo(metadata.getDate(LumeerConst.Collection.LAST_TIME_USED_KEY));
-      response2.close();
+      // assertThat(collectionMetadata).isEqualTo(metadata); // we do not compare whole documents, because there is a difference in our and deserialized representation
+      assertThat(collectionMetadata).hasSize(9); // based on number of variables in CollectionMetadata
+      assertThat(collectionMetadata.getString(LumeerConst.Collection.REAL_NAME_KEY)).isEqualTo(metadata.getString(LumeerConst.Collection.REAL_NAME_KEY));
 
+      response2.close();
       client2.close();
    }
 
@@ -379,16 +378,16 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       final int value = 100;
       final int updatedValue = 500;
 
-      collectionFacade.createCollection(COLLECTION_UPDATE_COLLECTION_METADATA);
+      String collection = collectionFacade.createCollection(COLLECTION_UPDATE_COLLECTION_METADATA);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
-      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
+      CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(collection);
       int readValue = metadata.getCustomMetadata().getInteger(columnSizeAttributeName);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readValue).isEqualTo(value);
       response.close();
 
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_COLLECTION_METADATA + "/meta/" + columnSizeAttributeName).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(updatedValue, MediaType.APPLICATION_JSON)).invoke();
-      CollectionMetadata updatedMetadata = collectionMetadataFacade.getCollectionMetadata(getInternalName(COLLECTION_UPDATE_COLLECTION_METADATA));
+      CollectionMetadata updatedMetadata = collectionMetadataFacade.getCollectionMetadata(collection);
       int readUpdatedValue = updatedMetadata.getCustomMetadata().getInteger(columnSizeAttributeName);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readUpdatedValue).isEqualTo(updatedValue);
@@ -413,16 +412,16 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       client.close();
 
       // #2 the given collection and attributes exists, status code = 200
-      collectionFacade.createCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
-      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES), dummyAttribute1);
-      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES), dummyAttribute2);
-      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES), dummyAttribute3);
+      String collection = collectionFacade.createCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, dummyAttribute1);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, dummyAttribute2);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, dummyAttribute3);
 
       final Client client2 = ClientBuilder.newBuilder().build();
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_COLLECTION_ATTRIBUTES + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       Set<String> collectionAttributes = response2.readEntity(HashSet.class);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(collectionAttributes).isEqualTo(collectionFacade.readCollectionAttributes(getInternalName(COLLECTION_READ_COLLECTION_ATTRIBUTES)).keySet());
+      assertThat(collectionAttributes).isEqualTo(collectionFacade.readCollectionAttributes(collection).keySet());
       response2.close();
 
       client2.close();
@@ -456,9 +455,9 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       final String user = userFacade.getUserEmail();
       final AccessRightsDao accessRights = new AccessRightsDao(true, true, false, user);
 
-      collectionFacade.createCollection(COLLECTION_UPDATE_ACCESS_RIGHTS);
+      String collection = collectionFacade.createCollection(COLLECTION_UPDATE_ACCESS_RIGHTS);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(accessRights, MediaType.APPLICATION_JSON)).invoke();
-      DataDocument metadata = collectionMetadataFacade.getCollectionMetadataDocument(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS));
+      DataDocument metadata = collectionMetadataFacade.getCollectionMetadataDocument(collection);
       AccessRightsDao readAccessRights = securityFacade.getDao(LumeerConst.Collection.METADATA_COLLECTION, metadata.getId(), user);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readAccessRights.isWrite()).isTrue();
@@ -468,34 +467,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       client.close();
    }
 
-   //   @Test
-   //   public void testSetAndReadAttributeType() throws Exception {
-   //      setUpCollections(COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE);
-   //
-   //      final Client client = ClientBuilder.newBuilder().build();
-   //      final String attributeName = "dummyAttribute";
-   //      final String newType = LumeerConst.Collection.ATTRIBUTE_TYPE_VALUES.get(0);
-   //
-   //      collectionFacade.createCollection(COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE);
-   //      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE), attributeName);
-   //
-   //      // set attribute type
-   //      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE + "/attributes/" + attributeName + "/types/" + newType).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-   //      boolean wasSuccessful = response.readEntity(Boolean.class);
-   //      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-   //      assertThat(wasSuccessful).isTrue();
-   //      response.close();
-   //
-   //      // read attribute type
-   //      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_AND_READ_ATTRIBUTE_TYPE + "/attributes/" + attributeName + "/types").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-   //      String attributeType = response2.readEntity(String.class);
-   //      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-   //      assertThat(attributeType).isEqualTo(newType);
-   //      response2.close();
-   //
-   //      client.close();
-   //   }
-
    @Test
    public void testSetReadAndDropAttributeConstraint() throws Exception {
       setUpCollections(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
@@ -504,8 +475,8 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       final String constraintConfiguration = "case:lower";
       final String attributeName = "dummyAttributeName";
 
-      collectionFacade.createCollection(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
-      collectionMetadataFacade.addOrIncrementAttribute(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName);
+      String collection = collectionFacade.createCollection(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, attributeName);
 
       // set attribute constraint
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT + "/attributes/" + attributeName + "/constraints").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(constraintConfiguration, MediaType.APPLICATION_JSON)).invoke();
@@ -516,13 +487,13 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT + "/attributes/" + attributeName + "/constraints").request(MediaType.APPLICATION_JSON).buildGet().invoke();
       List<String> constraints = response2.readEntity(ArrayList.class);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(constraints).isEqualTo(collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName));
+      assertThat(constraints).isEqualTo(collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attributeName));
       response2.close();
 
       // drop attribute constraint
       Response response3 = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT + "/attributes/" + attributeName + "/constraints").request(MediaType.APPLICATION_JSON).build("DELETE", Entity.json(constraintConfiguration)).invoke();
       assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      assertThat(collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT), attributeName)).hasSize(0);
+      assertThat(collectionMetadataFacade.getAttributeConstraintsConfigurations(collection, attributeName)).isEmpty();
       response3.close();
 
       client.close();
