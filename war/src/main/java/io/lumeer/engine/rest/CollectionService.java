@@ -40,7 +40,6 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.controller.VersionFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -82,9 +81,6 @@ public class CollectionService implements Serializable {
 
    @Inject
    private SecurityFacade securityFacade;
-
-   @Inject
-   private VersionFacade versionFacade;
 
    @Inject
    private UserFacade userFacade;

@@ -181,8 +181,8 @@ public class VersionFacadeIntegrationTest extends IntegrationTestBase {
       DataDocument dataDocument = createTestDocument();
       String documentId = dataStorage.createDocument(TEST_EXCEPTION, dataDocument);
       dataDocument = dataStorage.readDocument(TEST_EXCEPTION, documentId);
-      versionFacade.backUp(TEST_EXCEPTION, dataDocument);
-      versionFacade.backUp(TEST_EXCEPTION, dataDocument);
+      versionFacade.backUpDocument(TEST_EXCEPTION, dataDocument);
+      versionFacade.backUpDocument(TEST_EXCEPTION, dataDocument);
    }
 
    /* @Test
