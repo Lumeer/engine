@@ -22,6 +22,7 @@ package io.lumeer.engine.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -55,6 +56,8 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080/";
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -65,14 +68,6 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    @Test
    public void testRegister() throws Exception {

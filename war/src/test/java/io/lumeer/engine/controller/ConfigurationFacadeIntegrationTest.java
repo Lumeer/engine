@@ -22,11 +22,11 @@ package io.lumeer.engine.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulatorIntegrationTest;
-import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -62,6 +62,8 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    private final int BEFORE_SIZE_RESET = 4;
    private final int AFTER_SIZE_RESET = 0;
 
+   @Inject
+   @SystemDataStorage
    private DataStorage systemDataStorage;
 
    @Inject
@@ -79,13 +81,8 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private ProjectFacade projectFacade;
 
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
    @Before
    public void setUp() throws Exception {
-      systemDataStorage = dataStorageProvider.getSystemStorage();
-
       projectFacade.setCurrentProjectId("configProject");
       organisationFacade.setOrganisationId("configOrg");
 

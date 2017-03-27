@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -33,7 +34,6 @@ import io.lumeer.engine.rest.dao.Attribute;
 import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,6 +55,8 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    @Inject
    private CollectionFacade collectionFacade;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -85,11 +87,6 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
    private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
    private final String COLLECTION_RECENTLY_USED_DOCUMENTS = "CollectionMetadataFacadeCollectionRecentlyUsedDocuments";
-
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    @Test
    public void testCreateInternalName() throws Exception {

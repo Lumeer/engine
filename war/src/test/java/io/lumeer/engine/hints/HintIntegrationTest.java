@@ -22,14 +22,13 @@ package io.lumeer.engine.hints;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.CollectionFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.mongodb.MongoUtils;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,18 +45,12 @@ public class HintIntegrationTest extends IntegrationTestBase {
    @Inject
    public HintFacade hintFacade;
 
+   @Inject
+   @UserDataStorage
    public DataStorage dataStorage;
 
    @Inject
    public CollectionFacade collectionFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    @Test
    public void testNormalFormHintDocument() throws Exception {

@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
@@ -60,15 +61,9 @@ public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
-   private DataStorage dataStorage;
-
    @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
+   @UserDataStorage
+   private DataStorage dataStorage;
 
    @Inject
    private CollectionFacade collectionFacade;
