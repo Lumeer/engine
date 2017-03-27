@@ -30,6 +30,7 @@ import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageStats;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
@@ -640,5 +641,39 @@ public class MongoDbStorage implements DataStorage {
       if (collectionsCache != null) {
          collectionsCache.remove(COLLECTION_CACHE);
       }
+   }
+
+   @Override
+   public DataStorageStats getDbStats() {
+      final Document dbStats = database.runCommand(Document.parse("{ dbStats: 1, scale: 1 }"));
+      final DataStorageStats dss = new DataStorageStats();
+
+      dss.setDatabaseName(dbStats.getString("db"));
+      dss.setCollections(dbStats.getInteger("collections"));
+      dss.setDocuments(dbStats.getInteger("objects"));
+      dss.setDataSize(dbStats.getDouble("dataSize").longValue());
+      dss.setStorageSize(dbStats.getDouble("storageSize").longValue());
+      dss.setIndexes(dbStats.getInteger("indexes"));
+      dss.setIndexSize(dbStats.getDouble("indexSize").longValue());
+
+      return dss;
+   }
+
+   @Override
+   public DataStorageStats getCollectionStats(final String collectionName) {
+      final Document collStats = database.runCommand(Document.parse("{ collStats: \"" + collectionName + "\", scale: 1, verbose: false }"));
+      final DataStorageStats dss = new DataStorageStats();
+
+      final String ns = collStats.getString("ns");
+
+      dss.setDatabaseName(ns.substring(0, ns.indexOf(".")));
+      dss.setCollectionName(ns.substring(ns.indexOf(".") + 1));
+      dss.setDocuments(collStats.getInteger("count"));
+      dss.setDataSize(collStats.getInteger("size"));
+      dss.setStorageSize(collStats.getInteger("storageSize"));
+      dss.setIndexes(collStats.getInteger("nindexes"));
+      dss.setIndexSize(collStats.getInteger("totalIndexSize"));
+
+      return dss;
    }
 }

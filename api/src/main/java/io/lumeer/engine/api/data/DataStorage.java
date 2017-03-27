@@ -459,4 +459,20 @@ public interface DataStorage extends Serializable {
     * Invalidates all caches.
     */
    void invalidateCaches();
+
+   /**
+    * Gets the statistics about database usage.
+    *
+    * @return Statistics about database usage.
+    */
+   DataStorageStats getDbStats();
+
+   /**
+    * Gets the statistics about collection usage.
+    *
+    * @param collectionName
+    *       Name of the collection to obtain statistics for.
+    * @return Statistics about collection usage.
+    */
+   DataStorageStats getCollectionStats(final String collectionName);
 }
