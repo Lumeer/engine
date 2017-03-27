@@ -20,7 +20,6 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -53,7 +51,7 @@ public class ProjectFacade {
    private OrganisationFacade organisationFacade;
 
    @Inject
-   private ApplicationInitFacade applicationInitFacade;
+   private DatabazeInitializer databazeInitializer;
 
    private String projectId = "default";
 
