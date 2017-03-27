@@ -60,6 +60,8 @@ public class ErrorMessageBuilder {
    private static final String ERROR_VIEW_META_IMMUTABLE = "The metadata key \"{1}\" for view \"{0}\" cannot be changed.";
    private static final String ERROR_VIEW_META_SPECIAL = "The metadata key \"{1}\" for view \"{0}\" can be changed only with special method.";
 
+   private static final String ERROR_PROJECT_NOT_FOUND = "Project with id \"{0}\" not found";
+
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
    }
@@ -162,6 +164,10 @@ public class ErrorMessageBuilder {
 
    public static String idNotFoundString() {
       return ERROR_ID_NOT_FOUND;
+   }
+
+   public static String projectNotFoundString(String projectId) {
+      return MessageFormat.format(ERROR_PROJECT_NOT_FOUND, projectId);
    }
 
 }

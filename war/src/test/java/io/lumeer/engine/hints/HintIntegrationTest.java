@@ -22,8 +22,10 @@ package io.lumeer.engine.hints;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.mongodb.MongoUtils;
@@ -44,20 +46,17 @@ public class HintIntegrationTest extends IntegrationTestBase {
    private String VALUE_DATABASE = "hintTestValue";
 
    @Inject
-   public HintFacade hintFacade;
-
-   public DataStorage dataStorage;
+   private HintFacade hintFacade;
 
    @Inject
-   public CollectionFacade collectionFacade;
+   @UserDataStorage
+   private DataStorage dataStorage;
 
    @Inject
-   private DataStorageProvider dataStorageProvider;
+   private DataStorageDialect dataStorageDialect;
 
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
+   @Inject
+   private CollectionFacade collectionFacade;
 
    @Test
    public void testNormalFormHintDocument() throws Exception {
@@ -87,7 +86,7 @@ public class HintIntegrationTest extends IntegrationTestBase {
       dataDocument.put("numberString", "9");
       dataDocument.put("uvodzovky", "\"");
       String id = dataStorage.createDocument(VALUE_DATABASE, dataDocument);
-      DataDocument dataDocumentDatabase = dataStorage.readDocument(VALUE_DATABASE, id);
+      DataDocument dataDocumentDatabase = dataStorage.readDocument(VALUE_DATABASE, dataStorageDialect.documentIdFilter(id));
       System.out.println("=======================");
       System.out.println(MongoUtils.dataDocumentToDocument(dataDocument).toJson().toString());
       hintFacade.runHint("ValueTypeHint", dataDocumentDatabase);

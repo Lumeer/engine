@@ -71,7 +71,6 @@ public class ConfigurationManipulator implements Serializable {
 
    public static final String NAME_KEY = "name";
    public static final String CONFIG_KEY = "config";
-   public static final String ID_KEY = "_id";
 
    @Inject
    private DataStorageDialect dataStorageDialect;
@@ -107,8 +106,7 @@ public class ConfigurationManipulator implements Serializable {
          if (!config.containsKey(attributeName)) {
             return;
          }
-         String id = configuration.get().getString(ID_KEY);
-         systemDataStorage.dropAttribute(collectionName, id, CONFIG_KEY + "." + attributeName);
+         systemDataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(configuration.get().getId()), dataStorageDialect.concatFields(CONFIG_KEY, attributeName));
       } else {
          createSimpleConfigurationEntry(collectionName, nameValue);
       }
@@ -130,10 +128,10 @@ public class ConfigurationManipulator implements Serializable {
       Optional<DataDocument> configuration = getConfigurationEntry(collectionName, nameValue);
       if (configuration.isPresent()) {
          // if configuration entry exists, reset 'config' field
-         String id = configuration.get().getString(ID_KEY);
+         String id = configuration.get().getId();
          configuration.get().remove(CONFIG_KEY);
          configuration.get().put(CONFIG_KEY, new DataDocument());
-         systemDataStorage.updateDocument(collectionName, configuration.get(), id);
+         systemDataStorage.updateDocument(collectionName, configuration.get(), dataStorageDialect.documentIdFilter(id));
       } else {
          createSimpleConfigurationEntry(collectionName, nameValue);
       }
@@ -190,10 +188,10 @@ public class ConfigurationManipulator implements Serializable {
          }
 
          String filter = dataStorageDialect.fieldValueFilter(NAME_KEY, nameValue);
-         List<DataDocument> configs = systemDataStorage.search(collectionName, filter, null, 0, 0);
+         DataDocument config = systemDataStorage.readDocument(collectionName, filter);
 
-         if (!configs.isEmpty()) {
-            return Optional.of(configs.get(0));
+         if (config != null) {
+            return Optional.of(config);
          }
       }
 
@@ -225,7 +223,7 @@ public class ConfigurationManipulator implements Serializable {
       String id = "";
 
       if (configuration.isPresent()) {
-         id = configuration.get().getString(ID_KEY);
+         id = configuration.get().getId();
          configDocument = (DataDocument) configuration.get().get(CONFIG_KEY);
       } else {
          newConfiguration = new DataDocument();
@@ -247,7 +245,7 @@ public class ConfigurationManipulator implements Serializable {
       newConfiguration.put(CONFIG_KEY, configDocument);
 
       if (configuration.isPresent()) {
-         systemDataStorage.updateDocument(collectionName, newConfiguration, id);
+         systemDataStorage.updateDocument(collectionName, newConfiguration, dataStorageDialect.documentIdFilter(id));
       } else {
          systemDataStorage.createDocument(collectionName, newConfiguration);
       }

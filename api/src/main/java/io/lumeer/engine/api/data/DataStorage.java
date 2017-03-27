@@ -25,6 +25,7 @@ import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -102,11 +103,11 @@ public interface DataStorage extends Serializable {
     *
     * @param collectionName
     *       The name of the collection to find document.
-    * @param documentId
-    *       The id of the document to check for.
+    * @param filter
+    *       the filter to identify document
     * @return True if and only if the document exists.
     */
-   boolean collectionHasDocument(final String collectionName, final String documentId);
+   boolean collectionHasDocument(final String collectionName, final String filter);
 
    /**
     * Creates and inserts a new document to specified collection.
@@ -136,87 +137,62 @@ public interface DataStorage extends Serializable {
    void createOldDocument(final String collectionName, final DataDocument document, String documentId, int version) throws UnsuccessfulOperationException;
 
    /**
-    * Reads the specified document in given collection by its id.
+    * Reads the specified document in given collection by filter.
     *
     * @param collectionName
     *       the name of the collection where the document is located
-    * @param documentId
-    *       the id of the read document
+    * @param filter
+    *       the filter to identify document
     * @param attributes
     *       list of attribute names
     * @return the DataDocument object representing the read document containg only specified attributes
     */
-   DataDocument readDocumentIncludeAttrs(final String collectionName, final String documentId, final List<String> attributes);
+   DataDocument readDocumentIncludeAttrs(final String collectionName, final String filter, final List<String> attributes);
 
    /**
-    * Reads the specified document in given collection by its id.
+    * Reads the specified document in given collection by filter.
     *
     * @param collectionName
     *       the name of the collection where the document is located
-    * @param documentId
-    *       the id of the read document
+    * @param filter
+    *       the filter to identify document
     * @return the DataDocument object representing the read document
     */
-   DataDocument readDocument(final String collectionName, final String documentId);
+   DataDocument readDocument(final String collectionName, final String filter);
 
    /**
-    * Reads the old document in given collection by its id and version.
-    *
-    * @param collectionName
-    *       the name of the collection where the document is located
-    * @param documentId
-    *       the id of the document
-    * @param version
-    *       the version of document
-    * @return the DataDocument object representing the read document
-    */
-   DataDocument readOldDocument(final String collectionName, final String documentId, final int version);
-
-   /**
-    * Modifies an existing document in given collection by its id. If updated document contains non-existing columns, they will be added into database.
+    * Modifies an existing document in given collection by filter. If updated document contains non-existing columns, they will be added into database.
     *
     * @param collectionName
     *       the name of the collection where the existing document is located
     * @param updatedDocument
     *       the DataDocument object representing a document with changes to update
-    * @param documentId
-    *       the id of the existing document in given collection
+    * @param filter
+    *       the filter to identify document
     */
-   void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId);
+   void updateDocument(final String collectionName, final DataDocument updatedDocument, final String filter);
 
    /**
-    * Replace an existing document in given collection by its id.
+    * Replace an existing document in given collection by filter.
     *
     * @param collectionName
     *       the name of the collection where the existing document is located
     * @param replaceDocument
     *       the DataDocument object representing a document
-    * @param documentId
-    *       the id of the existing document in given collection
+    * @param filter
+    *       the filter to identify document
     */
-   void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String documentId);
+   void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String filter);
 
    /**
-    * Drops an existing document in given collection by its id.
+    * Drops an existing document in given collection by filter.
     *
     * @param collectionName
     *       the name of the collection where the document is located
-    * @param documentId
-    *       the id of the document to drop
+    * @param filter
+    *       the filter to identify document
     */
-   void dropDocument(final String collectionName, final String documentId);
-
-   /**
-    * Reads the old document in given collection by its id and version.
-    *
-    * @param collectionName
-    *       the name of the collection where the document is located
-    * @param documentId
-    *       the id of the document
-    * @param version
-    *       the version of document
-    */
-   void dropOldDocument(final String collectionName, final String documentId, final int version);
+   void dropDocument(final String collectionName, final String filter);
 
    /**
     * Drops many documents based on filter.
@@ -241,72 +217,72 @@ public interface DataStorage extends Serializable {
    void renameAttribute(final String collectionName, final String oldName, final String newName);
 
    /**
-    * Removes given attribute from existing document specified by its id.
+    * Removes given attribute from existing document specified by filter.
     *
     * @param collectionName
     *       the name of the collection where the given attribute should be removed
-    * @param documentId
-    *       the id of document from which attribute will be removed
+    * @param filter
+    *       the filter to identify document
     * @param attributeName
     *       the name of an attribute to remove
     */
-   void dropAttribute(final String collectionName, final String documentId, final String attributeName);
+   void dropAttribute(final String collectionName, final String filter, final String attributeName);
 
    /**
     * Add item to array
     *
     * @param collectionName
     *       the name of the collection
-    * @param documentId
-    *       the id of document
+    * @param filter
+    *       the filter to identify document
     * @param attributeName
     *       the name of an attribute to add item
     * @param item
     *       the item to add to array
     */
-   <T> void addItemToArray(final String collectionName, final String documentId, final String attributeName, final T item);
+   <T> void addItemToArray(final String collectionName, final String filter, final String attributeName, final T item);
 
    /**
     * Add items to array
     *
     * @param collectionName
     *       the name of the collection
-    * @param documentId
-    *       the id of document
+    * @param filter
+    *       the filter to identify document
     * @param attributeName
     *       the name of an attribute to add item
     * @param items
     *       the items to add to array
     */
-   <T> void addItemsToArray(final String collectionName, final String documentId, final String attributeName, final List<T> items);
+   <T> void addItemsToArray(final String collectionName, final String filter, final String attributeName, final List<T> items);
 
    /**
     * remove specified item from array
     *
     * @param collectionName
     *       the name of the collection
-    * @param documentId
-    *       the id of document
+    * @param filter
+    *       the filter to identify document
     * @param attributeName
     *       the name of an attribute to add item
     * @param item
     *       the item that will be deleted from the array
     */
-   <T> void removeItemFromArray(final String collectionName, final String documentId, final String attributeName, final T item);
+   <T> void removeItemFromArray(final String collectionName, final String filter, final String attributeName, final T item);
 
    /**
     * remove items from array
     *
     * @param collectionName
     *       the name of the collection
-    * @param documentId
-    *       the id of document
+    * @param filter
+    *       the filter to identify document
     * @param attributeName
     *       the name of an attribute to add item
     * @param items
     *       the items  that will be deleted from the array
     */
-   <T> void removeItemsFromArray(final String collectionName, final String documentId, final String attributeName, final List<T> items);
+   <T> void removeItemsFromArray(final String collectionName, final String filter, final String attributeName, final List<T> items);
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.
@@ -338,6 +314,19 @@ public interface DataStorage extends Serializable {
     * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
     */
    List<DataDocument> run(final DataDocument command);
+
+   /**
+    * Searches the specified collection for specified documents using filter and projection to specific attributes.
+    *
+    * @param collectionName
+    *       the name of the collection where the run will be performed
+    * @param filter
+    *       the query predicate. If unspecified, then all documents in the collection will match the predicate.
+    * @param attributes
+    *       list of attribute names
+    * @return the list of the found documents containing only specified attributes
+    */
+   public List<DataDocument> searchIncludeAttrs(final String collectionName, final String filter, final List<String> attributes);
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
@@ -427,14 +416,16 @@ public interface DataStorage extends Serializable {
    void resetSequence(final String collectionName, final String indexAttribute, final String index);
 
    /**
-    * Creates an index on a collection.
+    * Creates defined indexes on a collection.
     *
     * @param collectionName
     *       Name of the collection.
     * @param indexAttributes
     *       Names of atributes and their index types to create index on.
+    * @param unique
+    *       indicated if index should be unique
     */
-   void createIndex(final String collectionName, final DataDocument indexAttributes);
+   void createIndex(final String collectionName, final DataDocument indexAttributes, boolean unique);
 
    /**
     * Lists all indexes on the given collection.

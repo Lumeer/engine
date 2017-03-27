@@ -20,6 +20,7 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 
@@ -57,7 +58,7 @@ public class SequenceFacade implements Serializable {
    public void init() {
       if (!systemDataStorage.hasCollection(SEQUENCE_COLLECTION)) {
          systemDataStorage.createCollection(SEQUENCE_COLLECTION);
-         systemDataStorage.createIndex(SEQUENCE_COLLECTION, new DataDocument(SEQUENCE_INDEX_ATTR, 1));
+         systemDataStorage.createIndex(SEQUENCE_COLLECTION, new DataDocument(SEQUENCE_INDEX_ATTR, LumeerConst.Index.ASCENDING), false);
       }
    }
 

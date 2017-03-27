@@ -26,6 +26,7 @@ import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.event.CreateCollection;
 import io.lumeer.engine.api.event.DropCollection;
@@ -66,6 +67,9 @@ public class CollectionFacade implements Serializable {
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
@@ -194,7 +198,7 @@ public class CollectionFacade implements Serializable {
     */
    private void dropCollectionMetadata(final String collectionName) throws CollectionMetadataDocumentNotFoundException {
       String documentId = collectionMetadataFacade.getCollectionMetadataDocument(collectionName).getId();
-      dataStorage.dropDocument(LumeerConst.Collection.METADATA_COLLECTION, documentId);
+      dataStorage.dropDocument(LumeerConst.Collection.METADATA_COLLECTION, dataStorageDialect.documentIdFilter(documentId));
    }
 
    /**
@@ -242,8 +246,7 @@ public class CollectionFacade implements Serializable {
          List<DataDocument> documents = getAllDocuments(collectionName);
 
          for (DataDocument document : documents) {
-            String id = document.getId();
-            dataStorage.dropAttribute(collectionName, id, attributeName);
+            dataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(document.getId()), attributeName);
          }
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));

@@ -17,32 +17,23 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.controller;
-
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataStorage;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+package io.lumeer.engine.api.exception;
 
 /**
- * Manages organisations and keeps track of currently selected organisation.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-@RequestScoped
-public class OrganisationFacade {
+public class ProjectNotFoundException extends DbException {
 
-   @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
-
-   private String organisationId = "ACME";
-
-   public String getOrganisationId() {
-      return organisationId;
+   public ProjectNotFoundException(final String message) {
+      super(message);
    }
 
-   public void setOrganisationId(final String organisationId) {
-      this.organisationId = organisationId;
+   public ProjectNotFoundException(final String message, final Throwable cause) {
+      super(message, cause);
    }
+
+   public ProjectNotFoundException(final Throwable cause) {
+      super(cause);
+   }
+
 }

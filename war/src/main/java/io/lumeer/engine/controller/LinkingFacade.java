@@ -468,7 +468,7 @@ public class LinkingFacade implements Serializable {
          // check for right id of linking document
          String linkingDocumentId = ld.getString(keyParam);
 
-         DataDocument doc = dataStorage.readDocument(collectionName, linkingDocumentId);
+         DataDocument doc = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(linkingDocumentId));
          if (doc != null) {
             docs.add(doc);
          }
