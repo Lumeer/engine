@@ -22,13 +22,12 @@ package io.lumeer.engine.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.Attribute;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -58,18 +57,12 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionFacade collectionFacade;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    @Test
    public void testGetAllCollections() throws Exception {

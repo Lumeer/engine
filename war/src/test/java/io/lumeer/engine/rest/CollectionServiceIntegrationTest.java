@@ -22,6 +22,7 @@ package io.lumeer.engine.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
@@ -96,6 +97,8 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionService collectionService;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -108,9 +111,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    private UserFacade userFacade;
 
    @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Inject
    private OrganisationFacade organisationFacade;
 
    @Inject
@@ -118,7 +118,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
       PATH_PREFIX = PATH_CONTEXT + "/rest/" + organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/";
    }
 

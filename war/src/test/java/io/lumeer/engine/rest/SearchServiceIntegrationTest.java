@@ -22,6 +22,7 @@ package io.lumeer.engine.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -61,18 +62,12 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionFacade collectionFacade;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
    private DocumentFacade documentFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    @Test
    public void testRegister() throws Exception {

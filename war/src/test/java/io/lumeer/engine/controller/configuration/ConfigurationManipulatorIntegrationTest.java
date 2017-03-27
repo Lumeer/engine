@@ -22,9 +22,9 @@ package io.lumeer.engine.controller.configuration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -66,18 +66,15 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
    private final String DUMMY_KEY = "dummyKey";
    private final String DUMMY_VALUE = "dummyValue";
 
+   @Inject
+   @SystemDataStorage
    private DataStorage systemDataStorage;
 
    @Inject
    private ConfigurationManipulator configurationManipulator;
 
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
    @Before
    public void setUp() throws Exception {
-      systemDataStorage = dataStorageProvider.getSystemStorage();
-
       if (isDatabaseCollection(COLLECTION_USER_SET_CONFIGURATION)) {
          systemDataStorage.dropCollection(COLLECTION_USER_SET_CONFIGURATION);
       }

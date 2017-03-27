@@ -22,11 +22,10 @@ package io.lumeer.engine.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,18 +37,12 @@ import javax.inject.Inject;
 @RunWith(Arquillian.class)
 public class SequenceFacadeIntegrationTest extends IntegrationTestBase {
 
+   @Inject
+   @SystemDataStorage
    private DataStorage systemDataStorage;
 
    @Inject
    private SequenceFacade sequenceFacade;
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Before
-   public void init() {
-      systemDataStorage = dataStorageProvider.getSystemStorage();
-   }
 
    @Test
    public void testSequences() {

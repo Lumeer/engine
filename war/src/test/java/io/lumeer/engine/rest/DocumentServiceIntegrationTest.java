@@ -22,6 +22,7 @@ package io.lumeer.engine.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -61,6 +62,8 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private CollectionFacade collectionFacade;
 
+   @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
@@ -89,14 +92,6 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
    private final String COLLECTION_READ_ACCESS_RIGHTS = "DocumentServiceCollectionrReadAccessRights";
    private final String COLLECTION_UPDATE_ACCESS_RIGHTS = "DocumentServiceCollectionrUpdateAccessRights";
-
-   @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Before
-   public void init() {
-      dataStorage = dataStorageProvider.getUserStorage();
-   }
 
    @Test
    public void testRegister() throws Exception {
