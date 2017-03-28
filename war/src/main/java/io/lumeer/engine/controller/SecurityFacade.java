@@ -23,6 +23,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
@@ -47,6 +48,9 @@ public class SecurityFacade implements Serializable {
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private UserFacade user;
@@ -161,7 +165,7 @@ public class SecurityFacade implements Serializable {
     *       if document not found
     */
    public boolean checkForRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, buildMetaList());
+      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, dataStorageDialect.documentIdFilter(documentId), buildMetaList());
       if (dataDoc == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -183,7 +187,7 @@ public class SecurityFacade implements Serializable {
     *       if document not found
     */
    public boolean checkForWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, buildMetaList());
+      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, dataStorageDialect.documentIdFilter(documentId), buildMetaList());
       if (dataDoc == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -205,11 +209,11 @@ public class SecurityFacade implements Serializable {
     *       if document not found
     */
    public boolean checkForExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, buildMetaList());
+      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, dataStorageDialect.documentIdFilter(documentId), buildMetaList());
       if (dataDoc == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
-      return checkForExecute(dataStorage.readDocument(collectionName, documentId), userName);
+      return checkForExecute(dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId)), userName);
    }
 
    /**
@@ -227,7 +231,7 @@ public class SecurityFacade implements Serializable {
     *       if document not found
     */
    public boolean checkForAddRights(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, documentId, buildMetaList());
+      DataDocument dataDoc = dataStorage.readDocumentIncludeAttrs(collectionName, dataStorageDialect.documentIdFilter(documentId), buildMetaList());
       if (dataDoc == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -272,9 +276,10 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean setRightsRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
       setRightsRead(dataDocument, userName);
-      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      dataStorage.updateDocument(collectionName, dataDocument, documentIdFilter);
       return checkForRead(collectionName, documentId, userName);
    }
 
@@ -311,9 +316,10 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean setRightsWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
       setRightsWrite(dataDocument, userName);
-      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      dataStorage.updateDocument(collectionName, dataDocument, documentIdFilter);
       return checkForWrite(collectionName, documentId, userName);
    }
 
@@ -350,9 +356,10 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean setRightsExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
       setRightsExecute(dataDocument, userName);
-      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      dataStorage.updateDocument(collectionName, dataDocument, documentIdFilter);
       return checkForExecute(collectionName, documentId, userName);
    }
 
@@ -389,9 +396,9 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean removeRightsExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
       removeRightsExecute(dataDocument, userName);
-      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      dataStorage.updateDocument(collectionName, dataDocument, dataStorageDialect.documentIdFilter(documentId));
       return !checkForExecute(collectionName, documentId, userName);
    }
 
@@ -428,9 +435,9 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean removeRightsWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
       removeRightsWrite(dataDocument, userName);
-      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      dataStorage.updateDocument(collectionName, dataDocument, dataStorageDialect.documentIdFilter(documentId));
       return !checkForWrite(collectionName, documentId, userName);
    }
 
@@ -467,9 +474,9 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean removeRightsRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
       removeRightsRead(dataDocument, userName);
-      dataStorage.updateDocument(collectionName, dataDocument, documentId);
+      dataStorage.updateDocument(collectionName, dataDocument, dataStorageDialect.documentIdFilter(documentId));
       return !checkForRead(collectionName, documentId, userName);
    }
 
@@ -580,7 +587,7 @@ public class SecurityFacade implements Serializable {
     * @return return hashmap of all rules
     */
    public Map<String, Integer> readRightsMap(String collectionName, String documentId) {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentId);
+      DataDocument dataDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
       return readRightsMap(dataDocument);
    }
 
@@ -619,7 +626,7 @@ public class SecurityFacade implements Serializable {
     * @return data access object.
     */
    public List<AccessRightsDao> getDaoList(String collectionName, String documentId) {
-      DataDocument dataDoc = dataStorage.readDocument(collectionName, documentId);
+      DataDocument dataDoc = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
       return getDaoList(dataDoc);
    }
 
@@ -655,7 +662,7 @@ public class SecurityFacade implements Serializable {
     * @return data access object
     */
    public AccessRightsDao getDao(String collectionName, String documentId, String email) {
-      return getDao(dataStorage.readDocument(collectionName, documentId), email);
+      return getDao(dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId)), email);
    }
 
    /**
@@ -717,7 +724,8 @@ public class SecurityFacade implements Serializable {
     *       data access object
     */
    public void setDao(String collectionName, String documentId, AccessRightsDao accessRightsDao) {
-      dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentId), accessRightsDao), documentId);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentIdFilter), accessRightsDao), documentIdFilter);
    }
 
    /**
@@ -733,8 +741,9 @@ public class SecurityFacade implements Serializable {
     * @return true if all data was updated successful
     */
    public boolean setDaoCheck(String collectionName, String documentId, AccessRightsDao accessRightsDao) {
-      dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentId), accessRightsDao), documentId);
-      DataDocument dataDoc = dataStorage.readDocument(collectionName, documentId);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentIdFilter), accessRightsDao), documentIdFilter);
+      DataDocument dataDoc = dataStorage.readDocument(collectionName, documentIdFilter);
       return (accessRightsDao.isWrite() == checkForWrite(dataDoc, accessRightsDao.getUserName()))
             & (accessRightsDao.isRead() == checkForRead(dataDoc, accessRightsDao.getUserName()))
             & (accessRightsDao.isExecute() == checkForExecute(dataDoc, accessRightsDao.getUserName()));

@@ -26,6 +26,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -67,13 +68,16 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    @UserDataStorage
-   public DataStorage dataStorage;
+   private DataStorage dataStorage;
 
    @Inject
-   public SecurityFacade securityFacade;
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
-   public UserFacade userFacade;
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
 
    @Test
    public void testCheckForReadDataDoc() throws Exception {
@@ -161,14 +165,15 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_READ);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_READ, dataDocument);
-      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_READ, id);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_READ, documentIdFilter);
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER4)).isTrue();
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER5)).isTrue();
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER6)).isTrue();
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 2);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_READ, dataDocument, id);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_READ, dataDocument, documentIdFilter);
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER)).isFalse();
    }
 
@@ -184,14 +189,15 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_WRITE);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument);
-      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_WRITE, id);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_WRITE, documentIdFilter);
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER2)).isTrue();
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER3)).isTrue();
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER6)).isTrue();
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 4);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument, id);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument, documentIdFilter);
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER)).isFalse();
    }
 
@@ -207,14 +213,15 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_EXECUTE);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument);
-      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_EXECUTE, id);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_EXECUTE, documentIdFilter);
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER1)).isTrue();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER3)).isTrue();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER5)).isTrue();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 4);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument, id);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument, documentIdFilter);
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER)).isFalse();
    }
 
@@ -230,17 +237,18 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_ADD_RIGHTS);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument);
-      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id);
+      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, documentIdFilter);
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER1)).isTrue();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER3)).isTrue();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER5)).isTrue();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER7)).isTrue();
       addRights(dataDocument, TEST_USER, 2);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, documentIdFilter);
       assertThat(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER)).isFalse();
       dataDocument.put(LumeerConst.Document.CREATE_BY_USER_KEY, TEST_USER);
-      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, id);
+      dataStorage.updateDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument, documentIdFilter);
       assertThat(securityFacade.checkForAddRights(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER)).isTrue();
    }
 

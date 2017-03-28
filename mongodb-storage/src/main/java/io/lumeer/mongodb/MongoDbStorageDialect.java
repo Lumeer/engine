@@ -21,14 +21,18 @@ package io.lumeer.mongodb;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static io.lumeer.mongodb.MongoUtils.convertBsonToJson;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
-import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
 
 /**
@@ -48,7 +52,7 @@ public class MongoDbStorageDialect implements DataStorageDialect {
             ? eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName)
             : and(eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName),
             eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return MongoUtils.convertBsonToJson(filterRaw);
+      return convertBsonToJson(filterRaw);
    }
 
    @Override
@@ -58,7 +62,7 @@ public class MongoDbStorageDialect implements DataStorageDialect {
             ? eq(collParam, firstCollectionName)
             : and(eq(collParam, firstCollectionName),
             eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return MongoUtils.convertBsonToJson(filterRaw);
+      return convertBsonToJson(filterRaw);
    }
 
    @Override
@@ -78,7 +82,7 @@ public class MongoDbStorageDialect implements DataStorageDialect {
             : and(eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
             eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName),
             eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return MongoUtils.convertBsonToJson(filterRaw);
+      return convertBsonToJson(filterRaw);
    }
 
    @Override
@@ -89,7 +93,7 @@ public class MongoDbStorageDialect implements DataStorageDialect {
             : and(eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, toId),
             eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId)
       );
-      return MongoUtils.convertBsonToJson(filterRaw);
+      return convertBsonToJson(filterRaw);
    }
 
    @Override
@@ -97,17 +101,45 @@ public class MongoDbStorageDialect implements DataStorageDialect {
       Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM
             ? eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId)
             : eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId);
-      return MongoUtils.convertBsonToJson(filterRaw);
+      return convertBsonToJson(filterRaw);
    }
 
    @Override
    public String fieldValueFilter(final String fieldName, final Object value) {
-      Bson filterRaw = Filters.eq(fieldName, value);
-      return MongoUtils.convertBsonToJson(filterRaw);
+      return convertBsonToJson(eq(fieldName, value));
+   }
+
+   @Override
+   public String documentNestedIdFilter(final String documentId) {
+      return fieldValueFilter(concatFields(LumeerConst.Document.ID, LumeerConst.Document.ID), new ObjectId(documentId));
+   }
+
+   @Override
+   public String documentNestedIdFilterWithVersion(final String documentId, final int version) {
+      return convertBsonToJson(eq(LumeerConst.Document.ID, and(eq(LumeerConst.Document.ID, new ObjectId(documentId)), eq(LumeerConst.Document.METADATA_VERSION_KEY, version))));
    }
 
    @Override
    public String documentIdFilter(final String documentId) {
-      return fieldValueFilter("_id._id", new ObjectId(documentId));
+      return fieldValueFilter(LumeerConst.Document.ID, new ObjectId(documentId));
+   }
+
+   @Override
+   public String multipleFieldsValueFilter(final Map<String, Object> fields) {
+      List<Bson> bsons = new ArrayList<>();
+      fields.entrySet().forEach(e -> bsons.add(eq(e.getKey(), e.getValue())));
+      return convertBsonToJson(and(bsons));
+   }
+
+   @Override
+   public String concatFields(final String... fields) {
+      if (fields.length == 0) {
+         return "";
+      }
+      String field = fields[0];
+      for (int i = 1; i < fields.length; i++) {
+         field += "." + fields[i];
+      }
+      return field;
    }
 }

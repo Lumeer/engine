@@ -21,7 +21,6 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 

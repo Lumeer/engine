@@ -57,6 +57,15 @@ public final class LumeerConst {
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));
    }
 
+   /**
+    * Index type
+    * @see <a href="https://docs.mongodb.com/manual/core/index-single/">https://docs.mongodb.com/manual/core/index-single/</a>
+    */
+   public static class Index {
+      public static final int ASCENDING = 1;
+      public static final int DESCENDING = -1;
+   }
+
    public static class Linking {
       public static final String PREFIX = "_linking";
 
@@ -164,5 +173,29 @@ public final class LumeerConst {
       public static final int READ = 4;
       public static final int WRITE = 2;
       public static final int EXECUTE = 1;
+   }
+
+   public static class Project {
+
+      public static final String COLLECTION_NAME = "_system-project";
+      public static final String ATTR_PROJECT_ID = "project-id";
+      public static final String ATTR_ORGANIZATION_ID = "organization-id";
+      public static final String ATTR_PROJECT_NAME = "project-name";
+      public static final String ATTR_USERS = "users";
+      public static final String ATTR_USERS_USERNAME = "user";
+      public static final String ATTR_USERS_USER_ROLES = "user-roles";
+      public static final String METADATA_PREFIX = "_meta-";
+      public static final String ATTR_META_ICON = METADATA_PREFIX + "icon";
+      public static final String ATTR_META_COLOR = METADATA_PREFIX + "color";
+      public static final String ATTR_META_DEFAULT_ROLES = METADATA_PREFIX + "default-roles";
+
+      public static class UserRoles {
+         public static final String COLLECTION_NAME = Project.COLLECTION_NAME + "-user-role";
+         public static final String ATTR_ORGANIZATION_ID = "organization-id";
+         public static final String ATTR_PROJECT_ID = "project-id";
+         public static final String ATTR_USER_ROLE = "user-role";
+         public static final String ATTR_CORE_ROLES = "core-roles";
+      }
+
    }
 }
