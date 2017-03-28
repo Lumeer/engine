@@ -623,6 +623,29 @@ public class MongoDbStorageTest {
    }
 
    @Test
+   public void testttt() {
+      mongoDbStorage.createCollection("collectionn");
+
+      DataDocument doc = new DataDocument("name", "name")
+            .append("field", "field")
+            .append("users", Arrays.asList(new DataDocument("user", "user").append("list", Arrays.asList(1, 2, 3)),
+                  new DataDocument("user", "user2").append("list", Arrays.asList(5, 2, 3)),
+                  new DataDocument("user", "user4").append("list", Arrays.asList(1, 2, 3))
+            ));
+
+      String id = mongoDbStorage.createDocument("collectionn", doc);
+      Map<String, Object> filter = new HashMap<>();
+      filter.put("name", "name");
+      filter.put("users.user", "user2");
+      DataDocument document = mongoDbStorage.readDocumentIncludeAttrs("collectionn", mongoDbStorageDialect.multipleFieldsValueFilter(filter), Collections.singletonList("users.$"));
+
+      if (document != null) {
+         ArrayList<Integer> list = document.getArrayList("list", Integer.class);
+         doc.get("daco");
+      }
+   }
+
+   @Test
    public void testAggregate() {
       mongoDbStorage.createCollection(COLLECTION_AGGREGATE);
 

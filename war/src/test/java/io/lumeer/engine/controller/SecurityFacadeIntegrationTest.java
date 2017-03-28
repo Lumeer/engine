@@ -68,7 +68,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    @UserDataStorage
-   public DataStorage dataStorage;
+   private DataStorage dataStorage;
 
    @Inject
    private DataStorageDialect dataStorageDialect;

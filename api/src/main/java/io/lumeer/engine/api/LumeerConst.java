@@ -57,13 +57,11 @@ public final class LumeerConst {
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));
    }
 
-
    /**
     * Index type
     * @see <a href="https://docs.mongodb.com/manual/core/index-single/">https://docs.mongodb.com/manual/core/index-single/</a>
     */
    public static class Index {
-
       public static final int ASCENDING = 1;
       public static final int DESCENDING = -1;
    }
