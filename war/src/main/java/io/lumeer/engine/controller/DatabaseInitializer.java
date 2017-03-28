@@ -34,7 +34,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class DatabazeInitializer implements Serializable {
+public class DatabaseInitializer implements Serializable {
 
    @Inject
    @SystemDataStorage

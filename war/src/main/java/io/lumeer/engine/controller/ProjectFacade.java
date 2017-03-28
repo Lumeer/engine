@@ -51,7 +51,7 @@ public class ProjectFacade {
    private OrganisationFacade organisationFacade;
 
    @Inject
-   private DatabazeInitializer databazeInitializer;
+   private DatabaseInitializer databaseInitializer;
 
    private String projectId = "default";
 
