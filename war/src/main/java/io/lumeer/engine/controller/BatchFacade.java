@@ -66,7 +66,7 @@ public class BatchFacade implements Serializable {
    }
 
    private void internalExecuteBatch(final MergeBatch batch) throws DbException, InvalidConstraintException {
-      List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, -1, -1);
+      List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, 0, 0);
 
       for (final DataDocument doc : documents) {
          if (batch.getMergeType() == MergeBatch.MergeType.JOIN) {
@@ -170,7 +170,7 @@ public class BatchFacade implements Serializable {
    }
 
    private void internalExecuteBatch(final SplitBatch batch) throws DbException, InvalidConstraintException {
-      List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, -1, -1);
+      List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, 0, 0);
 
       for (final DataDocument doc : documents) {
          final Object value = doc.get(batch.getAttribute());

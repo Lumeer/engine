@@ -26,6 +26,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.provider.DataStorageProvider;
 
@@ -59,6 +60,9 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
    private DocumentFacade documentFacade;
 
    @Inject
+   private DataStorageDialect dataStorageDialect;
+
+   @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
    @Inject
@@ -80,7 +84,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
 
       documentFacade.dropDocument(coll, documentId);
       // Assert.assertNull(dataStorage.readDocument(coll, documentId));
-      assertThat(dataStorage.readDocument(coll, documentId)).isNull();
+      assertThat(dataStorage.readDocument(coll, dataStorageDialect.documentIdFilter(documentId))).isNull();
    }
 
    @Test
@@ -180,7 +184,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       String changed = DUMMY_VALUE1 + "_changed";
       inserted.put(DUMMY_KEY1, changed);
       documentFacade.updateDocument(coll, inserted);
-      DataDocument updated = dataStorage.readDocument(coll, documentId);
+      DataDocument updated = dataStorage.readDocument(coll, dataStorageDialect.documentIdFilter(documentId));
       // Assert.assertNotNull(updated);
       assertThat(updated).isNotNull();
       // Assert.assertEquals(updated.getString(DUMMY_KEY1), changed);

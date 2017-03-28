@@ -48,6 +48,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.BsonDocument;
@@ -214,8 +215,8 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public boolean collectionHasDocument(final String collectionName, final String documentId) {
-      return database.getCollection(collectionName).find(new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId))).limit(1).iterator().hasNext();
+   public boolean collectionHasDocument(final String collectionName, final String filter) {
+      return database.getCollection(collectionName).find(BsonDocument.parse(filter)).limit(1).iterator().hasNext();
    }
 
    @Override
@@ -260,93 +261,46 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public DataDocument readDocumentIncludeAttrs(final String collectionName, final String documentId, final List<String> attributes) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      Bson projection = Projections.include(attributes);
-      Document document = database.getCollection(collectionName).find(filter).projection(projection).first();
-
-      if (document == null) {
-         return null;
-      }
-
-      // converts id to string
-      MongoUtils.replaceId(document);
-      DataDocument readed = new DataDocument(document);
-      MongoUtils.convertNestedAndListDocuments(readed);
-
-      return readed;
+   public DataDocument readDocumentIncludeAttrs(final String collectionName, final String filter, final List<String> attributes) {
+      Document document = database.getCollection(collectionName).find(BsonDocument.parse(filter)).projection(Projections.include(attributes)).limit(1).first();
+      return document != null ? convertDocument(document) : null;
    }
 
    @Override
-   public DataDocument readDocument(final String collectionName, final String documentId) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      Document document = database.getCollection(collectionName).find(filter).first();
+   public DataDocument readDocument(final String collectionName, final String filter) {
+      Document document = database.getCollection(collectionName).find(BsonDocument.parse(filter)).limit(1).first();
 
-      if (document == null) {
-         return null;
-      }
-
-      // converts id to string
-      MongoUtils.replaceId(document);
-      DataDocument readed = new DataDocument(document);
-      MongoUtils.convertNestedAndListDocuments(readed);
-
-      return readed;
+      return document != null ? convertDocument(document) : null;
    }
 
-   @Override
-   public DataDocument readOldDocument(final String collectionName, final String documentId, final int version) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(
-            LumeerConst.Document.METADATA_VERSION_KEY, version));
-      Document document = database.getCollection(collectionName).find(filter).first();
-      if (document == null) {
-         return null;
-      }
-      MongoUtils.replaceId(document);
-      DataDocument readed = new DataDocument(document);
-      MongoUtils.convertNestedAndListDocuments(readed);
-
-      return readed;
-   }
-
-   @Override
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String documentId) {
+    @Override
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument, final String filter) {
       DataDocument toUpdate = new DataDocument(updatedDocument);
       if (toUpdate.containsKey(LumeerConst.Document.ID)) {
          toUpdate.remove(LumeerConst.Document.ID);
       }
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(toUpdate));
-      database.getCollection(collectionName).updateOne(filter, updateBson);
+      database.getCollection(collectionName).updateOne(BsonDocument.parse(filter), updateBson);
    }
 
    @Override
-   public void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String documentId) {
+   public void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String filter) {
       DataDocument toReplace = new DataDocument(replaceDocument);
       if (toReplace.containsKey(LumeerConst.Document.ID)) {
          toReplace.remove(LumeerConst.Document.ID);
       }
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
       Document replaceDoc = new Document(toReplace);
-      database.getCollection(collectionName).replaceOne(filter, replaceDoc);
+      database.getCollection(collectionName).replaceOne(BsonDocument.parse(filter), replaceDoc);
    }
 
    @Override
-   public void dropDocument(final String collectionName, final String documentId) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).deleteOne(filter);
+   public void dropDocument(final String collectionName, final String filter) {
+      database.getCollection(collectionName).deleteOne(BsonDocument.parse(filter));
    }
 
    @Override
    public long documentCount(final String collectionName) {
       return database.getCollection(collectionName).count();
-   }
-
-   @Override
-   public void dropOldDocument(final String collectionName, final String documentId, final int version) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(
-            LumeerConst.Document.METADATA_VERSION_KEY, version));
-      database.getCollection(collectionName).deleteOne(filter);
    }
 
    @Override
@@ -360,59 +314,54 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, unset(attributeName));
+   public void dropAttribute(final String collectionName, final String filter, final String attributeName) {
+      database.getCollection(collectionName).updateOne(BsonDocument.parse(filter), unset(attributeName));
    }
 
    @Override
-   public <T> void addItemToArray(final String collectionName, final String documentId, final String attributeName, final T item) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, push(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+   public <T> void addItemToArray(final String collectionName, final String filter, final String attributeName, final T item) {
+      database.getCollection(collectionName).updateOne(BsonDocument.parse(filter), addToSet(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
    }
 
    @Override
-   public <T> void addItemsToArray(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
+   public <T> void addItemsToArray(final String collectionName, final String filter, final String attributeName, final List<T> items) {
       if (items.isEmpty()) {
          return;
       }
       if (MongoUtils.isDataDocument(items.get(0))) {
          List<Document> docs = new ArrayList<>();
          items.forEach((i) -> docs.add(new Document((DataDocument) i)));
-         addItemsToArrayInternal(collectionName, documentId, attributeName, docs);
+         addItemsToArrayInternal(collectionName, filter, attributeName, docs);
          return;
       }
-      addItemsToArrayInternal(collectionName, documentId, attributeName, items);
+      addItemsToArrayInternal(collectionName, filter, attributeName, items);
    }
 
-   private <T> void addItemsToArrayInternal(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, pushEach(attributeName, items));
-   }
-
-   @Override
-   public <T> void removeItemFromArray(final String collectionName, final String documentId, final String attributeName, final T item) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+   private <T> void addItemsToArrayInternal(final String collectionName, final String filter, final String attributeName, final List<T> items) {
+      database.getCollection(collectionName).updateOne(BsonDocument.parse(filter), addEachToSet(attributeName, items));
    }
 
    @Override
-   public <T> void removeItemsFromArray(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
+   public <T> void removeItemFromArray(final String collectionName, final String filter, final String attributeName, final T item) {
+      database.getCollection(collectionName).updateOne(BsonDocument.parse(filter), pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+   }
+
+   @Override
+   public <T> void removeItemsFromArray(final String collectionName, final String filter, final String attributeName, final List<T> items) {
       if (items.isEmpty()) {
          return;
       }
       if (MongoUtils.isDataDocument(items.get(0))) {
          List<Document> docs = new ArrayList<>();
          items.forEach((i) -> docs.add(new Document((DataDocument) i)));
-         removeItemsFromArrayInternal(collectionName, documentId, attributeName, docs);
+         removeItemsFromArrayInternal(collectionName, filter, attributeName, docs);
          return;
       }
-      removeItemsFromArrayInternal(collectionName, documentId, attributeName, items);
+      removeItemsFromArrayInternal(collectionName, filter, attributeName, items);
    }
 
-   private <T> void removeItemsFromArrayInternal(final String collectionName, final String documentId, final String attributeName, final List<T> items) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, pullAll(attributeName, items));
+   private <T> void removeItemsFromArrayInternal(final String collectionName, final String filter, final String attributeName, final List<T> items) {
+      database.getCollection(collectionName).updateOne(BsonDocument.parse(filter), pullAll(attributeName, items));
    }
 
    @Override
@@ -455,10 +404,7 @@ public class MongoDbStorage implements DataStorage {
 
       if (cursor != null) {
          ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
-            MongoUtils.replaceId(d);
-            DataDocument raw = new DataDocument(d);
-            MongoUtils.convertNestedAndListDocuments(raw);
-            result.add(raw);
+            result.add(convertDocument(d));
          });
       }
 
@@ -466,9 +412,18 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit) {
-      final List<DataDocument> result = new ArrayList<>();
+   public List<DataDocument> searchIncludeAttrs(final String collectionName, final String filter, final List<String> attributes) {
+      MongoCollection<Document> collection = database.getCollection(collectionName);
+      FindIterable<Document> documents = filter != null ? collection.find(BsonDocument.parse(filter)) : collection.find();
+      if (attributes != null) {
+         documents.projection(Projections.include(attributes));
+      }
 
+      return convertIterableToList(documents);
+   }
+
+   @Override
+   public List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit) {
       MongoCollection<Document> collection = database.getCollection(collectionName);
       FindIterable<Document> documents = filter != null ? collection.find(BsonDocument.parse(filter)) : collection.find();
       if (sort != null && !sort.isEmpty()) {
@@ -481,14 +436,7 @@ public class MongoDbStorage implements DataStorage {
          documents = documents.limit(limit);
       }
 
-      documents.into(new ArrayList<>()).forEach(d -> {
-         MongoUtils.replaceId(d);
-         DataDocument raw = new DataDocument(d);
-         MongoUtils.convertNestedAndListDocuments(raw);
-         result.add(raw);
-      });
-
-      return result;
+      return convertIterableToList(documents);
    }
 
    @Override
@@ -566,23 +514,15 @@ public class MongoDbStorage implements DataStorage {
 
       AggregateIterable<Document> resultDocuments = database.getCollection(collectionName).aggregate(documents);
       resultDocuments.into(new LinkedList<>()).forEach(d -> {
-         if (d.get(LumeerConst.Document.ID) instanceof Document) {
-            d.replace(LumeerConst.Document.ID, ((Document) d.get(LumeerConst.Document.ID)).toJson());
-         } else {
-            d.replace(LumeerConst.Document.ID, d.getObjectId(LumeerConst.Document.ID).toString());
-         }
-         DataDocument raw = new DataDocument(d);
-         MongoUtils.convertNestedAndListDocuments(raw);
-         result.add(raw);
+         result.add(convertDocument(d));
       });
 
       return result;
    }
 
    @Override
-   public void incrementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy) {
-      BasicDBObject filter = new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId));
-      database.getCollection(collectionName).updateOne(filter, inc(attributeName, incBy));
+   public void incrementAttributeValueBy(final String collectionName, final String filter, final String attributeName, final int incBy) {
+      database.getCollection(collectionName).updateOne(BsonDocument.parse(filter), inc(attributeName, incBy));
    }
 
    @Override
@@ -618,8 +558,8 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public void createIndex(final String collectionName, final DataDocument indexAttributes) {
-      database.getCollection(collectionName).createIndex(MongoUtils.dataDocumentToDocument(indexAttributes));
+   public void createIndex(final String collectionName, final DataDocument indexAttributes, boolean unique) {
+      database.getCollection(collectionName).createIndex(MongoUtils.dataDocumentToDocument(indexAttributes), new IndexOptions().unique(unique));
    }
 
    @Override
@@ -676,4 +616,21 @@ public class MongoDbStorage implements DataStorage {
 
       return dss;
    }
+
+   private List<DataDocument> convertIterableToList(FindIterable<Document> documents) {
+      final List<DataDocument> result = new ArrayList<>();
+      documents.into(new ArrayList<>()).forEach(d -> {
+         result.add(convertDocument(d));
+      });
+
+      return result;
+   }
+
+   private DataDocument convertDocument(Document document) {
+      MongoUtils.replaceId(document);
+      DataDocument dataDocument = new DataDocument(document);
+      MongoUtils.convertNestedAndListDocuments(dataDocument);
+      return dataDocument;
+   }
+
 }

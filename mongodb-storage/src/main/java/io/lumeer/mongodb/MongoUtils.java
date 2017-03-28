@@ -23,6 +23,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.mongodb.MongoClient;
+import com.mongodb.QueryOperators;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -30,6 +31,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.QueryParam;
 
 /**
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
@@ -92,7 +94,9 @@ public class MongoUtils {
          document.replace(LumeerConst.Document.ID, docId.toString());
       } else if (docId instanceof Document) { // shadow document
          Document d = (Document) docId;
-         d.replace(LumeerConst.Document.ID, d.getObjectId(LumeerConst.Document.ID).toString());
+         if (d.containsKey(LumeerConst.Document.ID)) {
+            d.replace(LumeerConst.Document.ID, d.getObjectId(LumeerConst.Document.ID).toString());
+         }
          DataDocument doc = new DataDocument(d);
          document.replace(LumeerConst.Document.ID, doc);
       }
@@ -108,6 +112,17 @@ public class MongoUtils {
 
    public static boolean isList(Object obj) {
       return obj != null && obj instanceof List;
+   }
+
+   public static String concatParams(String... args) {
+      if (args.length == 0) {
+         return "";
+      }
+      String returnParam = args[0];
+      for (int i = 1; i < args.length; i++) {
+         returnParam += "." + args[i];
+      }
+      return returnParam;
    }
 
 }

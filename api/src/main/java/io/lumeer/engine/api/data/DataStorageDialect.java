@@ -22,6 +22,7 @@ package io.lumeer.engine.api.data;
 import io.lumeer.engine.api.LumeerConst;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -44,6 +45,13 @@ public interface DataStorageDialect extends Serializable {
 
    String fieldValueFilter(final String fieldName, final Object value);
 
+   String documentNestedIdFilter(final String documentId);
+
+   String documentNestedIdFilterWithVersion(final String documentId, final int version);
+
    String documentIdFilter(final String documentId);
 
+   String multipleFieldsValueFilter(final Map<String, Object> fields);
+
+   String concatFields(String... fields);
 }

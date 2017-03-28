@@ -23,6 +23,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
@@ -72,6 +73,9 @@ public class LinkingService {
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
 
    @PathParam("organisation")
    private String organisationId;
@@ -349,7 +353,8 @@ public class LinkingService {
    }
 
    private void hasDocumentRoleNotNull(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role) throws DocumentNotFoundException {
-      if (!(dataStorage.collectionHasDocument(firstCollectionName, firstDocumentId) && dataStorage.collectionHasDocument(secondCollectionName, secondDocumentId))) {
+      if (!(dataStorage.collectionHasDocument(firstCollectionName, dataStorageDialect.documentIdFilter(firstDocumentId))
+            && dataStorage.collectionHasDocument(secondCollectionName, dataStorageDialect.documentIdFilter(secondDocumentId)))) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       if (role == null) {

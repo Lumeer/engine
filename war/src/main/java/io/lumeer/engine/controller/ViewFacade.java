@@ -23,6 +23,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
@@ -45,6 +46,9 @@ public class ViewFacade implements Serializable {
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private SequenceFacade sequenceFacade;
@@ -72,10 +76,10 @@ public class ViewFacade implements Serializable {
       if (!dataStorage.hasCollection(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME)) {
          dataStorage.createCollection(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME);
          // we create indexes on frequently used fields
-         int indexType = 1;
-         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_ID_KEY, indexType));
-         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_TYPE_KEY, indexType));
-         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_NAME_KEY, indexType));
+         int indexType = LumeerConst.Index.ASCENDING;
+         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_ID_KEY, indexType), false);
+         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_TYPE_KEY, indexType), false);
+         dataStorage.createIndex(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, new DataDocument(LumeerConst.View.VIEW_NAME_KEY, indexType), false);
       }
 
       if (checkIfViewNameExists(originalViewName)) {
@@ -398,7 +402,7 @@ public class ViewFacade implements Serializable {
             .append(LumeerConst.View.VIEW_UPDATE_DATE_KEY, new Date());
 
       String id = viewDocument.getId();
-      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, metadataDocument, id);
+      dataStorage.updateDocument(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, metadataDocument, dataStorageDialect.documentIdFilter(id));
    }
 
    private String getCurrentUser() {

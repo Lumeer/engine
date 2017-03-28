@@ -23,6 +23,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
@@ -70,6 +71,9 @@ public class DocumentMetadataFacade implements Serializable {
    @UserDataStorage
    private DataStorage dataStorage;
 
+   @Inject
+   private DataStorageDialect dataStorageDialect;
+
    /**
     * Reads specified metadata value
     *
@@ -87,7 +91,7 @@ public class DocumentMetadataFacade implements Serializable {
       if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
-      return dataStorage.readDocumentIncludeAttrs(collectionName, documentId, Collections.singletonList(key)).get(key);
+      return dataStorage.readDocumentIncludeAttrs(collectionName, dataStorageDialect.documentIdFilter(documentId), Collections.singletonList(key)).get(key);
    }
 
    /**
@@ -100,7 +104,7 @@ public class DocumentMetadataFacade implements Serializable {
     * @return the map where key is name of metadata attribute and its value
     */
    public DataDocument readDocumentMetadata(String collectionName, String documentId) {
-      return dataStorage.readDocumentIncludeAttrs(collectionName, documentId, LumeerConst.Document.METADATA_KEYS);
+      return dataStorage.readDocumentIncludeAttrs(collectionName, dataStorageDialect.documentIdFilter(documentId), LumeerConst.Document.METADATA_KEYS);
    }
 
    /**
@@ -139,7 +143,7 @@ public class DocumentMetadataFacade implements Serializable {
             throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
          }
       }
-      dataStorage.updateDocument(collectionName, metadata, documentId);
+      dataStorage.updateDocument(collectionName, metadata, dataStorageDialect.documentIdFilter(documentId));
    }
 
    /**
@@ -158,7 +162,7 @@ public class DocumentMetadataFacade implements Serializable {
       if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
-      dataStorage.dropAttribute(collectionName, documentId, key);
+      dataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(documentId), key);
    }
 
    public void putInitDocumentMetadataInternally(DataDocument dataDocument, String userEmail) {
