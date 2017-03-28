@@ -182,8 +182,8 @@ public final class LumeerConst {
       public static final String ATTR_ORGANIZATION_ID = "organization-id";
       public static final String ATTR_PROJECT_NAME = "project-name";
       public static final String ATTR_USERS = "users";
-      public static final String ATTR_USER = "user";
-      public static final String ATTR_USER_ROLES = "user-roles";
+      public static final String ATTR_USERS_USERNAME = "user";
+      public static final String ATTR_USERS_USER_ROLES = "user-roles";
       public static final String METADATA_PREFIX = "_meta-";
       public static final String ATTR_META_ICON = METADATA_PREFIX + "icon";
       public static final String ATTR_META_COLOR = METADATA_PREFIX + "color";

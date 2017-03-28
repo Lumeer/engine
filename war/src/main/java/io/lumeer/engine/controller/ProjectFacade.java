@@ -318,8 +318,8 @@ public class ProjectFacade {
     *       Name of the user
     */
    public void addUserToProject(final String projectId, final String userName, final List<String> userRoles) {
-      DataDocument document = new DataDocument(Project.ATTR_USER, userName)
-            .append(Project.ATTR_USER_ROLES, userRoles);
+      DataDocument document = new DataDocument(Project.ATTR_USERS_USERNAME, userName)
+            .append(Project.ATTR_USERS_USER_ROLES, userRoles);
       dataStorage.addItemToArray(Project.COLLECTION_NAME, projectIdFilter(projectId), Project.ATTR_USERS, document);
    }
 
@@ -334,7 +334,7 @@ public class ProjectFacade {
     *       Roles to add
     */
    public void addRolesToUser(final String projectId, final String userName, final List<String> userRoles) {
-      dataStorage.addItemsToArray(Project.COLLECTION_NAME, userFilter(projectId, userName), dataStorageDialect.concatFields(Project.ATTR_USERS, "$", Project.ATTR_USER_ROLES), userRoles);
+      dataStorage.addItemsToArray(Project.COLLECTION_NAME, userFilter(projectId, userName), dataStorageDialect.concatFields(Project.ATTR_USERS, "$", Project.ATTR_USERS_USER_ROLES), userRoles);
    }
 
    /**
@@ -348,7 +348,7 @@ public class ProjectFacade {
     *       Roles to remove
     */
    public void removeRolesFromUser(final String projectId, final String userName, final List<String> userRoles) {
-      dataStorage.removeItemsFromArray(Project.COLLECTION_NAME, userFilter(projectId, userName), dataStorageDialect.concatFields(Project.ATTR_USERS, "$", Project.ATTR_USER_ROLES), userRoles);
+      dataStorage.removeItemsFromArray(Project.COLLECTION_NAME, userFilter(projectId, userName), dataStorageDialect.concatFields(Project.ATTR_USERS, "$", Project.ATTR_USERS_USER_ROLES), userRoles);
    }
 
    /**
@@ -360,7 +360,7 @@ public class ProjectFacade {
     *       Name of the user
     */
    public void dropUserFromProject(final String projectId, final String userName) {
-      dataStorage.removeItemFromArray(Project.COLLECTION_NAME, projectIdFilter(projectId), Project.ATTR_USERS, new DataDocument(Project.ATTR_USER, userName));
+      dataStorage.removeItemFromArray(Project.COLLECTION_NAME, projectIdFilter(projectId), Project.ATTR_USERS, new DataDocument(Project.ATTR_USERS_USERNAME, userName));
    }
 
    /**
@@ -379,7 +379,7 @@ public class ProjectFacade {
       }
       // we got only one subdocument otherwise there was null
       DataDocument userRoles = document.getArrayList(Project.ATTR_USERS, DataDocument.class).get(0);
-      return userRoles.getArrayList(Project.ATTR_USER_ROLES, String.class);
+      return userRoles.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class);
    }
 
    /**
@@ -392,7 +392,7 @@ public class ProjectFacade {
    public Map<String, List<String>> readUsersRoles(final String projectId) {
       DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectIdFilter(projectId), Collections.singletonList(Project.ATTR_USERS));
       List<DataDocument> users = document.getArrayList(Project.ATTR_USERS, DataDocument.class);
-      return users != null ? users.stream().collect(Collectors.toMap(d -> d.getString(Project.ATTR_USER), d -> d.getArrayList(Project.ATTR_USER_ROLES, String.class))) : null;
+      return users != null ? users.stream().collect(Collectors.toMap(d -> d.getString(Project.ATTR_USERS_USERNAME), d -> d.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class))) : null;
    }
 
    /**
@@ -428,7 +428,7 @@ public class ProjectFacade {
       Map<String, Object> filter = new HashMap<>();
       filter.put(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
-      filter.put(dataStorageDialect.concatFields(Project.ATTR_USERS, Project.ATTR_USER), userName);
+      filter.put(dataStorageDialect.concatFields(Project.ATTR_USERS, Project.ATTR_USERS_USERNAME), userName);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
