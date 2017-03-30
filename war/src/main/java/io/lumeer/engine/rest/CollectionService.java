@@ -250,7 +250,7 @@ public class CollectionService implements Serializable {
       if (!dataStorage.hasCollection(internalCollectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
-      return searchFacade.search(internalCollectionName, dialect.documentFilter(filter), sort, skip, limit);
+      return searchFacade.search(internalCollectionName, dialect.documentFilter(filter == null ? "{}" : filter), sort, skip, limit);
    }
 
    /**
