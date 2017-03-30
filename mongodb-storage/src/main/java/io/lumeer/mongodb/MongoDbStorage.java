@@ -217,7 +217,7 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public boolean collectionHasDocument(final String collectionName, final DataFilter filter) {
-      return database.getCollection(collectionName).find((Bson) filter.get()).limit(1).iterator().hasNext();
+      return database.getCollection(collectionName).find(filter.<Bson>get()).limit(1).iterator().hasNext();
    }
 
    @Override
@@ -263,13 +263,13 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public DataDocument readDocumentIncludeAttrs(final String collectionName, final DataFilter filter, final List<String> attributes) {
-      Document document = database.getCollection(collectionName).find((Bson) filter.get()).projection(Projections.include(attributes)).limit(1).first();
+      Document document = database.getCollection(collectionName).find(filter.<Bson>get()).projection(Projections.include(attributes)).limit(1).first();
       return document != null ? convertDocument(document) : null;
    }
 
    @Override
    public DataDocument readDocument(final String collectionName, final DataFilter filter) {
-      Document document = database.getCollection(collectionName).find((Bson) filter.get()).limit(1).first();
+      Document document = database.getCollection(collectionName).find(filter.<Bson>get()).limit(1).first();
 
       return document != null ? convertDocument(document) : null;
    }
@@ -281,7 +281,7 @@ public class MongoDbStorage implements DataStorage {
          toUpdate.remove(LumeerConst.Document.ID);
       }
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(toUpdate));
-      database.getCollection(collectionName).updateOne((Bson) filter.get(), updateBson);
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), updateBson);
    }
 
    @Override
@@ -291,12 +291,12 @@ public class MongoDbStorage implements DataStorage {
          toReplace.remove(LumeerConst.Document.ID);
       }
       Document replaceDoc = new Document(toReplace);
-      database.getCollection(collectionName).replaceOne((Bson) filter.get(), replaceDoc);
+      database.getCollection(collectionName).replaceOne(filter.<Bson>get(), replaceDoc);
    }
 
    @Override
    public void dropDocument(final String collectionName, final DataFilter filter) {
-      database.getCollection(collectionName).deleteOne((Bson) filter.get());
+      database.getCollection(collectionName).deleteOne(filter.<Bson>get());
    }
 
    @Override
@@ -306,7 +306,7 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void dropManyDocuments(final String collectionName, final DataFilter filter) {
-      database.getCollection(collectionName).deleteMany((Bson) filter.get());
+      database.getCollection(collectionName).deleteMany(filter.<Bson>get());
    }
 
    @Override
@@ -316,12 +316,12 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void dropAttribute(final String collectionName, final DataFilter filter, final String attributeName) {
-      database.getCollection(collectionName).updateOne((Bson) filter.get(), unset(attributeName));
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), unset(attributeName));
    }
 
    @Override
    public <T> void addItemToArray(final String collectionName, final DataFilter filter, final String attributeName, final T item) {
-      database.getCollection(collectionName).updateOne((Bson) filter.get(), addToSet(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), addToSet(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
    }
 
    @Override
@@ -339,12 +339,12 @@ public class MongoDbStorage implements DataStorage {
    }
 
    private <T> void addItemsToArrayInternal(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items) {
-      database.getCollection(collectionName).updateOne((Bson) filter.get(), addEachToSet(attributeName, items));
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), addEachToSet(attributeName, items));
    }
 
    @Override
    public <T> void removeItemFromArray(final String collectionName, final DataFilter filter, final String attributeName, final T item) {
-      database.getCollection(collectionName).updateOne((Bson) filter.get(), pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
    }
 
    @Override
@@ -362,7 +362,7 @@ public class MongoDbStorage implements DataStorage {
    }
 
    private <T> void removeItemsFromArrayInternal(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items) {
-      database.getCollection(collectionName).updateOne((Bson) filter.get(), pullAll(attributeName, items));
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), pullAll(attributeName, items));
    }
 
    @Override
@@ -415,7 +415,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public List<DataDocument> searchIncludeAttrs(final String collectionName, final DataFilter filter, final List<String> attributes) {
       MongoCollection<Document> collection = database.getCollection(collectionName);
-      FindIterable<Document> documents = filter != null ? collection.find((Bson) filter.get()) : collection.find();
+      FindIterable<Document> documents = filter != null ? collection.find(filter.<Bson>get()) : collection.find();
       if (attributes != null) {
          documents.projection(Projections.include(attributes));
       }
@@ -426,7 +426,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public List<DataDocument> search(final String collectionName, final DataFilter filter, final String sort, final int skip, final int limit) {
       MongoCollection<Document> collection = database.getCollection(collectionName);
-      FindIterable<Document> documents = filter != null ? collection.find((Bson) filter.get()) : collection.find();
+      FindIterable<Document> documents = filter != null ? collection.find(filter.<Bson>get()) : collection.find();
       if (sort != null && !sort.isEmpty()) {
          documents = documents.sort(BsonDocument.parse(sort));
       }
@@ -444,7 +444,7 @@ public class MongoDbStorage implements DataStorage {
    public long count(final String collectionName, final DataFilter filter) {
       MongoCollection<Document> collection = database.getCollection(collectionName);
 
-      return filter != null ? collection.count((Bson) filter.get()) : collection.count();
+      return filter != null ? collection.count(filter.<Bson>get()) : collection.count();
    }
 
    @Override
@@ -523,7 +523,7 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public void incrementAttributeValueBy(final String collectionName, final DataFilter filter, final String attributeName, final int incBy) {
-      database.getCollection(collectionName).updateOne((Bson) filter.get(), inc(attributeName, incBy));
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), inc(attributeName, incBy));
    }
 
    @Override
