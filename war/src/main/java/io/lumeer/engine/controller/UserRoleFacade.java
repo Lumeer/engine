@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
@@ -196,14 +197,14 @@ public class UserRoleFacade implements Serializable{
       return readRoles(organizationId, null);
    }
 
-   private String projectIdFilter(final String organizationId, final String projectId) {
+   private DataFilter projectIdFilter(final String organizationId, final String projectId) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationId);
       filter.put(LumeerConst.Project.ATTR_PROJECT_ID, projectId);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
-   private String userRoleFilter(final String organizationId, final String projectId, final String userRole) {
+   private DataFilter userRoleFilter(final String organizationId, final String projectId, final String userRole) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(LumeerConst.Project.UserRoles.ATTR_ORGANIZATION_ID, organizationId);
       filter.put(LumeerConst.Project.UserRoles.ATTR_PROJECT_ID, projectId);
