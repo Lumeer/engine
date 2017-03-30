@@ -27,6 +27,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
@@ -111,6 +112,11 @@ public class MongoDbStorageDialect implements DataStorageDialect {
    @Override
    public DataFilter fieldValueFilter(final String fieldName, final Object value) {
       return createFilter(eq(fieldName, value));
+   }
+
+   @Override
+   public DataFilter documentFilter(final String documentFilter) {
+      return createFilter(BsonDocument.parse(documentFilter));
    }
 
    @Override

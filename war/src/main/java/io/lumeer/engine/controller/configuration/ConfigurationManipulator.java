@@ -20,6 +20,7 @@
 package io.lumeer.engine.controller.configuration;
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.provider.DataStorageProvider;
@@ -187,7 +188,7 @@ public class ConfigurationManipulator implements Serializable {
             return Optional.empty();
          }
 
-         String filter = dataStorageDialect.fieldValueFilter(NAME_KEY, nameValue);
+         final DataFilter filter = dataStorageDialect.fieldValueFilter(NAME_KEY, nameValue);
          DataDocument config = systemDataStorage.readDocument(collectionName, filter);
 
          if (config != null) {

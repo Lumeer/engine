@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
@@ -73,7 +74,7 @@ public class SearchFacade implements Serializable {
     * @throws CollectionNotFoundException
     *       When the collection in which we want to search does not exist. TODO Think about simply returning an empty result.
     */
-   public List<DataDocument> search(String collectionName, String filter, String sort, int skip, int limit) throws CollectionNotFoundException {
+   public List<DataDocument> search(final String collectionName, final DataFilter filter, final String sort, int skip, int limit) throws CollectionNotFoundException {
       return dataStorage.search(collectionName, filter, sort, skip, limit);
    }
 
@@ -85,7 +86,7 @@ public class SearchFacade implements Serializable {
     * @return the list of the found documents
     * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
     */
-   public List<DataDocument> search(String query) {
+   public List<DataDocument> search(final String query) {
       return dataStorage.run(query);
    }
 

@@ -45,6 +45,8 @@ public interface DataStorageDialect extends Serializable {
 
    DataFilter fieldValueFilter(final String fieldName, final Object value);
 
+   DataFilter documentFilter(final String documentFilter);
+
    DataFilter documentNestedIdFilter(final String documentId);
 
    DataFilter documentNestedIdFilterWithVersion(final String documentId, final int version);
