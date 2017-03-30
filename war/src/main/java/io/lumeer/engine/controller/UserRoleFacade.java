@@ -25,17 +25,20 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 /**
  * Manipulates with user roles used in projects and organizations
  */
-public class UserRoleFacade {
+@ApplicationScoped
+public class UserRoleFacade implements Serializable{
 
    @Inject
    @SystemDataStorage
