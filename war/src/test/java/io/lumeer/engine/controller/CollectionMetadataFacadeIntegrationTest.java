@@ -114,9 +114,9 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       assertThat(metadata.getInternalName()).as("internal name").isEqualTo(collection);
       assertThat(metadata.getProjectId()).as("project id").isEqualTo(projectFacade.getCurrentProjectId());
       assertThat(metadata.getAttributes()).as("attributes").isEmpty();
-      assertThat(metadata.getLastTimeUsed()).as("last time used").isBefore(new Date());
+      assertThat(metadata.getLastTimeUsed()).as("last time used").isBeforeOrEqualsTo(new Date());
       assertThat(metadata.getRecentlyUsedDocumentIds()).as("recently used documents").isEmpty();
-      assertThat(metadata.getCreateDate()).as("create date").isBefore(new Date());
+      assertThat(metadata.getCreateDate()).as("create date").isBeforeOrEqualsTo(new Date());
       assertThat(metadata.getCreator()).as("create user").isEqualTo(userFacade.getUserEmail());
       assertThat(metadata.getCustomMetadata()).as("custom metadata").isEmpty();
    }
@@ -458,7 +458,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       Date last = collectionMetadataFacade.getLastTimeUsed(collection);
 
       assertThat(new Date()).isAfter(last);
-      assertThat(last).isAfter(collectionMetadataFacade.getCollectionMetadata(collection).getCreateDate());
+      assertThat(last).isAfterOrEqualsTo(collectionMetadataFacade.getCollectionMetadata(collection).getCreateDate());
    }
 
    @Test
