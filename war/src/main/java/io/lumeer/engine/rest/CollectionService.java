@@ -23,6 +23,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
@@ -87,6 +88,9 @@ public class CollectionService implements Serializable {
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
+
+   @Inject
+   private DataStorageDialect dialect;
 
    @PathParam("organisation")
    private String organisationId;
@@ -246,7 +250,7 @@ public class CollectionService implements Serializable {
       if (!dataStorage.hasCollection(internalCollectionName)) {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
-      return searchFacade.search(internalCollectionName, filter, sort, skip, limit);
+      return searchFacade.search(internalCollectionName, dialect.documentFilter(filter), sort, skip, limit);
    }
 
    /**

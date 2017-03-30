@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.LumeerConst.Project;
@@ -424,7 +425,7 @@ public class ProjectFacade {
       }
    }
 
-   private String userFilter(String projectId, String userName) {
+   private DataFilter userFilter(String projectId, String userName) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
@@ -432,7 +433,7 @@ public class ProjectFacade {
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
-   private String userRoleFilter(String projectId, String userRole) {
+   private DataFilter userRoleFilter(String projectId, String userRole) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(Project.UserRoles.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
       filter.put(Project.UserRoles.ATTR_PROJECT_ID, projectId);
@@ -440,14 +441,14 @@ public class ProjectFacade {
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
-   private String projectIdFilter(String projectId) {
+   private DataFilter projectIdFilter(String projectId) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
-   private String projectNameFilter(String projectName) {
+   private DataFilter projectNameFilter(String projectName) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
       filter.put(Project.ATTR_PROJECT_NAME, projectName);
