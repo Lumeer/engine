@@ -462,8 +462,8 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       collectionMetadataFacade.setLastTimeUsedNow(collection);
       Date last = collectionMetadataFacade.getLastTimeUsed(collection);
 
-      assertThat(new Date()).isAfter(last);
       assertThat(last).isAfterOrEqualsTo(collectionMetadataFacade.getCollectionMetadata(collection).getCreateDate());
+      assertThat(new Date()).isAfterOrEqualsTo(last);
    }
 
    @Test

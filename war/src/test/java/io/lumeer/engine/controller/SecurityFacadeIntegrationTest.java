@@ -25,6 +25,7 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
@@ -165,7 +166,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_READ);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_READ, dataDocument);
-      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(id);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_READ, documentIdFilter);
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForRead(SECURITY_TEST_COLLECTION_READ, id, TEST_USER4)).isTrue();
@@ -189,7 +190,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_WRITE);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_WRITE, dataDocument);
-      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(id);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_WRITE, documentIdFilter);
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForWrite(SECURITY_TEST_COLLECTION_WRITE, id, TEST_USER2)).isTrue();
@@ -213,7 +214,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_EXECUTE);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_EXECUTE, dataDocument);
-      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(id);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_EXECUTE, documentIdFilter);
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_EXECUTE, id, TEST_USER1)).isTrue();
@@ -237,7 +238,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
          dataStorage.dropCollection(SECURITY_TEST_COLLECTION_ADD_RIGHTS);
       }
       String id = dataStorage.createDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, dataDocument);
-      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(id);
       dataDocument = dataStorage.readDocument(SECURITY_TEST_COLLECTION_ADD_RIGHTS, documentIdFilter);
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER)).isFalse();
       assertThat(securityFacade.checkForExecute(SECURITY_TEST_COLLECTION_ADD_RIGHTS, id, TEST_USER1)).isTrue();

@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
@@ -276,7 +277,7 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean setRightsRead(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
       setRightsRead(dataDocument, userName);
       dataStorage.updateDocument(collectionName, dataDocument, documentIdFilter);
@@ -316,7 +317,7 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean setRightsWrite(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
       setRightsWrite(dataDocument, userName);
       dataStorage.updateDocument(collectionName, dataDocument, documentIdFilter);
@@ -356,7 +357,7 @@ public class SecurityFacade implements Serializable {
     *       throws if document not found in database
     */
    public boolean setRightsExecute(String collectionName, String documentId, String userName) throws DocumentNotFoundException {
-      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
       setRightsExecute(dataDocument, userName);
       dataStorage.updateDocument(collectionName, dataDocument, documentIdFilter);
@@ -724,7 +725,7 @@ public class SecurityFacade implements Serializable {
     *       data access object
     */
    public void setDao(String collectionName, String documentId, AccessRightsDao accessRightsDao) {
-      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
       dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentIdFilter), accessRightsDao), documentIdFilter);
    }
 
@@ -741,7 +742,7 @@ public class SecurityFacade implements Serializable {
     * @return true if all data was updated successful
     */
    public boolean setDaoCheck(String collectionName, String documentId, AccessRightsDao accessRightsDao) {
-      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
       dataStorage.updateDocument(collectionName, setDao(dataStorage.readDocument(collectionName, documentIdFilter), accessRightsDao), documentIdFilter);
       DataDocument dataDoc = dataStorage.readDocument(collectionName, documentIdFilter);
       return (accessRightsDao.isWrite() == checkForWrite(dataDoc, accessRightsDao.getUserName()))
