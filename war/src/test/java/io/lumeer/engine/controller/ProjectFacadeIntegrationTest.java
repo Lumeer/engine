@@ -33,13 +33,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
 /**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ * Tests for ProjectFacade
  */
 @RunWith(Arquillian.class)
 public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
@@ -56,6 +55,9 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private OrganisationFacade organisationFacade;
+
+   @Inject
+   private UserRoleFacade userRoleFacade;
 
    @Test
    public void basicMethodsTest() throws Exception {
@@ -126,57 +128,6 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void userRolesTest() throws Exception {
-      systemDataStorage.dropManyDocuments(Project.UserRoles.COLLECTION_NAME, "{}");
-
-      final String p1 = "project1";
-      final String p2 = "project2";
-
-      final String u1 = "userRole1";
-      final String u2 = "userRole2";
-      final String u3 = "userRole3";
-
-      final String c1 = "coreRole1";
-      final String c2 = "coreRole2";
-      final String c3 = "coreRole3";
-
-      Map<String, List<String>> r1 = projectFacade.readRoles(p1);
-      Map<String, List<String>> r2 = projectFacade.readRoles(p2);
-      assertThat(r1).isEmpty();
-      assertThat(r2).isEmpty();
-
-      // create test
-      projectFacade.createRole(p1, u1, Arrays.asList(c1, c2));
-      projectFacade.createRole(p1, u2, Arrays.asList(c2, c3));
-      projectFacade.createRole(p2, u2, Arrays.asList(c2, c3));
-      projectFacade.createRole(p2, u3, Collections.singletonList(c3));
-      r1 = projectFacade.readRoles(p1);
-      r2 = projectFacade.readRoles(p2);
-      assertThat(r1).containsOnlyKeys(u1, u2);
-      assertThat(r1.get(u1)).containsExactly(c1, c2);
-      assertThat(r1.get(u2)).containsExactly(c2, c3);
-      assertThat(r2).containsOnlyKeys(u2, u3);
-      assertThat(r2.get(u2)).containsExactly(c2, c3);
-      assertThat(r2.get(u3)).containsExactly(c3);
-
-      // drop test
-      projectFacade.dropRole(p1, u2);
-      projectFacade.dropRole(p2, u2);
-      r1 = projectFacade.readRoles(p1);
-      r2 = projectFacade.readRoles(p2);
-      assertThat(r1).containsOnlyKeys(u1);
-      assertThat(r2).containsOnlyKeys(u3);
-
-      // add and delete core roles test
-      projectFacade.addCoreRolesToRole(p1, u1, Collections.singletonList(c3));
-      r1 = projectFacade.readRoles(p1);
-      assertThat(r1.get(u1)).containsExactly(c1, c2, c3);
-      projectFacade.removeCoreRolesFromRole(p1, u1, Arrays.asList(c1, c2));
-      r1 = projectFacade.readRoles(p1);
-      assertThat(r1.get(u1)).containsExactly(c3);
-   }
-
-   @Test
    public void userManagementTest() throws Exception {
       systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, "{}");
       systemDataStorage.dropManyDocuments(Project.UserRoles.COLLECTION_NAME, "{}");
@@ -214,7 +165,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(userRoles).containsExactly("r10", "r11");
 
       //has role with transitive support test
-      projectFacade.createRole(project, "ur1", Arrays.asList("c1", "c2", "c3"));
+      userRoleFacade.createRole(organisationFacade.getOrganisationId(), project, "ur1", Arrays.asList("c1", "c2", "c3"));
       projectFacade.addUserToProject(project, "user100", Arrays.asList("ur1", "c4", "c5"));
       assertThat(projectFacade.hasUserRole(project, "user100", "c1")).isTrue();
       assertThat(projectFacade.hasUserRole(project, "user100", "c2")).isTrue();
