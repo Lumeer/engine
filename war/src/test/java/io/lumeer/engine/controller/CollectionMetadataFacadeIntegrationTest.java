@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
@@ -37,6 +38,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +69,9 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Inject
    private UserFacade userFacade;
+
+   @Inject
+   private ConfigurationFacade configurationFacade;
 
    // do not change collection names, because it can mess up internal name creation in method internalName()
    private final String CREATE_INTERNAL_NAME_ORIGINAL_NAME1 = "CollectionMetadataFacadeCollečťion&-./ 1";
@@ -508,30 +513,28 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       String collection = collectionFacade.createCollection(COLLECTION_RECENTLY_USED_DOCUMENTS);
 
-      String id1 = "id1";
-      String id2 = "id2";
-      String id3 = "id3";
-      String id4 = "id4";
+      List<String> ids = new ArrayList<>();
 
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id1);
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id2);
+      // we add so many ids, as is the size of the list
+      for (int i = 0; i < configurationFacade.getConfigurationInteger(LumeerConst.NUMBER_OF_RECENT_DOCS_PROPERTY).get(); i++) {
+         String id = "id" + i;
+         ids.add(id);
+         collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id);
+      }
 
+      List<String> recentlyUsed = collectionMetadataFacade.getRecentlyUsedDocumentsIds(collection);
+      assertThat(recentlyUsed).containsOnlyElementsOf(ids); // all ids are there
+      assertThat(recentlyUsed.get(0)).isEqualTo(ids.get(ids.size() - 1)); // the last one added is at the beginning of the list
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, ids.get(1)); // we add id1 again
       List<String> recentlyUsed1 = collectionMetadataFacade.getRecentlyUsedDocumentsIds(collection);
-      assertThat(recentlyUsed1).containsOnly(id1, id2);
-      assertThat(recentlyUsed1.get(0)).isEqualTo(id2); // id2 is first because it was added later than id1
+      assertThat(recentlyUsed1.get(0)).isEqualTo(ids.get(1)); // now id1 is at the beginning of the list
 
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id3);
-
+      String newId = "new id";
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, newId); // we add totally new id so we exceed the capacity of the list
       List<String> recentlyUsed2 = collectionMetadataFacade.getRecentlyUsedDocumentsIds(collection);
-      assertThat(recentlyUsed2).containsOnly(id1, id2, id3);
-      assertThat(recentlyUsed2.get(0)).isEqualTo(id3); // id3 is first because it was added later than id2
-      assertThat(recentlyUsed2.get(1)).isEqualTo(id2); // id2 is first because it was added later than id1
-
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id4);
-
-      List<String> recentlyUsed3 = collectionMetadataFacade.getRecentlyUsedDocumentsIds(collection);
-      assertThat(recentlyUsed3).containsOnly(id2, id3, id4); // max number of ids is 3, so id1 was removed
-
+      assertThat(recentlyUsed2.get(0)).isEqualTo(newId); // new id is at the beginning of the list
+      assertThat(recentlyUsed2).doesNotContain(ids.get(0)); // the first (and firstly added) id is no more in the list
    }
 
    private String internalName(String collectionOriginalName) {
