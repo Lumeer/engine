@@ -26,6 +26,7 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -49,6 +50,9 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    private DataStorage systemDataStorage;
 
    @Inject
+   private DataStorageDialect dialect;
+
+   @Inject
    private DataStorageProvider dataStorageProvider;
 
    @Inject
@@ -60,7 +64,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void basicMethodsTest() throws Exception {
       //clears whole collection
-      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, "{}");
+      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dialect.documentFilter("{}"));
 
       projectFacade.createProject("project1", "Project One");
       projectFacade.createProject("project2", "Project Two");
@@ -98,7 +102,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void metadataMethodsTest() throws Exception {
       //clears whole collection
-      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, "{}");
+      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dialect.documentFilter("{}"));
 
       projectFacade.createProject("project1", "Project One");
       projectFacade.createProject("project2", "Project Two");
@@ -127,7 +131,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void userRolesTest() throws Exception {
-      systemDataStorage.dropManyDocuments(Project.UserRoles.COLLECTION_NAME, "{}");
+      systemDataStorage.dropManyDocuments(Project.UserRoles.COLLECTION_NAME, dialect.documentFilter("{}"));
 
       final String p1 = "project1";
       final String p2 = "project2";
@@ -178,8 +182,8 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void userManagementTest() throws Exception {
-      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, "{}");
-      systemDataStorage.dropManyDocuments(Project.UserRoles.COLLECTION_NAME, "{}");
+      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(Project.UserRoles.COLLECTION_NAME, dialect.documentFilter("{}"));
 
       final String project = "project";
       projectFacade.createProject(project, "Project One");

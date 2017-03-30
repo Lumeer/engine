@@ -23,26 +23,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorageStats;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.model.Filters;
-import org.assertj.core.api.SoftAssertions;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.IMongodConfig;
@@ -50,6 +36,17 @@ import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
@@ -281,7 +278,7 @@ public class MongoDbStorageTest {
 
       DataDocument insertedDocument = new DataDocument("a", 1).append("b", 2).append("c", 3);
       String documentId = mongoDbStorage.createDocument(COLLECTION_REPLACE_DOCUMENT, insertedDocument);
-      String documentIdFilter = mongoDbStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(documentId);
 
       DataDocument replaceDocument = new DataDocument("d", 4).append("e", 5).append("f", 6);
       mongoDbStorage.replaceDocument(COLLECTION_REPLACE_DOCUMENT, replaceDocument, documentIdFilter);
@@ -304,7 +301,7 @@ public class MongoDbStorageTest {
 
       DataDocument insertedDocument = createDummyDocument();
       String documentId = mongoDbStorage.createDocument(COLLECTION_DROP_DOCUMENT, insertedDocument);
-      String documentIdFilter = mongoDbStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(documentId);
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_DOCUMENT, documentIdFilter);
 
       assertThat(readedDocument).isNotNull();
@@ -331,7 +328,7 @@ public class MongoDbStorageTest {
       List<DataDocument> docs = mongoDbStorage.search(COLLECTION_DROP_MANY, null, null, 0, 0);
       assertThat(docs).hasSize(100);
 
-      mongoDbStorage.dropManyDocuments(COLLECTION_DROP_MANY, MongoUtils.convertBsonToJson(Filters.eq(dropManyKey, value1)));
+      mongoDbStorage.dropManyDocuments(COLLECTION_DROP_MANY, mongoDbStorageDialect.fieldValueFilter(dropManyKey, value1));
 
       docs = mongoDbStorage.search(COLLECTION_DROP_MANY, null, null, 0, 0);
       assertThat(docs).hasSize(50);
@@ -346,7 +343,7 @@ public class MongoDbStorageTest {
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_ATTRIBUTE, mongoDbStorageDialect.documentIdFilter(documentId));
       assertThat(readedDocument).hasSize(4);
 
-      String documentIdFilter = mongoDbStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(documentId);
 
       mongoDbStorage.dropAttribute(COLLECTION_DROP_ATTRIBUTE, documentIdFilter, DUMMY_KEY1);
 
@@ -386,7 +383,7 @@ public class MongoDbStorageTest {
       List<DataDocument> docs = mongoDbStorage.searchIncludeAttrs(COLLECTION_SEARCH_ATTRS, null, null);
       assertThat(docs).hasSize(200);
 
-      String filter = MongoUtils.convertBsonToJson(Filters.gte("a", 100));
+      final DataFilter filter = new MongoDbDataFilter(Filters.gte("a", 100));
       docs = mongoDbStorage.searchIncludeAttrs(COLLECTION_SEARCH_ATTRS, filter, Arrays.asList("a", "c", "f.b"));
       assertThat(docs).hasSize(100);
       DataDocument anyDoc = docs.get(0);
@@ -457,7 +454,7 @@ public class MongoDbStorageTest {
 
       DataDocument insertedDocument = createDummyDocument();
       String id = mongoDbStorage.createDocument(COLLECTION_INC_ATTR_VALUE_BY, insertedDocument);
-      String documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
 
       mongoDbStorage.incrementAttributeValueBy(COLLECTION_INC_ATTR_VALUE_BY, documentIdFilter, incAttribute, 1);
 
@@ -537,7 +534,7 @@ public class MongoDbStorageTest {
       d.put("d_d", trippleNested);
 
       String id = mongoDbStorage.createDocument(COLLECTION_NESTED_DOCUMENTS, d);
-      String documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
 
       mongoDbStorage.dropAttribute(COLLECTION_NESTED_DOCUMENTS, documentIdFilter, "d_d.tn.tnn." + DUMMY_KEY1);
 
@@ -554,7 +551,7 @@ public class MongoDbStorageTest {
       doc.put("a", Arrays.asList(1, 2, 3, 4));
 
       String id = mongoDbStorage.createDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, doc);
-      String documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
       DataDocument fromDb = mongoDbStorage.readDocument(COLLECTION_BASIC_ARRAY_MANIPULATION, documentIdFilter);
       assertThat(fromDb.getArrayList("a", Integer.class)).hasSize(4);
 
@@ -590,7 +587,7 @@ public class MongoDbStorageTest {
       d.put("n", n);
 
       String id = mongoDbStorage.createDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, d);
-      String documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(id);
       DataDocument fromDb = mongoDbStorage.readDocument(COLLECTION_COMPLEX_ARRAY_MANIPULATION, documentIdFilter);
       assertThat(fromDb.getArrayList("n.a", DataDocument.class)).hasSize(2);
 
