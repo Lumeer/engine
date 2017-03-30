@@ -22,6 +22,7 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
@@ -181,7 +182,7 @@ public class VersionFacade implements Serializable {
       int oldVersion = backUpDocument(collectionName, actualDocument);
       int newVersion = oldVersion + 1;
 
-      String documentIdFilter = dataStorageDialect.documentIdFilter(id);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(id);
       dataStorage.dropAttribute(collectionName, documentIdFilter, attributeName);
       dataStorage.incrementAttributeValueBy(collectionName, documentIdFilter, LumeerConst.Document.METADATA_VERSION_KEY, 1);
 
@@ -302,7 +303,7 @@ public class VersionFacade implements Serializable {
     *       if document cannot be found
     */
    public DataDocument readOldDocumentVersion(String collectionName, String documentId, int version) throws DocumentNotFoundException {
-      DataDocument data = dataStorage.readDocument(buildShadowCollectionName(collectionName), dataStorageDialect.documentNestedIdFilterWithVersion(documentId, version));
+      final DataDocument data = dataStorage.readDocument(buildShadowCollectionName(collectionName), dataStorageDialect.documentNestedIdFilterWithVersion(documentId, version));
       if (data == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -322,7 +323,7 @@ public class VersionFacade implements Serializable {
     *       if collection does not exists
     */
    public List<DataDocument> getDocumentVersions(String collectionName, String documentId) throws CollectionNotFoundException {
-      String filter = dataStorageDialect.documentNestedIdFilter(documentId);
+      final DataFilter filter = dataStorageDialect.documentNestedIdFilter(documentId);
       List<DataDocument> dataDocuments = dataStorage.search(buildShadowCollectionName(collectionName), filter, null, 0, 100);
 
       DataDocument main = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));

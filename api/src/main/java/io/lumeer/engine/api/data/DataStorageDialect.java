@@ -33,25 +33,27 @@ public interface DataStorageDialect extends Serializable {
    DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName);
 
    // LinkingFacade
-   String linkingFromTablesColNameFilter(final String collectionName, final String role);
+   DataFilter linkingFromTablesColNameFilter(final String collectionName, final String role);
 
-   String linkingFromTablesFilter(final String firstCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
+   DataFilter linkingFromTablesFilter(final String firstCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
 
-   String linkingFromToTablesFilter(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
+   DataFilter linkingFromToTablesFilter(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
 
-   String linkingFromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection);
+   DataFilter linkingFromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection);
 
-   String linkingFromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection);
+   DataFilter linkingFromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection);
 
-   String fieldValueFilter(final String fieldName, final Object value);
+   DataFilter fieldValueFilter(final String fieldName, final Object value);
 
-   String documentNestedIdFilter(final String documentId);
+   DataFilter documentFilter(final String documentFilter);
 
-   String documentNestedIdFilterWithVersion(final String documentId, final int version);
+   DataFilter documentNestedIdFilter(final String documentId);
 
-   String documentIdFilter(final String documentId);
+   DataFilter documentNestedIdFilterWithVersion(final String documentId, final int version);
 
-   String multipleFieldsValueFilter(final Map<String, Object> fields);
+   DataFilter documentIdFilter(final String documentId);
+
+   DataFilter multipleFieldsValueFilter(final Map<String, Object> fields);
 
    String concatFields(String... fields);
 }

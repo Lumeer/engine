@@ -23,13 +23,13 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
@@ -213,7 +213,7 @@ public class DocumentFacade implements Serializable {
     *       When there is an error working with the database.
     */
    public void dropDocument(final String collectionName, final String documentId) throws DbException {
-      String documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
+      final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
       DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
 
       versionFacade.backUpDocument(collectionName, dataDocument);
@@ -317,7 +317,7 @@ public class DocumentFacade implements Serializable {
       } catch (CollectionMetadataDocumentNotFoundException e) {
          // nothing happens - if we don't find metadata, all values are valid
       }
-      for(String attribute: doc.keySet()) {
+      for (String attribute : doc.keySet()) {
          if (doc.get(attribute) == null) {
             throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));
          }

@@ -107,7 +107,7 @@ public interface DataStorage extends Serializable {
     *       the filter to identify document
     * @return True if and only if the document exists.
     */
-   boolean collectionHasDocument(final String collectionName, final String filter);
+   boolean collectionHasDocument(final String collectionName, final DataFilter filter);
 
    /**
     * Creates and inserts a new document to specified collection.
@@ -147,7 +147,7 @@ public interface DataStorage extends Serializable {
     *       list of attribute names
     * @return the DataDocument object representing the read document containg only specified attributes
     */
-   DataDocument readDocumentIncludeAttrs(final String collectionName, final String filter, final List<String> attributes);
+   DataDocument readDocumentIncludeAttrs(final String collectionName, final DataFilter filter, final List<String> attributes);
 
    /**
     * Reads the specified document in given collection by filter.
@@ -158,7 +158,7 @@ public interface DataStorage extends Serializable {
     *       the filter to identify document
     * @return the DataDocument object representing the read document
     */
-   DataDocument readDocument(final String collectionName, final String filter);
+   DataDocument readDocument(final String collectionName, final DataFilter filter);
 
    /**
     * Modifies an existing document in given collection by filter. If updated document contains non-existing columns, they will be added into database.
@@ -170,7 +170,7 @@ public interface DataStorage extends Serializable {
     * @param filter
     *       the filter to identify document
     */
-   void updateDocument(final String collectionName, final DataDocument updatedDocument, final String filter);
+   void updateDocument(final String collectionName, final DataDocument updatedDocument, final DataFilter filter);
 
    /**
     * Replace an existing document in given collection by filter.
@@ -182,7 +182,7 @@ public interface DataStorage extends Serializable {
     * @param filter
     *       the filter to identify document
     */
-   void replaceDocument(final String collectionName, final DataDocument replaceDocument, final String filter);
+   void replaceDocument(final String collectionName, final DataDocument replaceDocument, final DataFilter filter);
 
    /**
     * Drops an existing document in given collection by filter.
@@ -192,7 +192,7 @@ public interface DataStorage extends Serializable {
     * @param filter
     *       the filter to identify document
     */
-   void dropDocument(final String collectionName, final String filter);
+   void dropDocument(final String collectionName, final DataFilter filter);
 
    /**
     * Drops many documents based on filter.
@@ -202,7 +202,7 @@ public interface DataStorage extends Serializable {
     * @param filter
     *       string representation of filter
     */
-   void dropManyDocuments(final String collectionName, final String filter);
+   void dropManyDocuments(final String collectionName, final DataFilter filter);
 
    /**
     * Updates the name of an attribute which is found in all documents of given collection.
@@ -226,7 +226,7 @@ public interface DataStorage extends Serializable {
     * @param attributeName
     *       the name of an attribute to remove
     */
-   void dropAttribute(final String collectionName, final String filter, final String attributeName);
+   void dropAttribute(final String collectionName, final DataFilter filter, final String attributeName);
 
    /**
     * Add item to array
@@ -240,7 +240,7 @@ public interface DataStorage extends Serializable {
     * @param item
     *       the item to add to array
     */
-   <T> void addItemToArray(final String collectionName, final String filter, final String attributeName, final T item);
+   <T> void addItemToArray(final String collectionName, final DataFilter filter, final String attributeName, final T item);
 
    /**
     * Add items to array
@@ -254,7 +254,7 @@ public interface DataStorage extends Serializable {
     * @param items
     *       the items to add to array
     */
-   <T> void addItemsToArray(final String collectionName, final String filter, final String attributeName, final List<T> items);
+   <T> void addItemsToArray(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items);
 
    /**
     * remove specified item from array
@@ -268,7 +268,7 @@ public interface DataStorage extends Serializable {
     * @param item
     *       the item that will be deleted from the array
     */
-   <T> void removeItemFromArray(final String collectionName, final String filter, final String attributeName, final T item);
+   <T> void removeItemFromArray(final String collectionName, final DataFilter filter, final String attributeName, final T item);
 
    /**
     * remove items from array
@@ -282,7 +282,7 @@ public interface DataStorage extends Serializable {
     * @param items
     *       the items  that will be deleted from the array
     */
-   <T> void removeItemsFromArray(final String collectionName, final String filter, final String attributeName, final List<T> items);
+   <T> void removeItemsFromArray(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items);
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.
@@ -326,7 +326,7 @@ public interface DataStorage extends Serializable {
     *       list of attribute names
     * @return the list of the found documents containing only specified attributes
     */
-   public List<DataDocument> searchIncludeAttrs(final String collectionName, final String filter, final List<String> attributes);
+   public List<DataDocument> searchIncludeAttrs(final String collectionName, final DataFilter filter, final List<String> attributes);
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
@@ -343,7 +343,7 @@ public interface DataStorage extends Serializable {
     *       the maximum number of documents to return. A limit of 0 is equivalent to setting no limit.
     * @return the list of the found documents
     */
-   List<DataDocument> search(final String collectionName, final String filter, final String sort, final int skip, final int limit);
+   List<DataDocument> search(final String collectionName, final DataFilter filter, final String sort, final int skip, final int limit);
 
    /**
     * Counts the number of document in the collection optionally meeting the filter criteria.
@@ -354,7 +354,7 @@ public interface DataStorage extends Serializable {
     *       The filter on documents.
     * @return Number of documents in the collection meeting the criteria.
     */
-   long count(final String collectionName, final String filter);
+   long count(final String collectionName, final DataFilter filter);
 
    /**
     * Executes the provided query and returns its results. The query needs to have real database collection names filled in.
@@ -381,14 +381,14 @@ public interface DataStorage extends Serializable {
     *
     * @param collectionName
     *       the name of the collection where the given document is located
-    * @param documentId
-    *       the id of specified document
+    * @param filter
+    *       the filter to obtain a document
     * @param attributeName
     *       the name of attribute which value is increment
     * @param incBy
     *       the value by which attribute is increment
     */
-   void incrementAttributeValueBy(final String collectionName, final String documentId, final String attributeName, final int incBy);
+   void incrementAttributeValueBy(final String collectionName, final DataFilter filter, final String attributeName, final int incBy);
 
    /**
     * Gets the next value of sequence.
