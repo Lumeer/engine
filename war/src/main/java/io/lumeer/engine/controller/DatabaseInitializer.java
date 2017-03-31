@@ -50,7 +50,7 @@ public class DatabaseInitializer implements Serializable {
                .append(LumeerConst.Project.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING), true);
          dataStorage.createIndex(LumeerConst.Project.COLLECTION_NAME, new DataDocument(LumeerConst.Project.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
                .append(LumeerConst.Project.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING)
-               .append(dataStorageDialect.concatFields(LumeerConst.Project.ATTR_USERS, LumeerConst.Project.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), true);
+               .append(dataStorageDialect.concatFields(LumeerConst.Project.ATTR_USERS, LumeerConst.Project.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
       }
 
       if (!dataStorage.hasCollection(LumeerConst.Project.UserRoles.COLLECTION_NAME)) {

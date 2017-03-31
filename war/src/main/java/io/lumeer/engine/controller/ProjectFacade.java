@@ -54,6 +54,9 @@ public class ProjectFacade {
    @Inject
    private DatabaseInitializer databaseInitializer;
 
+   @Inject
+   private UserRoleFacade userRoleFacade;
+
    private String projectId = "default";
 
    public String getCurrentProjectId() {
@@ -230,75 +233,6 @@ public class ProjectFacade {
    }
 
    /**
-    * Create new user role which consists of core roles
-    *
-    * @param projectId
-    *       Id of the project
-    * @param userRole
-    *       Unique name of user role
-    * @param coreRoles
-    *       List of the core roles to set
-    */
-   public void createRole(final String projectId, final String userRole, final List<String> coreRoles) {
-      DataDocument document = new DataDocument(Project.UserRoles.ATTR_PROJECT_ID, projectId)
-            .append(Project.UserRoles.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId())
-            .append(Project.UserRoles.ATTR_USER_ROLE, userRole)
-            .append(Project.UserRoles.ATTR_CORE_ROLES, coreRoles);
-      dataStorage.createDocument(Project.UserRoles.COLLECTION_NAME, document);
-   }
-
-   /**
-    * Adds core roles to user role
-    *
-    * @param projectId
-    *       Id of the project
-    * @param userRole
-    *       Name of user role
-    * @param coreRoles
-    *       List of the core roles to add
-    */
-   public void addCoreRolesToRole(final String projectId, final String userRole, final List<String> coreRoles) {
-      dataStorage.addItemsToArray(Project.UserRoles.COLLECTION_NAME, userRoleFilter(projectId, userRole), Project.UserRoles.ATTR_CORE_ROLES, coreRoles);
-   }
-
-   /**
-    * Removes core role from user role
-    *
-    * @param projectId
-    *       Id of the project
-    * @param userRole
-    *       Name of user role
-    * @param coreRoles
-    *       List of the core roles to remove
-    */
-   public void removeCoreRolesFromRole(final String projectId, final String userRole, final List<String> coreRoles) {
-      dataStorage.removeItemsFromArray(Project.UserRoles.COLLECTION_NAME, userRoleFilter(projectId, userRole), Project.UserRoles.ATTR_CORE_ROLES, coreRoles);
-   }
-
-   /**
-    * Removes user role from project
-    *
-    * @param projectId
-    *       Id of the project
-    * @param userRole
-    *       Name of user role to delete
-    */
-   public void dropRole(final String projectId, final String userRole) {
-      dataStorage.dropDocument(Project.UserRoles.COLLECTION_NAME, userRoleFilter(projectId, userRole));
-   }
-
-   /**
-    * Reads project user roles
-    *
-    * @param projectId
-    *       Id of the project
-    */
-   public Map<String, List<String>> readRoles(final String projectId) {
-      List<DataDocument> documents = dataStorage.searchIncludeAttrs(Project.UserRoles.COLLECTION_NAME, projectIdFilter(projectId), Arrays.asList(Project.UserRoles.ATTR_USER_ROLE, Project.UserRoles.ATTR_CORE_ROLES));
-      return documents.stream().collect(Collectors.toMap(d -> d.getString(Project.UserRoles.ATTR_USER_ROLE), d -> d.getArrayList(Project.UserRoles.ATTR_CORE_ROLES, String.class)));
-   }
-
-   /**
     * Adds user to project with default roles
     *
     * @param projectId
@@ -415,7 +349,7 @@ public class ProjectFacade {
       if (userRoles.contains(userRole)) {
          return true;
       } else {
-         Map<String, List<String>> roles = readRoles(projectId);
+         Map<String, List<String>> roles = userRoleFacade.readRoles(organisationFacade.getOrganisationId(), projectId);
          for (String ur : userRoles) {
             if (roles.containsKey(ur) && roles.get(ur).contains(userRole)) {
                return true;
@@ -424,6 +358,7 @@ public class ProjectFacade {
          return false;
       }
    }
+
 
    private DataFilter userFilter(String projectId, String userName) {
       Map<String, Object> filter = new HashMap<>();
