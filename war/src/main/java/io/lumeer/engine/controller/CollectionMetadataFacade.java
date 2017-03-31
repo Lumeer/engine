@@ -123,12 +123,13 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws CollectionMetadataDocumentNotFoundException
     */
    public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      List<DataDocument> metadata = dataStorage.run(dialect.getCollectionMetadataDocumentQuery(METADATA_COLLECTION, collectionName));
-      if (metadata == null || metadata.isEmpty()) {
+      DataDocument metadata = dataStorage.readDocument(METADATA_COLLECTION, dialect.fieldValueFilter(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName));
+
+      if (metadata == null) {
          throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName));
-      } else {
-         return metadata.get(0);
       }
+
+      return metadata;
    }
 
    /**
@@ -415,13 +416,13 @@ public class CollectionMetadataFacade implements Serializable {
     *       when collection with given user name is not found
     */
    public String getInternalCollectionName(String originalCollectionName) throws UserCollectionNotFoundException {
-      List<DataDocument> result = dataStorage.run(dialect.getInternalNameQuery(METADATA_COLLECTION, originalCollectionName));
+      DataDocument metadata = dataStorage.readDocument(METADATA_COLLECTION, dialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName));
 
-      if (result.isEmpty()) {
+      if (metadata == null) {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(originalCollectionName));
       }
 
-      return result.get(0).getString(LumeerConst.Collection.INTERNAL_NAME_KEY);
+      return metadata.getString(LumeerConst.Collection.INTERNAL_NAME_KEY);
    }
 
    /**
@@ -871,9 +872,9 @@ public class CollectionMetadataFacade implements Serializable {
 
    // checks whether collection with given user name already exists
    private boolean checkIfUserCollectionExists(String originalCollectionName) {
-      List<DataDocument> result = dataStorage.run(dialect.checkIfUserCollectionExistsQuery(METADATA_COLLECTION, originalCollectionName));
+      DataDocument result = dataStorage.readDocument(METADATA_COLLECTION, dialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName));
 
-      if (result.isEmpty()) {
+      if (result == null) {
          return false;
       }
 

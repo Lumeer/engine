@@ -123,9 +123,4 @@ public class MongoUtils {
       return returnParam;
    }
 
-   // returns string "parent.child"
-   public static String nestedAttributeName(String parent, String child) {
-      return parent + "." + child;
-   }
-
 }

@@ -42,16 +42,6 @@ import javax.enterprise.context.ApplicationScoped;
  */
 @ApplicationScoped
 public class MongoDbStorageDialect implements DataStorageDialect {
-   
-   @Override
-   public DataDocument getCollectionMetadataDocumentQuery(final String metadataCollection, final String collection) {
-      return new DataDocument()
-            .append("find", metadataCollection)
-            .append("filter",
-                  new DataDocument(
-                        LumeerConst.Collection.INTERNAL_NAME_KEY,
-                        collection));
-   }
 
    @Override
    public DataDocument renameAttributeQuery(final String metadataCollection, final String collection, final String oldName, final String newName) {
@@ -60,18 +50,8 @@ public class MongoDbStorageDialect implements DataStorageDialect {
             .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collection))
             .append("update", new DataDocument()
                   .append("$rename", new DataDocument(
-                        MongoUtils.nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, oldName),
-                        MongoUtils.nestedAttributeName(LumeerConst.Collection.ATTRIBUTES_KEY, newName))));
-   }
-
-   @Override
-   public DataDocument getInternalNameQuery(final String metadataCollection, final String collection) {
-      return new DataDocument()
-            .append("find", metadataCollection)
-            .append("filter", new DataDocument()
-                  .append(LumeerConst.Collection.REAL_NAME_KEY, collection))
-            .append("projection", new DataDocument()
-                  .append(LumeerConst.Collection.INTERNAL_NAME_KEY, true));
+                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES_KEY, oldName),
+                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES_KEY, newName))));
    }
 
    @Override
@@ -89,14 +69,6 @@ public class MongoDbStorageDialect implements DataStorageDialect {
 
    private DataFilter createFilter(final Bson filter) {
       return new MongoDbDataFilter(filter);
-   }
-
-   @Override
-   public DataDocument checkIfUserCollectionExistsQuery(final String metadataCollection, final String originalCollectionName) {
-      return new DataDocument()
-            .append("find", metadataCollection)
-            .append("filter", new DataDocument()
-                  .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName));
    }
 
    @Override
