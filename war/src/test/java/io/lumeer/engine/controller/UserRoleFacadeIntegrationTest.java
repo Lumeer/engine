@@ -25,7 +25,7 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.provider.DataStorageProvider;
+import io.lumeer.engine.api.data.DataStorageDialect;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -49,14 +49,14 @@ public class UserRoleFacadeIntegrationTest extends IntegrationTestBase {
    private DataStorage systemDataStorage;
 
    @Inject
-   private DataStorageProvider dataStorageProvider;
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private UserRoleFacade userRoleFacade;
 
    @Before
    public void setUp() throws Exception {
-      systemDataStorage.dropManyDocuments(LumeerConst.Project.UserRoles.COLLECTION_NAME, "{}");
+      systemDataStorage.dropManyDocuments(LumeerConst.Project.UserRoles.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
