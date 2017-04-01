@@ -18,6 +18,7 @@
    <container qualifier="wildfly-managed">
       <configuration>
          <property name="jbossHome">${project.build.directory}/wildfly-10.1.0.Final</property>
+         <property name="javaVmArguments">-Xmx128m -Xms128m</property>
       </configuration>
    </container>
 </arquillian>

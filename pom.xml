@@ -148,6 +148,7 @@
                <artifactId>maven-surefire-plugin</artifactId>
                <version>${maven.surefire.plugin.version}</version>
                <configuration>
+                  <argLine>-Xmx256m -Xms256m</argLine>
                   <excludes>
                      <exclude>*IntegrationTest.java</exclude>
                   </excludes>
@@ -158,6 +159,7 @@
                <artifactId>maven-failsafe-plugin</artifactId>
                <version>${maven.failsafe.plugin.version}</version>
                <configuration>
+                  <argLine>-Xmx256m -Xms256m</argLine>
                   <includes>
                      <include>*IntegrationTest.java</include>
                   </includes>
@@ -185,6 +187,7 @@
                   <deployer/>
                   <configuration>
                      <properties>
+                        <cargo.jvmargs>-Xmx128m -Xms128m</cargo.jvmargs>
                         <cargo.wildfly.script.cli.embedded.adapter-install>${wildfly.dir}/bin/adapter-install.cli</cargo.wildfly.script.cli.embedded.adapter-install>
                      </properties>
                      <users>
