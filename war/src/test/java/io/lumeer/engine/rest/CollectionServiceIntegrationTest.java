@@ -35,7 +35,6 @@ import io.lumeer.engine.controller.OrganisationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.rest.dao.CollectionMetadata;
 
@@ -457,7 +456,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       String collection = collectionFacade.createCollection(COLLECTION_UPDATE_ACCESS_RIGHTS);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(accessRights, MediaType.APPLICATION_JSON)).invoke();
       DataDocument metadata = collectionMetadataFacade.getCollectionMetadataDocument(collection);
-      AccessRightsDao readAccessRights = securityFacade.getDao(LumeerConst.Collection.METADATA_COLLECTION, metadata.getId(), user);
+      AccessRightsDao readAccessRights = securityFacade.getDao(LumeerConst.Collection.METADATA_COLLECTION_PREFIX, metadata.getId(), user);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(readAccessRights.isWrite()).isTrue();
       assertThat(readAccessRights.isRead()).isTrue();

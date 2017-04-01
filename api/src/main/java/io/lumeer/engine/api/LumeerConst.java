@@ -129,7 +129,7 @@ public final class LumeerConst {
    }
 
    public static class Collection {
-      public static final String METADATA_COLLECTION = "meta.collection";
+      public static final String METADATA_COLLECTION_PREFIX = "meta.collection_";
       public static final String NAME_PREFIX = "collection.";
 
       public static final String REAL_NAME_KEY = "name";
