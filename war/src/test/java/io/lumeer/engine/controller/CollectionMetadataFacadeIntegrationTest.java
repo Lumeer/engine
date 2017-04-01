@@ -515,8 +515,11 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       List<String> ids = new ArrayList<>();
 
+      int listSize = configurationFacade.getConfigurationInteger(LumeerConst.NUMBER_OF_RECENT_DOCS_PROPERTY)
+                                        .orElse(LumeerConst.Collection.DEFAULT_NUMBER_OF_RECENT_DOCUMENTS);
+
       // we add so many ids, as is the size of the list
-      for (int i = 0; i < configurationFacade.getConfigurationInteger(LumeerConst.NUMBER_OF_RECENT_DOCS_PROPERTY).get(); i++) {
+      for (int i = 0; i < listSize; i++) {
          String id = "id" + i;
          ids.add(id);
          collectionMetadataFacade.addRecentlyUsedDocumentId(collection, id);

@@ -48,7 +48,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
@@ -717,12 +716,8 @@ public class CollectionMetadataFacade implements Serializable {
       String docId = getCollectionMetadataDocument(collectionName).getId();
       dataStorage.removeItemFromArray(METADATA_COLLECTION, dialect.documentIdFilter(docId), LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, id);
 
-      int listSize = 0;
-      try {
-         listSize = configurationFacade.getConfigurationInteger(LumeerConst.NUMBER_OF_RECENT_DOCS_PROPERTY).get();
-      } catch (NoSuchElementException e) {
-         listSize = LumeerConst.Collection.DEFAULT_NUMBER_OF_RECENT_DOCUMENTS;
-      }
+      int listSize = configurationFacade.getConfigurationInteger(LumeerConst.NUMBER_OF_RECENT_DOCS_PROPERTY)
+                                        .orElse(LumeerConst.Collection.DEFAULT_NUMBER_OF_RECENT_DOCUMENTS);
 
       DataDocument query = dialect.addRecentlyUsedDocumentQuery(METADATA_COLLECTION, collectionName, id, listSize);
 
@@ -874,11 +869,7 @@ public class CollectionMetadataFacade implements Serializable {
    private boolean checkIfUserCollectionExists(String originalCollectionName) {
       DataDocument result = dataStorage.readDocument(METADATA_COLLECTION, dialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName));
 
-      if (result == null) {
-         return false;
-      }
-
-      return true;
+      return result != null;
    }
 
    // initializes constraint manager
