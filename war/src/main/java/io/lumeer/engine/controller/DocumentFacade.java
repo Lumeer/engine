@@ -114,6 +114,7 @@ public class DocumentFacade implements Serializable {
          }
       });
 
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
       collectionMetadataFacade.setLastTimeUsedNow(collectionName);
 
       return documentId;
@@ -163,6 +164,7 @@ public class DocumentFacade implements Serializable {
          }
       });
 
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
       collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
@@ -206,6 +208,7 @@ public class DocumentFacade implements Serializable {
          }
       });
 
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
       collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
@@ -236,6 +239,7 @@ public class DocumentFacade implements Serializable {
          }
       }
 
+      collectionMetadataFacade.removeRecentlyUsedDocumentId(collectionName, documentId);
       collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
@@ -281,6 +285,7 @@ public class DocumentFacade implements Serializable {
          }
       });
 
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
       collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
@@ -302,6 +307,7 @@ public class DocumentFacade implements Serializable {
       versionFacade.dropDocumentAttribute(collectionName, existingDocument, attributeName);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
 
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
       collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 

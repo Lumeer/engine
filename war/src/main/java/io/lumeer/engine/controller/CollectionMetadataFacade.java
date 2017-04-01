@@ -714,16 +714,32 @@ public class CollectionMetadataFacade implements Serializable {
       setLastTimeUsedNow(collectionName);
    }
 
-   public List<String> getRecentlyUsedDocumentsIds(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      CollectionMetadata metadata = getCollectionMetadata(collectionName);
-
-      if (metadata == null) {
+   /**
+    * Gets the list of recently used documents in collection.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return list of document ids sorted in descending order
+    */
+   public List<String> getRecentlyUsedDocumentsIds(String collectionName) {
+      CollectionMetadata metadata = null;
+      try {
+         metadata = getCollectionMetadata(collectionName);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          return Collections.emptyList();
       }
 
       return metadata.getRecentlyUsedDocumentIds();
    }
 
+   /**
+    * Adds document id to the beginning of the list of recently used documents. If id is already present, it is moved to the beginning.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param id
+    * @throws CollectionMetadataDocumentNotFoundException
+    */
    public void addRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
       String docId = getCollectionMetadataDocument(collectionName).getId();
       dataStorage.removeItemFromArray(METADATA_COLLECTION, dialect.documentIdFilter(docId), LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, id);
@@ -734,6 +750,11 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument query = dialect.addRecentlyUsedDocumentQuery(METADATA_COLLECTION, collectionName, id, listSize);
 
       dataStorage.run(query);
+   }
+
+   public void removeRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
+      String docId = getCollectionMetadataDocument(collectionName).getId();
+      dataStorage.removeItemFromArray(METADATA_COLLECTION, dialect.documentIdFilter(docId), LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, id);
    }
 
    /**
