@@ -34,6 +34,8 @@ public interface DataStorageDialect extends Serializable {
 
    DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize);
 
+   String sortStringForSearch(final String field, final int order); // produces string that can be used in dataStorage.search() method
+
    // LinkingFacade
    DataFilter linkingFromTablesColNameFilter(final String collectionName, final String role);
 
@@ -56,6 +58,10 @@ public interface DataStorageDialect extends Serializable {
    DataFilter documentIdFilter(final String documentId);
 
    DataFilter multipleFieldsValueFilter(final Map<String, Object> fields);
+
+   DataSort documentSort(final String documentSort);
+
+   DataSort documentFieldSort(final String fieldName, final int sortOrder);
 
    String concatFields(String... fields);
 }

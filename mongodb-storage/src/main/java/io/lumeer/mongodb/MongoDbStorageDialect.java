@@ -25,8 +25,10 @@ import static com.mongodb.client.model.Filters.eq;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
+import io.lumeer.engine.api.data.DataSort;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import com.mongodb.client.model.Sorts;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -65,6 +67,10 @@ public class MongoDbStorageDialect implements DataStorageDialect {
                               .append("$each", Arrays.asList(id))
                               .append("$position", 0)
                               .append("$slice", listSize))));
+   }
+
+   public String sortStringForSearch(final String field, final int order) {
+      return MongoUtils.convertBsonToJson(Sorts.descending(field));
    }
 
    private DataFilter createFilter(final Bson filter) {
@@ -159,6 +165,28 @@ public class MongoDbStorageDialect implements DataStorageDialect {
       List<Bson> bsons = new ArrayList<>();
       fields.entrySet().forEach(e -> bsons.add(eq(e.getKey(), e.getValue())));
       return createFilter(and(bsons));
+   }
+
+   private DataSort createSort(final Bson sort) {
+      return new MongoDbDataSort(sort);
+   }
+
+   @Override
+   public DataSort documentSort(final String documentSort) {
+      return createSort(BsonDocument.parse(documentSort));
+   }
+
+   @Override
+   public DataSort documentFieldSort(final String fieldName, final int sortOrder) {
+      if (sortOrder == LumeerConst.SORT_ASCENDING_ORDER) {
+         return createSort(Sorts.ascending(fieldName));
+      }
+
+      if (sortOrder == LumeerConst.SORT_DESCENDING_ORDER) {
+         return createSort(Sorts.descending(fieldName));
+      }
+
+      return null;
    }
 
    @Override

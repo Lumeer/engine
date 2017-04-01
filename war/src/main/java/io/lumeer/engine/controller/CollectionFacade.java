@@ -124,12 +124,11 @@ public class CollectionFacade implements Serializable {
     * @return a list of internal collection names.
     */
    public List<String> getAllCollectionsByLastTimeUsed() {
-      List<DataDocument> result = dataStorage.run(new DataDocument()
-            .append("find", LumeerConst.Collection.METADATA_COLLECTION)
-            .append("projection", new DataDocument()
-                  .append(LumeerConst.Collection.INTERNAL_NAME_KEY, true))
-            .append("sort", new DataDocument()
-                  .append(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER)));
+      List<DataDocument> result = dataStorage.search(
+            LumeerConst.Collection.METADATA_COLLECTION,
+            null,
+            dataStorageDialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER),
+            0, 0);
 
       List<String> collections = new ArrayList<>();
 
