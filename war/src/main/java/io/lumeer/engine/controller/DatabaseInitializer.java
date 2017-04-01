@@ -59,6 +59,12 @@ public class DatabaseInitializer implements Serializable {
                .append(LumeerConst.Project.UserRoles.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING)
                .append(LumeerConst.Project.UserRoles.ATTR_USER_ROLE, LumeerConst.Index.ASCENDING), true);
       }
+
+      if (!dataStorage.hasCollection(LumeerConst.Organization.COLLECTION_NAME)) {
+         dataStorage.createCollection(LumeerConst.Organization.COLLECTION_NAME);
+         dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, LumeerConst.Index.ASCENDING)
+               .append(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, LumeerConst.Organization.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
+      }
    }
 
 }

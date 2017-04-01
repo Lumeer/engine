@@ -23,7 +23,7 @@ import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.engine.api.cache.CacheManager;
 import io.lumeer.engine.api.cache.CacheProvider;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 
 import java.io.Serializable;
@@ -44,7 +44,7 @@ public class CdiCacheManager implements CacheManager, Serializable {
    private Map<String, Map<String, Cache>> caches = new ConcurrentHashMap<>();
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
@@ -58,7 +58,7 @@ public class CdiCacheManager implements CacheManager, Serializable {
    }
 
    public <T> Cache<T> getCache(final String name) {
-      final String key = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId();
+      final String key = organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId();
       final Map<String, Cache> localCaches = caches.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
       final Cache<T> cache = localCaches.computeIfAbsent(name, k -> cacheFactory.getCache());
 

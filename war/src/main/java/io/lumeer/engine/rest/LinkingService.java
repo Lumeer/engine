@@ -30,7 +30,7 @@ import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.LinkDao;
@@ -84,14 +84,14 @@ public class LinkingService {
    private String projectId;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
 
    @PostConstruct
    public void init() {
-      organisationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 

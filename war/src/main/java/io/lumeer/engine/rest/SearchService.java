@@ -22,7 +22,7 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.exception.InvalidQueryException;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SearchFacade;
 
@@ -57,14 +57,14 @@ public class SearchService implements Serializable {
    private String projectId;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
 
    @PostConstruct
    public void init() {
-      organisationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 
