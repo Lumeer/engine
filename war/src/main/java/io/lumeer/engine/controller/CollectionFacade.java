@@ -41,6 +41,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -92,19 +93,18 @@ public class CollectionFacade implements Serializable {
    // cache of collections - keys are internal names, values are original names
    private Map<String, String> collections;
 
-   private long cacheLastUpdated = 0L;
-
    /**
-    * Returns a Map object of collection names in the database except of metadata collections.
+    * Returns a Map object of collection names in the database.
     *
     * @return the map of collection names. Keys are internal names, values are original names.
     */
    public Map<String, String> getAllCollections() {
-      List<DataDocument> result = dataStorage.run(new DataDocument()
-            .append("find", LumeerConst.Collection.METADATA_COLLECTION)
-            .append("projection", new DataDocument()
-                  .append(LumeerConst.Collection.INTERNAL_NAME_KEY, true)
-                  .append(LumeerConst.Collection.REAL_NAME_KEY, true)));
+      List<DataDocument> result = dataStorage.searchIncludeAttrs(
+            LumeerConst.Collection.METADATA_COLLECTION,
+            null,
+            Arrays.asList(
+                  LumeerConst.Collection.INTERNAL_NAME_KEY,
+                  LumeerConst.Collection.REAL_NAME_KEY));
 
       Map<String, String> collections = new HashMap<>();
 
@@ -114,9 +114,15 @@ public class CollectionFacade implements Serializable {
                d.getString(LumeerConst.Collection.REAL_NAME_KEY));
       }
 
+      this.collections = collections;
       return collections;
    }
 
+   /**
+    * Returns a list of collection names sorted by last time used date in descending order.
+    *
+    * @return a list of internal collection names.
+    */
    public List<String> getAllCollectionsByLastTimeUsed() {
       List<DataDocument> result = dataStorage.run(new DataDocument()
             .append("find", LumeerConst.Collection.METADATA_COLLECTION)
