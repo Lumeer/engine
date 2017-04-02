@@ -30,7 +30,9 @@ import java.util.Map;
 public interface DataStorageDialect extends Serializable {
 
    // CollectionMetadataFacade
-   DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName);
+   DataDocument renameAttributeQuery(final String metadataCollection, final String collection, final String oldName, final String newName);
+
+   DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize);
 
    // LinkingFacade
    DataFilter linkingFromTablesColNameFilter(final String collectionName, final String role);
