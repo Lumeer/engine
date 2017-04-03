@@ -33,9 +33,7 @@ public interface DataStorageDialect extends Serializable {
    DataDocument renameAttributeQuery(final String metadataCollection, final String collection, final String oldName, final String newName);
 
    DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize);
-
-   String sortStringForSearch(final String field, final int order); // produces string that can be used in dataStorage.search() method
-
+   
    // LinkingFacade
    DataFilter linkingFromTablesColNameFilter(final String collectionName, final String role);
 
