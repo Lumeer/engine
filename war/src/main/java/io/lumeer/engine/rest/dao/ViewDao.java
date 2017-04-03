@@ -19,7 +19,12 @@
  */
 package io.lumeer.engine.rest.dao;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.controller.UserFacade;
+
+import java.util.Date;
+import javax.inject.Inject;
 
 /**
  * Describes view information.
@@ -27,6 +32,9 @@ import io.lumeer.engine.api.data.DataDocument;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class ViewDao {
+
+   @Inject
+   private UserFacade userFacade;
 
    /**
     * Internal view ID.
@@ -44,18 +52,43 @@ public class ViewDao {
    private String type;
 
    /**
+    * View description from user
+    */
+   private String description;
+
+   /**
     * Complete view configuration.
     */
    private DataDocument configuration;
 
+   private Date createDate;
+   private String createUser;
+   private Date updateDate;
+   private String updateUser;
+
    public ViewDao() {
    }
 
-   public ViewDao(final int id, final String name, final String type, final DataDocument configuration) {
+   public ViewDao(final int id, final String name, final String type, final String description, final DataDocument configuration) {
       this.id = id;
       this.name = name;
       this.type = type;
+      this.description = description;
       this.configuration = configuration;
+      this.createUser = userFacade.getUserEmail();
+      this.createDate = new Date();
+   }
+
+   public ViewDao(DataDocument viewMetadata) {
+      this.id = viewMetadata.getInteger(LumeerConst.View.ID_KEY);
+      this.name = viewMetadata.getString(LumeerConst.View.NAME_KEY);
+      this.type = viewMetadata.getString(LumeerConst.View.TYPE_KEY);
+      this.description = viewMetadata.getString(LumeerConst.View.DESCRIPTION_KEY);
+      this.configuration = viewMetadata.getDataDocument(LumeerConst.View.CONFIGURATION_KEY);
+      this.createDate = viewMetadata.getDate(LumeerConst.View.CREATE_DATE_KEY);
+      this.createUser = viewMetadata.getString(LumeerConst.View.CREATE_USER_KEY);
+      this.updateDate = viewMetadata.getDate(LumeerConst.View.UPDATE_DATE_KEY);
+      this.updateUser = viewMetadata.getString(LumeerConst.View.UPDATE_USER_KEY);
    }
 
    public int getId() {
@@ -80,6 +113,46 @@ public class ViewDao {
 
    public void setType(final String type) {
       this.type = type;
+   }
+
+   public String getDescription() {
+      return description;
+   }
+
+   public void setDescription(final String description) {
+      this.description = description;
+   }
+
+   public Date getCreateDate() {
+      return createDate;
+   }
+
+   public void setCreateDate(final Date createDate) {
+      this.createDate = createDate;
+   }
+
+   public String getCreateUser() {
+      return createUser;
+   }
+
+   public void setCreateUser(final String createUser) {
+      this.createUser = createUser;
+   }
+
+   public Date getUpdateDate() {
+      return updateDate;
+   }
+
+   public void setUpdateDate(final Date updateDate) {
+      this.updateDate = updateDate;
+   }
+
+   public String getUpdateUser() {
+      return updateUser;
+   }
+
+   public void setUpdateUser(final String updateUser) {
+      this.updateUser = updateUser;
    }
 
    public DataDocument getConfiguration() {

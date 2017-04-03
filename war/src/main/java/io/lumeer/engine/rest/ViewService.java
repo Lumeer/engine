@@ -19,7 +19,6 @@
  */
 package io.lumeer.engine.rest;
 
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
@@ -118,7 +117,7 @@ public class ViewService {
    @Consumes(MediaType.APPLICATION_JSON)
    @Produces(MediaType.APPLICATION_JSON)
    public int createView(final ViewDao view) throws ViewAlreadyExistsException {
-      return viewFacade.createView(view.getName(), view.getType(), view.getConfiguration());
+      return viewFacade.createView(view.getName(), view.getType(), view.getDescription(), view.getConfiguration());
    }
 
    /**
@@ -126,8 +125,6 @@ public class ViewService {
     *
     * @param view
     *       The view descriptor.
-    * @throws ViewMetadataNotFoundException
-    *       when view was not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to edit the view
     * @throws ViewAlreadyExistsException
@@ -136,11 +133,15 @@ public class ViewService {
    @PUT
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateView(final ViewDao view) throws ViewMetadataNotFoundException, UnauthorizedAccessException, ViewAlreadyExistsException {
+   public void updateView(final ViewDao view) throws UnauthorizedAccessException, ViewAlreadyExistsException {
       // TODO update view with id view.id
-      DataDocument viewDocument = viewFacade.getViewMetadata(view.getId());
+      if (!viewFacade.checkViewForWrite(view.getId(), getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
 
-      if (view.getName() != null && !view.getName().equals(viewDocument.getString(LumeerConst.View.VIEW_NAME_KEY))) {
+      ViewDao viewMetadata = viewFacade.getViewMetadata(view.getId());
+
+      if (view.getName() != null && !view.getName().equals(viewMetadata.getName())) {
          viewFacade.setViewName(view.getId(), view.getName());
       }
 
@@ -156,15 +157,17 @@ public class ViewService {
     *       An attribute of the view to configure.
     * @param configuration
     *       Configuration string, can specify either JSON or just a plain string.
-    * @throws ViewMetadataNotFoundException
-    *       when view was not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to edit the view
     */
    @PUT
    @Path("/{id}/configure/{attribute}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute, final String configuration) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+   public void updateViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute, final String configuration) throws UnauthorizedAccessException {
+      if (!viewFacade.checkViewForWrite(id, getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
+
       try {
          Map<String, Object> configurationData = new ObjectMapper().readValue(configuration, HashMap.class);
          DataDocument configurationDocument = new DataDocument(configurationData);
@@ -182,15 +185,17 @@ public class ViewService {
     * @param attribute
     *       An attribute of the view to return.
     * @return The configuration value. Either JSON or a plain string.
-    * @throws ViewMetadataNotFoundException
-    *       when view was not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read the view
     */
    @GET
    @Path("/{id}/configure/{attribute}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Object readViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
+   public Object readViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute) throws UnauthorizedAccessException {
+      if (!viewFacade.checkViewForRead(id, getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
+
       return viewFacade.getViewConfigurationAttribute(id, attribute);
    }
 
@@ -206,14 +211,16 @@ public class ViewService {
     *       when a view with given new name already exists
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to read copied view
-    * @throws ViewMetadataNotFoundException
-    *       when copied view was not found
     */
    @POST
    @Path("/{id}/clone/{newName}")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public int cloneView(final @PathParam("id") int id, final @PathParam("newName") String newName) throws ViewAlreadyExistsException, UnauthorizedAccessException, ViewMetadataNotFoundException {
+   public int cloneView(final @PathParam("id") int id, final @PathParam("newName") String newName) throws UnauthorizedAccessException, ViewMetadataNotFoundException, ViewAlreadyExistsException {
+      if (!viewFacade.checkViewForRead(id, getCurrentUser())) {
+         throw new UnauthorizedAccessException();
+      }
+
       return viewFacade.copyView(id, newName);
    }
 
@@ -223,22 +230,17 @@ public class ViewService {
     * @param id
     *       The view id.
     * @return The access rights.
-    * @throws ViewMetadataNotFoundException
-    *       when view was not found
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to read the view
     */
    @GET
    @Path("/{id}/rights")
    @Produces(MediaType.APPLICATION_JSON)
-   public AccessRightsDao getViewAccessRights(final @PathParam("id") int id) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
-      final String user = userFacade.getUserEmail();
-      final DataDocument view = viewFacade.getViewMetadata(id);
-
+   public AccessRightsDao getViewAccessRights(final @PathParam("id") int id) {
+      DataDocument metadata = viewFacade.getViewMetadataDocument(id);
+      String user = getCurrentUser();
       return new AccessRightsDao(
-            securityFacade.checkForRead(view, user),
-            securityFacade.checkForWrite(view, user),
-            securityFacade.checkForExecute(view, user),
+            securityFacade.checkForRead(metadata, user),
+            securityFacade.checkForWrite(metadata, user),
+            securityFacade.checkForExecute(metadata, user),
             user);
    }
 
@@ -249,19 +251,16 @@ public class ViewService {
     *       The view id.
     * @param accessRights
     *       The rights to set.
-    * @throws ViewMetadataNotFoundException
-    *       when view was not found
     * @throws UnauthorizedAccessException
     *       when current user is not allowed to set rights for the view
     */
    @PUT
    @Path("/{id}/rights")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void setViewAccessRights(final @PathParam("id") int id, final AccessRightsDao accessRights) throws ViewMetadataNotFoundException, UnauthorizedAccessException {
-      final String user = userFacade.getUserEmail();
-      final DataDocument view = viewFacade.getViewMetadata(id);
+   public void setViewAccessRights(final @PathParam("id") int id, final AccessRightsDao accessRights) throws UnauthorizedAccessException {
+      final DataDocument view = viewFacade.getViewMetadataDocument(id);
 
-      if (securityFacade.checkForAddRights(view, user)) {
+      if (securityFacade.checkForAddRights(view, getCurrentUser())) {
          if (accessRights.isRead()) {
             securityFacade.setRightsRead(view, accessRights.getUserName());
          } else {
@@ -284,5 +283,9 @@ public class ViewService {
       } else {
          throw new UnauthorizedAccessException("Cannot set user rights on this view.");
       }
+   }
+
+   private String getCurrentUser() {
+      return userFacade.getUserEmail();
    }
 }
