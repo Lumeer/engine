@@ -448,6 +448,7 @@ public class CollectionMetadataFacade implements Serializable {
                   collectionOriginalName),
             dialect.documentIdFilter(documentId));
 
+      setLastTimeUsedNow(collectionInternalName);
       changeCollectionNameEvent.fire(new ChangeCollectionName(collectionOriginalName, collectionInternalName));
    }
 
@@ -468,8 +469,14 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     */
-   public void setLastTimeUsedNow(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      DataDocument collectionInfo = getCollectionMetadataDocument(collectionName);
+   public void setLastTimeUsedNow(String collectionName) {
+      DataDocument collectionInfo = null;
+      try {
+         collectionInfo = getCollectionMetadataDocument(collectionName);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
+         return; // do nothing
+      }
+
       String documentId = collectionInfo.getId();
       dataStorage.updateDocument(
             METADATA_COLLECTION,
@@ -509,6 +516,7 @@ public class CollectionMetadataFacade implements Serializable {
       }
 
       dataStorage.updateDocument(METADATA_COLLECTION, metadataDocument, dialect.documentIdFilter(documentId));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -527,6 +535,7 @@ public class CollectionMetadataFacade implements Serializable {
             nestedAttributeName(
                   LumeerConst.Collection.CUSTOM_META_KEY,
                   key));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -678,6 +687,8 @@ public class CollectionMetadataFacade implements Serializable {
                   LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
             ),
             constraintConfiguration);
+
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -700,18 +711,35 @@ public class CollectionMetadataFacade implements Serializable {
             ),
             constraintConfiguration);
 
+      setLastTimeUsedNow(collectionName);
    }
 
-   public List<String> getRecentlyUsedDocumentsIds(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      CollectionMetadata metadata = getCollectionMetadata(collectionName);
-
-      if (metadata == null) {
+   /**
+    * Gets the list of recently used documents in collection.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @return list of document ids sorted in descending order
+    */
+   public List<String> getRecentlyUsedDocumentsIds(String collectionName) {
+      CollectionMetadata metadata = null;
+      try {
+         metadata = getCollectionMetadata(collectionName);
+      } catch (CollectionMetadataDocumentNotFoundException e) {
          return Collections.emptyList();
       }
 
       return metadata.getRecentlyUsedDocumentIds();
    }
 
+   /**
+    * Adds document id to the beginning of the list of recently used documents. If id is already present, it is moved to the beginning.
+    *
+    * @param collectionName
+    *       internal collection name
+    * @param id
+    * @throws CollectionMetadataDocumentNotFoundException
+    */
    public void addRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
       String docId = getCollectionMetadataDocument(collectionName).getId();
       dataStorage.removeItemFromArray(METADATA_COLLECTION, dialect.documentIdFilter(docId), LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, id);
@@ -722,6 +750,11 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument query = dialect.addRecentlyUsedDocumentQuery(METADATA_COLLECTION, collectionName, id, listSize);
 
       dataStorage.run(query);
+   }
+
+   public void removeRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
+      String docId = getCollectionMetadataDocument(collectionName).getId();
+      dataStorage.removeItemFromArray(METADATA_COLLECTION, dialect.documentIdFilter(docId), LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, id);
    }
 
    /**
@@ -782,6 +815,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.setRightsRead(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, dialect.documentIdFilter(collectionMetadata.getId()));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -796,6 +830,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.setRightsWrite(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, dialect.documentIdFilter(collectionMetadata.getId()));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -810,6 +845,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.setRightsExecute(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, dialect.documentIdFilter(collectionMetadata.getId()));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -824,6 +860,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.removeRightsRead(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, dialect.documentIdFilter(collectionMetadata.getId()));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -838,6 +875,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.removeRightsWrite(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, dialect.documentIdFilter(collectionMetadata.getId()));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -852,6 +890,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = getCollectionMetadataDocument(collectionName);
       securityFacade.removeRightsExecute(collectionMetadata, user);
       dataStorage.updateDocument(METADATA_COLLECTION, collectionMetadata, dialect.documentIdFilter(collectionMetadata.getId()));
+      setLastTimeUsedNow(collectionName);
    }
 
    /**

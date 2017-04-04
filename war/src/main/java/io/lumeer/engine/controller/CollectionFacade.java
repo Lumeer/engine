@@ -254,6 +254,8 @@ public class CollectionFacade implements Serializable {
          for (DataDocument document : documents) {
             dataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(document.getId()), attributeName);
          }
+
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -279,6 +281,8 @@ public class CollectionFacade implements Serializable {
       if (dataStorage.hasCollection(collectionName)) {
          collectionMetadataFacade.renameAttribute(collectionName, origName, newName);
          dataStorage.renameAttribute(collectionName, origName, newName);
+
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -320,6 +324,8 @@ public class CollectionFacade implements Serializable {
          }
 
          collectionMetadataFacade.addAttributeConstraint(collectionName, attributeName, constraintConfiguration);
+
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
          return true;
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -343,6 +349,7 @@ public class CollectionFacade implements Serializable {
    public void dropAttributeConstraint(final String collectionName, final String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
          collectionMetadataFacade.dropAttributeConstraint(collectionName, attributeName, constraintConfiguration);
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
