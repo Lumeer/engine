@@ -69,10 +69,6 @@ public class MongoDbStorageDialect implements DataStorageDialect {
                               .append("$slice", listSize))));
    }
 
-   public String sortStringForSearch(final String field, final int order) {
-      return MongoUtils.convertBsonToJson(Sorts.descending(field));
-   }
-
    private DataFilter createFilter(final Bson filter) {
       return new MongoDbDataFilter(filter);
    }
