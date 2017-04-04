@@ -277,7 +277,7 @@ public class ViewFacade implements Serializable {
     */
    public List<ViewDao> getAllViews() {
       List<DataDocument> views = dataStorage.search(metadataCollection(), null, null, 0, 0);
-      return createListOfDaos(views);
+      return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
    }
 
    /**
@@ -290,10 +290,30 @@ public class ViewFacade implements Serializable {
             metadataCollection(),
             dataStorageDialect.fieldValueFilter(LumeerConst.View.TYPE_KEY, type),
             null, 0, 0);
-      return createListOfDaos(views);
+      return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
    }
 
-   // creates list of daos from list of documents
+   /**
+    * Filters out only views that can be read by current user
+    *
+    * @param views
+    *       list of all views
+    * @return filtered list of views
+    */
+   private List<DataDocument> filterViewsForUser(List<DataDocument> views) {
+      List<DataDocument> filteredViews = new ArrayList<>();
+      String user = getCurrentUser();
+
+      for (DataDocument view : views) {
+         if (checkViewForRead(view.getInteger(LumeerConst.View.ID_KEY), user)) {
+            filteredViews.add(view);
+         }
+      }
+
+      return filteredViews;
+   }
+
+   // creates list of daos from list of DataDocuments
    private List<ViewDao> createListOfDaos(List<DataDocument> views) {
       List<ViewDao> viewsDaos = new ArrayList<>();
 
