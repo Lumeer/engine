@@ -102,6 +102,8 @@ public class ViewFacade implements Serializable {
             .append(LumeerConst.View.PROJECT_ID, projectFacade.getCurrentProjectId())
             .append(LumeerConst.View.CREATE_USER_KEY, createUser)
             .append(LumeerConst.View.CREATE_DATE_KEY, new Date())
+            .append(LumeerConst.View.UPDATE_USER_KEY, null)
+            .append(LumeerConst.View.UPDATE_DATE_KEY, null)
             .append(LumeerConst.View.TYPE_KEY, viewType)
             .append(LumeerConst.View.CONFIGURATION_KEY, configuration != null ? configuration : new DataDocument());
 
@@ -184,7 +186,8 @@ public class ViewFacade implements Serializable {
     *       view id
     * @param name
     *       new view name
-    * @throws ViewAlreadyExistsException if view with given name already exists
+    * @throws ViewAlreadyExistsException
+    *       if view with given name already exists
     */
    public void setViewName(int viewId, String name) throws ViewAlreadyExistsException {
       if (checkIfViewNameExists(name)) {
@@ -328,14 +331,19 @@ public class ViewFacade implements Serializable {
    }
 
    private void setViewMetadataValue(int viewId, String metaKey, Object value) {
-      DataDocument metadataDocument = new DataDocument(metaKey, value)
-            .append(LumeerConst.View.UPDATE_USER_KEY, getCurrentUser())    // with every change, we change update user and date
-            .append(LumeerConst.View.UPDATE_DATE_KEY, new Date());
+      DataDocument metadataDocument = new DataDocument(metaKey, value);
+      setUpdateTimeAndUser(metadataDocument);
 
       dataStorage.updateDocument(
             metadataCollection(),
             metadataDocument,
             dataStorageDialect.fieldValueFilter(LumeerConst.View.ID_KEY, viewId));
+   }
+
+   private DataDocument setUpdateTimeAndUser(DataDocument updatedDocument) {
+      return updatedDocument
+            .append(LumeerConst.View.UPDATE_USER_KEY, getCurrentUser())    // with every change, we change update user and date
+            .append(LumeerConst.View.UPDATE_DATE_KEY, new Date());
    }
 
    private String getCurrentUser() {
