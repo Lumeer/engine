@@ -61,9 +61,24 @@ public class ViewDao {
     */
    private DataDocument configuration;
 
+   /**
+    * Date when view was created
+    */
    private Date createDate;
+
+   /**
+    * Name of user who created the view
+    */
    private String createUser;
+
+   /**
+    * Date when view was last updated
+    */
    private Date updateDate;
+
+   /**
+    * Name of user who last updated the view
+    */
    private String updateUser;
 
    public ViewDao() {
@@ -200,6 +215,7 @@ public class ViewDao {
       return "ViewDao{"
             + "id=" + id
             + ", name='" + name + '\''
+            + ", description='" + description + '\''
             + ", type='" + type + '\''
             + ", configuration=" + configuration
             + '}';

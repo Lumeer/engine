@@ -67,6 +67,8 @@ public class ViewFacade implements Serializable {
     *       name given by user
     * @param viewType
     *       type of the view
+    * @param description
+    *       view description
     * @param configuration
     *       configuration of the view
     * @return view id
@@ -133,6 +135,11 @@ public class ViewFacade implements Serializable {
             originalView.getConfiguration());
    }
 
+   /**
+    * @param viewId
+    *       view id
+    * @return object with view metadata
+    */
    public ViewDao getViewMetadata(int viewId) {
       DataDocument viewMetadata = getViewMetadataDocument(viewId);
       if (viewMetadata == null) {
@@ -177,6 +184,7 @@ public class ViewFacade implements Serializable {
     *       view id
     * @param name
     *       new view name
+    * @throws ViewAlreadyExistsException if view with given name already exists
     */
    public void setViewName(int viewId, String name) throws ViewAlreadyExistsException {
       if (checkIfViewNameExists(name)) {
@@ -282,7 +290,7 @@ public class ViewFacade implements Serializable {
       return createListOfDaos(views);
    }
 
-   // creates list of daos from list of documents and performs security checks
+   // creates list of daos from list of documents
    private List<ViewDao> createListOfDaos(List<DataDocument> views) {
       List<ViewDao> viewsDaos = new ArrayList<>();
 
@@ -335,7 +343,7 @@ public class ViewFacade implements Serializable {
    }
 
    /**
-    * @return name of metadata collection for current project
+    * @return name of view metadata collection for current project
     */
    public String metadataCollection() {
       return metadataCollection(projectFacade.getCurrentProjectId());
@@ -344,7 +352,7 @@ public class ViewFacade implements Serializable {
    /**
     * @param projectId
     *       project id
-    * @return name of metadata collection for given project id
+    * @return name of view metadata collection for given project id
     */
    private String metadataCollection(String projectId) {
       return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectId;

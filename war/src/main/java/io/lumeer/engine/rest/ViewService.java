@@ -107,7 +107,7 @@ public class ViewService {
     * Creates a new view.
     *
     * @param view
-    *       The view description.
+    *       The view object.
     * @return Id of the newly created view.
     * @throws ViewAlreadyExistsException
     *       when view with given name already exists
@@ -134,7 +134,6 @@ public class ViewService {
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateView(final ViewDao view) throws UnauthorizedAccessException, ViewAlreadyExistsException {
-      // TODO update view with id view.id
       if (!viewFacade.checkViewForWrite(view.getId(), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
