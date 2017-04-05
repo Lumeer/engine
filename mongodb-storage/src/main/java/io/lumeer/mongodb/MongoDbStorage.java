@@ -30,6 +30,7 @@ import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
+import io.lumeer.engine.api.data.DataSort;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageStats;
 import io.lumeer.engine.api.data.Query;
@@ -424,11 +425,11 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public List<DataDocument> search(final String collectionName, final DataFilter filter, final String sort, final int skip, final int limit) {
+   public List<DataDocument> search(final String collectionName, final DataFilter filter, final DataSort sort, final int skip, final int limit) {
       MongoCollection<Document> collection = database.getCollection(collectionName);
       FindIterable<Document> documents = filter != null ? collection.find(filter.<Bson>get()) : collection.find();
-      if (sort != null && !sort.isEmpty()) {
-         documents = documents.sort(BsonDocument.parse(sort));
+      if (sort != null) {
+         documents = documents.sort(sort.<Bson>get());
       }
       if (skip > 0) {
          documents = documents.skip(skip);
