@@ -27,10 +27,15 @@ import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.util.Resources;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
@@ -44,6 +49,9 @@ public class ConfigurationManipulator implements Serializable {
 
    public static final String NAME_KEY = "name";
    public static final String CONFIG_KEY = "config";
+   public static final String FLAGS_KEY = "flags";
+
+   private static final String FLAG_SEPARATOR = "_";
 
    @Inject
    private DataStorageDialect dataStorageDialect;
@@ -124,7 +132,25 @@ public class ConfigurationManipulator implements Serializable {
     *       the Object value of the given key
     */
    public void setConfiguration(final String collectionName, final String nameValue, final String key, final Object value) {
-      writeValueToDb(collectionName, nameValue, key, value);
+      setConfiguration(collectionName, nameValue, key, value, Collections.emptySet());
+   }
+
+   /**
+    * Sets a new key-value into 'config' field for given nameValue of configuration entry stored in system database. If the given key exists, its value will be updated.
+    *
+    * @param collectionName
+    *       the name of collection in system database
+    * @param nameValue
+    *       the unique name value of stored configuration entry
+    * @param key
+    *       the name of key to store in 'config' field
+    * @param value
+    *       the Object value of the given key
+    * @param flags
+    *       flags to be set for the given configuration field
+    */
+   public void setConfiguration(final String collectionName, final String nameValue, final String key, final Object value, final Set<String> flags) {
+      writeValueToDb(collectionName, nameValue, key, value, flags);
    }
 
    /**
@@ -161,6 +187,21 @@ public class ConfigurationManipulator implements Serializable {
       return Optional.ofNullable(config);
    }
 
+   public boolean hasConfigurationAttributeFlag(final String collectionName, final String configName, final String attributeName, final String flagName) {
+      Optional<DataDocument> configuration = getConfigurationEntry(collectionName, configName);
+      if (!configuration.isPresent()) {
+         return false;
+      }
+
+      List<String> flags = configuration.get().getArrayList(FLAGS_KEY, String.class);
+      if (flags == null) {
+         return false;
+      }
+
+      String attributeFlag = createAttributeFlag(attributeName, flagName);
+      return flags.contains(attributeFlag);
+   }
+
    /**
     * Sets a new Object value for given nameValue and key located in 'config' field in configuration entry stored in system database. If the given key exists, its value will be updated.
     *
@@ -173,29 +214,44 @@ public class ConfigurationManipulator implements Serializable {
     * @param value
     *       the Object value of the given key
     */
-   private void writeValueToDb(final String collectionName, final String nameValue, final String key, final Object value) {
+   private void writeValueToDb(final String collectionName, final String nameValue, final String key, final Object value, final Set<String> flags) {
       if (nameValue == null || key == null || value == null) {
          return;
       }
 
-      Optional<DataDocument> configuration = getConfigurationEntry(collectionName, nameValue);
+      List<String> newFlags = convertToAttributeFlags(key, flags);
 
+      Optional<DataDocument> configuration = getConfigurationEntry(collectionName, nameValue);
       if (!configuration.isPresent()) {
          log.log(Level.FINE, "Configuration '{}' not found in collection '{}', creating configuration entry '{{}:{}}'", Arrays.asList(nameValue, collectionName, key, value));
-         createNewConfigurationEntry(collectionName, nameValue, key, value);
+         createNewConfigurationEntry(collectionName, nameValue, key, value, newFlags);
          return;
       }
 
       log.log(Level.FINE, "Writing '{{}:{}}' to configuration '{}' in collection '{}'", Arrays.asList(key, value, nameValue, collectionName));
       DataDocument configDocument = configuration.get();
+
       DataDocument configValues = (DataDocument) configDocument.get(CONFIG_KEY);
       configValues.put(key, value);
 
+      List<String> flagsArray = configDocument.getArrayList(FLAGS_KEY, String.class);
+      if (flagsArray == null) {
+         flagsArray = new ArrayList<>();
+      }
+      flagsArray.addAll(newFlags);
+
       DataDocument updatedDocument = new DataDocument();
       updatedDocument.put(CONFIG_KEY, configValues);
+      updatedDocument.put(FLAGS_KEY, flagsArray);
 
       DataFilter filter = dataStorageDialect.documentIdFilter(configDocument.getId());
       systemDataStorage.updateDocument(collectionName, updatedDocument, filter);
+   }
+
+   private static List<String> convertToAttributeFlags(final String configKey, final Set<String> flags) {
+      return flags.stream()
+                  .map(flag -> createAttributeFlag(configKey, flag))
+                  .collect(Collectors.toList());
    }
 
    /**
@@ -244,13 +300,19 @@ public class ConfigurationManipulator implements Serializable {
       DataDocument configDocument = new DataDocument();
       configDocument.put(NAME_KEY, nameValue);
       configDocument.put(CONFIG_KEY, new DataDocument());
+      configDocument.put(FLAGS_KEY, Collections.emptyList());
       systemDataStorage.createDocument(collectionName, configDocument);
    }
 
-   private void createNewConfigurationEntry(final String collectionName, final String nameValue, final String key, final Object value) {
-      DataDocument configuration = new DataDocument();
-      configuration.put(NAME_KEY, nameValue);
-      configuration.put(CONFIG_KEY, new DataDocument(key, value));
-      systemDataStorage.createDocument(collectionName, configuration);
+   private void createNewConfigurationEntry(final String collectionName, final String nameValue, final String key, final Object value, final List<String> flags) {
+      DataDocument configDocument = new DataDocument();
+      configDocument.put(NAME_KEY, nameValue);
+      configDocument.put(CONFIG_KEY, new DataDocument(key, value));
+      configDocument.put(FLAGS_KEY, flags);
+      systemDataStorage.createDocument(collectionName, configDocument);
+   }
+
+   private static String createAttributeFlag(final String configKey, final String flagName) {
+      return configKey + FLAG_SEPARATOR + flagName;
    }
 }

@@ -27,7 +27,9 @@ import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.util.Resources;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.enterprise.context.SessionScoped;
@@ -48,6 +50,8 @@ public class ConfigurationFacade implements Serializable {
    protected static final String USER_CONFIG_COLLECTION = "_config_user";
    protected static final String PROJECT_CONFIG_COLLECTION = "_config_project";
    protected static final String ORGANISATION_CONFIG_COLLECTION = "_config_organization";
+
+   protected static final String FLAG_RESTRICTED = "restricted";
 
    @Inject
    private UserFacade userFacade;
@@ -247,7 +251,7 @@ public class ConfigurationFacade implements Serializable {
     *       the value for the given key
     */
    public void setUserConfiguration(final String key, final Object value) {
-      setConfiguration(ConfigurationLevel.USER, key, value);
+      setConfiguration(ConfigurationLevel.USER, key, value, false);
    }
 
    /**
@@ -257,9 +261,11 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @param value
     *       the value of the given key
+    * @param restricted
+    *       indicates if the value of the specified field can be overridden by lower level configuration
     */
-   public void setProjectConfiguration(final String key, final Object value) {
-      setConfiguration(ConfigurationLevel.PROJECT, key, value);
+   public void setProjectConfiguration(final String key, final Object value, final boolean restricted) {
+      setConfiguration(ConfigurationLevel.PROJECT, key, value, restricted);
    }
 
    /**
@@ -269,9 +275,11 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @param value
     *       the value of the given key
+    * @param restricted
+    *       indicates if the value of the specified field can be overridden by lower level configuration
     */
-   public void setOrganisationConfiguration(final String key, final Object value) {
-      setConfiguration(ConfigurationLevel.ORGANISATION, key, value);
+   public void setOrganisationConfiguration(final String key, final Object value, final boolean restricted) {
+      setConfiguration(ConfigurationLevel.ORGANISATION, key, value, restricted);
    }
 
    /**
@@ -422,13 +430,20 @@ public class ConfigurationFacade implements Serializable {
     * @return Object value of the given key
     */
    private Object getConfiguration(final String key) {
+      String organization = organizationFacade.getOrganizationId();
+      String project = projectFacade.getCurrentProjectId();
+
+      String configName = createConfigName(organization, project);
+      boolean projectRestricted = configurationManipulator.hasConfigurationAttributeFlag(PROJECT_CONFIG_COLLECTION, configName, key, FLAG_RESTRICTED);
+      boolean organizationRestricted = configurationManipulator.hasConfigurationAttributeFlag(ORGANISATION_CONFIG_COLLECTION, organization, key, FLAG_RESTRICTED);
+
       Object userConfig = getUserConfiguration(key);
-      if (userConfig != null) {
+      if (userConfig != null && !projectRestricted && !organizationRestricted) {
          return userConfig;
       }
 
       Object projectConfig = getProjectConfiguration(key);
-      if (projectConfig != null) {
+      if (projectConfig != null && !organizationRestricted) {
          return projectConfig;
       }
 
@@ -449,23 +464,30 @@ public class ConfigurationFacade implements Serializable {
     *       the name of key
     * @param value
     *       the Object value of the given key
+    * @param restricted
+    *       indicates if the value of the specified field can be overridden by lower level configuration
     */
-   private void setConfiguration(final ConfigurationLevel level, final String key, final Object value) {
+   private void setConfiguration(final ConfigurationLevel level, final String key, final Object value, final boolean restricted) {
       final String user = userFacade.getUserEmail();
       final String organization = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
+      Set<String> flags = new HashSet<>();
+      if (restricted) {
+         flags.add(FLAG_RESTRICTED);
+      }
+
       switch (level) {
          case USER:
             String userConfigName = createConfigName(organization, project, user);
-            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userConfigName, key, value);
+            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userConfigName, key, value, flags);
             break;
          case PROJECT:
             String projectConfigName = createConfigName(organization, project);
-            configurationManipulator.setConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName, key, value);
+            configurationManipulator.setConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName, key, value, flags);
             break;
          case ORGANISATION:
-            configurationManipulator.setConfiguration(ORGANISATION_CONFIG_COLLECTION, organization, key, value);
+            configurationManipulator.setConfiguration(ORGANISATION_CONFIG_COLLECTION, organization, key, value, flags);
             break;
       }
    }

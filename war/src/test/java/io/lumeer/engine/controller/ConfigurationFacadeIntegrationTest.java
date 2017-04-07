@@ -209,13 +209,13 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       // #1 if the system user collection is empty
-      configurationFacade.setProjectConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      configurationFacade.setProjectConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE, true);
       assertThat(configurationFacade.getProjectConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
       systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       // #2 if the system user collection is filled and key exists
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
-      configurationFacade.setProjectConfiguration(DBURL_KEY, DUMMY_VALUE);
+      configurationFacade.setProjectConfiguration(DBURL_KEY, DUMMY_VALUE, true);
       assertThat(configurationFacade.getProjectConfigurationString(DBURL_KEY)).contains(DUMMY_VALUE);
    }
 
@@ -223,7 +223,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    public void testSetAndGetProjectConfigurationInteger() throws Exception {
       systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
-      configurationFacade.setProjectConfiguration(PORT_KEY, DUMMY_PORT_VALUE);
+      configurationFacade.setProjectConfiguration(PORT_KEY, DUMMY_PORT_VALUE, true);
       assertThat(configurationFacade.getProjectConfigurationInteger(PORT_KEY)).contains(DUMMY_PORT_VALUE);
    }
 
@@ -232,7 +232,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
-      configurationFacade.setProjectConfiguration(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      configurationFacade.setProjectConfiguration(DOCUMENT_PROPERTY_KEY, dummyDocument, true);
       final DataDocument document = configurationFacade.getProjectConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
       assertThat(dummyDocument).isEqualTo(document);
@@ -243,13 +243,13 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
       // #1 if the system user collection is empty
-      configurationFacade.setOrganisationConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      configurationFacade.setOrganisationConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE, true);
       assertThat(configurationFacade.getOrganisationConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
       systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
       // #2 if the system user collection is filled and key exists
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.ORGANISATION);
-      configurationFacade.setOrganisationConfiguration(DBURL_KEY, DUMMY_VALUE);
+      configurationFacade.setOrganisationConfiguration(DBURL_KEY, DUMMY_VALUE, true);
       assertThat(configurationFacade.getOrganisationConfigurationString(DBURL_KEY)).contains(DUMMY_VALUE);
    }
 
@@ -257,7 +257,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    public void testSetAndGetOrganisationConfigurationInteger() throws Exception {
       systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
-      configurationFacade.setOrganisationConfiguration(PORT_KEY, DUMMY_PORT_VALUE);
+      configurationFacade.setOrganisationConfiguration(PORT_KEY, DUMMY_PORT_VALUE, true);
       assertThat(configurationFacade.getOrganisationConfigurationInteger(PORT_KEY)).contains(DUMMY_PORT_VALUE);
    }
 
@@ -266,7 +266,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
       final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
-      configurationFacade.setOrganisationConfiguration(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      configurationFacade.setOrganisationConfiguration(DOCUMENT_PROPERTY_KEY, dummyDocument, true);
       final DataDocument document = configurationFacade.getOrganisationConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
       assertThat(dummyDocument).isEqualTo(document);
@@ -327,6 +327,42 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       configurationFacade.resetOrganisationConfigurationAttribute(DBURL_KEY);
       assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION, organizationFacade.getOrganizationId()).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
+   }
+
+   @Test
+   public void testNotOverridableProjectConfigurationByUser() {
+      configurationFacade.setProjectConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE, true);
+      assertThat(configurationFacade.getProjectConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
+
+      String overridenValue = DUMMY_DBHOST_VALUE + "aaa";
+      configurationFacade.setUserConfiguration(DBHOST_KEY, overridenValue);
+      assertThat(configurationFacade.getUserConfigurationString(DBHOST_KEY)).contains(overridenValue);
+
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
+   }
+
+   @Test
+   public void testNotOverridableOrganizationConfigurationByProject() {
+      configurationFacade.setOrganisationConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE, true);
+      assertThat(configurationFacade.getOrganisationConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
+
+      String overridenValue = DUMMY_DBHOST_VALUE + "aaa";
+      configurationFacade.setProjectConfiguration(DBHOST_KEY, overridenValue, false);
+      assertThat(configurationFacade.getProjectConfigurationString(DBHOST_KEY)).contains(overridenValue);
+
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
+   }
+
+   @Test
+   public void testNotOverridableOrganizationConfigurationByUser() {
+      configurationFacade.setOrganisationConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE, true);
+      assertThat(configurationFacade.getOrganisationConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
+
+      String overridenValue = DUMMY_DBHOST_VALUE + "aaa";
+      configurationFacade.setUserConfiguration(DBHOST_KEY, overridenValue);
+      assertThat(configurationFacade.getUserConfigurationString(DBHOST_KEY)).contains(overridenValue);
+
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
    }
 
    private void fillSystemCollection(final ConfigurationFacade.ConfigurationLevel level) {
