@@ -100,8 +100,8 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testGetConfigurationString() throws Exception {
       // #1 if both system collections are empty, default value will be returned
-      final Optional defaultValue = configurationFacade.getConfigurationString(DBHOST_KEY);
-      assertThat(defaultValue.get()).isEqualTo(DEFAULT_DBHOST_VALUE);
+      final Optional<String> defaultValue = configurationFacade.getConfigurationString(DBHOST_KEY);
+      assertThat(defaultValue).contains(DEFAULT_DBHOST_VALUE);
 
       systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
       systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
@@ -109,7 +109,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // #2 if the org. system collection has key-value
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.ORGANISATION);
-      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
 
       systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
       systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
@@ -117,7 +117,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // #3 if the project system collection has key-value
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
-      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
 
       systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
       systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
@@ -125,7 +125,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // #4 if the user system collection has key-value
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
-      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
 
       // #5 if none of system values exists in collections, neither the default value
       assertThat(configurationFacade.getConfigurationString(DEFAULT_NOT_EXISTED_KEY)).isEqualTo(Optional.empty());
@@ -134,8 +134,8 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testGetConfigurationInteger() throws Exception {
       // #1 if both system collections are empty, default value will be returned
-      final Optional defaultValue = configurationFacade.getConfigurationInteger(PORT_KEY);
-      assertThat(defaultValue.get()).isEqualTo(DEFAULT_PORT_VALUE);
+      final Optional<Integer> defaultValue = configurationFacade.getConfigurationInteger(PORT_KEY);
+      assertThat(defaultValue).contains(DEFAULT_PORT_VALUE);
 
       systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
       systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
@@ -143,7 +143,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // #2 if the user system collection has key-value
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
-      assertThat(configurationFacade.getConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
+      assertThat(configurationFacade.getConfigurationInteger(PORT_KEY)).contains(DUMMY_PORT_VALUE);
 
       // #3 string key is present but cannot be obtain as integer
       assertThat(configurationFacade.getConfigurationString(DBHOST_KEY)).isNotEmpty();
@@ -157,7 +157,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
    public void testGetConfigurationDocument() throws Exception {
       // #1 if the user system collection has key-value
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
-      assertThat(configurationFacade.getConfigurationDocument(DOCUMENT_PROPERTY_KEY).get()).isEqualTo(ConfigurationManipulatorIntegrationTest.createDummyDataDocument());
+      assertThat(configurationFacade.getConfigurationDocument(DOCUMENT_PROPERTY_KEY)).contains(ConfigurationManipulatorIntegrationTest.createDummyDataDocument());
 
       // #3 if none of system values exists in collections, neither the default value
       assertThat(configurationFacade.getConfigurationDocument(DEFAULT_NOT_EXISTED_KEY)).isEqualTo(Optional.empty());
@@ -168,14 +168,14 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
       // #1 if the default value exists
-      configurationFacade.setUserConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
-      assertThat(configurationFacade.getUserConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      configurationFacade.setUserConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getUserConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
       systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
       // #2 if the system user collection is filled and key exists
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.USER);
-      configurationFacade.setUserConfigurationString(DBURL_KEY, DUMMY_VALUE);
-      assertThat(configurationFacade.getUserConfigurationString(DBURL_KEY).get()).isEqualTo(DUMMY_VALUE);
+      configurationFacade.setUserConfiguration(DBURL_KEY, DUMMY_VALUE);
+      assertThat(configurationFacade.getUserConfigurationString(DBURL_KEY)).contains(DUMMY_VALUE);
 
       // #3 if none of system values exists in collections, neither the default value
       assertThat(configurationFacade.getConfigurationString(DEFAULT_NOT_EXISTED_KEY)).isEqualTo(Optional.empty());
@@ -186,8 +186,8 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
       // #1 if the default value exists
-      configurationFacade.setUserConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
-      assertThat(configurationFacade.getUserConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
+      configurationFacade.setUserConfiguration(PORT_KEY, DUMMY_PORT_VALUE);
+      assertThat(configurationFacade.getUserConfigurationInteger(PORT_KEY)).contains(DUMMY_PORT_VALUE);
 
       // #2 if none of system values exists in collections, neither the default value
       assertThat(configurationFacade.getConfigurationInteger(DEFAULT_NOT_EXISTED_KEY)).isEqualTo(Optional.empty());
@@ -198,7 +198,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
 
       final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
-      configurationFacade.setUserConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      configurationFacade.setUserConfiguration(DOCUMENT_PROPERTY_KEY, dummyDocument);
       final DataDocument document = configurationFacade.getUserConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
       assertThat(dummyDocument).isEqualTo(document);
@@ -209,22 +209,22 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       // #1 if the system user collection is empty
-      configurationFacade.setProjectConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
-      assertThat(configurationFacade.getProjectConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      configurationFacade.setProjectConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getProjectConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
       systemDataStorage.dropCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       // #2 if the system user collection is filled and key exists
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.PROJECT);
-      configurationFacade.setProjectConfigurationString(DBURL_KEY, DUMMY_VALUE);
-      assertThat(configurationFacade.getProjectConfigurationString(DBURL_KEY).get()).isEqualTo(DUMMY_VALUE);
+      configurationFacade.setProjectConfiguration(DBURL_KEY, DUMMY_VALUE);
+      assertThat(configurationFacade.getProjectConfigurationString(DBURL_KEY)).contains(DUMMY_VALUE);
    }
 
    @Test
    public void testSetAndGetProjectConfigurationInteger() throws Exception {
       systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
-      configurationFacade.setProjectConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
-      assertThat(configurationFacade.getProjectConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
+      configurationFacade.setProjectConfiguration(PORT_KEY, DUMMY_PORT_VALUE);
+      assertThat(configurationFacade.getProjectConfigurationInteger(PORT_KEY)).contains(DUMMY_PORT_VALUE);
    }
 
    @Test
@@ -232,7 +232,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
 
       final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
-      configurationFacade.setProjectConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      configurationFacade.setProjectConfiguration(DOCUMENT_PROPERTY_KEY, dummyDocument);
       final DataDocument document = configurationFacade.getProjectConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
       assertThat(dummyDocument).isEqualTo(document);
@@ -243,22 +243,22 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
       // #1 if the system user collection is empty
-      configurationFacade.setOrganisationConfigurationString(DBHOST_KEY, DUMMY_DBHOST_VALUE);
-      assertThat(configurationFacade.getOrganisationConfigurationString(DBHOST_KEY).get()).isEqualTo(DUMMY_DBHOST_VALUE);
+      configurationFacade.setOrganisationConfiguration(DBHOST_KEY, DUMMY_DBHOST_VALUE);
+      assertThat(configurationFacade.getOrganisationConfigurationString(DBHOST_KEY)).contains(DUMMY_DBHOST_VALUE);
       systemDataStorage.dropCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
       // #2 if the system user collection is filled and key exists
       fillSystemCollection(ConfigurationFacade.ConfigurationLevel.ORGANISATION);
-      configurationFacade.setOrganisationConfigurationString(DBURL_KEY, DUMMY_VALUE);
-      assertThat(configurationFacade.getOrganisationConfigurationString(DBURL_KEY).get()).isEqualTo(DUMMY_VALUE);
+      configurationFacade.setOrganisationConfiguration(DBURL_KEY, DUMMY_VALUE);
+      assertThat(configurationFacade.getOrganisationConfigurationString(DBURL_KEY)).contains(DUMMY_VALUE);
    }
 
    @Test
    public void testSetAndGetOrganisationConfigurationInteger() throws Exception {
       systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
-      configurationFacade.setOrganisationConfigurationInteger(PORT_KEY, DUMMY_PORT_VALUE);
-      assertThat(configurationFacade.getOrganisationConfigurationInteger(PORT_KEY).get()).isEqualTo(DUMMY_PORT_VALUE);
+      configurationFacade.setOrganisationConfiguration(PORT_KEY, DUMMY_PORT_VALUE);
+      assertThat(configurationFacade.getOrganisationConfigurationInteger(PORT_KEY)).contains(DUMMY_PORT_VALUE);
    }
 
    @Test
@@ -266,7 +266,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.createCollection(ConfigurationFacade.ORGANISATION_CONFIG_COLLECTION);
 
       final DataDocument dummyDocument = ConfigurationManipulatorIntegrationTest.createDummyDataDocument();
-      configurationFacade.setOrganisationConfigurationDocument(DOCUMENT_PROPERTY_KEY, dummyDocument);
+      configurationFacade.setOrganisationConfiguration(DOCUMENT_PROPERTY_KEY, dummyDocument);
       final DataDocument document = configurationFacade.getOrganisationConfigurationDocument(DOCUMENT_PROPERTY_KEY).get();
 
       assertThat(dummyDocument).isEqualTo(document);
