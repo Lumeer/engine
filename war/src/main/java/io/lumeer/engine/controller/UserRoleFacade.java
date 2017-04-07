@@ -19,8 +19,9 @@
  */
 package io.lumeer.engine.controller;
 
+import static io.lumeer.engine.api.LumeerConst.UserRoles.*;
+
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
@@ -64,11 +65,11 @@ public class UserRoleFacade implements Serializable{
     *       List of the core roles to set
     */
    public void createRole(final String organizationId, final String projectId, final String userRole, final List<String> coreRoles) {
-      DataDocument document = new DataDocument(LumeerConst.Project.UserRoles.ATTR_PROJECT_ID, projectId)
-            .append(LumeerConst.Project.UserRoles.ATTR_ORGANIZATION_ID, organizationId)
-            .append(LumeerConst.Project.UserRoles.ATTR_USER_ROLE, userRole)
-            .append(LumeerConst.Project.UserRoles.ATTR_CORE_ROLES, coreRoles);
-      dataStorage.createDocument(LumeerConst.Project.UserRoles.COLLECTION_NAME, document);
+      DataDocument document = new DataDocument(ATTR_PROJECT_ID, projectId)
+            .append(ATTR_ORGANIZATION_ID, organizationId)
+            .append(ATTR_USER_ROLE, userRole)
+            .append(ATTR_CORE_ROLES, coreRoles);
+      dataStorage.createDocument(COLLECTION_NAME, document);
    }
 
    /**
@@ -99,7 +100,7 @@ public class UserRoleFacade implements Serializable{
     *       List of the core roles to add
     */
    public void addCoreRolesToRole(final String organizationId, final String projectId, final String userRole, final List<String> coreRoles) {
-      dataStorage.addItemsToArray(LumeerConst.Project.UserRoles.COLLECTION_NAME, userRoleFilter(organizationId, projectId, userRole), LumeerConst.Project.UserRoles.ATTR_CORE_ROLES, coreRoles);
+      dataStorage.addItemsToArray(COLLECTION_NAME, userRoleFilter(organizationId, projectId, userRole), ATTR_CORE_ROLES, coreRoles);
    }
 
    /**
@@ -129,7 +130,7 @@ public class UserRoleFacade implements Serializable{
     *       List of the core roles to remove
     */
    public void removeCoreRolesFromRole(final String organizationId, final String projectId, final String userRole, final List<String> coreRoles) {
-      dataStorage.removeItemsFromArray(LumeerConst.Project.UserRoles.COLLECTION_NAME, userRoleFilter(organizationId, projectId, userRole), LumeerConst.Project.UserRoles.ATTR_CORE_ROLES, coreRoles);
+      dataStorage.removeItemsFromArray(COLLECTION_NAME, userRoleFilter(organizationId, projectId, userRole), ATTR_CORE_ROLES, coreRoles);
    }
 
    /**
@@ -157,7 +158,7 @@ public class UserRoleFacade implements Serializable{
     *       Name of user role to delete
     */
    public void dropRole(final String organizationId, final String projectId, final String userRole) {
-      dataStorage.dropDocument(LumeerConst.Project.UserRoles.COLLECTION_NAME, userRoleFilter(organizationId, projectId, userRole));
+      dataStorage.dropDocument(COLLECTION_NAME, userRoleFilter(organizationId, projectId, userRole));
    }
 
    /**
@@ -182,8 +183,8 @@ public class UserRoleFacade implements Serializable{
     * @return map of roles and their core roles
     */
    public Map<String, List<String>> readRoles(final String organizationId, final String projectId) {
-      List<DataDocument> documents = dataStorage.searchIncludeAttrs(LumeerConst.Project.UserRoles.COLLECTION_NAME, projectIdFilter(organizationId, projectId), Arrays.asList(LumeerConst.Project.UserRoles.ATTR_USER_ROLE, LumeerConst.Project.UserRoles.ATTR_CORE_ROLES));
-      return documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Project.UserRoles.ATTR_USER_ROLE), d -> d.getArrayList(LumeerConst.Project.UserRoles.ATTR_CORE_ROLES, String.class)));
+      List<DataDocument> documents = dataStorage.searchIncludeAttrs(COLLECTION_NAME, projectIdFilter(organizationId, projectId), Arrays.asList(ATTR_USER_ROLE, ATTR_CORE_ROLES));
+      return documents.stream().collect(Collectors.toMap(d -> d.getString(ATTR_USER_ROLE), d -> d.getArrayList(ATTR_CORE_ROLES, String.class)));
    }
 
    /**
@@ -199,16 +200,16 @@ public class UserRoleFacade implements Serializable{
 
    private DataFilter projectIdFilter(final String organizationId, final String projectId) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationId);
-      filter.put(LumeerConst.Project.ATTR_PROJECT_ID, projectId);
+      filter.put(ATTR_ORGANIZATION_ID, organizationId);
+      filter.put(ATTR_PROJECT_ID, projectId);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
    private DataFilter userRoleFilter(final String organizationId, final String projectId, final String userRole) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(LumeerConst.Project.UserRoles.ATTR_ORGANIZATION_ID, organizationId);
-      filter.put(LumeerConst.Project.UserRoles.ATTR_PROJECT_ID, projectId);
-      filter.put(LumeerConst.Project.UserRoles.ATTR_USER_ROLE, userRole);
+      filter.put(ATTR_ORGANIZATION_ID, organizationId);
+      filter.put(ATTR_PROJECT_ID, projectId);
+      filter.put(ATTR_USER_ROLE, userRole);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 

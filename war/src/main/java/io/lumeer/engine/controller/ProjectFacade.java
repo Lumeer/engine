@@ -19,12 +19,14 @@
  */
 package io.lumeer.engine.controller;
 
+import static  io.lumeer.engine.api.LumeerConst.Project;
+import static  io.lumeer.engine.api.LumeerConst.UserRoles;
+
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.LumeerConst.Project;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -379,9 +381,9 @@ public class ProjectFacade {
 
    private DataFilter userRoleFilter(String projectId, String userRole) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.UserRoles.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
-      filter.put(Project.UserRoles.ATTR_PROJECT_ID, projectId);
-      filter.put(Project.UserRoles.ATTR_USER_ROLE, userRole);
+      filter.put(UserRoles.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
+      filter.put(UserRoles.ATTR_PROJECT_ID, projectId);
+      filter.put(UserRoles.ATTR_USER_ROLE, userRole);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 

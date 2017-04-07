@@ -20,11 +20,11 @@
 package io.lumeer.engine.controller;
 
 import static io.lumeer.engine.api.LumeerConst.Project;
+import static io.lumeer.engine.api.LumeerConst.UserRoles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
@@ -70,7 +70,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    @Before
    public void setUp() throws Exception {
       systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
-      systemDataStorage.dropManyDocuments(LumeerConst.Project.UserRoles.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(UserRoles.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
 
