@@ -190,6 +190,7 @@ public class OrganizationFacade {
     */
    public void dropOrganization(final String organizationId) {
       dataStorage.dropDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId));
+      // TODO: check cannot be implemented without other facades changes
    }
 
    /**
@@ -214,8 +215,7 @@ public class OrganizationFacade {
     * @return value of the organization info attribute
     */
    public String readOrganizationInfoData(final String organizationId, final String infoDataAttribute) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_DATA));
-      DataDocument infoDataDocument = document.getDataDocument(LumeerConst.Organization.ATTR_ORG_DATA);
+      DataDocument infoDataDocument = readOrganizationInfoData(organizationId);
       return infoDataDocument != null ? infoDataDocument.getString(infoDataAttribute) : null;
    }
 
@@ -255,10 +255,7 @@ public class OrganizationFacade {
     *       attribute of the organization additional info to drop
     */
    public void dropOrganizationInfoDataAttribute(final String organizationId, final String infoAttribute) {
-      DataDocument infoDocument = readOrganizationInfoData(organizationId);
-      infoDocument.remove(infoAttribute);
-      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_DATA, infoDocument);
-      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationIdFilter(organizationId));
+      dataStorage.dropAttribute(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_ORG_DATA, infoAttribute));
    }
 
    /**
@@ -334,10 +331,7 @@ public class OrganizationFacade {
     *       name of the user to remove from organization
     */
    public void removeUserFromOrganization(final String organizationId, final String userName) {
-      List<String> userRoles = readUserRoles(organizationId, userName);
-      DataDocument userDocument = new DataDocument(LumeerConst.Organization.ATTR_USERS_USERNAME, userName)
-            .append(LumeerConst.Organization.ATTR_USERS_USER_ROLES, userRoles);
-      dataStorage.removeItemsFromArray(LumeerConst.Organization.COLLECTION_NAME, userFilter(organizationId, userName), LumeerConst.Organization.ATTR_USERS, Collections.singletonList(userDocument));
+      dataStorage.removeItemFromArray(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), LumeerConst.Organization.ATTR_USERS, new DataDocument(LumeerConst.Organization.ATTR_USERS_USERNAME, userName));
    }
 
    /**
@@ -456,8 +450,6 @@ public class OrganizationFacade {
    }
 
    private DataFilter organizationFilterByUser(final String userName) {
-      Map<String, Object> filter = new HashMap<>();
-      filter.put(dataStorageDialect.concatFields(LumeerConst.Project.ATTR_USERS, LumeerConst.Project.ATTR_USERS_USERNAME), userName);
-      return dataStorageDialect.multipleFieldsValueFilter(filter);
+      return dataStorageDialect.fieldValueFilter(dataStorageDialect.concatFields(LumeerConst.Project.ATTR_USERS, LumeerConst.Project.ATTR_USERS_USERNAME), userName);
    }
 }
