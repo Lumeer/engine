@@ -302,12 +302,23 @@ public class ViewFacade implements Serializable {
       return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
    }
 
+   /**
+    * @param orgId
+    *       organisation id
+    * @return list of ViewDao for all views from given organisation
+    */
    public List<ViewDao> getAllViewsForOrganisation(String orgId) {
       List<DataDocument> views = dataStorage.search(
             metadataCollection(orgId), null, null, 0, 0);
       return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
    }
 
+   /**
+    *
+    * @param orgId organisation id
+    * @param type type of the view
+    * @returnlist of ViewDao for all views of given type from given organisation
+    */
    public List<ViewDao> getAllViewsOfTypeForOrganisation(String orgId, String type) {
       List<DataDocument> views = dataStorage.search(
             metadataCollection(orgId),
