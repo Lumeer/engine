@@ -150,10 +150,7 @@ public class ViewFacade implements Serializable {
     */
    public ViewDao getViewMetadata(int viewId) {
       DataDocument viewMetadata = getViewMetadataDocument(viewId);
-      if (viewMetadata == null) {
-         return null;
-      }
-      return new ViewDao(viewMetadata);
+      return viewMetadata != null ? new ViewDao(viewMetadata) : null;
    }
 
    /**
