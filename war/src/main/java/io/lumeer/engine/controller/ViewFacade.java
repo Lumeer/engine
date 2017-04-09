@@ -30,8 +30,11 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -59,6 +62,9 @@ public class ViewFacade implements Serializable {
 
    @Inject
    private ProjectFacade projectFacade;
+
+   @Inject
+   private OrganisationFacade organisationFacade;
 
    /**
     * Creates initial metadata for the view
@@ -156,8 +162,7 @@ public class ViewFacade implements Serializable {
     * @return type of the given view
     */
    public String getViewType(int viewId) {
-      ViewDao metadata = getViewMetadata(viewId);
-      return metadata != null ? metadata.getType() : null;
+      return (String) getViewMetadataValue(viewId, LumeerConst.View.TYPE_KEY);
    }
 
    /**
@@ -177,8 +182,7 @@ public class ViewFacade implements Serializable {
     * @return view name
     */
    public String getViewName(int viewId) {
-      ViewDao metadata = getViewMetadata(viewId);
-      return metadata != null ? metadata.getName() : null;
+      return (String) getViewMetadataValue(viewId, LumeerConst.View.NAME_KEY);
    }
 
    /**
@@ -213,8 +217,7 @@ public class ViewFacade implements Serializable {
     * @return view description
     */
    public String getViewDescription(int viewId) {
-      ViewDao metadata = getViewMetadata(viewId);
-      return metadata != null ? metadata.getDescription() : null;
+      return (String) getViewMetadataValue(viewId, LumeerConst.View.DESCRIPTION_KEY);
    }
 
    /**
@@ -223,8 +226,7 @@ public class ViewFacade implements Serializable {
     * @return view configuration
     */
    public DataDocument getViewConfiguration(int viewId) {
-      ViewDao metadata = getViewMetadata(viewId);
-      return metadata != null ? metadata.getConfiguration() : null;
+      return (DataDocument) getViewMetadataValue(viewId, LumeerConst.View.CONFIGURATION_KEY);
    }
 
    /**
@@ -245,8 +247,7 @@ public class ViewFacade implements Serializable {
     * @return value of view configuration attribute
     */
    public Object getViewConfigurationAttribute(int viewId, String attributeName) {
-      ViewDao metadata = getViewMetadata(viewId);
-      return metadata != null ? metadata.getConfiguration().get(attributeName) : null;
+      return getViewConfiguration(viewId).get(attributeName);
    }
 
    /**
@@ -273,23 +274,46 @@ public class ViewFacade implements Serializable {
    }
 
    /**
-    * @return list of ViewDao for all views
+    * @return list of ViewDao for all views from current project
     */
    public List<ViewDao> getAllViews() {
-      List<DataDocument> views = dataStorage.search(metadataCollection(), null, null, 0, 0);
+      List<DataDocument> views = dataStorage.search(
+            metadataCollection(),
+            dataStorageDialect.fieldValueFilter(LumeerConst.View.PROJECT_ID, projectFacade.getCurrentProjectId()),
+            null, 0, 0);
       return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
    }
 
    /**
     * @param type
     *       type of the view
-    * @return list of ViewDao for all views of given type
+    * @return list of ViewDao for all views of given type from current project
     */
    public List<ViewDao> getAllViewsOfType(String type) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.View.PROJECT_ID, projectFacade.getCurrentProjectId());
+      filter.put(LumeerConst.View.TYPE_KEY, type);
+
       List<DataDocument> views = dataStorage.search(
             metadataCollection(),
+            dataStorageDialect.multipleFieldsValueFilter(filter),
+            null, 0, 0);
+
+      return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
+   }
+
+   public List<ViewDao> getAllViewsForOrganisation(String orgId) {
+      List<DataDocument> views = dataStorage.search(
+            metadataCollection(orgId), null, null, 0, 0);
+      return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
+   }
+
+   public List<ViewDao> getAllViewsOfTypeForOrganisation(String orgId, String type) {
+      List<DataDocument> views = dataStorage.search(
+            metadataCollection(orgId),
             dataStorageDialect.fieldValueFilter(LumeerConst.View.TYPE_KEY, type),
             null, 0, 0);
+
       return createListOfDaos(filterViewsForUser(views)); // TODO: filter in query
    }
 
@@ -325,7 +349,7 @@ public class ViewFacade implements Serializable {
    }
 
    private boolean checkIfViewNameExists(String viewName) {
-      return dataStorage.getAttributeValues(metadataCollection(), LumeerConst.View.NAME_KEY).contains(viewName);
+      return dataStorage.collectionHasDocument(metadataCollection(), dataStorageDialect.fieldValueFilter(LumeerConst.View.NAME_KEY, viewName));
    }
 
    /**
@@ -350,6 +374,14 @@ public class ViewFacade implements Serializable {
       return securityFacade.checkForExecute(getViewMetadataDocument(viewId), user);
    }
 
+   private Object getViewMetadataValue(int viewId, String key) {
+      DataDocument metadata = dataStorage.readDocumentIncludeAttrs(
+            metadataCollection(),
+            dataStorageDialect.fieldValueFilter(LumeerConst.View.ID_KEY, viewId),
+            Arrays.asList(key));
+      return metadata != null ? metadata.get(key) : null;
+   }
+
    private void setViewMetadataValue(int viewId, String metaKey, Object value) {
       DataDocument metadataDocument = new DataDocument(metaKey, value);
       setUpdateTimeAndUser(metadataDocument);
@@ -371,18 +403,18 @@ public class ViewFacade implements Serializable {
    }
 
    /**
-    * @return name of view metadata collection for current project
+    * @return name of view metadata collection for current organization
     */
    public String metadataCollection() {
-      return metadataCollection(projectFacade.getCurrentProjectId());
+      return metadataCollection(organisationFacade.getOrganisationId());
    }
 
    /**
-    * @param projectId
-    *       project id
-    * @return name of view metadata collection for given project id
+    * @param orgId
+    *       organization id
+    * @return name of view metadata collection for given organization id
     */
-   private String metadataCollection(String projectId) {
-      return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectId;
+   private String metadataCollection(String orgId) {
+      return LumeerConst.View.METADATA_COLLECTION_PREFIX + orgId;
    }
 }

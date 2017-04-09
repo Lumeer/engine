@@ -53,6 +53,9 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   private OrganisationFacade organisationFacade;
+
    private final String CREATE_INITIAL_METADATA_VIEW = "viewCreateInitialMetadata";
    private final String VIEW_TO_BE_COPIED = "viewToBeCopied";
    private final String COPIED_VIEW = "viewCopied";
@@ -176,8 +179,8 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testGetAllViews() throws Exception {
       setUpCollection();
-      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_VIEW_1, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-      int viewId2 = viewFacade.createView(GET_ALL_VIEWS_VIEW_2, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+      viewFacade.createView(GET_ALL_VIEWS_VIEW_1, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+      viewFacade.createView(GET_ALL_VIEWS_VIEW_2, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
 
       List<ViewDao> views = viewFacade.getAllViews();
       assertThat(views).hasSize(2);
@@ -194,6 +197,34 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       viewFacade.setViewType(viewId1, type);
 
       List<ViewDao> views = viewFacade.getAllViewsOfType(type);
+      assertThat(views).hasSize(1);
+      assertThat(views.get(0).getName()).isEqualTo(GET_ALL_VIEWS_OF_TYPE_VIEW_1);
+
+      views = viewFacade.getAllViewsOfType("non existing type");
+      assertThat(views).isEmpty();
+   }
+
+   @Test
+   public void testGetAllViewsForOrg() throws Exception {
+      setUpCollection();
+      viewFacade.createView(GET_ALL_VIEWS_VIEW_1, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+      viewFacade.createView(GET_ALL_VIEWS_VIEW_2, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+
+      List<ViewDao> views = viewFacade.getAllViewsForOrganisation(organisationFacade.getOrganisationId());
+      assertThat(views).hasSize(2);
+      assertThat(views.get(0).getName()).isIn(GET_ALL_VIEWS_VIEW_1, GET_ALL_VIEWS_VIEW_2);
+   }
+
+   @Test
+   public void testGetAllViewsOfTypeForOrg() throws Exception {
+      setUpCollection();
+      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_1, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+      viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_2, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+
+      String type = "type";
+      viewFacade.setViewType(viewId1, type);
+
+      List<ViewDao> views = viewFacade.getAllViewsOfTypeForOrganisation(organisationFacade.getOrganisationId(), type);
       assertThat(views).hasSize(1);
       assertThat(views.get(0).getName()).isEqualTo(GET_ALL_VIEWS_OF_TYPE_VIEW_1);
 
