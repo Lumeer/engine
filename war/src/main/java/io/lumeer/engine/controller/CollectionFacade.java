@@ -87,6 +87,9 @@ public class CollectionFacade implements Serializable {
    private ProjectFacade projectFacade;
 
    @Inject
+   private OrganisationFacade organisationFacade;
+
+   @Inject
    private Event<CreateCollection> createCollectionEvent;
 
    @Inject
@@ -145,8 +148,8 @@ public class CollectionFacade implements Serializable {
 
    private List<DataDocument> getAllCollectionsDocuments(String projectId) {
       List<DataDocument> result = dataStorage.search(
-            collectionMetadataFacade.metadataCollection(projectId),
-            null,
+            collectionMetadataFacade.metadataCollection(organisationFacade.getOrganisationId()),
+            dataStorageDialect.fieldValueFilter(LumeerConst.Collection.PROJECT_ID_KEY, projectId),
             dataStorageDialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER),
             0, 0);
 
@@ -217,7 +220,7 @@ public class CollectionFacade implements Serializable {
     */
    private void dropCollectionMetadata(final String collectionName) throws CollectionMetadataDocumentNotFoundException {
       String documentId = collectionMetadataFacade.getCollectionMetadataDocument(collectionName).getId();
-      dataStorage.dropDocument(LumeerConst.Collection.METADATA_COLLECTION_PREFIX, dataStorageDialect.documentIdFilter(documentId));
+      dataStorage.dropDocument(collectionMetadataFacade.metadataCollection(), dataStorageDialect.documentIdFilter(documentId));
    }
 
    /**
