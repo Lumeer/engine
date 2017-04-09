@@ -381,9 +381,9 @@ public class ProjectFacade {
 
    private DataFilter userRoleFilter(String projectId, String userRole) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
-      filter.put(Project.UserRoles.ATTR_PROJECT_ID, projectId);
-      filter.put(Project.UserRoles.ATTR_USER_ROLE, userRole);
+      filter.put(UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
+      filter.put(UserRoles.ATTR_PROJECT_ID, projectId);
+      filter.put(UserRoles.ATTR_USER_ROLE, userRole);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
