@@ -33,39 +33,10 @@ import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ * Manipulates with document metadata
  */
 @SessionScoped
 public class DocumentMetadataFacade implements Serializable {
-
-   // example of document metadata structure:
-   // -------------------------------------
-   // {
-   //	“_meta-create-date” : date,
-   //	“_meta-update-date” : date,
-   //	“_meta-creator-user” : user_name,
-   //	“_meta-update-user” : user_name,
-   //	“_meta-rights” : [
-   //      user_name1 : 1  //execute permissions
-   //      user_name2 : 2  //write permissions
-   //      user_name3 : 4  //read permissions
-   //      user_name4 : 3  //execute and write permissions = 1 + 2
-   //      user_name5 : 5  //read and execute permissions = 1 + 4
-   //      user_name6 : 6  //write and read permissions = 2 + 4
-   //      user_name7 : 7  //full permissions = 1 + 2 + 4
-   //      others     : 0  //others is forced to be there, maybe if not presented, that means 0 permissions
-   //    ],
-   // “_meta-group-rights” : [
-   //      group_name1: 1  //execute permissions
-   //      group_name2: 2  //write permissions
-   //      group_name3: 4  //read permissions
-   //      group_name4: 3  //execute and write permissions = 1 + 2
-   //      group_name5: 5  //read and execute permissions = 1 + 4
-   //      group_name6: 6  //write and read permissions = 2 + 4
-   //      group_name7: 7  //full permissions = 1 + 2 + 4
-   //	   ]
-   //	… (rest of the document) …
-   // }
 
    @Inject
    @UserDataStorage

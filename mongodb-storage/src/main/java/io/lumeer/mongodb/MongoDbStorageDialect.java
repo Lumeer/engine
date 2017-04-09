@@ -25,13 +25,16 @@ import static com.mongodb.client.model.Filters.eq;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
+import io.lumeer.engine.api.data.DataSort;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import com.mongodb.client.model.Sorts;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
@@ -42,13 +45,32 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class MongoDbStorageDialect implements DataStorageDialect {
 
-   private DataFilter createFilter(final Bson filter) {
-      return new MongoDbDataFilter(filter);
+   @Override
+   public DataDocument renameAttributeQuery(final String metadataCollection, final String collection, final String oldName, final String newName) {
+      return new DataDocument()
+            .append("findAndModify", metadataCollection)
+            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collection))
+            .append("update", new DataDocument()
+                  .append("$rename", new DataDocument(
+                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES_KEY, oldName),
+                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES_KEY, newName))));
    }
 
    @Override
-   public DataDocument updateCollectionAttributeCountQuery(final String metadataCollectionName, final String attributeName) {
-      return new DataDocument(); // TODO based on new query in CollectionMetadataFacade
+   public DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize) {
+      return new DataDocument()
+            .append("findAndModify", metadataCollection)
+            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collection))
+            .append("update", new DataDocument()
+                  .append("$push", new DataDocument()
+                        .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new DataDocument()
+                              .append("$each", Arrays.asList(id))
+                              .append("$position", 0)
+                              .append("$slice", listSize))));
+   }
+
+   private DataFilter createFilter(final Bson filter) {
+      return new MongoDbDataFilter(filter);
    }
 
    @Override
@@ -139,6 +161,28 @@ public class MongoDbStorageDialect implements DataStorageDialect {
       List<Bson> bsons = new ArrayList<>();
       fields.entrySet().forEach(e -> bsons.add(eq(e.getKey(), e.getValue())));
       return createFilter(and(bsons));
+   }
+
+   private DataSort createSort(final Bson sort) {
+      return new MongoDbDataSort(sort);
+   }
+
+   @Override
+   public DataSort documentSort(final String documentSort) {
+      return createSort(BsonDocument.parse(documentSort));
+   }
+
+   @Override
+   public DataSort documentFieldSort(final String fieldName, final int sortOrder) {
+      if (sortOrder == LumeerConst.SORT_ASCENDING_ORDER) {
+         return createSort(Sorts.ascending(fieldName));
+      }
+
+      if (sortOrder == LumeerConst.SORT_DESCENDING_ORDER) {
+         return createSort(Sorts.descending(fieldName));
+      }
+
+      return null;
    }
 
    @Override

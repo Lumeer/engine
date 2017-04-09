@@ -52,6 +52,8 @@ public final class LumeerConst {
    public static final int SORT_ASCENDING_ORDER = 1;
    public static final int SORT_DESCENDING_ORDER = -1;
 
+   public static final String NUMBER_OF_RECENT_DOCS_PROPERTY = "number_recently_used_documents";
+
    private LumeerConst() {
       // we do not want any instances to be created
       throw new UnsupportedOperationException(String.format("Creation of %s is forbidden.", this.getClass().getCanonicalName()));
@@ -130,7 +132,6 @@ public final class LumeerConst {
    public static class Collection {
       public static final String METADATA_COLLECTION = "meta.collection";
       public static final String NAME_PREFIX = "collection.";
-      public static final String SHADOW_SUFFIX = ".shadow";
 
       public static final String REAL_NAME_KEY = "name";
       public static final String INTERNAL_NAME_KEY = "internal-name";
@@ -148,23 +149,11 @@ public final class LumeerConst {
 
       public static final String CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
       public static final String CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
-      public static final String COLLECTION_ATTRIBUTE_CONSTRAINTS_KEY = "attribute-constraints";
-      public static final String COLLECTION_ATTRIBUTE_COUNT_KEY = "attribute-count";
-
-      public static final String COLLECTION_REAL_NAME_META_TYPE_VALUE = "name";
-      public static final String COLLECTION_REAL_NAME_KEY = "name";
-
-      public static final String COLLECTION_LOCK_META_TYPE_VALUE = "lock";
-      public static final String COLLECTION_LOCK_UPDATED_KEY = "updated";
-
-      public static final String COLLECTION_RIGHTS_META_TYPE_VALUE = "rights";
-      public static final String COLLECTION_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
-      public static final String COLLECTION_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
-
-      public static final String COLLECTION_CUSTOM_META_TYPE_VALUE = "custom";
 
       public static final String COLLECTION_SHADOW_PREFFIX = "_shadow";
       public static final String COLLECTION_TRASH_PREFFIX = "_trash";
+
+      public static final int DEFAULT_NUMBER_OF_RECENT_DOCUMENTS = 5;
    }
 
    public static class Security {

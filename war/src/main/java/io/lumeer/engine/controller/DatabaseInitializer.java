@@ -27,11 +27,16 @@ import io.lumeer.engine.api.data.DataStorageDialect;
 
 import java.io.Serializable;
 import javax.annotation.PostConstruct;
+import javax.ejb.Startup;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.ConversationScoped;
+import javax.enterprise.context.Initialized;
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class DatabaseInitializer implements Serializable {
+public class DatabaseInitializer{
 
    @Inject
    @SystemDataStorage
@@ -39,6 +44,11 @@ public class DatabaseInitializer implements Serializable {
 
    @Inject
    private DataStorageDialect dataStorageDialect;
+
+
+   public void init(@Observes @Initialized(RequestScoped.class) Object init) {
+
+   }
 
    @PostConstruct
    public void init() {
@@ -53,11 +63,11 @@ public class DatabaseInitializer implements Serializable {
                .append(dataStorageDialect.concatFields(LumeerConst.Project.ATTR_USERS, LumeerConst.Project.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
       }
 
-      if (!dataStorage.hasCollection(LumeerConst.Project.UserRoles.COLLECTION_NAME)) {
-         dataStorage.createCollection(LumeerConst.Project.UserRoles.COLLECTION_NAME);
-         dataStorage.createIndex(LumeerConst.Project.UserRoles.COLLECTION_NAME, new DataDocument(LumeerConst.Project.UserRoles.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Project.UserRoles.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Project.UserRoles.ATTR_USER_ROLE, LumeerConst.Index.ASCENDING), true);
+      if (!dataStorage.hasCollection(LumeerConst.UserRoles.COLLECTION_NAME)) {
+         dataStorage.createCollection(LumeerConst.UserRoles.COLLECTION_NAME);
+         dataStorage.createIndex(LumeerConst.UserRoles.COLLECTION_NAME, new DataDocument(LumeerConst.UserRoles.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.UserRoles.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.UserRoles.ATTR_USER_ROLE, LumeerConst.Index.ASCENDING), true);
       }
 
       if (!dataStorage.hasCollection(LumeerConst.Organization.COLLECTION_NAME)) {

@@ -23,7 +23,6 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.mongodb.MongoClient;
-import com.mongodb.QueryOperators;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -31,7 +30,6 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.ws.rs.QueryParam;
 
 /**
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>

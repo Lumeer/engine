@@ -113,6 +113,10 @@ public class DocumentFacade implements Serializable {
             // nothing happens - if we don't find metadata, we just don't increment attribute
          }
       });
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+
       return documentId;
    }
 
@@ -159,6 +163,9 @@ public class DocumentFacade implements Serializable {
             // nothing happens - if we don't find metadata, we just don't increment attribute
          }
       });
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -200,6 +207,9 @@ public class DocumentFacade implements Serializable {
 
          }
       });
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -228,6 +238,9 @@ public class DocumentFacade implements Serializable {
             collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
          }
       }
+
+      collectionMetadataFacade.removeRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -271,6 +284,9 @@ public class DocumentFacade implements Serializable {
             // nothing happens - if we don't find metadata, we just don't decrement attribute
          }
       });
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -290,6 +306,9 @@ public class DocumentFacade implements Serializable {
 
       versionFacade.dropDocumentAttribute(collectionName, existingDocument, attributeName);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
