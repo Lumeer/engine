@@ -91,9 +91,9 @@ public class ViewFacade implements Serializable {
          dataStorage.createCollection(metadataCollection());
          // we create indexes on frequently used fields
          int indexType = LumeerConst.Index.ASCENDING;
-         dataStorage.createIndex(metadataCollection(), new DataDocument(LumeerConst.View.ID_KEY, indexType), false);
-         dataStorage.createIndex(metadataCollection(), new DataDocument(LumeerConst.View.TYPE_KEY, indexType), false);
-         dataStorage.createIndex(metadataCollection(), new DataDocument(LumeerConst.View.NAME_KEY, indexType), false);
+
+         dataStorage.createIndex(metadataCollection(), new DataDocument(LumeerConst.View.PROJECT_ID, indexType).append(LumeerConst.View.ID_KEY, indexType), true);
+         dataStorage.createIndex(metadataCollection(), new DataDocument(LumeerConst.View.PROJECT_ID, indexType).append(LumeerConst.View.NAME_KEY, indexType), true);
       }
 
       if (checkIfViewNameExists(originalViewName)) {
