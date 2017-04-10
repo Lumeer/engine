@@ -60,7 +60,7 @@ public class ConfigurationFacade implements Serializable {
    private ProjectFacade projectFacade;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    /**
     * Never ever replace the way of getting data storage here. Data storage configuration depends on this bean and this bean cannot inject it directly.
@@ -451,7 +451,7 @@ public class ConfigurationFacade implements Serializable {
     */
    private void resetConfiguration(final ConfigurationLevel level, final String attributeName) {
       final String user = userFacade.getUserEmail();
-      final String org = organisationFacade.getOrganisationId();
+      final String org = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
       if (attributeName != null) {
@@ -491,7 +491,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Object value of the given key
     */
    private Object getUserConfiguration(final String key) {
-      final String id = organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/" + userFacade.getUserEmail();
+      final String id = organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/" + userFacade.getUserEmail();
       return configurationManipulator.getConfiguration(USER_CONFIG_COLLECTION, id, key);
    }
 
@@ -503,7 +503,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Object value of the given key
     */
    private Object getProjectConfiguration(final String key) {
-      return configurationManipulator.getConfiguration(PROJECT_CONFIG_COLLECTION, organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId(), key);
+      return configurationManipulator.getConfiguration(PROJECT_CONFIG_COLLECTION, organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId(), key);
    }
 
    /**
@@ -514,7 +514,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Object value of the given key
     */
    private Object getOrganisationConfiguration(final String key) {
-      return configurationManipulator.getConfiguration(ORGANISATION_CONFIG_COLLECTION, organisationFacade.getOrganisationId(), key);
+      return configurationManipulator.getConfiguration(ORGANISATION_CONFIG_COLLECTION, organizationFacade.getOrganizationId(), key);
    }
 
    /**
@@ -526,7 +526,7 @@ public class ConfigurationFacade implements Serializable {
     */
    private Object getConfiguration(final String key) {
       final String user = userFacade.getUserEmail();
-      final String org = organisationFacade.getOrganisationId();
+      final String org = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
       Object conf = null;
 
@@ -553,7 +553,7 @@ public class ConfigurationFacade implements Serializable {
     */
    private void setConfiguration(final ConfigurationLevel level, final String key, final Object value) {
       final String user = userFacade.getUserEmail();
-      final String org = organisationFacade.getOrganisationId();
+      final String org = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
