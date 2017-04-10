@@ -25,11 +25,8 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
-import java.io.Serializable;
 import javax.annotation.PostConstruct;
-import javax.ejb.Startup;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.Initialized;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
@@ -73,7 +70,7 @@ public class DatabaseInitializer{
       if (!dataStorage.hasCollection(LumeerConst.Organization.COLLECTION_NAME)) {
          dataStorage.createCollection(LumeerConst.Organization.COLLECTION_NAME);
          dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, LumeerConst.Index.ASCENDING), true);
-         dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Index.ASCENDING), true);
+         dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Index.ASCENDING), false);
          dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, LumeerConst.Index.ASCENDING)
                .append(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, LumeerConst.Organization.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
       }

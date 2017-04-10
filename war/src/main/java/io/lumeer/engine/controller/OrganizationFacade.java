@@ -44,7 +44,7 @@ import javax.inject.Inject;
 @RequestScoped
 public class OrganizationFacade {
 
-   private static String organizationId = "ACME";
+   private String organizationId = "ACME";
 
    @Inject
    @SystemDataStorage
@@ -52,9 +52,6 @@ public class OrganizationFacade {
 
    @Inject
    private DataStorageDialect dataStorageDialect;
-
-   @Inject
-   private DatabaseInitializer databaseInitializer;
 
    @Inject
    private UserRoleFacade userRoleFacade;

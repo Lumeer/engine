@@ -34,7 +34,6 @@ import io.lumeer.engine.provider.DataStorageProvider;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
