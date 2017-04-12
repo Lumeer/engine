@@ -19,12 +19,17 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Makes sure the value is of the given case.
@@ -47,6 +52,30 @@ public class CaseConstraintType implements ConstraintType {
       return Collections.singleton(CONSTRAINT_PREFIX);
    }
 
+   static BiFunction<Object, Class, Object> getEncodeFunction() {
+      return (o, t) -> {
+         if (t != null && t != String.class) {
+            return null;
+         }
+
+         if (o instanceof String) {
+            return o;
+         }
+
+         return o.toString();
+      };
+   }
+
+   static Function<Object, Object> getDecodeFunction() {
+      return o -> {
+         if (o instanceof String) {
+            return o;
+         }
+
+         return o.toString();
+      };
+   }
+
    @Override
    public Constraint parseConstraint(final String constraintConfiguration) throws InvalidConstraintException {
       final String[] config = constraintConfiguration.split(":", 2);
@@ -57,22 +86,22 @@ public class CaseConstraintType implements ConstraintType {
                return new FixingFunctionConstraint(
                      value -> value != null && value.toLowerCase(locale).equals(value),
                      value -> value.toLowerCase(locale),
-                     constraintConfiguration);
+                     constraintConfiguration, getEncodeFunction(), getDecodeFunction(), String.class);
             case UPPER_CASE:
                return new FixingFunctionConstraint(
                      value -> value != null && value.toUpperCase(locale).equals(value),
                      value -> value.toUpperCase(locale),
-                     constraintConfiguration);
+                     constraintConfiguration, getEncodeFunction(), getDecodeFunction(), String.class);
             case FIRST_LOWER_CASE:
                return new FixingFunctionConstraint(
                      value -> value != null && (value.substring(0, 1).toLowerCase(locale) + value.substring(1)).equals(value),
                      value -> value.substring(0, 1).toLowerCase(locale) + value.substring(1),
-                     constraintConfiguration);
+                     constraintConfiguration, getEncodeFunction(), getDecodeFunction(), String.class);
             case FIRST_UPPER_CASE:
                return new FixingFunctionConstraint(
                      value -> value != null && (value.substring(0, 1).toUpperCase(locale) + value.substring(1)).equals(value),
                      value -> value.substring(0, 1).toUpperCase(locale) + value.substring(1),
-                     constraintConfiguration);
+                     constraintConfiguration, getEncodeFunction(), getDecodeFunction(), String.class);
             default:
                throw new InvalidConstraintException("Unsupported parameter value for constraint 'case': " + config[1]);
          }

@@ -19,9 +19,13 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -47,7 +51,9 @@ public class MatchesConstraintType implements ConstraintType {
       if (config.length == 2) {
          try {
             final Pattern pattern = Pattern.compile(config[1]);
-            return new FunctionConstraint(value -> pattern.matcher(value).matches(), constraintConfiguration);
+            return new FunctionConstraint(value -> pattern.matcher(value).matches(),
+                  constraintConfiguration, CaseConstraintType.getEncodeFunction(),
+                  CaseConstraintType.getDecodeFunction(), String.class);
          } catch (PatternSyntaxException pse) {
             throw new InvalidConstraintException("Invalid pattern for 'match' constraint: " + config[1], pse);
          }

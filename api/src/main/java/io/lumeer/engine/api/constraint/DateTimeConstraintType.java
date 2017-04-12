@@ -23,10 +23,13 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +51,38 @@ public class DateTimeConstraintType implements ConstraintType {
       return REGISTERED;
    }
 
+   private BiFunction<Object, Class, Object> getEncodeFunction(final DateFormat format) {
+      return (o, t) -> {
+         if (t != null && t != Date.class) {
+            return null;
+         }
+
+         if (o instanceof Date) {
+            return o;
+         }
+
+         try {
+            return format.parse(o.toString().trim());
+         } catch (ParseException e) {
+            return null;
+         }
+      };
+   }
+
+   private Function<Object, Object> getDecodeFunction(final DateFormat format) {
+      return o -> {
+         if (o instanceof String) {
+            return o;
+         }
+
+         if (o instanceof Date) {
+            return format.format((Date) o);
+         }
+
+         return o.toString();
+      };
+   }
+
    @Override
    public Constraint parseConstraint(final String constraintConfiguration) throws InvalidConstraintException {
       final String[] config = constraintConfiguration.split(":", 2);
@@ -63,7 +98,7 @@ public class DateTimeConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(format), getDecodeFunction(format), Date.class);
          } catch (IllegalArgumentException | NullPointerException e) {
             throw new InvalidConstraintException("Invalid pattern for '" + config[0] + "' constraint: " + config[1], e);
          }

@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -41,6 +42,7 @@ public class NumberConstraintType implements ConstraintType {
 
    private static final String IS_NUMBER = "isNumber";
    private static final String IS_INTEGER = "isInteger";
+   private static final String IS_MONETARY = "isMonetary";
    private static final String GREATER_THAN = "greaterThan";
    private static final String LESS_THAN = "lessThan";
    private static final String GREATER_OR_EQUALS = "greaterOrEquals";
@@ -51,18 +53,37 @@ public class NumberConstraintType implements ConstraintType {
     * Number format respecting given locale.
     */
    private NumberFormat numberFormat = NumberFormat.getNumberInstance();
-   private NumberFormat integerNumberFormat = NumberFormat.getNumberInstance();
-
-   public NumberConstraintType() {
-      integerNumberFormat.setParseIntegerOnly(true);
-   }
+   private NumberFormat integerNumberFormat = NumberFormat.getIntegerInstance();
+   private NumberFormat currencyNumberFormat = NumberFormat.getCurrencyInstance();
 
    @Override
    public Set<String> getRegisteredPrefixes() {
       final Set<String> result = new HashSet<>();
-      result.addAll(Arrays.asList(IS_NUMBER, IS_INTEGER, GREATER_THAN, LESS_THAN, GREATER_OR_EQUALS, LESS_OR_EQUALS, EQUALS));
+      result.addAll(Arrays.asList(IS_NUMBER, IS_INTEGER, IS_MONETARY, GREATER_THAN, LESS_THAN, GREATER_OR_EQUALS, LESS_OR_EQUALS, EQUALS));
 
       return result;
+   }
+
+   private BiFunction<Object, Class, Object> getEncodeFunction(final NumberFormat nf) {
+      return (o, t) -> {
+         if (t != null && t != Number.class) {
+            return null;
+         }
+
+         if (o instanceof Number) {
+            return o;
+         }
+
+         try {
+            return nf.parse(o.toString().replaceAll(" ", ""));
+         } catch (ParseException e) {
+            return null;
+         }
+      };
+   }
+
+   private Function<Object, Object> getDecodeFunction() {
+      return o -> o.toString();
    }
 
    @Override
@@ -71,68 +92,77 @@ public class NumberConstraintType implements ConstraintType {
 
       switch (config[0]) {
          case IS_NUMBER:
-            return new FunctionConstraint((value -> {
+            return new FunctionConstraint(value -> {
                try {
                   numberFormat.parse(value.replaceAll(" ", ""));
                   return true;
                } catch (ParseException pe) {
                   return false;
                }
-            }), constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
          case IS_INTEGER:
-            return new FunctionConstraint((value -> {
+            return new FunctionConstraint(value -> {
                try {
                   integerNumberFormat.parse(value.replaceAll(" ", "")).intValue();
                   return true;
                } catch (ParseException pe) {
                   return false;
                }
-            }), constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(integerNumberFormat), getDecodeFunction(), Number.class);
+         case IS_MONETARY:
+            return new FunctionConstraint(value -> {
+               try {
+                  currencyNumberFormat.parse(value.replaceAll(" ", ""));
+                  return true;
+               } catch (ParseException pe) {
+                  return false;
+               }
+            }, constraintConfiguration, getEncodeFunction(currencyNumberFormat), getDecodeFunction(), Number.class);
          case LESS_THAN:
             final double ltParam = checkParameter(config, constraintConfiguration);
-            return new FunctionConstraint((value -> {
+            return new FunctionConstraint(value -> {
                try {
                   return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() < ltParam;
                } catch (ParseException pe) {
                   return false;
                }
-            }), constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
          case GREATER_THAN:
             final double gtParam = checkParameter(config, constraintConfiguration);
-            return new FunctionConstraint((value -> {
+            return new FunctionConstraint(value -> {
                try {
                   return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() > gtParam;
                } catch (ParseException pe) {
                   return false;
                }
-            }), constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
          case GREATER_OR_EQUALS:
             final double gteParam = checkParameter(config, constraintConfiguration);
-            return new FunctionConstraint((value -> {
+            return new FunctionConstraint(value -> {
                try {
                   return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() >= gteParam;
                } catch (ParseException pe) {
                   return false;
                }
-            }), constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
          case LESS_OR_EQUALS:
             final double lteParam = checkParameter(config, constraintConfiguration);
-            return new FunctionConstraint((value -> {
+            return new FunctionConstraint(value -> {
                try {
                   return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() <= lteParam;
                } catch (ParseException pe) {
                   return false;
                }
-            }), constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
          case EQUALS:
             final double eqParam = checkParameter(config, constraintConfiguration);
-            return new FunctionConstraint((value -> {
+            return new FunctionConstraint(value -> {
                try {
                   return numberFormat.parse(value.replaceAll(" ", "")).doubleValue() == eqParam;
                } catch (ParseException pe) {
                   return false;
                }
-            }), constraintConfiguration);
+            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
          default:
             throw new InvalidConstraintException("Unable to parse constraint configuration: " + constraintConfiguration);
       }
@@ -160,6 +190,8 @@ public class NumberConstraintType implements ConstraintType {
    @Override
    public void setLocale(final Locale locale) {
       numberFormat = NumberFormat.getInstance(locale);
+      integerNumberFormat = NumberFormat.getIntegerInstance(locale);
+      currencyNumberFormat = NumberFormat.getCurrencyInstance(locale);
    }
 
    @Override
@@ -192,6 +224,12 @@ public class NumberConstraintType implements ConstraintType {
       if (numbers.intValue() == values.size()) {
          try {
             constraints.add(parseConstraint(IS_NUMBER));
+         } catch (InvalidConstraintException ice) {
+            // we just don't suggest the wrong constraint
+         }
+
+         try {
+            constraints.add(parseConstraint(IS_MONETARY));
          } catch (InvalidConstraintException ice) {
             // we just don't suggest the wrong constraint
          }
