@@ -54,7 +54,7 @@ public class DataStorageProvider {
    private CacheManager cacheManager;
 
    public DataStorage getUserStorage() {
-      return connections.computeIfAbsent(organizationFacade.getOrganisationId(),
+      return connections.computeIfAbsent(organizationFacade.getOrganizationId(),
             k -> dataStorageFactory.getStorage(cacheManager.getCacheProvider("userDataStorage"), configurationFacade.getDataStorage(), configurationFacade.getDataStorageDatabase(), configurationFacade.getDataStorageUseSsl()));
    }
 

@@ -19,72 +19,46 @@
  */
 package io.lumeer.engine.controller.configuration;
 
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.provider.DataStorageProvider;
+import io.lumeer.engine.util.Resources;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.SessionScoped;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 /**
  * Manipulates specified configuration properties.
- *
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@SessionScoped
+@ApplicationScoped
 public class ConfigurationManipulator implements Serializable {
 
-   // SYSTEM DATABASE ENTRIES STRUCTURE
-   // collection _configuration_user:
-   /* { _id: …,
-      name: pepa@zdepa.cz ,
-      config: {
-         db.host: “...”,
-         string_property: “value”,
-         int_property: 42,
-         document_property: {
-            another_string_property: “...”,
-            …
-         }
-      }
-    }*/
-
-   //collection _configuration_team:
-    /* { _id: ... ,
-      name: “redhat”,
-      config: {
-         db.host: “...”,
-         string_property: “value”,
-         int_property: 42,
-         document_property:{
-            another_string_property: “...”,
-            …
-         }
-      }
-    }
-    */
+   private static final Logger log = Resources.produceLog(ConfigurationManipulator.class.getName());
 
    public static final String NAME_KEY = "name";
    public static final String CONFIG_KEY = "config";
+   public static final String FLAGS_KEY = "flags";
+
+   private static final String FLAG_SEPARATOR = "_";
 
    @Inject
    private DataStorageDialect dataStorageDialect;
 
    @Inject
-   private DataStorageProvider dataStorageProvider;
-
+   @SystemDataStorage
    private DataStorage systemDataStorage;
-
-   @PostConstruct
-   public void init() {
-      systemDataStorage = dataStorageProvider.getSystemStorage();
-   }
 
    /**
     * Removes the whole attribute located in 'config' field in configuration entry.
@@ -102,15 +76,20 @@ public class ConfigurationManipulator implements Serializable {
       }
 
       Optional<DataDocument> configuration = getConfigurationEntry(collectionName, nameValue);
-      if (configuration.isPresent()) {
-         DataDocument config = (DataDocument) configuration.get().get(CONFIG_KEY);
-         if (!config.containsKey(attributeName)) {
-            return;
-         }
-         systemDataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(configuration.get().getId()), dataStorageDialect.concatFields(CONFIG_KEY, attributeName));
-      } else {
-         createSimpleConfigurationEntry(collectionName, nameValue);
+      if (!configuration.isPresent()) {
+         log.log(Level.FINE, "Configuration '{}' not found in collection '{}', creating configuration entry...", Arrays.asList(nameValue, collectionName));
+         createEmptyConfigurationEntry(collectionName, nameValue);
+         return;
       }
+
+      DataDocument config = (DataDocument) configuration.get().get(CONFIG_KEY);
+      if (!config.containsKey(attributeName)) {
+         log.log(Level.FINE, "Attribute '{}' not found for configuration '{}' in collection '{}'", Arrays.asList(attributeName, nameValue, collectionName));
+         return;
+      }
+
+      log.log(Level.FINE, "Dropping attribute '{}' of configuration '{}' in collection '{}'", Arrays.asList(attributeName, nameValue, collectionName));
+      systemDataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(configuration.get().getId()), dataStorageDialect.concatFields(CONFIG_KEY, attributeName));
    }
 
    /**
@@ -127,15 +106,17 @@ public class ConfigurationManipulator implements Serializable {
       }
 
       Optional<DataDocument> configuration = getConfigurationEntry(collectionName, nameValue);
-      if (configuration.isPresent()) {
-         // if configuration entry exists, reset 'config' field
-         String id = configuration.get().getId();
-         configuration.get().remove(CONFIG_KEY);
-         configuration.get().put(CONFIG_KEY, new DataDocument());
-         systemDataStorage.updateDocument(collectionName, configuration.get(), dataStorageDialect.documentIdFilter(id));
-      } else {
-         createSimpleConfigurationEntry(collectionName, nameValue);
+      if (!configuration.isPresent()) {
+         log.log(Level.FINE, "Configuration '{}' not found in collection '{}', creating configuration entry...", Arrays.asList(nameValue, collectionName));
+         createEmptyConfigurationEntry(collectionName, nameValue);
+         return;
       }
+
+      log.log(Level.FINE, "Resetting configuration '{}' in collection '{}'", Arrays.asList(nameValue, collectionName));
+      DataDocument configDocument = configuration.get();
+      configDocument.remove(CONFIG_KEY);
+      configDocument.put(CONFIG_KEY, new DataDocument());
+      systemDataStorage.updateDocument(collectionName, configDocument, dataStorageDialect.documentIdFilter(configDocument.getId()));
    }
 
    /**
@@ -151,7 +132,25 @@ public class ConfigurationManipulator implements Serializable {
     *       the Object value of the given key
     */
    public void setConfiguration(final String collectionName, final String nameValue, final String key, final Object value) {
-      writeValueToDb(collectionName, nameValue, key, value);
+      setConfiguration(collectionName, nameValue, key, value, Collections.emptySet());
+   }
+
+   /**
+    * Sets a new key-value into 'config' field for given nameValue of configuration entry stored in system database. If the given key exists, its value will be updated.
+    *
+    * @param collectionName
+    *       the name of collection in system database
+    * @param nameValue
+    *       the unique name value of stored configuration entry
+    * @param key
+    *       the name of key to store in 'config' field
+    * @param value
+    *       the Object value of the given key
+    * @param flags
+    *       flags to be set for the given configuration field
+    */
+   public void setConfiguration(final String collectionName, final String nameValue, final String key, final Object value, final Set<String> flags) {
+      writeValueToDb(collectionName, nameValue, key, value, flags);
    }
 
    /**
@@ -166,11 +165,7 @@ public class ConfigurationManipulator implements Serializable {
     * @return Object value of the given key
     */
    public Object getConfiguration(final String collectionName, final String nameValue, final String key) {
-      Optional<Object> conf = readValueFromDb(collectionName, nameValue, key);
-      if (conf.isPresent()) {
-         return conf.get();
-      }
-      return null;
+      return readValueFromDb(collectionName, nameValue, key).orElse(null);
    }
 
    /**
@@ -183,20 +178,28 @@ public class ConfigurationManipulator implements Serializable {
     * @return configuration entry of the given nameValue in given collection
     */
    public Optional<DataDocument> getConfigurationEntry(final String collectionName, final String nameValue) {
-      if (systemDataStorage.hasCollection(collectionName)) {
-         if (nameValue == null) {
-            return Optional.empty();
-         }
-
-         final DataFilter filter = dataStorageDialect.fieldValueFilter(NAME_KEY, nameValue);
-         DataDocument config = systemDataStorage.readDocument(collectionName, filter);
-
-         if (config != null) {
-            return Optional.of(config);
-         }
+      if (nameValue == null || !systemDataStorage.hasCollection(collectionName)) {
+         return Optional.empty();
       }
 
-      return Optional.empty();
+      final DataFilter filter = dataStorageDialect.fieldValueFilter(NAME_KEY, nameValue);
+      DataDocument config = systemDataStorage.readDocument(collectionName, filter);
+      return Optional.ofNullable(config);
+   }
+
+   public boolean hasConfigurationAttributeFlag(final String collectionName, final String configName, final String attributeName, final String flagName) {
+      Optional<DataDocument> configuration = getConfigurationEntry(collectionName, configName);
+      if (!configuration.isPresent()) {
+         return false;
+      }
+
+      List<String> flags = configuration.get().getArrayList(FLAGS_KEY, String.class);
+      if (flags == null) {
+         return false;
+      }
+
+      String attributeFlag = createAttributeFlag(attributeName, flagName);
+      return flags.contains(attributeFlag);
    }
 
    /**
@@ -211,45 +214,44 @@ public class ConfigurationManipulator implements Serializable {
     * @param value
     *       the Object value of the given key
     */
-   private void writeValueToDb(final String collectionName, final String nameValue, final String key, final Object value) {
+   private void writeValueToDb(final String collectionName, final String nameValue, final String key, final Object value, final Set<String> flags) {
       if (nameValue == null || key == null || value == null) {
          return;
       }
 
-      // configuration represents the configuration document of the given nameValue
+      List<String> newFlags = convertToAttributeFlags(key, flags);
+
       Optional<DataDocument> configuration = getConfigurationEntry(collectionName, nameValue);
-
-      DataDocument newConfiguration = new DataDocument();
-      DataDocument configDocument = new DataDocument();
-      String id = "";
-
-      if (configuration.isPresent()) {
-         id = configuration.get().getId();
-         configDocument = (DataDocument) configuration.get().get(CONFIG_KEY);
-      } else {
-         newConfiguration = new DataDocument();
-         newConfiguration.put(NAME_KEY, nameValue);
+      if (!configuration.isPresent()) {
+         log.log(Level.FINE, "Configuration '{}' not found in collection '{}', creating configuration entry '{{}:{}}'", Arrays.asList(nameValue, collectionName, key, value));
+         createNewConfigurationEntry(collectionName, nameValue, key, value, newFlags);
+         return;
       }
 
-      if (value instanceof String) {
-         configDocument.put(key, value.toString());
-      }
+      log.log(Level.FINE, "Writing '{{}:{}}' to configuration '{}' in collection '{}'", Arrays.asList(key, value, nameValue, collectionName));
+      DataDocument configDocument = configuration.get();
 
-      if (value instanceof Integer) {
-         configDocument.put(key, Integer.valueOf(value.toString()));
-      }
+      DataDocument configValues = (DataDocument) configDocument.get(CONFIG_KEY);
+      configValues.put(key, value);
 
-      if (value instanceof DataDocument) {
-         configDocument.put(key, value);
+      List<String> flagsArray = configDocument.getArrayList(FLAGS_KEY, String.class);
+      if (flagsArray == null) {
+         flagsArray = new ArrayList<>();
       }
+      flagsArray.addAll(newFlags);
 
-      newConfiguration.put(CONFIG_KEY, configDocument);
+      DataDocument updatedDocument = new DataDocument();
+      updatedDocument.put(CONFIG_KEY, configValues);
+      updatedDocument.put(FLAGS_KEY, flagsArray);
 
-      if (configuration.isPresent()) {
-         systemDataStorage.updateDocument(collectionName, newConfiguration, dataStorageDialect.documentIdFilter(id));
-      } else {
-         systemDataStorage.createDocument(collectionName, newConfiguration);
-      }
+      DataFilter filter = dataStorageDialect.documentIdFilter(configDocument.getId());
+      systemDataStorage.updateDocument(collectionName, updatedDocument, filter);
+   }
+
+   private static List<String> convertToAttributeFlags(final String configKey, final Set<String> flags) {
+      return flags.stream()
+                  .map(flag -> createAttributeFlag(configKey, flag))
+                  .collect(Collectors.toList());
    }
 
    /**
@@ -268,42 +270,49 @@ public class ConfigurationManipulator implements Serializable {
          return Optional.empty();
       }
 
-      // configuration contains only configuration document of the given nameValue. If configuration document does not exists, Optional<DataDocument> will be empty.
       Optional<DataDocument> configuration = getConfigurationEntry(collectionName, nameValue);
 
-      if (configuration.isPresent()) {
-         // config contains document of 'config' key
-         DataDocument config = (DataDocument) configuration.get().get(CONFIG_KEY);
-
-         if (!config.containsKey(key)) {
-            return Optional.empty();
-         }
-
-         Object value = config.get(key);
-         if (value == null) {
-            return Optional.empty();
-         }
-
-         return Optional.of(value);
+      if (!configuration.isPresent()) {
+         log.log(Level.FINE, "Configuration '{}' not found in collection '{}', creating configuration entry...", Arrays.asList(nameValue, collectionName));
+         createEmptyConfigurationEntry(collectionName, nameValue);
+         return Optional.empty();
       }
 
-      // if configuration document is not found, it will be created
-      createSimpleConfigurationEntry(collectionName, nameValue);
-      return Optional.empty();
+      DataDocument config = (DataDocument) configuration.get().get(CONFIG_KEY);
+
+      if (!config.containsKey(key)) {
+         return Optional.empty();
+      }
+
+      Object value = config.get(key);
+      return Optional.ofNullable(value);
    }
 
    /**
-    * Creates new configuration entry with '_id', 'name' and 'config' fields.ø
+    * Creates new configuration entry with '_id', 'name' and empty 'config' field.
     *
     * @param collectionName
     *       the name of collection
     * @param nameValue
     *       value of name field
     */
-   private void createSimpleConfigurationEntry(final String collectionName, final String nameValue) {
+   private void createEmptyConfigurationEntry(final String collectionName, final String nameValue) {
       DataDocument configDocument = new DataDocument();
       configDocument.put(NAME_KEY, nameValue);
       configDocument.put(CONFIG_KEY, new DataDocument());
+      configDocument.put(FLAGS_KEY, Collections.emptyList());
       systemDataStorage.createDocument(collectionName, configDocument);
+   }
+
+   private void createNewConfigurationEntry(final String collectionName, final String nameValue, final String key, final Object value, final List<String> flags) {
+      DataDocument configDocument = new DataDocument();
+      configDocument.put(NAME_KEY, nameValue);
+      configDocument.put(CONFIG_KEY, new DataDocument(key, value));
+      configDocument.put(FLAGS_KEY, flags);
+      systemDataStorage.createDocument(collectionName, configDocument);
+   }
+
+   private static String createAttributeFlag(final String configKey, final String flagName) {
+      return configKey + FLAG_SEPARATOR + flagName;
    }
 }

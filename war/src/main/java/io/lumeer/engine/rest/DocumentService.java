@@ -102,7 +102,7 @@ public class DocumentService implements Serializable {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 

@@ -64,7 +64,7 @@ public class SearchService implements Serializable {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 

@@ -117,7 +117,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void init() {
-      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/";
+      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/";
    }
 
    @Test

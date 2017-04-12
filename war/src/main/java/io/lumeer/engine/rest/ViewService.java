@@ -82,7 +82,7 @@ public class ViewService {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 

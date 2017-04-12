@@ -196,7 +196,7 @@ public class ProjectFacade {
    public void createProject(final String projectId, final String projectName) {
       DataDocument document = new DataDocument(Project.ATTR_PROJECT_ID, projectId)
             .append(Project.ATTR_PROJECT_NAME, projectName)
-            .append(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganisationId());
+            .append(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       dataStorage.createDocument(Project.COLLECTION_NAME, document);
    }
 
@@ -356,7 +356,7 @@ public class ProjectFacade {
       if (userRoles.contains(userRole)) {
          return true;
       } else {
-         Map<String, List<String>> roles = userRoleFacade.readRoles(organizationFacade.getOrganisationId(), projectId);
+         Map<String, List<String>> roles = userRoleFacade.readRoles(organizationFacade.getOrganizationId(), projectId);
          for (String ur : userRoles) {
             if (roles.containsKey(ur) && roles.get(ur).contains(userRole)) {
                return true;
@@ -374,7 +374,7 @@ public class ProjectFacade {
 
    private DataFilter userFilter(String projectId, String userName) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganisationId());
+      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
       filter.put(dataStorageDialect.concatFields(Project.ATTR_USERS, Project.ATTR_USERS_USERNAME), userName);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
@@ -382,7 +382,7 @@ public class ProjectFacade {
 
    private DataFilter userRoleFilter(String projectId, String userRole) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganisationId());
+      filter.put(UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(UserRoles.ATTR_PROJECT_ID, projectId);
       filter.put(UserRoles.ATTR_USER_ROLE, userRole);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
@@ -390,14 +390,14 @@ public class ProjectFacade {
 
    private DataFilter projectIdFilter(String projectId) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganisationId());
+      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
    private DataFilter projectNameFilter(String projectName) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganisationId());
+      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.ATTR_PROJECT_NAME, projectName);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }

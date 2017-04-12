@@ -91,7 +91,7 @@ public class LinkingService {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 
