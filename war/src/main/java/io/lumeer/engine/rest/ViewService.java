@@ -24,7 +24,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
@@ -75,14 +75,14 @@ public class ViewService {
    private String projectId;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
 
    @PostConstruct
    public void init() {
-      organisationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganisationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 

@@ -38,15 +38,12 @@ public class CollectionMetadata {
    private String projectId;
    private Map<String, Attribute> attributes = new HashMap<>();
    private Date lastTimeUsed;
-   private List<String> recentlyUsedDocumentIds;
-   private DataDocument customMetadata;
+   private List<String> recentlyUsedDocumentIds = new ArrayList<>();
+   private DataDocument customMetadata = new DataDocument();
    private String creator;
    private Date createDate;
 
-   // we put empty values here, so null pointer ex is not thrown when calling methods on the list or DataDocument
    public CollectionMetadata() {
-      recentlyUsedDocumentIds = new ArrayList<>();
-      customMetadata = new DataDocument();
    }
 
    public CollectionMetadata(final DataDocument metadata) {

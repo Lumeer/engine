@@ -117,7 +117,6 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       assertThat(metadata.getName()).as("real name").isEqualTo(COLLECTION_CREATE_INITIAL_METADATA);
       assertThat(metadata.getInternalName()).as("internal name").isEqualTo(collection);
-      assertThat(metadata.getProjectId()).as("project id").isEqualTo(projectFacade.getCurrentProjectId());
       assertThat(metadata.getAttributes()).as("attributes").isEmpty();
       assertThat(metadata.getLastTimeUsed()).as("last time used").isBeforeOrEqualsTo(new Date());
       assertThat(metadata.getRecentlyUsedDocumentIds()).as("recently used documents").isEmpty();

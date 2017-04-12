@@ -30,15 +30,13 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -79,7 +77,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    private UserFacade userFacade;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
@@ -283,7 +281,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String setPathPrefix(final String collectionName) {
-      return PATH_CONTEXT + "/rest/" + organisationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/" + collectionName + "/documents/";
+      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/" + collectionName + "/documents/";
    }
 
    private String getInternalName(final String collectionOriginalName) {

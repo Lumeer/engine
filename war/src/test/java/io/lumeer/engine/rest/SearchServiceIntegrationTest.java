@@ -30,10 +30,10 @@ import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.DocumentFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
+import io.lumeer.engine.controller.OrganizationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,7 +55,6 @@ import javax.ws.rs.core.Response;
 public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
-   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/sampleOrg/sampleProj/";
 
    private final String COLLECTION_QUERY_SEARCH = "SearchServiceCollectionRunQuery";
 
@@ -68,6 +67,12 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private DocumentFacade documentFacade;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Test
    public void testRegister() throws Exception {
@@ -83,13 +88,13 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
       final DataDocument emptyProjection = new DataDocument();
       final DataDocument emptySorting = new DataDocument();
 
-      collectionFacade.createCollection(COLLECTION_QUERY_SEARCH);
-      createDummyEntries(COLLECTION_QUERY_SEARCH);
+      String collection = collectionFacade.createCollection(COLLECTION_QUERY_SEARCH);
+      createDummyEntries(collection);
 
       final Set<String> collections = new HashSet<>();
       collections.add(COLLECTION_QUERY_SEARCH);
       final Query query = new Query(collections, emptyFilters, emptyProjection, emptySorting, limit, null);
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "query/").request().buildPost(Entity.entity(query, MediaType.APPLICATION_JSON)).invoke();
+      Response response = client.target(TARGET_URI).path(buildPathPrefix() + "query/").request().buildPost(Entity.entity(query, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> matchResult = response.readEntity(ArrayList.class);
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(matchResult).hasSize(limit);
@@ -99,14 +104,18 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    private void createDummyEntries(final String collectionName) throws DbException, InvalidConstraintException {
       for (int i = 0; i < 10; i++) {
-         documentFacade.createDocument(getInternalName(collectionName), new DataDocument("dummyAttribute", i));
+         documentFacade.createDocument(collectionName, new DataDocument("dummyAttribute", i));
       }
    }
 
    private void setUpCollections(final String collectionName) throws DbException {
-      if (dataStorage.hasCollection(getInternalName(collectionName))) {
-         collectionFacade.dropCollection(getInternalName(collectionName));
+      if (dataStorage.hasCollection(collectionName)) {
+         collectionFacade.dropCollection(collectionName);
       }
+   }
+
+   private String buildPathPrefix() {
+      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/";
    }
 
    private String getInternalName(final String collectionOriginalName) {

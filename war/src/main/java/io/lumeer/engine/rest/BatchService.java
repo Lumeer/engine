@@ -28,7 +28,7 @@ import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.BatchFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 
 import javax.annotation.PostConstruct;
@@ -63,14 +63,14 @@ public class BatchService {
    private String projectId;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
 
    @PostConstruct
    public void init() {
-      organisationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganisationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 

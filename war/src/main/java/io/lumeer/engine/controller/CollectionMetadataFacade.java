@@ -83,7 +83,7 @@ public class CollectionMetadataFacade implements Serializable {
    private ProjectFacade projectFacade;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private Event<ChangeCollectionName> changeCollectionNameEvent;
@@ -123,13 +123,9 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws CollectionMetadataDocumentNotFoundException when metadata document is not found
     */
    public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      Map<String, Object> filter = new HashMap<>();
-      filter.put(LumeerConst.Collection.PROJECT_ID_KEY, projectFacade.getCurrentProjectId());
-      filter.put(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName);
-
       DataDocument metadata = dataStorage.readDocument(
             metadataCollection(),
-            dialect.multipleFieldsValueFilter(filter));
+            dialect.fieldValueFilter(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName));
 
       if (metadata == null) {
          throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName));
@@ -200,7 +196,6 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = new DataDocument()
             .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName)
             .append(LumeerConst.Collection.INTERNAL_NAME_KEY, internalCollectionName)
-            .append(LumeerConst.Collection.PROJECT_ID_KEY, projectFacade.getCurrentProjectId())
             .append(LumeerConst.Collection.ATTRIBUTES_KEY, new DataDocument())
             .append(LumeerConst.Collection.LAST_TIME_USED_KEY, new Date())
             .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())
@@ -1051,15 +1046,15 @@ public class CollectionMetadataFacade implements Serializable {
     * @return name of metadata collection for current organisation
     */
    public String metadataCollection() {
-      return metadataCollection(organisationFacade.getOrganisationId());
+      return metadataCollection(projectFacade.getCurrentProjectId());
    }
 
    /**
-    * @param orgId
-    *       organisation id
+    * @param projectId
+    *       project id
     * @return name of metadata collection for given project id
     */
-   public String metadataCollection(String orgId) {
-      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + orgId;
+   public static String metadataCollection(String projectId) {
+      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + projectId;
    }
 }

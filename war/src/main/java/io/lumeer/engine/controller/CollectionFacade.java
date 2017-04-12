@@ -87,7 +87,7 @@ public class CollectionFacade implements Serializable {
    private ProjectFacade projectFacade;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private Event<CreateCollection> createCollectionEvent;
@@ -113,6 +113,7 @@ public class CollectionFacade implements Serializable {
    /**
     * Returns a Map object of collection names for given project.
     *
+    * @param projectId project id
     * @return the map of collection names. Keys are internal names, values are original names.
     */
    public Map<String, String> getAllCollections(String projectId) {
@@ -148,8 +149,8 @@ public class CollectionFacade implements Serializable {
 
    private List<DataDocument> getAllCollectionsDocuments(String projectId) {
       List<DataDocument> result = dataStorage.search(
-            collectionMetadataFacade.metadataCollection(organisationFacade.getOrganisationId()),
-            dataStorageDialect.fieldValueFilter(LumeerConst.Collection.PROJECT_ID_KEY, projectId),
+            collectionMetadataFacade.metadataCollection(projectId),
+            null,
             dataStorageDialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER),
             0, 0);
 
@@ -203,10 +204,8 @@ public class CollectionFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @return map, keys are attributes' names, values are objects with attributes' metadata
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public Map<String, Attribute> readCollectionAttributes(final String collectionName) throws CollectionMetadataDocumentNotFoundException {
+   public Map<String, Attribute> readCollectionAttributes(final String collectionName) {
       return collectionMetadataFacade.getAttributesInfo(collectionName);
    }
 
