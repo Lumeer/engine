@@ -115,7 +115,7 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String buildPathPrefix() {
-      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganisationId() + "/" + projectFacade.getCurrentProjectId() + "/";
+      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/";
    }
 
    private String getInternalName(final String collectionOriginalName) {
