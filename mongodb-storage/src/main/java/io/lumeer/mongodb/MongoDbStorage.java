@@ -36,6 +36,7 @@ import io.lumeer.engine.api.data.DataStorageStats;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
+import io.lumeer.mongodb.codecs.BigDecimalCodec;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.ErrorCategory;
@@ -56,6 +57,8 @@ import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
@@ -115,7 +118,10 @@ public class MongoDbStorage implements DataStorage {
          optionsBuilder.sslEnabled(true).socketFactory(NaiveTrustManager.getSocketFactory()).sslInvalidHostNameAllowed(true);
       }
 
-      this.mongoClient = new MongoClient(addresses, credentials, optionsBuilder.build());
+      final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
+      final CodecRegistry registry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new BigDecimalCodec()), defaultRegistry);
+
+      this.mongoClient = new MongoClient(addresses, credentials, optionsBuilder.codecRegistry(registry).build());
       this.database = mongoClient.getDatabase(database);
    }
 

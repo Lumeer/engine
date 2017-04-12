@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -39,9 +40,15 @@ public class FixingFunctionConstraint extends FunctionConstraint {
     *       Function that can fix the value. Return null if and only if the value cannot be fixed.
     * @param configuration
     *       Original constraint configuration to be able to throw user friendly exceptions.
+    * @param encodeFunction
+    *       Function to encode input data types to the form needed for database.
+    * @param decodeFunction
+    *       Function to decode database data types to user data type.
+    * @param encodedTypes
+    *       Allowed database data types.
     */
-   protected FixingFunctionConstraint(final Function<String, Boolean> assesFunction, final Function<String, String> fixFunction, final String configuration) {
-      super(assesFunction, configuration);
+   protected FixingFunctionConstraint(final Function<String, Boolean> assesFunction, final Function<String, String> fixFunction, final String configuration, final BiFunction<Object, Class, Object> encodeFunction, final Function<Object, Object> decodeFunction, final Class... encodedTypes) {
+      super(assesFunction, configuration, encodeFunction, decodeFunction, encodedTypes);
 
       this.fixFunction = fixFunction;
    }

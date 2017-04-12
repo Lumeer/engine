@@ -19,6 +19,10 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -32,6 +36,12 @@ public class FunctionConstraint implements Constraint {
 
    private final String configuration;
 
+   private final BiFunction<Object, Class, Object> encodeFunction;
+
+   private final Function<Object, Object> decodeFunction;
+
+   private final Set<Class> encodedTypes;
+
    /**
     * Gets a new instance of constraint that is defined by the provided function.
     *
@@ -39,10 +49,19 @@ public class FunctionConstraint implements Constraint {
     *       Function that returns true for valid values and false otherwise.
     * @param configuration
     *       Original constraint configuration to be able to throw user friendly exceptions.
+    * @param encodeFunction
+    *       Function to encode input data types to the form needed for database.
+    * @param decodeFunction
+    *       Function to decode database data types to user data type.
+    * @param encodedTypes
+    *       Allowed database data types.
     */
-   protected FunctionConstraint(final Function<String, Boolean> assesFunction, final String configuration) {
+   protected FunctionConstraint(final Function<String, Boolean> assesFunction, final String configuration, final BiFunction<Object, Class, Object> encodeFunction, final Function<Object, Object> decodeFunction, final Class... encodedTypes) {
       this.assesFunction = assesFunction;
       this.configuration = configuration;
+      this.encodeFunction = encodeFunction;
+      this.decodeFunction = decodeFunction;
+      this.encodedTypes = new HashSet<>(Arrays.asList(encodedTypes));
    }
 
    @Override
@@ -60,4 +79,18 @@ public class FunctionConstraint implements Constraint {
       return configuration;
    }
 
+   @Override
+   public Object encode(final Object value, final Class preferredType) {
+      return encodeFunction.apply(value, preferredType);
+   }
+
+   @Override
+   public Object decode(final Object value) {
+      return decodeFunction.apply(value);
+   }
+
+   @Override
+   public Set<Class> getEncodedTypes() {
+      return encodedTypes;
+   }
 }

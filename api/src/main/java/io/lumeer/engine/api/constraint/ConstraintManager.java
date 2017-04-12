@@ -217,6 +217,7 @@ public class ConstraintManager {
     *       When it was not possible to parse constraint configuration.
     */
    public List<Constraint> parseConstraints(final List<String> constraintConfigurations) throws InvalidConstraintException {
+      final Set<Class> encodedTypes = new HashSet<>();
       final List<Constraint> constraints = new ArrayList<>();
       final List<String> invalidConfigurations = new ArrayList<>();
 
@@ -227,12 +228,22 @@ public class ConstraintManager {
             invalidConfigurations.add(configuration);
          } else {
             try {
-               constraints.add(registry.get(config[0]).parseConstraint(configuration));
+               final Constraint c = registry.get(config[0]).parseConstraint(configuration);
+               if (encodedTypes.size() == 0) {
+                  encodedTypes.addAll(c.getEncodedTypes());
+               } else {
+                  encodedTypes.retainAll(c.getEncodedTypes());
+               }
+               constraints.add(c);
             } catch (InvalidConstraintException e) {
                invalidConfigurations.add(configuration);
             }
          }
       });
+
+      if (encodedTypes.size() == 0) {
+         throw new InvalidConstraintException("Incompatible constraints were found. The constraint do not match on the data types they could use in database.");
+      }
 
       if (invalidConfigurations.size() > 0) {
          throw new InvalidConstraintException("The following constraint configurations are not recognized: " + String.join(", ", invalidConfigurations));

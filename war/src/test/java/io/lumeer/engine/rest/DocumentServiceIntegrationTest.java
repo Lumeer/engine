@@ -40,7 +40,11 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -88,8 +92,9 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA = "DocumentServiceCollectionAddReadAndUpdateDocumentMetadata";
    private final String COLLECTION_SEARCH_HISTORY_CHANGES = "DocumentServiceCollectionSearchHistoryChanges";
    private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
-   private final String COLLECTION_READ_ACCESS_RIGHTS = "DocumentServiceCollectionrReadAccessRights";
-   private final String COLLECTION_UPDATE_ACCESS_RIGHTS = "DocumentServiceCollectionrUpdateAccessRights";
+   private final String COLLECTION_READ_ACCESS_RIGHTS = "DocumentServiceCollectionReadAccessRights";
+   private final String COLLECTION_UPDATE_ACCESS_RIGHTS = "DocumentServiceCollectionUpdateAccessRights";
+   private final String COLLECTION_ATTRIBUTE_TYPES = "DocumentServiceCollectionAttributeTypes";
 
    @Test
    public void testRegister() throws Exception {
@@ -131,6 +136,44 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       response4.close();
 
       client.close();
+   }
+
+   @Test
+   public void testAttributeTypes() throws Exception {
+      final DataDocument doc = new DataDocument().append("dbl", 2.34).append("str", "hello")
+                                                 .append("set", new HashSet(Arrays.asList("huu", "hooo")))
+                                                 .append("lst", Arrays.asList("a", "b", "C"))
+                                                 .append("date", new Date(35)).append("bool", true)
+                                                 .append("int", 42).append("decimal", new BigDecimal("35.03535"));
+
+      setUpCollections(COLLECTION_ATTRIBUTE_TYPES);
+      final Client client = ClientBuilder.newBuilder().build();
+
+      collectionFacade.createCollection(COLLECTION_ATTRIBUTE_TYPES);
+      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ATTRIBUTE_TYPES)).request().buildPost(Entity.json(doc)).invoke();
+      String documentId = response.readEntity(String.class);
+
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+
+      final DataDocument responseDoc = documentFacade.readDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), documentId);
+
+      assertThat(responseDoc).isNotNull();
+      response.close();
+
+      System.out.println("@@@@@@@@@@@");
+
+      responseDoc.forEach((k, v) ->
+         System.out.println(k + " (" + v.getClass().getName() + ") = " + v.toString())
+      );
+
+      String nId = documentFacade.createDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), doc);
+      final DataDocument readDoc = documentFacade.readDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), nId);
+
+      System.out.println("@@@@@@@@@@@");
+
+      readDoc.forEach((k, v) ->
+            System.out.println(k + " (" + v.getClass().getName() + ") = " + v.toString())
+      );
    }
 
    @Test
