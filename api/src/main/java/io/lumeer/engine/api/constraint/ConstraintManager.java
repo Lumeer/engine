@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -94,6 +96,10 @@ public class ConstraintManager {
    public ConstraintManager(final List<String> constraintConfigurations) throws InvalidConstraintException {
       this();
       constraints = parseConstraints(constraintConfigurations);
+
+      if (!checkConstraintCompatibility(constraints)) {
+         throw new InvalidConstraintException("Incompatible constraints detected. The constraints cannot work with the same data types.");
+      }
    }
 
    /**
@@ -101,9 +107,18 @@ public class ConstraintManager {
     *
     * @param constraint
     *       Constraint to be registered.
+    * @throws InvalidConstraintException
+    *       When the new constraint was incompatible with the existing ones.
     */
-   public void registerConstraint(final Constraint constraint) {
-      constraints.add(constraint);
+   public void registerConstraint(final Constraint constraint) throws InvalidConstraintException {
+      final List<Constraint> allConstraints = new ArrayList<>(constraints);
+      allConstraints.add(constraint);
+
+      if (checkConstraintCompatibility(allConstraints)) {
+         constraints.add(constraint);
+      } else {
+         throw new InvalidConstraintException("Incompatible constraints detected. The constraints cannot work with the same data types.");
+      }
    }
 
    /**
@@ -113,9 +128,18 @@ public class ConstraintManager {
     *       The constraint configuration.
     * @throws InvalidConstraintException
     *       When it was not possible to parse constraint configuration.
+    *       When the new constraint was incompatible with the existing ones.
     */
    public void registerConstraint(final String constraintConfiguration) throws InvalidConstraintException {
-      constraints.addAll(parseConstraints(Collections.singletonList(constraintConfiguration)));
+      final List<Constraint> newConstraints = parseConstraints(Collections.singletonList(constraintConfiguration));
+      final List<Constraint> allConstraints = new ArrayList<>(constraints);
+      allConstraints.addAll(newConstraints);
+
+      if (checkConstraintCompatibility(allConstraints)) {
+         constraints.addAll(newConstraints);
+      } else {
+         throw new InvalidConstraintException("Incompatible constraints detected. The constraints cannot work with the same data types.");
+      }
    }
 
    /**
@@ -292,5 +316,87 @@ public class ConstraintManager {
    public void setLocale(final Locale locale) {
       this.locale = locale;
       Arrays.asList(CONSTRAINT_CLASSES).forEach(ct -> ct.setLocale(locale));
+   }
+
+   /**
+    * Checks whether the given constraints are compatible and can be used at once.
+    * This is checked by their encoding types to see if there is a non-empty intersection.
+    *
+    * @param constraints
+    *       The constrains to check for compatibility.
+    * @return True iff the constraints are compatible.
+    */
+   private static boolean checkConstraintCompatibility(final List<Constraint> constraints) {
+      return getCommonTypes(constraints).size() > 0;
+   }
+
+   /**
+    * Gets the intersection of types supported by given constraints.
+    *
+    * @param constraints
+    *       The list of constraints to check for supported types intersection.
+    * @return The common types among all of the constraints.
+    */
+   private static Set<Class> getCommonTypes(final List<Constraint> constraints) {
+      Set<Class> types = null;
+
+      for (final Constraint c : constraints) {
+         if (types == null) {
+            types = new HashSet(c.getEncodedTypes());
+         } else {
+            types.retainAll(c.getEncodedTypes());
+         }
+      }
+
+      return types;
+   }
+
+   /**
+    * Encodes the given value to a data type suitable for database storage based on current constraints configuration.
+    *
+    * @param value
+    *       The value to convert.
+    * @return The same value with changed data type.
+    */
+   public Object encode(final Object value) {
+      if (constraints.size() == 0) {
+         final Number n = encodeNumber(value);
+         return n == null ? value : n;
+      }
+
+      // let's simply use the first available constraint and first available type
+      return constraints.get(0).encode(value, getCommonTypes(constraints).iterator().next());
+   }
+
+   public Object decode(final Object value) {
+      if (constraints.size() == 0) {
+         if (value != null && !(value instanceof String)) {
+            return value.toString();
+         }
+
+         return value;
+      }
+
+      // use the first constraint available
+      return constraints.get(0).decode(value);
+   }
+
+   /**
+    * Tries to convert the parameter to a number (either integer or double) and return it.
+    * @param value The value to try to convert to number.
+    * @return The value converted to a number data type or null when the conversion was not possible.
+    */
+   private Number encodeNumber(final Object value) {
+      if (value instanceof Number) {
+         return (Number) value;
+      } else if (value instanceof String) {
+         try {
+            return NumberFormat.getNumberInstance(locale).parse(((String) value).trim());
+         } catch (final ParseException pe) {
+            return null;
+         }
+      }
+
+      return null;
    }
 }
