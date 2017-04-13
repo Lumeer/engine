@@ -317,42 +317,26 @@ public class DocumentFacade implements Serializable {
    private void addOrIncrementAttributes(final String collectionName, DataDocument doc) {
       // we add all document attributes to collection metadata
       getDocumentAttributes(doc).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
       });
    }
 
    private void addOrIncrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
       attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
       });
    }
 
    private void dropOrDecrementAttributes(final String collectionName, DataDocument doc) {
       // we add all document attributes to collection metadata
       getDocumentAttributes(doc).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
       });
    }
 
    private void dropOrDecrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
       attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
       });
    }
 
