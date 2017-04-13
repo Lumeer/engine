@@ -22,6 +22,7 @@ package io.lumeer.engine.rest.dao;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -37,15 +38,18 @@ public class CollectionMetadata {
    private String projectId;
    private Map<String, Attribute> attributes = new HashMap<>();
    private Date lastTimeUsed;
-   private List<String> recentlyUsedDocumentIds;
-   private DataDocument customMetadata;
+   private List<String> recentlyUsedDocumentIds = new ArrayList<>();
+   private DataDocument customMetadata = new DataDocument();
    private String creator;
    private Date createDate;
+
+   public CollectionMetadata() {
+   }
 
    public CollectionMetadata(final DataDocument metadata) {
       name = metadata.getString(LumeerConst.Collection.REAL_NAME_KEY);
       internalName = metadata.getString(LumeerConst.Collection.INTERNAL_NAME_KEY);
-      projectId = metadata.getString(LumeerConst.Collection.PROJECT_ID);
+      projectId = metadata.getString(LumeerConst.Collection.PROJECT_ID_KEY);
 
       DataDocument attributesDocument = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTES_KEY);
       for (String attributeName : attributesDocument.keySet()) {

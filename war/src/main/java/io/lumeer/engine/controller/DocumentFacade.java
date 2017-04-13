@@ -27,7 +27,6 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
@@ -318,51 +317,31 @@ public class DocumentFacade implements Serializable {
    private void addOrIncrementAttributes(final String collectionName, DataDocument doc) {
       // we add all document attributes to collection metadata
       getDocumentAttributes(doc).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
       });
    }
 
    private void addOrIncrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
       attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
       });
    }
 
    private void dropOrDecrementAttributes(final String collectionName, DataDocument doc) {
       // we add all document attributes to collection metadata
       getDocumentAttributes(doc).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
       });
    }
 
    private void dropOrDecrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
       attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
       });
    }
 
    private void checkConstraintsAndConvert(final String collectionName, DataDocument doc) throws InvalidConstraintException {
-      try {
-         doc = collectionMetadataFacade.checkAndConvertAttributesValues(collectionName, doc);
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         // nothing happens - if we don't find metadata, all values are valid
-      }
+      doc = collectionMetadataFacade.checkAndConvertAttributesValues(collectionName, doc);
       for (String attribute : doc.keySet()) {
          if (doc.get(attribute) == null) {
             throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));

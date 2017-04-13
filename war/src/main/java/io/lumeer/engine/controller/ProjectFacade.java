@@ -19,8 +19,8 @@
  */
 package io.lumeer.engine.controller;
 
-import static  io.lumeer.engine.api.LumeerConst.Project;
-import static  io.lumeer.engine.api.LumeerConst.UserRoles;
+import static io.lumeer.engine.api.LumeerConst.Project;
+import static io.lumeer.engine.api.LumeerConst.UserRoles;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
@@ -257,6 +257,7 @@ public class ProjectFacade {
     *       Id of the project
     * @param userName
     *       Name of the user
+    * @param userRoles user roles
     * @throws UserAlreadyExistsException
     *       When user already exists in project
     */
