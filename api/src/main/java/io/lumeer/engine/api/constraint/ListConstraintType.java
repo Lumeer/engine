@@ -67,17 +67,23 @@ public class ListConstraintType implements ConstraintType {
    private Function<Object, Object> getDecodeFunction() {
       return o -> {
          if (o instanceof String[]) {
-            final String tags =  Arrays.toString((String[]) o);
+            return Arrays.asList((String[]) o);
+            /*final String tags =  Arrays.toString((String[]) o);
 
             if ("null".equals(tags)) {
                return "";
             }
 
-            return tags.substring(1, tags.length() - 1); // trim [ and ]
+            return tags.substring(1, tags.length() - 1); // trim [ and ]*/
          } else if (o instanceof List) {
-            final String tags = o.toString();
+            return o;
+            /*final String tags = o.toString();
 
-            return tags.substring(1, tags.length() - 1); // trim [ and ]
+            return tags.substring(1, tags.length() - 1); // trim [ and ]*/
+         } else if (o instanceof Set) {
+            return new ArrayList<String>((Set) o);
+         } else if (o instanceof String) {
+            return o;
          }
 
          return o.toString();

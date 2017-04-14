@@ -88,7 +88,7 @@ public class ConstraintManagerTest {
       final Object encoded = cm.encode(cm.fix(fixable));
       assertThat(encoded).isInstanceOf(List.class);
       assertThat((List) encoded).containsAll(l);
-      assertThat(cm.decode(encoded)).isEqualTo(valid);
+      assertThat((List) cm.decode(encoded)).isInstanceOf(List.class).containsAll(l);
    }
 
    @Test
@@ -149,7 +149,7 @@ public class ConstraintManagerTest {
       final Object encoded = cm.encode(cm.fix(valid));
       assertThat(encoded).isInstanceOf(BigDecimal.class);
       assertThat(encoded).isEqualTo(new BigDecimal(valid));
-      assertThat(cm.decode(encoded)).isEqualTo(valid);
+      assertThat(cm.decode(encoded)).isEqualTo(new BigDecimal(valid));
    }
 
    @Test
@@ -174,17 +174,17 @@ public class ConstraintManagerTest {
       Object encoded = cm.encode(cm.fix(validDouble));
       assertThat(encoded).isInstanceOf(Double.class);
       assertThat(encoded).isEqualTo(0.02);
-      assertThat(cm.decode(encoded)).isEqualTo(validDouble);
+      assertThat(cm.decode(encoded)).isEqualTo(0.02);
 
       encoded = cm.encode(cm.fix(validLong));
       assertThat(encoded).isInstanceOf(Long.class);
       assertThat(encoded).isEqualTo(123L);
-      assertThat(cm.decode(encoded)).isEqualTo(validLong);
+      assertThat(cm.decode(encoded)).isEqualTo(123L);
 
       encoded = cm.encode(cm.fix(validBigDecimal));
       assertThat(encoded).isInstanceOf(BigDecimal.class);
       assertThat(encoded).isEqualTo(bd);
-      assertThat(cm.decode(encoded)).isEqualTo(validBigDecimal);
+      assertThat(cm.decode(encoded)).isEqualTo(bd);
    }
 
    @Test

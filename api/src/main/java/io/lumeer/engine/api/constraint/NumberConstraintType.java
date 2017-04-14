@@ -98,7 +98,7 @@ public class NumberConstraintType implements ConstraintType {
    }
 
    private Function<Object, Object> getDecodeFunction() {
-      return o -> o.toString();
+      return o -> o;
    }
 
    @Override
