@@ -3,7 +3,6 @@ package io.lumeer.engine.api.constraint;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.math.BigDecimal;
