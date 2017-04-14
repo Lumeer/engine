@@ -30,10 +30,10 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
-import io.lumeer.engine.provider.DataStorageProvider;
+import io.lumeer.engine.controller.OrganizationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,6 +68,12 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Test
    public void testRegister() throws Exception {
@@ -152,7 +158,7 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String buildPathPrefix(final String collectionName) {
-      return PATH_CONTEXT + "/rest/sampleOrg/sampleProj/collections/" + collectionName + "/links/";
+      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/" + collectionName + "/links/";
    }
 
    private String buildAddDropPrefix(final String role, final String targetCollection, final String id, final String targetId) {

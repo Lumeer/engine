@@ -19,12 +19,17 @@
  */
 package io.lumeer.engine.controller;
 
+import static io.lumeer.engine.api.LumeerConst.Project;
+import static io.lumeer.engine.api.LumeerConst.UserRoles;
+
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst.Project;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.exception.UserAlreadyExistsException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -239,8 +244,10 @@ public class ProjectFacade {
     *       Id of the project
     * @param userName
     *       Name of the user
+    * @throws UserAlreadyExistsException
+    *       When user already exists in project
     */
-   public void addUserToProject(final String projectId, final String userName) {
+   public void addUserToProject(final String projectId, final String userName) throws UserAlreadyExistsException {
       addUserToProject(projectId, userName, readDefaultRoles(projectId));
    }
 
@@ -251,8 +258,14 @@ public class ProjectFacade {
     *       Id of the project
     * @param userName
     *       Name of the user
+    * @param userRoles user roles
+    * @throws UserAlreadyExistsException
+    *       When user already exists in project
     */
-   public void addUserToProject(final String projectId, final String userName, final List<String> userRoles) {
+   public void addUserToProject(final String projectId, final String userName, final List<String> userRoles) throws UserAlreadyExistsException {
+      if (readUser(projectId, userName) != null) {
+         throw new UserAlreadyExistsException(ErrorMessageBuilder.userAlreadyExistsInProjectString(userName, projectId));
+      }
       DataDocument document = new DataDocument(Project.ATTR_USERS_USERNAME, userName)
             .append(Project.ATTR_USERS_USER_ROLES, userRoles);
       dataStorage.addItemToArray(Project.COLLECTION_NAME, projectIdFilter(projectId), Project.ATTR_USERS, document);
@@ -308,13 +321,8 @@ public class ProjectFacade {
     * @return list of roles
     */
    public List<String> readUserRoles(final String projectId, final String userName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, userFilter(projectId, userName), Collections.singletonList(dataStorageDialect.concatFields(Project.ATTR_USERS, "$")));
-      if (document == null) {
-         return null;
-      }
-      // we got only one subdocument otherwise there was null
-      DataDocument userRoles = document.getArrayList(Project.ATTR_USERS, DataDocument.class).get(0);
-      return userRoles.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class);
+      DataDocument document = readUser(projectId, userName);
+      return document != null ? document.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class) : null;
    }
 
    /**
@@ -359,6 +367,11 @@ public class ProjectFacade {
       }
    }
 
+   private DataDocument readUser(final String projectId, final String userName) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, userFilter(projectId, userName), Collections.singletonList(dataStorageDialect.concatFields(Project.ATTR_USERS, "$")));
+      // we got only one subdocument otherwise there was null
+      return document != null ? document.getArrayList(Project.ATTR_USERS, DataDocument.class).get(0) : null;
+   }
 
    private DataFilter userFilter(String projectId, String userName) {
       Map<String, Object> filter = new HashMap<>();
@@ -370,9 +383,9 @@ public class ProjectFacade {
 
    private DataFilter userRoleFilter(String projectId, String userRole) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
-      filter.put(Project.UserRoles.ATTR_PROJECT_ID, projectId);
-      filter.put(Project.UserRoles.ATTR_USER_ROLE, userRole);
+      filter.put(UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
+      filter.put(UserRoles.ATTR_PROJECT_ID, projectId);
+      filter.put(UserRoles.ATTR_USER_ROLE, userRole);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 

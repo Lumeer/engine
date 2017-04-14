@@ -28,15 +28,11 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -79,11 +75,9 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       DataDocument document = new DataDocument();
       String documentId = documentFacade.createDocument(coll, document);
       DataDocument inserted = documentFacade.readDocument(coll, documentId);
-      // Assert.assertNotNull(inserted);
       assertThat(inserted).isNotNull();
 
       documentFacade.dropDocument(coll, documentId);
-      // Assert.assertNull(dataStorage.readDocument(coll, documentId));
       assertThat(dataStorage.readDocument(coll, dataStorageDialect.documentIdFilter(documentId))).isNull();
    }
 
@@ -107,27 +101,22 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       documentFacade.updateDocument(coll, document3);
 
       DataDocument readed = documentFacade.readDocument(coll, documentId);
-      // Assert.assertEquals(readed.getString(attr), "3");
       assertThat(readed.getString(attr)).isEqualTo("3");
 
       documentFacade.revertDocument(coll, documentId, 0);
       readed = documentFacade.readDocument(coll, documentId);
-      // Assert.assertEquals(readed.getString(attr), "0");
       assertThat(readed.getString(attr)).isEqualTo("0");
 
       documentFacade.revertDocument(coll, documentId, 1);
       readed = documentFacade.readDocument(coll, documentId);
-      // Assert.assertEquals(readed.getString(attr), "1");
       assertThat(readed.getString(attr)).isEqualTo("1");
 
       documentFacade.revertDocument(coll, documentId, 2);
       readed = documentFacade.readDocument(coll, documentId);
-      // Assert.assertEquals(readed.getString(attr), "2");
       assertThat(readed.getString(attr)).isEqualTo("2");
 
       documentFacade.revertDocument(coll, documentId, 3);
       readed = documentFacade.readDocument(coll, documentId);
-      // Assert.assertEquals(readed.getString(attr), "3");
       assertThat(readed.getString(attr)).isEqualTo("3");
    }
 
@@ -144,17 +133,10 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
 
       DataDocument readed = documentFacade.readDocument(coll, documentId);
 
-      //Assert.assertTrue(!readed.containsKey("a"));
-      //Assert.assertTrue(!readed.containsKey("b"));
-      //Assert.assertTrue(!readed.containsKey("c"));
       assertThat(readed).doesNotContainKey("a");
       assertThat(readed).doesNotContainKey("b");
       assertThat(readed).doesNotContainKey("c");
 
-      //Assert.assertTrue(readed.containsKey("d"));
-      //Assert.assertTrue(readed.containsKey("e"));
-      //Assert.assertTrue(readed.containsKey("f"));
-      // Assert.assertTrue(readed.containsKey(LumeerConst.Document.USER_RIGHTS));
       assertThat(readed).containsKey("d");
       assertThat(readed).containsKey("e");
       assertThat(readed).containsKey("f");
@@ -169,25 +151,16 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       DataDocument document = new DataDocument(DUMMY_KEY1, DUMMY_VALUE1);
       String documentId = documentFacade.createDocument(coll, document);
       DataDocument inserted = documentFacade.readDocument(coll, documentId);
-      // Assert.assertNotNull(inserted);
       assertThat(inserted).isNotNull();
-      // Assert.assertEquals(inserted.getId(), documentId);
       assertThat(inserted.getId()).isEqualTo(documentId);
 
-      for (Iterator<Map.Entry<String, Object>> it = inserted.entrySet().iterator(); it.hasNext(); ) {
-         Map.Entry<String, Object> entry = it.next();
-         if (entry.getKey().startsWith(LumeerConst.Document.METADATA_PREFIX)) {
-            it.remove();
-         }
-      }
+      inserted.entrySet().removeIf(entry -> entry.getKey().startsWith(LumeerConst.Document.METADATA_PREFIX));
 
       String changed = DUMMY_VALUE1 + "_changed";
       inserted.put(DUMMY_KEY1, changed);
       documentFacade.updateDocument(coll, inserted);
       DataDocument updated = dataStorage.readDocument(coll, dataStorageDialect.documentIdFilter(documentId));
-      // Assert.assertNotNull(updated);
       assertThat(updated).isNotNull();
-      // Assert.assertEquals(updated.getString(DUMMY_KEY1), changed);
       assertThat(updated.getString(DUMMY_KEY1)).isEqualTo(changed);
    }
 
@@ -195,42 +168,29 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
    public void testGetAttributes() throws Exception {
       String coll = setUpCollection(COLLECTION_GETATTRS_AND_DROPATTR);
 
-      DataDocument document = new DataDocument();
-      document.put("a", 1);
-      document.put("b", 2);
-      document.put("c", 3);
-      document.put("d", 4);
+      DataDocument document = new DataDocument("a", 1)
+            .append("b", 2)
+            .append("c", new DataDocument("cc", 1)
+                  .append("dd", 2))
+            .append("d", new DataDocument("dd", new DataDocument("ddd", new DataDocument("dddd", new DataDocument("ddddd", 1)
+                  .append("ddddd2", 2)))));
 
       String docId = dataStorage.createDocument(coll, document);
 
       Set<String> attrs = documentFacade.getDocumentAttributes(coll, docId);
-      //Assert.assertTrue(attrs.contains("a"));
-      //Assert.assertTrue(attrs.contains("c"));
-      //Assert.assertFalse(attrs.contains("x"));
-      //Assert.assertFalse(attrs.contains("g"));
-      assertThat(attrs).contains("a");
-      assertThat(attrs).contains("c");
-      assertThat(attrs).doesNotContain("x");
-      assertThat(attrs).doesNotContain("g");
+      assertThat(attrs).containsOnly("_id", "a", "b", "c", "d", "c.cc", "c.dd", "d.dd", "d.dd.ddd", "d.dd.ddd.dddd", "d.dd.ddd.dddd.ddddd", "d.dd.ddd.dddd.ddddd2");
 
-      documentFacade.dropAttribute(coll, docId, "a");
-      documentFacade.dropAttribute(coll, docId, "d");
+      documentFacade.dropAttribute(coll, docId, "b");
+      documentFacade.dropAttribute(coll, docId, "c.dd");
+      documentFacade.dropAttribute(coll, docId, "d.dd.ddd.dddd.ddddd2");
 
       DataDocument update = new DataDocument(ID_KEY, docId);
       update.put("f", 2);
-      update.put("x", 10);
       documentFacade.updateDocument(coll, update);
 
       attrs = documentFacade.getDocumentAttributes(coll, docId);
 
-      // Assert.assertFalse(attrs.contains("a"));
-      // Assert.assertFalse(attrs.contains("d"));
-      // Assert.assertTrue(attrs.contains("f"));
-      // Assert.assertTrue(attrs.contains("x"));
-      assertThat(attrs).doesNotContain("a");
-      assertThat(attrs).doesNotContain("d");
-      assertThat(attrs).contains("f");
-      assertThat(attrs).contains("x");
+      assertThat(attrs).containsOnly("_id", "a", "f", "c", "d", "c.cc", "d.dd", "d.dd.ddd", "d.dd.ddd.dddd", "d.dd.ddd.dddd.ddddd");
    }
 
    private String setUpCollection(final String collection) {

@@ -61,6 +61,7 @@ public final class LumeerConst {
 
    /**
     * Index type
+    *
     * @see <a href="https://docs.mongodb.com/manual/core/index-single/">https://docs.mongodb.com/manual/core/index-single/</a>
     */
    public static class Index {
@@ -129,12 +130,12 @@ public final class LumeerConst {
    }
 
    public static class Collection {
-      public static final String METADATA_COLLECTION = "meta.collection";
+      public static final String METADATA_COLLECTION_PREFIX = "meta.collection_";
       public static final String NAME_PREFIX = "collection.";
 
       public static final String REAL_NAME_KEY = "name";
       public static final String INTERNAL_NAME_KEY = "internal-name";
-      public static final String PROJECT_ID = "project-id";
+      public static final String PROJECT_ID_KEY = "project-id";
 
       public static final String ATTRIBUTES_KEY = "attributes";
       public static final String ATTRIBUTE_NAME_KEY = "attribute-name";
@@ -177,14 +178,31 @@ public final class LumeerConst {
       public static final String ATTR_META_ICON = METADATA_PREFIX + "icon";
       public static final String ATTR_META_COLOR = METADATA_PREFIX + "color";
       public static final String ATTR_META_DEFAULT_ROLES = METADATA_PREFIX + "default-roles";
+      
+   }
+   
+    public static class UserRoles {
+      public static final String COLLECTION_NAME = Project.COLLECTION_NAME + "-user-role";
+      public static final String ATTR_ORGANIZATION_ID = "organization-id";
+      public static final String ATTR_PROJECT_ID = "project-id";
+      public static final String ATTR_USER_ROLE = "user-role";
+      public static final String ATTR_CORE_ROLES = "core-roles";
+   }
 
-      public static class UserRoles {
-         public static final String COLLECTION_NAME = Project.COLLECTION_NAME + "-user-role";
-         public static final String ATTR_ORGANIZATION_ID = "organization-id";
-         public static final String ATTR_PROJECT_ID = "project-id";
-         public static final String ATTR_USER_ROLE = "user-role";
-         public static final String ATTR_CORE_ROLES = "core-roles";
-      }
+   public static class Organization {
 
+      public static final String COLLECTION_NAME = "_system-organization";
+      public static final String ATTR_ORG_ID = "organization-id";
+      public static final String ATTR_ORG_NAME = "organization-name";
+      public static final String ATTR_ORG_DATA = "organization-info-data";
+
+      public static final String METADATA_PREFIX = "_meta-";
+      public static final String ATTR_META_ICON = METADATA_PREFIX + "icon";
+      public static final String ATTR_META_COLOR = METADATA_PREFIX + "color";
+      public static final String ATTR_META_DEFAULT_ROLES = METADATA_PREFIX + "default-roles";
+
+      public static final String ATTR_USERS = "users";
+      public static final String ATTR_USERS_USERNAME = "user";
+      public static final String ATTR_USERS_USER_ROLES = "user-roles";
    }
 }

@@ -41,7 +41,6 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -85,6 +84,12 @@ public class CollectionFacade implements Serializable {
    private VersionFacade versionFacade;
 
    @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
    private Event<CreateCollection> createCollectionEvent;
 
    @Inject
@@ -94,17 +99,25 @@ public class CollectionFacade implements Serializable {
    private Map<String, String> collections;
 
    /**
-    * Returns a Map object of collection names in the database.
+    * Returns a Map object of collection names for current project.
     *
     * @return the map of collection names. Keys are internal names, values are original names.
     */
    public Map<String, String> getAllCollections() {
-      List<DataDocument> result = dataStorage.searchIncludeAttrs(
-            LumeerConst.Collection.METADATA_COLLECTION,
-            null,
-            Arrays.asList(
-                  LumeerConst.Collection.INTERNAL_NAME_KEY,
-                  LumeerConst.Collection.REAL_NAME_KEY));
+      Map<String, String> collections = getAllCollections(projectFacade.getCurrentProjectId());
+
+      this.collections = collections;
+      return collections;
+   }
+
+   /**
+    * Returns a Map object of collection names for given project.
+    *
+    * @param projectId project id
+    * @return the map of collection names. Keys are internal names, values are original names.
+    */
+   public Map<String, String> getAllCollections(String projectId) {
+      List<DataDocument> result = getAllCollectionsDocuments(projectId);
 
       Map<String, String> collections = new HashMap<>();
 
@@ -114,7 +127,6 @@ public class CollectionFacade implements Serializable {
                d.getString(LumeerConst.Collection.REAL_NAME_KEY));
       }
 
-      this.collections = collections;
       return collections;
    }
 
@@ -124,12 +136,7 @@ public class CollectionFacade implements Serializable {
     * @return a list of internal collection names.
     */
    public List<String> getAllCollectionsByLastTimeUsed() {
-      List<DataDocument> result = dataStorage.run(new DataDocument()
-            .append("find", LumeerConst.Collection.METADATA_COLLECTION)
-            .append("projection", new DataDocument()
-                  .append(LumeerConst.Collection.INTERNAL_NAME_KEY, true))
-            .append("sort", new DataDocument()
-                  .append(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER)));
+      List<DataDocument> result = getAllCollectionsDocuments(projectFacade.getCurrentProjectId());
 
       List<String> collections = new ArrayList<>();
 
@@ -138,6 +145,16 @@ public class CollectionFacade implements Serializable {
       }
 
       return collections;
+   }
+
+   private List<DataDocument> getAllCollectionsDocuments(String projectId) {
+      List<DataDocument> result = dataStorage.search(
+            collectionMetadataFacade.metadataCollection(projectId),
+            null,
+            dataStorageDialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER),
+            0, 0);
+
+      return result;
    }
 
    /**
@@ -187,10 +204,8 @@ public class CollectionFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @return map, keys are attributes' names, values are objects with attributes' metadata
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public Map<String, Attribute> readCollectionAttributes(final String collectionName) throws CollectionMetadataDocumentNotFoundException {
+   public Map<String, Attribute> readCollectionAttributes(final String collectionName) {
       return collectionMetadataFacade.getAttributesInfo(collectionName);
    }
 
@@ -204,7 +219,7 @@ public class CollectionFacade implements Serializable {
     */
    private void dropCollectionMetadata(final String collectionName) throws CollectionMetadataDocumentNotFoundException {
       String documentId = collectionMetadataFacade.getCollectionMetadataDocument(collectionName).getId();
-      dataStorage.dropDocument(LumeerConst.Collection.METADATA_COLLECTION, dataStorageDialect.documentIdFilter(documentId));
+      dataStorage.dropDocument(collectionMetadataFacade.metadataCollection(), dataStorageDialect.documentIdFilter(documentId));
    }
 
    /**
@@ -254,6 +269,8 @@ public class CollectionFacade implements Serializable {
          for (DataDocument document : documents) {
             dataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(document.getId()), attributeName);
          }
+
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -279,6 +296,8 @@ public class CollectionFacade implements Serializable {
       if (dataStorage.hasCollection(collectionName)) {
          collectionMetadataFacade.renameAttribute(collectionName, origName, newName);
          dataStorage.renameAttribute(collectionName, origName, newName);
+
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
@@ -320,6 +339,8 @@ public class CollectionFacade implements Serializable {
          }
 
          collectionMetadataFacade.addAttributeConstraint(collectionName, attributeName, constraintConfiguration);
+
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
          return true;
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
@@ -343,6 +364,7 @@ public class CollectionFacade implements Serializable {
    public void dropAttributeConstraint(final String collectionName, final String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
          collectionMetadataFacade.dropAttributeConstraint(collectionName, attributeName, constraintConfiguration);
+         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
       } else {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }

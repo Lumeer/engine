@@ -20,6 +20,7 @@
 package io.lumeer.engine.controller;
 
 import static io.lumeer.engine.api.LumeerConst.Project;
+import static io.lumeer.engine.api.LumeerConst.UserRoles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
@@ -27,9 +28,11 @@ import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.provider.DataStorageProvider;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -49,7 +52,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    private DataStorage systemDataStorage;
 
    @Inject
-   private DataStorageDialect dialect;
+   private DataStorageDialect dataStorageDialect;
 
    @Inject
    private DataStorageProvider dataStorageProvider;
@@ -63,33 +66,42 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private UserRoleFacade userRoleFacade;
 
+   @Before
+   public void setUp() throws Exception {
+      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(UserRoles.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+   }
+
+
    @Test
    public void basicMethodsTest() throws Exception {
-      //clears whole collection
-      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dialect.documentFilter("{}"));
+      final String project1 = "project1";
+      final String project2 = "project2";
+      final String project3 = "project3";
+      final String project4 = "project4";
 
-      projectFacade.createProject("project1", "Project One");
-      projectFacade.createProject("project2", "Project Two");
+      projectFacade.createProject(project1, "Project One");
+      projectFacade.createProject(project2, "Project Two");
 
       Map<String, String> map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
       assertThat(map).containsOnlyKeys("project1", "project2");
       assertThat(map).containsEntry("project1", "Project One");
       assertThat(map).containsEntry("project2", "Project Two");
 
-      assertThat(projectFacade.readProjectId("Project Two")).isEqualTo("project2");
-      assertThat(projectFacade.readProjectId("Project One")).isEqualTo("project1");
+      assertThat(projectFacade.readProjectId("Project Two")).isEqualTo(project2);
+      assertThat(projectFacade.readProjectId("Project One")).isEqualTo(project1);
       assertThat(projectFacade.readProjectId("Project Three")).isNull();
 
-      assertThat(projectFacade.readProjectName("project1")).isEqualTo("Project One");
-      assertThat(projectFacade.readProjectName("project2")).isEqualTo("Project Two");
-      assertThat(projectFacade.readProjectName("project3")).isNull();
+      assertThat(projectFacade.readProjectName(project1)).isEqualTo("Project One");
+      assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two");
+      assertThat(projectFacade.readProjectName(project3)).isNull();
 
-      projectFacade.updateProjectId("project1", "project3");
-      assertThat(projectFacade.readProjectName("project3")).isEqualTo("Project One");
-      assertThat(projectFacade.readProjectName("project1")).isNull();
+      projectFacade.updateProjectId(project1, project3);
+      assertThat(projectFacade.readProjectName(project3)).isEqualTo("Project One");
+      assertThat(projectFacade.readProjectName(project1)).isNull();
 
-      projectFacade.renameProject("project2", "Project Two Renamed");
-      assertThat(projectFacade.readProjectName("project2")).isEqualTo("Project Two Renamed");
+      projectFacade.renameProject(project2, "Project Two Renamed");
+      assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two Renamed");
 
       map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
       assertThat(map).containsOnlyKeys("project3", "project2");
@@ -103,40 +115,37 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void metadataMethodsTest() throws Exception {
-      //clears whole collection
-      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dialect.documentFilter("{}"));
+      final String project1 = "project11";
+      final String project2 = "project22";
 
-      projectFacade.createProject("project1", "Project One");
-      projectFacade.createProject("project2", "Project Two");
+      projectFacade.createProject(project1, "Project One");
+      projectFacade.createProject(project2, "Project Two");
 
       // read and update one test
-      assertThat(projectFacade.readProjectMetadata("project1", Project.ATTR_META_COLOR)).isNull();
-      projectFacade.updateProjectMetadata("project1", Project.ATTR_META_COLOR, "000000");
-      assertThat(projectFacade.readProjectMetadata("project1", Project.ATTR_META_COLOR)).isEqualTo("000000");
-      assertThat(projectFacade.readProjectMetadata("project2", Project.ATTR_META_COLOR)).isNull();
+      assertThat(projectFacade.readProjectMetadata(project1, Project.ATTR_META_COLOR)).isNull();
+      projectFacade.updateProjectMetadata(project1, Project.ATTR_META_COLOR, "000000");
+      assertThat(projectFacade.readProjectMetadata(project1, Project.ATTR_META_COLOR)).isEqualTo("000000");
+      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_COLOR)).isNull();
 
       // read, update more and drop test
-      projectFacade.updateProjectMetadata("project2", new DataDocument(Project.ATTR_META_COLOR, "ffffff")
+      projectFacade.updateProjectMetadata(project2, new DataDocument(Project.ATTR_META_COLOR, "ffffff")
             .append(Project.ATTR_META_ICON, "fa-user"));
-      assertThat(projectFacade.readProjectMetadata("project2", Project.ATTR_META_COLOR)).isEqualTo("ffffff");
-      assertThat(projectFacade.readProjectMetadata("project2", Project.ATTR_META_ICON)).isEqualTo("fa-user");
-      projectFacade.dropProjectMetadata("project2", Project.ATTR_META_COLOR);
-      assertThat(projectFacade.readProjectMetadata("project2", Project.ATTR_META_COLOR)).isNull();
+      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_COLOR)).isEqualTo("ffffff");
+      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_ICON)).isEqualTo("fa-user");
+      projectFacade.dropProjectMetadata(project2, Project.ATTR_META_COLOR);
+      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_COLOR)).isNull();
 
       // default user roles test
-      assertThat(projectFacade.readDefaultRoles("project1")).isNull();
-      projectFacade.setDefaultRoles("project1", Arrays.asList("role1", "role2", "role3"));
-      assertThat(projectFacade.readDefaultRoles("project1")).containsExactly("role1", "role2", "role3");
-      projectFacade.setDefaultRoles("project1", Arrays.asList("role2", "role4", "role5"));
-      assertThat(projectFacade.readDefaultRoles("project1")).containsExactly("role2", "role4", "role5");
+      assertThat(projectFacade.readDefaultRoles(project1)).isNull();
+      projectFacade.setDefaultRoles(project1, Arrays.asList("role1", "role2", "role3"));
+      assertThat(projectFacade.readDefaultRoles(project1)).containsExactly("role1", "role2", "role3");
+      projectFacade.setDefaultRoles(project1, Arrays.asList("role2", "role4", "role5"));
+      assertThat(projectFacade.readDefaultRoles(project1)).containsExactly("role2", "role4", "role5");
    }
 
    @Test
    public void userManagementTest() throws Exception {
-      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dialect.documentFilter("{}"));
-      systemDataStorage.dropManyDocuments(Project.UserRoles.COLLECTION_NAME, dialect.documentFilter("{}"));
-
-      final String project = "project";
+      final String project = "project111";
       projectFacade.createProject(project, "Project One");
       projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
       projectFacade.addUserToProject(project, "u2", Arrays.asList("r4", "r2", "r3"));
@@ -176,6 +185,14 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(projectFacade.hasUserRole(project, "user100", "ur1")).isTrue();
       assertThat(projectFacade.hasUserRole(project, "user100", "c4")).isTrue();
       assertThat(projectFacade.hasUserRole(project, "user100", "c6")).isFalse();
+   }
+
+   @Test(expected = UserAlreadyExistsException.class)
+   public void userAlreadyExistsTest() throws Exception {
+      String project = "project1111";
+      projectFacade.createProject(project, "Project One");
+      projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
+      projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
    }
 
 }

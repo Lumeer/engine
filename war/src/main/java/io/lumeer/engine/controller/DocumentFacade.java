@@ -27,7 +27,6 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
@@ -40,7 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -93,26 +91,24 @@ public class DocumentFacade implements Serializable {
     *       if one of document's value doesn't satisfy constraint or type
     */
    public String createDocument(final String collectionName, final DataDocument document) throws DbException, InvalidConstraintException {
-      DataDocument doc = checkDocumentKeysValidity(document);
+      DataDocument documentCleaned = checkDocumentKeysValidity(document);
       // check constraints
-      checkConstraintsAndConvert(collectionName, doc);
+      checkConstraintsAndConvert(collectionName, documentCleaned);
       // add metadata attributes
-      documentMetadataFacade.putInitDocumentMetadataInternally(doc, userFacade.getUserEmail());
-      versionFacade.putInitDocumentVersionInternally(doc);
-      securityFacade.putFullRightsInternally(doc, userFacade.getUserEmail());
+      documentMetadataFacade.putInitDocumentMetadataInternally(documentCleaned, userFacade.getUserEmail());
+      versionFacade.putInitDocumentVersionInternally(documentCleaned);
+      securityFacade.putFullRightsInternally(documentCleaned, userFacade.getUserEmail());
 
-      String documentId = dataStorage.createDocument(collectionName, doc);
+      String documentId = dataStorage.createDocument(collectionName, documentCleaned);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
       }
-      // we add all document attributes to collection metadata
-      doc.keySet().stream().filter(attribute -> !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
-      });
+
+      addOrIncrementAttributes(collectionName, documentCleaned);
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+
       return documentId;
    }
 
@@ -146,19 +142,17 @@ public class DocumentFacade implements Serializable {
    public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
       DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(updatedDocument.getId()));
 
-      final DataDocument upd = cleanInvalidAttributes(updatedDocument);
+      final DataDocument updateDocumentCleaned = cleanInvalidAttributes(updatedDocument);
       checkConstraintsAndConvert(collectionName, updatedDocument);
-      documentMetadataFacade.putUpdateDocumentMetadataInternally(upd, userFacade.getUserEmail());
-      versionFacade.newDocumentVersion(collectionName, existingDocument, upd, false);
+      documentMetadataFacade.putUpdateDocumentMetadataInternally(updateDocumentCleaned, userFacade.getUserEmail());
+      versionFacade.newDocumentVersion(collectionName, existingDocument, updateDocumentCleaned, false);
 
-      // we add new attributes of updated document to collection metadata
-      upd.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
-      });
+      Set<String> existingAttributes = getDocumentAttributes(existingDocument);
+      Set<String> updateAttributes = getDocumentAttributes(updateDocumentCleaned);
+      addOrIncrementAttributes(collectionName, updateAttributes, existingAttributes);
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -166,40 +160,29 @@ public class DocumentFacade implements Serializable {
     *
     * @param collectionName
     *       the name of the collection where the existing document is located
-    * @param replaceDocument
+    * @param replacedDocument
     *       the DataDocument object representing a replace document
     * @throws DbException
     *       When there is an error working with the data storage.
     * @throws InvalidConstraintException
     *       if one of document's value doesn't satisfy constraint or type
     */
-   public void replaceDocument(final String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException {
-      DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(replaceDocument.getId()));
-      final DataDocument repl = cleanInvalidAttributes(replaceDocument);
-      checkConstraintsAndConvert(collectionName, replaceDocument);
-      LumeerConst.Document.METADATA_KEYS.stream().filter(existingDocument::containsKey).forEach(metaKey -> {
-         repl.put(metaKey, existingDocument.get(metaKey));
-      });
-      documentMetadataFacade.putUpdateDocumentMetadataInternally(repl, userFacade.getUserEmail());
-      versionFacade.newDocumentVersion(collectionName, existingDocument, repl, true);
+   public void replaceDocument(final String collectionName, final DataDocument replacedDocument) throws DbException, InvalidConstraintException {
+      DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(replacedDocument.getId()));
+      final DataDocument replacedDocumentCleaned = cleanInvalidAttributes(replacedDocument);
+      checkConstraintsAndConvert(collectionName, replacedDocument);
+      LumeerConst.Document.METADATA_KEYS.stream().filter(existingDocument::containsKey).forEach(metaKey -> replacedDocumentCleaned.put(metaKey, existingDocument.get(metaKey)));
+      documentMetadataFacade.putUpdateDocumentMetadataInternally(replacedDocumentCleaned, userFacade.getUserEmail());
+      versionFacade.newDocumentVersion(collectionName, existingDocument, replacedDocumentCleaned, true);
 
-      // add new attributes of updated document to collection metadata
-      repl.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
-      });
+      Set<String> existingAttributes = getDocumentAttributes(existingDocument);
+      Set<String> replacedAttributes = getDocumentAttributes(existingDocument);
 
-      existingDocument.keySet().stream().filter(attribute -> !repl.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't decrement attribute
+      addOrIncrementAttributes(collectionName, replacedAttributes, existingAttributes);
+      dropOrDecrementAttributes(collectionName, existingAttributes, replacedAttributes);
 
-         }
-      });
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -223,11 +206,11 @@ public class DocumentFacade implements Serializable {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.dropDocumentUnsuccesfulString());
       } else {
          dropDocumentEvent.fire(new DropDocument(collectionName, dataDocument));
-         // we drop all attributes of dropped document from collection metadata
-         for (String attributeName : dataDocument.keySet()) {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
-         }
+         dropOrDecrementAttributes(collectionName, dataDocument);
       }
+
+      collectionMetadataFacade.removeRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -255,22 +238,14 @@ public class DocumentFacade implements Serializable {
 
       versionFacade.revertDocumentVersion(collectionName, existingDocument, revertDocument);
 
-      // add new attributes of updated document to collection metadata
-      revertDocument.keySet().stream().filter(attribute -> !existingDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't increment attribute
-         }
-      });
+      Set<String> existingAttributes = getDocumentAttributes(existingDocument);
+      Set<String> revertedAttributes = getDocumentAttributes(existingDocument);
 
-      existingDocument.keySet().stream().filter(attribute -> !revertDocument.containsKey(attribute) && !LumeerConst.Document.METADATA_KEYS.contains(attribute)).forEach(attribute -> {
-         try {
-            collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
-         } catch (CollectionMetadataDocumentNotFoundException e) {
-            // nothing happens - if we don't find metadata, we just don't decrement attribute
-         }
-      });
+      addOrIncrementAttributes(collectionName, revertedAttributes, existingAttributes);
+      dropOrDecrementAttributes(collectionName, existingAttributes, revertedAttributes);
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -290,6 +265,9 @@ public class DocumentFacade implements Serializable {
 
       versionFacade.dropDocumentAttribute(collectionName, existingDocument, attributeName);
       collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
+
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
    }
 
    /**
@@ -305,18 +283,65 @@ public class DocumentFacade implements Serializable {
     */
    public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws DbException {
       DataDocument dataDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
-      Set<String> documentAttributes = new HashSet<>();
-      // filter out metadata attributes
-      documentAttributes.addAll(dataDocument.keySet().stream().filter(key -> !key.startsWith(LumeerConst.Document.METADATA_PREFIX)).collect(Collectors.toList()));
-      return documentAttributes;
+      return dataDocument != null ? getDocumentAttributes(dataDocument) : null;
+   }
+
+   private Set<String> getDocumentAttributes(DataDocument dataDocument) {
+      Set<String> attrs = new HashSet<>();
+      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
+         String attributeName = entry.getKey().trim();
+         if (attributeName.startsWith(LumeerConst.Document.METADATA_PREFIX)) {
+            continue;
+         }
+         attrs.add(attributeName);
+         if (isDataDocument(entry.getValue())) {
+            // starts recursion
+            attrs.addAll(getDocumentAttributes((DataDocument) entry.getValue(), attributeName + "."));
+         }
+      }
+      return attrs;
+   }
+
+   private Set<String> getDocumentAttributes(DataDocument dataDocument, String prefix) {
+      Set<String> attrs = new HashSet<>();
+      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
+         String attributeName = prefix + entry.getKey().trim();
+         attrs.add(attributeName);
+         if (isDataDocument(entry.getValue())) {
+            attrs.addAll(getDocumentAttributes((DataDocument) entry.getValue(), attributeName + "."));
+         }
+      }
+      return attrs;
+   }
+
+   private void addOrIncrementAttributes(final String collectionName, DataDocument doc) {
+      // we add all document attributes to collection metadata
+      getDocumentAttributes(doc).forEach(attribute -> {
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+      });
+   }
+
+   private void addOrIncrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
+      attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
+         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+      });
+   }
+
+   private void dropOrDecrementAttributes(final String collectionName, DataDocument doc) {
+      // we add all document attributes to collection metadata
+      getDocumentAttributes(doc).forEach(attribute -> {
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+      });
+   }
+
+   private void dropOrDecrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
+      attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+      });
    }
 
    private void checkConstraintsAndConvert(final String collectionName, DataDocument doc) throws InvalidConstraintException {
-      try {
-         doc = collectionMetadataFacade.checkAndConvertAttributesValues(collectionName, doc);
-      } catch (CollectionMetadataDocumentNotFoundException e) {
-         // nothing happens - if we don't find metadata, all values are valid
-      }
+      doc = collectionMetadataFacade.checkAndConvertAttributesValues(collectionName, doc);
       for (String attribute : doc.keySet()) {
          if (doc.get(attribute) == null) {
             throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));

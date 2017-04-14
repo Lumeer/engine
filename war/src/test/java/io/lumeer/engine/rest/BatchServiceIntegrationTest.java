@@ -25,6 +25,8 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.batch.SplitBatch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.controller.OrganizationFacade;
+import io.lumeer.engine.controller.ProjectFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -33,6 +35,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -46,9 +49,13 @@ import javax.ws.rs.core.Response;
 public class BatchServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080/";
-   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/sampleOrg/sampleProject/";
    private final String COLLECTION_NAME = "Supeř Kolekce +ěščřžý";
-   //   private final String PATH_PREFIX = "lumeer-engine/rest/";
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Test
    public void testSplitBatch() throws Exception {
@@ -61,7 +68,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       final Client client = ClientBuilder.newBuilder().build();
       // the path prefix '/lumeer-engine/' does not work in test classes
       Response response = client.target(TARGET_URI)
-                                .path(PATH_PREFIX + "collections/" + COLLECTION_NAME)
+                                .path(buildPathPrefix() + "collections/" + COLLECTION_NAME)
                                 .request(MediaType.APPLICATION_JSON_TYPE)
                                 .buildDelete()
                                 .invoke();
@@ -74,7 +81,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(PATH_PREFIX + "collections/" + COLLECTION_NAME)
+                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME)
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.text(""))
                        .invoke();
@@ -86,7 +93,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
+                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME + "/documents/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 1")))
@@ -102,7 +109,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
+                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME + "/documents/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 2")))
@@ -113,7 +120,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(PATH_PREFIX + "collections/" + COLLECTION_NAME + "/documents/")
+                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME + "/documents/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 3")))
@@ -124,7 +131,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(PATH_PREFIX + "batch/split/")
+                       .path(buildPathPrefix() + "batch/split/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new SplitBatch(COLLECTION_NAME, "attr2", ",", true, Arrays.asList("attr2a", "attr2b", "attr2c", "attr2d"), false)))
                        .invoke();
@@ -134,7 +141,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(PATH_PREFIX + "query/")
+                       .path(buildPathPrefix() + "query/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new Query(new DataDocument("attr1", "5"))))
@@ -151,6 +158,10 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
          assertThat(data).containsEntry("attr2b", "how are");
          assertThat(data).doesNotContainKey("attr2d");
       });
+   }
+
+   private String buildPathPrefix() {
+      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/";
    }
 
 }

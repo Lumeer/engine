@@ -25,7 +25,6 @@ import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -343,7 +342,7 @@ public interface DataStorage extends Serializable {
     *       the maximum number of documents to return. A limit of 0 is equivalent to setting no limit.
     * @return the list of the found documents
     */
-   List<DataDocument> search(final String collectionName, final DataFilter filter, final String sort, final int skip, final int limit);
+   List<DataDocument> search(final String collectionName, final DataFilter filter, final DataSort sort, final int skip, final int limit);
 
    /**
     * Counts the number of document in the collection optionally meeting the filter criteria.

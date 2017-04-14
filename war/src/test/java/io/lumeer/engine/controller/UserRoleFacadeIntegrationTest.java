@@ -19,11 +19,11 @@
  */
 package io.lumeer.engine.controller;
 
+import static io.lumeer.engine.api.LumeerConst.UserRoles.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
@@ -56,7 +56,7 @@ public class UserRoleFacadeIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void setUp() throws Exception {
-      systemDataStorage.dropManyDocuments(LumeerConst.Project.UserRoles.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
