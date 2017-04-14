@@ -36,6 +36,7 @@ import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
 
+import org.bson.types.Decimal128;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +49,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -61,6 +63,9 @@ import javax.ws.rs.core.Response;
  */
 @RunWith(Arquillian.class)
 public class DocumentServiceIntegrationTest extends IntegrationTestBase {
+
+   @Inject
+   private Logger log;
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -155,25 +160,39 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       String documentId = response.readEntity(String.class);
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-
-      final DataDocument responseDoc = documentFacade.readDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), documentId);
-
-      assertThat(responseDoc).isNotNull();
       response.close();
 
-      System.out.println("@@@@@@@@@@@");
+      final DataDocument responseDoc = documentFacade.readDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), documentId);
+      assertThat(responseDoc).isNotNull();
+      assertThat(responseDoc.getDouble("dbl")).isInstanceOf(Double.class).isEqualTo(2.34);
+      assertThat(responseDoc.getString("str")).isInstanceOf(String.class).isEqualTo("hello");
+      assertThat(responseDoc.getArrayList("set", String.class)).isInstanceOf(List.class).contains("hooo", "huu");
+      assertThat(responseDoc.getArrayList("lst", String.class)).isInstanceOf(List.class).contains("a", "b", "C");
+      assertThat(responseDoc.getInteger("date")).isEqualTo(35); // should be long
+      assertThat(responseDoc.getBoolean("bool")).isEqualTo(true);
+      assertThat(responseDoc.getInteger("int")).isEqualTo(42);
+      assertThat(responseDoc.getDouble("decimal")).isEqualTo(35.03535); // should be decimal
 
+      log.info("@@@@@@@@@@@");
       responseDoc.forEach((k, v) ->
-         System.out.println(k + " (" + v.getClass().getName() + ") = " + v.toString())
+         log.info(k + " (" + v.getClass().getName() + ") = " + v.toString())
       );
 
       String nId = documentFacade.createDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), doc);
       final DataDocument readDoc = documentFacade.readDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), nId);
 
-      System.out.println("@@@@@@@@@@@");
+      assertThat(readDoc.getDouble("dbl")).isInstanceOf(Double.class).isEqualTo(2.34);
+      assertThat(readDoc.getString("str")).isInstanceOf(String.class).isEqualTo("hello");
+      assertThat(readDoc.getArrayList("set", String.class)).isInstanceOf(List.class).contains("hooo", "huu");
+      assertThat(readDoc.getArrayList("lst", String.class)).isInstanceOf(List.class).contains("a", "b", "C");
+      assertThat(readDoc.getDate("date")).isEqualTo(new Date(35));
+      assertThat(readDoc.getBoolean("bool")).isEqualTo(true);
+      assertThat(readDoc.getInteger("int")).isEqualTo(42);
+      assertThat(readDoc.getObject("decimal")).isInstanceOf(Decimal128.class).isEqualTo(new Decimal128(new BigDecimal("35.03535"))); // should be decimal
 
+      log.info("@@@@@@@@@@@");
       readDoc.forEach((k, v) ->
-            System.out.println(k + " (" + v.getClass().getName() + ") = " + v.toString())
+            log.info(k + " (" + v.getClass().getName() + ") = " + v.toString())
       );
    }
 
