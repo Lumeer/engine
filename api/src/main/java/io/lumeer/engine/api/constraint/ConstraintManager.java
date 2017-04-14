@@ -19,6 +19,8 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -47,7 +49,7 @@ public class ConstraintManager {
    /**
     * Configured constraints.
     */
-   private List<Constraint> constraints;
+   private List<Constraint> constraints = new ArrayList<>();
 
    /**
     * Registry of constraint types.
@@ -387,11 +389,19 @@ public class ConstraintManager {
     * @return The value converted to a number data type or null when the conversion was not possible.
     */
    private Number encodeNumber(final Object value) {
+      final DecimalFormat df = (DecimalFormat) DecimalFormat.getNumberInstance(locale);
+      df.setParseBigDecimal(true);
+      final NumberFormat nf = NumberFormat.getNumberInstance(locale);
+
       if (value instanceof Number) {
          return (Number) value;
       } else if (value instanceof String) {
          try {
-            return NumberFormat.getNumberInstance(locale).parse(((String) value).trim());
+            // figure out whether we need to use BigDecimal
+            Number n1 = df.parse(((String) value).trim());
+            Number n2 = nf.parse(((String) value).trim());
+
+            return n1.toString().equals(n2.toString()) ? n2 : n1;
          } catch (final ParseException pe) {
             return null;
          }
