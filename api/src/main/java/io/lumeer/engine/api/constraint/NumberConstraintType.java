@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -53,8 +54,14 @@ public class NumberConstraintType implements ConstraintType {
     * Number format respecting given locale.
     */
    private NumberFormat numberFormat = NumberFormat.getNumberInstance();
+   private NumberFormat bigNumberFormat = NumberFormat.getNumberInstance();
    private NumberFormat integerNumberFormat = NumberFormat.getIntegerInstance();
-   private NumberFormat currencyNumberFormat = NumberFormat.getCurrencyInstance();
+   private NumberFormat currencyNumberFormat = NumberFormat.getNumberInstance();
+
+   public NumberConstraintType() {
+      ((DecimalFormat) currencyNumberFormat).setParseBigDecimal(true);
+      ((DecimalFormat) bigNumberFormat).setParseBigDecimal(true);
+   }
 
    @Override
    public Set<String> getRegisteredPrefixes() {
@@ -64,7 +71,7 @@ public class NumberConstraintType implements ConstraintType {
       return result;
    }
 
-   private BiFunction<Object, Class, Object> getEncodeFunction(final NumberFormat nf) {
+   private BiFunction<Object, Class, Object> getEncodeFunction(final NumberFormat nf, final NumberFormat big) {
       return (o, t) -> {
          if (t != null && t != Number.class) {
             return null;
@@ -75,7 +82,15 @@ public class NumberConstraintType implements ConstraintType {
          }
 
          try {
-            return nf.parse(o.toString().replaceAll(" ", ""));
+            final String trim = o.toString().replaceAll(" ", "");
+            final Number n1 = nf.parse(trim);
+
+            if (big != null) { // try to parse with BigDecimal and see if we overflowed
+               final Number n2 = big.parse(trim);
+               return n1.toString().equals(n2.toString()) ? n1 : n2;
+            } else {
+               return n1;
+            }
          } catch (ParseException e) {
             return null;
          }
@@ -99,7 +114,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
          case IS_INTEGER:
             return new FunctionConstraint(value -> {
                try {
@@ -108,7 +123,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(integerNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(integerNumberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
          case IS_MONETARY:
             return new FunctionConstraint(value -> {
                try {
@@ -117,7 +132,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(currencyNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(currencyNumberFormat, null), getDecodeFunction(), Number.class);
          case LESS_THAN:
             final double ltParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -126,7 +141,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
          case GREATER_THAN:
             final double gtParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -135,7 +150,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
          case GREATER_OR_EQUALS:
             final double gteParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -144,7 +159,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
          case LESS_OR_EQUALS:
             final double lteParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -153,7 +168,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
          case EQUALS:
             final double eqParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -162,7 +177,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
          default:
             throw new InvalidConstraintException("Unable to parse constraint configuration: " + constraintConfiguration);
       }
@@ -191,7 +206,10 @@ public class NumberConstraintType implements ConstraintType {
    public void setLocale(final Locale locale) {
       numberFormat = NumberFormat.getInstance(locale);
       integerNumberFormat = NumberFormat.getIntegerInstance(locale);
-      currencyNumberFormat = NumberFormat.getCurrencyInstance(locale);
+      currencyNumberFormat = NumberFormat.getNumberInstance(locale);
+      ((DecimalFormat) currencyNumberFormat).setParseBigDecimal(true);
+      bigNumberFormat = NumberFormat.getNumberInstance(locale);
+      ((DecimalFormat) bigNumberFormat).setParseBigDecimal(true);
    }
 
    @Override

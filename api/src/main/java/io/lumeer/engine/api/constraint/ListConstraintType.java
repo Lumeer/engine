@@ -139,7 +139,7 @@ public class ListConstraintType implements ConstraintType {
                            }
                         }
 
-                        return null;
+                        return result.stream().collect(Collectors.joining(", "));
                      },
                      constraintConfiguration, getEncodeFunction(false), getDecodeFunction(), String[].class);
             default:

@@ -19,7 +19,6 @@
  */
 package io.lumeer.engine.api.constraint;
 
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -267,12 +266,12 @@ public class ConstraintManager {
          }
       });
 
-      if (encodedTypes.size() == 0) {
-         throw new InvalidConstraintException("Incompatible constraints were found. The constraint do not match on the data types they could use in database.");
-      }
-
       if (invalidConfigurations.size() > 0) {
          throw new InvalidConstraintException("The following constraint configurations are not recognized: " + String.join(", ", invalidConfigurations));
+      }
+
+      if (encodedTypes.size() == 0) {
+         throw new InvalidConstraintException("Incompatible constraints were found. The constraint do not match on the data types they could use in database.");
       }
 
       return constraints;
@@ -385,7 +384,9 @@ public class ConstraintManager {
 
    /**
     * Tries to convert the parameter to a number (either integer or double) and return it.
-    * @param value The value to try to convert to number.
+    *
+    * @param value
+    *       The value to try to convert to number.
     * @return The value converted to a number data type or null when the conversion was not possible.
     */
    private Number encodeNumber(final Object value) {
