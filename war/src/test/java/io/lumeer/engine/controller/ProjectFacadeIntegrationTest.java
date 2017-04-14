@@ -22,12 +22,14 @@ package io.lumeer.engine.controller;
 import static io.lumeer.engine.api.LumeerConst.Project;
 import static io.lumeer.engine.api.LumeerConst.UserRoles;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.exception.ProjectAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.provider.DataStorageProvider;
 
@@ -72,7 +74,6 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       systemDataStorage.dropManyDocuments(UserRoles.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
-
    @Test
    public void basicMethodsTest() throws Exception {
       final String project1 = "project1";
@@ -87,10 +88,6 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(map).containsOnlyKeys("project1", "project2");
       assertThat(map).containsEntry("project1", "Project One");
       assertThat(map).containsEntry("project2", "Project Two");
-
-      assertThat(projectFacade.readProjectId("Project Two")).isEqualTo(project2);
-      assertThat(projectFacade.readProjectId("Project One")).isEqualTo(project1);
-      assertThat(projectFacade.readProjectId("Project Three")).isNull();
 
       assertThat(projectFacade.readProjectName(project1)).isEqualTo("Project One");
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two");
@@ -187,12 +184,23 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(projectFacade.hasUserRole(project, "user100", "c6")).isFalse();
    }
 
-   @Test(expected = UserAlreadyExistsException.class)
+   @Test
    public void userAlreadyExistsTest() throws Exception {
       String project = "project1111";
       projectFacade.createProject(project, "Project One");
       projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
-      projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
+      assertThatThrownBy(() -> projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"))).isInstanceOf(UserAlreadyExistsException.class);
+   }
+
+   @Test
+   public void projectAlreadyExistsTest() throws Exception {
+      final String project1 = "project11111";
+      final String project2 = "project22222";
+      projectFacade.createProject(project1, "Project One");
+      projectFacade.createProject(project2, "Project Two");
+
+      assertThatThrownBy(() -> projectFacade.createProject(project1, "Project One again")).isInstanceOf(ProjectAlreadyExistsException.class);
+      assertThatThrownBy(() -> projectFacade.updateProjectId(project1, project2)).isInstanceOf(ProjectAlreadyExistsException.class);
    }
 
 }

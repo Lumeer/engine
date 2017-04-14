@@ -61,6 +61,9 @@ public class ErrorMessageBuilder {
    private static final String ERROR_VIEW_META_SPECIAL = "The metadata key \"{1}\" for view \"{0}\" can be changed only with special method.";
 
    private static final String ERROR_USER_ALREADY_EXISTS_IN_PROJECT = "User \"{0}\" already exists in project \"{1}\"";
+   private static final String ERROR_USER_ALREADY_EXISTS_IN_ORGANIZATION = "User \"{0}\" already exists in organization \"{1}\"";
+   private static final String ERROR_PROJECT_ALREADY_EXISTS = "Project with id \"{0}\" already exists";
+   private static final String ERROR_ORGANIZATION_ALREADY_EXISTS = "Organization with id \"{0}\" already exists";
 
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
@@ -168,6 +171,18 @@ public class ErrorMessageBuilder {
 
    public static String userAlreadyExistsInProjectString(String userName, String projectId) {
       return MessageFormat.format(ERROR_USER_ALREADY_EXISTS_IN_PROJECT, userName, projectId);
+   }
+
+   public static String userAlreadyExistsInOrganizationString(String userName, String organizationId) {
+      return MessageFormat.format(ERROR_USER_ALREADY_EXISTS_IN_ORGANIZATION, userName, organizationId);
+   }
+
+   public static String projectAlreadyExistsString(String projectId) {
+      return MessageFormat.format(ERROR_PROJECT_ALREADY_EXISTS, projectId);
+   }
+
+   public static String organizationAlreadyExistsString(String organizationId) {
+      return MessageFormat.format(ERROR_ORGANIZATION_ALREADY_EXISTS, organizationId);
    }
 
 }

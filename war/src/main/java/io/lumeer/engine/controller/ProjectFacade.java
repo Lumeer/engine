@@ -27,6 +27,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.exception.ProjectAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -84,26 +85,19 @@ public class ProjectFacade {
    }
 
    /**
-    * Reads the project id according to its name
-    *
-    * @param projectName
-    *       name of the project
-    * @return id of the project
-    */
-   public String readProjectId(final String projectName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectNameFilter(projectName), Collections.singletonList(Project.ATTR_PROJECT_ID));
-      return document != null ? document.getString(Project.ATTR_PROJECT_ID) : null;
-   }
-
-   /**
     * Changes project id
     *
     * @param oldProjectId
     *       id of the project to change
     * @param newProjectId
     *       new id for project
+    * @throws ProjectAlreadyExistsException
+    *       when project with projectId already exists
     */
-   public void updateProjectId(final String oldProjectId, final String newProjectId) {
+   public void updateProjectId(final String oldProjectId, final String newProjectId) throws ProjectAlreadyExistsException {
+      if (dataStorage.collectionHasDocument(Project.COLLECTION_NAME, projectIdFilter(newProjectId))) {
+         throw new ProjectAlreadyExistsException(ErrorMessageBuilder.projectAlreadyExistsString(newProjectId));
+      }
       DataDocument document = new DataDocument(Project.ATTR_PROJECT_ID, newProjectId);
       dataStorage.updateDocument(Project.COLLECTION_NAME, document, projectIdFilter(oldProjectId));
    }
@@ -192,8 +186,13 @@ public class ProjectFacade {
     *       id of the project to create
     * @param projectName
     *       name of the project
+    * @throws ProjectAlreadyExistsException
+    *       when project with projectId already exists
     */
-   public void createProject(final String projectId, final String projectName) {
+   public void createProject(final String projectId, final String projectName) throws ProjectAlreadyExistsException {
+      if (dataStorage.collectionHasDocument(Project.COLLECTION_NAME, projectIdFilter(projectId))) {
+         throw new ProjectAlreadyExistsException(ErrorMessageBuilder.projectAlreadyExistsString(projectId));
+      }
       DataDocument document = new DataDocument(Project.ATTR_PROJECT_ID, projectId)
             .append(Project.ATTR_PROJECT_NAME, projectName)
             .append(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
@@ -257,7 +256,8 @@ public class ProjectFacade {
     *       Id of the project
     * @param userName
     *       Name of the user
-    * @param userRoles user roles
+    * @param userRoles
+    *       user roles
     * @throws UserAlreadyExistsException
     *       When user already exists in project
     */

@@ -25,6 +25,9 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.exception.OrganizationAlreadyExistsException;
+import io.lumeer.engine.api.exception.UserAlreadyExistsException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +48,7 @@ import javax.inject.Inject;
 public class OrganizationFacade {
 
    private String organizationId = "ACME";
-  
+
    @Inject
    @SystemDataStorage
    private DataStorage dataStorage;
@@ -72,18 +75,6 @@ public class OrganizationFacade {
    public Map<String, String> readOrganizationsMap() {
       List<DataDocument> documents = dataStorage.searchIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_ID));
       return documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_ORG_ID), d -> d.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
-   }
-
-   /**
-    * Reads the organization id according to its name.
-    *
-    * @param organizationName
-    *       name of the organization
-    * @return id of the given organization
-    */
-   public String readOrganizationId(final String organizationName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationNameFilter(organizationName), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_ID));
-      return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_ID) : null;
    }
 
    /**
@@ -157,13 +148,35 @@ public class OrganizationFacade {
     *       id of the new organization to create
     * @param organizationName
     *       name of the new organization to create
+    * @throws OrganizationAlreadyExistsException
+    *       when organization with organizationId already exists
     */
-   public void createOrganization(final String organizationId, final String organizationName) {
+   public void createOrganization(final String organizationId, final String organizationName) throws OrganizationAlreadyExistsException {
+      if (dataStorage.collectionHasDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId))) {
+         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationAlreadyExistsString(organizationId));
+      }
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, organizationId)
             .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
-            .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument())
-            .append(LumeerConst.Organization.ATTR_USERS, new DataDocument());
+            .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
       dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, document);
+   }
+
+   /**
+    * Changes organization id
+    *
+    * @param oldOrganizationId
+    *       id of the organization to change
+    * @param newOrganizationId
+    *       new id for organization
+    * @throws OrganizationAlreadyExistsException
+    *       when organization with newOrganizationId already exists
+    */
+   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) throws OrganizationAlreadyExistsException {
+      if (dataStorage.collectionHasDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(newOrganizationId))) {
+         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationAlreadyExistsString(organizationId));
+      }
+      DataDocument document = new DataDocument(LumeerConst.Organization.COLLECTION_NAME, newOrganizationId);
+      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationIdFilter(oldOrganizationId));
    }
 
    /**
@@ -300,8 +313,13 @@ public class OrganizationFacade {
     *       name of the user to add
     * @param userRoles
     *       organization roles of the given user
+    * @throws UserAlreadyExistsException
+    *       When user already exists in organization
     */
-   public void addUserToOrganization(final String organizationId, final String userName, final List<String> userRoles) {
+   public void addUserToOrganization(final String organizationId, final String userName, final List<String> userRoles) throws UserAlreadyExistsException {
+      if (readUser(organizationId, userName) != null) {
+         throw new UserAlreadyExistsException(ErrorMessageBuilder.userAlreadyExistsInOrganizationString(userName, organizationId));
+      }
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_USERS_USERNAME, userName)
             .append(LumeerConst.Organization.ATTR_USERS_USER_ROLES, userRoles);
       dataStorage.addItemToArray(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), LumeerConst.Organization.ATTR_USERS, document);
@@ -314,8 +332,10 @@ public class OrganizationFacade {
     *       id of the organization
     * @param userName
     *       name of the user to add
+    * @throws UserAlreadyExistsException
+    *       When user already exists in project
     */
-   public void addUserToOrganization(final String organizationId, final String userName) {
+   public void addUserToOrganization(final String organizationId, final String userName) throws UserAlreadyExistsException {
       addUserToOrganization(organizationId, userName, readDefaultRoles(organizationId));
    }
 
@@ -355,12 +375,8 @@ public class OrganizationFacade {
     * @return list of roles
     */
    public List<String> readUserRoles(final String organizationId, final String userName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, userFilter(organizationId, userName), Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, "$")));
-      if (document == null) {
-         return null;
-      }
-      DataDocument userRoles = document.getArrayList(LumeerConst.Organization.ATTR_USERS, DataDocument.class).get(0);
-      return userRoles.getArrayList(LumeerConst.Organization.ATTR_USERS_USER_ROLES, String.class);
+      DataDocument document = readUser(organizationId, userName);
+      return document != null ? document.getArrayList(LumeerConst.Organization.ATTR_USERS_USER_ROLES, String.class) : null;
    }
 
    /**
@@ -431,8 +447,10 @@ public class OrganizationFacade {
       }
    }
 
-   private DataFilter organizationNameFilter(final String organizationName) {
-      return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_NAME, organizationName);
+   private DataDocument readUser(final String organizationId, final String userName) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, userFilter(organizationId, userName), Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, "$")));
+      // we got only one subdocument otherwise there was null
+      return document != null ? document.getArrayList(LumeerConst.Organization.ATTR_USERS, DataDocument.class).get(0) : null;
    }
 
    private DataFilter organizationIdFilter(final String organizationId) {
