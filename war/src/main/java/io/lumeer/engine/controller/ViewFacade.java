@@ -289,7 +289,7 @@ public class ViewFacade implements Serializable {
     *       project id
     * @param type
     *       type of the view
-    * @returnlist of ViewMetadata for all views of given type from given project
+    * @return list of ViewMetadata for all views of given type from given project
     */
    public List<ViewMetadata> getAllViewsOfType(String projectId, String type) {
       List<DataDocument> views = dataStorage.search(

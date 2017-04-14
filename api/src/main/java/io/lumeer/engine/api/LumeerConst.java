@@ -114,7 +114,6 @@ public final class LumeerConst {
    public static class View {
       public static final String METADATA_COLLECTION_PREFIX = "meta.view_";
       public static final String SEQUENCE_NAME = "view-sequence";
-      public static final String PROJECT_ID = Collection.PROJECT_ID;
 
       public static final String NAME_KEY = "name";
       public static final String DESCRIPTION_KEY = "description";

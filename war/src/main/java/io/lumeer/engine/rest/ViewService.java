@@ -22,7 +22,6 @@ package io.lumeer.engine.rest;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
-import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
@@ -215,7 +214,7 @@ public class ViewService {
    @Path("/{id}/clone/{newName}")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public int cloneView(final @PathParam("id") int id, final @PathParam("newName") String newName) throws UnauthorizedAccessException, ViewMetadataNotFoundException, ViewAlreadyExistsException {
+   public int cloneView(final @PathParam("id") int id, final @PathParam("newName") String newName) throws UnauthorizedAccessException, ViewAlreadyExistsException {
       if (!viewFacade.checkViewForRead(id, getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
