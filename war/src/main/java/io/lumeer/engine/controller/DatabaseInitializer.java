@@ -42,6 +42,7 @@ public class DatabaseInitializer{
    @Inject
    private DataStorageDialect dataStorageDialect;
 
+   @Inject
    private ViewFacade viewFacade;
 
    public void init(@Observes @Initialized(RequestScoped.class) Object init) {
