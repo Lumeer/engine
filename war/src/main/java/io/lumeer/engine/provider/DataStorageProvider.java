@@ -20,11 +20,10 @@
 package io.lumeer.engine.provider;
 
 import io.lumeer.engine.api.cache.CacheManager;
-import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 import io.lumeer.engine.controller.ConfigurationFacade;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,13 +48,13 @@ public class DataStorageProvider {
    private ConfigurationFacade configurationFacade;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private CacheManager cacheManager;
 
    public DataStorage getUserStorage() {
-      return connections.computeIfAbsent(organisationFacade.getOrganisationId(),
+      return connections.computeIfAbsent(organizationFacade.getOrganizationId(),
             k -> dataStorageFactory.getStorage(cacheManager.getCacheProvider("userDataStorage"), configurationFacade.getDataStorage(), configurationFacade.getDataStorageDatabase(), configurationFacade.getDataStorageUseSsl()));
    }
 

@@ -21,6 +21,7 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
+
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -30,7 +31,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RequestScoped
-public class OrganisationFacade {
+public class OrganizationFacade {
 
    @Inject
    @SystemDataStorage
@@ -38,11 +39,11 @@ public class OrganisationFacade {
 
    private String organisationId = "ACME";
 
-   public String getOrganisationId() {
+   public String getOrganizationId() {
       return organisationId;
    }
 
-   public void setOrganisationId(final String organisationId) {
+   public void setOrganizationId(final String organisationId) {
       this.organisationId = organisationId;
    }
 }

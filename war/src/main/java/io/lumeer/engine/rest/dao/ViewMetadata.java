@@ -21,20 +21,15 @@ package io.lumeer.engine.rest.dao;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.controller.UserFacade;
 
 import java.util.Date;
-import javax.inject.Inject;
 
 /**
  * Describes view information.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class ViewDao {
-
-   @Inject
-   private UserFacade userFacade;
+public class ViewMetadata {
 
    /**
     * Internal view ID.
@@ -81,20 +76,10 @@ public class ViewDao {
     */
    private String updateUser;
 
-   public ViewDao() {
+   public ViewMetadata() {
    }
 
-   public ViewDao(final int id, final String name, final String type, final String description, final DataDocument configuration) {
-      this.id = id;
-      this.name = name;
-      this.type = type;
-      this.description = description;
-      this.configuration = configuration;
-      this.createUser = userFacade.getUserEmail();
-      this.createDate = new Date();
-   }
-
-   public ViewDao(DataDocument viewMetadata) {
+   public ViewMetadata(DataDocument viewMetadata) {
       this.id = viewMetadata.getInteger(LumeerConst.View.ID_KEY);
       this.name = viewMetadata.getString(LumeerConst.View.NAME_KEY);
       this.type = viewMetadata.getString(LumeerConst.View.TYPE_KEY);
@@ -187,18 +172,18 @@ public class ViewDao {
          return false;
       }
 
-      final ViewDao viewDao = (ViewDao) o;
+      final ViewMetadata viewMetadata = (ViewMetadata) o;
 
-      if (id != viewDao.id) {
+      if (id != viewMetadata.id) {
          return false;
       }
-      if (name != null ? !name.equals(viewDao.name) : viewDao.name != null) {
+      if (name != null ? !name.equals(viewMetadata.name) : viewMetadata.name != null) {
          return false;
       }
-      if (type != null ? !type.equals(viewDao.type) : viewDao.type != null) {
+      if (type != null ? !type.equals(viewMetadata.type) : viewMetadata.type != null) {
          return false;
       }
-      return configuration != null ? configuration.equals(viewDao.configuration) : viewDao.configuration == null;
+      return configuration != null ? configuration.equals(viewMetadata.configuration) : viewMetadata.configuration == null;
    }
 
    @Override
@@ -212,7 +197,7 @@ public class ViewDao {
 
    @Override
    public String toString() {
-      return "ViewDao{"
+      return "ViewMetadata{"
             + "id=" + id
             + ", name='" + name + '\''
             + ", description='" + description + '\''

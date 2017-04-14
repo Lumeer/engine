@@ -58,7 +58,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    private ProjectFacade projectFacade;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private UserRoleFacade userRoleFacade;
@@ -71,7 +71,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject("project1", "Project One");
       projectFacade.createProject("project2", "Project Two");
 
-      Map<String, String> map = projectFacade.readProjectsMap(organisationFacade.getOrganisationId());
+      Map<String, String> map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
       assertThat(map).containsOnlyKeys("project1", "project2");
       assertThat(map).containsEntry("project1", "Project One");
       assertThat(map).containsEntry("project2", "Project Two");
@@ -91,13 +91,13 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.renameProject("project2", "Project Two Renamed");
       assertThat(projectFacade.readProjectName("project2")).isEqualTo("Project Two Renamed");
 
-      map = projectFacade.readProjectsMap(organisationFacade.getOrganisationId());
+      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
       assertThat(map).containsOnlyKeys("project3", "project2");
       projectFacade.createProject("project34", "Project Three");
-      map = projectFacade.readProjectsMap(organisationFacade.getOrganisationId());
+      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
       assertThat(map).containsOnlyKeys("project3", "project2", "project34");
       projectFacade.dropProject("project34");
-      map = projectFacade.readProjectsMap(organisationFacade.getOrganisationId());
+      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
       assertThat(map).containsOnlyKeys("project3", "project2");
    }
 
@@ -169,7 +169,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(userRoles).containsExactly("r10", "r11");
 
       //has role with transitive support test
-      userRoleFacade.createRole(organisationFacade.getOrganisationId(), project, "ur1", Arrays.asList("c1", "c2", "c3"));
+      userRoleFacade.createRole(organizationFacade.getOrganizationId(), project, "ur1", Arrays.asList("c1", "c2", "c3"));
       projectFacade.addUserToProject(project, "user100", Arrays.asList("ur1", "c4", "c5"));
       assertThat(projectFacade.hasUserRole(project, "user100", "c1")).isTrue();
       assertThat(projectFacade.hasUserRole(project, "user100", "c2")).isTrue();

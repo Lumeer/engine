@@ -29,7 +29,7 @@ import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ConfigurationFacade;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 
 import java.util.Collections;
@@ -80,14 +80,14 @@ public class WhisperService {
    private String projectId;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
 
    @PostConstruct
    public void init() {
-      organisationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
 
       locale = Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US"));

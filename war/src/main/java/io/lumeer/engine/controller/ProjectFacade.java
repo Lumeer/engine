@@ -20,11 +20,11 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.LumeerConst.Project;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.LumeerConst.Project;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,7 +49,7 @@ public class ProjectFacade {
    private DataStorageDialect dataStorageDialect;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private DatabaseInitializer databaseInitializer;
@@ -192,7 +192,7 @@ public class ProjectFacade {
    public void createProject(final String projectId, final String projectName) {
       DataDocument document = new DataDocument(Project.ATTR_PROJECT_ID, projectId)
             .append(Project.ATTR_PROJECT_NAME, projectName)
-            .append(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
+            .append(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       dataStorage.createDocument(Project.COLLECTION_NAME, document);
    }
 
@@ -349,7 +349,7 @@ public class ProjectFacade {
       if (userRoles.contains(userRole)) {
          return true;
       } else {
-         Map<String, List<String>> roles = userRoleFacade.readRoles(organisationFacade.getOrganisationId(), projectId);
+         Map<String, List<String>> roles = userRoleFacade.readRoles(organizationFacade.getOrganizationId(), projectId);
          for (String ur : userRoles) {
             if (roles.containsKey(ur) && roles.get(ur).contains(userRole)) {
                return true;
@@ -362,7 +362,7 @@ public class ProjectFacade {
 
    private DataFilter userFilter(String projectId, String userName) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
+      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
       filter.put(dataStorageDialect.concatFields(Project.ATTR_USERS, Project.ATTR_USERS_USERNAME), userName);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
@@ -370,7 +370,7 @@ public class ProjectFacade {
 
    private DataFilter userRoleFilter(String projectId, String userRole) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.UserRoles.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
+      filter.put(Project.UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.UserRoles.ATTR_PROJECT_ID, projectId);
       filter.put(Project.UserRoles.ATTR_USER_ROLE, userRole);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
@@ -378,14 +378,14 @@ public class ProjectFacade {
 
    private DataFilter projectIdFilter(String projectId) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
+      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
    private DataFilter projectNameFilter(String projectName) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.ATTR_ORGANIZATION_ID, organisationFacade.getOrganisationId());
+      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.ATTR_PROJECT_NAME, projectName);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }

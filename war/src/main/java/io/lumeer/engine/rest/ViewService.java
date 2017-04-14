@@ -23,13 +23,13 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
-import io.lumeer.engine.controller.OrganisationFacade;
+import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.ViewDao;
+import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -74,14 +74,14 @@ public class ViewService {
    private String projectId;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
 
    @PostConstruct
    public void init() {
-      organisationFacade.setOrganisationId(organisationId);
+      organizationFacade.setOrganizationId(organisationId);
       projectFacade.setCurrentProjectId(projectId);
    }
 
@@ -95,7 +95,7 @@ public class ViewService {
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<ViewDao> getAllViews(final @QueryParam("typeName") String typeName) {
+   public List<ViewMetadata> getAllViews(final @QueryParam("typeName") String typeName) {
       if (typeName == null || typeName.isEmpty()) {
          return viewFacade.getAllViews();
       } else {
@@ -116,7 +116,7 @@ public class ViewService {
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    @Produces(MediaType.APPLICATION_JSON)
-   public int createView(final ViewDao view) throws ViewAlreadyExistsException {
+   public int createView(final ViewMetadata view) throws ViewAlreadyExistsException {
       return viewFacade.createView(view.getName(), view.getType(), view.getDescription(), view.getConfiguration());
    }
 
@@ -133,12 +133,12 @@ public class ViewService {
    @PUT
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateView(final ViewDao view) throws UnauthorizedAccessException, ViewAlreadyExistsException {
+   public void updateView(final ViewMetadata view) throws UnauthorizedAccessException, ViewAlreadyExistsException {
       if (!viewFacade.checkViewForWrite(view.getId(), getCurrentUser())) {
          throw new UnauthorizedAccessException();
       }
 
-      ViewDao viewMetadata = viewFacade.getViewMetadata(view.getId());
+      ViewMetadata viewMetadata = viewFacade.getViewMetadata(view.getId());
 
       if (view.getName() != null && !view.getName().equals(viewMetadata.getName())) {
          viewFacade.setViewName(view.getId(), view.getName());

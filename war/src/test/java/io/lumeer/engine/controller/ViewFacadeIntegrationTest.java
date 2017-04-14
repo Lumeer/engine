@@ -28,9 +28,10 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
-import io.lumeer.engine.rest.dao.ViewDao;
+import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -54,7 +55,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    private UserFacade userFacade;
 
    @Inject
-   private OrganisationFacade organisationFacade;
+   private ProjectFacade projectFacade;
 
    private final String CREATE_INITIAL_METADATA_VIEW = "viewCreateInitialMetadata";
    private final String VIEW_TO_BE_COPIED = "viewToBeCopied";
@@ -74,7 +75,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    public void testCreateView() throws Exception {
       setUpCollection();
       int viewId = viewFacade.createView(CREATE_INITIAL_METADATA_VIEW, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-      ViewDao metadata = viewFacade.getViewMetadata(viewId);
+      ViewMetadata metadata = viewFacade.getViewMetadata(viewId);
 
       assertThat(metadata.getName()).isEqualTo(CREATE_INITIAL_METADATA_VIEW);
    }
@@ -90,8 +91,8 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
 
       int copy = viewFacade.copyView(view, COPIED_VIEW);
 
-      ViewDao originalView = viewFacade.getViewMetadata(view);
-      ViewDao newView = viewFacade.getViewMetadata(copy);
+      ViewMetadata originalView = viewFacade.getViewMetadata(view);
+      ViewMetadata newView = viewFacade.getViewMetadata(copy);
 
       assertThat(view).isNotEqualTo(copy); // copy should have a new id
       assertThat(newView.getName()).isEqualTo(COPIED_VIEW); // copy should have a new name
@@ -172,7 +173,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    public void testGetViewMetadata() throws Exception {
       setUpCollection();
       int viewId = viewFacade.createView(GET_METADATA_VIEW, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-      ViewDao metadata = viewFacade.getViewMetadata(viewId);
+      ViewMetadata metadata = viewFacade.getViewMetadata(viewId);
       assertThat(metadata).isNotNull();
    }
 
@@ -182,7 +183,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       viewFacade.createView(GET_ALL_VIEWS_VIEW_1, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
       viewFacade.createView(GET_ALL_VIEWS_VIEW_2, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
 
-      List<ViewDao> views = viewFacade.getAllViews();
+      List<ViewMetadata> views = viewFacade.getAllViews();
       assertThat(views).hasSize(2);
       assertThat(views.get(0).getName()).isIn(GET_ALL_VIEWS_VIEW_1, GET_ALL_VIEWS_VIEW_2);
    }
@@ -196,7 +197,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       String type = "type";
       viewFacade.setViewType(viewId1, type);
 
-      List<ViewDao> views = viewFacade.getAllViewsOfType(type);
+      List<ViewMetadata> views = viewFacade.getAllViewsOfType(type);
       assertThat(views).hasSize(1);
       assertThat(views.get(0).getName()).isEqualTo(GET_ALL_VIEWS_OF_TYPE_VIEW_1);
 
@@ -204,38 +205,8 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(views).isEmpty();
    }
 
-   @Test
-   public void testGetAllViewsForOrg() throws Exception {
-      setUpCollection();
-      viewFacade.createView(GET_ALL_VIEWS_VIEW_1, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-      viewFacade.createView(GET_ALL_VIEWS_VIEW_2, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-
-      List<ViewDao> views = viewFacade.getAllViewsForOrganisation(organisationFacade.getOrganisationId());
-      assertThat(views).hasSize(2);
-      assertThat(views.get(0).getName()).isIn(GET_ALL_VIEWS_VIEW_1, GET_ALL_VIEWS_VIEW_2);
-   }
-
-   @Test
-   public void testGetAllViewsOfTypeForOrg() throws Exception {
-      setUpCollection();
-      int viewId1 = viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_1, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-      viewFacade.createView(GET_ALL_VIEWS_OF_TYPE_VIEW_2, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-
-      String type = "type";
-      viewFacade.setViewType(viewId1, type);
-
-      List<ViewDao> views = viewFacade.getAllViewsOfTypeForOrganisation(organisationFacade.getOrganisationId(), type);
-      assertThat(views).hasSize(1);
-      assertThat(views.get(0).getName()).isEqualTo(GET_ALL_VIEWS_OF_TYPE_VIEW_1);
-
-      views = viewFacade.getAllViewsOfType("non existing type");
-      assertThat(views).isEmpty();
-   }
-
-   private void setUpCollection() {
-      // we have only one collection with metadata for all views,
-      // so we have to drop collection before every test, because we
-      // cannot drop it before whole test suite (inject in @BeforeClass does not work)
+   @Before
+   public void setUpCollection() {
       dataStorage.dropCollection(viewFacade.metadataCollection());
    }
 

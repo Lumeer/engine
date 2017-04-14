@@ -40,6 +40,9 @@ public class DatabaseInitializer implements Serializable {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
+   @Inject
+   private ViewFacade viewFacade;
+
    @PostConstruct
    public void init() {
       if (!dataStorage.hasCollection(LumeerConst.Project.COLLECTION_NAME)) {
@@ -58,6 +61,12 @@ public class DatabaseInitializer implements Serializable {
          dataStorage.createIndex(LumeerConst.Project.UserRoles.COLLECTION_NAME, new DataDocument(LumeerConst.Project.UserRoles.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
                .append(LumeerConst.Project.UserRoles.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING)
                .append(LumeerConst.Project.UserRoles.ATTR_USER_ROLE, LumeerConst.Index.ASCENDING), true);
+      }
+
+      if (!dataStorage.hasCollection(viewFacade.metadataCollection())) {
+         dataStorage.createCollection(viewFacade.metadataCollection());
+         dataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.ID_KEY, LumeerConst.Index.ASCENDING), true);
+         dataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.NAME_KEY, LumeerConst.Index.ASCENDING), true);
       }
    }
 
