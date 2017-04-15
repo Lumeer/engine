@@ -1,6 +1,7 @@
 package io.lumeer.engine.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
@@ -8,7 +9,9 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 
+import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,17 +52,6 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
 
       assertThat(organizationsMap).isEqualTo(newOrganizationsMap);
       assertThat(organizationsMap.entrySet().size()).isEqualTo(newOrganizationsMap.entrySet().size());
-   }
-
-   @Test
-   public void testReadOrganizationId() throws Exception {
-      dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
-      createDummyEntries();
-
-      final String DUMMY_ORG_ID = "TST3";
-      final String DUMMY_ORG_NAME = "Test3";
-      String organizationId = organizationFacade.readOrganizationId(DUMMY_ORG_NAME);
-      assertThat(DUMMY_ORG_ID).isEqualTo(organizationId);
    }
 
    @Test
@@ -324,6 +316,27 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       // to read default roles
       List<String> readDefaultRoles = organizationFacade.readDefaultRoles(ORG_ID);
       assertThat(readDefaultRoles).isEqualTo(defaultRolesToSet);
+   }
+
+   @Test
+   public void usersAlreadyExists() throws Exception {
+      dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
+      String organization = "LMR999";
+      organizationFacade.createOrganization(organization, "Organization One");
+      organizationFacade.addUserToOrganization(organization, "u1", Arrays.asList("r1", "r2", "r3"));
+      assertThatThrownBy(() -> organizationFacade.addUserToOrganization(organization, "u1", Arrays.asList("r1", "r2", "r3"))).isInstanceOf(UserAlreadyExistsException.class);
+   }
+
+   @Test
+   public void organizationAlreadyExists() throws Exception {
+      dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
+      String organization1 = "LMR9998";
+      String organization2 = "LMR9999";
+      organizationFacade.createOrganization(organization1, "Organization One");
+      organizationFacade.createOrganization(organization2, "Organization Two");
+
+      assertThatThrownBy(() -> organizationFacade.createOrganization(organization1, "Organization One again")).isInstanceOf(MongoWriteException.class);
+      assertThatThrownBy(() -> organizationFacade.updateOrganizationId(organization1, organization2)).isInstanceOf(MongoWriteException.class);
    }
 
    private void createDummyEntries() {

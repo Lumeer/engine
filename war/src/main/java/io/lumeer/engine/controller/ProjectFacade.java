@@ -85,18 +85,6 @@ public class ProjectFacade {
    }
 
    /**
-    * Reads the project id according to its name
-    *
-    * @param projectName
-    *       name of the project
-    * @return id of the project
-    */
-   public String readProjectId(final String projectName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectNameFilter(projectName), Collections.singletonList(Project.ATTR_PROJECT_ID));
-      return document != null ? document.getString(Project.ATTR_PROJECT_ID) : null;
-   }
-
-   /**
     * Changes project id
     *
     * @param oldProjectId
@@ -258,7 +246,8 @@ public class ProjectFacade {
     *       Id of the project
     * @param userName
     *       Name of the user
-    * @param userRoles user roles
+    * @param userRoles
+    *       user roles
     * @throws UserAlreadyExistsException
     *       When user already exists in project
     */
