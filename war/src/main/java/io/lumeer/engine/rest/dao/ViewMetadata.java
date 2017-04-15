@@ -19,14 +19,17 @@
  */
 package io.lumeer.engine.rest.dao;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+
+import java.util.Date;
 
 /**
  * Describes view information.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class ViewDao {
+public class ViewMetadata {
 
    /**
     * Internal view ID.
@@ -44,18 +47,48 @@ public class ViewDao {
    private String type;
 
    /**
+    * View description from user
+    */
+   private String description;
+
+   /**
     * Complete view configuration.
     */
    private DataDocument configuration;
 
-   public ViewDao() {
+   /**
+    * Date when view was created
+    */
+   private Date createDate;
+
+   /**
+    * Name of user who created the view
+    */
+   private String createUser;
+
+   /**
+    * Date when view was last updated
+    */
+   private Date updateDate;
+
+   /**
+    * Name of user who last updated the view
+    */
+   private String updateUser;
+
+   public ViewMetadata() {
    }
 
-   public ViewDao(final int id, final String name, final String type, final DataDocument configuration) {
-      this.id = id;
-      this.name = name;
-      this.type = type;
-      this.configuration = configuration;
+   public ViewMetadata(DataDocument viewMetadata) {
+      this.id = viewMetadata.getInteger(LumeerConst.View.ID_KEY);
+      this.name = viewMetadata.getString(LumeerConst.View.NAME_KEY);
+      this.type = viewMetadata.getString(LumeerConst.View.TYPE_KEY);
+      this.description = viewMetadata.getString(LumeerConst.View.DESCRIPTION_KEY);
+      this.configuration = viewMetadata.getDataDocument(LumeerConst.View.CONFIGURATION_KEY);
+      this.createDate = viewMetadata.getDate(LumeerConst.View.CREATE_DATE_KEY);
+      this.createUser = viewMetadata.getString(LumeerConst.View.CREATE_USER_KEY);
+      this.updateDate = viewMetadata.getDate(LumeerConst.View.UPDATE_DATE_KEY);
+      this.updateUser = viewMetadata.getString(LumeerConst.View.UPDATE_USER_KEY);
    }
 
    public int getId() {
@@ -82,6 +115,46 @@ public class ViewDao {
       this.type = type;
    }
 
+   public String getDescription() {
+      return description;
+   }
+
+   public void setDescription(final String description) {
+      this.description = description;
+   }
+
+   public Date getCreateDate() {
+      return createDate;
+   }
+
+   public void setCreateDate(final Date createDate) {
+      this.createDate = createDate;
+   }
+
+   public String getCreateUser() {
+      return createUser;
+   }
+
+   public void setCreateUser(final String createUser) {
+      this.createUser = createUser;
+   }
+
+   public Date getUpdateDate() {
+      return updateDate;
+   }
+
+   public void setUpdateDate(final Date updateDate) {
+      this.updateDate = updateDate;
+   }
+
+   public String getUpdateUser() {
+      return updateUser;
+   }
+
+   public void setUpdateUser(final String updateUser) {
+      this.updateUser = updateUser;
+   }
+
    public DataDocument getConfiguration() {
       return configuration;
    }
@@ -99,18 +172,18 @@ public class ViewDao {
          return false;
       }
 
-      final ViewDao viewDao = (ViewDao) o;
+      final ViewMetadata viewMetadata = (ViewMetadata) o;
 
-      if (id != viewDao.id) {
+      if (id != viewMetadata.id) {
          return false;
       }
-      if (name != null ? !name.equals(viewDao.name) : viewDao.name != null) {
+      if (name != null ? !name.equals(viewMetadata.name) : viewMetadata.name != null) {
          return false;
       }
-      if (type != null ? !type.equals(viewDao.type) : viewDao.type != null) {
+      if (type != null ? !type.equals(viewMetadata.type) : viewMetadata.type != null) {
          return false;
       }
-      return configuration != null ? configuration.equals(viewDao.configuration) : viewDao.configuration == null;
+      return configuration != null ? configuration.equals(viewMetadata.configuration) : viewMetadata.configuration == null;
    }
 
    @Override
@@ -124,9 +197,10 @@ public class ViewDao {
 
    @Override
    public String toString() {
-      return "ViewDao{"
+      return "ViewMetadata{"
             + "id=" + id
             + ", name='" + name + '\''
+            + ", description='" + description + '\''
             + ", type='" + type + '\''
             + ", configuration=" + configuration
             + '}';
