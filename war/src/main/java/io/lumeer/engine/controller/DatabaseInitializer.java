@@ -42,6 +42,9 @@ public class DatabaseInitializer {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
+   @Inject
+   private ViewFacade viewFacade;
+
    public void init(@Observes @Initialized(RequestScoped.class) Object init) {
 
    }
@@ -84,6 +87,12 @@ public class DatabaseInitializer {
                .append(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, LumeerConst.Index.ASCENDING)
                .append(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, LumeerConst.Index.ASCENDING)
                .append(LumeerConst.Linking.MainTable.ATTR_ROLE, LumeerConst.Index.ASCENDING), true);
+      }
+     
+      if (!dataStorage.hasCollection(viewFacade.metadataCollection())) {
+         dataStorage.createCollection(viewFacade.metadataCollection());
+         dataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.ID_KEY, LumeerConst.Index.ASCENDING), true);
+         dataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.NAME_KEY, LumeerConst.Index.ASCENDING), true);
       }
    }
 

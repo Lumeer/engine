@@ -113,21 +113,20 @@ public final class LumeerConst {
    }
 
    public static class View {
-      public static final String VIEW_METADATA_COLLECTION_NAME = "viewmetadatacollection";
-      public static final String VIEW_SEQUENCE_NAME = "view-sequence";
+      public static final String METADATA_COLLECTION_PREFIX = "meta.view_";
+      public static final String SEQUENCE_NAME = "view-sequence";
 
-      public static final String VIEW_NAME_KEY = "name";
-      public static final String VIEW_ID_KEY = "view-id";
-      public static final String VIEW_TYPE_KEY = "type";
-      public static final String VIEW_TYPE_DEFAULT_VALUE = "default";
-      public static final String VIEW_CONFIGURATION_KEY = "configuration";
+      public static final String NAME_KEY = "name";
+      public static final String DESCRIPTION_KEY = "description";
+      public static final String ID_KEY = "view-id";
+      public static final String TYPE_KEY = "type";
+      public static final String TYPE_DEFAULT_VALUE = "default";
+      public static final String CONFIGURATION_KEY = "configuration";
 
-      public static final String VIEW_USER_RIGHTS_KEY = Document.USER_RIGHTS;
-      //public static final String VIEW_GROUP_RIGHTS_KEY = "group-rights";
-      public static final String VIEW_CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
-      public static final String VIEW_CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
-      public static final String VIEW_UPDATE_DATE_KEY = Document.UPDATE_DATE_KEY;
-      public static final String VIEW_UPDATE_USER_KEY = Document.UPDATED_BY_USER_KEY;
+      public static final String CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
+      public static final String CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
+      public static final String UPDATE_DATE_KEY = Document.UPDATE_DATE_KEY;
+      public static final String UPDATE_USER_KEY = Document.UPDATED_BY_USER_KEY;
    }
 
    public static class Collection {
