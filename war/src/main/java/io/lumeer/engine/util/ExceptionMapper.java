@@ -9,6 +9,7 @@ import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidCollectionAttributeTypeException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
+import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
 import io.lumeer.engine.api.exception.NullParameterException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
@@ -45,7 +46,8 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
             e instanceof InvalidQueryException || e instanceof InvalidDocumentKeyException ||
             e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException ||
             e instanceof NullParameterException || e instanceof LinkAlreadyExistsException ||
-            e instanceof ViewAlreadyExistsException || e instanceof InvalidCollectionAttributeTypeException) {
+            e instanceof ViewAlreadyExistsException || e instanceof InvalidCollectionAttributeTypeException ||
+            e instanceof InvalidValueException) {
          return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 

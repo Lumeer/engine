@@ -21,7 +21,6 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
@@ -87,13 +86,9 @@ public class DocumentFacade implements Serializable {
     * @return the id of the newly created document
     * @throws DbException
     *       When there is an error working with the database.
-    * @throws InvalidConstraintException
-    *       if one of document's value doesn't satisfy constraint or type
     */
-   public String createDocument(final String collectionName, final DataDocument document) throws DbException, InvalidConstraintException {
+   public String createDocument(final String collectionName, final DataDocument document) throws DbException {
       DataDocument documentCleaned = checkDocumentKeysValidity(document);
-      // check constraints
-      checkConstraintsAndConvert(collectionName, documentCleaned);
       // add metadata attributes
       documentMetadataFacade.putInitDocumentMetadataInternally(documentCleaned, userFacade.getUserEmail());
       versionFacade.putInitDocumentVersionInternally(documentCleaned);
@@ -136,14 +131,11 @@ public class DocumentFacade implements Serializable {
     *       the DataDocument object representing a document with changes to update
     * @throws DbException
     *       When there is an error working with the data storage.
-    * @throws InvalidConstraintException
-    *       if one of document's value doesn't satisfy constraint or type
     */
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
+   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws DbException {
       DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(updatedDocument.getId()));
 
       final DataDocument updateDocumentCleaned = cleanInvalidAttributes(updatedDocument);
-      checkConstraintsAndConvert(collectionName, updatedDocument);
       documentMetadataFacade.putUpdateDocumentMetadataInternally(updateDocumentCleaned, userFacade.getUserEmail());
       versionFacade.newDocumentVersion(collectionName, existingDocument, updateDocumentCleaned, false);
 
@@ -164,13 +156,10 @@ public class DocumentFacade implements Serializable {
     *       the DataDocument object representing a replace document
     * @throws DbException
     *       When there is an error working with the data storage.
-    * @throws InvalidConstraintException
-    *       if one of document's value doesn't satisfy constraint or type
     */
-   public void replaceDocument(final String collectionName, final DataDocument replacedDocument) throws DbException, InvalidConstraintException {
+   public void replaceDocument(final String collectionName, final DataDocument replacedDocument) throws DbException {
       DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(replacedDocument.getId()));
       final DataDocument replacedDocumentCleaned = cleanInvalidAttributes(replacedDocument);
-      checkConstraintsAndConvert(collectionName, replacedDocument);
       LumeerConst.Document.METADATA_KEYS.stream().filter(existingDocument::containsKey).forEach(metaKey -> replacedDocumentCleaned.put(metaKey, existingDocument.get(metaKey)));
       documentMetadataFacade.putUpdateDocumentMetadataInternally(replacedDocumentCleaned, userFacade.getUserEmail());
       versionFacade.newDocumentVersion(collectionName, existingDocument, replacedDocumentCleaned, true);
@@ -224,15 +213,12 @@ public class DocumentFacade implements Serializable {
     *       old version to be reverted
     * @throws DbException
     *       When there is an error working with the data storage.
-    * @throws InvalidConstraintException
-    *       if one of document's value doesn't satisfy constraint or type
     */
-   public void revertDocument(final String collectionName, final String documentId, final int revertVersion) throws DbException, InvalidConstraintException {
+   public void revertDocument(final String collectionName, final String documentId, final int revertVersion) throws DbException {
       DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
 
       DataDocument revertDocument = versionFacade.readOldDocumentVersion(collectionName, documentId, revertVersion);
       DataDocument meta = filterAndRemoveMeta(revertDocument);
-      checkConstraintsAndConvert(collectionName, revertDocument);
       revertDocument.putAll(meta);
       documentMetadataFacade.putUpdateDocumentMetadataInternally(revertDocument, userFacade.getUserEmail());
 
@@ -338,15 +324,6 @@ public class DocumentFacade implements Serializable {
       attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
          collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
       });
-   }
-
-   private void checkConstraintsAndConvert(final String collectionName, DataDocument doc) throws InvalidConstraintException {
-      doc = collectionMetadataFacade.checkAndConvertAttributesValues(collectionName, doc);
-      for (String attribute : doc.keySet()) {
-         if (doc.get(attribute) == null) {
-            throw new InvalidConstraintException(ErrorMessageBuilder.invalidConstraintKeyString(attribute));
-         }
-      }
    }
 
    private DataDocument checkDocumentKeysValidity(DataDocument dataDocument) throws InvalidDocumentKeyException {
