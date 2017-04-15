@@ -328,7 +328,7 @@ public class ConstraintManager {
     * @return True iff the constraints are compatible.
     */
    private static boolean checkConstraintCompatibility(final List<Constraint> constraints) {
-      return getCommonTypes(constraints).size() > 0;
+      return constraints.size() == 0 || getCommonTypes(constraints).size() > 0;
    }
 
    /**

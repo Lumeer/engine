@@ -20,6 +20,7 @@
 package io.lumeer.engine.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
@@ -29,6 +30,7 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
+import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.provider.DataStorageProvider;
 import io.lumeer.engine.rest.dao.Attribute;
@@ -428,28 +430,18 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
                               valueInvalid3)));
 
       DataDocument validAfterConvert = collectionMetadataFacade.checkAndConvertAttributesValues(collection, validDoc);
-      DataDocument invalidAfterConvert = collectionMetadataFacade.checkAndConvertAttributesValues(collection, invalidDoc);
+      assertThatThrownBy(() -> collectionMetadataFacade.checkAndConvertAttributesValues(collection, invalidDoc)).isInstanceOf(InvalidValueException.class).hasMessageContaining("Invalid value");
 
       // we have to get values as strings, because ConstraintManager always returns strings as a result of validation
-      assertThat(validAfterConvert.getString(attribute))
+      assertThat(validAfterConvert.getInteger(attribute))
             .as("valid attribute")
-            .isEqualTo(Integer.toString(valueValid1));
-      assertThat(validAfterConvert.getDataDocument(attribute2).getString(child))
+            .isEqualTo(valueValid1);
+      assertThat(validAfterConvert.getDataDocument(attribute2).getInteger(child))
             .as("valid nested attribute")
-            .isEqualTo(Integer.toString(valueValid2));
-      assertThat(validAfterConvert.getDataDocument(attribute3).getDataDocument(child).getString(doubleChild))
+            .isEqualTo(valueValid2);
+      assertThat(validAfterConvert.getDataDocument(attribute3).getDataDocument(child).getInteger(doubleChild))
             .as("valid double nested attribute")
-            .isEqualTo(Integer.toString(valueValid3));
-
-      assertThat(invalidAfterConvert.getString(attribute))
-            .as("invalid attribute")
-            .isNull();
-      assertThat(invalidAfterConvert.getDataDocument(attribute2).getString(child))
-            .as("invalid nested attribute")
-            .isNull();
-      assertThat(invalidAfterConvert.getDataDocument(attribute3).getDataDocument(child).getString(doubleChild))
-            .as("invalid double nested attribute")
-            .isNull();
+            .isEqualTo(valueValid3);
    }
 
    @Test
