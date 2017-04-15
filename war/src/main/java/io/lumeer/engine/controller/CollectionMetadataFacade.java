@@ -30,6 +30,7 @@ import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
+import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
@@ -120,7 +121,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       internal collection name
     * @return DataDocument with collection metadata
-    * @throws CollectionMetadataDocumentNotFoundException when metadata document is not found
+    * @throws CollectionMetadataDocumentNotFoundException
+    *       when metadata document is not found
     */
    public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
       DataDocument metadata = dataStorage.readDocument(
@@ -606,18 +608,22 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param attribute
     *       attribute name
-    * @param valueObject
+    * @param value
     *       attribute value
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
+    * @throws InvalidConstraintException
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When it was not possible to properly encode the value.
     */
-   private Object checkAndConvertAttributeValue(Attribute attribute, Object valueObject) {
+   private Object checkAndConvertAttributeValue(final Attribute attribute, final Object value) throws InvalidConstraintException, InvalidValueException {
       // if the value is DataDocument, we check it recursively
-      if (valueObject instanceof DataDocument) {
+      if (value instanceof DataDocument) {
 
-         DataDocument beforeCheck = (DataDocument) valueObject;
-         DataDocument afterCheck = new DataDocument();
+         final DataDocument beforeCheck = (DataDocument) value;
+         final DataDocument afterCheck = new DataDocument();
 
-         Map<String, Attribute> attributes = attribute.getChildAttributes();
+         final Map<String, Attribute> attributes = attribute.getChildAttributes();
 
          for (String key : beforeCheck.keySet()) {
             if (!attributes.keySet().contains(key)) { // attribute does not exist - no need to check anything
@@ -631,31 +637,27 @@ public class CollectionMetadataFacade implements Serializable {
          return afterCheck;
       }
 
-      List<String> constraintConfigurations = attribute.getConstraints();
-      if (constraintConfigurations == null || constraintConfigurations.isEmpty()) { // there are no constraints
-         return valueObject;
-      }
+      final List<String> constraintConfigurations = attribute.getConstraints();
 
-      ConstraintManager constraintManager = null;
-      try {
-         constraintManager = new ConstraintManager(constraintConfigurations);
-         initConstraintManager(constraintManager);
-      } catch (InvalidConstraintException e) {
-         throw new IllegalStateException("Illegal constraint prefix collision: ", e);
-      }
-
-      String valueString = valueObject.toString();
-      Constraint.ConstraintResult result = constraintManager.isValid(valueString);
+      final ConstraintManager constraintManager = new ConstraintManager(constraintConfigurations);
+      Constraint.ConstraintResult result = constraintManager.isValid(value.toString());
 
       if (result == Constraint.ConstraintResult.INVALID) {
-         return null;
+         throw new InvalidValueException("Invalid value for attribute " + attribute.getName() + " given its constraints.");
       }
 
+      final Object encoded;
       if (result == Constraint.ConstraintResult.FIXABLE) {
-         return constraintManager.fix(valueString);
+         encoded = constraintManager.encode(constraintManager.fix(value.toString()));
+      } else {
+         encoded = constraintManager.encode(value);
       }
 
-      return valueString;
+      if (value != null && encoded == null) {
+         throw new InvalidValueException("It was not possible to encode user value: " + value.toString());
+      }
+
+      return encoded;
    }
 
    /**
@@ -666,22 +668,98 @@ public class CollectionMetadataFacade implements Serializable {
     * @param document
     *       document with attributes and their values to check
     * @return map of results, key is attribute name and value is result of checkAndConvertAttributeValue on that attribute
+    * @throws InvalidConstraintException
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When it was not possible to properly encode the value.
     */
-   public DataDocument checkAndConvertAttributesValues(String collectionName, DataDocument document) {
-      DataDocument results = new DataDocument();
+   public DataDocument checkAndConvertAttributesValues(final String collectionName, final DataDocument document) throws InvalidValueException, InvalidConstraintException {
+      final DataDocument results = new DataDocument();
+      final Map<String, Attribute> attributesMetadata = getCollectionMetadata(collectionName).getAttributes();
 
-      Set<String> attributes = document.keySet();
-      Map<String, Attribute> attributesMetadata = getCollectionMetadata(collectionName).getAttributes();
-      for (String a : attributes) {
-         Object value = document.get(a);
-         if (!attributesMetadata.keySet().contains(a)) { // attribute does not exist - no need to check anything
-            results.append(a, value);
+      for (Map.Entry<String, Object> entry : document.entrySet()) {
+         if (!attributesMetadata.keySet().contains(entry.getKey())) { // attribute does not exist - no need to check anything
+            results.append(entry.getKey(), entry.getValue());
          } else {
-            results.append(a, checkAndConvertAttributeValue(attributesMetadata.get(a), value));
+            results.append(entry.getKey(), checkAndConvertAttributeValue(attributesMetadata.get(entry.getKey()), entry.getValue()));
          }
       }
 
       return results;
+   }
+
+   /**
+    * Decodes document attributes based on the constraints so that they can be sent to the presentation layer properly.
+    *
+    * @param collectionName
+    *       Name of the collection from which the document was read.
+    * @param document
+    *       The document the attribtues of which should be decoded.
+    * @return A new document with decoded values.
+    * @throws InvalidConstraintException
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When it was not possible to properly decode the value.
+    */
+   public DataDocument decodeAttributeValues(final String collectionName, final DataDocument document) throws InvalidConstraintException, InvalidValueException {
+      final DataDocument results = new DataDocument();
+      final Map<String, Attribute> attributesMetadata = getCollectionMetadata(collectionName).getAttributes();
+
+      for (Map.Entry<String, Object> entry : document.entrySet()) {
+         if (!attributesMetadata.keySet().contains(entry.getKey())) { // attribute does not exist - no need to decode anything
+            results.append(entry.getKey(), entry.getValue());
+         } else {
+            results.append(entry.getKey(), decodeDocumentValue(attributesMetadata.get(entry.getKey()), entry.getValue()));
+         }
+      }
+
+      return results;
+   }
+
+   /**
+    * Decodes a value type or the value itself from database representation to the user representation
+    * based on the information in constraints.
+    *
+    * @param attribute
+    *       The attribute meta-data.
+    * @param value
+    *       The attribute value.
+    * @return Decoded value.
+    * @throws InvalidConstraintException
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When it was not possible to properly decode the value.
+    */
+   private Object decodeDocumentValue(final Attribute attribute, final Object value) throws InvalidConstraintException, InvalidValueException {
+      // if the value is DataDocument, we check it recursively
+      if (value instanceof DataDocument) {
+
+         final DataDocument beforeCheck = (DataDocument) value;
+         final DataDocument afterCheck = new DataDocument();
+
+         final Map<String, Attribute> attributes = attribute.getChildAttributes();
+
+         for (String key : beforeCheck.keySet()) {
+            if (!attributes.keySet().contains(key)) { // attribute does not exist - no need to check anything
+               afterCheck.put(key, beforeCheck.get(key));
+            } else {
+               Object newValue = decodeDocumentValue(attributes.get(key), beforeCheck.get(key));
+               afterCheck.put(key, newValue);
+            }
+         }
+
+         return afterCheck;
+      }
+
+      final List<String> constraintConfigurations = attribute.getConstraints();
+      final ConstraintManager constraintManager = new ConstraintManager(constraintConfigurations);
+      final Object decoded = constraintManager.decode(value);
+
+      if (value != null && decoded == null) {
+         throw new InvalidValueException("Unable to decode value from database: " + value.toString());
+      }
+
+      return constraintManager.decode(value);
    }
 
    /**
@@ -794,7 +872,8 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param collectionName
     *       internal collection name
-    * @param id document id
+    * @param id
+    *       document id
     */
    public void addRecentlyUsedDocumentId(String collectionName, String id) {
       String docId = null;

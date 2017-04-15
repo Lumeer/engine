@@ -270,7 +270,7 @@ public class ConstraintManager {
          throw new InvalidConstraintException("The following constraint configurations are not recognized: " + String.join(", ", invalidConfigurations));
       }
 
-      if (encodedTypes.size() == 0) {
+      if (constraints.size() > 0 && encodedTypes.size() == 0) {
          throw new InvalidConstraintException("Incompatible constraints were found. The constraint do not match on the data types they could use in database.");
       }
 

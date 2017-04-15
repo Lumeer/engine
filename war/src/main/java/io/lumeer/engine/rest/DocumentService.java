@@ -26,6 +26,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
@@ -40,6 +41,7 @@ import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,19 +119,25 @@ public class DocumentService implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     * @throws InvalidConstraintException
-    *       If one of document's value does not satisfy constraint or type.
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When the attribute values did not meet constraint requirements.
     */
    @POST
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws DbException, InvalidConstraintException {
+   public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || document == null) {
          throw new IllegalArgumentException();
       }
-      String internalCollectionName = getInternalName(collectionName);
+
+      final String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      return documentFacade.createDocument(internalCollectionName, document);
+
+      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, document);
+
+      return documentFacade.createDocument(internalCollectionName, convertedDocument);
    }
 
    /**
@@ -165,11 +173,15 @@ public class DocumentService implements Serializable {
     * @return the DataDocument object representing the read document
     * @throws DbException
     *       When there is an error working with the database.
+    * @throws InvalidConstraintException
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When it was not possible to properly decode the value.
     */
    @GET
    @Path("/{documentId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
+   public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
@@ -177,7 +189,7 @@ public class DocumentService implements Serializable {
       checkCollectionExistency(internalCollectionName);
       checkDocumentForRead(internalCollectionName, documentId);
 
-      return documentFacade.readDocument(internalCollectionName, documentId);
+      return collectionMetadataFacade.decodeAttributeValues(internalCollectionName, documentFacade.readDocument(internalCollectionName, documentId));
    }
 
    /**
@@ -190,12 +202,14 @@ public class DocumentService implements Serializable {
     * @throws DbException
     *       When there is an error working with the data storage.
     * @throws InvalidConstraintException
-    *       If one of document's value doesn't satisfy constraint or type.
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When the attribute values did not meet constraint requirements.
     */
    @PUT
    @Path("/update/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
+   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || updatedDocument == null || updatedDocument.getId() == null) {
          throw new IllegalArgumentException();
       }
@@ -203,7 +217,9 @@ public class DocumentService implements Serializable {
       checkCollectionExistency(internalCollectionName);
       checkDocumentForWrite(internalCollectionName, updatedDocument.getId());
 
-      documentFacade.updateDocument(internalCollectionName, updatedDocument);
+      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, updatedDocument);
+
+      documentFacade.updateDocument(internalCollectionName, convertedDocument);
    }
 
    /**
@@ -216,12 +232,14 @@ public class DocumentService implements Serializable {
     * @throws DbException
     *       When there is an error working with the data storage.
     * @throws InvalidConstraintException
-    *       If one of document's value doesn't satisfy constraint or type.
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When the attribute values did not meet constraint requirements.
     */
    @PUT
    @Path("/replace/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void replaceDocument(final @PathParam("collectionName") String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException {
+   public void replaceDocument(final @PathParam("collectionName") String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || replaceDocument == null || replaceDocument.getId() == null) {
          throw new IllegalArgumentException();
       }
@@ -229,7 +247,9 @@ public class DocumentService implements Serializable {
       checkCollectionExistency(internalCollectionName);
       checkDocumentForWrite(internalCollectionName, replaceDocument.getId());
 
-      documentFacade.replaceDocument(internalCollectionName, replaceDocument);
+      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, replaceDocument);
+
+      documentFacade.replaceDocument(internalCollectionName, convertedDocument);
    }
 
    /**
@@ -321,11 +341,15 @@ public class DocumentService implements Serializable {
     * @return list of documents in different version
     * @throws DbException
     *       When there is an error working with the data storage.
+    * @throws InvalidConstraintException
+    *       When the constraint configuration was wrong.
+    * @throws InvalidValueException
+    *       When it was not possible to decode the attribute values.
     */
    @GET
    @Path("/{documentId}/versions")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> searchHistoryChanges(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
+   public List<DataDocument> searchHistoryChanges(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
@@ -333,7 +357,14 @@ public class DocumentService implements Serializable {
       checkCollectionExistency(internalCollectionName);
       checkDocumentForRead(internalCollectionName, documentId);
 
-      return versionFacade.getDocumentVersions(getInternalName(collectionName), documentId);
+      final List<DataDocument> docs = versionFacade.getDocumentVersions(getInternalName(collectionName), documentId);
+      final List<DataDocument> convertedDocs = new ArrayList<>();
+
+      for (final DataDocument doc : docs) {
+         convertedDocs.add(collectionMetadataFacade.decodeAttributeValues(internalCollectionName, doc));
+      }
+
+      return convertedDocs;
    }
 
    /**
@@ -347,13 +378,10 @@ public class DocumentService implements Serializable {
     *       old version to be reverted
     * @throws DbException
     *       When there is an error working with the data storage.
-    * @throws InvalidConstraintException
-    *       If one of document's value doesn't satisfy constraint or type.
     */
    @POST
    @Path("/{documentId}/versions/{version}")
-   public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("version") int version)
-         throws DbException, InvalidConstraintException {
+   public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("version") int version) throws DbException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
@@ -375,13 +403,10 @@ public class DocumentService implements Serializable {
     *       attribute to delete
     * @throws DbException
     *       When there is an error working with the data storage.
-    * @throws InvalidConstraintException
-    *       If one of document's value doesn't satisfy constraint or type.
     */
    @DELETE
    @Path("/{documentId}/attribute/{attributeName}")
-   public void dropDocumentAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName)
-         throws DbException, InvalidConstraintException {
+   public void dropDocumentAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName) throws DbException {
       if (collectionName == null || documentId == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
@@ -393,7 +418,7 @@ public class DocumentService implements Serializable {
    }
 
    /**
-    * Get attributes of document
+    * Gets attribute names of a document.
     *
     * @param collectionName
     *       the name of the collection
@@ -402,13 +427,10 @@ public class DocumentService implements Serializable {
     * @return set of document's attributes
     * @throws DbException
     *       When there is an error working with the data storage.
-    * @throws InvalidConstraintException
-    *       If one of document's value doesn't satisfy constraint or type.
     */
    @GET
    @Path("/{documentId}/attributes/")
-   public Set<String> readDocumentAttributes(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId)
-         throws DbException, InvalidConstraintException {
+   public Set<String> readDocumentAttributes(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
          throw new IllegalArgumentException();
       }
