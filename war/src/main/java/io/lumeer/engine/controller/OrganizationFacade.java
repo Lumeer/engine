@@ -25,7 +25,6 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.exception.OrganizationAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -148,13 +147,8 @@ public class OrganizationFacade {
     *       id of the new organization to create
     * @param organizationName
     *       name of the new organization to create
-    * @throws OrganizationAlreadyExistsException
-    *       when organization with organizationId already exists
     */
-   public void createOrganization(final String organizationId, final String organizationName) throws OrganizationAlreadyExistsException {
-      if (dataStorage.collectionHasDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId))) {
-         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationAlreadyExistsString(organizationId));
-      }
+   public void createOrganization(final String organizationId, final String organizationName) {
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, organizationId)
             .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
             .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
@@ -168,14 +162,9 @@ public class OrganizationFacade {
     *       id of the organization to change
     * @param newOrganizationId
     *       new id for organization
-    * @throws OrganizationAlreadyExistsException
-    *       when organization with newOrganizationId already exists
     */
-   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) throws OrganizationAlreadyExistsException {
-      if (dataStorage.collectionHasDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(newOrganizationId))) {
-         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationAlreadyExistsString(organizationId));
-      }
-      DataDocument document = new DataDocument(LumeerConst.Organization.COLLECTION_NAME, newOrganizationId);
+   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) {
+      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, newOrganizationId);
       dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationIdFilter(oldOrganizationId));
    }
 

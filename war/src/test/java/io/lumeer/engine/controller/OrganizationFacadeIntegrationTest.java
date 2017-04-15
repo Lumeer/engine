@@ -9,9 +9,9 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.exception.OrganizationAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 
+import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -335,8 +335,8 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(organization1, "Organization One");
       organizationFacade.createOrganization(organization2, "Organization Two");
 
-      assertThatThrownBy(() -> organizationFacade.createOrganization(organization1, "Organization One again")).isInstanceOf(OrganizationAlreadyExistsException.class);
-      assertThatThrownBy(() -> organizationFacade.updateOrganizationId(organization1, organization2)).isInstanceOf(OrganizationAlreadyExistsException.class);
+      assertThatThrownBy(() -> organizationFacade.createOrganization(organization1, "Organization One again")).isInstanceOf(MongoWriteException.class);
+      assertThatThrownBy(() -> organizationFacade.updateOrganizationId(organization1, organization2)).isInstanceOf(MongoWriteException.class);
    }
 
    private void createDummyEntries() {

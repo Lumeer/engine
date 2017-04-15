@@ -29,10 +29,10 @@ import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.exception.ProjectAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.provider.DataStorageProvider;
 
+import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
@@ -101,13 +101,13 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two Renamed");
 
       map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
-      assertThat(map).containsOnlyKeys("project3", "project2");
-      projectFacade.createProject("project34", "Project Three");
+      assertThat(map).containsOnlyKeys(project3, project2);
+      projectFacade.createProject(project4, "Project Three");
       map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
-      assertThat(map).containsOnlyKeys("project3", "project2", "project34");
-      projectFacade.dropProject("project34");
+      assertThat(map).containsOnlyKeys(project3, project2, project4);
+      projectFacade.dropProject(project4);
       map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
-      assertThat(map).containsOnlyKeys("project3", "project2");
+      assertThat(map).containsOnlyKeys(project3, project2);
    }
 
    @Test
@@ -199,8 +199,8 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(project1, "Project One");
       projectFacade.createProject(project2, "Project Two");
 
-      assertThatThrownBy(() -> projectFacade.createProject(project1, "Project One again")).isInstanceOf(ProjectAlreadyExistsException.class);
-      assertThatThrownBy(() -> projectFacade.updateProjectId(project1, project2)).isInstanceOf(ProjectAlreadyExistsException.class);
+      assertThatThrownBy(() -> projectFacade.createProject(project1, "Project One again")).isInstanceOf(MongoWriteException.class);
+      assertThatThrownBy(() -> projectFacade.updateProjectId(project1, project2)).isInstanceOf(MongoWriteException.class);
    }
 
 }
