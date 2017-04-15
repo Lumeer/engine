@@ -87,11 +87,12 @@ public final class LumeerConst {
          public static final String NAME = "_system-linking";
          public static final String ATTR_FROM_COLLECTION = "from_collection";
          public static final String ATTR_TO_COLLECTION = "to_collection";
-         public static final String ATTR_COL_NAME = "collection_name";
+         public static final String ATTR_PROJECT = "project_id";
          public static final String ATTR_ROLE = "role";
       }
 
       public class LinkingTable {
+         public static final String ATTR_MAIN_TABLE_ID = "main_table_id";
          public static final String ATTR_FROM_ID = "from_id";
          public static final String ATTR_TO_ID = "to_id";
          public static final String ATTR_ATTRIBUTES = "attributes";

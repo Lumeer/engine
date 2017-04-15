@@ -33,7 +33,7 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class DatabaseInitializer{
+public class DatabaseInitializer {
 
    @Inject
    @SystemDataStorage
@@ -41,7 +41,6 @@ public class DatabaseInitializer{
 
    @Inject
    private DataStorageDialect dataStorageDialect;
-
 
    public void init(@Observes @Initialized(RequestScoped.class) Object init) {
 
@@ -73,6 +72,18 @@ public class DatabaseInitializer{
          dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Index.ASCENDING), false);
          dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, LumeerConst.Index.ASCENDING)
                .append(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, LumeerConst.Organization.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
+      }
+
+      if (!dataStorage.hasCollection(LumeerConst.Linking.MainTable.NAME)) {
+         dataStorage.createCollection(LumeerConst.Linking.MainTable.NAME);
+         dataStorage.createIndex(LumeerConst.Linking.MainTable.NAME, new DataDocument(LumeerConst.Linking.MainTable.ATTR_PROJECT, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.Linking.MainTable.ATTR_ROLE, LumeerConst.Index.ASCENDING), true);
+         dataStorage.createIndex(LumeerConst.Linking.MainTable.NAME, new DataDocument(LumeerConst.Linking.MainTable.ATTR_PROJECT, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, LumeerConst.Index.ASCENDING)
+               .append(LumeerConst.Linking.MainTable.ATTR_ROLE, LumeerConst.Index.ASCENDING), true);
       }
    }
 

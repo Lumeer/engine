@@ -51,6 +51,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.BsonDocument;
@@ -65,6 +66,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -243,8 +245,36 @@ public class MongoDbStorage implements DataStorage {
       } else {
          database.getCollection(collectionName).insertOne(doc);
       }
-
       return doc.containsKey(LumeerConst.Document.ID) ? doc.getObjectId(LumeerConst.Document.ID).toString() : null;
+   }
+
+   @Override
+   public List<String> createDocuments(final String collectionName, final List<DataDocument> dataDocuments) {
+      List<Document> documents = new LinkedList<>();
+      dataDocuments.forEach(d -> documents.add(MongoUtils.dataDocumentToDocument(d)));
+
+      if (collectionsCache != null) {
+         collectionsCache.lock(COLLECTION_CACHE);
+         try {
+            final List<String> collections = getCollectionCache();
+
+            if (collections != null) {
+               collections.add(collectionName);
+            } else {
+               setCollectionCache(new ArrayList<>(Collections.singletonList(collectionName)));
+            }
+
+            database.getCollection(collectionName).insertMany(documents, new InsertManyOptions().ordered(false));
+         } finally {
+            collectionsCache.unlock(COLLECTION_CACHE);
+         }
+      } else {
+         database.getCollection(collectionName).insertMany(documents, new InsertManyOptions().ordered(false));
+      }
+
+      List<String> ids = new LinkedList<>();
+      documents.forEach(doc -> ids.add(doc.containsKey(LumeerConst.Document.ID) ? doc.getObjectId(LumeerConst.Document.ID).toString() : null));
+      return ids;
    }
 
    @Override
@@ -275,7 +305,7 @@ public class MongoDbStorage implements DataStorage {
       return document != null ? convertDocument(document) : null;
    }
 
-    @Override
+   @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final DataFilter filter) {
       DataDocument toUpdate = new DataDocument(updatedDocument);
       if (toUpdate.containsKey(LumeerConst.Document.ID)) {

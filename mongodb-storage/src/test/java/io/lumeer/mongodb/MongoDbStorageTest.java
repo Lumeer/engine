@@ -20,6 +20,7 @@
 package io.lumeer.mongodb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -28,7 +29,9 @@ import io.lumeer.engine.api.data.DataStorageStats;
 import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.client.model.Filters;
+
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.IMongodConfig;
@@ -36,15 +39,18 @@ import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -77,6 +83,7 @@ public class MongoDbStorageTest {
    private final String COLLECTION_HAS_COLLECTION = "collectionHasCollection";
    private final String COLLECTION_COLLECTION_HAS_DOCUMENT = "collectionCollectionHasDocument";
    private final String COLLECTION_CREATE_AND_READ_DOCUMENT = "collectionCreateAndReadDocument";
+   private final String COLLECTION_CREATE_DOCUMENTS = "collectionCreateDocuments";
    private final String COLLECTION_CREATE_AND_READ_OLD_DOCUMENT = "collectionCreateAndReadOldDocument";
    private final String COLLECTION_UPDATE_DOCUMENT = "collectionUpdateDocument";
    private final String COLLECTION_REPLACE_DOCUMENT = "collectionReplaceDocument";
@@ -143,6 +150,7 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_HAS_COLLECTION);
       mongoDbStorage.dropCollection(COLLECTION_COLLECTION_HAS_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_READ_DOCUMENT);
+      mongoDbStorage.dropCollection(COLLECTION_CREATE_DOCUMENTS);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_UPDATE_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_DROP_DOCUMENT);
@@ -231,6 +239,26 @@ public class MongoDbStorageTest {
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_CREATE_AND_READ_DOCUMENT, mongoDbStorageDialect.documentIdFilter(documentId));
       assertThat(insertedDocument.getString(DUMMY_KEY1)).isEqualTo(readedDocument.getString(DUMMY_KEY1));
       assertThat(insertedDocument.getString(DUMMY_KEY2)).isEqualTo(readedDocument.getString(DUMMY_KEY2));
+   }
+
+   @Test
+   public void testCreateDocuments() throws Exception {
+      mongoDbStorage.createCollection(COLLECTION_CREATE_DOCUMENTS);
+      mongoDbStorage.createIndex(COLLECTION_CREATE_DOCUMENTS, new DataDocument("b", 1), true);
+
+      mongoDbStorage.createDocument(COLLECTION_CREATE_DOCUMENTS, new DataDocument("a", "a").append("b", "b"));
+      List<DataDocument> search = mongoDbStorage.search(COLLECTION_CREATE_DOCUMENTS, null, null, 0, 0);
+      assertThat(search).hasSize(1);
+
+      List<DataDocument> documents = new LinkedList<>();
+      documents.add(new DataDocument("a", "a").append("b", "c"));
+      documents.add(new DataDocument("a", "a").append("b", "d"));
+      documents.add(new DataDocument("a", "a").append("b", "e"));
+      documents.add(new DataDocument("a", "a").append("b", "b"));
+      documents.add(new DataDocument("a", "a").append("b", "f"));
+      assertThatThrownBy(() -> mongoDbStorage.createDocuments(COLLECTION_CREATE_DOCUMENTS, documents)).isInstanceOf(MongoBulkWriteException.class);
+      search = mongoDbStorage.search(COLLECTION_CREATE_DOCUMENTS, null, null, 0, 0);
+      assertThat(search).hasSize(5);
    }
 
    @Test

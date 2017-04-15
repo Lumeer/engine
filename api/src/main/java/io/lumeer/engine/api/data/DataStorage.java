@@ -120,6 +120,17 @@ public interface DataStorage extends Serializable {
    String createDocument(final String collectionName, final DataDocument document);
 
    /**
+    * Creates and inserts a new documents to specified collection. Skip if already exists
+    *
+    * @param collectionName
+    *       the name of the collection where the documents will be created
+    * @param dataDocuments
+    *       the DataDocument objects representing a documents to be created
+    * @return the list of ids of the newly created documents
+    */
+   List<String> createDocuments(final String collectionName, final List<DataDocument> dataDocuments);
+
+   /**
     * Creates and inserts an old document to specified collection.
     *
     * @param collectionName
