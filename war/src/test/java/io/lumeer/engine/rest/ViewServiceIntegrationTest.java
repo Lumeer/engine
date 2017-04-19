@@ -33,13 +33,14 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.ViewDao;
+import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Date;
 import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -84,7 +85,7 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
    @Before
    public void init() {
       PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/views/";
-      dataStorage.dropManyDocuments(LumeerConst.View.VIEW_METADATA_COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      dataStorage.dropManyDocuments(viewFacade.metadataCollection(), dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
@@ -92,7 +93,7 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       // #1 No created views so far.
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      assertThat(response.readEntity(new GenericType<List<ViewDao>>() {
+      assertThat(response.readEntity(new GenericType<List<ViewMetadata>>() {
       })).isEmpty();
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       response.close();
@@ -100,12 +101,13 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
 
       // #2 There is one newly created view.
       final String INITIAL_VIEW_NAME = "initialViewName";
-      viewFacade.createView(INITIAL_VIEW_NAME, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
-      List<ViewDao> viewsByFacade = viewFacade.getAllViews();
+
+      viewFacade.createView(INITIAL_VIEW_NAME, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+      List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
 
       final Client client2 = ClientBuilder.newBuilder().build();
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      List<ViewDao> viewsByService = response2.readEntity(new GenericType<List<ViewDao>>() {
+      List<ViewMetadata> viewsByService = response2.readEntity(new GenericType<List<ViewMetadata>>() {
       });
       assertThat(viewsByService).isEqualTo(viewsByFacade);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -116,17 +118,17 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testCreateAndUpdateView() throws Exception {
       // Checking that there are no saved views in the database so far.
-      List<ViewDao> noViewsByFacade = viewFacade.getAllViews();
+      List<ViewMetadata> noViewsByFacade = viewFacade.getAllViews();
       assertThat(noViewsByFacade).isEmpty();
 
       // #1 Create simple view.
       final Client client = ClientBuilder.newBuilder().build();
       final int viewId = 1;
       final String viewName = "name";
-      final String viewType = LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE;
-      ViewDao view = new ViewDao(viewId, viewName, viewType, null);
+      final String viewType = LumeerConst.View.TYPE_DEFAULT_VALUE;
+      ViewMetadata view = createViewMetadata(viewId, viewName, viewType);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(view, MediaType.APPLICATION_JSON)).invoke();
-      List<ViewDao> viewsByFacade = viewFacade.getAllViews();
+      List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
       int responseViewId = response.readEntity(Integer.class);
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -150,9 +152,9 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       // #3 Update the given view.
       final Client client3 = ClientBuilder.newBuilder().build();
       final String updatedViewName = "updatedName";
-      ViewDao updatedView = new ViewDao(responseViewId, updatedViewName, LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE, null);
+      ViewMetadata updatedView = createViewMetadata(responseViewId, updatedViewName, LumeerConst.View.TYPE_DEFAULT_VALUE);
       Response response3 = client3.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(updatedView, MediaType.APPLICATION_JSON)).invoke();
-      List<ViewDao> updatedViewsByFacade = viewFacade.getAllViews();
+      List<ViewMetadata> updatedViewsByFacade = viewFacade.getAllViews();
 
       assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(updatedViewsByFacade).hasSize(1);
@@ -168,13 +170,13 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testReadAndUpdateViewConfiguration() throws Exception {
       final String viewName = "name";
-      final String viewType = LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE;
+      final String viewType = LumeerConst.View.TYPE_DEFAULT_VALUE;
       final String confAttribute = "conf-attribute";
       final String confValue = "conf-value";
       final DataDocument viewConf = new DataDocument(confAttribute, confValue);
 
       // inserting the given view to database
-      int viewIdByFacade = viewFacade.createView(viewName, viewType, viewConf);
+      int viewIdByFacade = viewFacade.createView(viewName, viewType, null, viewConf);
 
       // #1 read view configuration
       final Client client = ClientBuilder.newBuilder().build();
@@ -202,8 +204,8 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
    public void testCloneView() throws Exception {
       // creating new view
       final String viewName = "name";
-      final String viewType = LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE;
-      final int viewIdByFacade = viewFacade.createView(viewName, viewType, null);
+      final String viewType = LumeerConst.View.TYPE_DEFAULT_VALUE;
+      final int viewIdByFacade = viewFacade.createView(viewName, viewType, null, null);
 
       // creating a clone
       final String cloneName = "cloneName";
@@ -217,11 +219,11 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       client.close();
 
       // checking all created views
-      List<ViewDao> viewsByFacade = viewFacade.getAllViews();
+      List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
       assertThat(viewsByFacade).hasSize(2);
 
-      ViewDao origView = viewsByFacade.get(0);
-      ViewDao cloneView = viewsByFacade.get(1);
+      ViewMetadata origView = viewsByFacade.get(0);
+      ViewMetadata cloneView = viewsByFacade.get(1);
       assertThat(origView.getName()).isEqualTo(viewName);
       assertThat(cloneView.getName()).isEqualTo(cloneName);
    }
@@ -230,8 +232,8 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
    public void testGetAndSetViewAccessRights() throws Exception {
       // creating new view
       final String viewName = "name";
-      final String viewType = LumeerConst.View.VIEW_TYPE_DEFAULT_VALUE;
-      final int viewIdByFacade = viewFacade.createView(viewName, viewType, null);
+      final String viewType = LumeerConst.View.TYPE_DEFAULT_VALUE;
+      final int viewIdByFacade = viewFacade.createView(viewName, viewType, null, null);
       final AccessRightsDao defaultViewAccessRights = new AccessRightsDao(true, true, true, userFacade.getUserEmail());
 
       // #1 read view access rights
@@ -266,5 +268,14 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       response3.close();
       client3.close();*/
 
+   }
+
+   private ViewMetadata createViewMetadata(int viewId, String viewName, String viewType) {
+      DataDocument metadataDocument = new DataDocument(LumeerConst.View.NAME_KEY, viewName)
+            .append(LumeerConst.View.ID_KEY, viewId)
+            .append(LumeerConst.View.CREATE_USER_KEY, userFacade.getUserEmail())
+            .append(LumeerConst.View.CREATE_DATE_KEY, new Date())
+            .append(LumeerConst.View.TYPE_KEY, viewType);
+      return new ViewMetadata(metadataDocument);
    }
 }
