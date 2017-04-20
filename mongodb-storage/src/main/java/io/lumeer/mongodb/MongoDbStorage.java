@@ -250,8 +250,9 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public List<String> createDocuments(final String collectionName, final List<DataDocument> dataDocuments) {
-      List<Document> documents = new LinkedList<>();
-      dataDocuments.forEach(d -> documents.add(MongoUtils.dataDocumentToDocument(d)));
+      List<Document> documents = dataDocuments.stream()
+                                              .map(MongoUtils::dataDocumentToDocument)
+                                              .collect(Collectors.toList());
 
       if (collectionsCache != null) {
          collectionsCache.lock(COLLECTION_CACHE);
@@ -272,9 +273,10 @@ public class MongoDbStorage implements DataStorage {
          database.getCollection(collectionName).insertMany(documents, new InsertManyOptions().ordered(false));
       }
 
-      List<String> ids = new LinkedList<>();
-      documents.forEach(doc -> ids.add(doc.containsKey(LumeerConst.Document.ID) ? doc.getObjectId(LumeerConst.Document.ID).toString() : null));
-      return ids;
+      return documents.stream()
+                      .filter(d -> d.containsKey(LumeerConst.Document.ID))
+                      .map(d -> d.getObjectId(LumeerConst.Document.ID).toString())
+                      .collect(Collectors.toList());
    }
 
    @Override

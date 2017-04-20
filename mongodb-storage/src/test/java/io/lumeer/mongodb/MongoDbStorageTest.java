@@ -84,6 +84,7 @@ public class MongoDbStorageTest {
    private final String COLLECTION_COLLECTION_HAS_DOCUMENT = "collectionCollectionHasDocument";
    private final String COLLECTION_CREATE_AND_READ_DOCUMENT = "collectionCreateAndReadDocument";
    private final String COLLECTION_CREATE_DOCUMENTS = "collectionCreateDocuments";
+   private final String COLLECTION_CREATE_DOCUMENTS_EXCEPTION = "collectionCreateDocumentsWithException";
    private final String COLLECTION_CREATE_AND_READ_OLD_DOCUMENT = "collectionCreateAndReadOldDocument";
    private final String COLLECTION_UPDATE_DOCUMENT = "collectionUpdateDocument";
    private final String COLLECTION_REPLACE_DOCUMENT = "collectionReplaceDocument";
@@ -151,6 +152,7 @@ public class MongoDbStorageTest {
       mongoDbStorage.dropCollection(COLLECTION_COLLECTION_HAS_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_READ_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_DOCUMENTS);
+      mongoDbStorage.dropCollection(COLLECTION_CREATE_DOCUMENTS_EXCEPTION);
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_UPDATE_DOCUMENT);
       mongoDbStorage.dropCollection(COLLECTION_DROP_DOCUMENT);
@@ -244,21 +246,36 @@ public class MongoDbStorageTest {
    @Test
    public void testCreateDocuments() throws Exception {
       mongoDbStorage.createCollection(COLLECTION_CREATE_DOCUMENTS);
-      mongoDbStorage.createIndex(COLLECTION_CREATE_DOCUMENTS, new DataDocument("b", 1), true);
-
-      mongoDbStorage.createDocument(COLLECTION_CREATE_DOCUMENTS, new DataDocument("a", "a").append("b", "b"));
-      List<DataDocument> search = mongoDbStorage.search(COLLECTION_CREATE_DOCUMENTS, null, null, 0, 0);
-      assertThat(search).hasSize(1);
 
       List<DataDocument> documents = new LinkedList<>();
+      documents.add(new DataDocument("a", "a").append("b", "a"));
+      documents.add(new DataDocument("a", "a").append("b", "b"));
       documents.add(new DataDocument("a", "a").append("b", "c"));
       documents.add(new DataDocument("a", "a").append("b", "d"));
-      documents.add(new DataDocument("a", "a").append("b", "e"));
-      documents.add(new DataDocument("a", "a").append("b", "b"));
-      documents.add(new DataDocument("a", "a").append("b", "f"));
-      assertThatThrownBy(() -> mongoDbStorage.createDocuments(COLLECTION_CREATE_DOCUMENTS, documents)).isInstanceOf(MongoBulkWriteException.class);
-      search = mongoDbStorage.search(COLLECTION_CREATE_DOCUMENTS, null, null, 0, 0);
+      documents.add(new DataDocument("a", "a").append("b", "a"));
+
+      List<String> ids = mongoDbStorage.createDocuments(COLLECTION_CREATE_DOCUMENTS, documents);
+      assertThat(ids).hasSize(5);
+
+      List<DataDocument> search = mongoDbStorage.search(COLLECTION_CREATE_DOCUMENTS, null, null, 0, 0);
       assertThat(search).hasSize(5);
+   }
+
+   @Test
+   public void testCreateDocumentsWithException() throws Exception{
+      mongoDbStorage.createCollection(COLLECTION_CREATE_DOCUMENTS_EXCEPTION);
+      mongoDbStorage.createIndex(COLLECTION_CREATE_DOCUMENTS_EXCEPTION, new DataDocument("b", 1), true);
+
+      List<DataDocument> documents = new LinkedList<>();
+      documents.add(new DataDocument("a", "a").append("b", "a"));
+      documents.add(new DataDocument("a", "a").append("b", "b"));
+      documents.add(new DataDocument("a", "a").append("b", "c"));
+      documents.add(new DataDocument("a", "a").append("b", "d"));
+      documents.add(new DataDocument("a", "a").append("b", "a"));
+
+      assertThatThrownBy(() -> mongoDbStorage.createDocuments(COLLECTION_CREATE_DOCUMENTS_EXCEPTION, documents)).isInstanceOf(MongoBulkWriteException.class);
+      List<DataDocument> search = mongoDbStorage.search(COLLECTION_CREATE_DOCUMENTS_EXCEPTION, null, null, 0, 0);
+      assertThat(search).hasSize(4);
    }
 
    @Test

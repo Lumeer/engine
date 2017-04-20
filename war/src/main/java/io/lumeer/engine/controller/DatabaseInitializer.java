@@ -77,18 +77,6 @@ public class DatabaseInitializer {
                .append(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, LumeerConst.Organization.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
       }
 
-      if (!dataStorage.hasCollection(LumeerConst.Linking.MainTable.NAME)) {
-         dataStorage.createCollection(LumeerConst.Linking.MainTable.NAME);
-         dataStorage.createIndex(LumeerConst.Linking.MainTable.NAME, new DataDocument(LumeerConst.Linking.MainTable.ATTR_PROJECT, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Linking.MainTable.ATTR_ROLE, LumeerConst.Index.ASCENDING), true);
-         dataStorage.createIndex(LumeerConst.Linking.MainTable.NAME, new DataDocument(LumeerConst.Linking.MainTable.ATTR_PROJECT, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.Linking.MainTable.ATTR_ROLE, LumeerConst.Index.ASCENDING), true);
-      }
-     
       if (!dataStorage.hasCollection(viewFacade.metadataCollection())) {
          dataStorage.createCollection(viewFacade.metadataCollection());
          dataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.ID_KEY, LumeerConst.Index.ASCENDING), true);

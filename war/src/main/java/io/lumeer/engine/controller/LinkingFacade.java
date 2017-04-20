@@ -22,14 +22,13 @@ package io.lumeer.engine.controller;
 import static io.lumeer.engine.api.LumeerConst.*;
 
 import io.lumeer.engine.annotation.UserDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.rest.dao.LinkDao;
-import io.lumeer.engine.rest.dao.LinkTypeDao;
+import io.lumeer.engine.rest.dao.LinkInstance;
+import io.lumeer.engine.rest.dao.LinkType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -37,6 +36,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.Reception;
@@ -59,326 +60,298 @@ public class LinkingFacade implements Serializable {
    private ProjectFacade projectFacade;
 
    public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) {
-      dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.FROM);
-      dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.TO);
+      dropLinksForDocument(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.FROM);
+      dropLinksForDocument(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.TO);
+   }
+
+   @PostConstruct
+   public void init(){
+      if (!dataStorage.hasCollection(Linking.Type.NAME)) {
+         dataStorage.createCollection(Linking.Type.NAME);
+         dataStorage.createIndex(Linking.Type.NAME, new DataDocument(Linking.Type.ATTR_PROJECT, Index.ASCENDING)
+               .append(Linking.Type.ATTR_FROM_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_TO_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_ROLE, Index.ASCENDING), true);
+         dataStorage.createIndex(Linking.Type.NAME, new DataDocument(Linking.Type.ATTR_PROJECT, Index.ASCENDING)
+               .append(Linking.Type.ATTR_TO_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_FROM_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_ROLE, Index.ASCENDING), true);
+      }
    }
 
    /**
-    * Read all link types for selected collection
+    * Read all link types for selected collection.
     *
     * @param collectionName
-    *       the name of the  collection
+    *       The name of the collection.
     * @param linkDirection
-    *       direction of link
-    * @return list of all link types
+    *       Direction of link.
+    * @return List of all link types.
     */
-   public List<LinkTypeDao> readLinkTypes(final String collectionName, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsOneWay(collectionName, null, linkDirection);
-
-      List<LinkTypeDao> links = new ArrayList<>();
-      linkingDocs.forEach(lt -> links.add(new LinkTypeDao(lt.getString(Linking.MainTable.ATTR_FROM_COLLECTION),
-            lt.getString(Linking.MainTable.ATTR_TO_COLLECTION), lt.getString(Linking.MainTable.ATTR_ROLE))));
-
-      return links;
+   public List<LinkType> readLinkTypesForCollection(final String collectionName, final Linking.LinkDirection linkDirection) {
+      return readLinkingTypesForCollection(collectionName, null, linkDirection)
+            .stream()
+            .map(LinkType::new)
+            .collect(Collectors.toList());
    }
 
    /**
-    * Read all links for selected collection
+    * Read all links for selected collection.
     *
     * @param collectionName
-    *       the name of the  collection
+    *       The name of the collection.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     * @param role
-    *       role name
-    * @return list of all links
+    *       Role name.
+    * @return List of all links.
     */
-   public List<LinkDao> readLinks(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsOneWay(collectionName, role, linkDirection);
+   public List<LinkInstance> readLinkInstancesForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
 
-      List<LinkDao> links = new ArrayList<>();
+      List<LinkInstance> linkInstances = new ArrayList<>();
       String linkingCollectionName = buildCollectionName();
       for (DataDocument lt : linkingDocs) {
-         String fromCollection = lt.getString(Linking.MainTable.ATTR_FROM_COLLECTION);
-         String toCollection = lt.getString(Linking.MainTable.ATTR_TO_COLLECTION);
-         String attrRole = lt.getString(Linking.MainTable.ATTR_ROLE);
+         LinkType linkType = new LinkType(lt);
 
-         List<DataDocument> ls = dataStorage.search(linkingCollectionName, dataStorageDialect.fieldValueFilter(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, lt.getId()), null, 0, 0);
+         List<DataDocument> ls = dataStorage.search(linkingCollectionName, dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, lt.getId()), null, 0, 0);
          for (DataDocument doc : ls) {
-            String fromDocumentId = linkDirection == Linking.LinkDirection.FROM ? doc.getString(Linking.LinkingTable.ATTR_FROM_ID) : doc.getString(Linking.LinkingTable.ATTR_TO_ID);
-            String toDocumentId = linkDirection == Linking.LinkDirection.FROM ? doc.getString(Linking.LinkingTable.ATTR_TO_ID) : doc.getString(Linking.LinkingTable.ATTR_FROM_ID);
-            links.add(new LinkDao(fromCollection, toCollection, attrRole, fromDocumentId, toDocumentId, doc.getDataDocument(Linking.LinkingTable.ATTR_ATTRIBUTES)));
+            String fromDocumentId = linkDirection == Linking.LinkDirection.FROM ? doc.getString(Linking.Instance.ATTR_FROM_ID) : doc.getString(Linking.Instance.ATTR_TO_ID);
+            String toDocumentId = linkDirection == Linking.LinkDirection.FROM ? doc.getString(Linking.Instance.ATTR_TO_ID) : doc.getString(Linking.Instance.ATTR_FROM_ID);
+            linkInstances.add(new LinkInstance(linkType, fromDocumentId, toDocumentId, doc.getDataDocument(Linking.Instance.ATTR_ATTRIBUTES)));
          }
       }
-      return links;
+      return linkInstances;
    }
 
    /**
     * Read all links between two documents
     *
     * @param firstCollectionName
-    *       the name of the first document's collection
+    *       The name of the first document's collection.
     * @param firstDocumentId
-    *       the id of the first document
+    *       The id of the first document.
     * @param secondCollectionName
-    *       the name of the second document's collection
+    *       The name of the second document's collection.
     * @param secondDocumentId
-    *       the id of the second document
+    *       The id of the second document.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @return list of all links
+    *       Direction of link.
+    * @return List of all links.
     */
-   public List<LinkDao> readDocByDocLinks(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsFromTo(firstCollectionName, secondCollectionName, role, linkDirection);
+   public List<LinkInstance> readLinkInstancesBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
 
-      List<LinkDao> links = new ArrayList<>();
+      List<LinkInstance> linkInstances = new ArrayList<>();
       String collectionName = buildCollectionName();
       for (DataDocument lt : linkingDocs) {
-         String fromCollection = lt.getString(Linking.MainTable.ATTR_FROM_COLLECTION);
-         String toCollection = lt.getString(Linking.MainTable.ATTR_TO_COLLECTION);
-         String attrRole = lt.getString(Linking.MainTable.ATTR_ROLE);
+         LinkType linkType = new LinkType(lt);
 
-         DataDocument dc = dataStorage.readDocument(collectionName, linkingDocumentsFilter(lt.getId(), firstDocumentId, secondDocumentId, linkDirection));
+         DataDocument dc = dataStorage.readDocument(collectionName, filterLinkingInstanceBetweenDocuments(lt.getId(), firstDocumentId, secondDocumentId, linkDirection));
          if (dc != null) {
             String fromId = linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId;
             String toId = linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId;
 
-            links.add(new LinkDao(fromCollection, toCollection, attrRole, fromId, toId, dc.getDataDocument(Linking.LinkingTable.ATTR_ATTRIBUTES)));
+            linkInstances.add(new LinkInstance(linkType, fromId, toId, dc.getDataDocument(Linking.Instance.ATTR_ATTRIBUTES)));
          }
       }
 
-      return links;
+      return linkInstances;
    }
 
    /**
-    * Read all linking documents for specified document
+    * Read all linking documents for specified document.
     *
     * @param collectionName
-    *       the name of the document's collection
+    *       The name of the document's collection.
     * @param documentId
-    *       the id of the document to search for links
+    *       The id of the document to search for links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @return list of all linked documents
+    *       Direction of link.
+    * @return List of all linked documents.
     */
-   public List<DataDocument> readDocumentLinksDocs(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsOneWay(collectionName, role, linkDirection);
+   public List<DataDocument> readLinkedDocumentsForDocument(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
 
-      return readDataDocumentsFromLinks(linkingDocs, documentId, linkDirection);
+      return readDocumentsFromLinkInstances(linkingDocs, documentId, linkDirection);
    }
 
    /**
-    * Read all linking documents between two documents
+    * Read all linking documents for specified document and collection.
     *
     * @param firstCollectionName
-    *       the name of the first document's collection
+    *       The name of the document's collection.
     * @param firstDocumentId
-    *       the id of the first document
+    *       The id of the document to search for links.
     * @param secondCollectionName
-    *       the name of the second document's collection
-    * @param secondDocumentId
-    *       the id of the second document
+    *       The name of the collection to search for linking documents.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @return list of all linked documents
+    *       Direction of link.
+    * @return List of all linked documents.
     */
-   public List<DataDocument> readDocByDocLinksDocs(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> links = new ArrayList<>();
-      List<DataDocument> linkingDocs = readLinkingDocsFromTo(firstCollectionName, secondCollectionName, role, linkDirection);
-      String collectionName = buildCollectionName();
-      for (DataDocument lt : linkingDocs) {
-         String readCollectionName = linkDirection == Linking.LinkDirection.FROM ? lt.getString(Linking.MainTable.ATTR_TO_COLLECTION) : lt.getString(Linking.MainTable.ATTR_FROM_COLLECTION);
-         String param = linkDirection == Linking.LinkDirection.FROM ? Linking.LinkingTable.ATTR_TO_ID : Linking.LinkingTable.ATTR_FROM_ID;
-         DataDocument dc = dataStorage.readDocument(collectionName, linkingDocumentsFilter(lt.getId(), firstDocumentId, secondDocumentId, linkDirection));
-         if (dc != null) {
-            String id = dc.getString(param);
-            DataDocument doc = dataStorage.readDocument(readCollectionName, dataStorageDialect.documentIdFilter(id));
-            if (doc != null) {
-               links.add(doc);
-            }
-         }
-      }
-      return links;
-   }
+   public List<DataDocument> readLinkedDocumentsBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
 
-   /**
-    * Read all linking documents for specified document and collection
-    *
-    * @param firstCollectionName
-    *       the name of the document's collection
-    * @param firstDocumentId
-    *       the id of the document to search for links
-    * @param secondCollectionName
-    *       the name of the collection to search for linking documents
-    * @param role
-    *       role name
-    * @param linkDirection
-    *       direction of link
-    * @return list of all linked documents
-    */
-   public List<DataDocument> readDocWithCollectionLinks(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsFromTo(firstCollectionName, secondCollectionName, role, linkDirection);
-
-      return readDataDocumentsFromLinks(linkingDocs, firstDocumentId, linkDirection);
+      return readDocumentsFromLinkInstances(linkingDocs, firstDocumentId, linkDirection);
    }
 
    /**
     * Drop all links for specified document
     *
     * @param collectionName
-    *       the name of the document's collection
+    *       The name of the document's collection.
     * @param documentId
-    *       the id of the document to drop links
+    *       The id of the document to drop links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     */
-   public void dropAllDocumentLinks(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsOneWay(collectionName, role, linkDirection);
-      dropDocumentLinks(linkingDocs, documentId, role, linkDirection);
+   public void dropLinksForDocument(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
+      dropLinksForDocument(linkingDocs, documentId, linkDirection);
    }
 
    /**
-    * Drop all links for specified collection
+    * Drop all links for specified collection.
     *
     * @param collectionName
-    *       the name of the collection to drop links
+    *       the name of the collection to drop links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     */
-   public void dropCollectionLinks(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsOneWay(collectionName, role, linkDirection);
+   public void dropLinksForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingTypes = readLinkingTypesForCollection(collectionName, role, linkDirection);
       String linkingCollectionName = buildCollectionName();
-      for (DataDocument lt : linkingDocs) {
+      for (DataDocument lt : linkingTypes) {
          String id = lt.getId();
-         dataStorage.dropManyDocuments(linkingCollectionName, linkingDocumentsIdFilter(id));
-         dataStorage.dropDocument(Linking.MainTable.NAME, dataStorageDialect.documentIdFilter(id));
+         dataStorage.dropManyDocuments(linkingCollectionName, filterLinkingInstance(id));
+         dataStorage.dropDocument(Linking.Type.NAME, dataStorageDialect.documentIdFilter(id));
       }
    }
 
    /**
-    * Drop link between two documents
+    * Drop link between two documents.
     *
     * @param firstCollectionName
-    *       the name of the first document's collection
+    *       The name of the first document's collection.
     * @param firstDocumentId
-    *       the id of the first document
+    *       The id of the first document.
     * @param secondCollectionName
-    *       the name of the second document's collection
+    *       The name of the second document's collection.
     * @param secondDocumentId
-    *       the id of the second document
+    *       The id of the second document.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     */
-   public void dropDocWithDocLink(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsFromTo(firstCollectionName, secondCollectionName, role, linkDirection);
+   public void dropLinksBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
       String collectionName = buildCollectionName();
-      for (DataDocument lt : linkingDocs) {
+      for (DataDocument lt : linkingTypes) {
          String id = lt.getId();
-         dataStorage.dropManyDocuments(collectionName, linkingDocumentsFilter(id, firstDocumentId, secondDocumentId, linkDirection));
+         dataStorage.dropManyDocuments(collectionName, filterLinkingInstanceBetweenDocuments(id, firstDocumentId, secondDocumentId, linkDirection));
          if (linkTypeIsEmpty(id)) {
-            dataStorage.dropDocument(Linking.MainTable.NAME, dataStorageDialect.documentIdFilter(id));
+            dataStorage.dropDocument(Linking.Type.NAME, dataStorageDialect.documentIdFilter(id));
          }
       }
    }
 
    /**
-    * Drop link between document and collection
+    * Drop link between document and collection.
     *
     * @param firstCollectionName
-    *       the name of the document's collection
+    *       The name of the document's collection.
     * @param firstDocumentId
-    *       the id of the document
+    *       The id of the document.
     * @param secondCollectionName
-    *       the name of the collection to drop links
+    *       The name of the collection to drop links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     */
-   public void dropDocWithCollectionLinks(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingDocsFromTo(firstCollectionName, secondCollectionName, role, linkDirection);
-      dropDocumentLinks(linkingDocs, firstDocumentId, role, linkDirection);
+   public void dropLinksBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
+      dropLinksForDocument(linkingTypes, firstDocumentId, linkDirection);
    }
 
    /**
-    * Create link between two documents
+    * Create link between two documents.
     *
     * @param firstCollectionName
-    *       the name of the first document's collection
+    *       The name of the first document's collection.
     * @param firstDocumentId
-    *       the id of the first document
+    *       The id of the first document.
     * @param secondCollectionName
-    *       the name of the second document's collection
+    *       The name of the second document's collection.
     * @param secondDocumentId
-    *       the id of the second document
+    *       The id of the second document.
     * @param attributes
-    *       attributes of link
+    *       Attributes of link.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     */
-   public void createDocWithDocLink(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final DataDocument attributes, final String role, final Linking.LinkDirection linkDirection) {
-      String mainTableId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
+   public void createLinkInstanceBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final DataDocument attributes, final String role, final Linking.LinkDirection linkDirection) {
+      String typeId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
 
-      DataDocument dataDocument = new DataDocument(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, mainTableId)
-            .append(Linking.LinkingTable.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId)
-            .append(Linking.LinkingTable.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId)
-            .append(Linking.LinkingTable.ATTR_ATTRIBUTES, attributes);
+      DataDocument dataDocument = new DataDocument(Linking.Instance.ATTR_TYPE_ID, typeId)
+            .append(Linking.Instance.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId)
+            .append(Linking.Instance.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId)
+            .append(Linking.Instance.ATTR_ATTRIBUTES, attributes);
       dataStorage.createDocument(buildCollectionName(), dataDocument);
    }
 
    /**
-    * Create link from document to many documents
+    * Create link from document to many documents.
     *
     * @param firstCollectionName
-    *       the name of the first document's collection
+    *       The name of the first document's collection.
     * @param firstDocumentId
-    *       the id of the first document
+    *       The id of the first document.
     * @param secondCollectionName
-    *       the name of the second document's collection
+    *       The name of the second document's collection.
     * @param secondDocumentsIds
-    *       the ids of documents to create link
+    *       The ids of documents to create link.
     * @param attributesList
-    *       attributes of links
+    *       Attributes of links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     */
-   public void createDocWithDocsLinks(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final List<String> secondDocumentsIds, final List<DataDocument> attributesList, final String role, final Linking.LinkDirection linkDirection) {
-      String mainTableId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
+   public void createLinkInstancesBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final List<String> secondDocumentsIds, final List<DataDocument> attributesList, final String role, final Linking.LinkDirection linkDirection) {
+      String typeId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
 
       List<DataDocument> dataDocuments = new LinkedList<>();
       for (int i = 0; i < secondDocumentsIds.size(); i++) {
-         dataDocuments.add(new DataDocument(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, mainTableId)
-               .append(Linking.LinkingTable.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentsIds.get(i))
-               .append(Linking.LinkingTable.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentsIds.get(i) : firstDocumentId)
-               .append(Linking.LinkingTable.ATTR_ATTRIBUTES, attributesList.get(i))
+         dataDocuments.add(new DataDocument(Linking.Instance.ATTR_TYPE_ID, typeId)
+               .append(Linking.Instance.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentsIds.get(i))
+               .append(Linking.Instance.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentsIds.get(i) : firstDocumentId)
+               .append(Linking.Instance.ATTR_ATTRIBUTES, attributesList.get(i))
          );
       }
       dataStorage.createDocuments(buildCollectionName(), dataDocuments);
    }
 
-   private List<DataDocument> readDataDocumentsFromLinks(final List<DataDocument> linkingDocs, final String documentId, final Linking.LinkDirection linkDirection) {
+   private List<DataDocument> readDocumentsFromLinkInstances(final List<DataDocument> linkingDocs, final String documentId, final Linking.LinkDirection linkDirection) {
       List<DataDocument> links = new ArrayList<>();
       String collectionName = buildCollectionName();
       for (DataDocument lt : linkingDocs) {
-         String readCollectionName = linkDirection == Linking.LinkDirection.FROM ? lt.getString(Linking.MainTable.ATTR_TO_COLLECTION) : lt.getString(Linking.MainTable.ATTR_FROM_COLLECTION);
-         String param = linkDirection == Linking.LinkDirection.FROM ? Linking.LinkingTable.ATTR_TO_ID : Linking.LinkingTable.ATTR_FROM_ID;
-         List<DataDocument> docs = dataStorage.search(collectionName, linkingDocumentFilter(lt.getId(), documentId, linkDirection), null, 0, 0);
+         String readCollectionName = linkDirection == Linking.LinkDirection.FROM ? lt.getString(Linking.Type.ATTR_TO_COLLECTION) : lt.getString(Linking.Type.ATTR_FROM_COLLECTION);
+         String param = linkDirection == Linking.LinkDirection.FROM ? Linking.Instance.ATTR_TO_ID : Linking.Instance.ATTR_FROM_ID;
+         List<DataDocument> docs = dataStorage.search(collectionName, filterLinkingInstanceForDocument(lt.getId(), documentId, linkDirection), null, 0, 0);
          for (DataDocument dc : docs) {
             String id = dc.getString(param);
             DataDocument doc = dataStorage.readDocument(readCollectionName, dataStorageDialect.documentIdFilter(id));
@@ -390,100 +363,100 @@ public class LinkingFacade implements Serializable {
       return links;
    }
 
-   private void dropDocumentLinks(final List<DataDocument> linkingDocs, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
+   private void dropLinksForDocument(final List<DataDocument> linkingDocs, final String documentId, final Linking.LinkDirection linkDirection) {
       String collectionName = buildCollectionName();
       for (DataDocument lt : linkingDocs) {
          String id = lt.getId();
-         dataStorage.dropManyDocuments(collectionName, linkingDocumentFilter(id, documentId, linkDirection));
+         dataStorage.dropManyDocuments(collectionName, filterLinkingInstanceForDocument(id, documentId, linkDirection));
          if (linkTypeIsEmpty(id)) {
-            dataStorage.dropDocument(Linking.MainTable.NAME, dataStorageDialect.documentIdFilter(id));
+            dataStorage.dropDocument(Linking.Type.NAME, dataStorageDialect.documentIdFilter(id));
          }
       }
    }
 
    private boolean linkTypeIsEmpty(final String id) {
-      return dataStorage.search(buildCollectionName(), dataStorageDialect.fieldValueFilter(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, id), null, 0, 1).isEmpty();
+      return dataStorage.search(buildCollectionName(), dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, id), null, 0, 1).isEmpty();
    }
 
-   private List<DataDocument> readLinkingDocsOneWay(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
-      String param = linkDirection == Linking.LinkDirection.FROM ? Linking.MainTable.ATTR_FROM_COLLECTION : Linking.MainTable.ATTR_TO_COLLECTION;
-      return dataStorage.search(Linking.MainTable.NAME, linkingOneWayFilter(param, collectionName, role), null, 0, 0);
+   private List<DataDocument> readLinkingTypesForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
+      String param = linkDirection == Linking.LinkDirection.FROM ? Linking.Type.ATTR_FROM_COLLECTION : Linking.Type.ATTR_TO_COLLECTION;
+      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeForCollection(param, collectionName, role), null, 0, 0);
    }
 
-   private List<DataDocument> readLinkingDocsFromTo(final String firstCollectionName, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
+   private List<DataDocument> readLinkingTypesBetweenCollections(final String firstCollectionName, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
       String fromCollectionName = linkDirection == Linking.LinkDirection.FROM ? firstCollectionName : secondCollectionName;
       String toCollectionName = linkDirection == Linking.LinkDirection.FROM ? secondCollectionName : firstCollectionName;
-      return dataStorage.search(Linking.MainTable.NAME, linkingFromToFilter(fromCollectionName, toCollectionName, role), null, 0, 0);
+      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionName, toCollectionName, role), null, 0, 0);
    }
 
    private String createNewLinkingTypeIfNecessary(final String firstCollectionName, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
       String fromCollectionName = linkDirection == Linking.LinkDirection.FROM ? firstCollectionName : secondCollectionName;
       String toCollectionName = linkDirection == Linking.LinkDirection.FROM ? secondCollectionName : firstCollectionName;
 
-      DataDocument linkingType = dataStorage.readDocument(Linking.MainTable.NAME, linkingFromToFilter(fromCollectionName, toCollectionName, role));
+      DataDocument linkingType = dataStorage.readDocument(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionName, toCollectionName, role));
       if (linkingType != null) { // if linking type already exists, we return it
          return linkingType.getId();
       }
 
       //otherwise we create linking type and also collection for link if necessary
       DataDocument doc = new DataDocument();
-      doc.put(Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName);
-      doc.put(Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName);
-      doc.put(Linking.MainTable.ATTR_PROJECT, projectFacade.getCurrentProjectId());
-      doc.put(Linking.MainTable.ATTR_ROLE, role);
+      doc.put(Linking.Type.ATTR_FROM_COLLECTION, fromCollectionName);
+      doc.put(Linking.Type.ATTR_TO_COLLECTION, toCollectionName);
+      doc.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
+      doc.put(Linking.Type.ATTR_ROLE, role);
 
-      String mainTableId = dataStorage.createDocument(Linking.MainTable.NAME, doc);
+      String typeId = dataStorage.createDocument(Linking.Type.NAME, doc);
 
       String linkingCollectionName = buildCollectionName();
       if (!dataStorage.hasCollection(linkingCollectionName)) {
          dataStorage.createCollection(linkingCollectionName);
-         dataStorage.createIndex(linkingCollectionName, new DataDocument(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, Index.ASCENDING)
-               .append(Linking.LinkingTable.ATTR_FROM_ID, Index.ASCENDING)
-               .append(Linking.LinkingTable.ATTR_TO_ID, Index.ASCENDING), true);
-         dataStorage.createIndex(linkingCollectionName, new DataDocument(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, Index.ASCENDING)
-               .append(Linking.LinkingTable.ATTR_TO_ID, Index.ASCENDING)
-               .append(Linking.LinkingTable.ATTR_FROM_ID, Index.ASCENDING), true);
+         dataStorage.createIndex(linkingCollectionName, new DataDocument(Linking.Instance.ATTR_TYPE_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_FROM_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_TO_ID, Index.ASCENDING), true);
+         dataStorage.createIndex(linkingCollectionName, new DataDocument(Linking.Instance.ATTR_TYPE_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_TO_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_FROM_ID, Index.ASCENDING), true);
       }
 
-      return mainTableId;
+      return typeId;
    }
 
-   private DataFilter linkingDocumentsIdFilter(final String mainTableId) {
-      return dataStorageDialect.fieldValueFilter(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, mainTableId);
+   private DataFilter filterLinkingInstance(final String typeId) {
+      return dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, typeId);
    }
 
-   private DataFilter linkingDocumentFilter(final String mainTableId, final String documentId, Linking.LinkDirection linkDirection) {
+   private DataFilter filterLinkingInstanceForDocument(final String typeId, final String documentId, Linking.LinkDirection linkDirection) {
       Map<String, Object> fields = new HashMap<>();
-      fields.put(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, mainTableId);
-      fields.put(linkDirection == Linking.LinkDirection.FROM ? Linking.LinkingTable.ATTR_FROM_ID : Linking.LinkingTable.ATTR_TO_ID, documentId);
+      fields.put(Linking.Instance.ATTR_TYPE_ID, typeId);
+      fields.put(linkDirection == Linking.LinkDirection.FROM ? Linking.Instance.ATTR_FROM_ID : Linking.Instance.ATTR_TO_ID, documentId);
       return dataStorageDialect.multipleFieldsValueFilter(fields);
    }
 
-   private DataFilter linkingDocumentsFilter(final String mainTableId, final String firstDocumentId, final String secondDocumentId, Linking.LinkDirection linkDirection) {
+   private DataFilter filterLinkingInstanceBetweenDocuments(final String typeId, final String firstDocumentId, final String secondDocumentId, Linking.LinkDirection linkDirection) {
       Map<String, Object> fields = new HashMap<>();
-      fields.put(Linking.LinkingTable.ATTR_MAIN_TABLE_ID, mainTableId);
-      fields.put(Linking.LinkingTable.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId);
-      fields.put(Linking.LinkingTable.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId);
+      fields.put(Linking.Instance.ATTR_TYPE_ID, typeId);
+      fields.put(Linking.Instance.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId);
+      fields.put(Linking.Instance.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId);
       return dataStorageDialect.multipleFieldsValueFilter(fields);
    }
 
-   private DataFilter linkingOneWayFilter(final String param, final String collectionName, final String role) {
+   private DataFilter filterLinkingTypeForCollection(final String param, final String collectionName, final String role) {
       Map<String, Object> fields = new HashMap<>();
-      fields.put(LumeerConst.Linking.MainTable.ATTR_PROJECT, projectFacade.getCurrentProjectId());
+      fields.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
       fields.put(param, collectionName);
       if (role != null) {
-         fields.put(LumeerConst.Linking.MainTable.ATTR_ROLE, role);
+         fields.put(Linking.Type.ATTR_ROLE, role);
       }
       return dataStorageDialect.multipleFieldsValueFilter(fields);
    }
 
-   private DataFilter linkingFromToFilter(final String fromCollectionName, final String toCollectionName, final String role) {
+   private DataFilter filterLinkingTypeBetweenCollections(final String fromCollectionName, final String toCollectionName, final String role) {
       Map<String, Object> fields = new HashMap<>();
-      fields.put(LumeerConst.Linking.MainTable.ATTR_PROJECT, projectFacade.getCurrentProjectId());
-      fields.put(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName);
-      fields.put(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName);
+      fields.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
+      fields.put(Linking.Type.ATTR_FROM_COLLECTION, fromCollectionName);
+      fields.put(Linking.Type.ATTR_TO_COLLECTION, toCollectionName);
       if (role != null) {
-         fields.put(LumeerConst.Linking.MainTable.ATTR_ROLE, role);
+         fields.put(Linking.Type.ATTR_ROLE, role);
       }
       return dataStorageDialect.multipleFieldsValueFilter(fields);
    }
