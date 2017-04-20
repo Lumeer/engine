@@ -34,17 +34,6 @@ public interface DataStorageDialect extends Serializable {
 
    DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize);
    
-   // LinkingFacade
-   DataFilter linkingFromTablesColNameFilter(final String collectionName, final String role);
-
-   DataFilter linkingFromTablesFilter(final String firstCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
-
-   DataFilter linkingFromToTablesFilter(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection);
-
-   DataFilter linkingFromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection);
-
-   DataFilter linkingFromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection);
-
    DataFilter fieldValueFilter(final String fieldName, final Object value);
 
    DataFilter documentFilter(final String documentFilter);

@@ -19,10 +19,13 @@
  */
 package io.lumeer.engine.rest.dao;
 
+import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.data.DataDocument;
+
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class LinkTypeDao {
+public class LinkType {
 
    /**
     * From which collection is the link type.
@@ -39,10 +42,16 @@ public class LinkTypeDao {
     */
    private String role;
 
-   public LinkTypeDao() {
+   public LinkType() {
    }
 
-   public LinkTypeDao(final String fromCollection, final String toCollection, final String role) {
+   public LinkType(final DataDocument dataDocument){
+      this.fromCollection = dataDocument.getString(LumeerConst.Linking.Type.ATTR_FROM_COLLECTION);
+      this.toCollection = dataDocument.getString(LumeerConst.Linking.Type.ATTR_TO_COLLECTION);
+      this.role = dataDocument.getString(LumeerConst.Linking.Type.ATTR_ROLE);
+   }
+
+   public LinkType(final String fromCollection, final String toCollection, final String role) {
       this.fromCollection = fromCollection;
       this.toCollection = toCollection;
       this.role = role;
@@ -81,7 +90,7 @@ public class LinkTypeDao {
          return false;
       }
 
-      final LinkTypeDao that = (LinkTypeDao) o;
+      final LinkType that = (LinkType) o;
 
       if (fromCollection != null ? !fromCollection.equals(that.fromCollection) : that.fromCollection != null) {
          return false;
@@ -102,7 +111,7 @@ public class LinkTypeDao {
 
    @Override
    public String toString() {
-      return "LinkTypeDao{"
+      return "LinkType{"
             + "fromCollection='" + fromCollection + '\''
             + ", toCollection='" + toCollection + '\''
             + ", role='" + role + '\''

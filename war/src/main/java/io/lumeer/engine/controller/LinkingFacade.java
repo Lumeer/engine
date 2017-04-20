@@ -19,19 +19,24 @@
  */
 package io.lumeer.engine.controller;
 
+import static io.lumeer.engine.api.LumeerConst.*;
+
 import io.lumeer.engine.annotation.UserDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.rest.dao.LinkDao;
-import io.lumeer.engine.rest.dao.LinkTypeDao;
+import io.lumeer.engine.rest.dao.LinkInstance;
+import io.lumeer.engine.rest.dao.LinkType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Observes;
@@ -39,24 +44,10 @@ import javax.enterprise.event.Reception;
 import javax.inject.Inject;
 
 /**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ * Manipulates with documents links
  */
 @SessionScoped
 public class LinkingFacade implements Serializable {
-
-   /*
-      Main linking table name is "_system_linking"
-      attributes - "fromCollection" name of first collection
-                 - "toCollection" name of second collection
-                 - "collection_name" name of collection, where links are located
-                 - "role" number of links in collection
-
-      Collection linking table
-      attributes - "fromId" id of first document
-                 - "toId" id of second document
-                 - "attributes" some attributes...
-
-    */
 
    @Inject
    @UserDataStorage
@@ -66,447 +57,412 @@ public class LinkingFacade implements Serializable {
    private DataStorageDialect dataStorageDialect;
 
    @Inject
-   private CollectionMetadataFacade collectionMetadataFacade;
+   private ProjectFacade projectFacade;
 
-   @Inject
-   private UserFacade userFacade;
+   public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) {
+      dropLinksForDocument(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.FROM);
+      dropLinksForDocument(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.TO);
+   }
 
-   /**
-    * Creates main linking table if not exists
-    */
    @PostConstruct
-   public void init() {
-      if (!dataStorage.hasCollection(LumeerConst.Linking.MainTable.NAME)) {
-         dataStorage.createCollection(LumeerConst.Linking.MainTable.NAME);
+   public void init(){
+      if (!dataStorage.hasCollection(Linking.Type.NAME)) {
+         dataStorage.createCollection(Linking.Type.NAME);
+         dataStorage.createIndex(Linking.Type.NAME, new DataDocument(Linking.Type.ATTR_PROJECT, Index.ASCENDING)
+               .append(Linking.Type.ATTR_FROM_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_TO_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_ROLE, Index.ASCENDING), true);
+         dataStorage.createIndex(Linking.Type.NAME, new DataDocument(Linking.Type.ATTR_PROJECT, Index.ASCENDING)
+               .append(Linking.Type.ATTR_TO_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_FROM_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_ROLE, Index.ASCENDING), true);
       }
    }
 
-   public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) throws DbException {
-      dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, LumeerConst.Linking.LinkDirection.FROM);
-      dropAllDocumentLinks(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, LumeerConst.Linking.LinkDirection.TO);
-   }
-
    /**
-    * Read all link types for selected collection
+    * Read all link types for selected collection.
     *
     * @param collectionName
-    *       the name of the  collection
+    *       The name of the collection.
     * @param linkDirection
-    *       direction of link
-    * @return list of all link types
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Direction of link.
+    * @return List of all link types.
     */
-   public List<LinkTypeDao> readLinkTypes(final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<LinkTypeDao> links = new ArrayList<>();
-      List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, null, linkDirection);
-
-      for (DataDocument lt : linkingTables) {
-         String fromCollectionName = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
-         String toCollectionName = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
-         String role = lt.getString(LumeerConst.Linking.MainTable.ATTR_ROLE);
-         LinkTypeDao dao = new LinkTypeDao(fromCollectionName, toCollectionName, role);
-         links.add(dao);
-      }
-
-      return links;
+   public List<LinkType> readLinkTypesForCollection(final String collectionName, final Linking.LinkDirection linkDirection) {
+      return readLinkingTypesForCollection(collectionName, null, linkDirection)
+            .stream()
+            .map(LinkType::new)
+            .collect(Collectors.toList());
    }
 
    /**
-    * Read all links for selected collection
+    * Read all links for selected collection.
     *
     * @param collectionName
-    *       the name of the  collection
+    *       The name of the collection.
     * @param linkDirection
-    *       direction of link
+    *       Direction of link.
     * @param role
-    *       role name
-    * @return list of all links
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Role name.
+    * @return List of all links.
     */
-   public List<LinkDao> readLinks(final String collectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<LinkDao> links = new ArrayList<>();
-      List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, role, linkDirection);
+   public List<LinkInstance> readLinkInstancesForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
 
-      for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-         String fromCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
-         String toCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
-         List<DataDocument> ls = dataStorage.search(colName, null, null, 0, 0);
-         links.addAll(convertLinkDaosFromDocuments(ls, fromCollection, toCollection, role));
+      List<LinkInstance> linkInstances = new ArrayList<>();
+      String linkingCollectionName = buildCollectionName();
+      for (DataDocument lt : linkingDocs) {
+         LinkType linkType = new LinkType(lt);
+
+         List<DataDocument> ls = dataStorage.search(linkingCollectionName, dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, lt.getId()), null, 0, 0);
+         for (DataDocument doc : ls) {
+            String fromDocumentId = linkDirection == Linking.LinkDirection.FROM ? doc.getString(Linking.Instance.ATTR_FROM_ID) : doc.getString(Linking.Instance.ATTR_TO_ID);
+            String toDocumentId = linkDirection == Linking.LinkDirection.FROM ? doc.getString(Linking.Instance.ATTR_TO_ID) : doc.getString(Linking.Instance.ATTR_FROM_ID);
+            linkInstances.add(new LinkInstance(linkType, fromDocumentId, toDocumentId, doc.getDataDocument(Linking.Instance.ATTR_ATTRIBUTES)));
+         }
       }
-      return links;
+      return linkInstances;
    }
 
    /**
     * Read all links between two documents
     *
-    * @param fromCollectionName
-    *       the name of the first document's collection
-    * @param fromId
-    *       the id of the first document
-    * @param toCollectionName
-    *       the name of the second document's collection
-    * @param toId
-    *       the id of the second document
+    * @param firstCollectionName
+    *       The name of the first document's collection.
+    * @param firstDocumentId
+    *       The id of the first document.
+    * @param secondCollectionName
+    *       The name of the second document's collection.
+    * @param secondDocumentId
+    *       The id of the second document.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @return list of all links
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Direction of link.
+    * @return List of all links.
     */
-   public List<LinkDao> readDocByDocLinks(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<LinkDao> links = new ArrayList<>();
-      List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
+   public List<LinkInstance> readLinkInstancesBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
 
-      for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-         String fromCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
-         String toCollection = lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION);
-         List<DataDocument> ls = readLinkingDocumentsFromTo(colName, fromId, toId, linkDirection);
-         links.addAll(convertLinkDaosFromDocuments(ls, fromCollection, toCollection, role));
+      List<LinkInstance> linkInstances = new ArrayList<>();
+      String collectionName = buildCollectionName();
+      for (DataDocument lt : linkingDocs) {
+         LinkType linkType = new LinkType(lt);
+
+         DataDocument dc = dataStorage.readDocument(collectionName, filterLinkingInstanceBetweenDocuments(lt.getId(), firstDocumentId, secondDocumentId, linkDirection));
+         if (dc != null) {
+            String fromId = linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId;
+            String toId = linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId;
+
+            linkInstances.add(new LinkInstance(linkType, fromId, toId, dc.getDataDocument(Linking.Instance.ATTR_ATTRIBUTES)));
+         }
       }
 
-      return links;
+      return linkInstances;
    }
 
    /**
-    * Read all linking documents for specified document
+    * Read all linking documents for specified document.
     *
-    * @param fromCollectionName
-    *       the name of the document's collection
-    * @param fromDocumentId
-    *       the id of the document to search for links
+    * @param collectionName
+    *       The name of the document's collection.
+    * @param documentId
+    *       The id of the document to search for links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @return list of all linked documents
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Direction of link.
+    * @return List of all linked documents.
     */
-   public List<DataDocument> readDocumentLinksDocs(final String fromCollectionName, final String fromDocumentId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<DataDocument> links = new ArrayList<>();
-      List<DataDocument> linkingTables = readLinkingTablesFrom(fromCollectionName, role, linkDirection);
+   public List<DataDocument> readLinkedDocumentsForDocument(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
 
-      for (DataDocument lt : linkingTables) {
-         links.addAll(getDataDocumentsFromLinks(fromDocumentId, linkDirection, lt));
-      }
-      return links;
+      return readDocumentsFromLinkInstances(linkingDocs, documentId, linkDirection);
    }
 
    /**
-    * Read all linking documents between two documents
+    * Read all linking documents for specified document and collection.
     *
-    * @param fromCollectionName
-    *       the name of the first document's collection
-    * @param fromId
-    *       the id of the first document
-    * @param toCollectionName
-    *       the name of the second document's collection
-    * @param toId
-    *       the id of the second document
+    * @param firstCollectionName
+    *       The name of the document's collection.
+    * @param firstDocumentId
+    *       The id of the document to search for links.
+    * @param secondCollectionName
+    *       The name of the collection to search for linking documents.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @return list of all linked documents
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Direction of link.
+    * @return List of all linked documents.
     */
-   public List<DataDocument> readDocByDocLinksDocs(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<DataDocument> links = new ArrayList<>();
-      List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
-      for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-         List<DataDocument> linkingDocuments = readLinkingDocumentsFromTo(colName, fromId, toId, linkDirection);
-         String readCollectionName = linkDirection == LumeerConst.Linking.LinkDirection.FROM ? lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION) : lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
-         links.addAll(readDocumentsFromLinkingDocumentsFrom(linkingDocuments, readCollectionName, linkDirection));
-      }
-      return links;
-   }
+   public List<DataDocument> readLinkedDocumentsBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
 
-   /**
-    * Read all linking documents for specified document and collection
-    *
-    * @param fromCollectionName
-    *       the name of the document's collection
-    * @param fromDocumentId
-    *       the id of the document to search for links
-    * @param toCollectionName
-    *       the name of the collection to search for linking documents
-    * @param role
-    *       role name
-    * @param linkDirection
-    *       direction of link
-    * @return list of all linked documents
-    * @throws DbException
-    *       When there is an error working with the database.
-    */
-   public List<DataDocument> readDocWithCollectionLinks(final String fromCollectionName, final String fromDocumentId, final String toCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<DataDocument> links = new ArrayList<>();
-      List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
-      for (DataDocument lt : linkingTables) {
-         links.addAll(getDataDocumentsFromLinks(fromDocumentId, linkDirection, lt));
-      }
-      return links;
+      return readDocumentsFromLinkInstances(linkingDocs, firstDocumentId, linkDirection);
    }
 
    /**
     * Drop all links for specified document
     *
-    * @param fromCollectionName
-    *       the name of the document's collection
+    * @param collectionName
+    *       The name of the document's collection.
     * @param documentId
-    *       the id of the document to drop links
+    *       The id of the document to drop links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Direction of link.
     */
-   public void dropAllDocumentLinks(final String fromCollectionName, final String documentId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<DataDocument> linkingTables = readLinkingTablesFrom(fromCollectionName, role, linkDirection);
-
-      for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-         dropAllDocs(colName, documentId, linkDirection);
-         checkEmptinessAndRemoveEventually(colName, role);
-      }
+   public void dropLinksForDocument(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
+      dropLinksForDocument(linkingDocs, documentId, linkDirection);
    }
 
    /**
-    * Drop all links for specified collection
+    * Drop all links for specified collection.
     *
     * @param collectionName
-    *       the name of the collection to drop links
+    *       the name of the collection to drop links.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Direction of link.
     */
-   public void dropCollectionLinks(final String collectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<DataDocument> linkingTables = readLinkingTablesFrom(collectionName, role, linkDirection);
-
-      for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-         dataStorage.dropCollection(colName);
-      }
-      dataStorage.dropManyDocuments(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromTablesFilter(collectionName, role, linkDirection));
-   }
-
-   /**
-    * Drop link between two documents
-    *
-    * @param fromCollectionName
-    *       the name of the first document's collection
-    * @param fromId
-    *       the id of the first document
-    * @param toCollectionName
-    *       the name of the second document's collection
-    * @param toId
-    *       the id of the second document
-    * @param role
-    *       role name
-    * @param linkDirection
-    *       direction of link
-    * @throws DbException
-    *       When there is an error working with the database.
-    */
-   public void dropDocWithDocLink(final String fromCollectionName, final String fromId, final String toCollectionName, final String toId, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
-
-      for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-         dropAllDocs(colName, fromId, toId, linkDirection);
-         checkEmptinessAndRemoveEventually(colName, role);
+   public void dropLinksForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingTypes = readLinkingTypesForCollection(collectionName, role, linkDirection);
+      String linkingCollectionName = buildCollectionName();
+      for (DataDocument lt : linkingTypes) {
+         String id = lt.getId();
+         dataStorage.dropManyDocuments(linkingCollectionName, filterLinkingInstance(id));
+         dataStorage.dropDocument(Linking.Type.NAME, dataStorageDialect.documentIdFilter(id));
       }
    }
 
    /**
-    * Drop link between document and collection
-    *
-    * @param fromCollectionName
-    *       the name of the document's collection
-    * @param fromId
-    *       the id of the document
-    * @param toCollectionName
-    *       the name of the collection to drop links
-    * @param role
-    *       role name
-    * @param linkDirection
-    *       direction of link
-    * @throws DbException
-    *       When there is an error working with the database.
-    */
-   public void dropDocWithCollectionLinks(final String fromCollectionName, final String fromId, final String toCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      List<DataDocument> linkingTables = readLinkingTablesFromTo(fromCollectionName, toCollectionName, role, linkDirection);
-      for (DataDocument lt : linkingTables) {
-         String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-         dropAllDocs(colName, fromId, linkDirection);
-         checkEmptinessAndRemoveEventually(colName, role);
-      }
-   }
-
-   /**
-    * Create link between two documents
+    * Drop link between two documents.
     *
     * @param firstCollectionName
-    *       the name of the first document's collection
+    *       The name of the first document's collection.
     * @param firstDocumentId
-    *       the id of the first document
+    *       The id of the first document.
     * @param secondCollectionName
-    *       the name of the second document's collection
+    *       The name of the second document's collection.
     * @param secondDocumentId
-    *       the id of the second document
-    * @param attributes
-    *       attributes of link
+    *       The id of the second document.
     * @param role
-    *       role name
+    *       Role name.
     * @param linkDirection
-    *       direction of link
-    * @throws DbException
-    *       When there is an error working with the database.
+    *       Direction of link.
     */
-   public void createDocWithDocLink(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final DataDocument attributes, final String role, final LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      String collectionName = checkOrCreateLinkInSystemCollection(firstCollectionName, secondCollectionName, role, linkDirection);
-      createLinkIfNotExists(collectionName, firstDocumentId, secondDocumentId, attributes, linkDirection);
-   }
-
-   private void createLinkIfNotExists(final String collectionName, final String firstDocumentId, final String secondDocumentId, final DataDocument attributes, final LumeerConst.Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocuments = dataStorage.search(collectionName, dataStorageDialect.linkingFromToDocumentFilter(firstDocumentId, secondDocumentId, linkDirection), null, 0, 0);
-      if (linkingDocuments.isEmpty()) {
-         String fromId;
-         String toId;
-         if (linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-            fromId = firstDocumentId;
-            toId = secondDocumentId;
-         } else {
-            fromId = secondDocumentId;
-            toId = firstDocumentId;
+   public void dropLinksBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
+      String collectionName = buildCollectionName();
+      for (DataDocument lt : linkingTypes) {
+         String id = lt.getId();
+         dataStorage.dropManyDocuments(collectionName, filterLinkingInstanceBetweenDocuments(id, firstDocumentId, secondDocumentId, linkDirection));
+         if (linkTypeIsEmpty(id)) {
+            dataStorage.dropDocument(Linking.Type.NAME, dataStorageDialect.documentIdFilter(id));
          }
-         DataDocument dataDocument = new DataDocument(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId)
-               .append(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, toId)
-               .append(LumeerConst.Linking.LinkingTable.ATTR_ATTRIBUTES, attributes);
-         dataStorage.createDocument(collectionName, dataDocument);
       }
    }
 
-   private String checkOrCreateLinkInSystemCollection(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      String collectionName;
-      List<DataDocument> linkingTable = readLinkingTablesFromTo(firstCollectionName, secondCollectionName, role, linkDirection);
-      // role cannot be null there so the size of list is 1 or 0
-      if (linkingTable.isEmpty()) {
-         collectionName = buildCollectionName(firstCollectionName, secondCollectionName, role, linkDirection);
-         createLinkingTable(firstCollectionName, secondCollectionName, role, collectionName, linkDirection);
-      } else {
-         collectionName = linkingTable.get(0).getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
+   /**
+    * Drop link between document and collection.
+    *
+    * @param firstCollectionName
+    *       The name of the document's collection.
+    * @param firstDocumentId
+    *       The id of the document.
+    * @param secondCollectionName
+    *       The name of the collection to drop links.
+    * @param role
+    *       Role name.
+    * @param linkDirection
+    *       Direction of link.
+    */
+   public void dropLinksBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
+      dropLinksForDocument(linkingTypes, firstDocumentId, linkDirection);
+   }
+
+   /**
+    * Create link between two documents.
+    *
+    * @param firstCollectionName
+    *       The name of the first document's collection.
+    * @param firstDocumentId
+    *       The id of the first document.
+    * @param secondCollectionName
+    *       The name of the second document's collection.
+    * @param secondDocumentId
+    *       The id of the second document.
+    * @param attributes
+    *       Attributes of link.
+    * @param role
+    *       Role name.
+    * @param linkDirection
+    *       Direction of link.
+    */
+   public void createLinkInstanceBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final DataDocument attributes, final String role, final Linking.LinkDirection linkDirection) {
+      String typeId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
+
+      DataDocument dataDocument = new DataDocument(Linking.Instance.ATTR_TYPE_ID, typeId)
+            .append(Linking.Instance.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId)
+            .append(Linking.Instance.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId)
+            .append(Linking.Instance.ATTR_ATTRIBUTES, attributes);
+      dataStorage.createDocument(buildCollectionName(), dataDocument);
+   }
+
+   /**
+    * Create link from document to many documents.
+    *
+    * @param firstCollectionName
+    *       The name of the first document's collection.
+    * @param firstDocumentId
+    *       The id of the first document.
+    * @param secondCollectionName
+    *       The name of the second document's collection.
+    * @param secondDocumentsIds
+    *       The ids of documents to create link.
+    * @param attributesList
+    *       Attributes of links.
+    * @param role
+    *       Role name.
+    * @param linkDirection
+    *       Direction of link.
+    */
+   public void createLinkInstancesBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final List<String> secondDocumentsIds, final List<DataDocument> attributesList, final String role, final Linking.LinkDirection linkDirection) {
+      String typeId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
+
+      List<DataDocument> dataDocuments = new LinkedList<>();
+      for (int i = 0; i < secondDocumentsIds.size(); i++) {
+         dataDocuments.add(new DataDocument(Linking.Instance.ATTR_TYPE_ID, typeId)
+               .append(Linking.Instance.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentsIds.get(i))
+               .append(Linking.Instance.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentsIds.get(i) : firstDocumentId)
+               .append(Linking.Instance.ATTR_ATTRIBUTES, attributesList.get(i))
+         );
       }
-      return collectionName;
+      dataStorage.createDocuments(buildCollectionName(), dataDocuments);
    }
 
-   private List<DataDocument> getDataDocumentsFromLinks(final String fromDocumentId, final LumeerConst.Linking.LinkDirection linkDirection, final DataDocument lt) {
-      String colName = lt.getString(LumeerConst.Linking.MainTable.ATTR_COL_NAME);
-      List<DataDocument> linkingDocuments = readLinkingDocumentsFrom(colName, fromDocumentId, linkDirection);
-      String readCollectionName = linkDirection == LumeerConst.Linking.LinkDirection.FROM ? lt.getString(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION) : lt.getString(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION);
-      return readDocumentsFromLinkingDocumentsFrom(linkingDocuments, readCollectionName, linkDirection);
-   }
-
-   private List<LinkDao> convertLinkDaosFromDocuments(final List<DataDocument> ls, final String fromCollection, final String toCollection, final String role) {
-      List<LinkDao> links = new ArrayList<>();
-      for (DataDocument l : ls) {
-         String fromId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID);
-         String toId = l.getString(LumeerConst.Linking.LinkingTable.ATTR_TO_ID);
-         DataDocument attrs = l.getDataDocument(LumeerConst.Linking.LinkingTable.ATTR_ATTRIBUTES);
-         links.add(new LinkDao(fromCollection, toCollection, role, fromId, toId, attrs));
+   private List<DataDocument> readDocumentsFromLinkInstances(final List<DataDocument> linkingDocs, final String documentId, final Linking.LinkDirection linkDirection) {
+      List<DataDocument> links = new ArrayList<>();
+      String collectionName = buildCollectionName();
+      for (DataDocument lt : linkingDocs) {
+         String readCollectionName = linkDirection == Linking.LinkDirection.FROM ? lt.getString(Linking.Type.ATTR_TO_COLLECTION) : lt.getString(Linking.Type.ATTR_FROM_COLLECTION);
+         String param = linkDirection == Linking.LinkDirection.FROM ? Linking.Instance.ATTR_TO_ID : Linking.Instance.ATTR_FROM_ID;
+         List<DataDocument> docs = dataStorage.search(collectionName, filterLinkingInstanceForDocument(lt.getId(), documentId, linkDirection), null, 0, 0);
+         for (DataDocument dc : docs) {
+            String id = dc.getString(param);
+            DataDocument doc = dataStorage.readDocument(readCollectionName, dataStorageDialect.documentIdFilter(id));
+            if (doc != null) {
+               links.add(doc);
+            }
+         }
       }
       return links;
    }
 
-   private void dropAllDocs(final String collectionName, final String documentId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      dataStorage.dropManyDocuments(collectionName, dataStorageDialect.linkingFromDocumentFilter(documentId, linkDirection));
-   }
-
-   private void dropAllDocs(final String collectionName, final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      dataStorage.dropManyDocuments(collectionName, dataStorageDialect.linkingFromToDocumentFilter(fromId, toId, linkDirection));
-   }
-
-   private void checkEmptinessAndRemoveEventually(final String collectionName, String role) {
-      if (dataStorage.documentCount(collectionName) == 0) {
-         dataStorage.dropCollection(collectionName);
-
-         dataStorage.dropManyDocuments(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromTablesColNameFilter(collectionName, role));
-      }
-   }
-
-   private List<DataDocument> readLinkingTablesFromTo(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromToTablesFilter(firstCollectionName, secondCollectionName, role, linkDirection), null, 0, 0);
-   }
-
-   private List<DataDocument> readLinkingTablesFrom(final String fromCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(LumeerConst.Linking.MainTable.NAME, dataStorageDialect.linkingFromTablesFilter(fromCollectionName, role, linkDirection), null, 0, 0);
-   }
-
-   private List<DataDocument> readLinkingDocumentsFrom(final String collectionName, final String fromId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(collectionName, dataStorageDialect.linkingFromDocumentFilter(fromId, linkDirection), null, 0, 0);
-   }
-
-   private List<DataDocument> readLinkingDocumentsFromTo(final String collectionName, final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      return dataStorage.search(collectionName, dataStorageDialect.linkingFromToDocumentFilter(fromId, toId, linkDirection), null, 0, 0);
-   }
-
-   private List<DataDocument> readDocumentsFromLinkingDocumentsFrom(final List<DataDocument> linkingDocuments, final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) {
-      List<DataDocument> docs = new ArrayList<>();
-      String keyParam = linkDirection == LumeerConst.Linking.LinkDirection.TO ? LumeerConst.Linking.LinkingTable.ATTR_FROM_ID : LumeerConst.Linking.LinkingTable.ATTR_TO_ID;
-      for (DataDocument ld : linkingDocuments) {
-         // check for right id of linking document
-         String linkingDocumentId = ld.getString(keyParam);
-
-         DataDocument doc = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(linkingDocumentId));
-         if (doc != null) {
-            docs.add(doc);
+   private void dropLinksForDocument(final List<DataDocument> linkingDocs, final String documentId, final Linking.LinkDirection linkDirection) {
+      String collectionName = buildCollectionName();
+      for (DataDocument lt : linkingDocs) {
+         String id = lt.getId();
+         dataStorage.dropManyDocuments(collectionName, filterLinkingInstanceForDocument(id, documentId, linkDirection));
+         if (linkTypeIsEmpty(id)) {
+            dataStorage.dropDocument(Linking.Type.NAME, dataStorageDialect.documentIdFilter(id));
          }
       }
-      return docs;
    }
 
-   private void createLinkingTable(final String firstCollectionName, final String secondCollectionName, final String role, final String collectionName, final LumeerConst.Linking.LinkDirection linkDirection) {
-      String fromCollectionName;
-      String toCollectionName;
-      if (linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         fromCollectionName = firstCollectionName;
-         toCollectionName = secondCollectionName;
-      } else {
-         fromCollectionName = secondCollectionName;
-         toCollectionName = firstCollectionName;
+   private boolean linkTypeIsEmpty(final String id) {
+      return dataStorage.search(buildCollectionName(), dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, id), null, 0, 1).isEmpty();
+   }
+
+   private List<DataDocument> readLinkingTypesForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
+      String param = linkDirection == Linking.LinkDirection.FROM ? Linking.Type.ATTR_FROM_COLLECTION : Linking.Type.ATTR_TO_COLLECTION;
+      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeForCollection(param, collectionName, role), null, 0, 0);
+   }
+
+   private List<DataDocument> readLinkingTypesBetweenCollections(final String firstCollectionName, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
+      String fromCollectionName = linkDirection == Linking.LinkDirection.FROM ? firstCollectionName : secondCollectionName;
+      String toCollectionName = linkDirection == Linking.LinkDirection.FROM ? secondCollectionName : firstCollectionName;
+      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionName, toCollectionName, role), null, 0, 0);
+   }
+
+   private String createNewLinkingTypeIfNecessary(final String firstCollectionName, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
+      String fromCollectionName = linkDirection == Linking.LinkDirection.FROM ? firstCollectionName : secondCollectionName;
+      String toCollectionName = linkDirection == Linking.LinkDirection.FROM ? secondCollectionName : firstCollectionName;
+
+      DataDocument linkingType = dataStorage.readDocument(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionName, toCollectionName, role));
+      if (linkingType != null) { // if linking type already exists, we return it
+         return linkingType.getId();
       }
+
+      //otherwise we create linking type and also collection for link if necessary
       DataDocument doc = new DataDocument();
-      doc.put(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName);
-      doc.put(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName);
-      doc.put(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName);
-      doc.put(LumeerConst.Linking.MainTable.ATTR_ROLE, role);
+      doc.put(Linking.Type.ATTR_FROM_COLLECTION, fromCollectionName);
+      doc.put(Linking.Type.ATTR_TO_COLLECTION, toCollectionName);
+      doc.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
+      doc.put(Linking.Type.ATTR_ROLE, role);
 
-      dataStorage.createDocument(LumeerConst.Linking.MainTable.NAME, doc);
+      String typeId = dataStorage.createDocument(Linking.Type.NAME, doc);
 
+      String linkingCollectionName = buildCollectionName();
+      if (!dataStorage.hasCollection(linkingCollectionName)) {
+         dataStorage.createCollection(linkingCollectionName);
+         dataStorage.createIndex(linkingCollectionName, new DataDocument(Linking.Instance.ATTR_TYPE_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_FROM_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_TO_ID, Index.ASCENDING), true);
+         dataStorage.createIndex(linkingCollectionName, new DataDocument(Linking.Instance.ATTR_TYPE_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_TO_ID, Index.ASCENDING)
+               .append(Linking.Instance.ATTR_FROM_ID, Index.ASCENDING), true);
+      }
+
+      return typeId;
    }
 
-   private String buildCollectionName(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      String fromCollectionName;
-      String toCollectionName;
-      if (linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         fromCollectionName = firstCollectionName;
-         toCollectionName = secondCollectionName;
-      } else {
-         fromCollectionName = secondCollectionName;
-         toCollectionName = firstCollectionName;
+   private DataFilter filterLinkingInstance(final String typeId) {
+      return dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, typeId);
+   }
+
+   private DataFilter filterLinkingInstanceForDocument(final String typeId, final String documentId, Linking.LinkDirection linkDirection) {
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(Linking.Instance.ATTR_TYPE_ID, typeId);
+      fields.put(linkDirection == Linking.LinkDirection.FROM ? Linking.Instance.ATTR_FROM_ID : Linking.Instance.ATTR_TO_ID, documentId);
+      return dataStorageDialect.multipleFieldsValueFilter(fields);
+   }
+
+   private DataFilter filterLinkingInstanceBetweenDocuments(final String typeId, final String firstDocumentId, final String secondDocumentId, Linking.LinkDirection linkDirection) {
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(Linking.Instance.ATTR_TYPE_ID, typeId);
+      fields.put(Linking.Instance.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId);
+      fields.put(Linking.Instance.ATTR_TO_ID, linkDirection == Linking.LinkDirection.FROM ? secondDocumentId : firstDocumentId);
+      return dataStorageDialect.multipleFieldsValueFilter(fields);
+   }
+
+   private DataFilter filterLinkingTypeForCollection(final String param, final String collectionName, final String role) {
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
+      fields.put(param, collectionName);
+      if (role != null) {
+         fields.put(Linking.Type.ATTR_ROLE, role);
       }
-      return LumeerConst.Linking.PREFIX + "_" + fromCollectionName + "_" + toCollectionName + "_" + role;
+      return dataStorageDialect.multipleFieldsValueFilter(fields);
+   }
+
+   private DataFilter filterLinkingTypeBetweenCollections(final String fromCollectionName, final String toCollectionName, final String role) {
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
+      fields.put(Linking.Type.ATTR_FROM_COLLECTION, fromCollectionName);
+      fields.put(Linking.Type.ATTR_TO_COLLECTION, toCollectionName);
+      if (role != null) {
+         fields.put(Linking.Type.ATTR_ROLE, role);
+      }
+      return dataStorageDialect.multipleFieldsValueFilter(fields);
+   }
+
+   private String buildCollectionName() {
+      return Linking.PREFIX + "_" + projectFacade.getCurrentProjectId();
    }
 
 }

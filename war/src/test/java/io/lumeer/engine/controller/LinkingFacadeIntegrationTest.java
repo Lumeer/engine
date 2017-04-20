@@ -26,8 +26,9 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.rest.dao.LinkDao;
-import io.lumeer.engine.rest.dao.LinkTypeDao;
+import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.rest.dao.LinkInstance;
+import io.lumeer.engine.rest.dao.LinkType;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -35,7 +36,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,303 +47,379 @@ import javax.inject.Inject;
 @RunWith(Arquillian.class)
 public class LinkingFacadeIntegrationTest extends IntegrationTestBase {
 
-   private final String COLLECTION_GETLINKS_I = "collectionGetLinksI";
-   private final String COLLECTION_GETLINKS_II = "collectionGetLinksII";
-   private final String COLLECTION_GETLINKS_III = "collectionGetLinksIII";
-   private final String COLLECTION_GETLINKTYPES_I = "collectionGetLinkTypesI";
-   private final String COLLECTION_GETLINKTYPES_II = "collectionGetLinkTypesII";
-   private final String COLLECTION_GETLINKTYPES_III = "collectionGetLinkTypesIII";
-   private final String COLLECTION_GETDOCUMENTSLINKS_I = "collectionGetDocumentsLinksI";
-   private final String COLLECTION_GETDOCUMENTSLINKS_II = "collectionGetDocumentsLinksII";
-   private final String COLLECTION_READ_DROP_DOC_BY_DOC_I = "collectionReadDropDocByDocI";
-   private final String COLLECTION_READ_DROP_DOC_BY_DOC_II = "collectionReadDropDocByDocII";
-   private final String COLLECTION_READ_DROP_DOC_BY_DOC_III = "collectionReadDropDocByDocIII";
-   private final String COLLECTION_READ_DROP_COLL_I = "collectionCreateDropCollectionsI";
-   private final String COLLECTION_READ_DROP_COLL_II = "collectionCreateDropCollectionsII";
-   private final String COLLECTION_READ_DROP_COLL_III = "collectionCreateDropCollectionsIII";
-   private final String COLLECTION_READ_DROP_ALL_I = "collectionCreateDropAllI";
-   private final String COLLECTION_READ_DROP_ALL_II = "collectionCreateDropAllII";
-   private final String COLLECTION_READ_DROP_ALL_III = "collectionCreateDropAllIII";
-
-   private final int NUM_DOCUMENTS = 3;
-
    @Inject
    private LinkingFacade linkingFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
 
    @Test
-   public void testGetLinkTypes() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_GETLINKTYPES_I, COLLECTION_GETLINKTYPES_II, COLLECTION_GETLINKTYPES_III);
-      Map<String, List<String>> ids = createTestData(collections);
+   public void testReadLinkTypesForCollection() throws Exception {
+      final String col1 = "collection1";
+      final String col2 = "collection2";
+      final String col3 = "collection3";
+      List<String> collections = Arrays.asList(col1, col2, col3);
+      Map<String, List<String>> ids = createTestData(collections, 2);
 
-      String col1Id1 = ids.get(COLLECTION_GETLINKTYPES_I).get(0);
-      String col1Id2 = ids.get(COLLECTION_GETLINKTYPES_I).get(1);
-      String col2Id1 = ids.get(COLLECTION_GETLINKTYPES_II).get(0);
-      String col2Id2 = ids.get(COLLECTION_GETLINKTYPES_II).get(1);
-      String col3Id1 = ids.get(COLLECTION_GETLINKTYPES_III).get(0);
-      String col3Id2 = ids.get(COLLECTION_GETLINKTYPES_III).get(1);
+      String col1Id1 = ids.get(col1).get(0);
+      String col1Id2 = ids.get(col1).get(1);
+      String col2Id1 = ids.get(col2).get(0);
+      String col2Id2 = ids.get(col2).get(1);
+      String col3Id1 = ids.get(col3).get(0);
+      String col3Id2 = ids.get(col3).get(1);
 
       String role1 = "role1";
 
-      dropLinkingCollections(Collections.singletonList(role1), collections);
+      dataStorage.dropCollection(buildProjectLinkingCollectionName());
 
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id1, COLLECTION_GETLINKTYPES_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id2, COLLECTION_GETLINKTYPES_II, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id1, COLLECTION_GETLINKTYPES_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKTYPES_I, col1Id2, COLLECTION_GETLINKTYPES_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id2, col2, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id2, col3, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
 
-      List<LinkTypeDao> linkTypes = linkingFacade.readLinkTypes(COLLECTION_GETLINKTYPES_I, LumeerConst.Linking.LinkDirection.FROM);
+      List<LinkType> linkTypes = linkingFacade.readLinkTypesForCollection(col1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(linkTypes).hasSize(2);
+
+      linkTypes = linkingFacade.readLinkTypesForCollection(col2, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(linkTypes).hasSize(1);
+
+      linkTypes = linkingFacade.readLinkTypesForCollection(col3, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(linkTypes).hasSize(1);
    }
 
    @Test
-   public void testGetLinks() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_GETLINKS_I, COLLECTION_GETLINKS_II, COLLECTION_GETLINKS_III);
-      Map<String, List<String>> ids = createTestData(collections);
+   public void testReadLinkInstancesForCollection() throws Exception {
+      final String col1 = "collection11";
+      final String col2 = "collection12";
+      final String col3 = "collection13";
+      List<String> collections = Arrays.asList(col1, col2, col3);
+      Map<String, List<String>> ids = createTestData(collections, 3);
 
-      String col1Id1 = ids.get(COLLECTION_GETLINKS_I).get(0);
-      String col1Id2 = ids.get(COLLECTION_GETLINKS_I).get(1);
-      String col2Id1 = ids.get(COLLECTION_GETLINKS_II).get(0);
-      String col2Id2 = ids.get(COLLECTION_GETLINKS_II).get(1);
-      String col3Id1 = ids.get(COLLECTION_GETLINKS_III).get(0);
-      String col3Id2 = ids.get(COLLECTION_GETLINKS_III).get(1);
+      String col1Id1 = ids.get(col1).get(0);
+      String col1Id2 = ids.get(col1).get(1);
+      String col2Id1 = ids.get(col2).get(0);
+      String col2Id2 = ids.get(col2).get(1);
+      String col3Id1 = ids.get(col3).get(0);
+      String col3Id2 = ids.get(col3).get(1);
+      String col3Id3 = ids.get(col3).get(2);
 
       String role1 = "role1";
 
-      dropLinkingCollections(Collections.singletonList(role1), collections);
+      dataStorage.dropCollection(buildProjectLinkingCollectionName());
 
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id1, COLLECTION_GETLINKS_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id2, COLLECTION_GETLINKS_II, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id1, COLLECTION_GETLINKS_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_GETLINKS_I, col1Id2, COLLECTION_GETLINKS_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstancesBetweenDocumentAndCollection(col1, col1Id1, col2, Arrays.asList(col2Id1, col2Id2), Arrays.asList(new DataDocument(), new DataDocument()), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id2, col2, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstancesBetweenDocumentAndCollection(col1, col1Id1, col3, Arrays.asList(col3Id1, col3Id2, col3Id3), Arrays.asList(new DataDocument(), new DataDocument(), new DataDocument()), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id2, col3, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
 
-      List<LinkDao> linkTypes = linkingFacade.readLinks(COLLECTION_GETLINKS_I, role1, LumeerConst.Linking.LinkDirection.FROM);
-      assertThat(linkTypes).hasSize(2);
+      List<LinkInstance> linkInstances = linkingFacade.readLinkInstancesForCollection(col1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(linkInstances).hasSize(5);
+
+      linkInstances = linkingFacade.readLinkInstancesForCollection(col2, role1, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(linkInstances).hasSize(1);
+
+      linkInstances = linkingFacade.readLinkInstancesForCollection(col3, role1, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(linkInstances).hasSize(3);
    }
 
    @Test
-   public void testGetDocumentsLinks() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_GETDOCUMENTSLINKS_I, COLLECTION_GETDOCUMENTSLINKS_II);
-      Map<String, List<String>> ids = createTestData(collections);
+   public void testReadLinkInstancesBetweenDocuments() throws Exception {
+      final String col1 = "collection21";
+      final String col2 = "collection22";
+      List<String> collections = Arrays.asList(col1, col2);
+      Map<String, List<String>> ids = createTestData(collections, 2);
 
-      String col1Id1 = ids.get(COLLECTION_GETDOCUMENTSLINKS_I).get(0);
-      String col1Id2 = ids.get(COLLECTION_GETDOCUMENTSLINKS_I).get(1);
-      String col2Id1 = ids.get(COLLECTION_GETDOCUMENTSLINKS_II).get(0);
-      String col2Id2 = ids.get(COLLECTION_GETDOCUMENTSLINKS_II).get(1);
+      String col1Id1 = ids.get(col1).get(0);
+      String col1Id2 = ids.get(col1).get(1);
+      String col2Id1 = ids.get(col2).get(0);
+      String col2Id2 = ids.get(col2).get(1);
 
       String role1 = "role1";
 
-      dropLinkingCollections(Collections.singletonList(role1), collections);
+      dataStorage.dropCollection(buildProjectLinkingCollectionName());
 
-      linkingFacade.createDocWithDocLink(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
 
-      linkingFacade.createDocWithDocLink(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id2, col2, col2Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
-      List<LinkDao> linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      assertThat(linkTypes).hasSize(1);
+      List<LinkInstance> linkInstances = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(linkInstances).hasSize(1);
 
-      linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id1, COLLECTION_GETDOCUMENTSLINKS_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.TO);
-      assertThat(linkTypes).hasSize(1);
+      linkInstances = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(linkInstances).hasSize(1);
 
-      linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, role1, LumeerConst.Linking.LinkDirection.FROM);
-      assertThat(linkTypes).hasSize(1);
+      linkInstances = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id2, col2, col2Id2, role1, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(linkInstances).hasSize(1);
 
-      linkTypes = linkingFacade.readDocByDocLinks(COLLECTION_GETDOCUMENTSLINKS_I, col1Id2, COLLECTION_GETDOCUMENTSLINKS_II, col2Id2, role1, LumeerConst.Linking.LinkDirection.TO);
-      assertThat(linkTypes).isEmpty();
+      linkInstances = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id2, col2, col2Id2, role1, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(linkInstances).isEmpty();
    }
 
    @Test
-   public void testReadAndDropDocByDoc() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_READ_DROP_DOC_BY_DOC_I, COLLECTION_READ_DROP_DOC_BY_DOC_II, COLLECTION_READ_DROP_DOC_BY_DOC_III);
-      Map<String, List<String>> ids = createTestData(collections);
+   public void testReadAndDropBetweenDocuments() throws Exception {
+      final String col1 = "collection31";
+      final String col2 = "collection32";
+      final String col3 = "collection33";
+      List<String> collections = Arrays.asList(col1, col2, col3);
+      Map<String, List<String>> ids = createTestData(collections, 3);
 
-      String col1Id1 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_I).get(0);
-      String col2Id1 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_II).get(0);
-      String col3Id1 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_III).get(2);
-      String col3Id2 = ids.get(COLLECTION_READ_DROP_DOC_BY_DOC_III).get(1);
+      String col1Id1 = ids.get(col1).get(0);
+      String col2Id1 = ids.get(col2).get(0);
+      String col3Id1 = ids.get(col3).get(2);
+      String col3Id2 = ids.get(col3).get(1);
 
       String role1 = "role1";
       String role2 = "role2";
       String role3 = "role3";
 
-      dropLinkingCollections(Arrays.asList(role1, role2, role3), collections);
+      dataStorage.dropCollection(buildProjectLinkingCollectionName());
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
 
-      List<DataDocument> links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      // read link for specific role
+      List<LinkInstance> links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(1);
-      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksBetweenDocuments(col1, col1Id1, col2, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      // read link for all roles
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(2);
-      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksBetweenDocuments(col1, col1Id1, col2, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      // read link for all roles, but other way
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
       assertThat(links).hasSize(2);
-      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_II, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.dropLinksBetweenDocuments(col1, col1Id1, col2, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col2, col2Id1, null, LumeerConst.Linking.LinkDirection.TO);
       assertThat(links).isEmpty();
 
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      // read link for all roles
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col3, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(3);
-      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksBetweenDocuments(col1, col1Id1, col3, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col3, col3Id1, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col3, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(1);
-      linkingFacade.dropDocWithDocLink(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksBetweenDocuments(col1, col1Id1, col3, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col3, col3Id1, role1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col3, col3Id1, null, LumeerConst.Linking.LinkDirection.TO);
       assertThat(links).isEmpty();
 
-      links = linkingFacade.readDocByDocLinksDocs(COLLECTION_READ_DROP_DOC_BY_DOC_I, col1Id1, COLLECTION_READ_DROP_DOC_BY_DOC_III, col3Id2, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkInstancesBetweenDocuments(col1, col1Id1, col3, col3Id2, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
    }
 
    @Test
-   public void testCreateDropCollections() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_READ_DROP_COLL_I, COLLECTION_READ_DROP_COLL_II, COLLECTION_READ_DROP_COLL_III);
-      Map<String, List<String>> ids = createTestData(collections);
+   public void testCreateDropCollectionLinks() throws Exception {
+      final String col1 = "collection41";
+      final String col2 = "collection42";
+      final String col3 = "collection43";
+      List<String> collections = Arrays.asList(col1, col2, col3);
+      Map<String, List<String>> ids = createTestData(collections, 3);
 
-      String col1Id1 = ids.get(COLLECTION_READ_DROP_COLL_I).get(0);
-      String col2Id1 = ids.get(COLLECTION_READ_DROP_COLL_II).get(0);
-      String col3Id1 = ids.get(COLLECTION_READ_DROP_COLL_III).get(0);
-      String col3Id2 = ids.get(COLLECTION_READ_DROP_COLL_III).get(1);
-      String col3Id3 = ids.get(COLLECTION_READ_DROP_COLL_III).get(2);
+      String col1Id1 = ids.get(col1).get(0);
+      String col2Id1 = ids.get(col2).get(0);
+      String col3Id1 = ids.get(col3).get(0);
+      String col3Id2 = ids.get(col3).get(1);
+      String col3Id3 = ids.get(col3).get(2);
 
       String role1 = "role1";
       String role2 = "role2";
       String role3 = "role3";
 
-      dropLinkingCollections(Arrays.asList(role1, role2, role3), collections);
+      dataStorage.dropCollection(buildProjectLinkingCollectionName());
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
-      List<DataDocument> links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, role1, LumeerConst.Linking.LinkDirection.FROM);
+      List<DataDocument> links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(1);
 
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(2);
 
-      linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksBetweenDocumentAndCollection(col1, col1Id1, col2, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col3, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(5);
 
-      linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, role1, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksBetweenDocumentAndCollection(col1, col1Id1, col3, role1, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col3, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(2);
 
-      linkingFacade.dropDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      assertThat(links).isEmpty();
-
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
-
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
-      assertThat(links).hasSize(2);
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
-      assertThat(links).hasSize(3);
-      linkingFacade.dropCollectionLinks(COLLECTION_READ_DROP_COLL_I, null, LumeerConst.Linking.LinkDirection.FROM);
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_II, null, LumeerConst.Linking.LinkDirection.FROM);
-      assertThat(links).isEmpty();
-      links = linkingFacade.readDocWithCollectionLinks(COLLECTION_READ_DROP_COLL_I, col1Id1, COLLECTION_READ_DROP_COLL_III, null, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksBetweenDocumentAndCollection(col1, col1Id1, col3, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col3, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
    }
 
    @Test
-   public void testCreateDropAll() throws Exception {
-      List<String> collections = Arrays.asList(COLLECTION_READ_DROP_ALL_I, COLLECTION_READ_DROP_ALL_II, COLLECTION_READ_DROP_ALL_III);
-      Map<String, List<String>> ids = createTestData(collections);
+   public void testDropWholeCollectionLinks() throws Exception {
+      final String col1 = "collection51";
+      final String col2 = "collection52";
+      final String col3 = "collection53";
+      List<String> collections = Arrays.asList(col1, col2, col3);
+      Map<String, List<String>> ids = createTestData(collections, 3);
 
-      String col1Id1 = ids.get(COLLECTION_READ_DROP_ALL_I).get(0);
-      String col2Id1 = ids.get(COLLECTION_READ_DROP_ALL_II).get(0);
-      String col3Id1 = ids.get(COLLECTION_READ_DROP_ALL_III).get(0);
-      String col3Id2 = ids.get(COLLECTION_READ_DROP_ALL_III).get(1);
-      String col3Id3 = ids.get(COLLECTION_READ_DROP_ALL_III).get(2);
+      String col1Id1 = ids.get(col1).get(0);
+      String col2Id1 = ids.get(col2).get(0);
+      String col3Id1 = ids.get(col3).get(0);
+      String col3Id2 = ids.get(col3).get(1);
+      String col3Id3 = ids.get(col3).get(2);
 
       String role1 = "role1";
       String role2 = "role2";
       String role3 = "role3";
 
-      dropLinkingCollections(Arrays.asList(role1, role2, role3), collections);
+      dataStorage.dropCollection(buildProjectLinkingCollectionName());
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      List<DataDocument> links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, null, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(links).hasSize(2);
 
-      List<DataDocument> links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
-      assertThat(links).hasSize(4);
-      links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      assertThat(links).hasSize(8);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col3, null, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(links).hasSize(3);
 
-      linkingFacade.dropAllDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
-      links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.dropLinksForCollection(col1, null, LumeerConst.Linking.LinkDirection.FROM);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
-      links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      assertThat(links).hasSize(4);
-
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_II, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      linkingFacade.createDocWithDocLink(COLLECTION_READ_DROP_ALL_I, col1Id1, COLLECTION_READ_DROP_ALL_III, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
-      links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      assertThat(links).hasSize(7);
-
-      linkingFacade.dropAllDocumentLinks(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
-      links = linkingFacade.readDocumentLinksDocs(COLLECTION_READ_DROP_ALL_I, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col3, null, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
    }
 
-   private Map<String, List<String>> createTestData(List<String> collections) {
+   @Test
+   public void testCreateDropAllDocumentLinks() throws Exception {
+      final String col1 = "collection61";
+      final String col2 = "collection62";
+      final String col3 = "collection63";
+      List<String> collections = Arrays.asList(col1, col2, col3);
+      Map<String, List<String>> ids = createTestData(collections, 3);
+
+      String col1Id1 = ids.get(col1).get(0);
+      String col2Id1 = ids.get(col2).get(0);
+      String col3Id1 = ids.get(col3).get(0);
+      String col3Id2 = ids.get(col3).get(1);
+      String col3Id3 = ids.get(col3).get(2);
+
+      String role1 = "role1";
+      String role2 = "role2";
+      String role3 = "role3";
+
+      dataStorage.dropCollection(buildProjectLinkingCollectionName());
+
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role2, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role3, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id3, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+
+      List<DataDocument> links = linkingFacade.readLinkedDocumentsForDocument(col1, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(links).hasSize(4);
+      links = linkingFacade.readLinkedDocumentsForDocument(col1, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(links).hasSize(8);
+
+      linkingFacade.dropLinksForDocument(col1, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readLinkedDocumentsForDocument(col1, col1Id1, role1, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(links).isEmpty();
+
+      links = linkingFacade.readLinkedDocumentsForDocument(col1, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(links).hasSize(4);
+
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col3, col3Id2, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readLinkedDocumentsForDocument(col1, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(links).hasSize(7);
+
+      linkingFacade.dropLinksForDocument(col1, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      links = linkingFacade.readLinkedDocumentsForDocument(col1, col1Id1, null, LumeerConst.Linking.LinkDirection.TO);
+      assertThat(links).isEmpty();
+   }
+
+   @Test
+   public void testProjectSwitching() throws DbException {
+      final String col1 = "collection71";
+      final String col2 = "collection72";
+      List<String> collections = Arrays.asList(col1, col2);
+      Map<String, List<String>> ids = createTestData(collections, 2);
+
+      String col1Id1 = ids.get(col1).get(0);
+      String col2Id1 = ids.get(col2).get(0);
+      String col2Id2 = ids.get(col2).get(1);
+
+      String role1 = "role1";
+      String role2 = "role2";
+
+      String project1 = "project1";
+      String project2 = "project2";
+      projectFacade.setCurrentProjectId(project1);
+      linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
+
+      projectFacade.setCurrentProjectId(project2);
+      linkingFacade.createLinkInstancesBetweenDocumentAndCollection(col1, col1Id1, col2, Arrays.asList(col2Id1, col2Id2), Arrays.asList(new DataDocument(), new DataDocument()), role2, LumeerConst.Linking.LinkDirection.FROM);
+
+      projectFacade.setCurrentProjectId(project1);
+      List<DataDocument> links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role1, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(links).hasSize(1);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role2, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(links).isEmpty();
+
+      projectFacade.setCurrentProjectId(project2);
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role1, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(links).isEmpty();
+      links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role2, LumeerConst.Linking.LinkDirection.FROM);
+      assertThat(links).hasSize(2);
+   }
+
+   private Map<String, List<String>> createTestData(List<String> collections, int numDocuments) {
       Map<String, List<String>> ids = new HashMap<>();
       for (String col : collections) {
          dataStorage.dropCollection(col);
          dataStorage.createCollection(col);
          List<String> collIds = new ArrayList<>();
-         for (int i = 0; i < NUM_DOCUMENTS; i++) {
+         for (int i = 0; i < numDocuments; i++) {
             String id = dataStorage.createDocument(col, new DataDocument());
             collIds.add(id);
          }
@@ -352,21 +428,8 @@ public class LinkingFacadeIntegrationTest extends IntegrationTestBase {
       return ids;
    }
 
-   private void dropLinkingCollections(final List<String> roles, final List<String> collections) {
-      for (String role : roles) {
-         for (String col1 : collections) {
-            for (String col2 : collections) {
-               if (col1.equals(col2)) {
-                  continue;
-               }
-               dataStorage.dropCollection(buildCollectionName(col1, col2, role));
-            }
-         }
-      }
-   }
-
-   private String buildCollectionName(final String firstCollectionName, final String secondCollectionName, final String role) {
-      return LumeerConst.Linking.PREFIX + "_" + firstCollectionName + "_" + secondCollectionName + "_" + role;
+   private String buildProjectLinkingCollectionName() {
+      return LumeerConst.Linking.PREFIX + "_" + projectFacade.getCurrentProjectId();
    }
 
 }

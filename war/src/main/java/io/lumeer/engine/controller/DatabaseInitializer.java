@@ -33,7 +33,7 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class DatabaseInitializer{
+public class DatabaseInitializer {
 
    @Inject
    @SystemDataStorage

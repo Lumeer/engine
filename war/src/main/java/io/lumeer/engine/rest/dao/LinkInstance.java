@@ -24,7 +24,7 @@ import io.lumeer.engine.api.data.DataDocument;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class LinkDao extends LinkTypeDao {
+public class LinkInstance extends LinkType {
 
    /**
     * Id of the source document.
@@ -41,10 +41,17 @@ public class LinkDao extends LinkTypeDao {
     */
    private DataDocument attributes;
 
-   public LinkDao() {
+   public LinkInstance() {
    }
 
-   public LinkDao(final String fromCollection, final String toCollection, final String role, final String fromId, final String toId, final DataDocument attributes) {
+   public LinkInstance(final LinkType linkType, final String fromId, final String toId, final DataDocument attributes){
+      super(linkType.getFromCollection(), linkType.getToCollection(), linkType.getRole());
+      this.fromId = fromId;
+      this.toId = toId;
+      this.attributes = attributes;
+   }
+
+   public LinkInstance(final String fromCollection, final String toCollection, final String role, final String fromId, final String toId, final DataDocument attributes) {
       super(fromCollection, toCollection, role);
       this.fromId = fromId;
       this.toId = toId;
@@ -69,7 +76,7 @@ public class LinkDao extends LinkTypeDao {
 
    @Override
    public String toString() {
-      return "LinkDao{"
+      return "LinkInstance{"
             + "fromId='" + fromId + '\''
             + ", toId='" + toId + '\''
             + ", attributes=" + attributes
@@ -88,15 +95,15 @@ public class LinkDao extends LinkTypeDao {
          return false;
       }
 
-      final LinkDao linkDao = (LinkDao) o;
+      final LinkInstance linkInstance = (LinkInstance) o;
 
-      if (fromId != null ? !fromId.equals(linkDao.fromId) : linkDao.fromId != null) {
+      if (fromId != null ? !fromId.equals(linkInstance.fromId) : linkInstance.fromId != null) {
          return false;
       }
-      if (toId != null ? !toId.equals(linkDao.toId) : linkDao.toId != null) {
+      if (toId != null ? !toId.equals(linkInstance.toId) : linkInstance.toId != null) {
          return false;
       }
-      return attributes != null ? attributes.equals(linkDao.attributes) : linkDao.attributes == null;
+      return attributes != null ? attributes.equals(linkInstance.attributes) : linkInstance.attributes == null;
    }
 
    @Override

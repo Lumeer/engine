@@ -35,6 +35,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
@@ -71,64 +72,6 @@ public class MongoDbStorageDialect implements DataStorageDialect {
 
    private DataFilter createFilter(final Bson filter) {
       return new MongoDbDataFilter(filter);
-   }
-
-   @Override
-   public DataFilter linkingFromTablesColNameFilter(final String collectionName, final String role) {
-      Bson filterRaw = role == null || role.isEmpty()
-            ? eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName)
-            : and(eq(LumeerConst.Linking.MainTable.ATTR_COL_NAME, collectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return createFilter(filterRaw);
-   }
-
-   @Override
-   public DataFilter linkingFromTablesFilter(final String firstCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      String collParam = linkDirection == LumeerConst.Linking.LinkDirection.FROM ? LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION : LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION;
-      Bson filterRaw = role == null || role.isEmpty()
-            ? eq(collParam, firstCollectionName)
-            : and(eq(collParam, firstCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return createFilter(filterRaw);
-   }
-
-   @Override
-   public DataFilter linkingFromToTablesFilter(final String firstCollectionName, final String secondCollectionName, final String role, final LumeerConst.Linking.LinkDirection linkDirection) {
-      String fromCollectionName;
-      String toCollectionName;
-      if (linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         fromCollectionName = firstCollectionName;
-         toCollectionName = secondCollectionName;
-      } else {
-         fromCollectionName = secondCollectionName;
-         toCollectionName = firstCollectionName;
-      }
-      Bson filterRaw = role == null
-            ? and(eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName))
-            : and(eq(LumeerConst.Linking.MainTable.ATTR_FROM_COLLECTION, fromCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_TO_COLLECTION, toCollectionName),
-            eq(LumeerConst.Linking.MainTable.ATTR_ROLE, role));
-      return createFilter(filterRaw);
-   }
-
-   @Override
-   public DataFilter linkingFromToDocumentFilter(final String fromId, final String toId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM
-            ? and(eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId),
-            eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, toId))
-            : and(eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, toId),
-            eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId)
-      );
-      return createFilter(filterRaw);
-   }
-
-   @Override
-   public DataFilter linkingFromDocumentFilter(final String fromId, final LumeerConst.Linking.LinkDirection linkDirection) {
-      Bson filterRaw = linkDirection == LumeerConst.Linking.LinkDirection.FROM
-            ? eq(LumeerConst.Linking.LinkingTable.ATTR_FROM_ID, fromId)
-            : eq(LumeerConst.Linking.LinkingTable.ATTR_TO_ID, fromId);
-      return createFilter(filterRaw);
    }
 
    @Override

@@ -33,8 +33,8 @@ import io.lumeer.engine.controller.LinkingFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.rest.dao.LinkDao;
-import io.lumeer.engine.rest.dao.LinkTypeDao;
+import io.lumeer.engine.rest.dao.LinkInstance;
+import io.lumeer.engine.rest.dao.LinkType;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.util.ArrayList;
@@ -109,23 +109,23 @@ public class LinkingService {
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkTypeDao> getLinkTypes(final @PathParam("collectionName") String collectionName, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkType> getLinkTypes(final @PathParam("collectionName") String collectionName, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionForRead(internalCollectionName);
 
-      final List<LinkTypeDao> links = new ArrayList<>();
+      final List<LinkType> links = new ArrayList<>();
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         links.addAll(linkingFacade.readLinkTypes(internalCollectionName, LumeerConst.Linking.LinkDirection.FROM));
+         links.addAll(linkingFacade.readLinkTypesForCollection(internalCollectionName, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         links.addAll(linkingFacade.readLinkTypes(internalCollectionName, LumeerConst.Linking.LinkDirection.TO));
+         links.addAll(linkingFacade.readLinkTypesForCollection(internalCollectionName, LumeerConst.Linking.LinkDirection.TO));
       }
 
       // translate internal collection names
-      for (LinkTypeDao linkTypeDao : links) {
-         linkTypeDao.setFromCollection(getOriginalName(linkTypeDao.getFromCollection()));
-         linkTypeDao.setToCollection(getOriginalName(linkTypeDao.getToCollection()));
+      for (LinkType linkType : links) {
+         linkType.setFromCollection(getOriginalName(linkType.getFromCollection()));
+         linkType.setToCollection(getOriginalName(linkType.getToCollection()));
       }
 
       return links;
@@ -147,23 +147,23 @@ public class LinkingService {
    @GET
    @Path("/{role}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkDao> getLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
+   public List<LinkInstance> getLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionForRead(internalCollectionName);
-      final List<LinkDao> links = new ArrayList<>();
+      final List<LinkInstance> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         links.addAll(linkingFacade.readLinks(internalCollectionName, role, LumeerConst.Linking.LinkDirection.FROM));
+         links.addAll(linkingFacade.readLinkInstancesForCollection(internalCollectionName, role, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         links.addAll(linkingFacade.readLinks(internalCollectionName, role, LumeerConst.Linking.LinkDirection.TO));
+         links.addAll(linkingFacade.readLinkInstancesForCollection(internalCollectionName, role, LumeerConst.Linking.LinkDirection.TO));
       }
 
       // translate internal collection names
-      for (LinkDao linkDao : links) {
-         linkDao.setFromCollection(getOriginalName(linkDao.getFromCollection()));
-         linkDao.setToCollection(getOriginalName(linkDao.getToCollection()));
+      for (LinkInstance linkInstance : links) {
+         linkInstance.setFromCollection(getOriginalName(linkInstance.getFromCollection()));
+         linkInstance.setToCollection(getOriginalName(linkInstance.getToCollection()));
       }
 
       return links;
@@ -193,11 +193,11 @@ public class LinkingService {
       final List<DataDocument> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         links.addAll(linkingFacade.readDocumentLinksDocs(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM));
+         links.addAll(linkingFacade.readLinkedDocumentsForDocument(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         links.addAll(linkingFacade.readDocumentLinksDocs(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.TO));
+         links.addAll(linkingFacade.readLinkedDocumentsForDocument(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.TO));
       }
 
       return links;
@@ -225,19 +225,19 @@ public class LinkingService {
    @GET
    @Path("/{role}/collections/{targetCollection}/documents/{id}/target/{targetId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkDao> getDocumentsLinks(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
+   public List<LinkInstance> getDocumentsLinks(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
          throws DbException {
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionForRead(internalCollectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
 
-      final List<LinkDao> links = new ArrayList<>();
+      final List<LinkInstance> links = new ArrayList<>();
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         links.addAll(linkingFacade.readDocByDocLinks(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM));
+         links.addAll(linkingFacade.readLinkInstancesBetweenDocuments(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM));
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         links.addAll(linkingFacade.readDocByDocLinks(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.TO));
+         links.addAll(linkingFacade.readLinkInstancesBetweenDocuments(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.TO));
       }
 
       return links;
@@ -265,11 +265,11 @@ public class LinkingService {
       checkCollectionForWrite(internalCollectionName);
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         linkingFacade.dropAllDocumentLinks(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM);
+         linkingFacade.dropLinksForDocument(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM);
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         linkingFacade.dropAllDocumentLinks(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.TO);
+         linkingFacade.dropLinksForDocument(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.TO);
       }
    }
 
@@ -302,11 +302,11 @@ public class LinkingService {
       checkCollectionForWrite(internalTargetCollectionName);
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
-         linkingFacade.dropDocWithDocLink(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM);
+         linkingFacade.dropLinksBetweenDocuments(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM);
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
-         linkingFacade.dropDocWithDocLink(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.TO);
+         linkingFacade.dropLinksBetweenDocuments(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.TO);
       }
    }
 
@@ -342,12 +342,12 @@ public class LinkingService {
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          hasDocumentRoleNotNull(internalCollectionName, fromId, internalTargetCollectionName, toId, role);
-         linkingFacade.createDocWithDocLink(internalCollectionName, fromId, internalTargetCollectionName, toId, attributes, role, LumeerConst.Linking.LinkDirection.FROM);
+         linkingFacade.createLinkInstanceBetweenDocuments(internalCollectionName, fromId, internalTargetCollectionName, toId, attributes, role, LumeerConst.Linking.LinkDirection.FROM);
       }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.TO) {
          hasDocumentRoleNotNull(internalCollectionName, fromId, internalTargetCollectionName, toId, role);
-         linkingFacade.createDocWithDocLink(internalCollectionName, fromId, internalTargetCollectionName, toId, attributes, role, LumeerConst.Linking.LinkDirection.TO);
+         linkingFacade.createLinkInstanceBetweenDocuments(internalCollectionName, fromId, internalTargetCollectionName, toId, attributes, role, LumeerConst.Linking.LinkDirection.TO);
       }
 
    }
@@ -358,7 +358,7 @@ public class LinkingService {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
       if (role == null) {
-         throw new IllegalArgumentException(ErrorMessageBuilder.paramCanNotBeNullString(LumeerConst.Linking.MainTable.ATTR_ROLE));
+         throw new IllegalArgumentException(ErrorMessageBuilder.paramCanNotBeNullString(LumeerConst.Linking.Type.ATTR_ROLE));
       }
    }
 

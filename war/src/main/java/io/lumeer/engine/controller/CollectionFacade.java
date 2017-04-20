@@ -189,8 +189,8 @@ public class CollectionFacade implements Serializable {
       if (!dataStorage.hasCollection(collectionName)) {
          return;
       }
-      linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.dropCollectionLinks(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
+      linkingFacade.dropLinksForCollection(collectionName, null, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksForCollection(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
       dropCollectionMetadata(collectionName);
       dataStorage.dropCollection(collectionName);
       versionFacade.trashShadowCollection(collectionName);

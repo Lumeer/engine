@@ -44,7 +44,7 @@ public class ErrorMessageBuilder {
    private static final String ERROR_INVALID_DOCUMENT_KEY = "The key  \"{0}\" is not valid";
    private static final String ERROR_INVALID_CONSTRAINT_KEY = "Invalid value for attribute: \"{0}\"";
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
-   private static final String ERROR_LINK_ALREADY_EXISTS = "Link between documents already exists";
+   private static final String ERROR_LINK_ALREADY_EXISTS = "LinkInstance between documents already exists";
    private static final String ERROR_PARAM_CANNOT_BE_NULL = "The param  \"{0}\" can not be null.";
    private static final String ERROR_INVALID_COLLECTION_ATTRIBUTE_TYPE = "The type \"{0}\" is invalid. Valid types are: \"{1}\".";
 
