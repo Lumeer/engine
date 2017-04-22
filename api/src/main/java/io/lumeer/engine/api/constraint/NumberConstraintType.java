@@ -31,8 +31,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * Various constraints on numbers.
@@ -71,36 +69,6 @@ public class NumberConstraintType implements ConstraintType {
       return result;
    }
 
-   private BiFunction<Object, Class, Object> getEncodeFunction(final NumberFormat nf, final NumberFormat big) {
-      return (o, t) -> {
-         if (t != null && t != Number.class) {
-            return null;
-         }
-
-         if (o instanceof Number) {
-            return o;
-         }
-
-         try {
-            final String trim = o.toString().replaceAll(" ", "");
-            final Number n1 = nf.parse(trim);
-
-            if (big != null) { // try to parse with BigDecimal and see if we overflowed
-               final Number n2 = big.parse(trim);
-               return n1.toString().equals(n2.toString()) ? n1 : n2;
-            } else {
-               return n1;
-            }
-         } catch (ParseException e) {
-            return null;
-         }
-      };
-   }
-
-   private Function<Object, Object> getDecodeFunction() {
-      return o -> o;
-   }
-
    @Override
    public Constraint parseConstraint(final String constraintConfiguration) throws InvalidConstraintException {
       final String[] config = constraintConfiguration.split(":", 2);
@@ -114,7 +82,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(numberFormat, bigNumberFormat), Coders.getIdentityDecodeFunction(), Number.class);
          case IS_INTEGER:
             return new FunctionConstraint(value -> {
                try {
@@ -123,7 +91,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(integerNumberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(integerNumberFormat, bigNumberFormat), Coders.getIdentityDecodeFunction(), Number.class);
          case IS_MONETARY:
             return new FunctionConstraint(value -> {
                try {
@@ -132,7 +100,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(currencyNumberFormat, null), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(currencyNumberFormat, null), Coders.getIdentityDecodeFunction(), Number.class);
          case LESS_THAN:
             final double ltParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -141,7 +109,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(numberFormat, bigNumberFormat), Coders.getIdentityDecodeFunction(), Number.class);
          case GREATER_THAN:
             final double gtParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -150,7 +118,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(numberFormat, bigNumberFormat), Coders.getIdentityDecodeFunction(), Number.class);
          case GREATER_OR_EQUALS:
             final double gteParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -159,7 +127,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(numberFormat, bigNumberFormat), Coders.getIdentityDecodeFunction(), Number.class);
          case LESS_OR_EQUALS:
             final double lteParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -168,7 +136,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(numberFormat, bigNumberFormat), Coders.getIdentityDecodeFunction(), Number.class);
          case EQUALS:
             final double eqParam = checkParameter(config, constraintConfiguration);
             return new FunctionConstraint(value -> {
@@ -177,7 +145,7 @@ public class NumberConstraintType implements ConstraintType {
                } catch (ParseException pe) {
                   return false;
                }
-            }, constraintConfiguration, getEncodeFunction(numberFormat, bigNumberFormat), getDecodeFunction(), Number.class);
+            }, constraintConfiguration, Coders.getNumberEncodeFunction(numberFormat, bigNumberFormat), Coders.getIdentityDecodeFunction(), Number.class);
          default:
             throw new InvalidConstraintException("Unable to parse constraint configuration: " + constraintConfiguration);
       }

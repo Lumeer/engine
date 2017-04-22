@@ -19,16 +19,11 @@
  */
 package io.lumeer.engine.api.constraint;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -45,51 +40,6 @@ public class ListConstraintType implements ConstraintType {
    public Set<String> getRegisteredPrefixes() {
       return new HashSet<>(Arrays.asList(ONE_OF_TYPE, TAGS_TYPE));
    }
-
-   private BiFunction<Object, Class, Object> getEncodeFunction(final boolean oneOf) {
-      return (o, t) -> {
-         if (oneOf) {
-            if (t == null || t == String.class) {
-               return o.toString();
-            }
-         } else {
-            if (t == null || String[].class.isAssignableFrom(t)) {
-               return Arrays.asList(o.toString().split(",")).stream()
-                            .map(String::trim)
-                            .collect(Collectors.toList());
-            }
-         }
-
-         return null;
-      };
-   }
-
-   private Function<Object, Object> getDecodeFunction() {
-      return o -> {
-         if (o instanceof String[]) {
-            return Arrays.asList((String[]) o);
-            /*final String tags =  Arrays.toString((String[]) o);
-
-            if ("null".equals(tags)) {
-               return "";
-            }
-
-            return tags.substring(1, tags.length() - 1); // trim [ and ]*/
-         } else if (o instanceof List) {
-            return o;
-            /*final String tags = o.toString();
-
-            return tags.substring(1, tags.length() - 1); // trim [ and ]*/
-         } else if (o instanceof Set) {
-            return new ArrayList<String>((Set) o);
-         } else if (o instanceof String) {
-            return o;
-         }
-
-         return o.toString();
-      };
-   }
-
 
    @Override
    public Constraint parseConstraint(final String constraintConfiguration) throws InvalidConstraintException {
@@ -117,7 +67,7 @@ public class ListConstraintType implements ConstraintType {
                   }
 
                   return null;
-               }, constraintConfiguration, getEncodeFunction(true), getDecodeFunction(), String.class);
+               }, constraintConfiguration, Coders.getTagsEncodeFunction(true), Coders.getTagsDecodeFunction(), String.class);
             case TAGS_TYPE:
                return new FixingFunctionConstraint(
                      value -> options.containsAll(Arrays.asList(value.split(",")).stream().map(String::trim).collect(Collectors.toSet())),
@@ -147,7 +97,7 @@ public class ListConstraintType implements ConstraintType {
 
                         return result.stream().collect(Collectors.joining(", "));
                      },
-                     constraintConfiguration, getEncodeFunction(false), getDecodeFunction(), String[].class);
+                     constraintConfiguration, Coders.getTagsEncodeFunction(false), Coders.getTagsDecodeFunction(), String[].class);
             default:
                throw new InvalidConstraintException("Unsupported parameter value for constraint: " + config[1]);
          }
