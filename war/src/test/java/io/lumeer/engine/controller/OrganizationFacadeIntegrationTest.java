@@ -210,10 +210,9 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       createDummyEntries();
 
       final String USER_NAME = "tst2@lumeer.io";
-      Map<String, String> userOrganizations = organizationFacade.readUserOrganizations(USER_NAME);
+      List<String> userOrganizations = organizationFacade.readUserOrganizations(USER_NAME);
       assertThat(userOrganizations).hasSize(4);
-      assertThat(userOrganizations).containsOnlyKeys("TST0", "TST1", "TST3", "TST4");
-      assertThat(userOrganizations).containsValues("Test0", "Test1", "Test3", "Test4");
+      assertThat(userOrganizations).containsOnly("TST0", "TST1", "TST3", "TST4");
    }
 
    @Test

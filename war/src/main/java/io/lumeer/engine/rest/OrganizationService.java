@@ -20,6 +20,8 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.exception.OrganizationAlreadyExistsException;
+import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.controller.OrganizationFacade;
 
 import java.io.Serializable;
@@ -62,18 +64,17 @@ public class OrganizationService implements Serializable {
    }
 
    @GET
-   @Path("/{organizationName}")
+   @Path("/name/{organizationName}")
    @Produces(MediaType.APPLICATION_JSON)
    public String getOrganizationId(final @PathParam("organizationName") String organizationName) {
       if (organizationName == null) {
          throw new IllegalArgumentException();
       }
-      // return organizationFacade.readOrganizationId(organizationName);
-      return null;
+      return organizationFacade.readOrganizationId(organizationName);
    }
 
    @GET
-   @Path("/{organizationId}")
+   @Path("/id/{organizationId}")
    @Produces(MediaType.APPLICATION_JSON)
    public String getOrganizationName(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
@@ -83,8 +84,8 @@ public class OrganizationService implements Serializable {
    }
 
    @POST
-   @Path("/{organizationId}/{organizationName}")
-   public void createOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("organizationName") String organizationName) {
+   @Path("/id/{organizationId}/name/{organizationName}")
+   public void createOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("organizationName") String organizationName) throws OrganizationAlreadyExistsException {
       if (organizationId == null || organizationName == null) {
          throw new IllegalArgumentException();
       }
@@ -92,8 +93,8 @@ public class OrganizationService implements Serializable {
    }
 
    @PUT
-   @Path("/{organizationId}/{newOrganizationName}")
-   public void renameOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("newOrganizationName") String newOrganizationName) {
+   @Path("/id/{organizationId}/name/{newOrganizationName}")
+   public void renameOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("newOrganizationName") String newOrganizationName) throws OrganizationAlreadyExistsException {
       if (organizationId == null || newOrganizationName == null) {
          throw new IllegalArgumentException();
       }
@@ -101,7 +102,7 @@ public class OrganizationService implements Serializable {
    }
 
    @DELETE
-   @Path("/{organizationId}")
+   @Path("/id/{organizationId}")
    public void dropOrganization(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
          throw new IllegalArgumentException();
@@ -110,7 +111,7 @@ public class OrganizationService implements Serializable {
    }
 
    @GET
-   @Path("/{organizationId}/meta/{attributeName}")
+   @Path("/id/{organizationId}/meta/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
    public String readOrganizationMetadata(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
       if (organizationId == null || attributeName == null) {
@@ -120,7 +121,7 @@ public class OrganizationService implements Serializable {
    }
 
    @PUT
-   @Path("/{organizationId}/meta/{attributeName}")
+   @Path("/id/{organizationId}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateOrganizationMetadata(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName, final String value) {
       if (organizationId == null || attributeName == null) {
@@ -131,7 +132,7 @@ public class OrganizationService implements Serializable {
    }
 
    @DELETE
-   @Path("/{organizationId}/meta/{attributeName}")
+   @Path("/id/{organizationId}/meta/{attributeName}")
    public void dropOrganizationMetadata(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
       if (organizationId == null || attributeName == null) {
          throw new IllegalArgumentException();
@@ -140,7 +141,7 @@ public class OrganizationService implements Serializable {
    }
 
    @GET
-   @Path("/{organizationId}/data/")
+   @Path("/id/{organizationId}/data/")
    @Produces(MediaType.APPLICATION_JSON)
    public DataDocument readOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
@@ -150,7 +151,7 @@ public class OrganizationService implements Serializable {
    }
 
    @GET
-   @Path("/{organizationId}/data/{attributeName}")
+   @Path("/id/{organizationId}/data/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
    public String readOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
       if (organizationId == null || attributeName == null) {
@@ -160,7 +161,7 @@ public class OrganizationService implements Serializable {
    }
 
    @PUT
-   @Path("/{organizationId}/data/{attributeName}")
+   @Path("/id/{organizationId}/data/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName, final String value) {
       if (organizationId == null || attributeName == null) {
@@ -171,7 +172,7 @@ public class OrganizationService implements Serializable {
    }
 
    @DELETE
-   @Path("/{organizationId}/data/{attributeName}")
+   @Path("/id/{organizationId}/data/{attributeName}")
    public void dropOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
       if (organizationId == null || attributeName == null) {
          throw new IllegalArgumentException();
@@ -180,7 +181,7 @@ public class OrganizationService implements Serializable {
    }
 
    @POST
-   @Path("/{organizationId}/data")
+   @Path("/id/{organizationId}/data")
    public void resetOrganizationInfoData(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
          throw new IllegalArgumentException();
@@ -190,20 +191,18 @@ public class OrganizationService implements Serializable {
 
    /* ************************************* Users & Roles **************************************** */
 
-   /* ************* "/users/{userName}" **************** */
    @GET
-   @Path("/{userName}")
+   @Path("/users/{userName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Map<String, String> readUserOrganizations(final @PathParam("userName") String userName) {
+   public List<String> readUserOrganizations(final @PathParam("userName") String userName) {
       if (userName == null) {
          throw new IllegalArgumentException();
       }
       return organizationFacade.readUserOrganizations(userName);
    }
 
-   /* ************* "/{organizationId}/users" ******************* */
    @GET
-   @Path("/{organizationId}/users")
+   @Path("/id/{organizationId}/users")
    @Produces(MediaType.APPLICATION_JSON)
    public Map<String, List<String>> readOrganizationUsers(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
@@ -212,29 +211,22 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationUsers(organizationId);
    }
 
-   /* ************* "/{organizationId}/users/{userName}" ****************** */
    @POST
-   @Path("/{organizationId}/users/{userName}")  // TODO: aku adresu?
+   @Path("/id/{organizationId}/users/{userName}") // TODO: aku adresu?
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addUserToOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName) {
+   public void addUserWithRolesToOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) throws UserAlreadyExistsException {
       if (organizationId == null || userName == null) {
          throw new IllegalArgumentException();
       }
-      // organizationFacade.addUserToOrganization(organizationId, userName);
-   }
-
-   @POST
-   @Path("/{organizationId}/users/{userName}") // TODO: aku adresu?
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void addUserWithRolesToOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) {
-      if (organizationId == null || userName == null) {
-         throw new IllegalArgumentException();
+      if (userRoles == null) {
+         organizationFacade.addUserToOrganization(organizationId, userName);
+      } else {
+         organizationFacade.addUserToOrganization(organizationId, userName, userRoles);
       }
-      // organizationFacade.addUserToOrganization(organizationId, userName, userRoles);
    }
 
    @DELETE
-   @Path("/{organizationId}/users/{userName}")
+   @Path("/id/{organizationId}/users/{userName}")
    public void removeUserFromOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName) {
       if (organizationId == null || userName == null) {
          throw new IllegalArgumentException();
@@ -244,7 +236,7 @@ public class OrganizationService implements Serializable {
 
    /* ************* "/{organizationId}/users/{userName}/roles" ******************* */
    @GET
-   @Path("/{organizationId}/users/{userName}/roles")
+   @Path("/id/{organizationId}/users/{userName}/roles")
    @Produces(MediaType.APPLICATION_JSON)
    public List<String> readUserRoles(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName) {
       if (organizationId == null || userName == null) {
@@ -254,7 +246,7 @@ public class OrganizationService implements Serializable {
    }
 
    @POST
-   @Path("/{organizationId}/users/{userName}/roles")
+   @Path("/id/{organizationId}/users/{userName}/roles")
    @Consumes(MediaType.APPLICATION_JSON)
    public void addRolesToUser(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) {
       if (organizationId == null || userName == null) {
@@ -264,7 +256,7 @@ public class OrganizationService implements Serializable {
    }
 
    @DELETE
-   @Path("/{organizationId}/users/{userName}/roles")
+   @Path("/id/{organizationId}/users/{userName}/roles")
    @Consumes(MediaType.APPLICATION_JSON)
    public void removeRolesFromUser(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) {
       if (organizationId == null || userName == null) {
@@ -275,7 +267,7 @@ public class OrganizationService implements Serializable {
 
    /* ************* "/{organizationId}/roles" *************** */
    @GET
-   @Path("/{organizationId}/roles")
+   @Path("/id/{organizationId}/roles")
    @Produces(MediaType.APPLICATION_JSON)
    public List<String> readDefaultRoles(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
@@ -285,7 +277,7 @@ public class OrganizationService implements Serializable {
    }
 
    @POST
-   @Path("/{organizationId}/roles")
+   @Path("/id/{organizationId}/roles")
    @Consumes(MediaType.APPLICATION_JSON)
    public void setDefaultRoles(final @PathParam("organizationId") String organizationId, final List<String> userRoles) {
       if (organizationId == null) {

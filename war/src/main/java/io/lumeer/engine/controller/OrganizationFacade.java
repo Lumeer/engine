@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.exception.OrganizationAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -89,6 +90,18 @@ public class OrganizationFacade {
    }
 
    /**
+    * Reads the organization id according to its name.
+    *
+    * @param organizationName
+    *       name of the organization
+    * @return id of the given organization
+    */
+   public String readOrganizationId(final String organizationName) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationNameFilter(organizationName), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_ID));
+      return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_ID) : null;
+   }
+
+   /**
     * Reads the specific organization metadata.
     *
     * @param organizationId
@@ -148,7 +161,17 @@ public class OrganizationFacade {
     * @param organizationName
     *       name of the new organization to create
     */
-   public void createOrganization(final String organizationId, final String organizationName) {
+   public void createOrganization(final String organizationId, final String organizationName) throws OrganizationAlreadyExistsException {
+      // check if id is unique
+      if (readOrganizationName(organizationId) != null) {
+         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationIdAlreadyExists(organizationId));
+      }
+
+      // check if name is unique
+      if (readOrganizationId(organizationName) != null) {
+         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationNameAlreadyExists(organizationName));
+      }
+
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, organizationId)
             .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
             .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
@@ -163,7 +186,12 @@ public class OrganizationFacade {
     * @param newOrganizationId
     *       new id for organization
     */
-   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) {
+   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) throws OrganizationAlreadyExistsException {
+      // check if id is unique
+      if (readOrganizationName(newOrganizationId) != null) {
+         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationIdAlreadyExists(organizationId));
+      }
+
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, newOrganizationId);
       dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationIdFilter(oldOrganizationId));
    }
@@ -176,7 +204,12 @@ public class OrganizationFacade {
     * @param newOrganizationName
     *       new name of the organization
     */
-   public void renameOrganization(final String organizationId, final String newOrganizationName) {
+   public void renameOrganization(final String organizationId, final String newOrganizationName) throws OrganizationAlreadyExistsException {
+      // check if new name is unique
+      if (readOrganizationId(newOrganizationName) != null) {
+         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationNameAlreadyExists(newOrganizationName));
+      }
+
       DataDocument dataDocument = new DataDocument(LumeerConst.Organization.ATTR_ORG_NAME, newOrganizationName);
       dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, dataDocument, organizationIdFilter(organizationId));
    }
@@ -286,11 +319,11 @@ public class OrganizationFacade {
     *
     * @param userName
     *       name of the user
-    * @return list of organizations
+    * @return list of organizations' ids
     */
-   public Map<String, String> readUserOrganizations(final String userName) {
+   public List<String> readUserOrganizations(final String userName) {
       List<DataDocument> documents = dataStorage.searchIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationFilterByUser(userName), Arrays.asList(LumeerConst.Organization.ATTR_ORG_ID, LumeerConst.Organization.ATTR_ORG_NAME));
-      return documents != null ? documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_ORG_ID), d -> d.getString(LumeerConst.Organization.ATTR_ORG_NAME))) : null;
+      return documents != null ? documents.stream().map(d -> d.getString(LumeerConst.Organization.ATTR_ORG_ID)).collect(Collectors.toList()) : null;
    }
 
    /**
@@ -444,6 +477,10 @@ public class OrganizationFacade {
 
    private DataFilter organizationIdFilter(final String organizationId) {
       return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_ID, organizationId);
+   }
+
+   private DataFilter organizationNameFilter(final String organizationName) {
+      return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_NAME, organizationName);
    }
 
    private DataFilter userFilter(final String organizationId, final String userName) {
