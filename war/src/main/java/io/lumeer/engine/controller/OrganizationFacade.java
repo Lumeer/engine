@@ -25,7 +25,6 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.exception.OrganizationAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -90,18 +89,6 @@ public class OrganizationFacade {
    }
 
    /**
-    * Reads the organization id according to its name.
-    *
-    * @param organizationName
-    *       name of the organization
-    * @return id of the given organization
-    */
-   public String readOrganizationId(final String organizationName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationNameFilter(organizationName), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_ID));
-      return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_ID) : null;
-   }
-
-   /**
     * Reads the specific organization metadata.
     *
     * @param organizationId
@@ -160,14 +147,8 @@ public class OrganizationFacade {
     *       id of the new organization to create
     * @param organizationName
     *       name of the new organization to create
-    * @throws OrganizationAlreadyExistsException when organization with given name already exists
     */
-   public void createOrganization(final String organizationId, final String organizationName) throws OrganizationAlreadyExistsException {
-      // check if name is unique
-      if (readOrganizationId(organizationName) != null) {
-         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationNameAlreadyExists(organizationName));
-      }
-
+   public void createOrganization(final String organizationId, final String organizationName) {
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, organizationId)
             .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
             .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
@@ -181,7 +162,6 @@ public class OrganizationFacade {
     *       id of the organization to change
     * @param newOrganizationId
     *       new id for organization
-    * @throws OrganizationAlreadyExistsException
     */
    public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) {
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, newOrganizationId);
@@ -195,14 +175,8 @@ public class OrganizationFacade {
     *       id of the given organization
     * @param newOrganizationName
     *       new name of the organization
-    * @throws OrganizationAlreadyExistsException when organization with given name already exists
     */
-   public void renameOrganization(final String organizationId, final String newOrganizationName) throws OrganizationAlreadyExistsException {
-      // check if new name is unique
-      if (readOrganizationId(newOrganizationName) != null) {
-         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationNameAlreadyExists(newOrganizationName));
-      }
-
+   public void renameOrganization(final String organizationId, final String newOrganizationName) {
       DataDocument dataDocument = new DataDocument(LumeerConst.Organization.ATTR_ORG_NAME, newOrganizationName);
       dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, dataDocument, organizationIdFilter(organizationId));
    }
@@ -474,10 +448,6 @@ public class OrganizationFacade {
 
    private DataFilter organizationIdFilter(final String organizationId) {
       return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_ID, organizationId);
-   }
-
-   private DataFilter organizationNameFilter(final String organizationName) {
-      return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_NAME, organizationName);
    }
 
    private DataFilter userFilter(final String organizationId, final String userName) {

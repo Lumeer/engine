@@ -93,20 +93,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetOrganizationId() throws Exception {
-      String org = "GetOrganizationId";
-      String id = "GetOrganizationId_id";
-      organizationFacade.createOrganization(id, org);
-
-      final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "name/" + org).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-
-      String idFromResponse = response.readEntity(String.class);
-
-      assertThat(idFromResponse).isEqualTo(id);
-   }
-
-   @Test
    public void testGetOrganizationName() throws Exception {
       String org = "GetOrganizationName";
       String id = "GetOrganizationName_id";
