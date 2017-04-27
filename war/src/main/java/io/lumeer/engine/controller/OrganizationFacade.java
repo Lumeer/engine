@@ -160,13 +160,9 @@ public class OrganizationFacade {
     *       id of the new organization to create
     * @param organizationName
     *       name of the new organization to create
+    * @throws OrganizationAlreadyExistsException when organization with given name already exists
     */
    public void createOrganization(final String organizationId, final String organizationName) throws OrganizationAlreadyExistsException {
-      // check if id is unique
-      if (readOrganizationName(organizationId) != null) {
-         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationIdAlreadyExists(organizationId));
-      }
-
       // check if name is unique
       if (readOrganizationId(organizationName) != null) {
          throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationNameAlreadyExists(organizationName));
@@ -185,13 +181,9 @@ public class OrganizationFacade {
     *       id of the organization to change
     * @param newOrganizationId
     *       new id for organization
+    * @throws OrganizationAlreadyExistsException
     */
-   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) throws OrganizationAlreadyExistsException {
-      // check if id is unique
-      if (readOrganizationName(newOrganizationId) != null) {
-         throw new OrganizationAlreadyExistsException(ErrorMessageBuilder.organizationIdAlreadyExists(organizationId));
-      }
-
+   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) {
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, newOrganizationId);
       dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationIdFilter(oldOrganizationId));
    }
@@ -203,6 +195,7 @@ public class OrganizationFacade {
     *       id of the given organization
     * @param newOrganizationName
     *       new name of the organization
+    * @throws OrganizationAlreadyExistsException when organization with given name already exists
     */
    public void renameOrganization(final String organizationId, final String newOrganizationName) throws OrganizationAlreadyExistsException {
       // check if new name is unique
