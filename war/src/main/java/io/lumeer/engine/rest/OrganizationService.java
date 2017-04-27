@@ -54,6 +54,9 @@ public class OrganizationService implements Serializable {
 
    // TODO: RequestScoped?
 
+   /**
+    * @return map of organizations' ids and names
+    */
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
@@ -61,6 +64,10 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationsMap();
    }
 
+   /**
+    * @param organizationName organization name
+    * @return id of given organization
+    */
    @GET
    @Path("/name/{organizationName}")
    @Produces(MediaType.APPLICATION_JSON)
@@ -71,6 +78,10 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationId(organizationName);
    }
 
+   /**
+    * @param organizationId organization id
+    * @return name of given organization
+    */
    @GET
    @Path("/id/{organizationId}")
    @Produces(MediaType.APPLICATION_JSON)
@@ -81,6 +92,11 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationName(organizationId);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param organizationName organization name
+    * @throws OrganizationAlreadyExistsException if organization with given id and/or name already exists
+    */
    @POST
    @Path("/id/{organizationId}/name/{organizationName}")
    public void createOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("organizationName") String organizationName) throws OrganizationAlreadyExistsException {
@@ -90,6 +106,11 @@ public class OrganizationService implements Serializable {
       organizationFacade.createOrganization(organizationId, organizationName);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param newOrganizationName organization name
+    * @throws OrganizationAlreadyExistsException if organization with given name already exists
+    */
    @PUT
    @Path("/id/{organizationId}/name/{newOrganizationName}")
    public void renameOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("newOrganizationName") String newOrganizationName) throws OrganizationAlreadyExistsException {
@@ -99,6 +120,9 @@ public class OrganizationService implements Serializable {
       organizationFacade.renameOrganization(organizationId, newOrganizationName);
    }
 
+   /**
+    * @param organizationId organization id
+    */
    @DELETE
    @Path("/id/{organizationId}")
    public void dropOrganization(final @PathParam("organizationId") String organizationId) {
@@ -108,6 +132,11 @@ public class OrganizationService implements Serializable {
       organizationFacade.dropOrganization(organizationId);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param attributeName name of metadata attribute
+    * @return value of metadata attribute
+    */
    @GET
    @Path("/id/{organizationId}/meta/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
@@ -118,6 +147,12 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationMetadata(organizationId, attributeName);
    }
 
+   /**
+    * Adds or updates metadata attribute.
+    * @param organizationId organization id
+    * @param attributeName name of metadata attribute
+    * @param value value of metadata attribute
+    */
    @PUT
    @Path("/id/{organizationId}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
@@ -129,6 +164,10 @@ public class OrganizationService implements Serializable {
       organizationFacade.updateOrganizationMetadata(organizationId, metaDocument);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param attributeName name of metadata attribute
+    */
    @DELETE
    @Path("/id/{organizationId}/meta/{attributeName}")
    public void dropOrganizationMetadata(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
@@ -138,6 +177,10 @@ public class OrganizationService implements Serializable {
       organizationFacade.dropOrganizationMetadata(organizationId, attributeName);
    }
 
+   /**
+    * @param organizationId organization id
+    * @return DataDocument with additional info
+    */
    @GET
    @Path("/id/{organizationId}/data/")
    @Produces(MediaType.APPLICATION_JSON)
@@ -148,6 +191,11 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationInfoData(organizationId);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param attributeName name of attribute from additional info
+    * @return value of the attribute
+    */
    @GET
    @Path("/id/{organizationId}/data/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
@@ -158,6 +206,12 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationInfoData(organizationId, attributeName);
    }
 
+   /**
+    * Creates or updates entry in additional info.
+    * @param organizationId organization id
+    * @param attributeName name of the attribute
+    * @param value value of the attribute
+    */
    @PUT
    @Path("/id/{organizationId}/data/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
@@ -169,6 +223,11 @@ public class OrganizationService implements Serializable {
       organizationFacade.updateOrganizationInfoData(organizationId, infoDataDocument);
    }
 
+   /**
+    * Drops atttribute from additional info.
+    * @param organizationId organization id
+    * @param attributeName name of the attribute
+    */
    @DELETE
    @Path("/id/{organizationId}/data/{attributeName}")
    public void dropOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
@@ -178,6 +237,10 @@ public class OrganizationService implements Serializable {
       organizationFacade.dropOrganizationInfoDataAttribute(organizationId, attributeName);
    }
 
+   /**
+    * Drops all additional info.
+    * @param organizationId organization id
+    */
    @PUT
    @Path("/id/{organizationId}/data")
    public void resetOrganizationInfoData(final @PathParam("organizationId") String organizationId) {
@@ -189,6 +252,10 @@ public class OrganizationService implements Serializable {
 
    /* ************************************* Users & Roles **************************************** */
 
+   /**
+    * @param userName user name
+    * @return list of organizations with the user
+    */
    @GET
    @Path("/users/{userName}")
    @Produces(MediaType.APPLICATION_JSON)
@@ -199,6 +266,10 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readUserOrganizations(userName);
    }
 
+   /**
+    * @param organizationId organization id
+    * @return map of users in the organization with their roles
+    */
    @GET
    @Path("/id/{organizationId}/users")
    @Produces(MediaType.APPLICATION_JSON)
@@ -209,6 +280,12 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readOrganizationUsers(organizationId);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param userName user name
+    * @param userRoles list of user roles
+    * @throws UserAlreadyExistsException when user with given name already exists
+    */
    @POST
    @Path("/id/{organizationId}/users/{userName}") // TODO: aku adresu?
    @Consumes(MediaType.APPLICATION_JSON)
@@ -223,6 +300,10 @@ public class OrganizationService implements Serializable {
       }
    }
 
+   /**
+    * @param organizationId organization id
+    * @param userName user name
+    */
    @DELETE
    @Path("/id/{organizationId}/users/{userName}")
    public void removeUserFromOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName) {
@@ -232,7 +313,11 @@ public class OrganizationService implements Serializable {
       organizationFacade.removeUserFromOrganization(organizationId, userName);
    }
 
-   /* ************* "/{organizationId}/users/{userName}/roles" ******************* */
+   /**
+    * @param organizationId organization id
+    * @param userName user name
+    * @return list of roles for given user
+    */
    @GET
    @Path("/id/{organizationId}/users/{userName}/roles")
    @Produces(MediaType.APPLICATION_JSON)
@@ -243,6 +328,11 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readUserRoles(organizationId, userName);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param userName user name
+    * @param userRoles list of roles to add
+    */
    @POST
    @Path("/id/{organizationId}/users/{userName}/roles")
    @Consumes(MediaType.APPLICATION_JSON)
@@ -253,6 +343,11 @@ public class OrganizationService implements Serializable {
       organizationFacade.addRolesToUser(organizationId, userName, userRoles);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param userName user name
+    * @param userRoles list of roles
+    */
    @PUT
    @Path("/id/{organizationId}/users/{userName}/roles")
    @Consumes(MediaType.APPLICATION_JSON)
@@ -263,7 +358,10 @@ public class OrganizationService implements Serializable {
       organizationFacade.removeRolesFromUser(organizationId, userName, userRoles);
    }
 
-   /* ************* "/{organizationId}/roles" *************** */
+   /**
+    * @param organizationId organization id
+    * @return list of default roles
+    */
    @GET
    @Path("/id/{organizationId}/roles")
    @Produces(MediaType.APPLICATION_JSON)
@@ -274,6 +372,10 @@ public class OrganizationService implements Serializable {
       return organizationFacade.readDefaultRoles(organizationId);
    }
 
+   /**
+    * @param organizationId organization id
+    * @param userRoles list of default roles
+    */
    @POST
    @Path("/id/{organizationId}/roles")
    @Consumes(MediaType.APPLICATION_JSON)

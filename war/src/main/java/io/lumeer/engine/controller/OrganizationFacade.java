@@ -291,7 +291,7 @@ public class OrganizationFacade {
    }
 
    /**
-    * Resets additional info of the given organization.
+    * Resets additional info of the given organization (drops everything).
     *
     * @param organizationId
     *       id of the organization
