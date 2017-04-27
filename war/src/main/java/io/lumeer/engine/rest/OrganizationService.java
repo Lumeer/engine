@@ -67,7 +67,7 @@ public class OrganizationService implements Serializable {
     * @return name of given organization
     */
    @GET
-   @Path("/{organizationId}")
+   @Path("/{organizationId}/name")
    @Produces(MediaType.APPLICATION_JSON)
    public String getOrganizationName(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
@@ -81,8 +81,8 @@ public class OrganizationService implements Serializable {
     * @param organizationName organization name
     */
    @POST
-   @Path("/{organizationId}/name/{organizationName}")
-   public void createOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("organizationName") String organizationName) {
+   @Path("/{organizationId}")
+   public void createOrganization(final @PathParam("organizationId") String organizationId, final String organizationName) {
       if (organizationId == null || organizationName == null) {
          throw new IllegalArgumentException();
       }
@@ -223,7 +223,7 @@ public class OrganizationService implements Serializable {
     * Drops all additional info.
     * @param organizationId organization id
     */
-   @PUT
+   @DELETE
    @Path("/{organizationId}/data")
    public void resetOrganizationInfoData(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
@@ -358,7 +358,7 @@ public class OrganizationService implements Serializable {
     * @param organizationId organization id
     * @param userRoles list of default roles
     */
-   @POST
+   @PUT
    @Path("/{organizationId}/roles")
    @Consumes(MediaType.APPLICATION_JSON)
    public void setDefaultRoles(final @PathParam("organizationId") String organizationId, final List<String> userRoles) {

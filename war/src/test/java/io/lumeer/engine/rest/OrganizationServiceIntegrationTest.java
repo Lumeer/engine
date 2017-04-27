@@ -101,7 +101,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(id, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id)
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/name")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet()
                                 .invoke();
@@ -118,9 +118,9 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(id, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + id + "/name/" + org)
+      client.target(TARGET_URI).path(PATH_PREFIX + id)
             .request(MediaType.APPLICATION_JSON)
-            .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
+            .buildPost(Entity.entity(org, MediaType.APPLICATION_JSON))
             .invoke();
 
       assertThat(organizationFacade.readOrganizationsMap()).containsEntry(id, org);
@@ -334,7 +334,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + id + "/data/")
             .request(MediaType.APPLICATION_JSON)
-            .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+            .buildDelete()
             .invoke();
       assertThat(organizationFacade.readOrganizationInfoData(id)).isEmpty();
    }
@@ -531,7 +531,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + id + "/roles")
             .request(MediaType.APPLICATION_JSON)
-            .buildPost(Entity.entity(roles, MediaType.APPLICATION_JSON))
+            .buildPut(Entity.entity(roles, MediaType.APPLICATION_JSON))
             .invoke();
 
       assertThat(organizationFacade.readDefaultRoles(id)).containsOnly(role1, role2);
