@@ -358,7 +358,11 @@ public class OrganizationFacade {
     *       When user already exists in project
     */
    public void addUserToOrganization(final String organizationId, final String userName) throws UserAlreadyExistsException {
-      addUserToOrganization(organizationId, userName, readDefaultRoles(organizationId));
+      List<String> roles = readDefaultRoles(organizationId);
+      if (roles == null) {
+         roles = Collections.emptyList();
+      }
+      addUserToOrganization(organizationId, userName, roles);
    }
 
    /**

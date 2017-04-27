@@ -53,8 +53,6 @@ public class OrganizationService implements Serializable {
    private OrganizationFacade organizationFacade;
 
    // TODO: RequestScoped?
-   // TODO: Serializable?
-   // TODO: dva druhy metod s roznym pathom? Ako na to?
 
    @GET
    @Path("/")
@@ -180,7 +178,7 @@ public class OrganizationService implements Serializable {
       organizationFacade.dropOrganizationInfoDataAttribute(organizationId, attributeName);
    }
 
-   @POST
+   @PUT
    @Path("/id/{organizationId}/data")
    public void resetOrganizationInfoData(final @PathParam("organizationId") String organizationId) {
       if (organizationId == null) {
@@ -214,7 +212,7 @@ public class OrganizationService implements Serializable {
    @POST
    @Path("/id/{organizationId}/users/{userName}") // TODO: aku adresu?
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addUserWithRolesToOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) throws UserAlreadyExistsException {
+   public void addUserToOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) throws UserAlreadyExistsException {
       if (organizationId == null || userName == null) {
          throw new IllegalArgumentException();
       }
@@ -255,7 +253,7 @@ public class OrganizationService implements Serializable {
       organizationFacade.addRolesToUser(organizationId, userName, userRoles);
    }
 
-   @DELETE
+   @PUT
    @Path("/id/{organizationId}/users/{userName}/roles")
    @Consumes(MediaType.APPLICATION_JSON)
    public void removeRolesFromUser(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) {
