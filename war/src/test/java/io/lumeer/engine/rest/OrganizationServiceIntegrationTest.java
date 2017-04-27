@@ -26,6 +26,7 @@ import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.controller.OrganizationFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -59,11 +60,12 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    @SystemDataStorage
    private DataStorage dataStorage;
 
+   @Inject
+   private DataStorageDialect dataStorageDialect;
+
    @Before
    public void init() {
-      if (dataStorage.hasCollection(LumeerConst.Organization.COLLECTION_NAME)) {
-         dataStorage.dropCollection(LumeerConst.Organization.COLLECTION_NAME);
-      }
+      dataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
@@ -99,7 +101,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(id, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id)
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet()
                                 .invoke();
@@ -116,7 +118,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(id, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/name/" + org)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/name/" + org)
             .request(MediaType.APPLICATION_JSON)
             .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
@@ -132,7 +134,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(id, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/name/" + newName)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/name/" + newName)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
@@ -147,7 +149,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(id, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id)
+      client.target(TARGET_URI).path(PATH_PREFIX + id)
             .request(MediaType.APPLICATION_JSON)
             .buildDelete()
             .invoke();
@@ -164,7 +166,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String name = "attribute";
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/meta/" + name)
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/meta/" + name)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       String metaValue = response.readEntity(String.class);
@@ -173,7 +175,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String value = "value";
       organizationFacade.updateOrganizationMetadata(id, name, value);
 
-      response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/meta/" + name)
+      response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/meta/" + name)
                        .request(MediaType.APPLICATION_JSON)
                        .buildGet().invoke();
       metaValue = response.readEntity(String.class);
@@ -191,7 +193,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
 
       // add new value
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/meta/" + name)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/meta/" + name)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(value, MediaType.APPLICATION_JSON))
             .invoke();
@@ -200,7 +202,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String newValue = "new value";
 
       // update existing value
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/meta/" + name)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/meta/" + name)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(newValue, MediaType.APPLICATION_JSON))
             .invoke();
@@ -218,7 +220,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.updateOrganizationMetadata(id, name, value);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/meta/" + name)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/meta/" + name)
             .request(MediaType.APPLICATION_JSON)
             .buildDelete().invoke();
 
@@ -234,7 +236,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String name = "attribute";
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data/" + name)
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/data/" + name)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       String dataValue = response.readEntity(String.class);
@@ -243,7 +245,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String value = "value";
       organizationFacade.updateOrganizationInfoData(id, name, value);
 
-      response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data/" + name)
+      response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/data/" + name)
                        .request(MediaType.APPLICATION_JSON)
                        .buildGet().invoke();
       dataValue = response.readEntity(String.class);
@@ -257,7 +259,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.createOrganization(id, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data")
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       DataDocument dataValue = response.readEntity(DataDocument.class);
@@ -269,7 +271,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String value2 = "value2";
       organizationFacade.updateOrganizationInfoData(id, new DataDocument().append(name1, value1).append(name2, value2));
 
-      response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data")
+      response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/data")
                        .request(MediaType.APPLICATION_JSON)
                        .buildGet().invoke();
       dataValue = response.readEntity(DataDocument.class);
@@ -287,14 +289,14 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String value = "value";
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data/" + name)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/data/" + name)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(value, MediaType.APPLICATION_JSON))
             .invoke();
       assertThat(organizationFacade.readOrganizationInfoData(id, name)).isEqualTo(value);
 
       String newValue = "new value";
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data/" + name)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/data/" + name)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(newValue, MediaType.APPLICATION_JSON))
             .invoke();
@@ -312,7 +314,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.updateOrganizationInfoData(id, name, value);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data/" + name)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/data/" + name)
             .request(MediaType.APPLICATION_JSON)
             .buildDelete().invoke();
 
@@ -330,7 +332,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.updateOrganizationInfoData(id, name, value);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/data/")
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/data/")
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
@@ -373,7 +375,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.addUserToOrganization(id, user2, Arrays.asList(role1, role2));
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/users")
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/users")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       Map<String, List<String>> users = response.readEntity(Map.class);
@@ -393,7 +395,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.setDefaultRoles(id, Arrays.asList(defaultRole));
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/users/" + user)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/users/" + user)
             .request(MediaType.APPLICATION_JSON)
             .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
@@ -413,7 +415,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       List<String> roles = Arrays.asList(role1, role2);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/users/" + user)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/users/" + user)
             .request(MediaType.APPLICATION_JSON)
             .buildPost(Entity.entity(roles, MediaType.APPLICATION_JSON))
             .invoke();
@@ -431,7 +433,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.addUserToOrganization(id, user);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/users/" + user)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/users/" + user)
             .request(MediaType.APPLICATION_JSON)
             .buildDelete().invoke();
       assertThat(organizationFacade.readOrganizationUsers(id)).isEmpty();
@@ -450,7 +452,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.addUserToOrganization(id, user, roles);
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/users/" + user + "/roles")
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/users/" + user + "/roles")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       List<String> rolesResponse = response.readEntity(List.class);
@@ -459,41 +461,38 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testAddRolesToUser() throws Exception {
-      String org = "AddUserRoles";
-      String id = "AddUserRoles_id";
+   public void testAddRoleToUser() throws Exception {
+      String org = "AddUserRole";
+      String id = "AddUserRole_id";
       organizationFacade.createOrganization(id, org);
 
       String user = "user";
-      String role1 = "role 1";
-      String role2 = "role 2";
-      List<String> roles = Arrays.asList(role1, role2);
+      String role = "role";
       organizationFacade.addUserToOrganization(id, user);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/users/" + user + "/roles")
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/users/" + user + "/roles/" + role)
             .request(MediaType.APPLICATION_JSON)
-            .buildPost(Entity.entity(roles, MediaType.APPLICATION_JSON)).invoke();
+            .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
 
-      assertThat(organizationFacade.readUserRoles(id, user)).containsOnly(role1, role2);
+      assertThat(organizationFacade.readUserRoles(id, user)).containsOnly(role);
    }
 
    @Test
-   public void testRemoveRolesFromUser() throws Exception {
-      String org = "RemoveUserRoles";
-      String id = "RemoveUserRoles_id";
+   public void testRemoveRoleFromUser() throws Exception {
+      String org = "RemoveUserRole";
+      String id = "RemoveUserRole_id";
       organizationFacade.createOrganization(id, org);
 
       String user = "user";
       String role1 = "role 1";
       String role2 = "role 2";
-      List<String> roles = Arrays.asList(role1, role2);
-      organizationFacade.addUserToOrganization(id, user, roles);
+      organizationFacade.addUserToOrganization(id, user, Arrays.asList(role1, role2));
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/users/" + user + "/roles")
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/users/" + user + "/roles/" + role1)
             .request(MediaType.APPLICATION_JSON)
-            .buildPut(Entity.entity(Arrays.asList(role1), MediaType.APPLICATION_JSON))
+            .buildDelete()
             .invoke();
 
       assertThat(organizationFacade.readUserRoles(id, user)).containsOnly(role2);
@@ -511,7 +510,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       organizationFacade.setDefaultRoles(id, roles);
 
       final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/roles")
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + id + "/roles")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       List<String> rolesResponse = response.readEntity(List.class);
@@ -530,7 +529,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       List<String> roles = Arrays.asList(role1, role2);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + "id/" + id + "/roles")
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/roles")
             .request(MediaType.APPLICATION_JSON)
             .buildPost(Entity.entity(roles, MediaType.APPLICATION_JSON))
             .invoke();

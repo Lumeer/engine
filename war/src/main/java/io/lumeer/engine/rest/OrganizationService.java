@@ -20,11 +20,11 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.exception.OrganizationAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.controller.OrganizationFacade;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
@@ -79,11 +79,10 @@ public class OrganizationService implements Serializable {
    /**
     * @param organizationId organization id
     * @param organizationName organization name
-    * @throws OrganizationAlreadyExistsException if organization with given id and/or name already exists
     */
    @POST
    @Path("/{organizationId}/name/{organizationName}")
-   public void createOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("organizationName") String organizationName) throws OrganizationAlreadyExistsException {
+   public void createOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("organizationName") String organizationName) {
       if (organizationId == null || organizationName == null) {
          throw new IllegalArgumentException();
       }
@@ -93,11 +92,10 @@ public class OrganizationService implements Serializable {
    /**
     * @param organizationId organization id
     * @param newOrganizationName organization name
-    * @throws OrganizationAlreadyExistsException if organization with given name already exists
     */
    @PUT
    @Path("/{organizationId}/name/{newOrganizationName}")
-   public void renameOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("newOrganizationName") String newOrganizationName) throws OrganizationAlreadyExistsException {
+   public void renameOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("newOrganizationName") String newOrganizationName) {
       if (organizationId == null || newOrganizationName == null) {
          throw new IllegalArgumentException();
       }
@@ -315,31 +313,31 @@ public class OrganizationService implements Serializable {
    /**
     * @param organizationId organization id
     * @param userName user name
-    * @param userRoles list of roles to add
+    * @param role role to add
     */
    @POST
-   @Path("/{organizationId}/users/{userName}/roles")
+   @Path("/{organizationId}/users/{userName}/roles/{role}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addRolesToUser(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) {
-      if (organizationId == null || userName == null) {
+   public void addRoleToUser(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final @PathParam("role") String role) {
+      if (organizationId == null || userName == null || role == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.addRolesToUser(organizationId, userName, userRoles);
+      organizationFacade.addRolesToUser(organizationId, userName, Arrays.asList(role));
    }
 
    /**
     * @param organizationId organization id
     * @param userName user name
-    * @param userRoles list of roles
+    * @param role role to remove
     */
-   @PUT
-   @Path("/{organizationId}/users/{userName}/roles")
+   @DELETE
+   @Path("/{organizationId}/users/{userName}/roles/{role}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void removeRolesFromUser(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final List<String> userRoles) {
-      if (organizationId == null || userName == null) {
+   public void removeRoleFromUser(final @PathParam("organizationId") String organizationId, final @PathParam("userName") String userName, final @PathParam("role") String role) {
+      if (organizationId == null || userName == null || role == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.removeRolesFromUser(organizationId, userName, userRoles);
+      organizationFacade.removeRolesFromUser(organizationId, userName, Arrays.asList(role));
    }
 
    /**

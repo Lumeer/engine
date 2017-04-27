@@ -151,7 +151,8 @@ public class OrganizationFacade {
    public void createOrganization(final String organizationId, final String organizationName) {
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, organizationId)
             .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
-            .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
+            .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument())
+            .append(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES, Collections.emptyList());
       dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, document);
    }
 
@@ -325,11 +326,7 @@ public class OrganizationFacade {
     *       When user already exists in project
     */
    public void addUserToOrganization(final String organizationId, final String userName) throws UserAlreadyExistsException {
-      List<String> roles = readDefaultRoles(organizationId);
-      if (roles == null) {
-         roles = Collections.emptyList();
-      }
-      addUserToOrganization(organizationId, userName, roles);
+      addUserToOrganization(organizationId, userName, readDefaultRoles(organizationId));
    }
 
    /**
@@ -369,7 +366,7 @@ public class OrganizationFacade {
     */
    public List<String> readUserRoles(final String organizationId, final String userName) {
       DataDocument document = readUser(organizationId, userName);
-      return document != null ? document.getArrayList(LumeerConst.Organization.ATTR_USERS_USER_ROLES, String.class) : null;
+      return document != null ? document.getArrayList(LumeerConst.Organization.ATTR_USERS_USER_ROLES, String.class) : Collections.emptyList();
    }
 
    /**
@@ -408,7 +405,7 @@ public class OrganizationFacade {
     */
    public List<String> readDefaultRoles(final String organizationId) {
       DataDocument defaultRoles = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES));
-      return defaultRoles != null ? defaultRoles.getArrayList(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES, String.class) : null;
+      return defaultRoles != null ? defaultRoles.getArrayList(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES, String.class) : Collections.emptyList();
    }
 
    /**
