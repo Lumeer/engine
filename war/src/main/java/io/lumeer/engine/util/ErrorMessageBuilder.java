@@ -20,7 +20,6 @@
 package io.lumeer.engine.util;
 
 import java.text.MessageFormat;
-import java.util.List;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
@@ -32,7 +31,6 @@ public class ErrorMessageBuilder {
    }
 
    private static final String ERROR_COLLECTION_NOT_FOUND = "The collection \"{0}\" does not exist.";
-   private static final String ERROR_COLLECTION_ALREADY_EXISTS = "The collection \"{0}\" already exists.";
    private static final String ERROR_ATTRIBUTE_NOT_FOUND_IN_COLLECTION = "The attribute \"{0}\" does not exist in collection \"{1}\".";
    private static final String ERROR_ID_NOT_FOUND = "The id does not exist in document";
    private static final String ERROR_ATTRIBUTE_ALREADY_EXISTS = "The attribute \"{0}\" already exists in collection \"{1}\".";
@@ -46,29 +44,18 @@ public class ErrorMessageBuilder {
    private static final String ERROR_NULL_KEY = "The key can not be set to 'null'";
    private static final String ERROR_LINK_ALREADY_EXISTS = "LinkInstance between documents already exists";
    private static final String ERROR_PARAM_CANNOT_BE_NULL = "The param  \"{0}\" can not be null.";
-   private static final String ERROR_INVALID_COLLECTION_ATTRIBUTE_TYPE = "The type \"{0}\" is invalid. Valid types are: \"{1}\".";
 
    private static final String ERROR_USER_COLLECTION_NOT_FOUND = "The user collection \"{0}\" does not exist.";
    private static final String ERROR_USER_COLLECTION_ALREADY_EXISTS = "The user collection \"{0}\" already exists.";
-   private static final String ERROR_ATTRIBUTE_METADATA_DOCUMENT_NOT_FOUND = "The metadata document for attribute \"{0}\" in collection \"{1}\" does not exist.";
-   private static final String ERROR_ATTRIBUTE_METADATA_NOT_FOUND = "The metadata \"{0}\" for attribute \"{1}\" in collection \"{2}\" does not exist.";
    private static final String ERROR_COLLECTION_METADATA_NOT_FOUND = "The metadata for collection \"{0}\" does not exist.";
 
-   private static final String ERROR_VIEW_METADATA_NOT_FOUND = "The metadata for view \"{0}\" does not exist.";
-   private static final String ERROR_VIEW_METADATA_VALUE_NOT_FOUND = "The metadata value for key \"{1}\" for view \"{0}\" does not exist.";
    private static final String ERROR_VIEW_USERNAME_ALREADY_EXISTS = "The view with username \"{0}\" already exists.";
-   private static final String ERROR_VIEW_META_IMMUTABLE = "The metadata key \"{1}\" for view \"{0}\" cannot be changed.";
-   private static final String ERROR_VIEW_META_SPECIAL = "The metadata key \"{1}\" for view \"{0}\" can be changed only with special method.";
 
    private static final String ERROR_USER_ALREADY_EXISTS_IN_PROJECT = "User \"{0}\" already exists in project \"{1}\"";
    private static final String ERROR_USER_ALREADY_EXISTS_IN_ORGANIZATION = "User \"{0}\" already exists in organization \"{1}\"";
 
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
-   }
-
-   public static String collectionAlreadyExistsString(String collection) {
-      return MessageFormat.format(ERROR_COLLECTION_ALREADY_EXISTS, collection);
    }
 
    public static String attributeNotFoundInColString(String attribute, String collection) {
@@ -127,40 +114,12 @@ public class ErrorMessageBuilder {
       return MessageFormat.format(ERROR_USER_COLLECTION_ALREADY_EXISTS, collection);
    }
 
-   public static String attributeMetadataDocumentNotFoundString(String collection, String attribute) {
-      return MessageFormat.format(ERROR_ATTRIBUTE_METADATA_DOCUMENT_NOT_FOUND, attribute, collection);
-   }
-
-   public static String attributeMetadataNotFoundString(String collection, String attribute, String metadataType) {
-      return MessageFormat.format(ERROR_ATTRIBUTE_METADATA_NOT_FOUND, metadataType, attribute, collection);
-   }
-
    public static String collectionMetadataNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_METADATA_NOT_FOUND, collection);
    }
 
-   public static String viewMetadataNotFoundString(int viewId) {
-      return MessageFormat.format(ERROR_VIEW_METADATA_NOT_FOUND, viewId);
-   }
-
-   public static String viewMetadataValueNotFoundString(int viewId, String valueKey) {
-      return MessageFormat.format(ERROR_VIEW_METADATA_VALUE_NOT_FOUND, viewId, valueKey);
-   }
-
    public static String viewUsernameAlreadyExistsString(String viewName) {
       return MessageFormat.format(ERROR_VIEW_USERNAME_ALREADY_EXISTS, viewName);
-   }
-
-   public static String viewMetaImmutableString(int viewId, String metaKey) {
-      return MessageFormat.format(ERROR_VIEW_META_IMMUTABLE, viewId, metaKey);
-   }
-
-   public static String viewMetaSpecialString(int viewId, String metaKey) {
-      return MessageFormat.format(ERROR_VIEW_META_SPECIAL, viewId, metaKey);
-   }
-
-   public static String invalidCollectionAttributeTypeString(String newType, List<String> types) {
-      return MessageFormat.format(ERROR_INVALID_COLLECTION_ATTRIBUTE_TYPE, newType, types);
    }
 
    public static String idNotFoundString() {
@@ -174,5 +133,4 @@ public class ErrorMessageBuilder {
    public static String userAlreadyExistsInOrganizationString(String userName, String organizationId) {
       return MessageFormat.format(ERROR_USER_ALREADY_EXISTS_IN_ORGANIZATION, userName, organizationId);
    }
-
 }
