@@ -60,13 +60,6 @@ public class DatabaseInitializer {
                .append(dataStorageDialect.concatFields(LumeerConst.Project.ATTR_USERS, LumeerConst.Project.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
       }
 
-      if (!dataStorage.hasCollection(LumeerConst.UserRoles.COLLECTION_NAME)) {
-         dataStorage.createCollection(LumeerConst.UserRoles.COLLECTION_NAME);
-         dataStorage.createIndex(LumeerConst.UserRoles.COLLECTION_NAME, new DataDocument(LumeerConst.UserRoles.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.UserRoles.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING)
-               .append(LumeerConst.UserRoles.ATTR_USER_ROLE, LumeerConst.Index.ASCENDING), true);
-      }
-
       if (!dataStorage.hasCollection(LumeerConst.Organization.COLLECTION_NAME)) {
          dataStorage.createCollection(LumeerConst.Organization.COLLECTION_NAME);
          dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, LumeerConst.Index.ASCENDING), true);

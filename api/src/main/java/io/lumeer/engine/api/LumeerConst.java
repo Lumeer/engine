@@ -180,14 +180,6 @@ public final class LumeerConst {
       public static final String ATTR_META_DEFAULT_ROLES = METADATA_PREFIX + "default-roles";
       
    }
-   
-    public static class UserRoles {
-      public static final String COLLECTION_NAME = "_system-user-roles";
-      public static final String ATTR_ORGANIZATION_ID = "organization-id";
-      public static final String ATTR_PROJECT_ID = "project-id";
-      public static final String ATTR_USER_ROLE = "user-role";
-      public static final String ATTR_CORE_ROLES = "core-roles";
-   }
 
    public static class Organization {
 

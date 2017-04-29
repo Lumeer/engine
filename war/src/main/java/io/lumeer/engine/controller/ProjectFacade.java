@@ -19,9 +19,6 @@
  */
 package io.lumeer.engine.controller;
 
-import static io.lumeer.engine.api.LumeerConst.Project;
-import static io.lumeer.engine.api.LumeerConst.UserRoles;
-
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst.Project;
 import io.lumeer.engine.api.data.DataDocument;
@@ -58,9 +55,6 @@ public class ProjectFacade {
 
    @Inject
    private DatabaseInitializer databaseInitializer;
-
-   @Inject
-   private UserRoleFacade userRoleFacade;
 
    private String projectId = "default";
 
@@ -209,7 +203,7 @@ public class ProjectFacade {
     */
    public List<String> readDefaultRoles(final String projectId) {
       DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectIdFilter(projectId), Collections.singletonList(Project.ATTR_META_DEFAULT_ROLES));
-      return document != null ? document.getArrayList(Project.ATTR_META_DEFAULT_ROLES, String.class) : null;
+      return document != null ? document.getArrayList(Project.ATTR_META_DEFAULT_ROLES, String.class) : Collections.emptyList();
    }
 
    /**
@@ -311,7 +305,7 @@ public class ProjectFacade {
     */
    public List<String> readUserRoles(final String projectId, final String userName) {
       DataDocument document = readUser(projectId, userName);
-      return document != null ? document.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class) : null;
+      return document != null ? document.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class) : Collections.emptyList();
    }
 
    /**
@@ -324,7 +318,7 @@ public class ProjectFacade {
    public Map<String, List<String>> readUsersRoles(final String projectId) {
       DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectIdFilter(projectId), Collections.singletonList(Project.ATTR_USERS));
       List<DataDocument> users = document.getArrayList(Project.ATTR_USERS, DataDocument.class);
-      return users != null ? users.stream().collect(Collectors.toMap(d -> d.getString(Project.ATTR_USERS_USERNAME), d -> d.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class))) : null;
+      return users != null ? users.stream().collect(Collectors.toMap(d -> d.getString(Project.ATTR_USERS_USERNAME), d -> d.getArrayList(Project.ATTR_USERS_USER_ROLES, String.class))) : Collections.emptyMap();
    }
 
    /**
@@ -339,21 +333,7 @@ public class ProjectFacade {
     * @return true if user has this role, false otherwise
     */
    public boolean hasUserRole(final String projectId, final String userName, final String userRole) {
-      List<String> userRoles = readUserRoles(projectId, userName);
-      if (userRoles == null) {
-         return false;
-      }
-      if (userRoles.contains(userRole)) {
-         return true;
-      } else {
-         Map<String, List<String>> roles = userRoleFacade.readRoles(organizationFacade.getOrganizationId(), projectId);
-         for (String ur : userRoles) {
-            if (roles.containsKey(ur) && roles.get(ur).contains(userRole)) {
-               return true;
-            }
-         }
-         return false;
-      }
+      return readUserRoles(projectId, userName).contains(userRole);
    }
 
    private DataDocument readUser(final String projectId, final String userName) {
@@ -367,14 +347,6 @@ public class ProjectFacade {
       filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(Project.ATTR_PROJECT_ID, projectId);
       filter.put(dataStorageDialect.concatFields(Project.ATTR_USERS, Project.ATTR_USERS_USERNAME), userName);
-      return dataStorageDialect.multipleFieldsValueFilter(filter);
-   }
-
-   private DataFilter userRoleFilter(String projectId, String userRole) {
-      Map<String, Object> filter = new HashMap<>();
-      filter.put(UserRoles.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
-      filter.put(UserRoles.ATTR_PROJECT_ID, projectId);
-      filter.put(UserRoles.ATTR_USER_ROLE, userRole);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
