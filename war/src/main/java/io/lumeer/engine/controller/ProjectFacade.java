@@ -322,6 +322,18 @@ public class ProjectFacade {
    }
 
    /**
+    * Reads all projects for user.
+    *
+    * @param userName
+    *       Identification of user.
+    * @return List of projects for selected user.
+    */
+   public List<String> readUserProjects(final String userName) {
+      List<DataDocument> projects = dataStorage.searchIncludeAttrs(Project.COLLECTION_NAME, userFilter(null, userName), Collections.singletonList(Project.ATTR_PROJECT_ID));
+      return projects.stream().map(d -> d.getString(Project.ATTR_PROJECT_ID)).collect(Collectors.toList());
+   }
+
+   /**
     * Check whether user has specific role
     *
     * @param projectId
@@ -345,7 +357,9 @@ public class ProjectFacade {
    private DataFilter userFilter(String projectId, String userName) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
-      filter.put(Project.ATTR_PROJECT_ID, projectId);
+      if (projectId != null) {
+         filter.put(Project.ATTR_PROJECT_ID, projectId);
+      }
       filter.put(dataStorageDialect.concatFields(Project.ATTR_USERS, Project.ATTR_USERS_USERNAME), userName);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }

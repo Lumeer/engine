@@ -108,7 +108,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void metadataMethodsTest() throws Exception {
       final String project1 = "project11";
-      final String project2 = "project22";
+      final String project2 = "project12";
 
       projectFacade.createProject(project1, "Project One");
       projectFacade.createProject(project2, "Project Two");
@@ -137,7 +137,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void userManagementTest() throws Exception {
-      final String project = "project111";
+      final String project = "project31";
       projectFacade.createProject(project, "Project One");
       projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
       projectFacade.addUserToProject(project, "u2", Arrays.asList("r4", "r2", "r3"));
@@ -179,7 +179,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void userAlreadyExistsTest() throws Exception {
-      String project = "project1111";
+      String project = "project41";
       projectFacade.createProject(project, "Project One");
       projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
       assertThatThrownBy(() -> projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"))).isInstanceOf(UserAlreadyExistsException.class);
@@ -187,13 +187,38 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void projectAlreadyExistsTest() throws Exception {
-      final String project1 = "project11111";
-      final String project2 = "project22222";
+      final String project1 = "project51";
+      final String project2 = "project52";
       projectFacade.createProject(project1, "Project One");
       projectFacade.createProject(project2, "Project Two");
 
       assertThatThrownBy(() -> projectFacade.createProject(project1, "Project One again")).isInstanceOf(MongoWriteException.class);
       assertThatThrownBy(() -> projectFacade.updateProjectId(project1, project2)).isInstanceOf(MongoWriteException.class);
+   }
+
+   @Test
+   public void readUserProjectsTest() throws Exception {
+      final String project1 = "project61";
+      final String project2 = "project62";
+      final String project3 = "project63";
+      final String project4 = "project64";
+      projectFacade.createProject(project1, "Project One");
+      projectFacade.createProject(project2, "Project Two");
+      projectFacade.createProject(project3, "Project Three");
+      projectFacade.createProject(project4, "Project Four");
+
+      final String user1 = "user1";
+      final String user2 = "user2";
+      projectFacade.addUserToProject(project1, user1);
+      projectFacade.addUserToProject(project1, user2);
+      projectFacade.addUserToProject(project2, user1);
+      projectFacade.addUserToProject(project3, user1);
+      projectFacade.addUserToProject(project4, user2);
+
+      List<String> projects = projectFacade.readUserProjects(user1);
+      assertThat(projects).containsOnly(project1, project2, project3);
+      projects = projectFacade.readUserProjects(user2);
+      assertThat(projects).containsOnly(project1, project4);
    }
 
 }
