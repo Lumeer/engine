@@ -55,9 +55,6 @@ public class OrganizationFacade {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
-   @Inject
-   private UserRoleFacade userRoleFacade;
-
    public String getOrganizationId() {
       return organizationId;
    }
@@ -420,21 +417,7 @@ public class OrganizationFacade {
     * @return true if the role is assigned to the given user, false otherwise
     */
    public boolean hasUserRoleInOrganization(final String organizationId, final String userName, final String userRole) {
-      List<String> userRoles = readUserRoles(organizationId, userName);
-      if (userRoles == null) {
-         return false;
-      }
-      if (userRoles.contains(userRole)) {
-         return true;
-      } else {
-         Map<String, List<String>> roles = userRoleFacade.readRoles(this.getOrganizationId());
-         for (String ur : userRoles) {
-            if (roles.containsKey(ur) && roles.get(ur).contains(userRole)) {
-               return true;
-            }
-         }
-         return false;
-      }
+      return readUserRoles(organizationId, userName).contains(userRole);
    }
 
    private DataDocument readUser(final String organizationId, final String userName) {

@@ -20,7 +20,6 @@
 package io.lumeer.engine.controller;
 
 import static io.lumeer.engine.api.LumeerConst.Project;
-import static io.lumeer.engine.api.LumeerConst.UserRoles;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -65,13 +64,9 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private OrganizationFacade organizationFacade;
 
-   @Inject
-   private UserRoleFacade userRoleFacade;
-
    @Before
    public void setUp() throws Exception {
       systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
-      systemDataStorage.dropManyDocuments(UserRoles.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
@@ -175,13 +170,11 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(userRoles).containsExactly("r10", "r11");
 
       //has role with transitive support test
-      userRoleFacade.createRole(organizationFacade.getOrganizationId(), project, "ur1", Arrays.asList("c1", "c2", "c3"));
-      projectFacade.addUserToProject(project, "user100", Arrays.asList("ur1", "c4", "c5"));
+      projectFacade.addUserToProject(project, "user100", Arrays.asList("c1", "c2"));
       assertThat(projectFacade.hasUserRole(project, "user100", "c1")).isTrue();
       assertThat(projectFacade.hasUserRole(project, "user100", "c2")).isTrue();
-      assertThat(projectFacade.hasUserRole(project, "user100", "ur1")).isTrue();
-      assertThat(projectFacade.hasUserRole(project, "user100", "c4")).isTrue();
-      assertThat(projectFacade.hasUserRole(project, "user100", "c6")).isFalse();
+      assertThat(projectFacade.hasUserRole(project, "user100", "c3")).isFalse();
+      assertThat(projectFacade.hasUserRole(project, "user100", "c4")).isFalse();
    }
 
    @Test
