@@ -60,15 +60,7 @@ public class SecurityFacade implements Serializable {
 
    /********* CHECKING ROLES *********/
 
-   public boolean checkOrganizationManage(String organizationId, String user) {
-      return checkOrganizationRole(organizationId, user, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public boolean checkOrganizationWrite(String organizationId, String user) {
-      return checkOrganizationRole(organizationId, user, LumeerConst.Security.WRITE_KEY);
-   }
-
-   private boolean checkOrganizationRole(String organizationId, String user, String role) {
+   public boolean hasOrganizationRole(String organizationId, String user, String role) {
       DataDocument doc = systemDataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
             dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationId),
@@ -77,44 +69,16 @@ public class SecurityFacade implements Serializable {
       return checkRole(doc, user, role);
    }
 
-   public boolean checkProjectManage(String projectId, String user) {
-      return checkProjectRole(projectId, user, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public boolean checkProjectWrite(String projectId, String user) {
-      return checkProjectRole(projectId, user, LumeerConst.Security.WRITE_KEY);
-   }
-
-   private boolean checkProjectRole(String projectId, String user, String role) {
-      Map<String, Object> filter = new HashMap<>();
-      filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectId);
-      filter.put(LumeerConst.Security.SOURCE_TYPE_KEY, LumeerConst.Security.SOURCE_TYPE_PROJECT);
-
+   public boolean hasProjectRole(String projectId, String user, String role) {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.multipleFieldsValueFilter(filter),
+            dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectId)),
             Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
 
       return checkRole(doc, user, role);
    }
 
-   public boolean checkCollectionManage(String collectionName, String projectId, String user) {
-      return checkCollectionRole(collectionName, projectId, user, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public boolean checkCollectionRead(String collectionName, String projectId, String user) {
-      return checkCollectionRole(collectionName, projectId, user, LumeerConst.Security.READ_KEY);
-   }
-
-   public boolean checkCollectionShare(String collectionName, String projectId, String user) {
-      return checkCollectionRole(collectionName, projectId, user, LumeerConst.Security.SHARE_KEY);
-   }
-
-   public boolean checkCollectionWrite(String collectionName, String projectId, String user) {
-      return checkCollectionRole(collectionName, projectId, user, LumeerConst.Security.WRITE_KEY);
-   }
-
-   private boolean checkCollectionRole(String collectionName, String projectId, String user, String role) {
+   public boolean hasCollectionRole(String collectionName, String projectId, String user, String role) {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(collectionFilter(collectionName, projectId)),
@@ -123,19 +87,7 @@ public class SecurityFacade implements Serializable {
       return checkRole(doc, user, role);
    }
 
-   public boolean checkViewManage(String viewId, String projectId, String user) {
-      return checkViewRole(viewId, projectId, user, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public boolean checkViewRead(String viewId, String projectId, String user) {
-      return checkViewRole(viewId, projectId, user, LumeerConst.Security.READ_KEY);
-   }
-
-   public boolean checkViewClone(String viewId, String projectId, String user) {
-      return checkViewRole(viewId, projectId, user, LumeerConst.Security.CLONE_KEY);
-   }
-
-   private boolean checkViewRole(String viewId, String projectId, String user, String role) {
+   public boolean hasViewRole(String viewId, String projectId, String user, String role) {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(viewFilter(viewId, projectId)),
@@ -160,23 +112,15 @@ public class SecurityFacade implements Serializable {
 
    /********* ADDING ROLES *********/
 
-   public void addOrganizationManage(String organizationId, String user) {
-      addOrganizationRole(organizationId, user, null, LumeerConst.Security.MANAGE_KEY);
+   private void addOrganizationUserRole(String organizationId, String user, String role) {
+      addOrganizationRole(organizationId, user, null, role);
    }
 
-   public void addOrganizationWrite(String organizationId, String user) {
-      addOrganizationRole(organizationId, user, null, LumeerConst.Security.WRITE_KEY);
+   private void addOrganizationGroupRole(String organizationId, String group, String role) {
+      addOrganizationRole(organizationId, null, group, role);
    }
 
-   public void addOrganizationGroupManage(String organizationId, String group) {
-      addOrganizationRole(organizationId, null, group, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public void addOrganizationGroupWrite(String organizationId, String group) {
-      addOrganizationRole(organizationId, null, group, LumeerConst.Security.WRITE_KEY);
-   }
-
-   private void addOrganizationRole(String organizationId, String user, String group, String role) {
+   public void addOrganizationRole(String organizationId, String user, String group, String role) {
       String userOrGroupKey = userOrGroupKey(user);
       String userOrGroupName = userOrGroupName(user, group);
 
@@ -190,20 +134,12 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void addProjectManage(String projectId, String user) {
-      addProjectRole(projectId, user, null, LumeerConst.Security.MANAGE_KEY);
+   public void addProjectUserRole(String projectId, String user, String role) {
+      addProjectRole(projectId, user, null, role);
    }
 
-   public void addProjectWrite(String projectId, String user) {
-      addProjectRole(projectId, user, null, LumeerConst.Security.WRITE_KEY);
-   }
-
-   public void addProjectGroupManage(String projectId, String group) {
-      addProjectRole(projectId, null, group, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public void addProjectGroupWrite(String projectId, String group) {
-      addProjectRole(projectId, null, group, LumeerConst.Security.WRITE_KEY);
+   public void addProjectGroupRole(String projectId, String group, String role) {
+      addProjectRole(projectId, null, group, role);
    }
 
    private void addProjectRole(String projectId, String user, String group, String role) {
@@ -212,7 +148,7 @@ public class SecurityFacade implements Serializable {
 
       dataStorage.addItemToArray(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.fieldValueFilter(LumeerConst.Security.PROJECT_ID_KEY, projectId),
+            dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectId)),
             dataStorageDialect.concatFields(
                   LumeerConst.Security.ROLES_KEY,
                   role,
@@ -220,36 +156,12 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void addCollectionManage(String collectionName, String projectId, String user) {
-      addCollectionRole(collectionName, projectId, user, null, LumeerConst.Security.MANAGE_KEY);
+   public void addCollectionUserRole(String collectionName, String projectId, String user, String role) {
+      addCollectionRole(collectionName, projectId, user, null, role);
    }
 
-   public void addCollectionRead(String collectionName, String projectId, String user) {
-      addCollectionRole(collectionName, projectId, user, null, LumeerConst.Security.READ_KEY);
-   }
-
-   public void addCollectionShare(String collectionName, String projectId, String user) {
-      addCollectionRole(collectionName, projectId, user, null, LumeerConst.Security.SHARE_KEY);
-   }
-
-   public void addCollectionWrite(String collectionName, String projectId, String user) {
-      addCollectionRole(collectionName, projectId, user, null, LumeerConst.Security.WRITE_KEY);
-   }
-
-   public void addCollectionGroupManage(String collectionName, String projectId, String group) {
-      addCollectionRole(collectionName, projectId, null, group, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public void addCollectionGroupRead(String collectionName, String projectId, String group) {
-      addCollectionRole(collectionName, projectId, null, group, LumeerConst.Security.READ_KEY);
-   }
-
-   public void addCollectionGroupShare(String collectionName, String projectId, String group) {
-      addCollectionRole(collectionName, projectId, null, group, LumeerConst.Security.SHARE_KEY);
-   }
-
-   public void addCollectionGroupWrite(String collectionName, String projectId, String group) {
-      addCollectionRole(collectionName, projectId, null, group, LumeerConst.Security.WRITE_KEY);
+   public void addCollectionGroupRole(String collectionName, String projectId, String group, String role) {
+      addCollectionRole(collectionName, projectId, null, group, role);
    }
 
    private void addCollectionRole(String collectionName, String projectId, String user, String group, String role) {
@@ -268,28 +180,12 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void addViewManage(String viewId, String projectId, String user) {
-      addViewRole(viewId, projectId, user, null, LumeerConst.Security.MANAGE_KEY);
+   public void addViewUserRole(String viewId, String projectId, String user, String role) {
+      addViewRole(viewId, projectId, user, null, role);
    }
 
-   public void addViewRead(String viewId, String projectId, String user) {
-      addViewRole(viewId, projectId, user, null, LumeerConst.Security.READ_KEY);
-   }
-
-   public void addViewClone(String viewId, String projectId, String user) {
-      addViewRole(viewId, projectId, user, null, LumeerConst.Security.CLONE_KEY);
-   }
-
-   public void addViewGroupManage(String viewId, String projectId, String group) {
-      addViewRole(viewId, projectId, null, group, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public void addViewGroupRead(String viewId, String projectId, String group) {
-      addViewRole(viewId, projectId, null, group, LumeerConst.Security.READ_KEY);
-   }
-
-   public void addViewGroupClone(String viewId, String projectId, String group) {
-      addViewRole(viewId, projectId, null, group, LumeerConst.Security.CLONE_KEY);
+   public void addViewGroupRole(String viewId, String projectId, String group, String role) {
+      addViewRole(viewId, projectId, null, group, role);
    }
 
    private void addViewRole(String viewId, String projectId, String user, String group, String role) {
@@ -310,20 +206,12 @@ public class SecurityFacade implements Serializable {
 
    /********* REMOVING ROLES *********/
 
-   public void removeOrganizationManage(String organizationId, String user) {
-      removeOrganizationRole(organizationId, user, null, LumeerConst.Security.MANAGE_KEY);
+   public void removeOrganizationUserRole(String organizationId, String user, String role) {
+      removeOrganizationRole(organizationId, user, null, role);
    }
 
-   public void removeOrganizationWrite(String organizationId, String user) {
-      removeOrganizationRole(organizationId, user, null, LumeerConst.Security.WRITE_KEY);
-   }
-
-   public void removeOrganizationGroupManage(String organizationId, String group) {
-      removeOrganizationRole(organizationId, null, group, LumeerConst.Security.MANAGE_KEY);
-   }
-
-   public void removeOrganizationGroupWrite(String organizationId, String group) {
-      removeOrganizationRole(organizationId, null, group, LumeerConst.Security.WRITE_KEY);
+   public void removeOrganizationGroupRole(String organizationId, String group, String role) {
+      removeOrganizationRole(organizationId, null, group, role);
    }
 
    private void removeOrganizationRole(String organizationId, String user, String group, String role) {
@@ -340,20 +228,12 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void removeProjectManage(String projectId, String user) {
-      throw new UnsupportedOperationException();
+   public void removeProjectUserRole(String projectId, String user, String role) {
+      removeProjectRole(projectId, user, null, role);
    }
 
-   public void removeProjectWrite(String projectId, String user) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeProjectGroupManage(String projectId, String group) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeProjectGroupWrite(String projectId, String group) {
-      throw new UnsupportedOperationException();
+   public void removeProjectGroupRole(String projectId, String group, String role) {
+      removeProjectRole(projectId, null, group, role);
    }
 
    private void removeProjectRole(String projectId, String user, String group, String role) {
@@ -362,7 +242,7 @@ public class SecurityFacade implements Serializable {
 
       dataStorage.removeItemFromArray(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.fieldValueFilter(LumeerConst.Security.PROJECT_ID_KEY, projectId),
+            dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectId)),
             dataStorageDialect.concatFields(
                   LumeerConst.Security.ROLES_KEY,
                   role,
@@ -370,36 +250,12 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void removeCollectionManage(String collectionName, String projectId, String user) {
-      throw new UnsupportedOperationException();
+   public void removeCollectionUserRole(String collectionName, String projectId, String user, String role) {
+      removeCollectionRole(collectionName, projectId, user, null, role);
    }
 
-   public void removeCollectionRead(String collectionName, String projectId, String user) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeCollectionShare(String collectionName, String projectId, String user) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeCollectionWrite(String collectionName, String projectId, String user) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeCollectionGroupManage(String collectionName, String projectId, String group) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeCollectionGroupRead(String collectionName, String projectId, String group) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeCollectionGroupShare(String collectionName, String projectId, String group) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeCollectionGroupWrite(String collectionName, String projectId, String group) {
-      throw new UnsupportedOperationException();
+   public void removeCollectionGroupRole(String collectionName, String projectId, String group, String role) {
+      removeCollectionRole(collectionName, projectId, null, group, role);
    }
 
    private void removeCollectionRole(String collectionName, String projectId, String user, String group, String role) {
@@ -418,28 +274,12 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void removeViewManage(String viewId, String projectId, String user) {
-      throw new UnsupportedOperationException();
+   public void removeViewUserRole(String viewId, String projectId, String user, String role) {
+      removeViewRole(viewId, projectId, user, null, role);
    }
 
-   public void removeViewRead(String viewId, String projectId, String user) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeViewClone(String viewId, String projectId, String user) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeViewGroupManage(String viewId, String projectId, String group) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeViewGroupRead(String viewId, String projectId, String group) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void removeViewGroupClone(String viewId, String projectId, String group) {
-      throw new UnsupportedOperationException();
+   public void removeViewGroupRole(String viewId, String projectId, String group, String role) {
+      removeViewRole(viewId, projectId, null, group, role);
    }
 
    private void removeViewRole(String viewId, String projectId, String user, String group, String role) {
@@ -456,6 +296,13 @@ public class SecurityFacade implements Serializable {
                   role,
                   userOrGroupKey),
             userOrGroupName);
+   }
+
+   private Map<String, Object> projectFilter(String projectId) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectId);
+      filter.put(LumeerConst.Security.SOURCE_TYPE_KEY, LumeerConst.Security.SOURCE_TYPE_PROJECT);
+      return filter;
    }
 
    private Map<String, Object> collectionFilter(String collectionName, String projectId) {

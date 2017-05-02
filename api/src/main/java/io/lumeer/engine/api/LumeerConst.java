@@ -170,11 +170,11 @@ public final class LumeerConst {
       public static final String SOURCE_TYPE_VIEW = "view";
 
       public static final String ROLES_KEY = "roles";
-      public static final String MANAGE_KEY = "manage";
-      public static final String WRITE_KEY = "write";
-      public static final String READ_KEY = "read";
-      public static final String SHARE_KEY = "share";
-      public static final String CLONE_KEY = "clone";
+      public static final String ROLE_MANAGE = "manage";
+      public static final String ROLE_WRITE = "write";
+      public static final String ROLE_READ = "read";
+      public static final String ROLE_SHARE = "share";
+      public static final String ROLE_CLONE = "clone";
 
       public static final String USERS_KEY = "users";
       public static final String GROUP_KEY = "groups";
