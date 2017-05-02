@@ -86,9 +86,13 @@ public class SecurityFacade implements Serializable {
    }
 
    private boolean checkProjectRole(String projectId, String user, String role) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectId);
+      filter.put(LumeerConst.Security.SOURCE_TYPE_KEY, LumeerConst.Security.SOURCE_TYPE_PROJECT);
+
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.fieldValueFilter(LumeerConst.Security.PROJECT_ID_KEY, projectId),
+            dataStorageDialect.multipleFieldsValueFilter(filter),
             Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
 
       return checkRole(doc, user, role);
