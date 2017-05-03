@@ -163,11 +163,13 @@ public final class LumeerConst {
       public static final String ORGANIZATION_ID_KEY = "organization-id";
 
       public static final String PROJECT_ID_KEY = "project-id";
-      public static final String SOURCE_ID_KEY = "source-id";
-      public static final String SOURCE_TYPE_KEY = "source-type";
-      public static final String SOURCE_TYPE_PROJECT = "project";
-      public static final String SOURCE_TYPE_COLLECTION = "collection";
-      public static final String SOURCE_TYPE_VIEW = "view";
+      public static final String COLLECTION_NAME_KEY = "collection-name";
+      public static final String VIEW_ID_KEY = "view-id";
+
+      public static final String TYPE_KEY = "type";
+      public static final String TYPE_PROJECT = "project";
+      public static final String TYPE_COLLECTION = "collection";
+      public static final String TYPE_VIEW = "view";
 
       public static final String ROLES_KEY = "roles";
       public static final String ROLE_MANAGE = "manage";
