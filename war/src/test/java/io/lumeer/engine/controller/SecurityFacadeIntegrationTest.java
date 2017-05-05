@@ -64,6 +64,11 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private OrganizationFacade organizationFacade;
 
+   // we use methods for roles initialization just for test purposes, so we do not have to
+   // create organizations, projects, collections and views here
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
    private String user;
    private String org;
    private String project;
@@ -81,7 +86,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void addAndRemoveOrganizationUserRole() throws Exception {
-      securityFacade.initializeOrganizationRoles(org);
+      databaseInitializer.initializeOrganizationRoles(org);
 
       securityFacade.addOrganizationUserRole(org, user, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isTrue();
@@ -97,7 +102,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void addAndRemoveProjectUserRole() throws Exception {
-      securityFacade.initializeProjectRoles(project);
+      databaseInitializer.initializeProjectRoles(project);
 
       securityFacade.addProjectUserRole(project, user, roleManage);
       assertThat(securityFacade.hasProjectRole(project, roleManage)).isTrue();
@@ -114,13 +119,13 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void addAndRemoveCollectionUserRole() throws Exception {
       String collection = "test collection";
-      securityFacade.initializeCollectionRoles(project, collection);
+      databaseInitializer.initializeCollectionRoles(project, collection);
 
-      securityFacade.addCollectionUserRole(collection, project, user, roleManage);
-      assertThat(securityFacade.hasCollectionRole(collection, project, roleManage)).isTrue();
+      securityFacade.addCollectionUserRole(project, collection, user, roleManage);
+      assertThat(securityFacade.hasCollectionRole(project, collection, roleManage)).isTrue();
 
-      securityFacade.removeCollectionUserRole(collection, project, user, roleManage);
-      assertThat(securityFacade.hasCollectionRole(collection, project, roleManage)).isFalse();
+      securityFacade.removeCollectionUserRole(project, collection, user, roleManage);
+      assertThat(securityFacade.hasCollectionRole(project, collection, roleManage)).isFalse();
    }
 
    @Test
@@ -131,13 +136,13 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void addAndRemoveViewUserRole() throws Exception {
       int viewId = 1;
-      securityFacade.initializeViewRoles(project, viewId);
+      databaseInitializer.initializeViewRoles(project, viewId);
 
-      securityFacade.addViewUserRole(viewId, project, user, roleManage);
-      assertThat(securityFacade.hasViewRole(viewId, project, roleManage)).isTrue();
+      securityFacade.addViewUserRole(project, viewId, user, roleManage);
+      assertThat(securityFacade.hasViewRole(project, viewId, roleManage)).isTrue();
 
-      securityFacade.removeViewUserRole(viewId, project, user, roleManage);
-      assertThat(securityFacade.hasViewRole(viewId, project, roleManage)).isFalse();
+      securityFacade.removeViewUserRole(project, viewId, user, roleManage);
+      assertThat(securityFacade.hasViewRole(project, viewId, roleManage)).isFalse();
    }
 
    @Test

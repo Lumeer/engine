@@ -20,11 +20,13 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import java.util.Collections;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
@@ -38,6 +40,10 @@ public class DatabaseInitializer {
    @Inject
    @SystemDataStorage
    private DataStorage dataStorage;
+
+   @Inject
+   @UserDataStorage
+   private DataStorage userDataStorage;
 
    @Inject
    private DataStorageDialect dataStorageDialect;
@@ -67,11 +73,119 @@ public class DatabaseInitializer {
                .append(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, LumeerConst.Organization.ATTR_USERS_USERNAME), LumeerConst.Index.ASCENDING), false);
       }
 
-      if (!dataStorage.hasCollection(viewFacade.metadataCollection())) {
-         dataStorage.createCollection(viewFacade.metadataCollection());
-         dataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.ID_KEY, LumeerConst.Index.ASCENDING), true);
-         dataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.NAME_KEY, LumeerConst.Index.ASCENDING), true);
+      // TODO: we have to create the collection for every project
+      if (!userDataStorage.hasCollection(viewFacade.metadataCollection())) {
+         userDataStorage.createCollection(viewFacade.metadataCollection());
+         userDataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.ID_KEY, LumeerConst.Index.ASCENDING), true);
+         userDataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.NAME_KEY, LumeerConst.Index.ASCENDING), true);
+      }
+
+      if (!dataStorage.hasCollection(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME)) {
+         dataStorage.createCollection(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME);
+         dataStorage.createIndex(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
+               new DataDocument(LumeerConst.Security.ORGANIZATION_ID_KEY, LumeerConst.Index.ASCENDING), true);
+      }
+
+      if (!userDataStorage.hasCollection(LumeerConst.Security.ROLES_COLLECTION_NAME)) {
+         userDataStorage.createCollection(LumeerConst.Security.ROLES_COLLECTION_NAME);
+
+         // SecurityFacade#projectFilter
+         userDataStorage.createIndex(LumeerConst.Security.ROLES_COLLECTION_NAME,
+               new DataDocument(LumeerConst.Security.PROJECT_ID_KEY, LumeerConst.Index.ASCENDING)
+                     .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Index.ASCENDING), true);
+
+         // SecurityFacade#collectionFilter
+         userDataStorage.createIndex(LumeerConst.Security.ROLES_COLLECTION_NAME,
+               new DataDocument(LumeerConst.Security.PROJECT_ID_KEY, LumeerConst.Index.ASCENDING)
+                     .append(LumeerConst.Security.COLLECTION_NAME_KEY, LumeerConst.Index.ASCENDING)
+                     .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Index.ASCENDING), true);
+
+         // SecurityFacade#viewFilter
+         userDataStorage.createIndex(LumeerConst.Security.ROLES_COLLECTION_NAME,
+               new DataDocument(LumeerConst.Security.PROJECT_ID_KEY, LumeerConst.Index.ASCENDING)
+                     .append(LumeerConst.Security.VIEW_ID_KEY, LumeerConst.Index.ASCENDING)
+                     .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Index.ASCENDING), true);
       }
    }
 
+   public void initializeOrganizationRoles(String organizationId) {
+      DataDocument roles = new DataDocument()
+            .append(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationId)
+            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
+                  .append(LumeerConst.Security.ROLE_MANAGE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
+                  .append(LumeerConst.Security.ROLE_WRITE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
+
+      dataStorage.createDocument(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME, roles);
+   }
+
+   public void initializeProjectRoles(String projectId) {
+      DataDocument roles = new DataDocument()
+            .append(LumeerConst.Security.PROJECT_ID_KEY, projectId)
+            .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_PROJECT)
+            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
+                  .append(LumeerConst.Security.ROLE_MANAGE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
+                  .append(LumeerConst.Security.ROLE_WRITE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
+
+      userDataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
+   }
+
+   public void initializeCollectionRoles(String projectId, String collectionName) {
+      DataDocument roles = new DataDocument()
+            .append(LumeerConst.Security.PROJECT_ID_KEY, projectId)
+            .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_COLLECTION)
+            .append(LumeerConst.Security.COLLECTION_NAME_KEY, collectionName)
+            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
+                  .append(LumeerConst.Security.ROLE_MANAGE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
+                  .append(LumeerConst.Security.ROLE_READ,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
+                  .append(LumeerConst.Security.ROLE_SHARE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
+                  .append(LumeerConst.Security.ROLE_WRITE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
+
+      userDataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
+   }
+
+   public void initializeViewRoles(String projectId, int viewId) {
+      DataDocument roles = new DataDocument()
+            .append(LumeerConst.Security.PROJECT_ID_KEY, projectId)
+            .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_VIEW)
+            .append(LumeerConst.Security.VIEW_ID_KEY, viewId)
+            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
+                  .append(LumeerConst.Security.ROLE_MANAGE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
+                  .append(LumeerConst.Security.ROLE_READ,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
+                  .append(LumeerConst.Security.ROLE_CLONE,
+                        new DataDocument()
+                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
+                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
+
+      userDataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
+   }
 }

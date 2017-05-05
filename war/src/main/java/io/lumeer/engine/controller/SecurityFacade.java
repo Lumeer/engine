@@ -81,19 +81,19 @@ public class SecurityFacade implements Serializable {
       return checkRole(doc, userFacade.getUserEmail(), role);
    }
 
-   public boolean hasCollectionRole(String collectionName, String projectId, String role) {
+   public boolean hasCollectionRole(String projectId, String collectionName, String role) {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.multipleFieldsValueFilter(collectionFilter(collectionName, projectId)),
+            dataStorageDialect.multipleFieldsValueFilter(collectionFilter(projectId, collectionName)),
             Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
 
       return checkRole(doc, userFacade.getUserEmail(), role);
    }
 
-   public boolean hasViewRole(int viewId, String projectId, String role) {
+   public boolean hasViewRole(String projectId, int viewId, String role) {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.multipleFieldsValueFilter(viewFilter(viewId, projectId)),
+            dataStorageDialect.multipleFieldsValueFilter(viewFilter(projectId, viewId)),
             Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
 
       return checkRole(doc, userFacade.getUserEmail(), role);
@@ -166,11 +166,11 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void addCollectionUserRole(String collectionName, String projectId, String user, String role) {
+   public void addCollectionUserRole(String projectId, String collectionName, String user, String role) {
       addCollectionRole(collectionName, projectId, user, null, role);
    }
 
-   public void addCollectionGroupRole(String collectionName, String projectId, String group, String role) {
+   public void addCollectionGroupRole(String projectId, String collectionName, String group, String role) {
       addCollectionRole(collectionName, projectId, null, group, role);
    }
 
@@ -178,7 +178,7 @@ public class SecurityFacade implements Serializable {
       String userOrGroupKey = userOrGroupKey(user);
       String userOrGroupName = userOrGroupName(user, group);
 
-      Map<String, Object> filter = collectionFilter(collectionName, projectId);
+      Map<String, Object> filter = collectionFilter(projectId, collectionName);
 
       dataStorage.addItemToArray(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
@@ -190,11 +190,11 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void addViewUserRole(int viewId, String projectId, String user, String role) {
+   public void addViewUserRole(String projectId, int viewId, String user, String role) {
       addViewRole(viewId, projectId, user, null, role);
    }
 
-   public void addViewGroupRole(int viewId, String projectId, String group, String role) {
+   public void addViewGroupRole(String projectId, int viewId, String group, String role) {
       addViewRole(viewId, projectId, null, group, role);
    }
 
@@ -202,7 +202,7 @@ public class SecurityFacade implements Serializable {
       String userOrGroupKey = userOrGroupKey(user);
       String userOrGroupName = userOrGroupName(user, group);
 
-      Map<String, Object> filter = viewFilter(viewId, projectId);
+      Map<String, Object> filter = viewFilter(projectId, viewId);
 
       dataStorage.addItemToArray(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
@@ -260,19 +260,19 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void removeCollectionUserRole(String collectionName, String projectId, String user, String role) {
-      removeCollectionRole(collectionName, projectId, user, null, role);
+   public void removeCollectionUserRole(String projectId, String collectionName, String user, String role) {
+      removeCollectionRole(projectId, collectionName, user, null, role);
    }
 
-   public void removeCollectionGroupRole(String collectionName, String projectId, String group, String role) {
-      removeCollectionRole(collectionName, projectId, null, group, role);
+   public void removeCollectionGroupRole(String projectId, String collectionName, String group, String role) {
+      removeCollectionRole(projectId, collectionName, null, group, role);
    }
 
-   private void removeCollectionRole(String collectionName, String projectId, String user, String group, String role) {
+   private void removeCollectionRole(String projectId, String collectionName, String user, String group, String role) {
       String userOrGroupKey = userOrGroupKey(user);
       String userOrGroupName = userOrGroupName(user, group);
 
-      Map<String, Object> filter = collectionFilter(collectionName, projectId);
+      Map<String, Object> filter = collectionFilter(projectId, collectionName);
 
       dataStorage.removeItemFromArray(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
@@ -284,19 +284,19 @@ public class SecurityFacade implements Serializable {
             userOrGroupName);
    }
 
-   public void removeViewUserRole(int viewId, String projectId, String user, String role) {
-      removeViewRole(viewId, projectId, user, null, role);
+   public void removeViewUserRole(String projectId, int viewId, String user, String role) {
+      removeViewRole(projectId, viewId, user, null, role);
    }
 
-   public void removeViewGroupRole(int viewId, String projectId, String group, String role) {
-      removeViewRole(viewId, projectId, null, group, role);
+   public void removeViewGroupRole(String projectId, int viewId, String group, String role) {
+      removeViewRole(projectId, viewId, null, group, role);
    }
 
-   private void removeViewRole(int viewId, String projectId, String user, String group, String role) {
+   private void removeViewRole(String projectId, int viewId, String user, String group, String role) {
       String userOrGroupKey = userOrGroupKey(user);
       String userOrGroupName = userOrGroupName(user, group);
 
-      Map<String, Object> filter = viewFilter(viewId, projectId);
+      Map<String, Object> filter = viewFilter(projectId, viewId);
 
       dataStorage.removeItemFromArray(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
@@ -315,7 +315,7 @@ public class SecurityFacade implements Serializable {
       return filter;
    }
 
-   private Map<String, Object> collectionFilter(String collectionName, String projectId) {
+   private Map<String, Object> collectionFilter(String projectId, String collectionName) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectId);
       filter.put(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_COLLECTION);
@@ -323,7 +323,7 @@ public class SecurityFacade implements Serializable {
       return filter;
    }
 
-   private Map<String, Object> viewFilter(int viewId, String projectId) {
+   private Map<String, Object> viewFilter(String projectId, int viewId) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectId);
       filter.put(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_VIEW);
@@ -337,87 +337,6 @@ public class SecurityFacade implements Serializable {
 
    private String userOrGroupName(String user, String group) {
       return user != null ? user : group;
-   }
-
-   public void initializeOrganizationRoles(String organizationId) {
-      DataDocument roles = new DataDocument()
-            .append(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationId)
-            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
-                  .append(LumeerConst.Security.ROLE_MANAGE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
-                  .append(LumeerConst.Security.ROLE_WRITE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
-
-      systemDataStorage.createDocument(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME, roles);
-   }
-
-   public void initializeProjectRoles(String projectId) {
-      DataDocument roles = new DataDocument()
-            .append(LumeerConst.Security.PROJECT_ID_KEY, projectId)
-            .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_PROJECT)
-            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
-                  .append(LumeerConst.Security.ROLE_MANAGE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
-                  .append(LumeerConst.Security.ROLE_WRITE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
-
-      dataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
-   }
-
-   public void initializeCollectionRoles(String projectId, String collectionName) {
-      DataDocument roles = new DataDocument()
-            .append(LumeerConst.Security.PROJECT_ID_KEY, projectId)
-            .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_COLLECTION)
-            .append(LumeerConst.Security.COLLECTION_NAME_KEY, collectionName)
-            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
-                  .append(LumeerConst.Security.ROLE_MANAGE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
-                  .append(LumeerConst.Security.ROLE_READ,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
-                  .append(LumeerConst.Security.ROLE_SHARE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
-                  .append(LumeerConst.Security.ROLE_WRITE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
-
-      dataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
-   }
-
-   public void initializeViewRoles(String projectId, int viewId) {
-      DataDocument roles = new DataDocument()
-            .append(LumeerConst.Security.PROJECT_ID_KEY, projectId)
-            .append(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_VIEW)
-            .append(LumeerConst.Security.VIEW_ID_KEY, viewId)
-            .append(LumeerConst.Security.ROLES_KEY, new DataDocument()
-                  .append(LumeerConst.Security.ROLE_MANAGE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
-                  .append(LumeerConst.Security.ROLE_READ,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList()))
-                  .append(LumeerConst.Security.ROLE_CLONE,
-                        new DataDocument()
-                              .append(LumeerConst.Security.USERS_KEY, Collections.emptyList())
-                              .append(LumeerConst.Security.GROUP_KEY, Collections.emptyList())));
-
-      dataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
    }
 
    /********* OLD **********/
