@@ -336,7 +336,7 @@ public interface DataStorage extends Serializable {
     *       list of attribute names
     * @return the list of the found documents containing only specified attributes
     */
-   public List<DataDocument> searchIncludeAttrs(final String collectionName, final DataFilter filter, final List<String> attributes);
+   List<DataDocument> search(final String collectionName, final DataFilter filter, final List<String> attributes);
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
@@ -354,6 +354,25 @@ public interface DataStorage extends Serializable {
     * @return the list of the found documents
     */
    List<DataDocument> search(final String collectionName, final DataFilter filter, final DataSort sort, final int skip, final int limit);
+
+   /**
+    * Searches the specified collection for specified documents using filter and projection to specific attributes.
+    *
+    * @param collectionName
+    *       the name of the collection where the run will be performed
+    * @param filter
+    *       the query predicate. If unspecified, then all documents in the collection will match the predicate.
+    * @param sort
+    *       the sort specification for the ordering of the results. If unspecified, then a sort is equivalent to setting no sort.
+    * @param attributes
+    *       list of attribute names
+    * @param skip
+    *       the number of documents to skip. A skip of 0 is equivalent to setting no skip.
+    * @param limit
+    *       the maximum number of documents to return. A limit of 0 is equivalent to setting no limit.
+    * @return the list of the found documents containing only specified attributes
+    */
+   List<DataDocument> search(final String collectionName, final DataFilter filter, final DataSort sort, final List<String> attributes, final int skip, final int limit);
 
    /**
     * Counts the number of document in the collection optionally meeting the filter criteria.

@@ -19,8 +19,7 @@
  */
 package io.lumeer.mongodb;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -36,9 +35,9 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 
 /**
@@ -88,6 +87,11 @@ public class MongoDbStorageDialect implements DataStorageDialect {
    }
 
    @Override
+   public DataFilter fieldValueWildcardFilter(final String fieldName, final Object valuePart) {
+      return createFilter(regex(fieldName, ".*" + valuePart + ".*", "gi"));
+   }
+
+   @Override
    public DataFilter documentFilter(final String documentFilter) {
       return createFilter(BsonDocument.parse(documentFilter));
    }
@@ -112,6 +116,14 @@ public class MongoDbStorageDialect implements DataStorageDialect {
       List<Bson> bsons = new ArrayList<>();
       fields.entrySet().forEach(e -> bsons.add(eq(e.getKey(), e.getValue())));
       return createFilter(and(bsons));
+   }
+
+   @Override
+   public DataFilter combineFilters(final DataFilter... filters) {
+      List<Bson> mongoDbFilters = Arrays.stream(filters)
+                                        .map(DataFilter::<Bson>get)
+                                        .collect(Collectors.toList());
+      return createFilter(and(mongoDbFilters));
    }
 
    private DataSort createSort(final Bson sort) {
