@@ -79,7 +79,9 @@ public class DatabaseInitializer {
          userDataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.ID_KEY, LumeerConst.Index.ASCENDING), true);
          userDataStorage.createIndex(viewFacade.metadataCollection(), new DataDocument(LumeerConst.View.NAME_KEY, LumeerConst.Index.ASCENDING), true);
       }
+   }
 
+   public void initializeRolesCollections() {
       if (!dataStorage.hasCollection(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME)) {
          dataStorage.createCollection(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME);
          dataStorage.createIndex(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
