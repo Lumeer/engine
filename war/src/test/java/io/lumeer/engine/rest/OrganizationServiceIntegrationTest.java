@@ -112,6 +112,24 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
+   public void testUpdateOrganizationId() throws Exception {
+      String org = "UpdateOrganizationId";
+      String id = "UpdateOrganizationId_id";
+      organizationFacade.createOrganization(id, org);
+
+      String newId = "UpdateOrganizationId_newId";
+      final Client client = ClientBuilder.newBuilder().build();
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/id/" + newId)
+            .request(MediaType.APPLICATION_JSON)
+            .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+            .invoke();
+
+      String name = organizationFacade.readOrganizationName(newId);
+
+      assertThat(name).isEqualTo(org);
+   }
+
+   @Test
    public void testCreateOrganization() throws Exception {
       String org = "CreateOrganization";
       String id = "CreateOrganization_id";

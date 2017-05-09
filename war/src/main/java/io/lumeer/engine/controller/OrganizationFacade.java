@@ -55,6 +55,18 @@ public class OrganizationFacade {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
+   /**
+    * Gets unique and immutable identificator of the organization - _id from DataDocument
+    *
+    * @param organizationId
+    *       organization id
+    * @return identificator
+    */
+   public String getOrganizationIdentificator(final String organizationId) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Document.ID));
+      return document != null ? document.getString(LumeerConst.Document.ID) : null;
+   }
+
    public String getOrganizationId() {
       return organizationId;
    }
