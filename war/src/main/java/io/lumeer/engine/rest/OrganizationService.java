@@ -104,6 +104,19 @@ public class OrganizationService implements Serializable {
 
    /**
     * @param organizationId organization id
+    * @param newId new organization id
+    */
+   @PUT
+   @Path("/{organizationId}/id/{newId}")
+   public void updateOrganizationId(final @PathParam("organizationId") String organizationId, final @PathParam("newId") String newId) {
+      if (organizationId == null || newId == null) {
+         throw new IllegalArgumentException();
+      }
+      organizationFacade.updateOrganizationId(organizationId, newId);
+   }
+
+   /**
+    * @param organizationId organization id
     */
    @DELETE
    @Path("/{organizationId}")

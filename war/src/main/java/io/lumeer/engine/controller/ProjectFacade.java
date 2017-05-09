@@ -20,6 +20,7 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.LumeerConst.Project;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
@@ -57,6 +58,18 @@ public class ProjectFacade {
    private DatabaseInitializer databaseInitializer;
 
    private String projectId = "default";
+
+   /**
+    * Gets unique and immutable identificator of the project - _id from DataDocument
+    *
+    * @param projectId
+    *       project id
+    * @return identificator
+    */
+   public String getProjectIdentificator(final String projectId) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectIdFilter(projectId), Collections.singletonList(LumeerConst.Document.ID));
+      return document != null ? document.getString(LumeerConst.Document.ID) : null;
+   }
 
    public String getCurrentProjectId() {
       return projectId;

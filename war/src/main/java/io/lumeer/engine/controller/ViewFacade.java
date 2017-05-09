@@ -61,9 +61,6 @@ public class ViewFacade implements Serializable {
    @Inject
    private ProjectFacade projectFacade;
 
-   @Inject
-   private OrganizationFacade organizationFacade;
-
    /**
     * Creates initial metadata for the view
     *
@@ -387,6 +384,6 @@ public class ViewFacade implements Serializable {
     * @return name of view metadata collection for given project id
     */
    private String metadataCollection(String projectId) {
-      return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectId;
+      return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectFacade.getProjectIdentificator(projectId);
    }
 }
