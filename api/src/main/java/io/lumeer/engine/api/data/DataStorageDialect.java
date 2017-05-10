@@ -22,6 +22,7 @@ package io.lumeer.engine.api.data;
 import io.lumeer.engine.api.LumeerConst;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,7 +34,9 @@ public interface DataStorageDialect extends Serializable {
    DataDocument renameAttributeQuery(final String metadataCollection, final String collection, final String oldName, final String newName);
 
    DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize);
-   
+
+   DataDocument[] usersOfGroupAggregate(final String organization, final String group);
+
    DataFilter fieldValueFilter(final String fieldName, final Object value);
 
    DataFilter documentFilter(final String documentFilter);

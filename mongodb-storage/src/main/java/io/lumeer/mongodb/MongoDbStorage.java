@@ -383,7 +383,7 @@ public class MongoDbStorage implements DataStorage {
 
    @Override
    public <T> void removeItemFromArray(final String collectionName, final DataFilter filter, final String attributeName, final T item) {
-      database.getCollection(collectionName).updateOne(filter.<Bson>get(), pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
+      database.getCollection(collectionName).updateMany(filter.<Bson>get(), pull(attributeName, MongoUtils.isDataDocument(item) ? new Document((DataDocument) item) : item));
    }
 
    @Override
@@ -401,7 +401,7 @@ public class MongoDbStorage implements DataStorage {
    }
 
    private <T> void removeItemsFromArrayInternal(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items) {
-      database.getCollection(collectionName).updateOne(filter.<Bson>get(), pullAll(attributeName, items));
+      database.getCollection(collectionName).updateMany(filter.<Bson>get(), pullAll(attributeName, items));
    }
 
    @Override

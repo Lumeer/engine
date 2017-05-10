@@ -35,6 +35,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -65,9 +66,16 @@ public class MongoDbStorageDialect implements DataStorageDialect {
             .append("update", new DataDocument()
                   .append("$push", new DataDocument()
                         .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new DataDocument()
-                              .append("$each", Arrays.asList(id))
+                              .append("$each", Collections.singletonList(id))
                               .append("$position", 0)
                               .append("$slice", listSize))));
+   }
+
+   public DataDocument[] usersOfGroupAggregate(final String organization, final String group) {
+      return new DataDocument[] { new DataDocument("$match", new DataDocument(LumeerConst.UserGroup.ATTR_ORG_ID, organization)),
+            new DataDocument("$unwind", "$" + LumeerConst.UserGroup.ATTR_USERS),
+            new DataDocument("$match", new DataDocument(concatFields(LumeerConst.UserGroup.ATTR_USERS, LumeerConst.UserGroup.ATTR_USERS_GROUPS), group)),
+            new DataDocument("$project", new DataDocument(LumeerConst.UserGroup.ATTR_USERS_USER, concatFields("$" + LumeerConst.UserGroup.ATTR_USERS, LumeerConst.UserGroup.ATTR_USERS_USER))) };
    }
 
    private DataFilter createFilter(final Bson filter) {

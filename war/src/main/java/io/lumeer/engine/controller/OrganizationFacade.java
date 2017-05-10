@@ -55,6 +55,9 @@ public class OrganizationFacade {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
    /**
     * Gets unique and immutable identificator of the organization - _id from DataDocument
     *
@@ -157,12 +160,13 @@ public class OrganizationFacade {
     * @param organizationName
     *       name of the new organization to create
     */
-   public void createOrganization(final String organizationId, final String organizationName) {
+   public String createOrganization(final String organizationId, final String organizationName) {
       DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, organizationId)
             .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
-            .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument())
-            .append(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES, Collections.emptyList());
-      dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, document);
+            .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
+      String id = dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, document);
+      databaseInitializer.onOrganizationCreated(id);
+      return id;
    }
 
    /**
@@ -198,8 +202,11 @@ public class OrganizationFacade {
     *       id of the given organization to drop
     */
    public void dropOrganization(final String organizationId) {
-      dataStorage.dropDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId));
-      // TODO: check cannot be implemented without other facades changes
+      String organizationIdentifier =  getOrganizationIdentificator(organizationId);
+      if (organizationIdentifier != null) {
+         dataStorage.dropDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId));
+         databaseInitializer.onOrganizationRemoved(organizationIdentifier);
+      }
    }
 
    /**
@@ -278,178 +285,8 @@ public class OrganizationFacade {
       dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, defaultInfoDocument, organizationIdFilter(organizationId));
    }
 
-   /**
-    * Reads users and their roles in the given organization.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @return map of users and theirs roles
-    */
-   public Map<String, List<String>> readOrganizationUsers(final String organizationId) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_USERS));
-      List<DataDocument> users = document.getArrayList(LumeerConst.Organization.ATTR_USERS, DataDocument.class);
-      return users != null ? users.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_USERS_USERNAME), d -> d.getArrayList(LumeerConst.Organization.ATTR_USERS_USER_ROLES, String.class))) : null;
-   }
-
-   /**
-    * Reads a list of organizations the user is assigned to.
-    *
-    * @param userName
-    *       name of the user
-    * @return list of organizations' ids
-    */
-   public List<String> readUserOrganizations(final String userName) {
-      List<DataDocument> documents = dataStorage.searchIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationFilterByUser(userName), Arrays.asList(LumeerConst.Organization.ATTR_ORG_ID, LumeerConst.Organization.ATTR_ORG_NAME));
-      return documents != null ? documents.stream().map(d -> d.getString(LumeerConst.Organization.ATTR_ORG_ID)).collect(Collectors.toList()) : null;
-   }
-
-   /**
-    * Adds user to organization with specific user roles.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userName
-    *       name of the user to add
-    * @param userRoles
-    *       organization roles of the given user
-    * @throws UserAlreadyExistsException
-    *       When user already exists in organization
-    */
-   public void addUserToOrganization(final String organizationId, final String userName, final List<String> userRoles) throws UserAlreadyExistsException {
-      if (readUser(organizationId, userName) != null) {
-         throw new UserAlreadyExistsException(ErrorMessageBuilder.userAlreadyExistsInOrganizationString(userName, organizationId));
-      }
-      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_USERS_USERNAME, userName)
-            .append(LumeerConst.Organization.ATTR_USERS_USER_ROLES, userRoles);
-      dataStorage.addItemToArray(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), LumeerConst.Organization.ATTR_USERS, document);
-   }
-
-   /**
-    * Adds user to organization with default roles.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userName
-    *       name of the user to add
-    * @throws UserAlreadyExistsException
-    *       When user already exists in project
-    */
-   public void addUserToOrganization(final String organizationId, final String userName) throws UserAlreadyExistsException {
-      addUserToOrganization(organizationId, userName, readDefaultRoles(organizationId));
-   }
-
-   /**
-    * Removes the given user from the organization.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userName
-    *       name of the user to remove from organization
-    */
-   public void removeUserFromOrganization(final String organizationId, final String userName) {
-      dataStorage.removeItemFromArray(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), LumeerConst.Organization.ATTR_USERS, new DataDocument(LumeerConst.Organization.ATTR_USERS_USERNAME, userName));
-   }
-
-   /**
-    * Adds roles to the given user in the organization.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userName
-    *       name of the user
-    * @param userRoles
-    *       roles to set
-    */
-   public void addRolesToUser(final String organizationId, final String userName, final List<String> userRoles) {
-      dataStorage.addItemsToArray(LumeerConst.Organization.COLLECTION_NAME, userFilter(organizationId, userName), dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, "$", LumeerConst.Organization.ATTR_USERS_USER_ROLES), userRoles);
-   }
-
-   /**
-    * Reads user roles of the given user.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userName
-    *       name of the given user
-    * @return list of roles
-    */
-   public List<String> readUserRoles(final String organizationId, final String userName) {
-      DataDocument document = readUser(organizationId, userName);
-      return document != null ? document.getArrayList(LumeerConst.Organization.ATTR_USERS_USER_ROLES, String.class) : Collections.emptyList();
-   }
-
-   /**
-    * Removes roles of the given user in the organization.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userName
-    *       name of the user
-    * @param userRoles
-    *       roles to remove
-    */
-   public void removeRolesFromUser(final String organizationId, final String userName, final List<String> userRoles) {
-      dataStorage.removeItemsFromArray(LumeerConst.Organization.COLLECTION_NAME, userFilter(organizationId, userName), dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, "$", LumeerConst.Organization.ATTR_USERS_USER_ROLES), userRoles);
-   }
-
-   /**
-    * Sets default roles for newly added users of the given organization.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userRoles
-    *       list of user roles to set
-    */
-   public void setDefaultRoles(final String organizationId, final List<String> userRoles) {
-      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES, userRoles);
-      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationIdFilter(organizationId));
-   }
-
-   /**
-    * Reads a list of default roles for newly added users.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @return list of default user roles
-    */
-   public List<String> readDefaultRoles(final String organizationId) {
-      DataDocument defaultRoles = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES));
-      return defaultRoles != null ? defaultRoles.getArrayList(LumeerConst.Organization.ATTR_META_DEFAULT_ROLES, String.class) : Collections.emptyList();
-   }
-
-   /**
-    * Checks whether the given user has specific role in the organization.
-    *
-    * @param organizationId
-    *       id of the organization
-    * @param userName
-    *       name of the user
-    * @param userRole
-    *       name of the specific user role
-    * @return true if the role is assigned to the given user, false otherwise
-    */
-   public boolean hasUserRoleInOrganization(final String organizationId, final String userName, final String userRole) {
-      return readUserRoles(organizationId, userName).contains(userRole);
-   }
-
-   private DataDocument readUser(final String organizationId, final String userName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, userFilter(organizationId, userName), Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, "$")));
-      // we got only one subdocument otherwise there was null
-      return document != null ? document.getArrayList(LumeerConst.Organization.ATTR_USERS, DataDocument.class).get(0) : null;
-   }
-
    private DataFilter organizationIdFilter(final String organizationId) {
       return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_ID, organizationId);
    }
 
-   private DataFilter userFilter(final String organizationId, final String userName) {
-      Map<String, Object> filter = new HashMap<>();
-      filter.put(LumeerConst.Organization.ATTR_ORG_ID, organizationId);
-      filter.put(dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_USERS, LumeerConst.Organization.ATTR_USERS_USERNAME), userName);
-      return dataStorageDialect.multipleFieldsValueFilter(filter);
-   }
-
-   private DataFilter organizationFilterByUser(final String userName) {
-      return dataStorageDialect.fieldValueFilter(dataStorageDialect.concatFields(LumeerConst.Project.ATTR_USERS, LumeerConst.Project.ATTR_USERS_USERNAME), userName);
-   }
 }
