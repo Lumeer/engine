@@ -84,7 +84,7 @@ public class UserGroupFacade implements Serializable {
     * @param groups
     *       The one or more group names.
     */
-   public void addGroup(final String organization, final String... groups) {
+   public void addGroups(final String organization, final String... groups) {
       if (groups.length == 0) {
          return;
       }
@@ -101,7 +101,7 @@ public class UserGroupFacade implements Serializable {
     * @param groups
     *       The one or more group names.
     */
-   public void addUserToGroup(final String organization, final String user, final String... groups) {
+   public void addUserToGroups(final String organization, final String user, final String... groups) {
       if (groups.length == 0) {
          return;
       }
@@ -131,7 +131,7 @@ public class UserGroupFacade implements Serializable {
     * @param groups
     *       The one or more group names.
     */
-   public void removeUserFromGroup(final String organization, final String user, final String... groups) {
+   public void removeUserFromGroups(final String organization, final String user, final String... groups) {
       if (groups.length == 0) {
          return;
       }
@@ -146,7 +146,7 @@ public class UserGroupFacade implements Serializable {
     * @param groups
     *       The one or more group names.
     */
-   public void removeGroup(final String organization, final String... groups) {
+   public void removeGroups(final String organization, final String... groups) {
       if (groups.length == 0) {
          return;
       }

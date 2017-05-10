@@ -235,9 +235,6 @@ public class ConfigurationManipulator implements Serializable {
       configValues.put(key, value);
 
       List<String> flagsArray = configDocument.getArrayList(FLAGS_KEY, String.class);
-      if (flagsArray.isEmpty()) {
-         flagsArray = new ArrayList<>();
-      }
       flagsArray.addAll(newFlags);
 
       DataDocument updatedDocument = new DataDocument();

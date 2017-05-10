@@ -32,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -138,10 +137,10 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       userGroupFacade.addUser(org2Id, user1);
       userGroupFacade.addUser(org2Id, user2);
 
-      userGroupFacade.addUserToGroup(org1Id, user1, "g1", "g2");
-      userGroupFacade.addUserToGroup(org1Id, user2, "g3", "g4");
-      userGroupFacade.addUserToGroup(org2Id, user1, "g5", "g6");
-      userGroupFacade.addUserToGroup(org2Id, user2, "g7");
+      userGroupFacade.addUserToGroups(org1Id, user1, "g1", "g2");
+      userGroupFacade.addUserToGroups(org1Id, user2, "g3", "g4");
+      userGroupFacade.addUserToGroups(org2Id, user1, "g5", "g6");
+      userGroupFacade.addUserToGroups(org2Id, user2, "g7");
 
       Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
@@ -169,10 +168,10 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       userGroupFacade.addUser(org2Id, user1, "g1", "g2", "g3");
       userGroupFacade.addUser(org2Id, user2, "g1", "g2", "g3");
 
-      userGroupFacade.removeUserFromGroup(org1Id, user1, "g1");
-      userGroupFacade.removeUserFromGroup(org1Id, user2, "g1", "g2");
-      userGroupFacade.removeUserFromGroup(org2Id, user1, "g3");
-      userGroupFacade.removeUserFromGroup(org2Id, user2, "g1", "g2", "g3");
+      userGroupFacade.removeUserFromGroups(org1Id, user1, "g1");
+      userGroupFacade.removeUserFromGroups(org1Id, user2, "g1", "g2");
+      userGroupFacade.removeUserFromGroups(org2Id, user1, "g3");
+      userGroupFacade.removeUserFromGroups(org2Id, user2, "g1", "g2", "g3");
 
       Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
@@ -308,8 +307,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       String org1Id = organizationFacade.createOrganization(organization1, "Org one");
       String org2Id = organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addGroup(org1Id, group1, group2, group3);
-      userGroupFacade.addGroup(org2Id, group3, group4, group5);
+      userGroupFacade.addGroups(org1Id, group1, group2, group3);
+      userGroupFacade.addGroups(org2Id, group3, group4, group5);
 
       List<String> groups = userGroupFacade.getGroups(org1Id);
       assertThat(groups).hasSize(3).containsOnly(group1, group2, group3);
@@ -333,16 +332,16 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       String org1Id = organizationFacade.createOrganization(organization1, "Org one");
       String org2Id = organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addGroup(org1Id, group1, group2, group3);
-      userGroupFacade.addGroup(org2Id, group3, group4, group5);
+      userGroupFacade.addGroups(org1Id, group1, group2, group3);
+      userGroupFacade.addGroups(org2Id, group3, group4, group5);
 
       userGroupFacade.addUser(org1Id, user1, group1, group2, group3);
       userGroupFacade.addUser(org1Id, user2, group2, group3, group4);
       userGroupFacade.addUser(org2Id, user1, group3, group4, group5);
       userGroupFacade.addUser(org2Id, user2, group1, group2, group3, group4);
 
-      userGroupFacade.removeGroup(org1Id, group2);
-      userGroupFacade.removeGroup(org2Id, group3, group4, group5);
+      userGroupFacade.removeGroups(org1Id, group2);
+      userGroupFacade.removeGroups(org2Id, group3, group4, group5);
 
       List<String> groups = userGroupFacade.getGroups(org1Id);
       assertThat(groups).hasSize(2).containsOnly(group1, group3);
@@ -375,8 +374,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       String org1Id = organizationFacade.createOrganization(organization1, "Org one");
       String org2Id = organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addGroup(org1Id, group1, group3);
-      userGroupFacade.addGroup(org2Id, group2, group3, group4, group5);
+      userGroupFacade.addGroups(org1Id, group1, group3);
+      userGroupFacade.addGroups(org2Id, group2, group3, group4, group5);
 
       List<String> groups = userGroupFacade.getGroups(org1Id);
       assertThat(groups).hasSize(2).containsOnly(group1, group3);
