@@ -62,6 +62,12 @@ public class DatabaseInitializer {
    @Inject
    private SecurityFacade securityFacade;
 
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
    public void init(@Observes @Initialized(RequestScoped.class) Object init) {
 
    }
@@ -167,7 +173,7 @@ public class DatabaseInitializer {
     */
    private void initOrganizationRoles(String organizationId) {
       DataDocument roles = new DataDocument()
-            .append(Security.ORGANIZATION_ID_KEY, organizationId)
+            .append(Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationIdentificator(organizationId))
             .append(Security.ROLES_KEY, new DataDocument()
                   .append(Security.ROLE_MANAGE,
                         new DataDocument()
@@ -189,7 +195,7 @@ public class DatabaseInitializer {
     */
    private void initProjectRoles(String projectId) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectId)
+            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId))
             .append(Security.TYPE_KEY, Security.TYPE_PROJECT)
             .append(Security.ROLES_KEY, new DataDocument()
                   .append(Security.ROLE_MANAGE,
@@ -214,7 +220,7 @@ public class DatabaseInitializer {
     */
    private void initCollectionRoles(String projectId, String collectionName) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectId)
+            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId))
             .append(Security.TYPE_KEY, Security.TYPE_COLLECTION)
             .append(Security.COLLECTION_NAME_KEY, collectionName)
             .append(Security.ROLES_KEY, new DataDocument()
@@ -245,7 +251,7 @@ public class DatabaseInitializer {
     */
    private void initViewRoles(String projectId, int viewId) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectId)
+            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId))
             .append(Security.TYPE_KEY, Security.TYPE_VIEW)
             .append(Security.VIEW_ID_KEY, viewId)
             .append(Security.ROLES_KEY, new DataDocument()
