@@ -67,8 +67,6 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private UserGroupFacade userGroupFacade;
 
-   // we use methods for roles initialization just for test purposes, so we do not have to
-   // create organizations, projects, collections and views here
    @Inject
    private DatabaseInitializer databaseInitializer;
 
@@ -92,9 +90,7 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       group2 = "group 2";
 
       organizationFacade.dropOrganization(org);
-      databaseInitializer.onOrganizationRemoved(org);
       organizationFacade.createOrganization(org, "name");
-      databaseInitializer.onOrganizationCreated(org);
 
       userGroupFacade.addGroups(organizationFacade.getOrganizationIdentificator(org), group1, group2);
       userGroupFacade.addUser(organizationFacade.getOrganizationIdentificator(org), user, group1, group2);
