@@ -202,7 +202,6 @@ public class OrganizationFacade {
     *       id of the given organization to drop
     */
    public void dropOrganization(final String organizationId) {
-      // TODO: check cannot be implemented without other facades changes
       String organizationIdentifier =  getOrganizationIdentificator(organizationId);
       if (organizationIdentifier != null) {
          dataStorage.dropDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId));

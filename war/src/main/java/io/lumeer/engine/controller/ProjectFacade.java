@@ -204,7 +204,6 @@ public class ProjectFacade {
     */
    public void dropProject(final String projectId) {
       dataStorage.dropDocument(Project.COLLECTION_NAME, projectIdFilter(projectId));
-      // TODO check cannot be implemented without other facades changes
    }
 
    private DataFilter projectIdFilter(String projectId) {
