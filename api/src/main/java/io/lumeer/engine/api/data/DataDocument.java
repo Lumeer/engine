@@ -22,6 +22,7 @@ package io.lumeer.engine.api.data;
 import io.lumeer.engine.api.LumeerConst;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -283,7 +284,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
             return (ArrayList<T>) l;
          }
       }
-      return null;
+      return new ArrayList<T>();
    }
 
    /**

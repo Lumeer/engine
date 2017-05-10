@@ -384,7 +384,7 @@ public interface DataStorage extends Serializable {
     *       Operation stages to execute one by one.
     * @return Resulting document.
     */
-   List aggregate(final String collectionName, final DataDocument... stages);
+   List<DataDocument> aggregate(final String collectionName, final DataDocument... stages);
 
    /**
     * Increment attribute value of document by specified amount. If the field does not exist, it creates the field and sets the field to the specified value.

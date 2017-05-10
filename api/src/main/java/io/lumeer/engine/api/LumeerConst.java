@@ -171,14 +171,10 @@ public final class LumeerConst {
       public static final String ATTR_PROJECT_ID = "project-id";
       public static final String ATTR_ORGANIZATION_ID = "organization-id";
       public static final String ATTR_PROJECT_NAME = "project-name";
-      public static final String ATTR_USERS = "users";
-      public static final String ATTR_USERS_USERNAME = "user";
-      public static final String ATTR_USERS_USER_ROLES = "user-roles";
       public static final String METADATA_PREFIX = "_meta-";
       public static final String ATTR_META_ICON = METADATA_PREFIX + "icon";
       public static final String ATTR_META_COLOR = METADATA_PREFIX + "color";
-      public static final String ATTR_META_DEFAULT_ROLES = METADATA_PREFIX + "default-roles";
-      
+
    }
 
    public static class Organization {
@@ -191,10 +187,24 @@ public final class LumeerConst {
       public static final String METADATA_PREFIX = "_meta-";
       public static final String ATTR_META_ICON = METADATA_PREFIX + "icon";
       public static final String ATTR_META_COLOR = METADATA_PREFIX + "color";
-      public static final String ATTR_META_DEFAULT_ROLES = METADATA_PREFIX + "default-roles";
 
+   }
+
+   public static class UserGroup {
+
+      public static final String COLLECTION_NAME = "_system-usergroup";
+      public static final String ATTR_ORG_ID = "organization-id";
       public static final String ATTR_USERS = "users";
-      public static final String ATTR_USERS_USERNAME = "user";
-      public static final String ATTR_USERS_USER_ROLES = "user-roles";
+      public static final String ATTR_USERS_USER = "user";
+      public static final String ATTR_USERS_GROUPS = "groups";
+
+   }
+
+   public static class Group {
+
+      public static final String COLLECTION_NAME = "_system-group";
+      public static final String ATTR_ORG_ID = "organization-id";
+      public static final String ATTR_GROUPS = "groups";
+
    }
 }

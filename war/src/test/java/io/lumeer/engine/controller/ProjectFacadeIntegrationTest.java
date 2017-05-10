@@ -56,9 +56,6 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    private DataStorageDialect dataStorageDialect;
 
    @Inject
-   private DataStorageProvider dataStorageProvider;
-
-   @Inject
    private ProjectFacade projectFacade;
 
    @Inject
@@ -106,86 +103,6 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void metadataMethodsTest() throws Exception {
-      final String project1 = "project11";
-      final String project2 = "project12";
-
-      projectFacade.createProject(project1, "Project One");
-      projectFacade.createProject(project2, "Project Two");
-
-      // read and update one test
-      assertThat(projectFacade.readProjectMetadata(project1, Project.ATTR_META_COLOR)).isNull();
-      projectFacade.updateProjectMetadata(project1, Project.ATTR_META_COLOR, "000000");
-      assertThat(projectFacade.readProjectMetadata(project1, Project.ATTR_META_COLOR)).isEqualTo("000000");
-      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_COLOR)).isNull();
-
-      // read, update more and drop test
-      projectFacade.updateProjectMetadata(project2, new DataDocument(Project.ATTR_META_COLOR, "ffffff")
-            .append(Project.ATTR_META_ICON, "fa-user"));
-      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_COLOR)).isEqualTo("ffffff");
-      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_ICON)).isEqualTo("fa-user");
-      projectFacade.dropProjectMetadata(project2, Project.ATTR_META_COLOR);
-      assertThat(projectFacade.readProjectMetadata(project2, Project.ATTR_META_COLOR)).isNull();
-
-      // default user roles test
-      assertThat(projectFacade.readDefaultRoles(project1)).isNull();
-      projectFacade.setDefaultRoles(project1, Arrays.asList("role1", "role2", "role3"));
-      assertThat(projectFacade.readDefaultRoles(project1)).containsExactly("role1", "role2", "role3");
-      projectFacade.setDefaultRoles(project1, Arrays.asList("role2", "role4", "role5"));
-      assertThat(projectFacade.readDefaultRoles(project1)).containsExactly("role2", "role4", "role5");
-   }
-
-   @Test
-   public void userManagementTest() throws Exception {
-      final String project = "project31";
-      projectFacade.createProject(project, "Project One");
-      projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
-      projectFacade.addUserToProject(project, "u2", Arrays.asList("r4", "r2", "r3"));
-      projectFacade.addUserToProject(project, "u3", Arrays.asList("r4", "r2"));
-
-      //test creation and reading of all users and theirs roles
-      Map<String, List<String>> users = projectFacade.readUsersRoles(project);
-      assertThat(users).containsOnlyKeys("u1", "u2", "u3");
-      assertThat(users.get("u1")).containsExactly("r1", "r2", "r3");
-      assertThat(users.get("u2")).containsExactly("r4", "r2", "r3");
-      assertThat(users.get("u3")).containsExactly("r4", "r2");
-
-      //test read roles for user
-      List<String> userRoles = projectFacade.readUserRoles(project, "u1");
-      assertThat(userRoles).containsExactly("r1", "r2", "r3");
-      userRoles = projectFacade.readUserRoles(project, "u2");
-      assertThat(userRoles).containsExactly("r4", "r2", "r3");
-
-      // test drop
-      projectFacade.dropUserFromProject(project, "u3");
-      users = projectFacade.readUsersRoles(project);
-      assertThat(users).containsOnlyKeys("u1", "u2");
-
-      // test add and remove roles inside user
-      projectFacade.addRolesToUser(project, "u1", Arrays.asList("r10", "r11"));
-      userRoles = projectFacade.readUserRoles(project, "u1");
-      assertThat(userRoles).containsExactly("r1", "r2", "r3", "r10", "r11");
-      projectFacade.removeRolesFromUser(project, "u1", Arrays.asList("r1", "r2", "r3"));
-      userRoles = projectFacade.readUserRoles(project, "u1");
-      assertThat(userRoles).containsExactly("r10", "r11");
-
-      //has role with transitive support test
-      projectFacade.addUserToProject(project, "user100", Arrays.asList("c1", "c2"));
-      assertThat(projectFacade.hasUserRole(project, "user100", "c1")).isTrue();
-      assertThat(projectFacade.hasUserRole(project, "user100", "c2")).isTrue();
-      assertThat(projectFacade.hasUserRole(project, "user100", "c3")).isFalse();
-      assertThat(projectFacade.hasUserRole(project, "user100", "c4")).isFalse();
-   }
-
-   @Test
-   public void userAlreadyExistsTest() throws Exception {
-      String project = "project41";
-      projectFacade.createProject(project, "Project One");
-      projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"));
-      assertThatThrownBy(() -> projectFacade.addUserToProject(project, "u1", Arrays.asList("r1", "r2", "r3"))).isInstanceOf(UserAlreadyExistsException.class);
-   }
-
-   @Test
    public void projectAlreadyExistsTest() throws Exception {
       final String project1 = "project51";
       final String project2 = "project52";
@@ -194,31 +111,6 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
       assertThatThrownBy(() -> projectFacade.createProject(project1, "Project One again")).isInstanceOf(MongoWriteException.class);
       assertThatThrownBy(() -> projectFacade.updateProjectId(project1, project2)).isInstanceOf(MongoWriteException.class);
-   }
-
-   @Test
-   public void readUserProjectsTest() throws Exception {
-      final String project1 = "project61";
-      final String project2 = "project62";
-      final String project3 = "project63";
-      final String project4 = "project64";
-      projectFacade.createProject(project1, "Project One");
-      projectFacade.createProject(project2, "Project Two");
-      projectFacade.createProject(project3, "Project Three");
-      projectFacade.createProject(project4, "Project Four");
-
-      final String user1 = "user1";
-      final String user2 = "user2";
-      projectFacade.addUserToProject(project1, user1);
-      projectFacade.addUserToProject(project1, user2);
-      projectFacade.addUserToProject(project2, user1);
-      projectFacade.addUserToProject(project3, user1);
-      projectFacade.addUserToProject(project4, user2);
-
-      List<String> projects = projectFacade.readUserProjects(user1);
-      assertThat(projects).containsOnly(project1, project2, project3);
-      projects = projectFacade.readUserProjects(user2);
-      assertThat(projects).containsOnly(project1, project4);
    }
 
 }
