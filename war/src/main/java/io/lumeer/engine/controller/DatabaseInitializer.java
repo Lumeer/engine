@@ -173,7 +173,7 @@ public class DatabaseInitializer {
     */
    private void initOrganizationRoles(String organizationId) {
       DataDocument roles = new DataDocument()
-            .append(Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationIdentificator(organizationId))
+            .append(Security.ORGANIZATION_ID_KEY, organizationId)
             .append(Security.ROLES_KEY, new DataDocument()
                   .append(Security.ROLE_MANAGE,
                         new DataDocument()
