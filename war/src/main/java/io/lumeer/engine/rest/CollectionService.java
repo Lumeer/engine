@@ -106,8 +106,8 @@ public class CollectionService implements Serializable {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationId(organisationId);
-      projectFacade.setCurrentProjectId(projectId);
+      organizationFacade.setOrganizationCode(organisationId);
+      projectFacade.setCurrentProjectCode(projectId);
    }
 
    /**

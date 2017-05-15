@@ -193,7 +193,8 @@ public final class LumeerConst {
    public static class Project {
 
       public static final String COLLECTION_NAME = "_system-project";
-      public static final String ATTR_PROJECT_ID = "project-id";
+      public static final String ATTR_PROJECT_ID = Document.ID;
+      public static final String ATTR_PROJECT_CODE = "project-code";
       public static final String ATTR_ORGANIZATION_ID = "organization-id";
       public static final String ATTR_PROJECT_NAME = "project-name";
       public static final String METADATA_PREFIX = "_meta-";
@@ -205,7 +206,8 @@ public final class LumeerConst {
    public static class Organization {
 
       public static final String COLLECTION_NAME = "_system-organization";
-      public static final String ATTR_ORG_ID = "organization-id";
+      public static final String ATTR_ORG_ID = Document.ID;
+      public static final String ATTR_ORG_CODE = "organization-code";
       public static final String ATTR_ORG_NAME = "organization-name";
       public static final String ATTR_ORG_DATA = "organization-info-data";
 

@@ -83,8 +83,12 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void setUp() throws Exception {
-      projectFacade.setCurrentProjectId("configProject");
-      organizationFacade.setOrganizationId("configOrg");
+      projectFacade.setCurrentProjectCode("configProject");
+      String orgCode = "configOrg";
+      organizationFacade.setOrganizationCode(orgCode);
+      if (organizationFacade.getOrganizationId(orgCode) == null) {
+         organizationFacade.createOrganization(orgCode, "orgName");
+      }
 
       if (isDatabaseCollection(ConfigurationFacade.USER_CONFIG_COLLECTION)) {
          systemDataStorage.dropCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);

@@ -34,8 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -112,14 +110,14 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testUpdateOrganizationId() throws Exception {
+   public void testUpdateOrganizationCode() throws Exception {
       String org = "UpdateOrganizationId";
       String id = "UpdateOrganizationId_id";
       organizationFacade.createOrganization(id, org);
 
       String newId = "UpdateOrganizationId_newId";
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + id + "/id/" + newId)
+      client.target(TARGET_URI).path(PATH_PREFIX + id + "/code/" + newId)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();

@@ -104,7 +104,7 @@ public class CollectionFacade implements Serializable {
     * @return the map of collection names. Keys are internal names, values are original names.
     */
    public Map<String, String> getAllCollections() {
-      Map<String, String> collections = getAllCollections(projectFacade.getCurrentProjectId());
+      Map<String, String> collections = getAllCollections(projectFacade.getCurrentProjectCode());
 
       this.collections = collections;
       return collections;
@@ -113,11 +113,11 @@ public class CollectionFacade implements Serializable {
    /**
     * Returns a Map object of collection names for given project.
     *
-    * @param projectId project id
+    * @param projectCode project code
     * @return the map of collection names. Keys are internal names, values are original names.
     */
-   public Map<String, String> getAllCollections(String projectId) {
-      List<DataDocument> result = getAllCollectionsDocuments(projectId);
+   public Map<String, String> getAllCollections(String projectCode) {
+      List<DataDocument> result = getAllCollectionsDocuments(projectCode);
 
       Map<String, String> collections = new HashMap<>();
 
@@ -136,7 +136,7 @@ public class CollectionFacade implements Serializable {
     * @return a list of internal collection names.
     */
    public List<String> getAllCollectionsByLastTimeUsed() {
-      List<DataDocument> result = getAllCollectionsDocuments(projectFacade.getCurrentProjectId());
+      List<DataDocument> result = getAllCollectionsDocuments(projectFacade.getCurrentProjectCode());
 
       List<String> collections = new ArrayList<>();
 
@@ -147,9 +147,9 @@ public class CollectionFacade implements Serializable {
       return collections;
    }
 
-   private List<DataDocument> getAllCollectionsDocuments(String projectId) {
+   private List<DataDocument> getAllCollectionsDocuments(String projectCode) {
       List<DataDocument> result = dataStorage.search(
-            collectionMetadataFacade.metadataCollection(projectId),
+            collectionMetadataFacade.metadataCollection(projectCode),
             null,
             dataStorageDialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER),
             0, 0);

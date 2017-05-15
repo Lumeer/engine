@@ -161,7 +161,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String buildPathPrefix() {
-      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/";
+      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/";
    }
 
 }

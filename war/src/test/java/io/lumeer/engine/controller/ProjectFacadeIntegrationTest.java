@@ -25,11 +25,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.exception.UserAlreadyExistsException;
-import io.lumeer.engine.provider.DataStorageProvider;
 
 import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
@@ -37,8 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
@@ -76,7 +71,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(project1, "Project One");
       projectFacade.createProject(project2, "Project Two");
 
-      Map<String, String> map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
+      Map<String, String> map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
       assertThat(map).containsOnlyKeys("project1", "project2");
       assertThat(map).containsEntry("project1", "Project One");
       assertThat(map).containsEntry("project2", "Project Two");
@@ -85,20 +80,20 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two");
       assertThat(projectFacade.readProjectName(project3)).isNull();
 
-      projectFacade.updateProjectId(project1, project3);
+      projectFacade.updateProjectCode(project1, project3);
       assertThat(projectFacade.readProjectName(project3)).isEqualTo("Project One");
       assertThat(projectFacade.readProjectName(project1)).isNull();
 
       projectFacade.renameProject(project2, "Project Two Renamed");
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two Renamed");
 
-      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
+      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
       assertThat(map).containsOnlyKeys(project3, project2);
       projectFacade.createProject(project4, "Project Three");
-      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
+      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
       assertThat(map).containsOnlyKeys(project3, project2, project4);
       projectFacade.dropProject(project4);
-      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationId());
+      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
       assertThat(map).containsOnlyKeys(project3, project2);
    }
 
@@ -110,7 +105,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(project2, "Project Two");
 
       assertThatThrownBy(() -> projectFacade.createProject(project1, "Project One again")).isInstanceOf(MongoWriteException.class);
-      assertThatThrownBy(() -> projectFacade.updateProjectId(project1, project2)).isInstanceOf(MongoWriteException.class);
+      assertThatThrownBy(() -> projectFacade.updateProjectCode(project1, project2)).isInstanceOf(MongoWriteException.class);
    }
 
 }

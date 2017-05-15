@@ -394,19 +394,21 @@ public class LinkingFacadeIntegrationTest extends IntegrationTestBase {
 
       String project1 = "project1";
       String project2 = "project2";
-      projectFacade.setCurrentProjectId(project1);
+      projectFacade.createProject(project1, "p1");
+      projectFacade.setCurrentProjectCode(project1);
       linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
-      projectFacade.setCurrentProjectId(project2);
+      projectFacade.createProject(project2, "p2");
+      projectFacade.setCurrentProjectCode(project2);
       linkingFacade.createLinkInstancesBetweenDocumentAndCollection(col1, col1Id1, col2, Arrays.asList(col2Id1, col2Id2), Arrays.asList(new DataDocument(), new DataDocument()), role2, LumeerConst.Linking.LinkDirection.FROM);
 
-      projectFacade.setCurrentProjectId(project1);
+      projectFacade.setCurrentProjectCode(project1);
       List<DataDocument> links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).hasSize(1);
       links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role2, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
 
-      projectFacade.setCurrentProjectId(project2);
+      projectFacade.setCurrentProjectCode(project2);
       links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role1, LumeerConst.Linking.LinkDirection.FROM);
       assertThat(links).isEmpty();
       links = linkingFacade.readLinkedDocumentsBetweenDocumentAndCollection(col1, col1Id1, col2, role2, LumeerConst.Linking.LinkDirection.FROM);
@@ -429,7 +431,7 @@ public class LinkingFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private String buildProjectLinkingCollectionName() {
-      return LumeerConst.Linking.PREFIX + "_" + projectFacade.getCurrentProjectId();
+      return LumeerConst.Linking.PREFIX + "_" + projectFacade.getCurrentProjectCode();
    }
 
 }

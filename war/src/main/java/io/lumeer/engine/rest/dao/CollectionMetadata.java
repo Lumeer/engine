@@ -35,7 +35,6 @@ public class CollectionMetadata {
 
    private String name;
    private String internalName;
-   private String projectId;
    private Map<String, Attribute> attributes = new HashMap<>();
    private Date lastTimeUsed;
    private List<String> recentlyUsedDocumentIds = new ArrayList<>();
@@ -49,7 +48,6 @@ public class CollectionMetadata {
    public CollectionMetadata(final DataDocument metadata) {
       name = metadata.getString(LumeerConst.Collection.REAL_NAME_KEY);
       internalName = metadata.getString(LumeerConst.Collection.INTERNAL_NAME_KEY);
-      projectId = metadata.getString(LumeerConst.Collection.PROJECT_ID_KEY);
 
       DataDocument attributesDocument = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTES_KEY);
       for (String attributeName : attributesDocument.keySet()) {
@@ -74,10 +72,6 @@ public class CollectionMetadata {
 
    public String getInternalName() {
       return internalName;
-   }
-
-   public String getProjectId() {
-      return projectId;
    }
 
    public Map<String, Attribute> getAttributes() {
@@ -132,7 +126,6 @@ public class CollectionMetadata {
    @Override
    public String toString() {
       return "CollectionMetadata{"
-            + "projectId=" + projectId
             + ", name='" + name + '\''
             + ", internalName='" + internalName + '\''
             + ", lastTimeUsed=" + lastTimeUsed + '\''

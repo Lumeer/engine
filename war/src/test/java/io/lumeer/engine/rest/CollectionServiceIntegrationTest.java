@@ -117,7 +117,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void init() {
-      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/";
+      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/collections/";
    }
 
    @Test
@@ -361,7 +361,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       DataDocument metadata = collectionMetadataFacade.getCollectionMetadataDocument(collection);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       // assertThat(collectionMetadata).isEqualTo(metadata); // we do not compare whole documents, because there is a difference in our and deserialized representation
-      assertThat(collectionMetadata).hasSize(9); // based on number of variables in CollectionMetadata
+      assertThat(collectionMetadata).hasSize(8); // based on number of variables in CollectionMetadata
       assertThat(collectionMetadata.getString(LumeerConst.Collection.REAL_NAME_KEY)).isEqualTo(metadata.getString(LumeerConst.Collection.REAL_NAME_KEY));
 
       response2.close();

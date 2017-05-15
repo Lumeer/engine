@@ -19,13 +19,10 @@
  */
 package io.lumeer.engine.rest;
 
-import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -56,149 +53,149 @@ public class ProjectService implements Serializable {
    private OrganizationFacade organizationFacade;
 
    @PathParam("organization")
-   private String organizationId;
+   private String organizationCode;
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationId(organizationId);
+      organizationFacade.setOrganizationCode(organizationCode);
    }
 
    /**
-    * @return Map of projects ids and names.
+    * @return Map of projects codes and names.
     */
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    public Map<String, String> getProjects() {
-      return projectFacade.readProjectsMap(organizationId);
+      return projectFacade.readProjectsMap(organizationCode);
    }
 
    /**
-    * @param projectId
-    *       Project id.
+    * @param projectCode
+    *       Project code.
     * @return Name of given project.
     */
    @GET
-   @Path("/{projectId}/name")
+   @Path("/{projectCode}/name")
    @Produces(MediaType.APPLICATION_JSON)
-   public String getProjectName(final @PathParam("projectId") String projectId) {
-      if (projectId == null) {
+   public String getProjectName(final @PathParam("projectCode") String projectCode) {
+      if (projectCode == null) {
          throw new IllegalArgumentException();
       }
-      return projectFacade.readProjectName(projectId);
+      return projectFacade.readProjectName(projectCode);
    }
 
    /**
-    * @param projectId
-    *       Project id.
+    * @param projectCode
+    *       Project code.
     * @param projectName
     *       Project name.
     */
    @POST
-   @Path("/{projectId}")
-   public void createProject(final @PathParam("projectId") String projectId, final String projectName) {
-      if (projectId == null || projectName == null) {
+   @Path("/{projectCode}")
+   public void createProject(final @PathParam("projectCode") String projectCode, final String projectName) {
+      if (projectCode == null || projectName == null) {
          throw new IllegalArgumentException();
       }
-      projectFacade.createProject(projectId, projectName);
+      projectFacade.createProject(projectCode, projectName);
    }
 
    /**
-    * @param projectId
-    *       Project id.
+    * @param projectCode
+    *       Project code.
     * @param newProjectName
     *       Project name.
     */
    @PUT
-   @Path("/{projectId}/name/{newProjectName}")
-   public void renameProject(final @PathParam("projectId") String projectId, final @PathParam("newProjectName") String newProjectName) {
-      if (projectId == null || newProjectName == null) {
+   @Path("/{projectCode}/name/{newProjectName}")
+   public void renameProject(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectName") String newProjectName) {
+      if (projectCode == null || newProjectName == null) {
          throw new IllegalArgumentException();
       }
-      projectFacade.renameProject(projectId, newProjectName);
+      projectFacade.renameProject(projectCode, newProjectName);
    }
 
    /**
-    * Updates project id.
+    * Updates project code.
     *
-    * @param projectId
-    *       Project id.
-    * @param newProjectId
-    *       New project id.
+    * @param projectCode
+    *       Project code.
+    * @param newProjectCode
+    *       New project code.
     */
    @PUT
-   @Path("/{projectId}/id/{newProjectId}")
+   @Path("/{projectCode}/code/{newProjectCode}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateProjectId(final @PathParam("projectId") String projectId, final @PathParam("newProjectId") String newProjectId) {
-      if (projectId == null || newProjectId == null) {
+   public void updateProjectCode(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectCode") String newProjectCode) {
+      if (projectCode == null || newProjectCode == null) {
          throw new IllegalArgumentException();
       }
-      projectFacade.updateProjectId(projectId, newProjectId);
+      projectFacade.updateProjectCode(projectCode, newProjectCode);
    }
 
    /**
-    * @param projectId
-    *       Project id.
+    * @param projectCode
+    *       Project code.
     */
    @DELETE
-   @Path("/{projectId}")
-   public void dropProject(final @PathParam("projectId") String projectId) {
-      if (projectId == null) {
+   @Path("/{projectCode}")
+   public void dropProject(final @PathParam("projectCode") String projectCode) {
+      if (projectCode == null) {
          throw new IllegalArgumentException();
       }
-      projectFacade.dropProject(projectId);
+      projectFacade.dropProject(projectCode);
    }
 
    /**
-    * @param projectId
-    *       Project id.
+    * @param projectCode
+    *       Project code.
     * @param attributeName
     *       Name of metadata attribute.
     * @return Value of metadata attribute.
     */
    @GET
-   @Path("/{projectId}/meta/{attributeName}")
+   @Path("/{projectCode}/meta/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public String readProjectMetadata(final @PathParam("projectId") String projectId, final @PathParam("attributeName") String attributeName) {
-      if (projectId == null || attributeName == null) {
+   public String readProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) {
+      if (projectCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      return projectFacade.readProjectMetadata(projectId, attributeName);
+      return projectFacade.readProjectMetadata(projectCode, attributeName);
    }
 
    /**
     * Adds or updates metadata attribute.
     *
-    * @param projectId
-    *       Project id.
+    * @param projectCode
+    *       Project code.
     * @param attributeName
     *       Name of metadata attribute.
     * @param value
     *       Value of metadata attribute.
     */
    @PUT
-   @Path("/{projectId}/meta/{attributeName}")
+   @Path("/{projectCode}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateProjectMetadata(final @PathParam("projectId") String projectId, final @PathParam("attributeName") String attributeName, final String value) {
-      if (projectId == null || attributeName == null) {
+   public void updateProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName, final String value) {
+      if (projectCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      projectFacade.updateProjectMetadata(projectId, attributeName, value);
+      projectFacade.updateProjectMetadata(projectCode, attributeName, value);
    }
 
    /**
-    * @param projectId
-    *       Project id.
+    * @param projectCode
+    *       Project code.
     * @param attributeName
     *       Name of metadata attribute.
     */
    @DELETE
-   @Path("/{projectId}/meta/{attributeName}")
-   public void dropProjectMetadata(final @PathParam("projectId") String projectId, final @PathParam("attributeName") String attributeName) {
-      if (projectId == null || attributeName == null) {
+   @Path("/{projectCode}/meta/{attributeName}")
+   public void dropProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) {
+      if (projectCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      projectFacade.dropProjectMetadata(projectId, attributeName);
+      projectFacade.dropProjectMetadata(projectCode, attributeName);
    }
 
 }

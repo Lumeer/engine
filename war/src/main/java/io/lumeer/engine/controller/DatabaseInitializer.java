@@ -93,7 +93,7 @@ public class DatabaseInitializer {
    private void initOrganizationCollection() {
       if (!dataStorage.hasCollection(Organization.COLLECTION_NAME)) {
          dataStorage.createCollection(Organization.COLLECTION_NAME);
-         dataStorage.createIndex(Organization.COLLECTION_NAME, new DataDocument(Organization.ATTR_ORG_ID, LumeerConst.Index.ASCENDING), true);
+         dataStorage.createIndex(Organization.COLLECTION_NAME, new DataDocument(Organization.ATTR_ORG_CODE, LumeerConst.Index.ASCENDING), true);
       }
    }
 
@@ -195,7 +195,7 @@ public class DatabaseInitializer {
     */
    private void initProjectRoles(String projectId) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId))
+            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectId))
             .append(Security.TYPE_KEY, Security.TYPE_PROJECT)
             .append(Security.ROLES_KEY, new DataDocument()
                   .append(Security.ROLE_MANAGE,
@@ -213,14 +213,14 @@ public class DatabaseInitializer {
    /**
     * Initializes document with roles for given collection.
     *
-    * @param projectId
-    *       project id
+    * @param projectCode
+    *       project code
     * @param collectionName
     *       collection
     */
-   private void initCollectionRoles(String projectId, String collectionName) {
+   private void initCollectionRoles(String projectCode, String collectionName) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId))
+            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode))
             .append(Security.TYPE_KEY, Security.TYPE_COLLECTION)
             .append(Security.COLLECTION_NAME_KEY, collectionName)
             .append(Security.ROLES_KEY, new DataDocument()
@@ -246,12 +246,12 @@ public class DatabaseInitializer {
 
    /**
     * Initializes document with roles for given view.
-    * @param projectId project id
+    * @param projectCode project code
     * @param viewId view
     */
-   private void initViewRoles(String projectId, int viewId) {
+   private void initViewRoles(String projectCode, int viewId) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId))
+            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode))
             .append(Security.TYPE_KEY, Security.TYPE_VIEW)
             .append(Security.VIEW_ID_KEY, viewId)
             .append(Security.ROLES_KEY, new DataDocument()
@@ -275,7 +275,7 @@ public class DatabaseInitializer {
       if (!dataStorage.hasCollection(Project.COLLECTION_NAME)) {
          dataStorage.createCollection(Project.COLLECTION_NAME);
          dataStorage.createIndex(Project.COLLECTION_NAME, new DataDocument(Project.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
-               .append(Project.ATTR_PROJECT_ID, LumeerConst.Index.ASCENDING), true);
+               .append(Project.ATTR_PROJECT_CODE, LumeerConst.Index.ASCENDING), true);
       }
    }
 
@@ -309,37 +309,37 @@ public class DatabaseInitializer {
    /**
     * Initializes some project collections and documents.
     *
-    * @param projectId
-    *       project id
+    * @param projectCode
+    *       project code
     */
-   public void onProjectCreated(final String projectId) {
-      initProjectRoles(projectId);
-      initCollectionsMetadata(projectId);
-      initViewsMetadata(projectId);
+   public void onProjectCreated(final String projectCode) {
+      initProjectRoles(projectCode);
+      initCollectionsMetadata(projectCode);
+      initViewsMetadata(projectCode);
    }
 
    /**
     * Initializes some documents for new collection.
     *
-    * @param projectId
-    *       project id
+    * @param projectCode
+    *       project code
     * @param collection
     *       collection name
     */
-   public void onCollectionCreated(final String projectId, final String collection) {
-      initCollectionRoles(projectId, collection);
+   public void onCollectionCreated(final String projectCode, final String collection) {
+      initCollectionRoles(projectCode, collection);
    }
 
    /**
     * Initializes some documents for new view.
     *
-    * @param projectId
-    *       project id
+    * @param projectCode
+    *       project code
     * @param viewId
     *       view
     */
-   public void onViewCreated(final String projectId, final int viewId) {
-      initViewRoles(projectId, viewId);
+   public void onViewCreated(final String projectCode, final int viewId) {
+      initViewRoles(projectCode, viewId);
    }
 
 }

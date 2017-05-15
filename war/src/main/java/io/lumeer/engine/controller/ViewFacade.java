@@ -258,7 +258,7 @@ public class ViewFacade implements Serializable {
     * @return list of ViewMetadata for all views from current project
     */
    public List<ViewMetadata> getAllViews() {
-      return getAllViews(projectFacade.getCurrentProjectId());
+      return getAllViews(projectFacade.getCurrentProjectCode());
    }
 
    /**
@@ -267,7 +267,7 @@ public class ViewFacade implements Serializable {
     * @return list of ViewMetadata for all views of given type from current project
     */
    public List<ViewMetadata> getAllViewsOfType(String type) {
-      return getAllViewsOfType(projectFacade.getCurrentProjectId(), type);
+      return getAllViewsOfType(projectFacade.getCurrentProjectCode(), type);
    }
 
    /**
@@ -375,15 +375,15 @@ public class ViewFacade implements Serializable {
     * @return name of view metadata collection for current organization
     */
    public String metadataCollection() {
-      return metadataCollection(projectFacade.getCurrentProjectId());
+      return metadataCollection(projectFacade.getCurrentProjectCode());
    }
 
    /**
-    * @param projectId
-    *       project id
+    * @param projectCode
+    *       project code
     * @return name of view metadata collection for given project id
     */
-   public String metadataCollection(String projectId) {
-      return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectFacade.getProjectIdentificator(projectId);
+   public String metadataCollection(String projectCode) {
+      return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
    }
 }

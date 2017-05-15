@@ -45,7 +45,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -344,7 +343,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String setPathPrefix(final String collectionName) {
-      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/collections/" + collectionName + "/documents/";
+      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/collections/" + collectionName + "/documents/";
    }
 
    private String getInternalName(final String collectionOriginalName) {

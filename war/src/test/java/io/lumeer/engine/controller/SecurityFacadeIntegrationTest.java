@@ -83,8 +83,8 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       dataStorage.dropManyDocuments(LumeerConst.Security.ROLES_COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
 
       user = userFacade.getUserEmail();
-      org = organizationFacade.getOrganizationId();
-      project = projectFacade.getCurrentProjectId();
+      org = organizationFacade.getOrganizationCode();
+      project = projectFacade.getCurrentProjectCode();
       roleManage = LumeerConst.Security.ROLE_MANAGE;
       group1 = "group 1";
       group2 = "group 2";
@@ -92,8 +92,8 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       organizationFacade.dropOrganization(org);
       organizationFacade.createOrganization(org, "name");
 
-      userGroupFacade.addGroups(organizationFacade.getOrganizationIdentificator(org), group1, group2);
-      userGroupFacade.addUser(organizationFacade.getOrganizationIdentificator(org), user, group1, group2);
+      userGroupFacade.addGroups(organizationFacade.getOrganizationId(org), group1, group2);
+      userGroupFacade.addUser(organizationFacade.getOrganizationId(org), user, group1, group2);
 
       projectFacade.dropProject(project);
       projectFacade.createProject(project, "project name");

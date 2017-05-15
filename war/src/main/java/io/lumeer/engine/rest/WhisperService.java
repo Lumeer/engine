@@ -86,8 +86,8 @@ public class WhisperService {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationId(organisationId);
-      projectFacade.setCurrentProjectId(projectId);
+      organizationFacade.setOrganizationCode(organisationId);
+      projectFacade.setCurrentProjectCode(projectId);
 
       locale = Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US"));
    }
