@@ -19,6 +19,7 @@
 */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
@@ -41,7 +42,7 @@ import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
- * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
+ * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 @SessionScoped
 public class SecurityFacade implements Serializable {
@@ -51,7 +52,300 @@ public class SecurityFacade implements Serializable {
    private DataStorage dataStorage;
 
    @Inject
+   @SystemDataStorage
+   private DataStorage systemDataStorage;
+
+   @Inject
    private DataStorageDialect dataStorageDialect;
+
+   @Inject
+   private UserFacade userFacade;
+
+   @Inject
+   private UserGroupFacade userGroupFacade;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   /********* CHECKING ROLES *********/
+
+   public boolean hasOrganizationRole(String organizationId, String role) {
+      DataDocument doc = systemDataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
+            dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationIdentificator(organizationId)),
+            Arrays.asList(LumeerConst.Security.ROLES_KEY));
+
+      return checkRole(doc, userFacade.getUserEmail(), role, organizationId);
+   }
+
+   public boolean hasProjectRole(String projectId, String role) {
+      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectId)),
+            Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
+
+      return checkRole(doc, userFacade.getUserEmail(), role, organizationFacade.getOrganizationId());
+   }
+
+   public boolean hasCollectionRole(String projectId, String collectionName, String role) {
+      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(collectionFilter(projectId, collectionName)),
+            Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
+
+      return checkRole(doc, userFacade.getUserEmail(), role, organizationFacade.getOrganizationId());
+   }
+
+   public boolean hasViewRole(String projectId, int viewId, String role) {
+      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(viewFilter(projectId, viewId)),
+            Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
+
+      return checkRole(doc, userFacade.getUserEmail(), role, organizationFacade.getOrganizationId());
+   }
+
+   private boolean checkRole(DataDocument rolesDocument, String user, String role, String organizationCode) {
+      List<String> groupsForUser = userGroupFacade.getGroupsOfUser(organizationFacade.getOrganizationIdentificator(organizationCode), user);
+      if (groupsForUser == null) {
+         groupsForUser = Collections.emptyList();
+      }
+
+      DataDocument roleDoc = rolesDocument.getDataDocument(LumeerConst.Security.ROLES_KEY).getDataDocument(role);
+
+      if (roleDoc.getArrayList(LumeerConst.Security.USERS_KEY, String.class).contains(user)) {
+         return true;
+      }
+
+      List<String> groups = roleDoc.getArrayList(LumeerConst.Security.GROUP_KEY, String.class);
+      groups.retainAll(groupsForUser);
+
+      return !groups.isEmpty();
+   }
+
+   /********* ADDING ROLES *********/
+
+   public void addOrganizationUserRole(String organizationId, String user, String role) {
+      addOrganizationRole(organizationId, user, null, role);
+   }
+
+   public void addOrganizationGroupRole(String organizationId, String group, String role) {
+      addOrganizationRole(organizationId, null, group, role);
+   }
+
+   private void addOrganizationRole(String organizationCode, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      systemDataStorage.addItemToArray(
+            LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
+            dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationIdentificator(organizationCode)),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   public void addProjectUserRole(String projectId, String user, String role) {
+      addProjectRole(projectId, user, null, role);
+   }
+
+   public void addProjectGroupRole(String projectId, String group, String role) {
+      addProjectRole(projectId, null, group, role);
+   }
+
+   private void addProjectRole(String projectCode, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      dataStorage.addItemToArray(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectCode)),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   public void addCollectionUserRole(String projectId, String collectionName, String user, String role) {
+      addCollectionRole(collectionName, projectId, user, null, role);
+   }
+
+   public void addCollectionGroupRole(String projectId, String collectionName, String group, String role) {
+      addCollectionRole(collectionName, projectId, null, group, role);
+   }
+
+   private void addCollectionRole(String collectionName, String projectId, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      Map<String, Object> filter = collectionFilter(projectId, collectionName);
+
+      dataStorage.addItemToArray(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(filter),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   public void addViewUserRole(String projectId, int viewId, String user, String role) {
+      addViewRole(viewId, projectId, user, null, role);
+   }
+
+   public void addViewGroupRole(String projectId, int viewId, String group, String role) {
+      addViewRole(viewId, projectId, null, group, role);
+   }
+
+   private void addViewRole(int viewId, String projectId, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      Map<String, Object> filter = viewFilter(projectId, viewId);
+
+      dataStorage.addItemToArray(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(filter),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   /********* REMOVING ROLES *********/
+
+   public void removeOrganizationUserRole(String organizationId, String user, String role) {
+      removeOrganizationRole(organizationId, user, null, role);
+   }
+
+   public void removeOrganizationGroupRole(String organizationId, String group, String role) {
+      removeOrganizationRole(organizationId, null, group, role);
+   }
+
+   private void removeOrganizationRole(String organizationCode, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      systemDataStorage.removeItemFromArray(
+            LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
+            dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationIdentificator(organizationCode)),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   public void removeProjectUserRole(String projectId, String user, String role) {
+      removeProjectRole(projectId, user, null, role);
+   }
+
+   public void removeProjectGroupRole(String projectId, String group, String role) {
+      removeProjectRole(projectId, null, group, role);
+   }
+
+   private void removeProjectRole(String projectId, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      dataStorage.removeItemFromArray(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectId)),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   public void removeCollectionUserRole(String projectId, String collectionName, String user, String role) {
+      removeCollectionRole(projectId, collectionName, user, null, role);
+   }
+
+   public void removeCollectionGroupRole(String projectId, String collectionName, String group, String role) {
+      removeCollectionRole(projectId, collectionName, null, group, role);
+   }
+
+   private void removeCollectionRole(String projectId, String collectionName, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      Map<String, Object> filter = collectionFilter(projectId, collectionName);
+
+      dataStorage.removeItemFromArray(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(filter),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   public void removeViewUserRole(String projectId, int viewId, String user, String role) {
+      removeViewRole(projectId, viewId, user, null, role);
+   }
+
+   public void removeViewGroupRole(String projectId, int viewId, String group, String role) {
+      removeViewRole(projectId, viewId, null, group, role);
+   }
+
+   private void removeViewRole(String projectId, int viewId, String user, String group, String role) {
+      String userOrGroupKey = userOrGroupKey(user);
+      String userOrGroupName = userOrGroupName(user, group);
+
+      Map<String, Object> filter = viewFilter(projectId, viewId);
+
+      dataStorage.removeItemFromArray(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(filter),
+            dataStorageDialect.concatFields(
+                  LumeerConst.Security.ROLES_KEY,
+                  role,
+                  userOrGroupKey),
+            userOrGroupName);
+   }
+
+   private Map<String, Object> projectFilter(String projectId) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId));
+      filter.put(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_PROJECT);
+      return filter;
+   }
+
+   private Map<String, Object> collectionFilter(String projectId, String collectionName) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId));
+      filter.put(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_COLLECTION);
+      filter.put(LumeerConst.Security.COLLECTION_NAME_KEY, collectionName);
+      return filter;
+   }
+
+   private Map<String, Object> viewFilter(String projectId, int viewId) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectFacade.getProjectIdentificator(projectId));
+      filter.put(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_VIEW);
+      filter.put(LumeerConst.Security.VIEW_ID_KEY, viewId);
+      return filter;
+   }
+
+   private String userOrGroupKey(String user) {
+      return user != null ? LumeerConst.Security.USERS_KEY : LumeerConst.Security.GROUP_KEY;
+   }
+
+   private String userOrGroupName(String user, String group) {
+      return user != null ? user : group;
+   }
+
+   /********* OLD **********/
 
    @Inject
    private UserFacade user;

@@ -157,6 +157,31 @@ public final class LumeerConst {
    }
 
    public static class Security {
+      public static final String ORGANIZATION_ROLES_COLLECTION_NAME = "_system-organization-roles";
+      public static final String ROLES_COLLECTION_NAME = "_roles";
+
+      public static final String ORGANIZATION_ID_KEY = "organization-id";
+
+      public static final String PROJECT_ID_KEY = "project-id";
+      public static final String COLLECTION_NAME_KEY = "collection-name";
+      public static final String VIEW_ID_KEY = "view-id";
+
+      public static final String TYPE_KEY = "type";
+      public static final String TYPE_PROJECT = "project";
+      public static final String TYPE_COLLECTION = "collection";
+      public static final String TYPE_VIEW = "view";
+
+      public static final String ROLES_KEY = "roles";
+      public static final String ROLE_MANAGE = "manage";
+      public static final String ROLE_WRITE = "write";
+      public static final String ROLE_READ = "read";
+      public static final String ROLE_SHARE = "share";
+      public static final String ROLE_CLONE = "clone";
+
+      public static final String USERS_KEY = "users";
+      public static final String GROUP_KEY = "groups";
+
+      /****** OLD ******/
       public static final String RULE = "rule";
       public static final String USER_ID = "user_email";
 
