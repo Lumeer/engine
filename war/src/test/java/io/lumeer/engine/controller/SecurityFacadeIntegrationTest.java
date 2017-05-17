@@ -97,7 +97,6 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
       projectFacade.dropProject(project);
       projectFacade.createProject(project, "project name");
-      databaseInitializer.onProjectCreated(project);
    }
 
    @Test

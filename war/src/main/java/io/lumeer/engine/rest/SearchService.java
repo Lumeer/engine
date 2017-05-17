@@ -51,10 +51,10 @@ public class SearchService implements Serializable {
    private SearchFacade searchFacade;
 
    @PathParam("organisation")
-   private String organisationId;
+   private String organisationCode;
 
    @PathParam("project")
-   private String projectId;
+   private String projectCode;
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -64,8 +64,8 @@ public class SearchService implements Serializable {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationCode(organisationId);
-      projectFacade.setCurrentProjectCode(projectId);
+      organizationFacade.setOrganizationCode(organisationCode);
+      projectFacade.setCurrentProjectCode(projectCode);
    }
 
    /**

@@ -73,10 +73,10 @@ public class WhisperService {
    private Locale locale = Locale.getDefault();
 
    @PathParam("organisation")
-   private String organisationId;
+   private String organisationCode;
 
    @PathParam("project")
-   private String projectId;
+   private String projectCode;
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -86,8 +86,8 @@ public class WhisperService {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationCode(organisationId);
-      projectFacade.setCurrentProjectCode(projectId);
+      organizationFacade.setOrganizationCode(organisationCode);
+      projectFacade.setCurrentProjectCode(projectCode);
 
       locale = Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US"));
    }

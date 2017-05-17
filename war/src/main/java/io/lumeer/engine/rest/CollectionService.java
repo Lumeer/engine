@@ -93,10 +93,10 @@ public class CollectionService implements Serializable {
    private DataStorageDialect dialect;
 
    @PathParam("organisation")
-   private String organisationId;
+   private String organisationCode;
 
    @PathParam("project")
-   private String projectId;
+   private String projectCode;
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -106,8 +106,8 @@ public class CollectionService implements Serializable {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationCode(organisationId);
-      projectFacade.setCurrentProjectCode(projectId);
+      organizationFacade.setOrganizationCode(organisationCode);
+      projectFacade.setCurrentProjectCode(projectCode);
    }
 
    /**

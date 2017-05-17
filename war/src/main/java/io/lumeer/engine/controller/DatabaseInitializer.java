@@ -279,31 +279,31 @@ public class DatabaseInitializer {
       }
    }
 
-   public void onOrganizationCreated(final String organization) {
+   public void onOrganizationCreated(final String organizationId) {
       // init userGroup collection
-      DataDocument userGroup = new DataDocument(UserGroup.ATTR_ORG_ID, organization)
+      DataDocument userGroup = new DataDocument(UserGroup.ATTR_ORG_ID, organizationId)
             .append(UserGroup.ATTR_USERS, Collections.emptyList());
       dataStorage.createDocument(UserGroup.COLLECTION_NAME, userGroup);
 
       // init group collection
-      DataDocument group = new DataDocument(Group.ATTR_ORG_ID, organization)
+      DataDocument group = new DataDocument(Group.ATTR_ORG_ID, organizationId)
             .append(Group.ATTR_GROUPS, Collections.emptyList());
       dataStorage.createDocument(Group.COLLECTION_NAME, group);
 
       // initialize document with roles
-      initOrganizationRoles(organization);
+      initOrganizationRoles(organizationId);
       // initializes collection with roles for collections, views and projects inside the organization
       initRolesCollection();
    }
 
-   public void onOrganizationRemoved(final String organization) {
+   public void onOrganizationRemoved(final String organizationId) {
       // clean userGroup collection
       dataStorage.dropDocument(UserGroup.COLLECTION_NAME,
-            dataStorageDialect.fieldValueFilter(UserGroup.ATTR_ORG_ID, organization));
+            dataStorageDialect.fieldValueFilter(UserGroup.ATTR_ORG_ID, organizationId));
 
       // clean group collection
       dataStorage.dropDocument(Group.COLLECTION_NAME,
-            dataStorageDialect.fieldValueFilter(Group.ATTR_ORG_ID, organization));
+            dataStorageDialect.fieldValueFilter(Group.ATTR_ORG_ID, organizationId));
    }
 
    /**
