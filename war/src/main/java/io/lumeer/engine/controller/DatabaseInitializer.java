@@ -190,12 +190,12 @@ public class DatabaseInitializer {
    /**
     * Initializes document with roles for given project.
     *
-    * @param projectId
-    *       project id
+    * @param projectCode
+    *       project code
     */
-   private void initProjectRoles(String projectId) {
+   private void initProjectRoles(String projectCode) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectId))
+            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode))
             .append(Security.TYPE_KEY, Security.TYPE_PROJECT)
             .append(Security.ROLES_KEY, new DataDocument()
                   .append(Security.ROLE_MANAGE,

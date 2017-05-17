@@ -195,6 +195,7 @@ public class ProjectFacade {
             .append(Project.ATTR_PROJECT_NAME, projectName)
             .append(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       dataStorage.createDocument(Project.COLLECTION_NAME, document);
+      databaseInitializer.onProjectCreated(projectCode);
    }
 
    /**
