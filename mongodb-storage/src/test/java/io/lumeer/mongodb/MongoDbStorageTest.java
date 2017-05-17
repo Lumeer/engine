@@ -31,6 +31,18 @@ import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.client.model.Filters;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodStarter;
@@ -39,20 +51,6 @@ import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
-
-import org.assertj.core.api.SoftAssertions;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
@@ -93,6 +91,7 @@ public class MongoDbStorageTest {
    private final String COLLECTION_DROP_ATTRIBUTE = "collectionRemoveAttribute";
    private final String COLLECTION_SEARCH_ATTRS = "collectionSearchAttrs";
    private final String COLLECTION_SEARCH = "collectionSearch";
+   private final String COLLECTION_SEARCH_PROJECTION = "collectionSearchWithProjection";
    private final String COLLECTION_INDEXES = "collectionIndexes";
    private final String COLLECTION_RUN = "collectionSearchRaw";
    private final String COLLECTION_RENAME_ATTRIBUTE = "collectionRenameAttribute";
@@ -262,7 +261,7 @@ public class MongoDbStorageTest {
    }
 
    @Test
-   public void testCreateDocumentsWithException() throws Exception{
+   public void testCreateDocumentsWithException() throws Exception {
       mongoDbStorage.createCollection(COLLECTION_CREATE_DOCUMENTS_EXCEPTION);
       mongoDbStorage.createIndex(COLLECTION_CREATE_DOCUMENTS_EXCEPTION, new DataDocument("b", 1), true);
 
@@ -425,11 +424,11 @@ public class MongoDbStorageTest {
          mongoDbStorage.createDocument(COLLECTION_SEARCH_ATTRS, insertedDocument);
       }
       //test whether we get all documents
-      List<DataDocument> docs = mongoDbStorage.searchIncludeAttrs(COLLECTION_SEARCH_ATTRS, null, null);
+      List<DataDocument> docs = mongoDbStorage.search(COLLECTION_SEARCH_ATTRS, null, null);
       assertThat(docs).hasSize(200);
 
       final DataFilter filter = new MongoDbDataFilter(Filters.gte("a", 100));
-      docs = mongoDbStorage.searchIncludeAttrs(COLLECTION_SEARCH_ATTRS, filter, Arrays.asList("a", "c", "f.b"));
+      docs = mongoDbStorage.search(COLLECTION_SEARCH_ATTRS, filter, Arrays.asList("a", "c", "f.b"));
       assertThat(docs).hasSize(100);
       DataDocument anyDoc = docs.get(0);
       assertThat(anyDoc).containsKeys("_id", "a", "c", "f");
@@ -439,7 +438,7 @@ public class MongoDbStorageTest {
       assertThat(nestedDoc).doesNotContainKeys("a", "c");
 
       // test if it's necceserry to include attribute which is used in filter
-      docs = mongoDbStorage.searchIncludeAttrs(COLLECTION_SEARCH_ATTRS, filter, Arrays.asList("b", "c", "d"));
+      docs = mongoDbStorage.search(COLLECTION_SEARCH_ATTRS, filter, Arrays.asList("b", "c", "d"));
       assertThat(docs).hasSize(100);
       anyDoc = docs.get(0);
       assertThat(anyDoc).containsKeys("_id", "b", "c", "d");
@@ -457,6 +456,20 @@ public class MongoDbStorageTest {
 
       List<DataDocument> searchDocuments = mongoDbStorage.search(COLLECTION_SEARCH, null, null, 10, 10);
       assertThat(searchDocuments).hasSize(10);
+   }
+
+   @Test
+   public void testSearchWithProjection() {
+      mongoDbStorage.createCollection(COLLECTION_SEARCH_PROJECTION);
+
+      for (int i = 0; i < 10; i++) {
+         DataDocument insertedDocument = createDummyDocument();
+         mongoDbStorage.createDocument(COLLECTION_SEARCH_PROJECTION, insertedDocument);
+      }
+
+      List<DataDocument> searchDocuments = mongoDbStorage.search(COLLECTION_SEARCH_PROJECTION, null, null, Collections.singletonList(DUMMY_KEY1), 0, 5);
+      assertThat(searchDocuments).hasSize(5);
+      assertThat(searchDocuments).extracting(d -> d.getString(DUMMY_KEY2)).containsOnly((String) null);
    }
 
    @Test

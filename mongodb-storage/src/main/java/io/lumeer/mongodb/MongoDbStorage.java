@@ -50,6 +50,7 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
@@ -452,22 +453,24 @@ public class MongoDbStorage implements DataStorage {
    }
 
    @Override
-   public List<DataDocument> searchIncludeAttrs(final String collectionName, final DataFilter filter, final List<String> attributes) {
-      MongoCollection<Document> collection = database.getCollection(collectionName);
-      FindIterable<Document> documents = filter != null ? collection.find(filter.<Bson>get()) : collection.find();
-      if (attributes != null) {
-         documents.projection(Projections.include(attributes));
-      }
-
-      return convertIterableToList(documents);
+   public List<DataDocument> search(final String collectionName, final DataFilter filter, final List<String> attributes) {
+      return search(collectionName, filter, null, attributes, 0, 0);
    }
 
    @Override
    public List<DataDocument> search(final String collectionName, final DataFilter filter, final DataSort sort, final int skip, final int limit) {
+      return search(collectionName, filter, sort, null, skip, limit);
+   }
+
+   @Override
+   public List<DataDocument> search(String collectionName, DataFilter filter, final DataSort sort, List<String> attributes, final int skip, int limit) {
       MongoCollection<Document> collection = database.getCollection(collectionName);
       FindIterable<Document> documents = filter != null ? collection.find(filter.<Bson>get()) : collection.find();
       if (sort != null) {
          documents = documents.sort(sort.<Bson>get());
+      }
+      if (attributes != null && !attributes.isEmpty()) {
+         documents.projection(Projections.fields(Projections.include(attributes)));
       }
       if (skip > 0) {
          documents = documents.skip(skip);
@@ -657,7 +660,7 @@ public class MongoDbStorage implements DataStorage {
       return dss;
    }
 
-   private List<DataDocument> convertIterableToList(FindIterable<Document> documents) {
+   private List<DataDocument> convertIterableToList(MongoIterable<Document> documents) {
       final List<DataDocument> result = new ArrayList<>();
       documents.into(new ArrayList<>()).forEach(d -> {
          result.add(convertDocument(d));

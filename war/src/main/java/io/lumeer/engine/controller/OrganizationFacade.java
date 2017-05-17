@@ -84,7 +84,7 @@ public class OrganizationFacade {
     * @return map of values (id, name) of all organizations in the system
     */
    public Map<String, String> readOrganizationsMap() {
-      List<DataDocument> documents = dataStorage.searchIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_ID));
+      List<DataDocument> documents = dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_ID));
       return documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_ORG_ID), d -> d.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
    }
 

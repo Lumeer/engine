@@ -141,7 +141,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(buildPathPrefix() + "query/")
+                       .path(buildPathPrefix()).path("search/query")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new Query(new DataDocument("attr1", "5"))))
