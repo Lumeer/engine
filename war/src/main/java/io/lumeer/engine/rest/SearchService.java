@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------------\
  * Lumeer
  *  
- * Copyright (C) 2016 the original author or authors.
+ * Copyright (C) 2016 - 2017 the original author or authors.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SearchFacade;
+import io.lumeer.engine.controller.search.QuerySuggester;
+import io.lumeer.engine.controller.search.SuggestionsType;
 
 import java.io.Serializable;
 import java.util.List;
@@ -32,16 +34,20 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 /**
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
+ * Provides suggestions when creating search queries as well as query execution.
  */
-@Path("/{organisation}/{project}/query")
+@Path("/{organisation}/{project}/search")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
 public class SearchService implements Serializable {
 
@@ -49,6 +55,9 @@ public class SearchService implements Serializable {
 
    @Inject
    private SearchFacade searchFacade;
+
+   @Inject
+   private QuerySuggester querySuggester;
 
    @PathParam("organisation")
    private String organisationCode;
@@ -68,6 +77,16 @@ public class SearchService implements Serializable {
       projectFacade.setCurrentProjectCode(projectCode);
    }
 
+   @GET
+   @Path("suggestion")
+   public DataDocument suggest(@QueryParam("text") String text, @QueryParam("type") String type) {
+      if (text == null || text.isEmpty()) {
+         return new DataDocument();
+      }
+
+      return querySuggester.suggest(text, SuggestionsType.getType(type));
+   }
+
    /**
     * Queries the data storage in a flexible way. Allows for none or multiple collection names to be specified,
     * automatically sets limit to default values.
@@ -79,9 +98,7 @@ public class SearchService implements Serializable {
     *       When it was not possible to execute the query.
     */
    @POST
-   @Path("/")
-   @Produces(MediaType.APPLICATION_JSON)
-   @Consumes(MediaType.APPLICATION_JSON)
+   @Path("query")
    public List<DataDocument> runQuery(final Query query) throws InvalidQueryException {
       if (query == null) {
          throw new IllegalArgumentException();

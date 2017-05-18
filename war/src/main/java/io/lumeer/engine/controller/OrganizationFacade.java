@@ -82,7 +82,7 @@ public class OrganizationFacade {
    /**
     * Reads a map of all organizations in the system.
     *
-    * @return map of values (id, name) of all organizations in the system
+    * @return map of values (code, name) of all organizations in the system
     */
    public Map<String, String> readOrganizationsMap() {
       List<DataDocument> documents = dataStorage.searchIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_CODE));

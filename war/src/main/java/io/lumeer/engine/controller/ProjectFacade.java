@@ -85,7 +85,7 @@ public class ProjectFacade {
     *
     * @param organizationCode
     *       code of the organization
-    * @return map(id, name) values of all projects in an organization
+    * @return map(code, name) values of all projects in an organization
     */
    public Map<String, String> readProjectsMap(final String organizationCode) {
       List<DataDocument> documents = dataStorage.searchIncludeAttrs(Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), Arrays.asList(Project.ATTR_PROJECT_NAME, Project.ATTR_PROJECT_CODE));

@@ -32,6 +32,7 @@ import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.controller.search.SuggestionsDocument;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -40,6 +41,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -56,7 +58,15 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
 
-   private final String COLLECTION_QUERY_SEARCH = "SearchServiceCollectionRunQuery";
+   private static final String QUERY_PATH = "search/query";
+   private static final String SUGGESTION_PATH = "search/suggestion";
+
+   private static final String COLLECTION_BEERS = "beers";
+   private static final String COLLECTION_PEERS = "peers";
+   private static final String COLLECTION_ANTS = "ants";
+   private static final String COLLECTION_PANTS = "pants";
+
+   private static final String COLLECTION_QUERY_SEARCH = "SearchServiceCollectionRunQuery";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -75,8 +85,42 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
    private ProjectFacade projectFacade;
 
    @Test
-   public void testRegister() throws Exception {
-      assertThat(documentFacade).isNotNull();
+   public void testSuggestAll() throws Exception {
+      collectionFacade.createCollection(COLLECTION_BEERS);
+      collectionFacade.createCollection(COLLECTION_PEERS);
+
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(SUGGESTION_PATH)
+                                .queryParam("text", "eers")
+                                .request().buildGet().invoke();
+      DataDocument suggestions = response.readEntity(DataDocument.class);
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+
+      List<Map> collections = (List<Map>) suggestions.getObject(SuggestionsDocument.COLLECTIONS);
+      assertThat(collections).hasSize(2);
+      assertThat(collections).extracting(c -> c.get(SuggestionsDocument.COLLECTIONS_NAME)).containsOnly(COLLECTION_BEERS, COLLECTION_PEERS);
+      response.close();
+      client.close();
+   }
+
+   @Test
+   public void testSuggestCollectionType() throws Exception {
+      collectionFacade.createCollection(COLLECTION_ANTS);
+      collectionFacade.createCollection(COLLECTION_PANTS);
+
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(SUGGESTION_PATH)
+                                .queryParam("text", "ant")
+                                .queryParam("type", "collection")
+                                .request().buildGet().invoke();
+      DataDocument suggestions = response.readEntity(DataDocument.class);
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+
+      List<Map> collections = (List<Map>) suggestions.getObject(SuggestionsDocument.COLLECTIONS);
+      assertThat(collections).hasSize(2);
+      assertThat(collections).extracting(c -> c.get(SuggestionsDocument.COLLECTIONS_NAME)).containsOnly(COLLECTION_ANTS, COLLECTION_PANTS);
+      response.close();
+      client.close();
    }
 
    @Test
@@ -94,7 +138,7 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
       final Set<String> collections = new HashSet<>();
       collections.add(COLLECTION_QUERY_SEARCH);
       final Query query = new Query(collections, emptyFilters, emptyProjection, emptySorting, limit, null);
-      Response response = client.target(TARGET_URI).path(buildPathPrefix() + "query/").request().buildPost(Entity.entity(query, MediaType.APPLICATION_JSON)).invoke();
+      Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(QUERY_PATH).request().buildPost(Entity.entity(query, MediaType.APPLICATION_JSON)).invoke();
       List<DataDocument> matchResult = response.readEntity(ArrayList.class);
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(matchResult).hasSize(limit);
