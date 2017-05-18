@@ -88,7 +88,7 @@ public class ProjectFacade {
     * @return map(code, name) values of all projects in an organization
     */
    public Map<String, String> readProjectsMap(final String organizationCode) {
-      List<DataDocument> documents = dataStorage.searchIncludeAttrs(Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), Arrays.asList(Project.ATTR_PROJECT_NAME, Project.ATTR_PROJECT_CODE));
+      List<DataDocument> documents = dataStorage.search(Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), Arrays.asList(Project.ATTR_PROJECT_NAME, Project.ATTR_PROJECT_CODE));
       return documents.stream().collect(Collectors.toMap(d -> d.getString(Project.ATTR_PROJECT_CODE), d -> d.getString(Project.ATTR_PROJECT_NAME)));
    }
 
