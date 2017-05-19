@@ -216,7 +216,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private List<DataDocument> getOrganizationEntries() {
-      return dataStorage.searchIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_CODE));
+      return dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_CODE));
    }
 
    private void dropDocuments(final String collectionName) {
