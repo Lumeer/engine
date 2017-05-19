@@ -114,13 +114,11 @@ public class CollectionService implements Serializable {
     * Returns a list of collection names in the database.
     *
     * @return the list of collection names
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata for collection was not found
     */
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<String> getAllCollections() throws CollectionMetadataDocumentNotFoundException {
+   public List<String> getAllCollections() {
       return new ArrayList<>(collectionFacade.getAllCollections().values());
    }
 
