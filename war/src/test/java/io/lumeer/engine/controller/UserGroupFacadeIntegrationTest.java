@@ -70,21 +70,21 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1);
-      userGroupFacade.addUser(org1Id, user2, "g1", "g2", "g3");
-      userGroupFacade.addUser(org2Id, user1, "g1", "g2", "g3");
-      userGroupFacade.addUser(org2Id, user2);
-      userGroupFacade.addUser(org2Id, user3);
+      userGroupFacade.addUser(organization1, user1);
+      userGroupFacade.addUser(organization1, user2, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization2, user1, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization2, user2);
+      userGroupFacade.addUser(organization2, user3);
 
-      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
+      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(organization1);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).isEmpty();
       assertThat(users.get(user2)).hasSize(3);
 
-      users = userGroupFacade.getUsersAndGroups(org2Id);
+      users = userGroupFacade.getUsersAndGroups(organization2);
       assertThat(users).hasSize(3).containsOnlyKeys(user1, user2, user3);
       assertThat(users.get(user1)).hasSize(3);
       assertThat(users.get(user2)).isEmpty();
@@ -99,26 +99,26 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1);
-      userGroupFacade.addUser(org1Id, user2);
-      userGroupFacade.addUser(org2Id, user1);
-      userGroupFacade.addUser(org2Id, user2);
-      userGroupFacade.addUser(org2Id, user3);
+      userGroupFacade.addUser(organization1, user1);
+      userGroupFacade.addUser(organization1, user2);
+      userGroupFacade.addUser(organization2, user1);
+      userGroupFacade.addUser(organization2, user2);
+      userGroupFacade.addUser(organization2, user3);
 
-      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
+      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(organization1);
       assertThat(users).hasSize(2);
-      userGroupFacade.removeUser(org1Id, user1);
-      users = userGroupFacade.getUsersAndGroups(org1Id);
+      userGroupFacade.removeUser(organization1, user1);
+      users = userGroupFacade.getUsersAndGroups(organization1);
       assertThat(users).hasSize(1);
 
-      users = userGroupFacade.getUsersAndGroups(org2Id);
+      users = userGroupFacade.getUsersAndGroups(organization2);
       assertThat(users).hasSize(3);
-      userGroupFacade.removeUser(org2Id, user1);
-      userGroupFacade.removeUser(org2Id, user3);
-      users = userGroupFacade.getUsersAndGroups(org2Id);
+      userGroupFacade.removeUser(organization2, user1);
+      userGroupFacade.removeUser(organization2, user3);
+      users = userGroupFacade.getUsersAndGroups(organization2);
       assertThat(users).hasSize(1);
    }
 
@@ -129,25 +129,25 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user1 = "user1";
       final String user2 = "user2";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1);
-      userGroupFacade.addUser(org1Id, user2);
-      userGroupFacade.addUser(org2Id, user1);
-      userGroupFacade.addUser(org2Id, user2);
+      userGroupFacade.addUser(organization1, user1);
+      userGroupFacade.addUser(organization1, user2);
+      userGroupFacade.addUser(organization2, user1);
+      userGroupFacade.addUser(organization2, user2);
 
-      userGroupFacade.addUserToGroups(org1Id, user1, "g1", "g2");
-      userGroupFacade.addUserToGroups(org1Id, user2, "g3", "g4");
-      userGroupFacade.addUserToGroups(org2Id, user1, "g5", "g6");
-      userGroupFacade.addUserToGroups(org2Id, user2, "g7");
+      userGroupFacade.addUserToGroups(organization1, user1, "g1", "g2");
+      userGroupFacade.addUserToGroups(organization1, user2, "g3", "g4");
+      userGroupFacade.addUserToGroups(organization2, user1, "g5", "g6");
+      userGroupFacade.addUserToGroups(organization2, user2, "g7");
 
-      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
+      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(organization1);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).hasSize(2).containsOnly("g1", "g2");
       assertThat(users.get(user2)).hasSize(2).containsOnly("g3", "g4");
 
-      users = userGroupFacade.getUsersAndGroups(org2Id);
+      users = userGroupFacade.getUsersAndGroups(organization2);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).hasSize(2).containsOnly("g5", "g6");
       assertThat(users.get(user2)).hasSize(1).containsOnly("g7");
@@ -160,25 +160,25 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user1 = "user1";
       final String user2 = "user2";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1, "g1", "g2", "g3");
-      userGroupFacade.addUser(org1Id, user2, "g1", "g2", "g3");
-      userGroupFacade.addUser(org2Id, user1, "g1", "g2", "g3");
-      userGroupFacade.addUser(org2Id, user2, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization1, user1, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization1, user2, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization2, user1, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization2, user2, "g1", "g2", "g3");
 
-      userGroupFacade.removeUserFromGroups(org1Id, user1, "g1");
-      userGroupFacade.removeUserFromGroups(org1Id, user2, "g1", "g2");
-      userGroupFacade.removeUserFromGroups(org2Id, user1, "g3");
-      userGroupFacade.removeUserFromGroups(org2Id, user2, "g1", "g2", "g3");
+      userGroupFacade.removeUserFromGroups(organization1, user1, "g1");
+      userGroupFacade.removeUserFromGroups(organization1, user2, "g1", "g2");
+      userGroupFacade.removeUserFromGroups(organization2, user1, "g3");
+      userGroupFacade.removeUserFromGroups(organization2, user2, "g1", "g2", "g3");
 
-      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
+      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(organization1);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).hasSize(2).containsOnly("g2", "g3");
       assertThat(users.get(user2)).hasSize(1).containsOnly("g3");
 
-      users = userGroupFacade.getUsersAndGroups(org2Id);
+      users = userGroupFacade.getUsersAndGroups(organization2);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).hasSize(2).containsOnly("g1", "g2");
       assertThat(users.get(user2)).isEmpty();
@@ -193,19 +193,19 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user3 = "user3";
       final String user4 = "user4";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1);
-      userGroupFacade.addUser(org1Id, user2);
-      userGroupFacade.addUser(org2Id, user2);
-      userGroupFacade.addUser(org2Id, user3);
-      userGroupFacade.addUser(org2Id, user4);
+      userGroupFacade.addUser(organization1, user1);
+      userGroupFacade.addUser(organization1, user2);
+      userGroupFacade.addUser(organization2, user2);
+      userGroupFacade.addUser(organization2, user3);
+      userGroupFacade.addUser(organization2, user4);
 
-      List<String> users = userGroupFacade.getUsers(org1Id);
+      List<String> users = userGroupFacade.getUsers(organization1);
       assertThat(users).hasSize(2).containsOnly(user1, user2);
 
-      users = userGroupFacade.getUsers(org2Id);
+      users = userGroupFacade.getUsers(organization2);
       assertThat(users).hasSize(3).containsOnly(user2, user3, user4);
    }
 
@@ -217,19 +217,19 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1, "g1", "g2", "g3");
-      userGroupFacade.addUser(org1Id, user2, "g4", "g5", "g6", "g7");
-      userGroupFacade.addUser(org2Id, user3, "g8", "g9");
+      userGroupFacade.addUser(organization1, user1, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization1, user2, "g4", "g5", "g6", "g7");
+      userGroupFacade.addUser(organization2, user3, "g8", "g9");
 
-      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
+      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(organization1);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).hasSize(3).containsOnly("g1", "g2", "g3");
       assertThat(users.get(user2)).hasSize(4).containsOnly("g4", "g5", "g6", "g7");
 
-      users = userGroupFacade.getUsersAndGroups(org2Id);
+      users = userGroupFacade.getUsersAndGroups(organization2);
       assertThat(users).hasSize(1).containsOnlyKeys(user3);
       assertThat(users.get(user3)).hasSize(2).containsOnly("g8", "g9");
 
@@ -243,21 +243,20 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1, "g1", "g2", "g3");
-      userGroupFacade.addUser(org1Id, user2, "g4", "g5", "g6", "g7");
-      userGroupFacade.addUser(org2Id, user3, "g8", "g9");
+      userGroupFacade.addUser(organization1, user1, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization1, user2, "g4", "g5", "g6", "g7");
+      userGroupFacade.addUser(organization2, user3, "g8", "g9");
 
-      List<String> users = userGroupFacade.getGroupsOfUser(org1Id, user1);
+      List<String> users = userGroupFacade.getGroupsOfUser(organization1, user1);
       assertThat(users).hasSize(3).containsOnly("g1", "g2", "g3");
-      users = userGroupFacade.getGroupsOfUser(org1Id, user2);
+      users = userGroupFacade.getGroupsOfUser(organization1, user2);
       assertThat(users).hasSize(4).containsOnly("g4", "g5", "g6", "g7");
 
-      users = userGroupFacade.getGroupsOfUser(org2Id, user3);
+      users = userGroupFacade.getGroupsOfUser(organization2, user3);
       assertThat(users).hasSize(2).containsOnly("g8", "g9");
-
    }
 
    @Test
@@ -268,28 +267,28 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addUser(org1Id, user1, "g1", "g2");
-      userGroupFacade.addUser(org1Id, user2, "g1", "g2", "g3");
-      userGroupFacade.addUser(org1Id, user3, "g2");
-      userGroupFacade.addUser(org2Id, user1, "g1");
-      userGroupFacade.addUser(org2Id, user2, "g1", "g2", "g3");
-      userGroupFacade.addUser(org2Id, user3, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization1, user1, "g1", "g2");
+      userGroupFacade.addUser(organization1, user2, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization1, user3, "g2");
+      userGroupFacade.addUser(organization2, user1, "g1");
+      userGroupFacade.addUser(organization2, user2, "g1", "g2", "g3");
+      userGroupFacade.addUser(organization2, user3, "g1", "g2", "g3");
 
-      List<String> users = userGroupFacade.getUsersInGroup(org1Id, "g1");
+      List<String> users = userGroupFacade.getUsersInGroup(organization1, "g1");
       assertThat(users).hasSize(2).containsOnly(user1, user2);
-      users = userGroupFacade.getUsersInGroup(org1Id, "g2");
+      users = userGroupFacade.getUsersInGroup(organization1, "g2");
       assertThat(users).hasSize(3).containsOnly(user1, user2, user3);
-      users = userGroupFacade.getUsersInGroup(org1Id, "g3");
+      users = userGroupFacade.getUsersInGroup(organization1, "g3");
       assertThat(users).hasSize(1).containsOnly(user2);
 
-      users = userGroupFacade.getUsersInGroup(org2Id, "g1");
+      users = userGroupFacade.getUsersInGroup(organization2, "g1");
       assertThat(users).hasSize(3).containsOnly(user1, user2, user3);
-      users = userGroupFacade.getUsersInGroup(org2Id, "g2");
+      users = userGroupFacade.getUsersInGroup(organization2, "g2");
       assertThat(users).hasSize(2).containsOnly(user2, user3);
-      users = userGroupFacade.getUsersInGroup(org2Id, "g3");
+      users = userGroupFacade.getUsersInGroup(organization2, "g3");
       assertThat(users).hasSize(2).containsOnly(user2, user3);
 
    }
@@ -304,15 +303,15 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String group4 = "group4";
       final String group5 = "group5";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addGroups(org1Id, group1, group2, group3);
-      userGroupFacade.addGroups(org2Id, group3, group4, group5);
+      userGroupFacade.addGroups(organization1, group1, group2, group3);
+      userGroupFacade.addGroups(organization2, group3, group4, group5);
 
-      List<String> groups = userGroupFacade.getGroups(org1Id);
+      List<String> groups = userGroupFacade.getGroups(organization1);
       assertThat(groups).hasSize(3).containsOnly(group1, group2, group3);
-      groups = userGroupFacade.getGroups(org2Id);
+      groups = userGroupFacade.getGroups(organization2);
       assertThat(groups).hasSize(3).containsOnly(group3, group4, group5);
    }
 
@@ -329,33 +328,33 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user1 = "user1";
       final String user2 = "user2";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addGroups(org1Id, group1, group2, group3);
-      userGroupFacade.addGroups(org2Id, group3, group4, group5);
+      userGroupFacade.addGroups(organization1, group1, group2, group3);
+      userGroupFacade.addGroups(organization2, group3, group4, group5);
 
-      userGroupFacade.addUser(org1Id, user1, group1, group2, group3);
-      userGroupFacade.addUser(org1Id, user2, group2, group3, group4);
-      userGroupFacade.addUser(org2Id, user1, group3, group4, group5);
-      userGroupFacade.addUser(org2Id, user2, group1, group2, group3, group4);
+      userGroupFacade.addUser(organization1, user1, group1, group2, group3);
+      userGroupFacade.addUser(organization1, user2, group2, group3, group4);
+      userGroupFacade.addUser(organization2, user1, group3, group4, group5);
+      userGroupFacade.addUser(organization2, user2, group1, group2, group3, group4);
 
-      userGroupFacade.removeGroups(org1Id, group2);
-      userGroupFacade.removeGroups(org2Id, group3, group4, group5);
+      userGroupFacade.removeGroups(organization1, group2);
+      userGroupFacade.removeGroups(organization2, group3, group4, group5);
 
-      List<String> groups = userGroupFacade.getGroups(org1Id);
+      List<String> groups = userGroupFacade.getGroups(organization1);
       assertThat(groups).hasSize(2).containsOnly(group1, group3);
-      groups = userGroupFacade.getGroups(org2Id);
+      groups = userGroupFacade.getGroups(organization2);
       assertThat(groups).isEmpty();
 
       // check if groups was deleted from users correctly
 
-      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(org1Id);
+      Map<String, List<String>> users = userGroupFacade.getUsersAndGroups(organization1);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).hasSize(2).containsOnly(group1, group3);
       assertThat(users.get(user2)).hasSize(2).containsOnly(group3, group4);
 
-      users = userGroupFacade.getUsersAndGroups(org2Id);
+      users = userGroupFacade.getUsersAndGroups(organization2);
       assertThat(users).hasSize(2).containsOnlyKeys(user1, user2);
       assertThat(users.get(user1)).isEmpty();
       assertThat(users.get(user2)).hasSize(2).containsOnly(group1, group2);
@@ -371,15 +370,15 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String group4 = "group4";
       final String group5 = "group5";
 
-      String org1Id = organizationFacade.createOrganization(organization1, "Org one");
-      String org2Id = organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(organization1, "Org one");
+      organizationFacade.createOrganization(organization2, "Org two");
 
-      userGroupFacade.addGroups(org1Id, group1, group3);
-      userGroupFacade.addGroups(org2Id, group2, group3, group4, group5);
+      userGroupFacade.addGroups(organization1, group1, group3);
+      userGroupFacade.addGroups(organization2, group2, group3, group4, group5);
 
-      List<String> groups = userGroupFacade.getGroups(org1Id);
+      List<String> groups = userGroupFacade.getGroups(organization1);
       assertThat(groups).hasSize(2).containsOnly(group1, group3);
-      groups = userGroupFacade.getGroups(org2Id);
+      groups = userGroupFacade.getGroups(organization2);
       assertThat(groups).hasSize(4).containsOnly(group2, group3, group4, group5);
    }
 

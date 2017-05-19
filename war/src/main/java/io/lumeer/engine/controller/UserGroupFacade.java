@@ -59,7 +59,7 @@ public class UserGroupFacade implements Serializable {
     * Adds user to organization with one or more groups.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @param groups
@@ -80,7 +80,7 @@ public class UserGroupFacade implements Serializable {
     * Adds one or more groups to organization
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param groups
     *       The one or more group names.
     */
@@ -95,7 +95,7 @@ public class UserGroupFacade implements Serializable {
     * Assign one or more group to user
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @param groups
@@ -112,7 +112,7 @@ public class UserGroupFacade implements Serializable {
     * Remove user from organization
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     */
@@ -125,7 +125,7 @@ public class UserGroupFacade implements Serializable {
     * Remove one or more groups from user
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @param groups
@@ -142,7 +142,7 @@ public class UserGroupFacade implements Serializable {
     * Remove one or more groups from organization
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param groups
     *       The one or more group names.
     */
@@ -168,7 +168,7 @@ public class UserGroupFacade implements Serializable {
     * Read users in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @return The list of user names.
     */
    public List<String> getUsers(final String organization) {
@@ -181,7 +181,7 @@ public class UserGroupFacade implements Serializable {
     * Read users and their groups in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @return The map of user names and groups.
     */
    public Map<String, List<String>> getUsersAndGroups(final String organization) {
@@ -197,7 +197,7 @@ public class UserGroupFacade implements Serializable {
     * Read groups of user in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @return The list of group names.
@@ -217,7 +217,7 @@ public class UserGroupFacade implements Serializable {
     * @return The list of user names.
     */
    public List<String> getUsersInGroup(final String organization, final String group) {
-      List<DataDocument> users = dataStorage.aggregate(UserGroup.COLLECTION_NAME, dataStorageDialect.usersOfGroupAggregate(organization, group));
+      List<DataDocument> users = dataStorage.aggregate(UserGroup.COLLECTION_NAME, dataStorageDialect.usersOfGroupAggregate(organizationFacade.getOrganizationId(organization), group));
       return users.stream().map(u -> u.getString(UserGroup.ATTR_USERS_USER)).collect(Collectors.toList());
    }
 
@@ -225,7 +225,7 @@ public class UserGroupFacade implements Serializable {
     * Read groups in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @return The list of group names.
     */
    public List<String> getGroups(final String organization) {
