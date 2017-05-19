@@ -91,10 +91,10 @@ public class DocumentService implements Serializable {
    private DataStorage dataStorage;
 
    @PathParam("organisation")
-   private String organisationId;
+   private String organisationCode;
 
    @PathParam("project")
-   private String projectId;
+   private String projectCode;
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -104,8 +104,8 @@ public class DocumentService implements Serializable {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationId(organisationId);
-      projectFacade.setCurrentProjectId(projectId);
+      organizationFacade.setOrganizationCode(organisationCode);
+      projectFacade.setCurrentProjectCode(projectCode);
    }
 
    /**

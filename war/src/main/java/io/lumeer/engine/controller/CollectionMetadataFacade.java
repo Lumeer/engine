@@ -1121,16 +1121,16 @@ public class CollectionMetadataFacade implements Serializable {
     * @return name of metadata collection for current organisation
     */
    public String metadataCollection() {
-      return metadataCollection(projectFacade.getCurrentProjectId());
+      return metadataCollection(projectFacade.getCurrentProjectCode());
    }
 
    /**
-    * @param projectId
-    *       project id
-    * @return name of metadata collection for given project id
+    * @param projectCode
+    *       project code
+    * @return name of metadata collection for given project code
     */
-   public String metadataCollection(String projectId) {
-      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + projectFacade.getProjectIdentificator(projectId);
+   public String metadataCollection(String projectCode) {
+      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
    }
 
    private Object getMetadataValue(String collection, String key) {

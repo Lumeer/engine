@@ -20,12 +20,9 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.controller.OrganizationFacade;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -53,7 +50,7 @@ public class OrganizationService implements Serializable {
    private OrganizationFacade organizationFacade;
 
    /**
-    * @return map of organizations' ids and names
+    * @return map of organizations' codes and names
     */
    @GET
    @Path("/")
@@ -63,186 +60,186 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @return name of given organization
     */
    @GET
-   @Path("/{organizationId}/name")
+   @Path("/{organizationCode}/name")
    @Produces(MediaType.APPLICATION_JSON)
-   public String getOrganizationName(final @PathParam("organizationId") String organizationId) {
-      if (organizationId == null) {
+   public String getOrganizationName(final @PathParam("organizationCode") String organizationCode) {
+      if (organizationCode == null) {
          throw new IllegalArgumentException();
       }
-      return organizationFacade.readOrganizationName(organizationId);
+      return organizationFacade.readOrganizationName(organizationCode);
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @param organizationName organization name
     */
    @POST
-   @Path("/{organizationId}")
-   public void createOrganization(final @PathParam("organizationId") String organizationId, final String organizationName) {
-      if (organizationId == null || organizationName == null) {
+   @Path("/{organizationCode}")
+   public void createOrganization(final @PathParam("organizationCode") String organizationCode, final String organizationName) {
+      if (organizationCode == null || organizationName == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.createOrganization(organizationId, organizationName);
+      organizationFacade.createOrganization(organizationCode, organizationName);
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @param newOrganizationName organization name
     */
    @PUT
-   @Path("/{organizationId}/name/{newOrganizationName}")
-   public void renameOrganization(final @PathParam("organizationId") String organizationId, final @PathParam("newOrganizationName") String newOrganizationName) {
-      if (organizationId == null || newOrganizationName == null) {
+   @Path("/{organizationCode}/name/{newOrganizationName}")
+   public void renameOrganization(final @PathParam("organizationCode") String organizationCode, final @PathParam("newOrganizationName") String newOrganizationName) {
+      if (organizationCode == null || newOrganizationName == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.renameOrganization(organizationId, newOrganizationName);
+      organizationFacade.renameOrganization(organizationCode, newOrganizationName);
    }
 
    /**
-    * @param organizationId organization id
-    * @param newId new organization id
+    * @param organizationCode organization code
+    * @param newCode new organization code
     */
    @PUT
-   @Path("/{organizationId}/id/{newId}")
-   public void updateOrganizationId(final @PathParam("organizationId") String organizationId, final @PathParam("newId") String newId) {
-      if (organizationId == null || newId == null) {
+   @Path("/{organizationCode}/code/{newCode}")
+   public void updateOrganizationCode(final @PathParam("organizationCode") String organizationCode, final @PathParam("newCode") String newCode) {
+      if (organizationCode == null || newCode == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.updateOrganizationId(organizationId, newId);
+      organizationFacade.updateOrganizationCode(organizationCode, newCode);
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     */
    @DELETE
-   @Path("/{organizationId}")
-   public void dropOrganization(final @PathParam("organizationId") String organizationId) {
-      if (organizationId == null) {
+   @Path("/{organizationCode}")
+   public void dropOrganization(final @PathParam("organizationCode") String organizationCode) {
+      if (organizationCode == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.dropOrganization(organizationId);
+      organizationFacade.dropOrganization(organizationCode);
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @param attributeName name of metadata attribute
     * @return value of metadata attribute
     */
    @GET
-   @Path("/{organizationId}/meta/{attributeName}")
+   @Path("/{organizationCode}/meta/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public String readOrganizationMetadata(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
-      if (organizationId == null || attributeName == null) {
+   public String readOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+      if (organizationCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      return organizationFacade.readOrganizationMetadata(organizationId, attributeName);
+      return organizationFacade.readOrganizationMetadata(organizationCode, attributeName);
    }
 
    /**
     * Adds or updates metadata attribute.
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @param attributeName name of metadata attribute
     * @param value value of metadata attribute
     */
    @PUT
-   @Path("/{organizationId}/meta/{attributeName}")
+   @Path("/{organizationCode}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateOrganizationMetadata(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName, final String value) {
-      if (organizationId == null || attributeName == null) {
+   public void updateOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) {
+      if (organizationCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
       DataDocument metaDocument = new DataDocument(attributeName, value);
-      organizationFacade.updateOrganizationMetadata(organizationId, metaDocument);
+      organizationFacade.updateOrganizationMetadata(organizationCode, metaDocument);
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @param attributeName name of metadata attribute
     */
    @DELETE
-   @Path("/{organizationId}/meta/{attributeName}")
-   public void dropOrganizationMetadata(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
-      if (organizationId == null || attributeName == null) {
+   @Path("/{organizationCode}/meta/{attributeName}")
+   public void dropOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+      if (organizationCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.dropOrganizationMetadata(organizationId, attributeName);
+      organizationFacade.dropOrganizationMetadata(organizationCode, attributeName);
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @return DataDocument with additional info
     */
    @GET
-   @Path("/{organizationId}/data/")
+   @Path("/{organizationCode}/data/")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId) {
-      if (organizationId == null) {
+   public DataDocument readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode) {
+      if (organizationCode == null) {
          throw new IllegalArgumentException();
       }
-      return organizationFacade.readOrganizationInfoData(organizationId);
+      return organizationFacade.readOrganizationInfoData(organizationCode);
    }
 
    /**
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @param attributeName name of attribute from additional info
     * @return value of the attribute
     */
    @GET
-   @Path("/{organizationId}/data/{attributeName}")
+   @Path("/{organizationCode}/data/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public String readOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
-      if (organizationId == null || attributeName == null) {
+   public String readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+      if (organizationCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      return organizationFacade.readOrganizationInfoData(organizationId, attributeName);
+      return organizationFacade.readOrganizationInfoData(organizationCode, attributeName);
    }
 
    /**
     * Creates or updates entry in additional info.
-    * @param organizationId organization id
+    * @param organizationCode organization code
     * @param attributeName name of the attribute
     * @param value value of the attribute
     */
    @PUT
-   @Path("/{organizationId}/data/{attributeName}")
+   @Path("/{organizationCode}/data/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName, final String value) {
-      if (organizationId == null || attributeName == null) {
+   public void updateOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) {
+      if (organizationCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
       DataDocument infoDataDocument = new DataDocument(attributeName, value);
-      organizationFacade.updateOrganizationInfoData(organizationId, infoDataDocument);
+      organizationFacade.updateOrganizationInfoData(organizationCode, infoDataDocument);
    }
 
    /**
-    * Drops atttribute from additional info.
-    * @param organizationId organization id
+    * Drops attribute from additional info.
+    * @param organizationCode organization code
     * @param attributeName name of the attribute
     */
    @DELETE
-   @Path("/{organizationId}/data/{attributeName}")
-   public void dropOrganizationAdditionalInfo(final @PathParam("organizationId") String organizationId, final @PathParam("attributeName") String attributeName) {
-      if (organizationId == null || attributeName == null) {
+   @Path("/{organizationCode}/data/{attributeName}")
+   public void dropOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+      if (organizationCode == null || attributeName == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.dropOrganizationInfoDataAttribute(organizationId, attributeName);
+      organizationFacade.dropOrganizationInfoDataAttribute(organizationCode, attributeName);
    }
 
    /**
     * Drops all additional info.
-    * @param organizationId organization id
+    * @param organizationCode organization code
     */
    @DELETE
-   @Path("/{organizationId}/data")
-   public void resetOrganizationInfoData(final @PathParam("organizationId") String organizationId) {
-      if (organizationId == null) {
+   @Path("/{organizationCode}/data")
+   public void resetOrganizationInfoData(final @PathParam("organizationCode") String organizationCode) {
+      if (organizationCode == null) {
          throw new IllegalArgumentException();
       }
-      organizationFacade.resetOrganizationInfoData(organizationId);
+      organizationFacade.resetOrganizationInfoData(organizationCode);
    }
 
 }

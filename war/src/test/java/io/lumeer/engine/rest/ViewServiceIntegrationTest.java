@@ -84,7 +84,7 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void init() {
-      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationId() + "/" + projectFacade.getCurrentProjectId() + "/views/";
+      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/views/";
       dataStorage.dropManyDocuments(viewFacade.metadataCollection(), dataStorageDialect.documentFilter("{}"));
    }
 

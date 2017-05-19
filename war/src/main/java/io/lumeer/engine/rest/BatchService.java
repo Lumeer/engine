@@ -57,10 +57,10 @@ public class BatchService {
    private CollectionMetadataFacade collectionMetadataFacade;
 
    @PathParam("organisation")
-   private String organisationId;
+   private String organisationCode;
 
    @PathParam("project")
-   private String projectId;
+   private String projectCode;
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -70,8 +70,8 @@ public class BatchService {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationId(organisationId);
-      projectFacade.setCurrentProjectId(projectId);
+      organizationFacade.setOrganizationCode(organisationCode);
+      projectFacade.setCurrentProjectCode(projectCode);
    }
 
    /**

@@ -25,12 +25,9 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.exception.UserAlreadyExistsException;
-import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,7 +43,7 @@ import javax.inject.Inject;
 @RequestScoped
 public class OrganizationFacade {
 
-   private String organizationId = "ACME";
+   private String organizationCode = "ACME";
 
    @Inject
    @SystemDataStorage
@@ -59,109 +56,114 @@ public class OrganizationFacade {
    private DatabaseInitializer databaseInitializer;
 
    /**
-    * Gets unique and immutable identificator of the organization - _id from DataDocument
+    * Gets unique and immutable id of the organization - _id from DataDocument
     *
-    * @param organizationId
-    *       organization id
-    * @return identificator
+    * @param organizationCode
+    *       organization code
+    * @return id
     */
-   public String getOrganizationIdentificator(final String organizationId) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Document.ID));
-      return document != null ? document.getString(LumeerConst.Document.ID) : null;
+   public String getOrganizationId(final String organizationCode) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_ID));
+      return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_ID) : null;
    }
 
    public String getOrganizationId() {
-      return organizationId;
+      return getOrganizationId(organizationCode);
    }
 
-   public void setOrganizationId(final String organizationId) {
-      this.organizationId = organizationId;
+   public String getOrganizationCode() {
+      return organizationCode;
+   }
+
+   public void setOrganizationCode(final String organizationCode) {
+      this.organizationCode = organizationCode;
    }
 
    /**
     * Reads a map of all organizations in the system.
     *
-    * @return map of values (id, name) of all organizations in the system
+    * @return map of values (code, name) of all organizations in the system
     */
    public Map<String, String> readOrganizationsMap() {
-      List<DataDocument> documents = dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_ID));
-      return documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_ORG_ID), d -> d.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
+      List<DataDocument> documents = dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_CODE));
+      return documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_ORG_CODE), d -> d.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
    }
 
    /**
     * Reads the organization name according to its id.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @return name of the given organization
     */
-   public String readOrganizationName(final String organizationId) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_NAME));
+   public String readOrganizationName(final String organizationCode) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_NAME));
       return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_NAME) : null;
    }
 
    /**
     * Reads the specific organization metadata.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param metaName
     *       name of the meta attribute
     * @return meta attribute value
     */
-   public String readOrganizationMetadata(final String organizationId, final String metaName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(metaName));
+   public String readOrganizationMetadata(final String organizationCode, final String metaName) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode), Collections.singletonList(metaName));
       return document != null ? document.getString(metaName) : null;
    }
 
    /**
     * Updates single organization metadata.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param metaName
     *       name of the meta attribute to update
     * @param value
     *       meta attribute value
     */
-   public void updateOrganizationMetadata(final String organizationId, final String metaName, final String value) {
-      updateOrganizationMetadata(organizationId, new DataDocument(metaName, value));
+   public void updateOrganizationMetadata(final String organizationCode, final String metaName, final String value) {
+      updateOrganizationMetadata(organizationCode, new DataDocument(metaName, value));
    }
 
    /**
     * Updates multiple organization metadata.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param meta
     *       key-value pairs of metadata to update
     */
-   public void updateOrganizationMetadata(final String organizationId, final DataDocument meta) {
-      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, meta, organizationIdFilter(organizationId));
+   public void updateOrganizationMetadata(final String organizationCode, final DataDocument meta) {
+      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, meta, organizationCodeFilter(organizationCode));
    }
 
    /**
     * Removes the specific organization metadata.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param metaName
     *       name of the meta attribute to remove
     */
-   public void dropOrganizationMetadata(final String organizationId, final String metaName) {
-      dataStorage.dropAttribute(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), metaName);
+   public void dropOrganizationMetadata(final String organizationCode, final String metaName) {
+      dataStorage.dropAttribute(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode), metaName);
    }
 
    /**
     * Creates new organization in the system database.
     *
-    * @param organizationId
-    *       id of the new organization to create
+    * @param organizationCode
+    *       code of the new organization to create
     * @param organizationName
     *       name of the new organization to create
+    * @return id of the organization
     */
-   public String createOrganization(final String organizationId, final String organizationName) {
-      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, organizationId)
+   public String createOrganization(final String organizationCode, final String organizationName) {
+      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_CODE, organizationCode)
             .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
             .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
       String id = dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, document);
@@ -172,39 +174,39 @@ public class OrganizationFacade {
    /**
     * Changes organization id
     *
-    * @param oldOrganizationId
-    *       id of the organization to change
-    * @param newOrganizationId
-    *       new id for organization
+    * @param oldOrganizationCode
+    *       code of the organization to change
+    * @param newOrganizationCode
+    *       new code for organization
     */
-   public void updateOrganizationId(final String oldOrganizationId, final String newOrganizationId) {
-      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_ID, newOrganizationId);
-      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationIdFilter(oldOrganizationId));
+   public void updateOrganizationCode(final String oldOrganizationCode, final String newOrganizationCode) {
+      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_CODE, newOrganizationCode);
+      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, document, organizationCodeFilter(oldOrganizationCode));
    }
 
    /**
     * Renames a name of the given organization according to its id.
     *
-    * @param organizationId
-    *       id of the given organization
+    * @param organizationCode
+    *       code of the given organization
     * @param newOrganizationName
     *       new name of the organization
     */
-   public void renameOrganization(final String organizationId, final String newOrganizationName) {
+   public void renameOrganization(final String organizationCode, final String newOrganizationName) {
       DataDocument dataDocument = new DataDocument(LumeerConst.Organization.ATTR_ORG_NAME, newOrganizationName);
-      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, dataDocument, organizationIdFilter(organizationId));
+      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, dataDocument, organizationCodeFilter(organizationCode));
    }
 
    /**
     * Drops the organization according to its id.
     *
-    * @param organizationId
-    *       id of the given organization to drop
+    * @param organizationCode
+    *       code of the given organization to drop
     */
-   public void dropOrganization(final String organizationId) {
-      String organizationIdentifier =  getOrganizationIdentificator(organizationId);
+   public void dropOrganization(final String organizationCode) {
+      String organizationIdentifier = getOrganizationId(organizationCode);
       if (organizationIdentifier != null) {
-         dataStorage.dropDocument(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId));
+         dataStorage.dropDocument(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode));
          databaseInitializer.onOrganizationRemoved(organizationIdentifier);
       }
    }
@@ -212,81 +214,81 @@ public class OrganizationFacade {
    /**
     * Reads additional information about the given organization.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @return DataDocument object including additional organization info
     */
-   public DataDocument readOrganizationInfoData(final String organizationId) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_DATA));
+   public DataDocument readOrganizationInfoData(final String organizationCode) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_DATA));
       return document != null ? document.getDataDocument(LumeerConst.Organization.ATTR_ORG_DATA) : null;
    }
 
    /**
     * Reads specified additional information about the given organization.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param infoDataAttribute
     *       attribute of the organization additional info
     * @return value of the organization info attribute
     */
-   public String readOrganizationInfoData(final String organizationId, final String infoDataAttribute) {
-      DataDocument infoDataDocument = readOrganizationInfoData(organizationId);
+   public String readOrganizationInfoData(final String organizationCode, final String infoDataAttribute) {
+      DataDocument infoDataDocument = readOrganizationInfoData(organizationCode);
       return infoDataDocument != null ? infoDataDocument.getString(infoDataAttribute) : null;
    }
 
    /**
     * Updates whole organization info document.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param infoData
     *       info document including more attributes and values
     */
-   public void updateOrganizationInfoData(final String organizationId, final DataDocument infoData) {
+   public void updateOrganizationInfoData(final String organizationCode, final DataDocument infoData) {
       DataDocument infoDataDocument = new DataDocument(LumeerConst.Organization.ATTR_ORG_DATA, infoData);
-      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, infoDataDocument, organizationIdFilter(organizationId));
+      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, infoDataDocument, organizationCodeFilter(organizationCode));
    }
 
    /**
     * Updates specified attribute in the organization info document.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param infoAttribute
     *       attribute of the organization additional info to update
     * @param value
     *       new value of the given attribute
     */
-   public void updateOrganizationInfoData(final String organizationId, final String infoAttribute, final String value) {
-      updateOrganizationInfoData(organizationId, new DataDocument(infoAttribute, value));
+   public void updateOrganizationInfoData(final String organizationCode, final String infoAttribute, final String value) {
+      updateOrganizationInfoData(organizationCode, new DataDocument(infoAttribute, value));
    }
 
    /**
     * Drops the given attribute in the organization info document.
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     * @param infoAttribute
     *       attribute of the organization additional info to drop
     */
-   public void dropOrganizationInfoDataAttribute(final String organizationId, final String infoAttribute) {
-      dataStorage.dropAttribute(LumeerConst.Organization.COLLECTION_NAME, organizationIdFilter(organizationId), dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_ORG_DATA, infoAttribute));
+   public void dropOrganizationInfoDataAttribute(final String organizationCode, final String infoAttribute) {
+      dataStorage.dropAttribute(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode), dataStorageDialect.concatFields(LumeerConst.Organization.ATTR_ORG_DATA, infoAttribute));
    }
 
    /**
     * Resets additional info of the given organization (drops everything).
     *
-    * @param organizationId
-    *       id of the organization
+    * @param organizationCode
+    *       code of the organization
     */
-   public void resetOrganizationInfoData(final String organizationId) {
+   public void resetOrganizationInfoData(final String organizationCode) {
       DataDocument defaultInfoDocument = new DataDocument(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
-      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, defaultInfoDocument, organizationIdFilter(organizationId));
+      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, defaultInfoDocument, organizationCodeFilter(organizationCode));
    }
 
-   private DataFilter organizationIdFilter(final String organizationId) {
-      return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_ID, organizationId);
+   protected DataFilter organizationCodeFilter(final String organizationCode) {
+      return dataStorageDialect.fieldValueFilter(LumeerConst.Organization.ATTR_ORG_CODE, organizationCode);
    }
 
 }
