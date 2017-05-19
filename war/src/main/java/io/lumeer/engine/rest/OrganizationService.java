@@ -60,17 +60,17 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationId organization code
+    * @param organizationCode organization code
     * @return name of given organization
     */
    @GET
    @Path("/{organizationCode}/name")
    @Produces(MediaType.APPLICATION_JSON)
-   public String getOrganizationName(final @PathParam("organizationCode") String organizationId) {
-      if (organizationId == null) {
+   public String getOrganizationName(final @PathParam("organizationCode") String organizationCode) {
+      if (organizationCode == null) {
          throw new IllegalArgumentException();
       }
-      return organizationFacade.readOrganizationName(organizationId);
+      return organizationFacade.readOrganizationName(organizationCode);
    }
 
    /**
