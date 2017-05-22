@@ -20,7 +20,6 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.LumeerConst.Group;
 import io.lumeer.engine.api.LumeerConst.UserGroup;
 import io.lumeer.engine.api.data.DataDocument;
@@ -31,14 +30,12 @@ import io.lumeer.engine.api.exception.UserAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -55,11 +52,14 @@ public class UserGroupFacade implements Serializable {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
+   @Inject
+   private OrganizationFacade organizationFacade;
+
    /**
     * Adds user to organization with one or more groups.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @param groups
@@ -80,7 +80,7 @@ public class UserGroupFacade implements Serializable {
     * Adds one or more groups to organization
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param groups
     *       The one or more group names.
     */
@@ -95,7 +95,7 @@ public class UserGroupFacade implements Serializable {
     * Assign one or more group to user
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @param groups
@@ -112,7 +112,7 @@ public class UserGroupFacade implements Serializable {
     * Remove user from organization
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     */
@@ -125,7 +125,7 @@ public class UserGroupFacade implements Serializable {
     * Remove one or more groups from user
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @param groups
@@ -142,7 +142,7 @@ public class UserGroupFacade implements Serializable {
     * Remove one or more groups from organization
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param groups
     *       The one or more group names.
     */
@@ -168,7 +168,7 @@ public class UserGroupFacade implements Serializable {
     * Read users in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @return The list of user names.
     */
    public List<String> getUsers(final String organization) {
@@ -181,7 +181,7 @@ public class UserGroupFacade implements Serializable {
     * Read users and their groups in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @return The map of user names and groups.
     */
    public Map<String, List<String>> getUsersAndGroups(final String organization) {
@@ -197,7 +197,7 @@ public class UserGroupFacade implements Serializable {
     * Read groups of user in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @param user
     *       User identificator.
     * @return The list of group names.
@@ -217,7 +217,7 @@ public class UserGroupFacade implements Serializable {
     * @return The list of user names.
     */
    public List<String> getUsersInGroup(final String organization, final String group) {
-      List<DataDocument> users = dataStorage.aggregate(UserGroup.COLLECTION_NAME, dataStorageDialect.usersOfGroupAggregate(organization, group));
+      List<DataDocument> users = dataStorage.aggregate(UserGroup.COLLECTION_NAME, dataStorageDialect.usersOfGroupAggregate(organizationFacade.getOrganizationId(organization), group));
       return users.stream().map(u -> u.getString(UserGroup.ATTR_USERS_USER)).collect(Collectors.toList());
    }
 
@@ -225,7 +225,7 @@ public class UserGroupFacade implements Serializable {
     * Read groups in organization.
     *
     * @param organization
-    *       Id of the organization.
+    *       Code of the organization.
     * @return The list of group names.
     */
    public List<String> getGroups(final String organization) {
@@ -240,16 +240,16 @@ public class UserGroupFacade implements Serializable {
    }
 
    private DataFilter organizationFilter(final String organization) {
-      return dataStorageDialect.fieldValueFilter(UserGroup.ATTR_ORG_ID, organization);
+      return dataStorageDialect.fieldValueFilter(UserGroup.ATTR_ORG_ID, organizationFacade.getOrganizationId(organization));
    }
 
    private DataFilter organizationFilterGroups(final String organization) {
-      return dataStorageDialect.fieldValueFilter(Group.ATTR_ORG_ID, organization);
+      return dataStorageDialect.fieldValueFilter(Group.ATTR_ORG_ID, organizationFacade.getOrganizationId(organization));
    }
 
    private DataFilter userFilter(final String organization, final String user) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(UserGroup.ATTR_ORG_ID, organization);
+      filter.put(UserGroup.ATTR_ORG_ID, organizationFacade.getOrganizationId(organization));
       filter.put(dataStorageDialect.concatFields(UserGroup.ATTR_USERS, UserGroup.ATTR_USERS_USER), user);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }

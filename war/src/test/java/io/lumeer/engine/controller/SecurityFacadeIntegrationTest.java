@@ -92,8 +92,8 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       organizationFacade.dropOrganization(org);
       organizationFacade.createOrganization(org, "name");
 
-      userGroupFacade.addGroups(organizationFacade.getOrganizationId(org), group1, group2);
-      userGroupFacade.addUser(organizationFacade.getOrganizationId(org), user, group1, group2);
+      userGroupFacade.addGroups(org, group1, group2);
+      userGroupFacade.addUser(org, user, group1, group2);
 
       projectFacade.dropProject(project);
       projectFacade.createProject(project, "project name");

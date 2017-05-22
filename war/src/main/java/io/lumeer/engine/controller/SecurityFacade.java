@@ -109,7 +109,7 @@ public class SecurityFacade implements Serializable {
    }
 
    private boolean checkRole(DataDocument rolesDocument, String user, String role, String organizationCode) {
-      List<String> groupsForUser = userGroupFacade.getGroupsOfUser(organizationFacade.getOrganizationId(organizationCode), user);
+      List<String> groupsForUser = userGroupFacade.getGroupsOfUser(organizationCode, user);
       if (groupsForUser == null) {
          groupsForUser = Collections.emptyList();
       }

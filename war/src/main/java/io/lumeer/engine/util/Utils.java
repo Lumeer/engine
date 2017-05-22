@@ -23,7 +23,6 @@ import io.lumeer.engine.api.LumeerConst;
 
 import java.text.DateFormat;
 import java.text.Normalizer;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -41,45 +40,6 @@ public class Utils {
 
    public static String getCurrentTimeString() {
       return dateFormat.format(new Date());
-   }
-
-   /**
-    * @param date
-    *       Date date we want to convert to string
-    * @return String representation of Date
-    */
-   public static String getTimeString(Date date) {
-      return dateFormat.format(date);
-   }
-
-   /**
-    * @param date
-    *       date string we want to convert to Date
-    * @return Date representation of string
-    * @throws ParseException
-    *       when string cannot be parsed
-    */
-   public static Date getDate(String date) throws ParseException {
-      return dateFormat.parse(date);
-   }
-
-   /**
-    * Checks if date in string is in format yyyy.MM.dd HH.mm.ss.SSS
-    *
-    * @param dateString
-    *       string with date to check
-    * @return true if date string is in valid format, otherwise false
-    */
-   public static boolean isValidDateFormat(String dateString) {
-      try {
-         Date date = dateFormat.parse(dateString);
-         if (!dateString.equals(dateFormat.format(date))) {
-            return false;
-         }
-      } catch (ParseException ex) {
-         return false;
-      }
-      return true;
    }
 
    public static String normalize(String string) {
