@@ -34,11 +34,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -75,21 +77,18 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testGetOrganizations() throws Exception {
       String org1 = "GetOrganizations1";
       String org2 = "GetOrganizations2";
-      String id1 = "GetOrganizations1_id";
-      String id2 = "GetOrganizations2_id";
-      organizationFacade.createOrganization(id1, org1);
-      organizationFacade.createOrganization(id2, org2);
-
-      Map<String, String> organizationsFromFacade = organizationFacade.readOrganizationsMap();
+      String code1 = "GetOrganizations1_id";
+      String code2 = "GetOrganizations2_id";
+      organizationFacade.createOrganization(code1, org1);
+      organizationFacade.createOrganization(code2, org2);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
-      Map<String, String> organizations = response.readEntity(Map.class);
+      List<DataDocument> organizations = response.readEntity(new GenericType<List<DataDocument>>(){});
 
-      assertThat(organizations).isEqualTo(organizationsFromFacade);
-      assertThat(organizations).containsEntry(id1, org1);
-      assertThat(organizations).containsEntry(id2, org2);
+      assertThat(organizations).extracting("id").contains(code1, code2);
+      assertThat(organizations).extracting("name").contains(org1, org2);
    }
 
    @Test
@@ -130,47 +129,50 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testCreateOrganization() throws Exception {
       String org = "CreateOrganization";
-      String id = "CreateOrganization_id";
-      organizationFacade.createOrganization(id, org);
+      String code = "CreateOrganization_id";
+      organizationFacade.createOrganization(code, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + id)
+      client.target(TARGET_URI).path(PATH_PREFIX + code)
             .request(MediaType.APPLICATION_JSON)
             .buildPost(Entity.entity(org, MediaType.APPLICATION_JSON))
             .invoke();
 
-      assertThat(organizationFacade.readOrganizationsMap()).containsEntry(id, org);
+      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_CODE).contains(code);
+      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_NAME).contains(org);
    }
 
    @Test
    public void testRenameOrganization() throws Exception {
       String org = "RenameOrganization";
       String newName = "RenameOrganizationNew";
-      String id = "RenameOrganization_id";
-      organizationFacade.createOrganization(id, org);
+      String code = "RenameOrganization_id";
+      organizationFacade.createOrganization(code, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + id + "/name/" + newName)
+      client.target(TARGET_URI).path(PATH_PREFIX + code + "/name/" + newName)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
 
-      assertThat(organizationFacade.readOrganizationsMap()).containsEntry(id, newName);
+      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_CODE).contains(code);
+      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_NAME).contains(newName);
    }
 
    @Test
    public void testDropOrganization() throws Exception {
       String org = "DropOrganization";
-      String id = "DropOrganization_id";
-      organizationFacade.createOrganization(id, org);
+      String code = "DropOrganization_id";
+      organizationFacade.createOrganization(code, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + id)
+      client.target(TARGET_URI).path(PATH_PREFIX + code)
             .request(MediaType.APPLICATION_JSON)
             .buildDelete()
             .invoke();
 
-      assertThat(organizationFacade.readOrganizationsMap()).doesNotContainEntry(id, org);
+      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_ID).doesNotContain(code);
+      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_NAME).doesNotContain(org);
    }
 
    @Test

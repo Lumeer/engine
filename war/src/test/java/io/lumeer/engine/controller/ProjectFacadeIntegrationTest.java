@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
@@ -34,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
@@ -71,10 +73,9 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(project1, "Project One");
       projectFacade.createProject(project2, "Project Two");
 
-      Map<String, String> map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
-      assertThat(map).containsOnlyKeys("project1", "project2");
-      assertThat(map).containsEntry("project1", "Project One");
-      assertThat(map).containsEntry("project2", "Project Two");
+      List<DataDocument> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project1, project2);
+      assertThat(projects).extracting(Project.ATTR_PROJECT_NAME).containsOnly("Project One", "Project Two");
 
       assertThat(projectFacade.readProjectName(project1)).isEqualTo("Project One");
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two");
@@ -87,14 +88,14 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.renameProject(project2, "Project Two Renamed");
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two Renamed");
 
-      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
-      assertThat(map).containsOnlyKeys(project3, project2);
+      projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project3, project2);
       projectFacade.createProject(project4, "Project Three");
-      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
-      assertThat(map).containsOnlyKeys(project3, project2, project4);
+      projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project3, project2, project4);
       projectFacade.dropProject(project4);
-      map = projectFacade.readProjectsMap(organizationFacade.getOrganizationCode());
-      assertThat(map).containsOnlyKeys(project3, project2);
+      projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project3, project2);
    }
 
    @Test

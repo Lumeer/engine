@@ -19,11 +19,15 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.rest.dao.Project;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -62,13 +66,13 @@ public class ProjectService implements Serializable {
    }
 
    /**
-    * @return Map of projects codes and names.
+    * @return List of projects.
     */
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public Map<String, String> getProjects() {
-      return projectFacade.readProjectsMap(organizationCode);
+   public List<Project> getProjects() {
+      return projectFacade.readProjects(organizationCode).stream().map(Project::new).collect(Collectors.toList());
    }
 
    /**

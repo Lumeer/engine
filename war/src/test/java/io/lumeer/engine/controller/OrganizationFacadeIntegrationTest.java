@@ -38,18 +38,12 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    private OrganizationFacade organizationFacade;
 
    @Test
-   public void testReadOrganizationsMap() throws Exception {
+   public void testReadOrganizations() throws Exception {
       dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
       createDummyEntries();
 
-      Map<String, String> organizationsMap = organizationFacade.readOrganizationsMap();
-      List<DataDocument> organizations = getOrganizationEntries();
-      Map<String, String> newOrganizationsMap = new HashMap<>();
-
-      organizations.forEach(organization -> newOrganizationsMap.put(organization.getString(LumeerConst.Organization.ATTR_ORG_CODE), organization.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
-
-      assertThat(organizationsMap).isEqualTo(newOrganizationsMap);
-      assertThat(organizationsMap.entrySet().size()).isEqualTo(newOrganizationsMap.entrySet().size());
+      List<DataDocument> organizations = organizationFacade.readOrganizations();
+      assertThat(organizations).extracting(LumeerConst.Organization.ATTR_ORG_CODE).contains("TST0", "TST1", "TST2", "TST3", "TST4");
    }
 
    @Test
@@ -127,11 +121,10 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       final String DUMMY_ORG_ID = "TST2";
       final String DUMMY_ORG_NAME = "Test2";
       final String NEW_DUMMY_ORG_NAME = "Test2New";
+      assertThat(organizationFacade.readOrganizationName("TST2")).isNotEqualTo(NEW_DUMMY_ORG_NAME);
       organizationFacade.renameOrganization(DUMMY_ORG_ID, NEW_DUMMY_ORG_NAME);
-
-      Map<String, String> organizationsMap = organizationFacade.readOrganizationsMap();
-      assertThat(organizationsMap).containsEntry(DUMMY_ORG_ID, NEW_DUMMY_ORG_NAME);
-      assertThat(organizationsMap).doesNotContainEntry(DUMMY_ORG_ID, DUMMY_ORG_NAME);
+      assertThat(organizationFacade.readOrganizationName("TST2")).isNotEqualTo(DUMMY_ORG_NAME);
+      assertThat(organizationFacade.readOrganizationName("TST2")).isEqualTo(NEW_DUMMY_ORG_NAME);
    }
 
    @Test
