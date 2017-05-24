@@ -28,13 +28,13 @@ import io.lumeer.engine.api.data.DataDocument;
 public class Project {
 
    private String name;
-   private String id;
+   private String code;
    private String icon;
    private String color;
 
    public Project(final DataDocument dataDocument){
       this.name = dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_NAME);
-      this.id = dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_CODE);
+      this.code = dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_CODE);
       this.icon = dataDocument.getString(LumeerConst.Project.ATTR_META_ICON);
       this.color = dataDocument.getString(LumeerConst.Project.ATTR_META_COLOR);
    }
@@ -47,12 +47,12 @@ public class Project {
       this.name = name;
    }
 
-   public String getId() {
-      return id;
+   public String getCode() {
+      return code;
    }
 
-   public void setId(final String id) {
-      this.id = id;
+   public void setCode(final String code) {
+      this.code = code;
    }
 
    public String getIcon() {

@@ -89,7 +89,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
                                 .invoke();
 
       List<DataDocument> projects = response.readEntity(new GenericType<List<DataDocument>>(){});
-      assertThat(projects).extracting("id").containsOnly(project1, project2);
+      assertThat(projects).extracting("code").containsOnly(project1, project2);
       assertThat(projects).extracting("name").containsOnly("Project One", "Project Two");
    }
 
