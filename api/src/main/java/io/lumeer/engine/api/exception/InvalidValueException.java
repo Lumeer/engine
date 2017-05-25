@@ -22,7 +22,7 @@ package io.lumeer.engine.api.exception;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class InvalidValueException extends Exception {
+public class InvalidValueException extends DbException {
 
    public InvalidValueException(final String message) {
       super(message);

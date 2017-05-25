@@ -48,6 +48,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -129,7 +130,7 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || document == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
 
       final String internalCollectionName = getInternalName(collectionName);
@@ -154,7 +155,7 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}")
    public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -183,7 +184,7 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -211,7 +212,7 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || updatedDocument == null || updatedDocument.getId() == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -241,7 +242,7 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void replaceDocument(final @PathParam("collectionName") String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || replaceDocument == null || replaceDocument.getId() == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -271,7 +272,7 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void addDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName, final Object value) throws DbException {
       if (collectionName == null || documentId == null || attributeName == null || value == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -296,7 +297,7 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public Map<String, Object> readDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -322,7 +323,7 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final DataDocument metadata) throws DbException {
       if (collectionName == null || documentId == null || metadata == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -351,7 +352,7 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> searchHistoryChanges(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -383,7 +384,7 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}/versions/{version}")
    public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("version") int version) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -408,7 +409,7 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}/attribute/{attributeName}")
    public void dropDocumentAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName) throws DbException {
       if (collectionName == null || documentId == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -432,7 +433,7 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}/attributes/")
    public Set<String> readDocumentAttributes(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -446,7 +447,7 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public HashMap readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return securityFacade.readRightsMap(getInternalName(collectionName), documentId);
    }*/
@@ -467,7 +468,7 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
@@ -493,7 +494,7 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final AccessRightsDao accessRights) throws DbException {
       if (collectionName == null || documentId == null || accessRights == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
 
       String internalCollectionName = getInternalName(collectionName);

@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -68,7 +69,7 @@ public class OrganizationService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public String getOrganizationName(final @PathParam("organizationCode") String organizationCode) {
       if (organizationCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return organizationFacade.readOrganizationName(organizationCode);
    }
@@ -81,7 +82,7 @@ public class OrganizationService implements Serializable {
    @Path("/{organizationCode}")
    public void createOrganization(final @PathParam("organizationCode") String organizationCode, final String organizationName) {
       if (organizationCode == null || organizationName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       organizationFacade.createOrganization(organizationCode, organizationName);
    }
@@ -94,7 +95,7 @@ public class OrganizationService implements Serializable {
    @Path("/{organizationCode}/name/{newOrganizationName}")
    public void renameOrganization(final @PathParam("organizationCode") String organizationCode, final @PathParam("newOrganizationName") String newOrganizationName) {
       if (organizationCode == null || newOrganizationName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       organizationFacade.renameOrganization(organizationCode, newOrganizationName);
    }
@@ -107,7 +108,7 @@ public class OrganizationService implements Serializable {
    @Path("/{organizationCode}/code/{newCode}")
    public void updateOrganizationCode(final @PathParam("organizationCode") String organizationCode, final @PathParam("newCode") String newCode) {
       if (organizationCode == null || newCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       organizationFacade.updateOrganizationCode(organizationCode, newCode);
    }
@@ -119,7 +120,7 @@ public class OrganizationService implements Serializable {
    @Path("/{organizationCode}")
    public void dropOrganization(final @PathParam("organizationCode") String organizationCode) {
       if (organizationCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       organizationFacade.dropOrganization(organizationCode);
    }
@@ -134,7 +135,7 @@ public class OrganizationService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public String readOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
       if (organizationCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return organizationFacade.readOrganizationMetadata(organizationCode, attributeName);
    }
@@ -150,7 +151,7 @@ public class OrganizationService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) {
       if (organizationCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       DataDocument metaDocument = new DataDocument(attributeName, value);
       organizationFacade.updateOrganizationMetadata(organizationCode, metaDocument);
@@ -164,7 +165,7 @@ public class OrganizationService implements Serializable {
    @Path("/{organizationCode}/meta/{attributeName}")
    public void dropOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
       if (organizationCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       organizationFacade.dropOrganizationMetadata(organizationCode, attributeName);
    }
@@ -178,7 +179,7 @@ public class OrganizationService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public DataDocument readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode) {
       if (organizationCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return organizationFacade.readOrganizationInfoData(organizationCode);
    }
@@ -193,7 +194,7 @@ public class OrganizationService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public String readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
       if (organizationCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return organizationFacade.readOrganizationInfoData(organizationCode, attributeName);
    }
@@ -209,7 +210,7 @@ public class OrganizationService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) {
       if (organizationCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       DataDocument infoDataDocument = new DataDocument(attributeName, value);
       organizationFacade.updateOrganizationInfoData(organizationCode, infoDataDocument);
@@ -224,7 +225,7 @@ public class OrganizationService implements Serializable {
    @Path("/{organizationCode}/data/{attributeName}")
    public void dropOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
       if (organizationCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       organizationFacade.dropOrganizationInfoDataAttribute(organizationCode, attributeName);
    }
@@ -237,7 +238,7 @@ public class OrganizationService implements Serializable {
    @Path("/{organizationCode}/data")
    public void resetOrganizationInfoData(final @PathParam("organizationCode") String organizationCode) {
       if (organizationCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       organizationFacade.resetOrganizationInfoData(organizationCode);
    }

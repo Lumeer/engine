@@ -1,3 +1,22 @@
+/*
+ * -----------------------------------------------------------------------\
+ * Lumeer
+ *  
+ * Copyright (C) since 2016 the original author or authors.
+ *  
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -----------------------------------------------------------------------/
+ */
 package io.lumeer.engine.util;
 
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
@@ -5,6 +24,7 @@ import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
+import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidCollectionAttributeTypeException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
@@ -25,19 +45,20 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 /**
  * * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @Provider
-public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exception> {
+public class LumeerExceptionMapper implements ExceptionMapper<DbException> {
 
    @Inject
    private Logger log;
 
    @Override
-   public Response toResponse(final Exception e) {
+   public Response toResponse(final DbException e) {
       log.log(Level.INFO, "Exception while serving request: ", e);
 
       // 400 - BAD REQUEST
@@ -66,15 +87,6 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
       // 500 - INTERNAL SERVER ERROR
       if (e instanceof VersionUpdateConflictException) {
          return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
-      }
-
-      // ILLEGAL ARGUMENT
-      if (e instanceof IllegalArgumentException) {
-         return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
-      }
-
-      if (e instanceof UnsupportedOperationException) {
-         return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
