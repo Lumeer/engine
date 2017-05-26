@@ -27,12 +27,12 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
-import io.lumeer.engine.controller.search.SuggestionsDocument;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -41,7 +41,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -93,12 +92,12 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
       Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(SUGGESTION_PATH)
                                 .queryParam("text", "eers")
                                 .request().buildGet().invoke();
-      DataDocument suggestions = response.readEntity(DataDocument.class);
+
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
-      List<Map> collections = (List<Map>) suggestions.getObject(SuggestionsDocument.COLLECTIONS);
-      assertThat(collections).hasSize(2);
-      assertThat(collections).extracting(c -> c.get(SuggestionsDocument.COLLECTIONS_NAME)).containsOnly(COLLECTION_BEERS, COLLECTION_PEERS);
+      List suggestions = response.readEntity(List.class);
+      assertThat(suggestions).hasSize(4);
+
       response.close();
       client.close();
    }
@@ -113,12 +112,12 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
                                 .queryParam("text", "ant")
                                 .queryParam("type", "collection")
                                 .request().buildGet().invoke();
-      DataDocument suggestions = response.readEntity(DataDocument.class);
+
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
-      List<Map> collections = (List<Map>) suggestions.getObject(SuggestionsDocument.COLLECTIONS);
-      assertThat(collections).hasSize(2);
-      assertThat(collections).extracting(c -> c.get(SuggestionsDocument.COLLECTIONS_NAME)).containsOnly(COLLECTION_ANTS, COLLECTION_PANTS);
+      List<SearchSuggestion> suggestions = response.readEntity(List.class);
+      assertThat(suggestions).hasSize(2);
+
       response.close();
       client.close();
    }

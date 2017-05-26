@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
@@ -90,20 +91,8 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestAllNoMatches() {
-      DataDocument suggestions = querySuggester.suggestAll("xyz");
-      assertThat(suggestions).containsKeys(SuggestionsDocument.ATTRIBUTES, SuggestionsDocument.COLLECTIONS, SuggestionsDocument.LINKS, SuggestionsDocument.VIEWS);
-
-      List<DataDocument> attributes = suggestions.getArrayList(SuggestionsDocument.ATTRIBUTES, DataDocument.class);
-      assertThat(attributes).isEmpty();
-
-      List<DataDocument> collections = suggestions.getArrayList(SuggestionsDocument.COLLECTIONS, DataDocument.class);
-      assertThat(collections).isEmpty();
-
-      List<DataDocument> links = suggestions.getArrayList(SuggestionsDocument.LINKS, DataDocument.class);
-      assertThat(links).isEmpty();
-
-      List<DataDocument> views = suggestions.getArrayList(SuggestionsDocument.VIEWS, DataDocument.class);
-      assertThat(views).isEmpty();
+      List<SearchSuggestion> suggestions = querySuggester.suggestAll("xyz", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(suggestions).isEmpty();
    }
 
    @Test
@@ -118,33 +107,17 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
       viewFacade.createView(VIEW_BEES, null, null, null);
 
-      DataDocument suggestions = querySuggester.suggestAll("ees");
-      assertThat(suggestions).containsKeys(SuggestionsDocument.ATTRIBUTES, SuggestionsDocument.COLLECTIONS, SuggestionsDocument.LINKS, SuggestionsDocument.VIEWS);
-
-      List<DataDocument> attributes = suggestions.getArrayList(SuggestionsDocument.ATTRIBUTES, DataDocument.class);
-      SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(attributes).hasSize(1);
-      assertions.assertThat(attributes).extracting(a -> a.getString(SuggestionsDocument.ATTRIBUTES_COLLECTION)).containsOnly(COLLECTION_TREES);
-      assertions.assertAll();
-
-      List<DataDocument> collections = suggestions.getArrayList(SuggestionsDocument.COLLECTIONS, DataDocument.class);
-      assertThat(collections).extracting(c -> c.getString(SuggestionsDocument.COLLECTIONS_NAME)).containsOnly(COLLECTION_TREES);
-
-      List<DataDocument> links = suggestions.getArrayList(SuggestionsDocument.LINKS, DataDocument.class);
-      assertions = new SoftAssertions();
-      assertions.assertThat(links).hasSize(1);
-      assertions.assertThat(links).extracting(a -> a.getString(SuggestionsDocument.LINKS_FROM)).containsOnly(COLLECTION_DOGS);
-      assertions.assertThat(links).extracting(a -> a.getString(SuggestionsDocument.LINKS_TO)).containsOnly(COLLECTION_TREES);
-      assertions.assertThat(links).extracting(a -> a.getString(SuggestionsDocument.LINKS_ROLE)).containsOnly(LINK_PEES_ON);
-      assertions.assertAll();
-
-      List<DataDocument> views = suggestions.getArrayList(SuggestionsDocument.VIEWS, DataDocument.class);
-      assertThat(views).extracting(c -> c.getString(SuggestionsDocument.VIEWS_NAME)).containsOnly(VIEW_BEES);
+      List<SearchSuggestion> suggestions = querySuggester.suggestAll("ees", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(suggestions).containsOnly(
+            new SearchSuggestion(SearchSuggestion.TYPE_ATTRIBUTE, COLLECTION_TREES),
+            new SearchSuggestion(SearchSuggestion.TYPE_COLLECTION, COLLECTION_TREES),
+            new SearchSuggestion(SearchSuggestion.TYPE_VIEW, VIEW_BEES)
+      );
    }
 
    @Test
    public void testSuggestCollectionsNoMatches() {
-      List<DataDocument> collections = querySuggester.suggestCollections("spices");
+      List<SearchSuggestion> collections = querySuggester.suggestCollections("spices", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(collections).isEmpty();
    }
 
@@ -153,21 +126,21 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
       collectionFacade.createCollection(COLLECTION_BANANAS);
       collectionFacade.createCollection(COLLECTION_NANS);
 
-      List<DataDocument> collections = querySuggester.suggestCollections("nan");
-      assertThat(collections).extracting(c -> c.getString(SuggestionsDocument.COLLECTIONS_NAME)).containsOnly(COLLECTION_BANANAS, COLLECTION_NANS);
+      List<SearchSuggestion> collections = querySuggester.suggestCollections("nan", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(collections).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_BANANAS, COLLECTION_NANS);
    }
 
    @Test
    public void testSuggestCollectionsComplete() throws Exception {
       collectionFacade.createCollection(COLLECTION_SOFAS);
 
-      List<DataDocument> collections = querySuggester.suggestCollections("sofas");
-      assertThat(collections).extracting(c -> c.getString(SuggestionsDocument.COLLECTIONS_NAME)).containsOnly(COLLECTION_SOFAS);
+      List<SearchSuggestion> collections = querySuggester.suggestCollections("sofas", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(collections).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_SOFAS);
    }
 
    @Test
    public void testSuggestAttributesNoCollection() {
-      List<DataDocument> attributes = querySuggester.suggestAttributes("spices");
+      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("spices", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(attributes).isEmpty();
    }
 
@@ -176,16 +149,16 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
       collectionFacade.createCollection(COLLECTION_GUNS);
       collectionFacade.createCollection(COLLECTION_SHOTGUNS);
 
-      List<DataDocument> attributes = querySuggester.suggestAttributes("gun");
-      assertThat(attributes).extracting(a -> a.getString(SuggestionsDocument.ATTRIBUTES_COLLECTION)).containsOnly(COLLECTION_GUNS, COLLECTION_SHOTGUNS);
+      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("gun", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(attributes).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_GUNS, COLLECTION_SHOTGUNS);
    }
 
    @Test
    public void testSuggestAttributesCompleteCollection() throws Exception {
       collectionFacade.createCollection(COLLECTION_SUNGLASSES);
 
-      List<DataDocument> attributes = querySuggester.suggestAttributes("sunglasses");
-      assertThat(attributes).extracting(a -> a.getString(SuggestionsDocument.ATTRIBUTES_COLLECTION)).containsOnly(COLLECTION_SUNGLASSES);
+      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("sunglasses", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(attributes).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_SUNGLASSES);
    }
 
    @Test
@@ -193,11 +166,10 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
       collectionFacade.createCollection(COLLECTION_ANIMALS);
       collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_ANIMALS), ATTRIBUTE_SPECIES);
 
-      List<DataDocument> attributes = querySuggester.suggestAttributes("animals.spec");
+      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("animals.spec", QuerySuggester.SUGGESTIONS_LIMIT);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(attributes).hasSize(1);
-      assertions.assertThat(attributes).extracting(a -> a.getString(SuggestionsDocument.ATTRIBUTES_COLLECTION)).containsOnly(COLLECTION_ANIMALS);
-      assertions.assertThat(attributes).extracting(a -> a.getString(SuggestionsDocument.ATTRIBUTES_NAME)).containsOnly(ATTRIBUTE_SPECIES);
+      assertions.assertThat(attributes).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_ANIMALS + "." + ATTRIBUTE_SPECIES);
       assertions.assertAll();
    }
 
@@ -207,53 +179,23 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
       collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_PEOPLE), ATTRIBUTE_AGE);
       collectionMetadataFacade.addAttributeConstraint(collectionMetadataFacade.getInternalCollectionName(COLLECTION_PEOPLE), ATTRIBUTE_AGE, "isNumber");
 
-      List<DataDocument> attributes = querySuggester.suggestAttributes("people.age");
+      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("people.age", QuerySuggester.SUGGESTIONS_LIMIT);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(attributes).hasSize(1);
-      assertions.assertThat(attributes.get(0).getString(SuggestionsDocument.ATTRIBUTES_COLLECTION)).isEqualTo(COLLECTION_PEOPLE);
-      assertions.assertThat(attributes.get(0).getString(SuggestionsDocument.ATTRIBUTES_NAME)).isEqualTo(ATTRIBUTE_AGE);
-      assertions.assertThat(attributes.get(0).getArrayList(SuggestionsDocument.ATTRIBUTES_CONSTRAINTS, String.class)).containsOnly("isNumber");
+      assertions.assertThat(attributes.get(0).getText()).isEqualTo(COLLECTION_PEOPLE + "." + ATTRIBUTE_AGE);
+      assertions.assertThat(attributes.get(0).getConstraints()).containsOnly("isNumber");
       assertions.assertAll();
    }
 
    @Test
-   public void testSuggestLinkTypesNoMatches() {
-      List<DataDocument> linkTypes = querySuggester.suggestLinkTypes("spices");
+   public void testSuggestLinksNoMatches() {
+      List<SearchSuggestion> linkTypes = querySuggester.suggestLinks("spices", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(linkTypes).isEmpty();
    }
 
    @Test
-   public void testSuggestLinkTypesPartial() throws Exception {
-      collectionFacade.createCollection(COLLECTION_TEAMS);
-      String teamId = documentFacade.createDocument(collectionMetadataFacade.getInternalCollectionName(COLLECTION_TEAMS), new DataDocument());
-      collectionFacade.createCollection(COLLECTION_MATCHES);
-      String matchId = documentFacade.createDocument(collectionMetadataFacade.getInternalCollectionName(COLLECTION_MATCHES), new DataDocument());
-      linkingFacade.createLinkInstanceBetweenDocuments(COLLECTION_TEAMS, teamId, COLLECTION_MATCHES, matchId, null, LINK_WON, LumeerConst.Linking.LinkDirection.FROM);
-
-      List<DataDocument> linkTypes = querySuggester.suggestLinkTypes("won");
-      assertThat(linkTypes).extracting(a -> a.getString(SuggestionsDocument.LINKS_FROM)).containsOnly(COLLECTION_TEAMS);
-      assertThat(linkTypes).extracting(a -> a.getString(SuggestionsDocument.LINKS_TO)).containsOnly(COLLECTION_MATCHES);
-      assertThat(linkTypes).extracting(a -> a.getString(SuggestionsDocument.LINKS_ROLE)).containsOnly(LINK_WON);
-   }
-
-   @Test
-   public void testSuggestLinkTypesComplete() throws Exception {
-      collectionFacade.createCollection(COLLECTION_COMPANIES);
-      String companyId = documentFacade.createDocument(collectionMetadataFacade.getInternalCollectionName(COLLECTION_COMPANIES), new DataDocument());
-      collectionFacade.createCollection(COLLECTION_SOFTWARE);
-      String softwareId = documentFacade.createDocument(collectionMetadataFacade.getInternalCollectionName(COLLECTION_SOFTWARE), new DataDocument());
-      linkingFacade.createLinkInstanceBetweenDocuments(COLLECTION_COMPANIES, companyId, COLLECTION_SOFTWARE, softwareId, null, LINK_DEVELOPED, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.createLinkInstanceBetweenDocuments(COLLECTION_COMPANIES, companyId, COLLECTION_SOFTWARE, softwareId, null, LINK_OPEN_SOURCED, LumeerConst.Linking.LinkDirection.FROM);
-
-      List<DataDocument> linkTypes = querySuggester.suggestLinkTypes("ope");
-      assertThat(linkTypes).extracting(a -> a.getString(SuggestionsDocument.LINKS_FROM)).containsOnly(COLLECTION_COMPANIES);
-      assertThat(linkTypes).extracting(a -> a.getString(SuggestionsDocument.LINKS_TO)).containsOnly(COLLECTION_SOFTWARE);
-      assertThat(linkTypes).extracting(a -> a.getString(SuggestionsDocument.LINKS_ROLE)).containsOnly(LINK_DEVELOPED, LINK_OPEN_SOURCED);
-   }
-
-   @Test
    public void testSuggestViewsNoMatches() {
-      List<DataDocument> views = querySuggester.suggestViews("spices");
+      List<SearchSuggestion> views = querySuggester.suggestViews("spices", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(views).isEmpty();
    }
 
@@ -262,16 +204,16 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
       viewFacade.createView(VIEW_FOREIGNERS, null, null, null);
       viewFacade.createView(VIEW_FORMULAS, null, null, null);
 
-      List<DataDocument> views = querySuggester.suggestViews("for");
-      assertThat(views).extracting(a -> a.getString(SuggestionsDocument.VIEWS_NAME)).containsOnly(VIEW_FOREIGNERS, VIEW_FORMULAS);
+      List<SearchSuggestion> views = querySuggester.suggestViews("for", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(views).extracting(SearchSuggestion::getText).containsOnly(VIEW_FOREIGNERS, VIEW_FORMULAS);
    }
 
    @Test
    public void testSuggestViewsComplete() throws Exception {
       viewFacade.createView(VIEW_WITCHES, null, null, null);
 
-      List<DataDocument> views = querySuggester.suggestViews("witches");
-      assertThat(views).extracting(a -> a.getString(SuggestionsDocument.VIEWS_NAME)).containsOnly(VIEW_WITCHES);
+      List<SearchSuggestion> views = querySuggester.suggestViews("witches", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(views).extracting(SearchSuggestion::getText).containsOnly(VIEW_WITCHES);
    }
 
 }
