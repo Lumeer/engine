@@ -27,6 +27,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -80,7 +81,7 @@ public class ProjectService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public String getProjectName(final @PathParam("projectCode") String projectCode) {
       if (projectCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return projectFacade.readProjectName(projectCode);
    }
@@ -95,7 +96,7 @@ public class ProjectService implements Serializable {
    @Path("/{projectCode}")
    public void createProject(final @PathParam("projectCode") String projectCode, final String projectName) {
       if (projectCode == null || projectName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       projectFacade.createProject(projectCode, projectName);
    }
@@ -110,7 +111,7 @@ public class ProjectService implements Serializable {
    @Path("/{projectCode}/name/{newProjectName}")
    public void renameProject(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectName") String newProjectName) {
       if (projectCode == null || newProjectName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       projectFacade.renameProject(projectCode, newProjectName);
    }
@@ -128,7 +129,7 @@ public class ProjectService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateProjectCode(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectCode") String newProjectCode) {
       if (projectCode == null || newProjectCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       projectFacade.updateProjectCode(projectCode, newProjectCode);
    }
@@ -141,7 +142,7 @@ public class ProjectService implements Serializable {
    @Path("/{projectCode}")
    public void dropProject(final @PathParam("projectCode") String projectCode) {
       if (projectCode == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       projectFacade.dropProject(projectCode);
    }
@@ -158,7 +159,7 @@ public class ProjectService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public String readProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) {
       if (projectCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return projectFacade.readProjectMetadata(projectCode, attributeName);
    }
@@ -178,7 +179,7 @@ public class ProjectService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName, final String value) {
       if (projectCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       projectFacade.updateProjectMetadata(projectCode, attributeName, value);
    }
@@ -193,7 +194,7 @@ public class ProjectService implements Serializable {
    @Path("/{projectCode}/meta/{attributeName}")
    public void dropProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) {
       if (projectCode == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       projectFacade.dropProjectMetadata(projectCode, attributeName);
    }

@@ -33,6 +33,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -41,6 +42,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * Provides suggestions when creating search queries as well as query execution.
@@ -101,7 +103,7 @@ public class SearchService implements Serializable {
    @Path("query")
    public List<DataDocument> runQuery(final Query query) throws InvalidQueryException {
       if (query == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return searchFacade.query(query);
    }

@@ -49,6 +49,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -136,7 +137,7 @@ public class CollectionService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public String createCollection(final @PathParam("name") String name) throws UserCollectionAlreadyExistsException {
       if (name == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return collectionFacade.createCollection(name);
    }
@@ -153,7 +154,7 @@ public class CollectionService implements Serializable {
    @Path("/{name}")
    public void dropCollection(final @PathParam("name") String name) throws DbException {
       if (name == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForRead(getInternalName(name))) {
          throw new UnauthorizedAccessException();
@@ -188,7 +189,7 @@ public class CollectionService implements Serializable {
          throw new UnauthorizedAccessException();
       }
       if (collectionName == null || oldName == null || newName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       collectionFacade.renameAttribute(getInternalName(collectionName), oldName, newName);
    }
@@ -211,7 +212,7 @@ public class CollectionService implements Serializable {
    @Path("/{collectionName}/attributes/{attributeName}")
    public void dropAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -241,7 +242,7 @@ public class CollectionService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @QueryParam("filter") String filter, final @QueryParam("sort") String sort, final @QueryParam("skip") int skip, final @QueryParam("limit") int limit) throws CollectionNotFoundException {
       if (collectionName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       // TODO: What about access rights checks here (for individual documents)?
       String internalCollectionName = getInternalName(collectionName);
@@ -264,7 +265,7 @@ public class CollectionService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> search(final @QueryParam("query") String query) {
       if (query == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       // TODO: What about access rights checks here (for individual documents)?
       return searchFacade.search(query);
@@ -291,7 +292,7 @@ public class CollectionService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) throws CollectionNotFoundException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -319,7 +320,7 @@ public class CollectionService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public CollectionMetadata readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForRead(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -347,7 +348,7 @@ public class CollectionService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) throws UnauthorizedAccessException, UserCollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -375,7 +376,7 @@ public class CollectionService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public Set<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForRead(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -400,7 +401,7 @@ public class CollectionService implements Serializable {
    public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       // TODO: Who can read access rights? Anyone or is it restricted?
       if (collectionName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       return collectionMetadataFacade.getAllAccessRights(getInternalName(collectionName));
    }
@@ -424,7 +425,7 @@ public class CollectionService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateAccessRights(final @PathParam("collectionName") String collectionName, final AccessRightsDao accessRights) throws CollectionNotFoundException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || accessRights == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForAccessChange(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -474,7 +475,7 @@ public class CollectionService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void setAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, InvalidConstraintException, UnauthorizedAccessException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || attributeName == null || constraintConfiguration == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -502,7 +503,7 @@ public class CollectionService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public List<String> readAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || attributeName == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForRead(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
@@ -531,7 +532,7 @@ public class CollectionService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void dropAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws UnauthorizedAccessException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
       if (collectionName == null || attributeName == null || constraintConfiguration == null) {
-         throw new IllegalArgumentException();
+         throw new BadRequestException();
       }
       if (!checkCollectionForWrite(getInternalName(collectionName))) {
          throw new UnauthorizedAccessException();
