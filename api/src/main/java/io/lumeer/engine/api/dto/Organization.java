@@ -17,26 +17,33 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.rest.dao;
+package io.lumeer.engine.api.dto;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
 /**
- * DTO object for Project
+ * DTO object for Organization
  */
-public class Project {
+public class Organization {
 
    private String name;
    private String code;
    private String icon;
    private String color;
 
-   public Project(final DataDocument dataDocument){
-      this.name = dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_NAME);
-      this.code = dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_CODE);
-      this.icon = dataDocument.getString(LumeerConst.Project.ATTR_META_ICON);
-      this.color = dataDocument.getString(LumeerConst.Project.ATTR_META_COLOR);
+   public Organization(final DataDocument dataDocument) {
+      this(dataDocument.getString(LumeerConst.Organization.ATTR_ORG_NAME),
+            dataDocument.getString(LumeerConst.Organization.ATTR_ORG_CODE),
+            dataDocument.getString(LumeerConst.Organization.ATTR_META_ICON),
+            dataDocument.getString(LumeerConst.Organization.ATTR_META_COLOR));
+   }
+
+   public Organization(final String name, final String code, final String icon, final String color) {
+      this.name = name;
+      this.code = code;
+      this.icon = icon;
+      this.color = color;
    }
 
    public String getName() {

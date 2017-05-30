@@ -19,15 +19,15 @@
  */
 package io.lumeer.engine.controller;
 
-import static io.lumeer.engine.api.LumeerConst.Project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Project;
 
 import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
@@ -60,7 +60,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void setUp() throws Exception {
-      systemDataStorage.dropManyDocuments(Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
@@ -73,9 +73,9 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(project1, "Project One");
       projectFacade.createProject(project2, "Project Two");
 
-      List<DataDocument> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
-      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project1, project2);
-      assertThat(projects).extracting(Project.ATTR_PROJECT_NAME).containsOnly("Project One", "Project Two");
+      List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).extracting("code").containsOnly(project1, project2);
+      assertThat(projects).extracting("name").containsOnly("Project One", "Project Two");
 
       assertThat(projectFacade.readProjectName(project1)).isEqualTo("Project One");
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two");
@@ -89,13 +89,13 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(projectFacade.readProjectName(project2)).isEqualTo("Project Two Renamed");
 
       projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
-      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project3, project2);
+      assertThat(projects).extracting("code").containsOnly(project3, project2);
       projectFacade.createProject(project4, "Project Three");
       projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
-      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project3, project2, project4);
+      assertThat(projects).extracting("code").containsOnly(project3, project2, project4);
       projectFacade.dropProject(project4);
       projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
-      assertThat(projects).extracting(Project.ATTR_PROJECT_CODE).containsOnly(project3, project2);
+      assertThat(projects).extracting("code").containsOnly(project3, project2);
    }
 
    @Test

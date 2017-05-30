@@ -9,6 +9,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 
 import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
@@ -42,8 +43,8 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
       createDummyEntries();
 
-      List<DataDocument> organizations = organizationFacade.readOrganizations();
-      assertThat(organizations).extracting(LumeerConst.Organization.ATTR_ORG_CODE).contains("TST0", "TST1", "TST2", "TST3", "TST4");
+      List<Organization> organizations = organizationFacade.readOrganizations();
+      assertThat(organizations).extracting("code").contains("TST0", "TST1", "TST2", "TST3", "TST4");
    }
 
    @Test

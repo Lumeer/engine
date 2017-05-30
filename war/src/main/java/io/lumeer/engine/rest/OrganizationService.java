@@ -21,7 +21,7 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.controller.OrganizationFacade;
-import io.lumeer.engine.rest.dao.Organization;
+import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
 import java.util.List;
@@ -59,7 +59,7 @@ public class OrganizationService implements Serializable {
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    public List<Organization> getOrganizations() {
-      return organizationFacade.readOrganizations().stream().map(Organization::new).collect(Collectors.toList());
+      return organizationFacade.readOrganizations();
    }
 
    /**

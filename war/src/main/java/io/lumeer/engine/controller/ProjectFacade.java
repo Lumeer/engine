@@ -87,8 +87,9 @@ public class ProjectFacade {
     *       code of the organization
     * @return list of all projects in an organization
     */
-   public List<DataDocument> readProjects(final String organizationCode) {
-      return dataStorage.search(Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), null, 0 ,0);
+   public List<io.lumeer.engine.api.dto.Project> readProjects(final String organizationCode) {
+      return dataStorage.search(Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), null, 0 ,0)
+                        .stream().map(io.lumeer.engine.api.dto.Project::new).collect(Collectors.toList());
    }
 
    /**

@@ -27,6 +27,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.controller.OrganizationFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -85,7 +86,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
-      List<DataDocument> organizations = response.readEntity(new GenericType<List<DataDocument>>(){});
+      List<Organization> organizations = response.readEntity(new GenericType<List<Organization>>(List.class){});
 
       assertThat(organizations).extracting("code").contains(code1, code2);
       assertThat(organizations).extracting("name").contains(org1, org2);
@@ -138,8 +139,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .buildPost(Entity.entity(org, MediaType.APPLICATION_JSON))
             .invoke();
 
-      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_CODE).contains(code);
-      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_NAME).contains(org);
+      assertThat(organizationFacade.readOrganizations()).extracting("code").contains(code);
+      assertThat(organizationFacade.readOrganizations()).extracting("name").contains(org);
    }
 
    @Test
@@ -155,8 +156,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
 
-      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_CODE).contains(code);
-      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_NAME).contains(newName);
+      assertThat(organizationFacade.readOrganizations()).extracting("code").contains(code);
+      assertThat(organizationFacade.readOrganizations()).extracting("name").contains(newName);
    }
 
    @Test
@@ -171,8 +172,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .buildDelete()
             .invoke();
 
-      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_CODE).doesNotContain(code);
-      assertThat(organizationFacade.readOrganizations()).extracting(LumeerConst.Organization.ATTR_ORG_NAME).doesNotContain(org);
+      assertThat(organizationFacade.readOrganizations()).extracting("code").doesNotContain(code);
+      assertThat(organizationFacade.readOrganizations()).extracting("code").doesNotContain(org);
    }
 
    @Test
