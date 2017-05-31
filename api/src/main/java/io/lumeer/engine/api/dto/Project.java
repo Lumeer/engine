@@ -22,15 +22,18 @@ package io.lumeer.engine.api.dto;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * DTO object for Project
  */
+@Immutable
 public class Project {
 
-   private String name;
-   private String code;
-   private String icon;
-   private String color;
+   private final String name;
+   private final String code;
+   private final String icon;
+   private final String color;
 
    public Project(final DataDocument dataDocument) {
       this(dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_NAME),
@@ -50,31 +53,15 @@ public class Project {
       return name;
    }
 
-   public void setName(final String name) {
-      this.name = name;
-   }
-
    public String getCode() {
       return code;
-   }
-
-   public void setCode(final String code) {
-      this.code = code;
    }
 
    public String getIcon() {
       return icon;
    }
 
-   public void setIcon(final String icon) {
-      this.icon = icon;
-   }
-
    public String getColor() {
       return color;
-   }
-
-   public void setColor(final String color) {
-      this.color = color;
    }
 }
