@@ -21,14 +21,15 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.search.QuerySuggester;
-import io.lumeer.engine.controller.search.SuggestionsType;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -81,12 +82,12 @@ public class SearchService implements Serializable {
 
    @GET
    @Path("suggestion")
-   public DataDocument suggest(@QueryParam("text") String text, @QueryParam("type") String type) {
+   public List<SearchSuggestion> suggest(@QueryParam("text") String text, @QueryParam("type") String type) {
       if (text == null || text.isEmpty()) {
-         return new DataDocument();
+         return Collections.emptyList();
       }
 
-      return querySuggester.suggest(text, SuggestionsType.getType(type));
+      return querySuggester.suggest(text, type);
    }
 
    /**

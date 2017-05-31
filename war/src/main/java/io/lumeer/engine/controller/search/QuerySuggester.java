@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ProjectFacade;
@@ -32,6 +33,7 @@ import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.Attribute;
 import io.lumeer.engine.rest.dao.CollectionMetadata;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +47,7 @@ import javax.inject.Inject;
 @ApplicationScoped
 public class QuerySuggester {
 
-   private static final int SUGGESTIONS_LIMIT = 10;
+   static final int SUGGESTIONS_LIMIT = 12;
 
    @Inject
    @UserDataStorage
@@ -72,50 +74,38 @@ public class QuerySuggester {
     *       suggestion type from the request
     * @return a list of suggestions (collections, links, views, etc.)
     */
-   public DataDocument suggest(String text, SuggestionsType type) {
+   public List<SearchSuggestion> suggest(String text, String type) {
+      if (type == null) {
+         type = SearchSuggestion.TYPE_ALL;
+      }
+
       switch (type) {
-         case ATTRIBUTE:
-            return new DataDocument(SuggestionsDocument.ATTRIBUTES, suggestAttributes(text));
-         case COLLECTION:
-            return new DataDocument(SuggestionsDocument.COLLECTIONS, suggestCollections(text));
-         case LINK:
-            return new DataDocument(SuggestionsDocument.LINKS, suggestLinkTypes(text));
-         case VIEW:
-            return new DataDocument(SuggestionsDocument.VIEWS, suggestViews(text));
+         case SearchSuggestion.TYPE_ATTRIBUTE:
+            return suggestAttributes(text, SUGGESTIONS_LIMIT);
+         case SearchSuggestion.TYPE_COLLECTION:
+            return suggestCollections(text, SUGGESTIONS_LIMIT);
+         case SearchSuggestion.TYPE_LINK:
+            return suggestLinks(text, SUGGESTIONS_LIMIT);
+         case SearchSuggestion.TYPE_VIEW:
+            return suggestViews(text, SUGGESTIONS_LIMIT);
          default:
-            return suggestAll(text);
+            return suggestAll(text, SUGGESTIONS_LIMIT);
       }
    }
 
-   DataDocument suggestAll(String text) {
-      return new DataDocument()
-            .append(SuggestionsDocument.ATTRIBUTES, suggestAttributes(text))
-            .append(SuggestionsDocument.COLLECTIONS, suggestCollections(text))
-            .append(SuggestionsDocument.LINKS, suggestLinkTypes(text))
-            .append(SuggestionsDocument.VIEWS, suggestViews(text));
+   List<SearchSuggestion> suggestAll(String text, int limit) {
+      List<SearchSuggestion> suggestions = new ArrayList<>();
+      suggestions.addAll(suggestAttributes(text, limit / 4));
+      suggestions.addAll(suggestCollections(text, limit / 4));
+      suggestions.addAll(suggestLinks(text, limit / 4));
+      suggestions.addAll(suggestViews(text, limit / 4));
+      return suggestions;
    }
 
-   List<DataDocument> suggestCollections(String text) {
-      String metadataCollection = collectionMetadataFacade.metadataCollection();
-      DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.Collection.REAL_NAME_KEY, text);
-      List<String> projection = Arrays.asList(LumeerConst.Collection.REAL_NAME_KEY);
-
-      return userDataStorage.search(metadataCollection, filter, null, projection, 0, SUGGESTIONS_LIMIT)
-                            .stream()
-                            .map(QuerySuggester::convertCollection)
-                            .collect(Collectors.toList());
-   }
-
-   private static DataDocument convertCollection(DataDocument collection) {
-      return new DataDocument()
-            .append(SuggestionsDocument.COLLECTIONS_NAME, collection.getString(LumeerConst.Collection.REAL_NAME_KEY))
-            .append(SuggestionsDocument.COLLECTIONS_ICON, ""); // TODO store paths to icons in the database or somewhere else
-   }
-
-   List<DataDocument> suggestAttributes(String text) {
+   List<SearchSuggestion> suggestAttributes(String text, int limit) {
       String[] parts = text.split("\\.", 2);
       if (parts.length < 2) {
-         return suggestCollectionsForAttribute(text); // TODO look for attributes of all collections instead
+         return suggestCollectionsForAttribute(text, limit); // TODO look for attributes of all collections instead
       }
 
       String collectionName = parts[0];
@@ -124,63 +114,63 @@ public class QuerySuggester {
       try {
          CollectionMetadata collectionMetadata = collectionMetadataFacade.getCollectionMetadata(collectionMetadataFacade.getInternalCollectionName(collectionName));
          return collectionMetadata.getAttributes().values().stream()
-                                  .filter(a -> a.getName().toLowerCase().contains(attributePart.toLowerCase()))
-                                  .map(a -> convertAttribute(collectionName, a))
+                                  .filter(attribute -> attribute.getName().toLowerCase().contains(attributePart.toLowerCase()))
+                                  .map(attribute -> convertAttribute(collectionName, attribute))
                                   .collect(Collectors.toList()); // TODO do not ignore child attributes
       } catch (UserCollectionNotFoundException e) {
          return Collections.emptyList();
       }
    }
 
-   private DataDocument convertAttribute(String collectionName, Attribute attribute) {
-      return new DataDocument()
-            .append(SuggestionsDocument.ATTRIBUTES_COLLECTION, collectionName)
-            .append(SuggestionsDocument.ATTRIBUTES_NAME, attribute.getName())
-            .append(SuggestionsDocument.ATTRIBUTES_CONSTRAINTS, attribute.getConstraints());
+   private SearchSuggestion convertAttribute(String collectionName, Attribute attribute) {
+      String text = collectionName + "." + attribute.getName();
+      List<String> constraints = attribute.getConstraints();
+      String icon = "";
+      return new SearchSuggestion(SearchSuggestion.TYPE_ATTRIBUTE, text, constraints, icon);
    }
 
-   private List<DataDocument> suggestCollectionsForAttribute(String text) {
-      return suggestCollections(text)
+   private List<SearchSuggestion> suggestCollectionsForAttribute(String text, int limit) {
+      return suggestCollections(text, limit)
             .stream()
-            .map(c -> new DataDocument(SuggestionsDocument.ATTRIBUTES_COLLECTION, c.get(SuggestionsDocument.COLLECTIONS_NAME)))
+            .map(s -> new SearchSuggestion(SearchSuggestion.TYPE_ATTRIBUTE, s.getText(), s.getIcon()))
             .collect(Collectors.toList());
    }
 
-   List<DataDocument> suggestLinkTypes(String text) {
-      String linkTypesCollection = LumeerConst.Linking.Type.NAME;
-      DataFilter filter = storageDialect.combineFilters(
-            storageDialect.fieldValueFilter(LumeerConst.Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId()),
-            storageDialect.fieldValueWildcardFilter(LumeerConst.Linking.Type.ATTR_ROLE, text)
-      );
-      List<String> attributes = Arrays.asList(LumeerConst.Linking.Type.ATTR_ROLE, LumeerConst.Linking.Type.ATTR_FROM_COLLECTION, LumeerConst.Linking.Type.ATTR_TO_COLLECTION);
+   List<SearchSuggestion> suggestCollections(String text, int limit) {
+      String metadataCollection = collectionMetadataFacade.metadataCollection();
+      DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.Collection.REAL_NAME_KEY, text);
+      List<String> projection = Arrays.asList(LumeerConst.Collection.REAL_NAME_KEY);
 
-      return userDataStorage.search(linkTypesCollection, filter, null, attributes, 0, SUGGESTIONS_LIMIT)
+      return userDataStorage.search(metadataCollection, filter, null, projection, 0, limit)
                             .stream()
-                            .map(QuerySuggester::convertLinkType)
+                            .map(QuerySuggester::convertCollection)
                             .collect(Collectors.toList());
    }
 
-   private static DataDocument convertLinkType(DataDocument linkType) {
-      return new DataDocument()
-            .append(SuggestionsDocument.LINKS_FROM, linkType.getString(LumeerConst.Linking.Type.ATTR_FROM_COLLECTION))
-            .append(SuggestionsDocument.LINKS_TO, linkType.getString(LumeerConst.Linking.Type.ATTR_TO_COLLECTION))
-            .append(SuggestionsDocument.LINKS_ROLE, linkType.getString(LumeerConst.Linking.Type.ATTR_ROLE));
+   private static SearchSuggestion convertCollection(DataDocument collection) {
+      String name = collection.getString(LumeerConst.Collection.REAL_NAME_KEY);
+      String icon = "";  // TODO store paths to icons in the database or somewhere else
+      return new SearchSuggestion(SearchSuggestion.TYPE_COLLECTION, name, icon);
    }
 
-   List<DataDocument> suggestViews(String text) {
+   List<SearchSuggestion> suggestLinks(String text, int limit) {
+      return Collections.emptyList(); // TODO needs to be discussed how to search links
+   }
+
+   List<SearchSuggestion> suggestViews(String text, int limit) {
       String metadataCollection = viewFacade.metadataCollection();
       DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.View.NAME_KEY, text);
 
-      return userDataStorage.search(metadataCollection, filter, null, Arrays.asList(LumeerConst.View.NAME_KEY), 0, SUGGESTIONS_LIMIT)
+      return userDataStorage.search(metadataCollection, filter, null, Arrays.asList(LumeerConst.View.NAME_KEY), 0, limit)
                             .stream()
                             .map(QuerySuggester::convertView)
                             .collect(Collectors.toList());
    }
 
-   private static DataDocument convertView(DataDocument view) {
-      return new DataDocument()
-            .append(SuggestionsDocument.VIEWS_NAME, view.getString(LumeerConst.View.NAME_KEY))
-            .append(SuggestionsDocument.VIEWS_ICON, ""); // TODO store paths to icons in the database or somewhere else
+   private static SearchSuggestion convertView(DataDocument view) {
+      String name = view.getString(LumeerConst.View.NAME_KEY);
+      String icon = "";  // TODO store paths to icons in the database or somewhere else
+      return new SearchSuggestion(SearchSuggestion.TYPE_VIEW, name, icon);
    }
 
 }
