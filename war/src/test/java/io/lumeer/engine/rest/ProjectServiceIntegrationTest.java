@@ -19,14 +19,15 @@
  */
 package io.lumeer.engine.rest;
 
-import static io.lumeer.engine.api.LumeerConst.Project;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 
@@ -35,11 +36,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Map;
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -68,7 +70,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    @Before
    public void init() {
-      dataStorage.dropManyDocuments(Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      dataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
       PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/projects/";
    }
 
@@ -86,11 +88,9 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
                                 .buildGet()
                                 .invoke();
 
-      Map<String, String> projects = response.readEntity(new GenericType<Map<String, String>>() {
-      });
-      assertThat(projects).containsOnlyKeys(project1, project2);
-      assertThat(projects).containsEntry(project1, "Project One");
-      assertThat(projects).containsEntry(project2, "Project Two");
+      List<Project> projects = response.readEntity(new GenericType<List<Project>>(List.class){});
+      assertThat(projects).extracting("code").containsOnly(project1, project2);
+      assertThat(projects).extracting("name").containsOnly("Project One", "Project Two");
    }
 
    @Test
@@ -122,7 +122,9 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
             .buildPost(Entity.entity(projectName, MediaType.APPLICATION_JSON))
             .invoke();
 
-      assertThat(projectFacade.readProjectsMap(organizationFacade.getOrganizationCode())).hasSize(1).containsEntry(project, projectName);
+      List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).hasSize(1);
+      assertThat(projects).extracting("code").contains(project);
    }
 
    @Test
@@ -149,7 +151,9 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String projectName = "Project One";
       final String projectNew = "project41New";
       projectFacade.createProject(project, projectName);
-      assertThat(projectFacade.readProjectsMap(organizationFacade.getOrganizationCode())).hasSize(1).containsOnlyKeys(project);
+      List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).hasSize(1);
+      assertThat(projects).extracting("code").containsOnly(project);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
@@ -158,7 +162,9 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
 
-      assertThat(projectFacade.readProjectsMap(organizationFacade.getOrganizationCode())).hasSize(1).containsOnlyKeys(projectNew);
+      projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      assertThat(projects).hasSize(1);
+      assertThat(projects).extracting("code").contains(projectNew);
    }
 
    @Test
@@ -166,7 +172,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project51";
       final String projectName = "Project One";
       projectFacade.createProject(project, projectName);
-      assertThat(projectFacade.readProjectsMap(organizationFacade.getOrganizationCode())).hasSize(1).containsOnlyKeys(project);
+      List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationId());
+      assertThat(projects).hasSize(1).extracting("code").containsOnly(project);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
@@ -175,7 +182,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
             .buildDelete()
             .invoke();
 
-      assertThat(projectFacade.readProjectsMap(organizationFacade.getOrganizationCode())).isEmpty();
+      assertThat(projectFacade.readProjects(organizationFacade.getOrganizationCode())).isEmpty();
    }
 
    @Test

@@ -21,9 +21,11 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.controller.OrganizationFacade;
+import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -51,17 +53,18 @@ public class OrganizationService implements Serializable {
    private OrganizationFacade organizationFacade;
 
    /**
-    * @return map of organizations' codes and names
+    * @return list of organizations
     */
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public Map<String, String> getOrganizations() {
-      return organizationFacade.readOrganizationsMap();
+   public List<Organization> getOrganizations() {
+      return organizationFacade.readOrganizations();
    }
 
    /**
-    * @param organizationCode organization code
+    * @param organizationCode
+    *       organization code
     * @return name of given organization
     */
    @GET
@@ -75,8 +78,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param organizationName organization name
+    * @param organizationCode
+    *       organization code
+    * @param organizationName
+    *       organization name
     */
    @POST
    @Path("/{organizationCode}")
@@ -88,8 +93,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param newOrganizationName organization name
+    * @param organizationCode
+    *       organization code
+    * @param newOrganizationName
+    *       organization name
     */
    @PUT
    @Path("/{organizationCode}/name/{newOrganizationName}")
@@ -101,8 +108,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param newCode new organization code
+    * @param organizationCode
+    *       organization code
+    * @param newCode
+    *       new organization code
     */
    @PUT
    @Path("/{organizationCode}/code/{newCode}")
@@ -114,7 +123,8 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
+    * @param organizationCode
+    *       organization code
     */
    @DELETE
    @Path("/{organizationCode}")
@@ -126,8 +136,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param attributeName name of metadata attribute
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of metadata attribute
     * @return value of metadata attribute
     */
    @GET
@@ -142,9 +154,13 @@ public class OrganizationService implements Serializable {
 
    /**
     * Adds or updates metadata attribute.
-    * @param organizationCode organization code
-    * @param attributeName name of metadata attribute
-    * @param value value of metadata attribute
+    *
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of metadata attribute
+    * @param value
+    *       value of metadata attribute
     */
    @PUT
    @Path("/{organizationCode}/meta/{attributeName}")
@@ -158,8 +174,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param attributeName name of metadata attribute
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of metadata attribute
     */
    @DELETE
    @Path("/{organizationCode}/meta/{attributeName}")
@@ -171,7 +189,8 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
+    * @param organizationCode
+    *       organization code
     * @return DataDocument with additional info
     */
    @GET
@@ -185,8 +204,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param attributeName name of attribute from additional info
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of attribute from additional info
     * @return value of the attribute
     */
    @GET
@@ -201,9 +222,13 @@ public class OrganizationService implements Serializable {
 
    /**
     * Creates or updates entry in additional info.
-    * @param organizationCode organization code
-    * @param attributeName name of the attribute
-    * @param value value of the attribute
+    *
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of the attribute
+    * @param value
+    *       value of the attribute
     */
    @PUT
    @Path("/{organizationCode}/data/{attributeName}")
@@ -218,8 +243,11 @@ public class OrganizationService implements Serializable {
 
    /**
     * Drops attribute from additional info.
-    * @param organizationCode organization code
-    * @param attributeName name of the attribute
+    *
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of the attribute
     */
    @DELETE
    @Path("/{organizationCode}/data/{attributeName}")
@@ -232,7 +260,9 @@ public class OrganizationService implements Serializable {
 
    /**
     * Drops all additional info.
-    * @param organizationCode organization code
+    *
+    * @param organizationCode
+    *       organization code
     */
    @DELETE
    @Path("/{organizationCode}/data")

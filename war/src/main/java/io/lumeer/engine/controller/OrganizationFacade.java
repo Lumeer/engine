@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,13 +81,13 @@ public class OrganizationFacade {
    }
 
    /**
-    * Reads a map of all organizations in the system.
+    * Reads  all organizations in the system.
     *
-    * @return map of values (code, name) of all organizations in the system
+    * @return list of organizations
     */
-   public Map<String, String> readOrganizationsMap() {
-      List<DataDocument> documents = dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_CODE));
-      return documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_ORG_CODE), d -> d.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
+   public List<Organization> readOrganizations() {
+      return dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, null, 0, 0)
+                        .stream().map(Organization::new).collect(Collectors.toList());
    }
 
    /**
