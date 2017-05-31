@@ -28,6 +28,8 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.controller.OrganizationFacade;
+import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -53,6 +55,12 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
 
    @Inject
    @SystemDataStorage
@@ -115,6 +123,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String id = "UpdateOrganizationId_id";
       organizationFacade.createOrganization(id, org);
 
+      addManageRole(id);
+
       String newId = "UpdateOrganizationId_newId";
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + id + "/code/" + newId)
@@ -148,6 +158,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String newName = "RenameOrganizationNew";
       String id = "RenameOrganization_id";
       organizationFacade.createOrganization(id, org);
+
+      addManageRole(id);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + id + "/name/" + newName)
@@ -204,6 +216,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String id = "UpdateMetadata_id";
       organizationFacade.createOrganization(id, org);
 
+      addManageRole(id);
+
       String name = "attribute";
       String value = "value";
 
@@ -230,6 +244,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String org = "DropMetadata";
       String id = "DropMetadata_id";
       organizationFacade.createOrganization(id, org);
+
+      addManageRole(id);
 
       String name = "attribute";
       String value = "value";
@@ -301,6 +317,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String id = "UpdateInfo_id";
       organizationFacade.createOrganization(id, org);
 
+      addManageRole(id);
+
       String name = "attribute";
       String value = "value";
 
@@ -325,6 +343,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String id = "DropInfo_id";
       organizationFacade.createOrganization(id, org);
 
+      addManageRole(id);
+
       String name = "attribute";
       String value = "value";
       organizationFacade.updateOrganizationInfoData(id, name, value);
@@ -343,6 +363,8 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String id = "ResetInfo_id";
       organizationFacade.createOrganization(id, org);
 
+      addManageRole(id);
+
       String name = "attribute";
       String value = "value";
       organizationFacade.updateOrganizationInfoData(id, name, value);
@@ -353,6 +375,10 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .buildDelete()
             .invoke();
       assertThat(organizationFacade.readOrganizationInfoData(id)).isEmpty();
+   }
+
+   private void addManageRole(String organizationCode) {
+      securityFacade.addOrganizationUserRole(organizationCode, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
    }
 
 }

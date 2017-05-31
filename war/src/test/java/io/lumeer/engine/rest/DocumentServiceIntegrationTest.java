@@ -34,7 +34,6 @@ import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.rest.dao.AccessRightsDao;
 
 import org.bson.types.Decimal128;
 import org.jboss.arquillian.junit.Arquillian;
@@ -53,7 +52,6 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -97,8 +95,6 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA = "DocumentServiceCollectionAddReadAndUpdateDocumentMetadata";
    private final String COLLECTION_SEARCH_HISTORY_CHANGES = "DocumentServiceCollectionSearchHistoryChanges";
    private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
-   private final String COLLECTION_READ_ACCESS_RIGHTS = "DocumentServiceCollectionReadAccessRights";
-   private final String COLLECTION_UPDATE_ACCESS_RIGHTS = "DocumentServiceCollectionUpdateAccessRights";
    private final String COLLECTION_ATTRIBUTE_TYPES = "DocumentServiceCollectionAttributeTypes";
 
    @Test
@@ -289,50 +285,6 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       assertThat(isFirstVersion).isTrue();
       response.close();
 
-      client.close();
-   }
-
-   @Test
-   public void testReadAccessRights() throws Exception {
-      setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
-      final Client client = ClientBuilder.newBuilder().build();
-      final String user = userFacade.getUserEmail();
-      final AccessRightsDao DEFAULT_ACCESS_RIGHT = new AccessRightsDao(true, true, true, user);
-
-      collectionFacade.createCollection(COLLECTION_READ_ACCESS_RIGHTS);
-      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_READ_ACCESS_RIGHTS), new DataDocument());
-
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_READ_ACCESS_RIGHTS) + documentId + "/rights").request().buildGet().invoke();
-      List<AccessRightsDao> rights = response.readEntity(new GenericType<List<AccessRightsDao>>() {
-      });
-      AccessRightsDao readRights = rights.get(0);
-      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(readRights.isRead()).isEqualTo(DEFAULT_ACCESS_RIGHT.isRead());
-      assertThat(readRights.isWrite()).isEqualTo(DEFAULT_ACCESS_RIGHT.isWrite());
-      assertThat(readRights.isExecute()).isEqualTo(DEFAULT_ACCESS_RIGHT.isExecute());
-      assertThat(readRights.getUserName()).isEqualTo(DEFAULT_ACCESS_RIGHT.getUserName());
-
-      response.close();
-      client.close();
-   }
-
-   @Test
-   public void testUpdateAccessRights() throws Exception {
-      setUpCollections(COLLECTION_UPDATE_ACCESS_RIGHTS);
-      final Client client = ClientBuilder.newBuilder().build();
-      final String user = userFacade.getUserEmail();
-      final AccessRightsDao accessRightsDao = new AccessRightsDao(false, false, true, user);
-
-      collectionFacade.createCollection(COLLECTION_UPDATE_ACCESS_RIGHTS);
-      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS), new DataDocument());
-
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_UPDATE_ACCESS_RIGHTS) + documentId + "/rights").request().buildPut(Entity.entity(accessRightsDao, MediaType.APPLICATION_JSON)).invoke();
-      AccessRightsDao readAccessRights = securityFacade.getDao(getInternalName(COLLECTION_UPDATE_ACCESS_RIGHTS), documentId, user);
-      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      assertThat(readAccessRights.isRead()).isFalse();
-      assertThat(readAccessRights.isWrite()).isFalse();
-      assertThat(readAccessRights.isExecute()).isTrue();
-      response.close();
       client.close();
    }
 

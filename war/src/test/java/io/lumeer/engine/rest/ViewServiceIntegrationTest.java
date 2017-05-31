@@ -28,11 +28,12 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.controller.CollectionFacade;
+import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
-import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -82,8 +83,16 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
    @Before
    public void init() {
+      // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
+      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectCode());
       PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/views/";
       dataStorage.dropManyDocuments(viewFacade.metadataCollection(), dataStorageDialect.documentFilter("{}"));
    }
@@ -126,10 +135,13 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       final int viewId = 1;
       final String viewName = "name";
       final String viewType = LumeerConst.View.TYPE_DEFAULT_VALUE;
+
       ViewMetadata view = createViewMetadata(viewId, viewName, viewType);
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(view, MediaType.APPLICATION_JSON)).invoke();
       List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
       int responseViewId = response.readEntity(Integer.class);
+
+      addManageRole(responseViewId);
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(viewsByFacade).hasSize(1);
@@ -141,7 +153,7 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       response.close();
       client.close();
 
-      // #2 The given view has already existed in the database. It returs Bad Request status code.
+      // #2 The given view has already existed in the database. It returns Bad Request status code.
       final Client client2 = ClientBuilder.newBuilder().build();
       view.setId(responseViewId);
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(view, MediaType.APPLICATION_JSON)).invoke();
@@ -177,6 +189,7 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
 
       // inserting the given view to database
       int viewIdByFacade = viewFacade.createView(viewName, viewType, null, viewConf);
+      addManageRole(viewIdByFacade);
 
       // #1 read view configuration
       final Client client = ClientBuilder.newBuilder().build();
@@ -228,46 +241,8 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       assertThat(cloneView.getName()).isEqualTo(cloneName);
    }
 
-   @Test
-   public void testGetAndSetViewAccessRights() throws Exception {
-      // creating new view
-      final String viewName = "name";
-      final String viewType = LumeerConst.View.TYPE_DEFAULT_VALUE;
-      final int viewIdByFacade = viewFacade.createView(viewName, viewType, null, null);
-      final AccessRightsDao defaultViewAccessRights = new AccessRightsDao(true, true, true, userFacade.getUserEmail());
-
-      // #1 read view access rights
-      final Client client = ClientBuilder.newBuilder().build();
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + viewIdByFacade + "/rights").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      AccessRightsDao viewAccessRightsResponse = response.readEntity(AccessRightsDao.class);
-
-      System.err.println("viewAccessRightsResponse" + viewAccessRightsResponse.toString());
-      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(viewAccessRightsResponse).isEqualTo(defaultViewAccessRights);
-      response.close();
-      client.close();
-
-      // TODO: Work this out! ViewService.setViewAccessRights() method does not work correctly at this moment.
-      /*
-      // #2 set view access rights
-      AccessRightsDao viewRightsToSet = new AccessRightsDao(true, false, true, userFacade.getUserEmail());
-      final Client client2 = ClientBuilder.newBuilder().build();
-      Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + viewIdByFacade + "/rights").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(viewRightsToSet, MediaType.APPLICATION_JSON)).invoke();
-
-      assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode()); // TODO: .testGetAndSetViewAccessRights:227 expected:<[204]> but was:<[500]>
-      response2.close();
-      client2.close();
-
-      // #3 reading view access rights once again to check they were set correctly
-      final Client client3 = ClientBuilder.newBuilder().build();
-      Response response3 = client3.target(TARGET_URI).path(PATH_PREFIX + viewIdByFacade + "/rights").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      AccessRightsDao viewAccessRightsResponse2 = response3.readEntity(AccessRightsDao.class);
-
-      assertThat(response3.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(viewAccessRightsResponse2).isEqualTo(viewRightsToSet);
-      response3.close();
-      client3.close();*/
-
+   private void addManageRole(int view) {
+      securityFacade.addViewUserRole(projectFacade.getCurrentProjectCode(), view, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
    }
 
    private ViewMetadata createViewMetadata(int viewId, String viewName, String viewType) {

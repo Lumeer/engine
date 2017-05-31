@@ -92,7 +92,6 @@ public class DocumentFacade implements Serializable {
       // add metadata attributes
       documentMetadataFacade.putInitDocumentMetadataInternally(documentCleaned, userFacade.getUserEmail());
       versionFacade.putInitDocumentVersionInternally(documentCleaned);
-      securityFacade.putFullRightsInternally(documentCleaned, userFacade.getUserEmail());
 
       String documentId = dataStorage.createDocument(collectionName, documentCleaned);
       if (documentId == null) {

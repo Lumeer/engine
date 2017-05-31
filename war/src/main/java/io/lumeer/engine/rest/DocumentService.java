@@ -25,9 +25,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidValueException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
@@ -37,7 +35,6 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
-import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -48,7 +45,6 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -130,7 +126,7 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || document == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
 
       final String internalCollectionName = getInternalName(collectionName);
@@ -155,11 +151,10 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}")
    public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
 
       documentFacade.dropDocument(internalCollectionName, documentId);
    }
@@ -184,11 +179,10 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       return collectionMetadataFacade.decodeAttributeValues(internalCollectionName, documentFacade.readDocument(internalCollectionName, documentId));
    }
@@ -212,11 +206,10 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || updatedDocument == null || updatedDocument.getId() == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, updatedDocument.getId());
 
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, updatedDocument);
 
@@ -242,11 +235,10 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void replaceDocument(final @PathParam("collectionName") String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException, InvalidValueException {
       if (collectionName == null || replaceDocument == null || replaceDocument.getId() == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, replaceDocument.getId());
 
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, replaceDocument);
 
@@ -272,11 +264,10 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void addDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName, final Object value) throws DbException {
       if (collectionName == null || documentId == null || attributeName == null || value == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
 
       documentMetadataFacade.putDocumentMetadata(internalCollectionName, documentId, attributeName, value);
    }
@@ -297,11 +288,10 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public Map<String, Object> readDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       return documentMetadataFacade.readDocumentMetadata(internalCollectionName, documentId);
    }
@@ -323,11 +313,10 @@ public class DocumentService implements Serializable {
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final DataDocument metadata) throws DbException {
       if (collectionName == null || documentId == null || metadata == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
 
       documentMetadataFacade.updateDocumentMetadata(getInternalName(collectionName), documentId, metadata);
    }
@@ -352,11 +341,10 @@ public class DocumentService implements Serializable {
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> searchHistoryChanges(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
       if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       final List<DataDocument> docs = versionFacade.getDocumentVersions(getInternalName(collectionName), documentId);
       final List<DataDocument> convertedDocs = new ArrayList<>();
@@ -384,11 +372,10 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}/versions/{version}")
    public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("version") int version) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
 
       documentFacade.revertDocument(internalCollectionName, documentId, version);
    }
@@ -409,11 +396,10 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}/attribute/{attributeName}")
    public void dropDocumentAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName) throws DbException {
       if (collectionName == null || documentId == null || attributeName == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
 
       documentFacade.dropAttribute(internalCollectionName, documentId, attributeName);
    }
@@ -433,75 +419,12 @@ public class DocumentService implements Serializable {
    @Path("/{documentId}/attributes/")
    public Set<String> readDocumentAttributes(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
       if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
+         throw new IllegalArgumentException();
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       return documentFacade.getDocumentAttributes(collectionName, documentId);
-   }
-
-  /* @GET
-   @Path("/{documentId}/rights")
-   @Produces(MediaType.APPLICATION_JSON)
-   public HashMap readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
-      if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
-      }
-      return securityFacade.readRightsMap(getInternalName(collectionName), documentId);
-   }*/
-
-   /**
-    * Gets access rights for all users of the given document.
-    *
-    * @param collectionName
-    *       name of the collection
-    * @param documentId
-    *       id of the given document
-    * @return list of access rights of the given collection
-    * @throws DbException
-    *       When there is an error working with the data storage.
-    */
-   @GET
-   @Path("/{documentId}/rights")
-   @Produces(MediaType.APPLICATION_JSON)
-   public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
-      if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
-      }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
-
-      return securityFacade.getDaoList(getInternalName(collectionName), documentId);
-   }
-
-   /**
-    * Updates access rights of the given document for currently logged user.
-    *
-    * @param collectionName
-    *       name of the collection
-    * @param documentId
-    *       id of the given document
-    * @param accessRights
-    *       new access rights of the logged user
-    * @throws DbException
-    *       When there is an error working with the database.
-    */
-   @PUT
-   @Path("/{documentId}/rights")
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final AccessRightsDao accessRights) throws DbException {
-      if (collectionName == null || documentId == null || accessRights == null) {
-         throw new BadRequestException();
-      }
-
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
-      checkDocumentForAddRights(internalCollectionName, documentId);
-
-      securityFacade.setDao(internalCollectionName, documentId, accessRights);
    }
 
    /**
@@ -522,23 +445,4 @@ public class DocumentService implements Serializable {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
-
-   private void checkDocumentForWrite(final String collectionName, final String documentId) throws UnauthorizedAccessException, DocumentNotFoundException {
-      if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkDocumentForRead(final String collectionName, final String documentId) throws DocumentNotFoundException, UnauthorizedAccessException {
-      if (!securityFacade.checkForRead(collectionName, documentId, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkDocumentForAddRights(final String collectionName, final String documentId) throws DocumentNotFoundException, UnauthorizedAccessException {
-      if (!securityFacade.checkForAddRights(collectionName, documentId, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
 }

@@ -19,8 +19,11 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.controller.SecurityFacade;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -52,6 +55,9 @@ public class ProjectService implements Serializable {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
 
    @PathParam("organization")
    private String organizationCode;
@@ -94,7 +100,11 @@ public class ProjectService implements Serializable {
     */
    @POST
    @Path("/{projectCode}")
-   public void createProject(final @PathParam("projectCode") String projectCode, final String projectName) {
+   public void createProject(final @PathParam("projectCode") String projectCode, final String projectName) throws UnauthorizedAccessException {
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       if (projectCode == null || projectName == null) {
          throw new BadRequestException();
       }
@@ -109,10 +119,15 @@ public class ProjectService implements Serializable {
     */
    @PUT
    @Path("/{projectCode}/name/{newProjectName}")
-   public void renameProject(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectName") String newProjectName) {
+   public void renameProject(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectName") String newProjectName) throws UnauthorizedAccessException {
       if (projectCode == null || newProjectName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       projectFacade.renameProject(projectCode, newProjectName);
    }
 
@@ -127,10 +142,15 @@ public class ProjectService implements Serializable {
    @PUT
    @Path("/{projectCode}/code/{newProjectCode}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateProjectCode(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectCode") String newProjectCode) {
+   public void updateProjectCode(final @PathParam("projectCode") String projectCode, final @PathParam("newProjectCode") String newProjectCode) throws UnauthorizedAccessException {
       if (projectCode == null || newProjectCode == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       projectFacade.updateProjectCode(projectCode, newProjectCode);
    }
 
@@ -140,10 +160,15 @@ public class ProjectService implements Serializable {
     */
    @DELETE
    @Path("/{projectCode}")
-   public void dropProject(final @PathParam("projectCode") String projectCode) {
+   public void dropProject(final @PathParam("projectCode") String projectCode) throws UnauthorizedAccessException {
       if (projectCode == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       projectFacade.dropProject(projectCode);
    }
 
@@ -177,10 +202,15 @@ public class ProjectService implements Serializable {
    @PUT
    @Path("/{projectCode}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName, final String value) {
+   public void updateProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName, final String value) throws UnauthorizedAccessException {
       if (projectCode == null || attributeName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       projectFacade.updateProjectMetadata(projectCode, attributeName, value);
    }
 
@@ -192,10 +222,15 @@ public class ProjectService implements Serializable {
     */
    @DELETE
    @Path("/{projectCode}/meta/{attributeName}")
-   public void dropProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) {
+   public void dropProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException {
       if (projectCode == null || attributeName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       projectFacade.dropProjectMetadata(projectCode, attributeName);
    }
 

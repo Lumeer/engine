@@ -24,11 +24,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -58,6 +62,15 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
+
+   @Inject
+   private DatabaseInitializer databaseInitializer;
 
    @Inject
    @SystemDataStorage
@@ -112,6 +125,10 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateProject() throws Exception {
+      // I (Alica) suppose we operate inside some default organization which has not been initialized, so we do that here
+      databaseInitializer.onOrganizationCreated(organizationFacade.getOrganizationId(organizationFacade.getOrganizationCode()));
+      securityFacade.addOrganizationUserRole(organizationFacade.getOrganizationCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+
       final String project = "project21";
       final String projectName = "Project One";
 
@@ -133,6 +150,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(project, projectNameOld);
       assertThat(projectFacade.readProjectName(project)).isEqualTo(projectNameOld);
 
+      addManageRole(project);
+
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
             .path(PATH_PREFIX + project + "/name/" + projectNameNew)
@@ -151,6 +170,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(project, projectName);
       assertThat(projectFacade.readProjectsMap(organizationFacade.getOrganizationCode())).hasSize(1).containsOnlyKeys(project);
 
+      addManageRole(project);
+
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
             .path(PATH_PREFIX + project + "/code/" + projectNew)
@@ -167,6 +188,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String projectName = "Project One";
       projectFacade.createProject(project, projectName);
       assertThat(projectFacade.readProjectsMap(organizationFacade.getOrganizationCode())).hasSize(1).containsOnlyKeys(project);
+
+      addManageRole(project);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
@@ -206,6 +229,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isEqualTo("value");
 
+      addManageRole(project);
+
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
             .path(PATH_PREFIX + project + "/meta/" + metaAttr)
@@ -225,6 +250,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isNotNull();
 
+      addManageRole(project);
+
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
             .path(PATH_PREFIX + project + "/meta/" + metaAttr)
@@ -234,4 +261,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isNull();
    }
 
+   private void addManageRole(String projectCode) {
+      securityFacade.addProjectUserRole(projectCode, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+   }
 }

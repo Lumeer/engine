@@ -24,10 +24,8 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
@@ -112,7 +110,7 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<LinkType> getLinkTypes(final @PathParam("collectionName") String collectionName, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      checkCollectionForRead(internalCollectionName);
+      //checkCollectionForRead(internalCollectionName);
 
       final List<LinkType> links = new ArrayList<>();
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -150,7 +148,7 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<LinkInstance> getLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      checkCollectionForRead(internalCollectionName);
+      //checkCollectionForRead(internalCollectionName);
       final List<LinkInstance> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -190,7 +188,7 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      checkCollectionForRead(internalCollectionName);
+      //checkCollectionForRead(internalCollectionName);
       final List<DataDocument> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -226,10 +224,11 @@ public class LinkingService {
    @GET
    @Path("/{role}/collections/{targetCollection}/documents/{id}/target/{targetId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<LinkInstance> getDocumentsLinks(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
+   public List<LinkInstance> getDocumentsLinks(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId,
+         final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
          throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      checkCollectionForRead(internalCollectionName);
+      //checkCollectionForRead(internalCollectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
 
       final List<LinkInstance> links = new ArrayList<>();
@@ -263,7 +262,7 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public void deleteLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      checkCollectionForWrite(internalCollectionName);
+      //checkCollectionForWrite(internalCollectionName);
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          linkingFacade.dropLinksForDocument(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM);
@@ -298,9 +297,9 @@ public class LinkingService {
    public void deleteLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
          throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      checkCollectionForWrite(internalCollectionName);
+      //checkCollectionForWrite(internalCollectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
-      checkCollectionForWrite(internalTargetCollectionName);
+      //checkCollectionForWrite(internalTargetCollectionName);
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          linkingFacade.dropLinksBetweenDocuments(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM);
@@ -337,9 +336,9 @@ public class LinkingService {
    public void addLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String fromId, final @PathParam("targetId") String toId, final DataDocument attributes, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
          throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      checkCollectionForWrite(internalCollectionName);
+      //checkCollectionForWrite(internalCollectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
-      checkCollectionForWrite(internalTargetCollectionName);
+      //checkCollectionForWrite(internalTargetCollectionName);
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          hasDocumentRoleNotNull(internalCollectionName, fromId, internalTargetCollectionName, toId, role);
@@ -360,24 +359,6 @@ public class LinkingService {
       }
       if (role == null) {
          throw new BadRequestException(ErrorMessageBuilder.paramCanNotBeNullString(LumeerConst.Linking.Type.ATTR_ROLE));
-      }
-   }
-
-   private void checkCollectionForRead(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!collectionMetadataFacade.checkCollectionForRead(collectionName, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkCollectionForWrite(final String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-      if (!collectionMetadataFacade.checkCollectionForWrite(collectionName, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
       }
    }
 
