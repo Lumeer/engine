@@ -28,11 +28,8 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.provider.DataStorageProvider;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -82,7 +79,7 @@ public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
 
       assertThat(documentMetadata).containsKey(LumeerConst.Document.CREATE_BY_USER_KEY);
       assertThat(documentMetadata).containsKey(LumeerConst.Document.CREATE_DATE_KEY);
-      assertThat(documentMetadata).hasSize(5);
+      assertThat(documentMetadata).hasSize(4);
    }
 
    @Test

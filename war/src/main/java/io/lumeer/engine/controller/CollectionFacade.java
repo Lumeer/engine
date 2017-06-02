@@ -242,10 +242,8 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     * @throws AttributeNotFoundException
     *       if attribute was not found in metadata collection
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public Set<String> getAttributeValues(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public Set<String> getAttributeValues(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
          if (collectionMetadataFacade.getAttributesNames(collectionName).contains(attributeName)) {
             return dataStorage.getAttributeValues(collectionName, attributeName);
@@ -295,8 +293,6 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
    public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
       if (dataStorage.hasCollection(collectionName)) {

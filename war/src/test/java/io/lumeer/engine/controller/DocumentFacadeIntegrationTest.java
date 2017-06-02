@@ -140,8 +140,6 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(readed).containsKey("d");
       assertThat(readed).containsKey("e");
       assertThat(readed).containsKey("f");
-      assertThat(readed).containsKey(LumeerConst.Document.USER_RIGHTS);
-
    }
 
    @Test

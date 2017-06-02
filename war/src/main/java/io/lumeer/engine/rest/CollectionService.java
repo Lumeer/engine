@@ -131,6 +131,7 @@ public class CollectionService implements Serializable {
     * @return name of internal collection
     * @throws UserCollectionAlreadyExistsException
     *       When collection with given user name already exists.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @POST
    @Path("/{name}")

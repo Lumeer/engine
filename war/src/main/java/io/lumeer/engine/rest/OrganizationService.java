@@ -96,6 +96,7 @@ public class OrganizationService implements Serializable {
    /**
     * @param organizationCode organization code
     * @param newOrganizationName organization name
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/name/{newOrganizationName}")
@@ -114,6 +115,7 @@ public class OrganizationService implements Serializable {
    /**
     * @param organizationCode organization code
     * @param newCode new organization code
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/code/{newCode}")
@@ -161,6 +163,7 @@ public class OrganizationService implements Serializable {
     * @param organizationCode organization code
     * @param attributeName name of metadata attribute
     * @param value value of metadata attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/meta/{attributeName}")
@@ -181,6 +184,7 @@ public class OrganizationService implements Serializable {
    /**
     * @param organizationCode organization code
     * @param attributeName name of metadata attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/meta/{attributeName}")
@@ -230,6 +234,7 @@ public class OrganizationService implements Serializable {
     * @param organizationCode organization code
     * @param attributeName name of the attribute
     * @param value value of the attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/data/{attributeName}")
@@ -251,6 +256,7 @@ public class OrganizationService implements Serializable {
     * Drops attribute from additional info.
     * @param organizationCode organization code
     * @param attributeName name of the attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/data/{attributeName}")
@@ -269,6 +275,7 @@ public class OrganizationService implements Serializable {
    /**
     * Drops all additional info.
     * @param organizationCode organization code
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/data")

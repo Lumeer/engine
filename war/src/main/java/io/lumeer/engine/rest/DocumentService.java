@@ -20,12 +20,14 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidValueException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
@@ -132,6 +134,10 @@ public class DocumentService implements Serializable {
       final String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
 
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, document);
 
       return documentFacade.createDocument(internalCollectionName, convertedDocument);
@@ -155,6 +161,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentFacade.dropDocument(internalCollectionName, documentId);
    }
@@ -211,6 +221,10 @@ public class DocumentService implements Serializable {
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
 
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, updatedDocument);
 
       documentFacade.updateDocument(internalCollectionName, convertedDocument);
@@ -240,6 +254,10 @@ public class DocumentService implements Serializable {
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
 
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, replaceDocument);
 
       documentFacade.replaceDocument(internalCollectionName, convertedDocument);
@@ -268,6 +286,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentMetadataFacade.putDocumentMetadata(internalCollectionName, documentId, attributeName, value);
    }
@@ -317,6 +339,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentMetadataFacade.updateDocumentMetadata(getInternalName(collectionName), documentId, metadata);
    }
@@ -377,6 +403,10 @@ public class DocumentService implements Serializable {
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
 
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       documentFacade.revertDocument(internalCollectionName, documentId, version);
    }
 
@@ -400,6 +430,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentFacade.dropAttribute(internalCollectionName, documentId, attributeName);
    }

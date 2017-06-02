@@ -97,6 +97,7 @@ public class ProjectService implements Serializable {
     *       Project code.
     * @param projectName
     *       Project name.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @POST
    @Path("/{projectCode}")
@@ -116,6 +117,7 @@ public class ProjectService implements Serializable {
     *       Project code.
     * @param newProjectName
     *       Project name.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}/name/{newProjectName}")
@@ -138,6 +140,7 @@ public class ProjectService implements Serializable {
     *       Project code.
     * @param newProjectCode
     *       New project code.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}/code/{newProjectCode}")
@@ -157,6 +160,7 @@ public class ProjectService implements Serializable {
    /**
     * @param projectCode
     *       Project code.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{projectCode}")
@@ -198,6 +202,7 @@ public class ProjectService implements Serializable {
     *       Name of metadata attribute.
     * @param value
     *       Value of metadata attribute.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}/meta/{attributeName}")
@@ -219,6 +224,7 @@ public class ProjectService implements Serializable {
     *       Project code.
     * @param attributeName
     *       Name of metadata attribute.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{projectCode}/meta/{attributeName}")

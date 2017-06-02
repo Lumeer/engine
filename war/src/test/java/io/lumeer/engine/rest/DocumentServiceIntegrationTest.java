@@ -28,6 +28,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
+import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
@@ -37,6 +38,7 @@ import io.lumeer.engine.controller.UserFacade;
 
 import org.bson.types.Decimal128;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -89,6 +91,9 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
    private final String TARGET_URI = "http://localhost:8080";
 
    private final String COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT = "DocumentServiceCollectionCreateReadUpdateAndDropDocument";
@@ -96,6 +101,12 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_SEARCH_HISTORY_CHANGES = "DocumentServiceCollectionSearchHistoryChanges";
    private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
    private final String COLLECTION_ATTRIBUTE_TYPES = "DocumentServiceCollectionAttributeTypes";
+
+   @Before
+   public void init() {
+      // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
+      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectCode());
+   }
 
    @Test
    public void testRegister() throws Exception {
@@ -107,8 +118,10 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       setUpCollections(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
       final Client client = ClientBuilder.newBuilder().build();
 
+      String collection = collectionFacade.createCollection(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
+      addWriteRole(collection);
+
       // 200 - the document will be inserted into the given collection
-      collectionFacade.createCollection(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT)).request().buildPost(Entity.json(new DataDocument())).invoke();
       String documentId = response.readEntity(String.class);
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -150,7 +163,9 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       setUpCollections(COLLECTION_ATTRIBUTE_TYPES);
       final Client client = ClientBuilder.newBuilder().build();
 
-      collectionFacade.createCollection(COLLECTION_ATTRIBUTE_TYPES);
+      String collection = collectionFacade.createCollection(COLLECTION_ATTRIBUTE_TYPES);
+      addWriteRole(collection);
+
       Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ATTRIBUTE_TYPES)).request().buildPost(Entity.json(doc)).invoke();
       String documentId = response.readEntity(String.class);
 
@@ -170,7 +185,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
 
       log.info("@@@@@@@@@@@");
       responseDoc.forEach((k, v) ->
-         log.info(k + " (" + v.getClass().getName() + ") = " + v.toString())
+            log.info(k + " (" + v.getClass().getName() + ") = " + v.toString())
       );
 
       String nId = documentFacade.createDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), doc);
@@ -198,7 +213,8 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       final String attributeName = "_meta-update-user";
       final Object metaObjectValue = 123;
 
-      collectionFacade.createCollection(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA);
+      String collection = collectionFacade.createCollection(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA);
+      addWriteRole(collection);
       String documentId = documentFacade.createDocument(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), new DataDocument());
 
       // 204 - add the document metadata
@@ -263,7 +279,9 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       setUpCollections(COLLECTION_REVERT_DOCUMENT_VERSION);
       final Client client = ClientBuilder.newBuilder().build();
 
-      collectionFacade.createCollection(COLLECTION_REVERT_DOCUMENT_VERSION);
+      String collection = collectionFacade.createCollection(COLLECTION_REVERT_DOCUMENT_VERSION);
+      addWriteRole(collection);
+
       String documentId = documentFacade.createDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), new DataDocument());
       DataDocument documentVersionOne = new DataDocument("_id", documentId);
       DataDocument documentVersionTwo = new DataDocument("_id", documentId);
@@ -302,4 +320,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       return "collection." + collectionOriginalName.toLowerCase() + "_0";
    }
 
+   private void addWriteRole(String collection) {
+      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+   }
 }
