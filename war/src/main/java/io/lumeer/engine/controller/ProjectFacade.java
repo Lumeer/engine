@@ -26,7 +26,6 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +54,7 @@ public class ProjectFacade {
    private DatabaseInitializer databaseInitializer;
 
    private String projectCode = "default";
+   private String projectId = null;
 
    /**
     * Gets unique and immutable id of the project - _id from DataDocument
@@ -69,7 +69,7 @@ public class ProjectFacade {
    }
 
    public String getCurrentProjectId() {
-      return getProjectId(getCurrentProjectCode());
+      return projectId;
    }
 
    public String getCurrentProjectCode() {
@@ -78,6 +78,7 @@ public class ProjectFacade {
 
    public void setCurrentProjectCode(final String projectCode) {
       this.projectCode = projectCode;
+      this.projectId = getProjectId(projectCode);
    }
 
    /**
