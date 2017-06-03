@@ -27,10 +27,8 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Organization;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -45,6 +43,7 @@ import javax.inject.Inject;
 public class OrganizationFacade {
 
    private String organizationCode = "ACME";
+   private String organizationId = null;
 
    @Inject
    @SystemDataStorage
@@ -69,7 +68,7 @@ public class OrganizationFacade {
    }
 
    public String getOrganizationId() {
-      return getOrganizationId(organizationCode);
+      return organizationId;
    }
 
    public String getOrganizationCode() {
@@ -78,6 +77,7 @@ public class OrganizationFacade {
 
    public void setOrganizationCode(final String organizationCode) {
       this.organizationCode = organizationCode;
+      this.organizationId = getOrganizationId(organizationCode);
    }
 
    /**
