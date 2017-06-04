@@ -70,8 +70,8 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       final String project3 = "project3";
       final String project4 = "project4";
 
-      projectFacade.createProject(project1, "Project One");
-      projectFacade.createProject(project2, "Project Two");
+      projectFacade.createProject(new Project(project1, "Project One"));
+      projectFacade.createProject(new Project(project2, "Project Two"));
 
       List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
       assertThat(projects).extracting("code").containsOnly(project1, project2);
@@ -90,7 +90,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
       projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
       assertThat(projects).extracting("code").containsOnly(project3, project2);
-      projectFacade.createProject(project4, "Project Three");
+      projectFacade.createProject(new Project(project4, "Project Three"));
       projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
       assertThat(projects).extracting("code").containsOnly(project3, project2, project4);
       projectFacade.dropProject(project4);
@@ -99,13 +99,28 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
+   public void testReadAndUpdateProject(){
+      final String project = "project41";
+      final String projectName = "Project One";
+      final String newProjectName = "Project One New";
+
+      projectFacade.createProject(new Project(project, projectName));
+      Project proj = projectFacade.readProject(project);
+      assertThat(proj).isNotNull();
+      assertThat(proj.getName()).isNotEqualTo(newProjectName);
+
+      projectFacade.updateProject(project, new Project(project, newProjectName));
+      assertThat(projectFacade.readProject(project).getName()).isEqualTo(newProjectName);
+   }
+
+   @Test
    public void projectAlreadyExistsTest() throws Exception {
       final String project1 = "project51";
       final String project2 = "project52";
-      projectFacade.createProject(project1, "Project One");
-      projectFacade.createProject(project2, "Project Two");
+      projectFacade.createProject(new Project(project1, "Project One"));
+      projectFacade.createProject(new Project(project2, "Project Two"));
 
-      assertThatThrownBy(() -> projectFacade.createProject(project1, "Project One again")).isInstanceOf(MongoWriteException.class);
+      assertThatThrownBy(() -> projectFacade.createProject(new Project(project1, "Project One again"))).isInstanceOf(MongoWriteException.class);
       assertThatThrownBy(() -> projectFacade.updateProjectCode(project1, project2)).isInstanceOf(MongoWriteException.class);
    }
 

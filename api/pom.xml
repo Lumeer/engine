@@ -48,6 +48,7 @@
       <version.jacoco>0.7.7.201606060606</version.jacoco>
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
+      <version.jackson.annotations>2.8.8</version.jackson.annotations>
 
       <java.level>1.8</java.level>
    </properties>
@@ -59,6 +60,11 @@
             <version>${project.version}</version>
             <type>pom</type>
             <scope>import</scope>
+         </dependency>
+         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${version.jackson.annotations}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>
@@ -106,6 +112,12 @@
       <dependency>
          <groupId>org.assertj</groupId>
          <artifactId>assertj-core</artifactId>
+      </dependency>
+
+      <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-annotations</artifactId>
       </dependency>
 
    </dependencies>

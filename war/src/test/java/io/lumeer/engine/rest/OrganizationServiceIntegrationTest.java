@@ -80,23 +80,61 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String org2 = "GetOrganizations2";
       String code1 = "GetOrganizations1_id";
       String code2 = "GetOrganizations2_id";
-      organizationFacade.createOrganization(code1, org1);
-      organizationFacade.createOrganization(code2, org2);
+      organizationFacade.createOrganization(new Organization(code1, org1));
+      organizationFacade.createOrganization(new Organization(code2, org2));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
-      List<Organization> organizations = response.readEntity(new GenericType<List<Organization>>(List.class){});
+      List<Organization> organizations = response.readEntity(new GenericType<List<Organization>>(List.class) {
+      });
 
       assertThat(organizations).extracting("code").contains(code1, code2);
       assertThat(organizations).extracting("name").contains(org1, org2);
    }
 
    @Test
+   public void testReadOrganization() throws Exception {
+      String org = "ReadOrganization";
+      String code = "ReadOrganization_id";
+      organizationFacade.createOrganization(new Organization(code, org));
+
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client
+            .target(TARGET_URI)
+            .path(PATH_PREFIX + code)
+            .request(MediaType.APPLICATION_JSON)
+            .buildGet()
+            .invoke();
+
+      Organization organization = response.readEntity(Organization.class);
+      assertThat(organization).isNotNull();
+   }
+
+   @Test
+   public void testUpdateOrganization() throws Exception {
+      String org = "UpdateOrganization";
+      String code = "UpdateOrganization_id";
+      String newOrgName = "UpdateOrganizationNewName";
+      organizationFacade.createOrganization(new Organization(code, org));
+
+      assertThat(organizationFacade.readOrganization(code).getName()).isNotEqualTo(newOrgName);
+
+      final Client client = ClientBuilder.newBuilder().build();
+      client.target(TARGET_URI)
+            .path(PATH_PREFIX + code)
+            .request(MediaType.APPLICATION_JSON)
+            .buildPut(Entity.json(new Organization(code, newOrgName)))
+            .invoke();
+
+      assertThat(organizationFacade.readOrganization(code).getName()).isEqualTo(newOrgName);
+   }
+
+   @Test
    public void testGetOrganizationName() throws Exception {
       String org = "GetOrganizationName";
       String code = "GetOrganizationName_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + code + "/name")
@@ -113,7 +151,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testUpdateOrganizationCode() throws Exception {
       String org = "UpdateOrganizationId";
       String code = "UpdateOrganizationId_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String newId = "UpdateOrganizationId_newId";
       final Client client = ClientBuilder.newBuilder().build();
@@ -131,16 +169,16 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testCreateOrganization() throws Exception {
       String org = "CreateOrganization";
       String code = "CreateOrganization_id";
-      organizationFacade.createOrganization(code, org);
 
       final Client client = ClientBuilder.newBuilder().build();
-      client.target(TARGET_URI).path(PATH_PREFIX + code)
-            .request(MediaType.APPLICATION_JSON)
-            .buildPost(Entity.entity(org, MediaType.APPLICATION_JSON))
+      client.target(TARGET_URI).path(PATH_PREFIX)
+            .request()
+            .buildPost(Entity.json(new Organization(code, org)))
             .invoke();
 
-      assertThat(organizationFacade.readOrganizations()).extracting("code").contains(code);
-      assertThat(organizationFacade.readOrganizations()).extracting("name").contains(org);
+      List<Organization> organizations = organizationFacade.readOrganizations();
+      assertThat(organizations).extracting("code").contains(code);
+      assertThat(organizations).extracting("name").contains(org);
    }
 
    @Test
@@ -148,7 +186,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String org = "RenameOrganization";
       String newName = "RenameOrganizationNew";
       String code = "RenameOrganization_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + code + "/name/" + newName)
@@ -156,15 +194,16 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
 
-      assertThat(organizationFacade.readOrganizations()).extracting("code").contains(code);
-      assertThat(organizationFacade.readOrganizations()).extracting("name").contains(newName);
+      List<Organization> organizations = organizationFacade.readOrganizations();
+      assertThat(organizations).extracting("code").contains(code);
+      assertThat(organizations).extracting("name").contains(newName);
    }
 
    @Test
    public void testDropOrganization() throws Exception {
       String org = "DropOrganization";
       String code = "DropOrganization_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + code)
@@ -172,15 +211,16 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .buildDelete()
             .invoke();
 
-      assertThat(organizationFacade.readOrganizations()).extracting("code").doesNotContain(code);
-      assertThat(organizationFacade.readOrganizations()).extracting("code").doesNotContain(org);
+      List<Organization> organizations = organizationFacade.readOrganizations();
+      assertThat(organizations).extracting("code").doesNotContain(code);
+      assertThat(organizations).extracting("code").doesNotContain(org);
    }
 
    @Test
    public void testReadMetadata() throws Exception {
       String org = "ReadMetadata";
       String code = "ReadMetadata_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String name = "attribute";
 
@@ -205,7 +245,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testUpdateMetadata() throws Exception {
       String org = "UpdateMetadata";
       String code = "UpdateMetadata_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String name = "attribute";
       String value = "value";
@@ -232,7 +272,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testDropMetadata() throws Exception {
       String org = "DropMetadata";
       String code = "DropMetadata_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String name = "attribute";
       String value = "value";
@@ -250,7 +290,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testReadInfo() throws Exception {
       String org = "ReadInfo";
       String code = "ReadInfo_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String name = "attribute";
 
@@ -275,14 +315,14 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testReadInfoDocument() throws Exception {
       String org = "ReadInfoDoc";
       String code = "ReadInfoDoc_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + code + "/data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       DataDocument dataValue = response.readEntity(DataDocument.class);
-      assertThat(dataValue).isEmpty();
+      assertThat(dataValue).isNull();
 
       String name1 = "attribute1";
       String name2 = "attribute2";
@@ -302,7 +342,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testUpdateInfo() throws Exception {
       String org = "UpdateInfo";
       String code = "UpdateInfo_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String name = "attribute";
       String value = "value";
@@ -326,7 +366,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testDropInfo() throws Exception {
       String org = "DropInfo";
       String code = "DropInfo_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String name = "attribute";
       String value = "value";
@@ -344,7 +384,7 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
    public void testResetInfo() throws Exception {
       String org = "ResetInfo";
       String code = "ResetInfo_id";
-      organizationFacade.createOrganization(code, org);
+      organizationFacade.createOrganization(new Organization(code, org));
 
       String name = "attribute";
       String value = "value";

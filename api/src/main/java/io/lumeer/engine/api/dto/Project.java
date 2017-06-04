@@ -22,6 +22,9 @@ package io.lumeer.engine.api.dto;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -36,15 +39,23 @@ public class Project {
    private final String color;
 
    public Project(final DataDocument dataDocument) {
-      this(dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_NAME),
-            dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_CODE),
+      this(dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_CODE),
+            dataDocument.getString(LumeerConst.Project.ATTR_PROJECT_NAME),
             dataDocument.getString(LumeerConst.Project.ATTR_META_ICON),
             dataDocument.getString(LumeerConst.Project.ATTR_META_COLOR));
    }
 
-   public Project(final String name, final String code, final String icon, final String color) {
-      this.name = name;
+   public Project(final String code, final String name) {
+      this(code, name, null, null);
+   }
+
+   @JsonCreator
+   public Project(final @JsonProperty("code") String code,
+         final @JsonProperty("name") String name,
+         final @JsonProperty("icon") String icon,
+         final @JsonProperty("color") String color) {
       this.code = code;
+      this.name = name;
       this.icon = icon;
       this.color = color;
    }
@@ -63,5 +74,12 @@ public class Project {
 
    public String getColor() {
       return color;
+   }
+
+   public DataDocument toDataDocument() {
+      return new DataDocument(LumeerConst.Project.ATTR_PROJECT_CODE, code)
+            .append(LumeerConst.Project.ATTR_PROJECT_NAME, name)
+            .append(LumeerConst.Project.ATTR_META_COLOR, color)
+            .append(LumeerConst.Project.ATTR_META_ICON, icon);
    }
 }

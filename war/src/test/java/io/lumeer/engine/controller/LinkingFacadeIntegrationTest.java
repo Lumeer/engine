@@ -26,6 +26,7 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.rest.dao.LinkInstance;
 import io.lumeer.engine.rest.dao.LinkType;
@@ -394,11 +395,11 @@ public class LinkingFacadeIntegrationTest extends IntegrationTestBase {
 
       String project1 = "project1";
       String project2 = "project2";
-      projectFacade.createProject(project1, "p1");
+      projectFacade.createProject(new Project(project1, "p1"));
       projectFacade.setCurrentProjectCode(project1);
       linkingFacade.createLinkInstanceBetweenDocuments(col1, col1Id1, col2, col2Id1, new DataDocument(), role1, LumeerConst.Linking.LinkDirection.FROM);
 
-      projectFacade.createProject(project2, "p2");
+      projectFacade.createProject(new Project(project2, "p2"));
       projectFacade.setCurrentProjectCode(project2);
       linkingFacade.createLinkInstancesBetweenDocumentAndCollection(col1, col1Id1, col2, Arrays.asList(col2Id1, col2Id2), Arrays.asList(new DataDocument(), new DataDocument()), role2, LumeerConst.Linking.LinkDirection.FROM);
 

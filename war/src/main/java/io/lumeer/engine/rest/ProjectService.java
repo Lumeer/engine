@@ -75,6 +75,51 @@ public class ProjectService implements Serializable {
 
    /**
     * @param projectCode
+    *       Project code;
+    * @return Project data;
+    */
+   @GET
+   @Path("/{projectCode}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Project readProject(final @PathParam("projectCode") String projectCode) {
+      if (projectCode == null) {
+         throw new BadRequestException();
+      }
+      return projectFacade.readProject(projectCode);
+   }
+
+   /**
+    * @param project
+    *       Project data;
+    */
+   @POST
+   @Path("/")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void createProject(final Project project) {
+      if (project == null) {
+         throw new BadRequestException();
+      }
+      projectFacade.createProject(project);
+   }
+
+   /**
+    * @param projectCode
+    *       Code identifying project.
+    * @param project
+    *       Project data.
+    */
+   @PUT
+   @Path("/{projectCode}")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void updateProject(final @PathParam("projectCode") String projectCode, final Project project) {
+      if (projectCode == null || project == null) {
+         throw new BadRequestException();
+      }
+      projectFacade.updateProject(projectCode, project);
+   }
+
+   /**
+    * @param projectCode
     *       Project code.
     * @return Name of given project.
     */
@@ -86,21 +131,6 @@ public class ProjectService implements Serializable {
          throw new BadRequestException();
       }
       return projectFacade.readProjectName(projectCode);
-   }
-
-   /**
-    * @param projectCode
-    *       Project code.
-    * @param projectName
-    *       Project name.
-    */
-   @POST
-   @Path("/{projectCode}")
-   public void createProject(final @PathParam("projectCode") String projectCode, final String projectName) {
-      if (projectCode == null || projectName == null) {
-         throw new BadRequestException();
-      }
-      projectFacade.createProject(projectCode, projectName);
    }
 
    /**

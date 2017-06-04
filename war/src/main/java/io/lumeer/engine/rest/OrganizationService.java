@@ -64,6 +64,51 @@ public class OrganizationService implements Serializable {
 
    /**
     * @param organizationCode
+    *       Organization code;
+    * @return Organization data;
+    */
+   @GET
+   @Path("/{organizationCode}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Organization readOrganization(final @PathParam("organizationCode") String organizationCode) {
+      if (organizationCode == null) {
+         throw new BadRequestException();
+      }
+      return organizationFacade.readOrganization(organizationCode);
+   }
+
+   /**
+    * @param organization
+    *       organization data
+    */
+   @POST
+   @Path("/")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void createOrganization(final Organization organization) {
+      if (organization == null) {
+         throw new BadRequestException();
+      }
+      organizationFacade.createOrganization(organization);
+   }
+
+   /**
+    * @param organizationCode
+    *       Code identifying organization.
+    * @param organization
+    *       Organization data.
+    */
+   @PUT
+   @Path("/{organizationCode}")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void updateOrganization(final @PathParam("organizationCode") String organizationCode, final Organization organization) {
+      if (organizationCode == null || organization == null) {
+         throw new BadRequestException();
+      }
+      organizationFacade.updateOrganization(organizationCode, organization);
+   }
+
+   /**
+    * @param organizationCode
     *       organization code
     * @return name of given organization
     */
@@ -75,21 +120,6 @@ public class OrganizationService implements Serializable {
          throw new BadRequestException();
       }
       return organizationFacade.readOrganizationName(organizationCode);
-   }
-
-   /**
-    * @param organizationCode
-    *       organization code
-    * @param organizationName
-    *       organization name
-    */
-   @POST
-   @Path("/{organizationCode}")
-   public void createOrganization(final @PathParam("organizationCode") String organizationCode, final String organizationName) {
-      if (organizationCode == null || organizationName == null) {
-         throw new BadRequestException();
-      }
-      organizationFacade.createOrganization(organizationCode, organizationName);
    }
 
    /**
