@@ -48,7 +48,6 @@
       <version.jacoco>0.7.7.201606060606</version.jacoco>
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
-      <version.jackson.annotations>2.8.8</version.jackson.annotations>
 
       <java.level>1.8</java.level>
    </properties>
