@@ -108,6 +108,12 @@
          <artifactId>assertj-core</artifactId>
       </dependency>
 
+      <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-annotations</artifactId>
+      </dependency>
+
    </dependencies>
    <build>
       <plugins>

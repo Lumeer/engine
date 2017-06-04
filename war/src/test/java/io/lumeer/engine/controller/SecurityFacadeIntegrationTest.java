@@ -27,6 +27,8 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
+import io.lumeer.engine.api.dto.Project;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -90,13 +92,13 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       group2 = "group 2";
 
       organizationFacade.dropOrganization(org);
-      organizationFacade.createOrganization(org, "name");
+      organizationFacade.createOrganization(new Organization(org, "name"));
 
       userGroupFacade.addGroups(org, group1, group2);
       userGroupFacade.addUser(org, user, group1, group2);
 
       projectFacade.dropProject(project);
-      projectFacade.createProject(project, "project name");
+      projectFacade.createProject(new Project(project, "project name"));
    }
 
    @Test

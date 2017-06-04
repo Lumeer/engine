@@ -25,6 +25,7 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulatorIntegrationTest;
 
@@ -87,7 +88,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       String orgCode = "configOrg";
       organizationFacade.setOrganizationCode(orgCode);
       if (organizationFacade.getOrganizationId(orgCode) == null) {
-         organizationFacade.createOrganization(orgCode, "orgName");
+         organizationFacade.createOrganization(new Organization(orgCode, "orgName"));
       }
 
       if (isDatabaseCollection(ConfigurationFacade.USER_CONFIG_COLLECTION)) {

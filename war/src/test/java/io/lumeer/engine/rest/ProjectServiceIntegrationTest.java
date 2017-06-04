@@ -78,8 +78,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    public void testGetProjects() throws Exception {
       final String project1 = "project1";
       final String project2 = "project2";
-      projectFacade.createProject(project1, "Project One");
-      projectFacade.createProject(project2, "Project Two");
+      projectFacade.createProject(new Project(project1, "Project One"));
+      projectFacade.createProject(new Project(project2, "Project Two"));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
@@ -88,7 +88,8 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
                                 .buildGet()
                                 .invoke();
 
-      List<Project> projects = response.readEntity(new GenericType<List<Project>>(List.class){});
+      List<Project> projects = response.readEntity(new GenericType<List<Project>>(List.class) {
+      });
       assertThat(projects).extracting("code").containsOnly(project1, project2);
       assertThat(projects).extracting("name").containsOnly("Project One", "Project Two");
    }
@@ -96,7 +97,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testGetProjectName() throws Exception {
       final String project = "project11";
-      projectFacade.createProject(project, "Project One");
+      projectFacade.createProject(new Project(project, "Project One"));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
@@ -117,9 +118,9 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX + project)
-            .request(MediaType.APPLICATION_JSON)
-            .buildPost(Entity.entity(projectName, MediaType.APPLICATION_JSON))
+            .path(PATH_PREFIX)
+            .request()
+            .buildPost(Entity.json(new Project(project, projectName)))
             .invoke();
 
       List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
@@ -132,7 +133,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project31";
       final String projectNameOld = "Project One";
       final String projectNameNew = "Project One New";
-      projectFacade.createProject(project, projectNameOld);
+      projectFacade.createProject(new Project(project, projectNameOld));
       assertThat(projectFacade.readProjectName(project)).isEqualTo(projectNameOld);
 
       final Client client = ClientBuilder.newBuilder().build();
@@ -150,7 +151,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project41";
       final String projectName = "Project One";
       final String projectNew = "project41New";
-      projectFacade.createProject(project, projectName);
+      projectFacade.createProject(new Project(project, projectName));
       List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
       assertThat(projects).hasSize(1);
       assertThat(projects).extracting("code").containsOnly(project);
@@ -171,7 +172,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    public void testDropProject() throws Exception {
       final String project = "project51";
       final String projectName = "Project One";
-      projectFacade.createProject(project, projectName);
+      projectFacade.createProject(new Project(project, projectName));
       List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationId());
       assertThat(projects).hasSize(1).extracting("code").containsOnly(project);
 
@@ -190,7 +191,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project61";
       final String projectName = "Project One";
       final String metaAttr = "metaAttr";
-      projectFacade.createProject(project, projectName);
+      projectFacade.createProject(new Project(project, projectName));
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
 
       final Client client = ClientBuilder.newBuilder().build();
@@ -209,7 +210,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project71";
       final String projectName = "Project One";
       final String metaAttr = "metaAttr";
-      projectFacade.createProject(project, projectName);
+      projectFacade.createProject(new Project(project, projectName));
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isEqualTo("value");
 
@@ -228,7 +229,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project71";
       final String projectName = "Project One";
       final String metaAttr = "metaAttr";
-      projectFacade.createProject(project, projectName);
+      projectFacade.createProject(new Project(project, projectName));
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isNotNull();
 
@@ -239,6 +240,43 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
             .buildDelete()
             .invoke();
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isNull();
+   }
+
+   @Test
+   public void testReadProject() throws Exception {
+      final String project = "project81";
+      final String projectName = "Project One";
+      projectFacade.createProject(new Project(project, projectName));
+
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client
+            .target(TARGET_URI)
+            .path(PATH_PREFIX + project)
+            .request(MediaType.APPLICATION_JSON)
+            .buildGet()
+            .invoke();
+
+      Project proj = response.readEntity(Project.class);
+      assertThat(proj).isNotNull();
+   }
+
+   @Test
+   public void testUpdateProject() throws Exception {
+      final String project = "project91";
+      final String projectName = "Project One";
+      final String newProjName = "Project One Updated";
+      projectFacade.createProject(new Project(project, projectName));
+
+      assertThat(projectFacade.readProject(project).getName()).isNotEqualTo(newProjName);
+
+      final Client client = ClientBuilder.newBuilder().build();
+      client.target(TARGET_URI)
+            .path(PATH_PREFIX + project)
+            .request(MediaType.APPLICATION_JSON)
+            .buildPut(Entity.json(new Project(project, newProjName)))
+            .invoke();
+
+      assertThat(projectFacade.readProject(project).getName()).isEqualTo(newProjName);
    }
 
 }

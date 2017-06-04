@@ -26,6 +26,7 @@ import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -70,8 +71,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1);
       userGroupFacade.addUser(organization1, user2, "g1", "g2", "g3");
@@ -99,8 +100,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1);
       userGroupFacade.addUser(organization1, user2);
@@ -129,8 +130,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user1 = "user1";
       final String user2 = "user2";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1);
       userGroupFacade.addUser(organization1, user2);
@@ -160,8 +161,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user1 = "user1";
       final String user2 = "user2";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1, "g1", "g2", "g3");
       userGroupFacade.addUser(organization1, user2, "g1", "g2", "g3");
@@ -193,8 +194,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user3 = "user3";
       final String user4 = "user4";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1);
       userGroupFacade.addUser(organization1, user2);
@@ -217,8 +218,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1, "g1", "g2", "g3");
       userGroupFacade.addUser(organization1, user2, "g4", "g5", "g6", "g7");
@@ -243,8 +244,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1, "g1", "g2", "g3");
       userGroupFacade.addUser(organization1, user2, "g4", "g5", "g6", "g7");
@@ -267,8 +268,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user2 = "user2";
       final String user3 = "user3";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addUser(organization1, user1, "g1", "g2");
       userGroupFacade.addUser(organization1, user2, "g1", "g2", "g3");
@@ -303,8 +304,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String group4 = "group4";
       final String group5 = "group5";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addGroups(organization1, group1, group2, group3);
       userGroupFacade.addGroups(organization2, group3, group4, group5);
@@ -328,8 +329,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String user1 = "user1";
       final String user2 = "user2";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addGroups(organization1, group1, group2, group3);
       userGroupFacade.addGroups(organization2, group3, group4, group5);
@@ -370,8 +371,8 @@ public class UserGroupFacadeIntegrationTest extends IntegrationTestBase {
       final String group4 = "group4";
       final String group5 = "group5";
 
-      organizationFacade.createOrganization(organization1, "Org one");
-      organizationFacade.createOrganization(organization2, "Org two");
+      organizationFacade.createOrganization(new Organization(organization1, "Org one"));
+      organizationFacade.createOrganization(new Organization(organization2, "Org two"));
 
       userGroupFacade.addGroups(organization1, group1, group3);
       userGroupFacade.addGroups(organization2, group2, group3, group4, group5);

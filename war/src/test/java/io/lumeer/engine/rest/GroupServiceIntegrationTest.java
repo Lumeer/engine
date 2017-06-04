@@ -7,6 +7,7 @@ import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.UserGroupFacade;
 
@@ -51,7 +52,7 @@ public class GroupServiceIntegrationTest extends IntegrationTestBase {
       dataStorage.dropManyDocuments(LumeerConst.UserGroup.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
       dataStorage.dropManyDocuments(LumeerConst.Group.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
       organizationFacade.dropOrganization(organization);
-      organizationFacade.createOrganization(organization, "Lumeer");
+      organizationFacade.createOrganization(new Organization(organization, "Lumeer"));
    }
 
    @Test

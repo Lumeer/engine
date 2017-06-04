@@ -190,12 +190,12 @@ public class DatabaseInitializer {
    /**
     * Initializes document with roles for given project.
     *
-    * @param projectCode
-    *       project code
+    * @param projectId
+    *       project id
     */
-   private void initProjectRoles(String projectCode) {
+   private void initProjectRoles(String projectId) {
       DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode))
+            .append(Security.PROJECT_ID_KEY, projectId)
             .append(Security.TYPE_KEY, Security.TYPE_PROJECT)
             .append(Security.ROLES_KEY, new DataDocument()
                   .append(Security.ROLE_MANAGE,
@@ -309,13 +309,13 @@ public class DatabaseInitializer {
    /**
     * Initializes some project collections and documents.
     *
-    * @param projectCode
-    *       project code
+    * @param projectId
+    *       project id
     */
-   public void onProjectCreated(final String projectCode) {
-      initProjectRoles(projectCode);
-      initCollectionsMetadata(projectCode);
-      initViewsMetadata(projectCode);
+   public void onProjectCreated(final String projectId) {
+      initProjectRoles(projectId);
+      initCollectionsMetadata(projectId);
+      initViewsMetadata(projectId);
    }
 
    /**
