@@ -114,7 +114,9 @@ public class ProjectFacade {
     * @return id of the organization
     */
    public String createProject(final Project project) {
-      String id = dataStorage.createDocument(LumeerConst.Project.COLLECTION_NAME, project.toDataDocument());
+      DataDocument dataDocument = project.toDataDocument()
+            .append(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
+      String id = dataStorage.createDocument(LumeerConst.Project.COLLECTION_NAME, dataDocument);
       databaseInitializer.onProjectCreated(id);
       return id;
    }
