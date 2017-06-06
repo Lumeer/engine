@@ -27,6 +27,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
@@ -53,7 +54,6 @@ import javax.ws.rs.core.Response;
 public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    private static final String TARGET_URI = "http://localhost:8080";
-   private String PATH_PREFIX = PATH_CONTEXT + "/rest/LMR/projects/";
 
    @Inject
    private ProjectFacade projectFacade;
@@ -71,19 +71,23 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    @Before
    public void init() {
       dataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
-      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/projects/";
+      dataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
    public void testGetProjects() throws Exception {
       final String project1 = "project1";
       final String project2 = "project2";
+      final String org = "ORG1";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
       projectFacade.createProject(new Project(project1, "Project One"));
       projectFacade.createProject(new Project(project2, "Project Two"));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
-                                .path(PATH_PREFIX)
+                                .path(pathPrefix(org))
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet()
                                 .invoke();
@@ -97,11 +101,15 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testGetProjectName() throws Exception {
       final String project = "project11";
+      final String org = "ORG11";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
       projectFacade.createProject(new Project(project, "Project One"));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
-                                .path(PATH_PREFIX + project + "/name")
+                                .path(pathPrefix(org) + project + "/name")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet()
                                 .invoke();
@@ -115,15 +123,18 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    public void testCreateProject() throws Exception {
       final String project = "project21";
       final String projectName = "Project One";
+      final String org = "ORG21";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX)
+            .path(pathPrefix(org))
             .request()
             .buildPost(Entity.json(new Project(project, projectName)))
             .invoke();
 
-      List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      List<Project> projects = projectFacade.readProjects(org);
       assertThat(projects).hasSize(1);
       assertThat(projects).extracting("code").contains(project);
    }
@@ -133,12 +144,17 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project31";
       final String projectNameOld = "Project One";
       final String projectNameNew = "Project One New";
+      final String org = "ORG31";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectNameOld));
       assertThat(projectFacade.readProjectName(project)).isEqualTo(projectNameOld);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX + project + "/name/" + projectNameNew)
+            .path(pathPrefix(org) + project + "/name/" + projectNameNew)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
@@ -151,19 +167,24 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project41";
       final String projectName = "Project One";
       final String projectNew = "project41New";
+      final String org = "ORG41";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectName));
-      List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      List<Project> projects = projectFacade.readProjects(org);
       assertThat(projects).hasSize(1);
       assertThat(projects).extracting("code").containsOnly(project);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX + project + "/code/" + projectNew)
+            .path(pathPrefix(org) + project + "/code/" + projectNew)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
             .invoke();
 
-      projects = projectFacade.readProjects(organizationFacade.getOrganizationCode());
+      projects = projectFacade.readProjects(org);
       assertThat(projects).hasSize(1);
       assertThat(projects).extracting("code").contains(projectNew);
    }
@@ -172,18 +193,23 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    public void testDropProject() throws Exception {
       final String project = "project51";
       final String projectName = "Project One";
+      final String org = "ORG51";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectName));
-      List<Project> projects = projectFacade.readProjects(organizationFacade.getOrganizationId());
+      List<Project> projects = projectFacade.readProjects(org);
       assertThat(projects).hasSize(1).extracting("code").containsOnly(project);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX + project)
+            .path(pathPrefix(org) + project)
             .request(MediaType.APPLICATION_JSON)
             .buildDelete()
             .invoke();
 
-      assertThat(projectFacade.readProjects(organizationFacade.getOrganizationCode())).isEmpty();
+      assertThat(projectFacade.readProjects(org)).isEmpty();
    }
 
    @Test
@@ -191,12 +217,17 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project61";
       final String projectName = "Project One";
       final String metaAttr = "metaAttr";
+      final String org = "ORG61";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectName));
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
-                                .path(PATH_PREFIX + project + "/meta/" + metaAttr)
+                                .path(pathPrefix(org) + project + "/meta/" + metaAttr)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet()
                                 .invoke();
@@ -210,13 +241,18 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String project = "project71";
       final String projectName = "Project One";
       final String metaAttr = "metaAttr";
+      final String org = "ORG71";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectName));
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isEqualTo("value");
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX + project + "/meta/" + metaAttr)
+            .path(pathPrefix(org) + project + "/meta/" + metaAttr)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.entity("valueNew", MediaType.APPLICATION_JSON))
             .invoke();
@@ -226,16 +262,21 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testDropProjectMetadata() throws Exception {
-      final String project = "project71";
+      final String project = "project81";
       final String projectName = "Project One";
       final String metaAttr = "metaAttr";
+      final String org = "ORG81";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectName));
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isNotNull();
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX + project + "/meta/" + metaAttr)
+            .path(pathPrefix(org) + project + "/meta/" + metaAttr)
             .request(MediaType.APPLICATION_JSON)
             .buildDelete()
             .invoke();
@@ -244,14 +285,19 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testReadProject() throws Exception {
-      final String project = "project81";
+      final String project = "project91";
       final String projectName = "Project One";
+      final String org = "ORG91";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectName));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
             .target(TARGET_URI)
-            .path(PATH_PREFIX + project)
+            .path(pathPrefix(org) + project)
             .request(MediaType.APPLICATION_JSON)
             .buildGet()
             .invoke();
@@ -262,21 +308,30 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testUpdateProject() throws Exception {
-      final String project = "project91";
+      final String project = "project101";
       final String projectName = "Project One";
       final String newProjName = "Project One Updated";
+      final String org = "ORG101";
+
+      organizationFacade.createOrganization(new Organization(org, "Organization"));
+      organizationFacade.setOrganizationCode(org);
+
       projectFacade.createProject(new Project(project, projectName));
 
       assertThat(projectFacade.readProject(project).getName()).isNotEqualTo(newProjName);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
-            .path(PATH_PREFIX + project)
+            .path(pathPrefix(org) + project)
             .request(MediaType.APPLICATION_JSON)
             .buildPut(Entity.json(new Project(project, newProjName)))
             .invoke();
 
       assertThat(projectFacade.readProject(project).getName()).isEqualTo(newProjName);
+   }
+
+   private String pathPrefix(String organizationCode){
+      return PATH_CONTEXT + "/rest/" + organizationCode + "/projects/";
    }
 
 }
