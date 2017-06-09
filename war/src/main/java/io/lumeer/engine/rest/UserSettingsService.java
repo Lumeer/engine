@@ -37,7 +37,7 @@ import javax.ws.rs.core.MediaType;
 /**
  * Service for manipulation with user settings.
  */
-@Path("/settings")
+@Path("/settings/user")
 @ApplicationScoped
 public class UserSettingsService implements Serializable {
 
@@ -45,13 +45,10 @@ public class UserSettingsService implements Serializable {
    private UserSettingsFacade userSettingsFacade;
 
    @GET
-   @Path("/{user}")
+   @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public UserSettings readUserSettings(final @PathParam("user") String user) {
-      if (user == null) {
-         throw new BadRequestException();
-      }
-      return userSettingsFacade.readUserSettings(user);
+   public UserSettings readUserSettings() {
+      return userSettingsFacade.readUserSettings();
    }
 
    @PUT
@@ -65,12 +62,9 @@ public class UserSettingsService implements Serializable {
    }
 
    @DELETE
-   @Path("/{user}")
+   @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public void removeUserSettings(final @PathParam("user") String user) {
-      if (user == null) {
-         throw new BadRequestException();
-      }
-      userSettingsFacade.removeUserSettings(user);
+   public void removeUserSettings() {
+      userSettingsFacade.removeUserSettings();
    }
 }

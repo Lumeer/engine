@@ -33,27 +33,20 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class UserSettings {
 
-   private final String user;
    private final String activeOrganization;
    private final String activeProject;
 
    public UserSettings(final DataDocument dataDocument) {
-      this(dataDocument.getString(LumeerConst.UserSettings.ATTR_USER),
-            dataDocument.getString(LumeerConst.UserSettings.ATTR_ACTIVE_ORGANIZATION),
+      this(dataDocument.getString(LumeerConst.UserSettings.ATTR_ACTIVE_ORGANIZATION),
             dataDocument.getString(LumeerConst.UserSettings.ATTR_ACTIVE_PROJECT));
    }
 
    @JsonCreator
-   public UserSettings(final @JsonProperty("user") String user,
+   public UserSettings(
          final @JsonProperty("activeOrganization") String activeOrganization,
-         final @JsonProperty("icoactiveProjectn") String activeProject) {
-      this.user = user;
+         final @JsonProperty("activeProject") String activeProject) {
       this.activeOrganization = activeOrganization;
       this.activeProject = activeProject;
-   }
-
-   public String getUser() {
-      return user;
    }
 
    public String getActiveOrganization() {
@@ -65,8 +58,7 @@ public class UserSettings {
    }
 
    public DataDocument toDataDocument() {
-      return new DataDocument(LumeerConst.UserSettings.ATTR_USER, user)
-            .append(LumeerConst.UserSettings.ATTR_ACTIVE_ORGANIZATION, activeOrganization)
+      return new DataDocument(LumeerConst.UserSettings.ATTR_ACTIVE_ORGANIZATION, activeOrganization)
             .append(LumeerConst.UserSettings.ATTR_ACTIVE_PROJECT, activeProject);
    }
 }

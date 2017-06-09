@@ -45,15 +45,16 @@ public class UserSettingsFacade implements Serializable {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
+   @Inject
+   private UserFacade userFacade;
+
    /**
     * Reads user settings.
     *
-    * @param user
-    *       User name.
     * @return Dto object for stored user settings.
     **/
-   public UserSettings readUserSettings(String user) {
-      DataDocument dataDocument = dataStorage.readDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(user));
+   public UserSettings readUserSettings() {
+      DataDocument dataDocument = dataStorage.readDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(userFacade.getUserEmail()));
       return dataDocument != null ? new UserSettings(dataDocument) : null;
    }
 
@@ -66,17 +67,16 @@ public class UserSettingsFacade implements Serializable {
    public void upsertUserSettings(UserSettings userSettings) {
       DataDocument dataDocument = userSettings.toDataDocument();
       dataDocument.values().removeIf(Objects::isNull);
-      dataStorage.updateDocument(LumeerConst.UserSettings.COLLECTION_NAME, dataDocument, userFilter(userSettings.getUser()));
+      dataDocument.append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail());
+      dataStorage.updateDocument(LumeerConst.UserSettings.COLLECTION_NAME, dataDocument, userFilter(userFacade.getUserEmail()));
    }
 
    /**
     * Removes user and settings.
     *
-    * @param user
-    *       User name.
     **/
-   public void removeUserSettings(String user) {
-      dataStorage.dropDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(user));
+   public void removeUserSettings() {
+      dataStorage.dropDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(userFacade.getUserEmail()));
    }
 
    private DataFilter userFilter(String user) {

@@ -58,7 +58,7 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
    DataStorageDialect dataStorageDialect;
 
    private final String TARGET_URI = "http://localhost:8080";
-   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/settings/";
+   private final String PATH_PREFIX = PATH_CONTEXT + "/rest/settings/user/";
 
    @Before
    public void init() throws Exception {
@@ -67,13 +67,12 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void readUserSettingsTest() throws Exception {
-      final String user = "user1";
-      userSettingsFacade.upsertUserSettings(new UserSettings(user, "org1", "proj1"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
             .target(TARGET_URI)
-            .path(PATH_PREFIX + user)
+            .path(PATH_PREFIX)
             .request(MediaType.APPLICATION_JSON)
             .buildGet()
             .invoke();
@@ -85,10 +84,9 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void upsertUserSettingsTest() throws Exception {
-      final String user = "user11";
-      userSettingsFacade.upsertUserSettings(new UserSettings(user, "org1", "proj1"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
 
-      UserSettings userSettings = userSettingsFacade.readUserSettings(user);
+      UserSettings userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
       assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
 
@@ -96,10 +94,10 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
                    .target(TARGET_URI)
                    .path(PATH_PREFIX)
                    .request(MediaType.APPLICATION_JSON)
-                   .buildPut(Entity.json(new UserSettings(user, "org3", null)))
+                   .buildPut(Entity.json(new UserSettings("org3", null)))
                    .invoke();
 
-      userSettings = userSettingsFacade.readUserSettings(user);
+      userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
       assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
 
@@ -107,28 +105,27 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
                    .target(TARGET_URI)
                    .path(PATH_PREFIX)
                    .request(MediaType.APPLICATION_JSON)
-                   .buildPut(Entity.json(new UserSettings(user, null, "projXYZ")))
+                   .buildPut(Entity.json(new UserSettings(null, "projXYZ")))
                    .invoke();
 
-      userSettings = userSettingsFacade.readUserSettings(user);
+      userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
       assertThat(userSettings.getActiveProject()).isEqualTo("projXYZ");
    }
 
    @Test
    public void removeUserSettingsTest() throws Exception {
-      final String user = "user21";
-      userSettingsFacade.upsertUserSettings(new UserSettings(user, "org1", "proj1"));
-      assertThat(userSettingsFacade.readUserSettings(user)).isNotNull();
+      userSettingsFacade.upsertUserSettings(new UserSettings( "org1", "proj1"));
+      assertThat(userSettingsFacade.readUserSettings()).isNotNull();
 
       ClientBuilder.newBuilder().build()
                    .target(TARGET_URI)
-                   .path(PATH_PREFIX + user)
+                   .path(PATH_PREFIX)
                    .request(MediaType.APPLICATION_JSON)
                    .buildDelete()
                    .invoke();
 
-      assertThat(userSettingsFacade.readUserSettings(user)).isNull();
+      assertThat(userSettingsFacade.readUserSettings()).isNull();
    }
 
 }

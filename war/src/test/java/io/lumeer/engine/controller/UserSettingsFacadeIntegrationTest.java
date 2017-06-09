@@ -51,6 +51,9 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private UserSettingsFacade userSettingsFacade;
 
+   @Inject
+   private UserFacade userFacade;
+
    @Before
    public void setUp() throws Exception {
       systemDataStorage.dropManyDocuments(LumeerConst.UserSettings.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
@@ -58,52 +61,45 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void readUserSettingsTest() throws Exception {
-      final String user1 = "user1";
-      final String user2 = "user2";
       systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings(user1, "org1", "proj1").toDataDocument());
-      systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings(user2, "org1", "proj2").toDataDocument());
+            new UserSettings("org1", "proj1").toDataDocument()
+                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
 
-      UserSettings userSettings = userSettingsFacade.readUserSettings(user1);
+      UserSettings userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
       assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
-
-      userSettings = userSettingsFacade.readUserSettings(user2);
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
-      assertThat(userSettings.getActiveProject()).isEqualTo("proj2");
    }
 
    @Test
    public void upsertUserSettingsTest() throws Exception {
-      final String user = "user11";
       systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings(user, "org1", "proj1").toDataDocument());
+            new UserSettings("org1", "proj1").toDataDocument()
+                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
 
-      UserSettings userSettings = userSettingsFacade.readUserSettings(user);
+      UserSettings userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
       assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
 
-      userSettingsFacade.upsertUserSettings(new UserSettings(user, "org3", null));
-      userSettings = userSettingsFacade.readUserSettings(user);
+      userSettingsFacade.upsertUserSettings(new UserSettings("org3", null));
+      userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
       assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
 
-      userSettingsFacade.upsertUserSettings(new UserSettings(user, null, "projXYZ"));
-      userSettings = userSettingsFacade.readUserSettings(user);
+      userSettingsFacade.upsertUserSettings(new UserSettings(null, "projXYZ"));
+      userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
       assertThat(userSettings.getActiveProject()).isEqualTo("projXYZ");
    }
 
    @Test
    public void removeUserSettingsTest() throws Exception {
-      final String user = "user21";
       systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings(user, "org1", "proj1").toDataDocument());
+            new UserSettings("org1", "proj1").toDataDocument()
+                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
 
-      assertThat(userSettingsFacade.readUserSettings(user)).isNotNull();
-      userSettingsFacade.removeUserSettings(user);
-      assertThat(userSettingsFacade.readUserSettings(user)).isNull();
+      assertThat(userSettingsFacade.readUserSettings()).isNotNull();
+      userSettingsFacade.removeUserSettings();
+      assertThat(userSettingsFacade.readUserSettings()).isNull();
    }
 
 }
