@@ -221,8 +221,8 @@ public final class LumeerConst {
 
       public static final String COLLECTION_NAME = "_system-usersettings";
       public static final String ATTR_USER = "user";
-      public static final String ATTR_ACTIVE_ORGANIZATION = "active-organization";
-      public static final String ATTR_ACTIVE_PROJECT = "active-project";
+      public static final String ATTR_DEFAULT_ORGANIZATION = "default-organization";
+      public static final String ATTR_DEFAULT_PROJECT = "default-project";
 
    }
 

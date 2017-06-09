@@ -33,32 +33,32 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class UserSettings {
 
-   private final String activeOrganization;
-   private final String activeProject;
+   private final String defaultOrganization;
+   private final String defaultProject;
 
    public UserSettings(final DataDocument dataDocument) {
-      this(dataDocument.getString(LumeerConst.UserSettings.ATTR_ACTIVE_ORGANIZATION),
-            dataDocument.getString(LumeerConst.UserSettings.ATTR_ACTIVE_PROJECT));
+      this(dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION),
+            dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT));
    }
 
    @JsonCreator
    public UserSettings(
-         final @JsonProperty("activeOrganization") String activeOrganization,
-         final @JsonProperty("activeProject") String activeProject) {
-      this.activeOrganization = activeOrganization;
-      this.activeProject = activeProject;
+         final @JsonProperty("defaultOrganization") String defaultOrganization,
+         final @JsonProperty("defaultProject") String defaultProject) {
+      this.defaultOrganization = defaultOrganization;
+      this.defaultProject = defaultProject;
    }
 
-   public String getActiveOrganization() {
-      return activeOrganization;
+   public String getDefaultOrganization() {
+      return defaultOrganization;
    }
 
-   public String getActiveProject() {
-      return activeProject;
+   public String getDefaultProject() {
+      return defaultProject;
    }
 
    public DataDocument toDataDocument() {
-      return new DataDocument(LumeerConst.UserSettings.ATTR_ACTIVE_ORGANIZATION, activeOrganization)
-            .append(LumeerConst.UserSettings.ATTR_ACTIVE_PROJECT, activeProject);
+      return new DataDocument(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION, defaultOrganization)
+            .append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, defaultProject);
    }
 }

@@ -79,7 +79,7 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
 
       UserSettings userSettings = response.readEntity(UserSettings.class);
       assertThat(userSettings).isNotNull();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
    }
 
    @Test
@@ -87,8 +87,8 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
       userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
-      assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
       ClientBuilder.newBuilder().build()
                    .target(TARGET_URI)
@@ -98,8 +98,8 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
                    .invoke();
 
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
-      assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
       ClientBuilder.newBuilder().build()
                    .target(TARGET_URI)
@@ -109,8 +109,8 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
                    .invoke();
 
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
-      assertThat(userSettings.getActiveProject()).isEqualTo("projXYZ");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("projXYZ");
    }
 
    @Test

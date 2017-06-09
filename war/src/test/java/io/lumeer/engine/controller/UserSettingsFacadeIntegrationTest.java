@@ -66,8 +66,8 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
                                              .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
-      assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
    }
 
    @Test
@@ -77,18 +77,18 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
                                              .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org1");
-      assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
       userSettingsFacade.upsertUserSettings(new UserSettings("org3", null));
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
-      assertThat(userSettings.getActiveProject()).isEqualTo("proj1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
       userSettingsFacade.upsertUserSettings(new UserSettings(null, "projXYZ"));
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getActiveOrganization()).isEqualTo("org3");
-      assertThat(userSettings.getActiveProject()).isEqualTo("projXYZ");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("projXYZ");
    }
 
    @Test
