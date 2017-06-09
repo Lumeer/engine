@@ -26,6 +26,8 @@ import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
+import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.dto.UserSettings;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -52,18 +54,27 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
    private UserSettingsFacade userSettingsFacade;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private UserFacade userFacade;
 
    @Before
    public void setUp() throws Exception {
       systemDataStorage.dropManyDocuments(LumeerConst.UserSettings.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
    public void readUserSettingsTest() throws Exception {
-      systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings("org1", "proj1").toDataDocument()
-                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
+      organizationFacade.createOrganization(new Organization("org1", "Organization"));
+      organizationFacade.setOrganizationCode("org1");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
@@ -72,9 +83,13 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void upsertUserSettingsTest() throws Exception {
-      systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings("org1", "proj1").toDataDocument()
-                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
+      organizationFacade.createOrganization(new Organization("org1", "Organization"));
+      organizationFacade.createOrganization(new Organization("org3", "Organization"));
+      organizationFacade.setOrganizationCode("org1");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      organizationFacade.setOrganizationCode("org3");
+      projectFacade.createProject(new Project("projXYZ", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
@@ -83,9 +98,9 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
       userSettingsFacade.upsertUserSettings(new UserSettings("org3", null));
       userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
-      assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
+      assertThat(userSettings.getDefaultProject()).isNull();
 
-      userSettingsFacade.upsertUserSettings(new UserSettings(null, "projXYZ"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org3", "projXYZ"));
       userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
       assertThat(userSettings.getDefaultProject()).isEqualTo("projXYZ");
@@ -93,13 +108,14 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void removeUserSettingsTest() throws Exception {
-      systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings("org1", "proj1").toDataDocument()
-                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
+      organizationFacade.createOrganization(new Organization("org1", "Organization"));
+      organizationFacade.setOrganizationCode("org1");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
 
-      assertThat(userSettingsFacade.readUserSettings()).isNotNull();
+      assertThat(userSettingsFacade.readUserSettings().getDefaultOrganization()).isNotNull();
       userSettingsFacade.removeUserSettings();
-      assertThat(userSettingsFacade.readUserSettings()).isNull();
+      assertThat(userSettingsFacade.readUserSettings().getDefaultOrganization()).isNull();
    }
 
 }

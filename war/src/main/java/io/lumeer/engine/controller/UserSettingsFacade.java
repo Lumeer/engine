@@ -46,6 +46,12 @@ public class UserSettingsFacade implements Serializable {
    private DataStorageDialect dataStorageDialect;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private UserFacade userFacade;
 
    /**
@@ -55,7 +61,17 @@ public class UserSettingsFacade implements Serializable {
     **/
    public UserSettings readUserSettings() {
       DataDocument dataDocument = dataStorage.readDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(userFacade.getUserEmail()));
-      return dataDocument != null ? new UserSettings(dataDocument) : null;
+      if (dataDocument == null) {
+         return new UserSettings();
+      }
+
+      String organizationId = dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION);
+      String organizationCode = organizationId != null ? organizationFacade.getOrganizationCode(organizationId) : null;
+
+      String projectId = dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT);
+      String projectCode = organizationId != null && projectId != null ? projectFacade.getProjectCode(organizationId, projectId) : null;
+
+      return new UserSettings(organizationCode, projectCode);
    }
 
    /**
@@ -65,15 +81,27 @@ public class UserSettingsFacade implements Serializable {
     *       Dto object for user settings.
     **/
    public void upsertUserSettings(UserSettings userSettings) {
-      DataDocument dataDocument = userSettings.toDataDocument();
-      dataDocument.values().removeIf(Objects::isNull);
+      DataDocument dataDocument = new DataDocument();
+      if (userSettings.getDefaultOrganization() != null) {
+         String organizationId = organizationFacade.getOrganizationId(userSettings.getDefaultOrganization());
+         if (organizationId == null) {
+            return;
+         }
+         dataDocument.append(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION, organizationId);
+         if (userSettings.getDefaultProject() != null) {
+            dataDocument.append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, projectFacade.getProjectId(organizationId, userSettings.getDefaultProject()));
+         } else {
+            dataDocument.append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, null);
+         }
+      } else {
+         return;
+      }
       dataDocument.append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail());
       dataStorage.updateDocument(LumeerConst.UserSettings.COLLECTION_NAME, dataDocument, userFilter(userFacade.getUserEmail()));
    }
 
    /**
     * Removes user and settings.
-    *
     **/
    public void removeUserSettings() {
       dataStorage.dropDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(userFacade.getUserEmail()));

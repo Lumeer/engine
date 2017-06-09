@@ -67,6 +67,18 @@ public class OrganizationFacade {
       return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_ID) : null;
    }
 
+   /**
+    * Gets unique organization code.
+    *
+    * @param organizationId
+    *       Organization identificator
+    * @return Organization code.
+    */
+   public String getOrganizationCode(final String organizationId){
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_CODE));
+      return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_CODE) : null;
+   }
+
    public String getOrganizationId() {
       return organizationId;
    }
