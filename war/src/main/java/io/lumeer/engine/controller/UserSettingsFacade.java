@@ -33,7 +33,7 @@ import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
 /**
- * Stores user settings like active organization, project etc.
+ * Stores user settings like default organization, project etc.
  */
 @SessionScoped
 public class UserSettingsFacade implements Serializable {

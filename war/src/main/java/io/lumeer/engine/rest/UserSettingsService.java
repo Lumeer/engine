@@ -26,6 +26,7 @@ import java.io.Serializable;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -38,6 +39,8 @@ import javax.ws.rs.core.MediaType;
  * Service for manipulation with user settings.
  */
 @Path("/settings/user")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 public class UserSettingsService implements Serializable {
 
@@ -45,26 +48,16 @@ public class UserSettingsService implements Serializable {
    private UserSettingsFacade userSettingsFacade;
 
    @GET
-   @Path("/")
-   @Produces(MediaType.APPLICATION_JSON)
    public UserSettings readUserSettings() {
       return userSettingsFacade.readUserSettings();
    }
 
    @PUT
-   @Path("/")
-   @Produces(MediaType.APPLICATION_JSON)
-   public void readUserSettings(final UserSettings userSettings) {
+   public void upsertUserSettings(final UserSettings userSettings) {
       if (userSettings == null) {
          throw new BadRequestException();
       }
       userSettingsFacade.upsertUserSettings(userSettings);
    }
 
-   @DELETE
-   @Path("/")
-   @Produces(MediaType.APPLICATION_JSON)
-   public void removeUserSettings() {
-      userSettingsFacade.removeUserSettings();
-   }
 }

@@ -113,19 +113,4 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
       assertThat(userSettings.getDefaultProject()).isEqualTo("projXYZ");
    }
 
-   @Test
-   public void removeUserSettingsTest() throws Exception {
-      userSettingsFacade.upsertUserSettings(new UserSettings( "org1", "proj1"));
-      assertThat(userSettingsFacade.readUserSettings()).isNotNull();
-
-      ClientBuilder.newBuilder().build()
-                   .target(TARGET_URI)
-                   .path(PATH_PREFIX)
-                   .request(MediaType.APPLICATION_JSON)
-                   .buildDelete()
-                   .invoke();
-
-      assertThat(userSettingsFacade.readUserSettings()).isNull();
-   }
-
 }
