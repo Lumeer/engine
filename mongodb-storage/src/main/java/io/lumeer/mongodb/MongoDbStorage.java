@@ -56,6 +56,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -321,7 +322,7 @@ public class MongoDbStorage implements DataStorage {
          toUpdate.remove(LumeerConst.Document.ID);
       }
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(toUpdate));
-      database.getCollection(collectionName).updateOne(filter.<Bson>get(), updateBson);
+      database.getCollection(collectionName).updateOne(filter.<Bson>get(), updateBson, new UpdateOptions().upsert(true));
    }
 
    @Override
@@ -331,7 +332,7 @@ public class MongoDbStorage implements DataStorage {
          toReplace.remove(LumeerConst.Document.ID);
       }
       Document replaceDoc = new Document(toReplace);
-      database.getCollection(collectionName).replaceOne(filter.<Bson>get(), replaceDoc);
+      database.getCollection(collectionName).replaceOne(filter.<Bson>get(), replaceDoc, new UpdateOptions().upsert(true));
    }
 
    @Override

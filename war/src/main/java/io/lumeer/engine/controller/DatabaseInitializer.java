@@ -19,14 +19,10 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst.*;
+
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.annotation.UserDataStorage;
-import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.LumeerConst.Group;
-import io.lumeer.engine.api.LumeerConst.Organization;
-import io.lumeer.engine.api.LumeerConst.Project;
-import io.lumeer.engine.api.LumeerConst.Security;
-import io.lumeer.engine.api.LumeerConst.UserGroup;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
@@ -78,14 +74,22 @@ public class DatabaseInitializer {
       initOrganizationCollection();
       initOrganizationRolesCollection();
       initUserGroupCollection();
+      initUserSettingsCollection();
+   }
+
+   private void initUserSettingsCollection() {
+      if (!dataStorage.hasCollection(UserSettings.COLLECTION_NAME)) {
+         dataStorage.createCollection(UserSettings.COLLECTION_NAME);
+         dataStorage.createIndex(UserSettings.COLLECTION_NAME, new DataDocument(UserSettings.ATTR_USER, Index.ASCENDING), true);
+      }
    }
 
    private void initUserGroupCollection() {
       if (!dataStorage.hasCollection(UserGroup.COLLECTION_NAME)) {
          dataStorage.createCollection(UserGroup.COLLECTION_NAME);
-         dataStorage.createIndex(UserGroup.COLLECTION_NAME, new DataDocument(UserGroup.ATTR_ORG_ID, LumeerConst.Index.ASCENDING), true);
-         dataStorage.createIndex(UserGroup.COLLECTION_NAME, new DataDocument(UserGroup.ATTR_ORG_ID, LumeerConst.Index.ASCENDING)
-               .append(UserGroup.ATTR_USERS, LumeerConst.Index.ASCENDING), false);
+         dataStorage.createIndex(UserGroup.COLLECTION_NAME, new DataDocument(UserGroup.ATTR_ORG_ID, Index.ASCENDING), true);
+         dataStorage.createIndex(UserGroup.COLLECTION_NAME, new DataDocument(UserGroup.ATTR_ORG_ID, Index.ASCENDING)
+               .append(UserGroup.ATTR_USERS, Index.ASCENDING), false);
 
       }
    }
@@ -93,7 +97,7 @@ public class DatabaseInitializer {
    private void initOrganizationCollection() {
       if (!dataStorage.hasCollection(Organization.COLLECTION_NAME)) {
          dataStorage.createCollection(Organization.COLLECTION_NAME);
-         dataStorage.createIndex(Organization.COLLECTION_NAME, new DataDocument(Organization.ATTR_ORG_CODE, LumeerConst.Index.ASCENDING), true);
+         dataStorage.createIndex(Organization.COLLECTION_NAME, new DataDocument(Organization.ATTR_ORG_CODE, Index.ASCENDING), true);
       }
    }
 
@@ -107,8 +111,8 @@ public class DatabaseInitializer {
       String viewsCollection = viewFacade.metadataCollection(projectId);
       if (!userDataStorage.hasCollection(viewsCollection)) {
          userDataStorage.createCollection(viewsCollection);
-         userDataStorage.createIndex(viewsCollection, new DataDocument(LumeerConst.View.ID_KEY, LumeerConst.Index.ASCENDING), true);
-         userDataStorage.createIndex(viewsCollection, new DataDocument(LumeerConst.View.NAME_KEY, LumeerConst.Index.ASCENDING), true);
+         userDataStorage.createIndex(viewsCollection, new DataDocument(View.ID_KEY, Index.ASCENDING), true);
+         userDataStorage.createIndex(viewsCollection, new DataDocument(View.NAME_KEY, Index.ASCENDING), true);
       }
    }
 
@@ -122,8 +126,8 @@ public class DatabaseInitializer {
       String collectionMetadataCollection = collectionMetadataFacade.metadataCollection(projectId);
       if (!userDataStorage.hasCollection(collectionMetadataCollection)) {
          userDataStorage.createCollection(collectionMetadataCollection);
-         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, LumeerConst.Index.ASCENDING), true);
-         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(LumeerConst.Collection.REAL_NAME_KEY, LumeerConst.Index.ASCENDING), true);
+         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(Collection.INTERNAL_NAME_KEY, Index.ASCENDING), true);
+         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(Collection.REAL_NAME_KEY, Index.ASCENDING), true);
       }
    }
 
@@ -134,7 +138,7 @@ public class DatabaseInitializer {
       if (!dataStorage.hasCollection(Security.ORGANIZATION_ROLES_COLLECTION_NAME)) {
          dataStorage.createCollection(Security.ORGANIZATION_ROLES_COLLECTION_NAME);
          dataStorage.createIndex(Security.ORGANIZATION_ROLES_COLLECTION_NAME,
-               new DataDocument(Security.ORGANIZATION_ID_KEY, LumeerConst.Index.ASCENDING), true);
+               new DataDocument(Security.ORGANIZATION_ID_KEY, Index.ASCENDING), true);
       }
    }
 
@@ -148,20 +152,20 @@ public class DatabaseInitializer {
 
          // SecurityFacade#projectFilter
          userDataStorage.createIndex(Security.ROLES_COLLECTION_NAME,
-               new DataDocument(Security.PROJECT_ID_KEY, LumeerConst.Index.ASCENDING)
-                     .append(Security.TYPE_KEY, LumeerConst.Index.ASCENDING), true);
+               new DataDocument(Security.PROJECT_ID_KEY, Index.ASCENDING)
+                     .append(Security.TYPE_KEY, Index.ASCENDING), true);
 
          // SecurityFacade#collectionFilter
          userDataStorage.createIndex(Security.ROLES_COLLECTION_NAME,
-               new DataDocument(Security.PROJECT_ID_KEY, LumeerConst.Index.ASCENDING)
-                     .append(Security.COLLECTION_NAME_KEY, LumeerConst.Index.ASCENDING)
-                     .append(Security.TYPE_KEY, LumeerConst.Index.ASCENDING), true);
+               new DataDocument(Security.PROJECT_ID_KEY, Index.ASCENDING)
+                     .append(Security.COLLECTION_NAME_KEY, Index.ASCENDING)
+                     .append(Security.TYPE_KEY, Index.ASCENDING), true);
 
          // SecurityFacade#viewFilter
          userDataStorage.createIndex(Security.ROLES_COLLECTION_NAME,
-               new DataDocument(Security.PROJECT_ID_KEY, LumeerConst.Index.ASCENDING)
-                     .append(Security.VIEW_ID_KEY, LumeerConst.Index.ASCENDING)
-                     .append(Security.TYPE_KEY, LumeerConst.Index.ASCENDING), true);
+               new DataDocument(Security.PROJECT_ID_KEY, Index.ASCENDING)
+                     .append(Security.VIEW_ID_KEY, Index.ASCENDING)
+                     .append(Security.TYPE_KEY, Index.ASCENDING), true);
       }
    }
 
@@ -207,7 +211,7 @@ public class DatabaseInitializer {
                               .append(Security.USERS_KEY, Collections.emptyList())
                               .append(Security.GROUP_KEY, Collections.emptyList())));
 
-      userDataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
+      userDataStorage.createDocument(Security.ROLES_COLLECTION_NAME, roles);
    }
 
    /**
@@ -246,8 +250,11 @@ public class DatabaseInitializer {
 
    /**
     * Initializes document with roles for given view.
-    * @param projectCode project code
-    * @param viewId view
+    *
+    * @param projectCode
+    *       project code
+    * @param viewId
+    *       view
     */
    private void initViewRoles(String projectCode, int viewId) {
       DataDocument roles = new DataDocument()
@@ -268,14 +275,14 @@ public class DatabaseInitializer {
                               .append(Security.USERS_KEY, Collections.emptyList())
                               .append(Security.GROUP_KEY, Collections.emptyList())));
 
-      userDataStorage.createDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, roles);
+      userDataStorage.createDocument(Security.ROLES_COLLECTION_NAME, roles);
    }
 
    private void initProjectCollection() {
       if (!dataStorage.hasCollection(Project.COLLECTION_NAME)) {
          dataStorage.createCollection(Project.COLLECTION_NAME);
-         dataStorage.createIndex(Project.COLLECTION_NAME, new DataDocument(Project.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
-               .append(Project.ATTR_PROJECT_CODE, LumeerConst.Index.ASCENDING), true);
+         dataStorage.createIndex(Project.COLLECTION_NAME, new DataDocument(Project.ATTR_ORGANIZATION_ID, Index.ASCENDING)
+               .append(Project.ATTR_PROJECT_CODE, Index.ASCENDING), true);
       }
    }
 

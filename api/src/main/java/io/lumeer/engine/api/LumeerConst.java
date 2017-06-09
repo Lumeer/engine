@@ -217,6 +217,15 @@ public final class LumeerConst {
 
    }
 
+   public static class UserSettings {
+
+      public static final String COLLECTION_NAME = "_system-usersettings";
+      public static final String ATTR_USER = "user";
+      public static final String ATTR_DEFAULT_ORGANIZATION = "default-organization";
+      public static final String ATTR_DEFAULT_PROJECT = "default-project";
+
+   }
+
    public static class UserGroup {
 
       public static final String COLLECTION_NAME = "_system-usergroup";
