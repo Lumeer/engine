@@ -29,11 +29,15 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
+import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.LinkingFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -75,6 +79,20 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
+
+   @Before
+   public void init() {
+      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectCode());
+   }
+
    @Test
    public void testRegister() throws Exception {
       assertThat(linkingFacade).isNotNull();
@@ -88,6 +106,10 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
       final String collectionAddDrop2 = "lscollectionAddDropTwo";
       List<String> collections = Arrays.asList(collectionAddDrop1, collectionAddDrop2);
       Map<String, List<String>> ids = createTestData(collections);
+
+      for (String collection : ids.keySet()) {
+         securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, getCurrentUser(), LumeerConst.Security.ROLE_WRITE);
+      }
 
       final String role1 = "role1";
       final String role2 = "role2";
@@ -165,4 +187,7 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
       return role + "/collections/" + targetCollection + "/documents/" + id + "/targets/" + targetId;
    }
 
+   private String getCurrentUser() {
+      return userFacade.getUserEmail();
+   }
 }

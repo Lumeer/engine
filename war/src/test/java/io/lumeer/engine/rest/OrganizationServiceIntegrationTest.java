@@ -38,7 +38,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -161,8 +160,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String code = "UpdateOrganizationId_id";
       organizationFacade.createOrganization(new Organization(code, org));
 
-      addManageRole(id);
-
       String newId = "UpdateOrganizationId_newId";
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + code + "/code/" + newId)
@@ -197,8 +194,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String newName = "RenameOrganizationNew";
       String code = "RenameOrganization_id";
       organizationFacade.createOrganization(new Organization(code, org));
-
-      addManageRole(id);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI).path(PATH_PREFIX + code + "/name/" + newName)
@@ -259,8 +254,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String code = "UpdateMetadata_id";
       organizationFacade.createOrganization(new Organization(code, org));
 
-      addManageRole(id);
-
       String name = "attribute";
       String value = "value";
 
@@ -287,8 +280,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String org = "DropMetadata";
       String code = "DropMetadata_id";
       organizationFacade.createOrganization(new Organization(code, org));
-
-      addManageRole(id);
 
       String name = "attribute";
       String value = "value";
@@ -360,8 +351,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String code = "UpdateInfo_id";
       organizationFacade.createOrganization(new Organization(code, org));
 
-      addManageRole(id);
-
       String name = "attribute";
       String value = "value";
 
@@ -386,8 +375,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String code = "DropInfo_id";
       organizationFacade.createOrganization(new Organization(code, org));
 
-      addManageRole(id);
-
       String name = "attribute";
       String value = "value";
       organizationFacade.updateOrganizationInfoData(code, name, value);
@@ -406,8 +393,6 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
       String code = "ResetInfo_id";
       organizationFacade.createOrganization(new Organization(code, org));
 
-      addManageRole(id);
-
       String name = "attribute";
       String value = "value";
       organizationFacade.updateOrganizationInfoData(code, name, value);
@@ -419,9 +404,4 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .invoke();
       assertThat(organizationFacade.readOrganizationInfoData(code)).isEmpty();
    }
-
-   private void addManageRole(String organizationCode) {
-      securityFacade.addOrganizationUserRole(organizationCode, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
-   }
-
 }

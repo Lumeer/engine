@@ -26,10 +26,12 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.LinkingFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.LinkInstance;
 import io.lumeer.engine.rest.dao.LinkType;
@@ -88,6 +90,9 @@ public class LinkingService {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private SecurityFacade securityFacade;
+
    @PostConstruct
    public void init() {
       organizationFacade.setOrganizationCode(organisationCode);
@@ -110,7 +115,10 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<LinkType> getLinkTypes(final @PathParam("collectionName") String collectionName, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      //checkCollectionForRead(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_SHARE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       final List<LinkType> links = new ArrayList<>();
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -148,7 +156,11 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<LinkInstance> getLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      //checkCollectionForRead(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_SHARE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       final List<LinkInstance> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -188,7 +200,11 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> getLinkedDocuments(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      //checkCollectionForRead(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_SHARE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       final List<DataDocument> links = new ArrayList<>();
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -228,8 +244,12 @@ public class LinkingService {
          final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
          throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      //checkCollectionForRead(internalCollectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_SHARE)
+            || !securityFacade.hasCollectionRole(projectCode, internalTargetCollectionName, LumeerConst.Security.ROLE_SHARE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       final List<LinkInstance> links = new ArrayList<>();
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
@@ -262,7 +282,10 @@ public class LinkingService {
    @Produces(MediaType.APPLICATION_JSON)
    public void deleteLinks(final @PathParam("collectionName") String collectionName, final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      //checkCollectionForWrite(internalCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          linkingFacade.dropLinksForDocument(internalCollectionName, documentId, role, LumeerConst.Linking.LinkDirection.FROM);
@@ -297,9 +320,12 @@ public class LinkingService {
    public void deleteLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String documentId, final @PathParam("targetId") String targetDocumentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
          throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      //checkCollectionForWrite(internalCollectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
-      //checkCollectionForWrite(internalTargetCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)
+            || !securityFacade.hasCollectionRole(projectCode, internalTargetCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          linkingFacade.dropLinksBetweenDocuments(internalCollectionName, documentId, internalTargetCollectionName, targetDocumentId, role, LumeerConst.Linking.LinkDirection.FROM);
@@ -336,9 +362,12 @@ public class LinkingService {
    public void addLink(final @PathParam("collectionName") String collectionName, final @PathParam("targetCollection") String targetCollection, final @PathParam("role") String role, final @PathParam("id") String fromId, final @PathParam("targetId") String toId, final DataDocument attributes, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection)
          throws DbException {
       String internalCollectionName = getInternalName(collectionName);
-      //checkCollectionForWrite(internalCollectionName);
       String internalTargetCollectionName = getInternalName(targetCollection);
-      //checkCollectionForWrite(internalTargetCollectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)
+            || !securityFacade.hasCollectionRole(projectCode, internalTargetCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       if (linkDirection == null || linkDirection == LumeerConst.Linking.LinkDirection.BOTH || linkDirection == LumeerConst.Linking.LinkDirection.FROM) {
          hasDocumentRoleNotNull(internalCollectionName, fromId, internalTargetCollectionName, toId, role);
