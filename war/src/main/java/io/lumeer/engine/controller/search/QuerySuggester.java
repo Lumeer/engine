@@ -113,7 +113,7 @@ public class QuerySuggester {
 
       try {
          CollectionMetadata collectionMetadata = collectionMetadataFacade.getCollectionMetadata(collectionMetadataFacade.getInternalCollectionName(collectionName));
-         return collectionMetadata.getAttributes().values().stream()
+         return collectionMetadata.getAttributes().stream()
                                   .filter(attribute -> attribute.getName().toLowerCase().contains(attributePart.toLowerCase()))
                                   .map(attribute -> convertAttribute(collectionName, attribute))
                                   .collect(Collectors.toList()); // TODO do not ignore child attributes

@@ -20,7 +20,6 @@
 package io.lumeer.engine.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
@@ -183,7 +182,8 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       // existing
       assertThat(attribute).isNotNull();
-      assertThat(attribute.getNameWithoutParent()).isEqualTo(child);
+      assertThat(attribute.getName()).isEqualTo(child);
+      assertThat(attribute.getFullName()).isEqualTo(attributeName);
 
       // double nested attribute
       String child2 = "child 2";
@@ -192,7 +192,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       attribute = collectionMetadataFacade.getAttributeInfo(collection, attributeName2);
 
       assertThat(attribute).isNotNull();
-      assertThat(attribute.getNameWithoutParent()).isEqualTo(child2);
+      assertThat(attribute.getName()).isEqualTo(child2);
    }
 
    @Test

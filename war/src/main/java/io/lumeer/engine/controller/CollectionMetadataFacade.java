@@ -219,7 +219,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return set of collection attributes' names
     */
    public Set<String> getAttributesNames(String collectionName) {
-      return ((DataDocument) getMetadataValue(collectionName, LumeerConst.Collection.ATTRIBUTES_KEY)).keySet();
+      // TODO - use projection
+      return getAttributesInfo(collectionName).keySet();
    }
 
    /**
@@ -230,15 +231,16 @@ public class CollectionMetadataFacade implements Serializable {
     * @return map, keys are attributes' names, values are objects with attributes info
     */
    public Map<String, Attribute> getAttributesInfo(String collectionName) {
-      DataDocument attributesDocument = dataStorage.readDocumentIncludeAttrs(
-            metadataCollection(),
-            dialect.fieldValueFilter(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName),
-            Arrays.asList(LumeerConst.Collection.ATTRIBUTES_KEY))
-                                                   .getDataDocument(LumeerConst.Collection.ATTRIBUTES_KEY);
+      List<DataDocument> attributesDocuments =
+            dataStorage.readDocumentIncludeAttrs(
+                  metadataCollection(),
+                  dialect.fieldValueFilter(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName),
+                  Arrays.asList(LumeerConst.Collection.ATTRIBUTES_KEY))
+                       .getArrayList(LumeerConst.Collection.ATTRIBUTES_KEY, DataDocument.class);
 
       Map<String, Attribute> attributes = new HashMap<>();
-      for (String a : attributesDocument.keySet()) {
-         attributes.put(a, new Attribute(attributesDocument.getDataDocument(a)));
+      for (DataDocument a : attributesDocuments) {
+         attributes.put(a.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME_KEY), new Attribute(a));
       }
 
       return attributes;
@@ -254,21 +256,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return Attribute object
     */
    public Attribute getAttributeInfo(String collection, String attributeName) {
-      List<String> keys = divideAttributeName(attributeName);
-      if (keys.isEmpty()) {
-         return null;
-      }
-
-      Attribute attribute = getCollectionMetadata(collection).getAttributes().get(keys.get(0));
-
-      for (int i = 1; i < keys.size(); i++) {
-         if (attribute == null) {
-            break;
-         }
-         attribute = attribute.getChildAttributes().get(keys.get(i));
-      }
-
-      return attribute;
+      // TODO - use projection
+      return getAttributesInfo(collection).get(attributeName);
    }
 
    private List<String> divideAttributeName(String attribute) {
@@ -300,17 +289,16 @@ public class CollectionMetadataFacade implements Serializable {
          throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newName, collectionName));
       }
 
-      String oldNamePath = attributePath(oldName);
-      String newNamePath = attributePath(newName);
+      //DataDocument renameQuery = dialect.renameAttributeQuery(metadataCollection(), collectionName, oldName, newName);
+      //dataStorage.run(renameQuery);
 
-      DataDocument renameQuery = dialect.renameAttributeQuery(metadataCollection(), collectionName, oldNamePath, newNamePath);
-
-      dataStorage.run(renameQuery);
+      // TODO
+      throw new UnsupportedOperationException();
    }
 
    /**
     * Deletes an attribute from collection metadata. Nothing is done if attribute metadata is not found, just return.
-    * This method should be called only when also renaming attribute in all collection documents.
+    * This method should be called only when also dropping attribute in all collection documents.
     *
     * @param collectionName
     *       internal collection name
@@ -329,6 +317,9 @@ public class CollectionMetadataFacade implements Serializable {
             dialect.concatFields(
                   LumeerConst.Collection.ATTRIBUTES_KEY,
                   attributePath(attributeName)));
+
+      throw new UnsupportedOperationException();
+      // TODO: drop children
    }
 
    /**
@@ -350,36 +341,19 @@ public class CollectionMetadataFacade implements Serializable {
       Attribute attribute = getAttributeInfo(collectionName, attributeName);
 
       if (attribute != null) {
-         dataStorage.incrementAttributeValueBy(
-               metadataCollection(),
-               dialect.documentIdFilter(id),
-               dialect.concatFields(
-                     LumeerConst.Collection.ATTRIBUTES_KEY,
-                     attributePath(attributeName),
-                     LumeerConst.Collection.ATTRIBUTE_COUNT_KEY),
-               1);
+         throw new UnsupportedOperationException();
+         // TODO: use query
       } else {
          List<String> dividedName = divideAttributeName(attributeName);
-         dataStorage.updateDocument(
-               metadataCollection(),
-               new DataDocument(
-                     dialect.concatFields(
-                           LumeerConst.Collection.ATTRIBUTES_KEY,
-                           attributePath(attributeName)),
-                     new DataDocument()
-                           .append(
-                                 LumeerConst.Collection.ATTRIBUTE_NAME_KEY,
-                                 dividedName.get(dividedName.size() - 1))
-                           .append(
-                                 LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY,
-                                 new ArrayList<String>())
-                           .append(
-                                 LumeerConst.Collection.ATTRIBUTE_COUNT_KEY, 1)
-                           .append(
-                                 LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY,
-                                 new HashMap<String, Attribute>())
-               ),
-               dialect.documentIdFilter(id));
+         dataStorage.addItemToArray(metadataCollection(),
+               dialect.documentIdFilter(id),
+               LumeerConst.Collection.ATTRIBUTES_KEY,
+               new DataDocument()
+                     .append(LumeerConst.Collection.ATTRIBUTE_FULL_NAME_KEY, attributeName)
+                     .append(LumeerConst.Collection.ATTRIBUTE_NAME_KEY, dividedName.get(dividedName.size() - 1))
+                     .append(LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
+                     .append(LumeerConst.Collection.ATTRIBUTE_COUNT_KEY, 1)
+                     .append(LumeerConst.Collection.ATTRIBUTE_LEVEL_KEY, dividedName.size()));
       }
    }
 
@@ -410,14 +384,8 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      dataStorage.incrementAttributeValueBy(
-            metadataCollection(),
-            dialect.documentIdFilter(id),
-            dialect.concatFields(
-                  LumeerConst.Collection.ATTRIBUTES_KEY,
-                  attributePath(attributeName),
-                  LumeerConst.Collection.ATTRIBUTE_COUNT_KEY),
-            -1);
+      throw new UnsupportedOperationException();
+      // TODO: use query for count decrement
    }
 
    /**
@@ -615,20 +583,20 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws InvalidValueException
     *       When it was not possible to properly encode the value.
     */
-   private Object checkAndConvertAttributeValue(final Attribute attribute, final Object value) throws InvalidConstraintException, InvalidValueException {
+   private Object checkAndConvertAttributeValue(final Attribute attribute, final Object value, final String collection) throws InvalidConstraintException, InvalidValueException {
       // if the value is DataDocument, we check it recursively
       if (value instanceof DataDocument) {
 
          final DataDocument beforeCheck = (DataDocument) value;
          final DataDocument afterCheck = new DataDocument();
 
-         final Map<String, Attribute> attributes = attribute.getChildAttributes();
+         Set<String> names = getAttributesNames(collection);
 
          for (String key : beforeCheck.keySet()) {
-            if (!attributes.keySet().contains(key)) { // attribute does not exist - no need to check anything
+            if (!names.contains(key)) { // attribute does not exist - no need to check anything
                afterCheck.put(key, beforeCheck.get(key));
             } else {
-               Object newValue = checkAndConvertAttributeValue(attributes.get(key), beforeCheck.get(key));
+               Object newValue = checkAndConvertAttributeValue(getAttributeInfo(collection, key), beforeCheck.get(key), collection);
                afterCheck.put(key, newValue);
             }
          }
@@ -674,13 +642,14 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public DataDocument checkAndConvertAttributesValues(final String collectionName, final DataDocument document) throws InvalidValueException, InvalidConstraintException {
       final DataDocument results = new DataDocument();
-      final Map<String, Attribute> attributesMetadata = getCollectionMetadata(collectionName).getAttributes();
+      Set<String> names = getAttributesNames(collectionName);
 
       for (Map.Entry<String, Object> entry : document.entrySet()) {
-         if (!attributesMetadata.keySet().contains(entry.getKey())) { // attribute does not exist - no need to check anything
-            results.append(entry.getKey(), entry.getValue());
+         String key = entry.getKey();
+         if (!names.contains(key)) { // attribute does not exist - no need to check anything
+            results.append(key, entry.getValue());
          } else {
-            results.append(entry.getKey(), checkAndConvertAttributeValue(attributesMetadata.get(entry.getKey()), entry.getValue()));
+            results.append(key, checkAndConvertAttributeValue(getAttributeInfo(collectionName, key), entry.getValue(), collectionName));
          }
       }
 
@@ -693,7 +662,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collectionName
     *       Name of the collection from which the document was read.
     * @param document
-    *       The document the attribtues of which should be decoded.
+    *       The document the attributes of which should be decoded.
     * @return A new document with decoded values.
     * @throws InvalidConstraintException
     *       When the constraint configuration was wrong.
@@ -702,16 +671,16 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public DataDocument decodeAttributeValues(final String collectionName, final DataDocument document) throws InvalidConstraintException, InvalidValueException {
       final DataDocument results = new DataDocument();
-      final Map<String, Attribute> attributesMetadata = getCollectionMetadata(collectionName).getAttributes();
+      Set<String> names = getAttributesNames(collectionName);
 
       for (Map.Entry<String, Object> entry : document.entrySet()) {
-         if (!attributesMetadata.keySet().contains(entry.getKey())) { // attribute does not exist - no need to decode anything
-            results.append(entry.getKey(), entry.getValue());
+         String key = entry.getKey();
+         if (!names.contains(key)) { // attribute does not exist - no need to check anything
+            results.append(key, entry.getValue());
          } else {
-            results.append(entry.getKey(), decodeDocumentValue(attributesMetadata.get(entry.getKey()), entry.getValue()));
+            results.append(key, decodeDocumentValue(getAttributeInfo(collectionName, key), entry.getValue(), collectionName));
          }
       }
-
       return results;
    }
 
@@ -729,20 +698,20 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws InvalidValueException
     *       When it was not possible to properly decode the value.
     */
-   private Object decodeDocumentValue(final Attribute attribute, final Object value) throws InvalidConstraintException, InvalidValueException {
+   private Object decodeDocumentValue(final Attribute attribute, final Object value, final String collection) throws InvalidConstraintException, InvalidValueException {
       // if the value is DataDocument, we check it recursively
       if (value instanceof DataDocument) {
 
          final DataDocument beforeCheck = (DataDocument) value;
          final DataDocument afterCheck = new DataDocument();
 
-         final Map<String, Attribute> attributes = attribute.getChildAttributes();
+         Set<String> names = getAttributesNames(collection);
 
          for (String key : beforeCheck.keySet()) {
-            if (!attributes.keySet().contains(key)) { // attribute does not exist - no need to check anything
+            if (!names.contains(key)) { // attribute does not exist - no need to check anything
                afterCheck.put(key, beforeCheck.get(key));
             } else {
-               Object newValue = decodeDocumentValue(attributes.get(key), beforeCheck.get(key));
+               Object newValue = decodeDocumentValue(getAttributeInfo(collection, key), beforeCheck.get(key), collection);
                afterCheck.put(key, newValue);
             }
          }
@@ -798,7 +767,6 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      // user may be permitted to write, but might not be permitted to read
       List<String> existingConstraints = getAttributeConstraintsConfigurations(collectionName, attributeName);
 
       ConstraintManager constraintManager = null;
@@ -811,16 +779,19 @@ public class CollectionMetadataFacade implements Serializable {
 
       constraintManager.registerConstraint(constraintConfiguration); // if this doesn't throw an exception, the constraint is valid
 
-      dataStorage.addItemToArray(
-            metadataCollection(),
-            dialect.documentIdFilter(id),
-            dialect.concatFields(
-                  LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName),
-                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
-            ),
-            constraintConfiguration);
+      //      dataStorage.addItemToArray(
+      //            metadataCollection(),
+      //            dialect.documentIdFilter(id),
+      //            dialect.concatFields(
+      //                  LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName),
+      //                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
+      //            ),
+      //            constraintConfiguration);
 
       setLastTimeUsedNow(collectionName);
+
+      // TODO - add item to array in document which is in array
+      throw new UnsupportedOperationException();
    }
 
    /**
@@ -839,16 +810,19 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      dataStorage.removeItemFromArray(
-            metadataCollection(),
-            dialect.documentIdFilter(id),
-            dialect.concatFields(
-                  LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName),
-                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
-            ),
-            constraintConfiguration);
+      //      dataStorage.removeItemFromArray(
+      //            metadataCollection(),
+      //            dialect.documentIdFilter(id),
+      //            dialect.concatFields(
+      //                  LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName),
+      //                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
+      //            ),
+      //            constraintConfiguration);
 
       setLastTimeUsedNow(collectionName);
+
+      // TODO - remove item from array in document which is in array
+      throw new UnsupportedOperationException();
    }
 
    /**

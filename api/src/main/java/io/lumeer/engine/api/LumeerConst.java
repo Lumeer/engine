@@ -134,17 +134,18 @@ public final class LumeerConst {
       public static final String NAME_PREFIX = "collection.";
 
       public static final String REAL_NAME_KEY = "name";
-      public static final String INTERNAL_NAME_KEY = "internal-name";
-      public static final String PROJECT_ID_KEY = "project-id";
+      public static final String INTERNAL_NAME_KEY = "internal";
 
       public static final String ATTRIBUTES_KEY = "attributes";
-      public static final String ATTRIBUTE_NAME_KEY = "attribute-name";
-      public static final String ATTRIBUTE_CONSTRAINTS_KEY = "attribute-constraints";
-      public static final String ATTRIBUTE_COUNT_KEY = "attribute-count";
+      public static final String ATTRIBUTE_NAME_KEY = "name";
+      public static final String ATTRIBUTE_FULL_NAME_KEY = "full-name";
+      public static final String ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
+      public static final String ATTRIBUTE_COUNT_KEY = "count";
+      public static final String ATTRIBUTE_LEVEL_KEY = "level";
 
-      public static final String LAST_TIME_USED_KEY = "last-time-used";
-      public static final String RECENTLY_USED_DOCUMENTS_KEY = "recently-used-documents";
-      public static final String ATTRIBUTE_CHILDREN_KEY = "child-attributes";
+      public static final String LAST_TIME_USED_KEY = "last";
+      public static final String RECENTLY_USED_DOCUMENTS_KEY = "recently";
+      public static final String ATTRIBUTE_CHILDREN_KEY = "children";
       public static final String CUSTOM_META_KEY = "custom";
 
       public static final String CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
@@ -157,13 +158,13 @@ public final class LumeerConst {
    }
 
    public static class Security {
-      public static final String ORGANIZATION_ROLES_COLLECTION_NAME = "_system-organization-roles";
+      public static final String ORGANIZATION_ROLES_COLLECTION_NAME = "_system-org-roles";
       public static final String ROLES_COLLECTION_NAME = "_roles";
 
-      public static final String ORGANIZATION_ID_KEY = "organization-id";
+      public static final String ORGANIZATION_ID_KEY = "org-id";
 
-      public static final String PROJECT_ID_KEY = "project-id";
-      public static final String COLLECTION_NAME_KEY = "collection-name";
+      public static final String PROJECT_ID_KEY = "pro-id";
+      public static final String COLLECTION_NAME_KEY = "col-name";
       public static final String VIEW_ID_KEY = "view-id";
 
       public static final String TYPE_KEY = "type";
