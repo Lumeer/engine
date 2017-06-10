@@ -102,7 +102,10 @@ public class ViewFacade implements Serializable {
             .append(LumeerConst.View.CONFIGURATION_KEY, configuration != null ? configuration : new DataDocument());
 
       dataStorage.createDocument(metadataCollection(), metadataDocument);
-      databaseInitializer.onViewCreated(projectFacade.getCurrentProjectCode(), viewId);
+
+      String project = projectFacade.getCurrentProjectCode();
+      databaseInitializer.onViewCreated(project, viewId);
+      securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_MANAGE);
 
       return viewId;
    }

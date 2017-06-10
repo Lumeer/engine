@@ -20,15 +20,14 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
-import io.lumeer.engine.api.dto.Project;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -102,7 +101,7 @@ public class ProjectService implements Serializable {
    @POST
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void createProject(final Project project) {
+   public void createProject(final Project project) throws UnauthorizedAccessException {
       if (project == null) {
          throw new BadRequestException();
       }
@@ -119,11 +118,12 @@ public class ProjectService implements Serializable {
     *       Code identifying project.
     * @param project
     *       Project data.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateProject(final @PathParam("projectCode") String projectCode, final Project project) {
+   public void updateProject(final @PathParam("projectCode") String projectCode, final Project project) throws UnauthorizedAccessException {
       if (projectCode == null || project == null) {
          throw new BadRequestException();
       }

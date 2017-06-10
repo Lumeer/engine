@@ -119,7 +119,8 @@ public class CollectionFacade implements Serializable {
    /**
     * Returns a Map object of collection names for given project.
     *
-    * @param projectCode project code
+    * @param projectCode
+    *       project code
     * @return the map of collection names. Keys are internal names, values are original names.
     */
    public Map<String, String> getAllCollections(String projectCode) {
@@ -177,7 +178,10 @@ public class CollectionFacade implements Serializable {
 
       dataStorage.createCollection(internalCollectionName);
       collectionMetadataFacade.createInitialMetadata(internalCollectionName, collectionOriginalName);
-      databaseInitializer.onCollectionCreated(projectFacade.getCurrentProjectCode(), internalCollectionName);
+
+      String project = projectFacade.getCurrentProjectCode();
+      databaseInitializer.onCollectionCreated(project, internalCollectionName);
+      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
 
       createCollectionEvent.fire(new CreateCollection(collectionOriginalName, internalCollectionName));
 

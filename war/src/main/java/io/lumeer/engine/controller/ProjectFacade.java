@@ -54,6 +54,12 @@ public class ProjectFacade {
    @Inject
    private DatabaseInitializer databaseInitializer;
 
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
+
    private String projectCode = "default";
    private String projectId = null;
 
@@ -118,6 +124,8 @@ public class ProjectFacade {
             .append(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       String id = dataStorage.createDocument(LumeerConst.Project.COLLECTION_NAME, dataDocument);
       databaseInitializer.onProjectCreated(id);
+      securityFacade.addProjectUserRole(project.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+
       return id;
    }
 
