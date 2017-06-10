@@ -118,7 +118,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Before
    public void init() {
       // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
-      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectCode());
+      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectId());
       PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/collections/";
    }
 
@@ -210,7 +210,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
       // #2 collection exists, ready to delete, status code = 204
       String internalCollectionName = collectionFacade.createCollection(COLLECTION_DROP_COLLECTION);
-      addManageRole(internalCollectionName);
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_COLLECTION).request().buildDelete().invoke();
       assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
 
@@ -490,18 +489,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    private String percentEncode(final String rawQuery) throws UnsupportedEncodingException {
       return URLEncoder.encode(rawQuery, "UTF-8").replaceAll("\\+", "%20");
    }
-
-   private void addManageRole(String collection) {
-      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
-   }
-
-   //   private void addReadRole(String collection) {
-   //      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_READ);
-   //   }
-
-   //   private void addShareRole(String collection) {
-   //      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_SHARE);
-   //   }
 
    private void addWriteRole(String collection) {
       securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);

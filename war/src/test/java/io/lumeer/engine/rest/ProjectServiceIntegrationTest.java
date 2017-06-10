@@ -27,9 +27,9 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.api.dto.Project;
+import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
@@ -45,7 +45,6 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -133,15 +132,12 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateProject() throws Exception {
-      // I (Alica) suppose we operate inside some default organization which has not been initialized, so we do that here
-      databaseInitializer.onOrganizationCreated(organizationFacade.getOrganizationId(organizationFacade.getOrganizationCode()));
-      securityFacade.addOrganizationUserRole(organizationFacade.getOrganizationCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
-
       final String project = "project21";
       final String projectName = "Project One";
       final String org = "ORG21";
 
       organizationFacade.createOrganization(new Organization(org, "Organization"));
+      securityFacade.addOrganizationUserRole(org, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)

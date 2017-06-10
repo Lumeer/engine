@@ -112,6 +112,9 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void addAndRemoveOrganizationGroupRole() throws Exception {
+      // we have to remove default role
+      securityFacade.removeOrganizationUserRole(org, user, roleManage);
+
       // one group has role
       securityFacade.addOrganizationGroupRole(org, group1, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isTrue();
@@ -140,6 +143,9 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void addAndRemoveProjectGroupRole() throws Exception {
+      // we have to remove default role
+      securityFacade.removeProjectUserRole(project, user, roleManage);
+
       securityFacade.addProjectGroupRole(project, group1, roleManage);
       assertThat(securityFacade.hasProjectRole(project, roleManage)).isTrue();
 

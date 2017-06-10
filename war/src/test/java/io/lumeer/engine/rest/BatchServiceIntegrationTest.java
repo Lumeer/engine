@@ -74,7 +74,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
    @Before
    public void init() {
       // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
-      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectCode());
+      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectId());
    }
 
    @Test
