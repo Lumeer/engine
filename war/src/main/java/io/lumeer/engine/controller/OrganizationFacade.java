@@ -25,11 +25,10 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -44,6 +43,7 @@ import javax.inject.Inject;
 public class OrganizationFacade {
 
    private String organizationCode = "ACME";
+   private String organizationId = null;
 
    @Inject
    @SystemDataStorage
@@ -68,7 +68,7 @@ public class OrganizationFacade {
    }
 
    public String getOrganizationId() {
-      return getOrganizationId(organizationCode);
+      return organizationId;
    }
 
    public String getOrganizationCode() {
@@ -77,20 +77,58 @@ public class OrganizationFacade {
 
    public void setOrganizationCode(final String organizationCode) {
       this.organizationCode = organizationCode;
+      this.organizationId = getOrganizationId(organizationCode);
    }
 
    /**
-    * Reads a map of all organizations in the system.
+    * Reads  all organizations in the system.
     *
-    * @return map of values (code, name) of all organizations in the system
+    * @return list of organizations
     */
-   public Map<String, String> readOrganizationsMap() {
-      List<DataDocument> documents = dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_CODE));
-      return documents.stream().collect(Collectors.toMap(d -> d.getString(LumeerConst.Organization.ATTR_ORG_CODE), d -> d.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
+   public List<Organization> readOrganizations() {
+      return dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, null, 0, 0)
+                        .stream().map(Organization::new).collect(Collectors.toList());
    }
 
    /**
-    * Reads the organization name according to its id.
+    * Reads the organization data according to its code
+    *
+    * @param organizationCode
+    *       code of the organization
+    * @return name of the given organization
+    */
+   public Organization readOrganization(final String organizationCode) {
+      DataDocument dataDocument = dataStorage.readDocument(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode));
+      return dataDocument != null ? new Organization(dataDocument) : null;
+   }
+
+   /**
+    * Creates new organization in the system database.
+    *
+    * @param organization
+    *       organization data
+    * @return id of the organization
+    */
+   public String createOrganization(final Organization organization) {
+      String id = dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, organization.toDataDocument());
+      databaseInitializer.onOrganizationCreated(id);
+      return id;
+   }
+
+   /**
+    * Updates existing organization in the system database.
+    *
+    * @param organizationCode
+    *       code of organization
+    * @param organization
+    *       organization data
+    */
+   public void updateOrganization(final String organizationCode, final Organization organization) {
+      dataStorage.updateDocument(LumeerConst.Organization.COLLECTION_NAME, organization.toDataDocument(), organizationCodeFilter(organizationCode));
+   }
+
+   /**
+    * Reads the organization name according to its code.
     *
     * @param organizationCode
     *       code of the organization
@@ -151,24 +189,6 @@ public class OrganizationFacade {
     */
    public void dropOrganizationMetadata(final String organizationCode, final String metaName) {
       dataStorage.dropAttribute(LumeerConst.Organization.COLLECTION_NAME, organizationCodeFilter(organizationCode), metaName);
-   }
-
-   /**
-    * Creates new organization in the system database.
-    *
-    * @param organizationCode
-    *       code of the new organization to create
-    * @param organizationName
-    *       name of the new organization to create
-    * @return id of the organization
-    */
-   public String createOrganization(final String organizationCode, final String organizationName) {
-      DataDocument document = new DataDocument(LumeerConst.Organization.ATTR_ORG_CODE, organizationCode)
-            .append(LumeerConst.Organization.ATTR_ORG_NAME, organizationName)
-            .append(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
-      String id = dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, document);
-      databaseInitializer.onOrganizationCreated(id);
-      return id;
    }
 
    /**

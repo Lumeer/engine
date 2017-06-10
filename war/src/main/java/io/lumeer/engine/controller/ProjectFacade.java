@@ -20,13 +20,13 @@
 package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst.Project;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Project;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +55,7 @@ public class ProjectFacade {
    private DatabaseInitializer databaseInitializer;
 
    private String projectCode = "default";
+   private String projectId = null;
 
    /**
     * Gets unique and immutable id of the project - _id from DataDocument
@@ -64,12 +65,12 @@ public class ProjectFacade {
     * @return id
     */
    public String getProjectId(final String projectCode) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectCodeFilter(projectCode), Collections.singletonList(Project.ATTR_PROJECT_ID));
-      return document != null ? document.getString(Project.ATTR_PROJECT_ID) : null;
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Project.COLLECTION_NAME, projectCodeFilter(projectCode), Collections.singletonList(LumeerConst.Project.ATTR_PROJECT_ID));
+      return document != null ? document.getString(LumeerConst.Project.ATTR_PROJECT_ID) : null;
    }
 
    public String getCurrentProjectId() {
-      return getProjectId(getCurrentProjectCode());
+      return projectId;
    }
 
    public String getCurrentProjectCode() {
@@ -78,6 +79,7 @@ public class ProjectFacade {
 
    public void setCurrentProjectCode(final String projectCode) {
       this.projectCode = projectCode;
+      this.projectId = getProjectId(projectCode);
    }
 
    /**
@@ -85,11 +87,50 @@ public class ProjectFacade {
     *
     * @param organizationCode
     *       code of the organization
-    * @return map(code, name) values of all projects in an organization
+    * @return list of all projects in an organization
     */
-   public Map<String, String> readProjectsMap(final String organizationCode) {
-      List<DataDocument> documents = dataStorage.search(Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), Arrays.asList(Project.ATTR_PROJECT_NAME, Project.ATTR_PROJECT_CODE));
-      return documents.stream().collect(Collectors.toMap(d -> d.getString(Project.ATTR_PROJECT_CODE), d -> d.getString(Project.ATTR_PROJECT_NAME)));
+   public List<Project> readProjects(final String organizationCode) {
+      return dataStorage.search(LumeerConst.Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), null, 0, 0)
+                        .stream().map(Project::new).collect(Collectors.toList());
+   }
+
+   /**
+    * Reads the project data according to its code
+    *
+    * @param projectCode
+    *       code of the project
+    * @return project data
+    */
+   public Project readProject(final String projectCode) {
+      DataDocument dataDocument = dataStorage.readDocument(LumeerConst.Project.COLLECTION_NAME, projectCodeFilter(projectCode));
+      return dataDocument != null ? new Project(dataDocument) : null;
+   }
+
+   /**
+    * Creates new project in the system database.
+    *
+    * @param project
+    *       project data
+    * @return id of the organization
+    */
+   public String createProject(final Project project) {
+      DataDocument dataDocument = project.toDataDocument()
+            .append(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
+      String id = dataStorage.createDocument(LumeerConst.Project.COLLECTION_NAME, dataDocument);
+      databaseInitializer.onProjectCreated(id);
+      return id;
+   }
+
+   /**
+    * Updates existing project in the system database.
+    *
+    * @param projectCode
+    *       code of the project
+    * @param project
+    *       project data
+    */
+   public void updateProject(final String projectCode, final Project project) {
+      dataStorage.updateDocument(LumeerConst.Project.COLLECTION_NAME, project.toDataDocument(), projectCodeFilter(projectCode));
    }
 
    /**
@@ -101,8 +142,8 @@ public class ProjectFacade {
     *       new code for project
     */
    public void updateProjectCode(final String oldProjectCode, final String newProjectCode) {
-      DataDocument document = new DataDocument(Project.ATTR_PROJECT_CODE, newProjectCode);
-      dataStorage.updateDocument(Project.COLLECTION_NAME, document, projectCodeFilter(oldProjectCode));
+      DataDocument document = new DataDocument(LumeerConst.Project.ATTR_PROJECT_CODE, newProjectCode);
+      dataStorage.updateDocument(LumeerConst.Project.COLLECTION_NAME, document, projectCodeFilter(oldProjectCode));
    }
 
    /**
@@ -113,8 +154,8 @@ public class ProjectFacade {
     * @return name of the project
     */
    public String readProjectName(final String projectCode) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectCodeFilter(projectCode), Collections.singletonList(Project.ATTR_PROJECT_NAME));
-      return document != null ? document.getString(Project.ATTR_PROJECT_NAME) : null;
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Project.COLLECTION_NAME, projectCodeFilter(projectCode), Collections.singletonList(LumeerConst.Project.ATTR_PROJECT_NAME));
+      return document != null ? document.getString(LumeerConst.Project.ATTR_PROJECT_NAME) : null;
    }
 
    /**
@@ -140,7 +181,7 @@ public class ProjectFacade {
     *       key-value pairs of metadata to update
     */
    public void updateProjectMetadata(final String projectCode, DataDocument meta) {
-      dataStorage.updateDocument(Project.COLLECTION_NAME, meta, projectCodeFilter(projectCode));
+      dataStorage.updateDocument(LumeerConst.Project.COLLECTION_NAME, meta, projectCodeFilter(projectCode));
    }
 
    /**
@@ -153,7 +194,7 @@ public class ProjectFacade {
     * @return meta attribute value
     */
    public String readProjectMetadata(final String projectCode, final String metaName) {
-      DataDocument document = dataStorage.readDocumentIncludeAttrs(Project.COLLECTION_NAME, projectCodeFilter(projectCode), Collections.singletonList(metaName));
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Project.COLLECTION_NAME, projectCodeFilter(projectCode), Collections.singletonList(metaName));
       return document != null ? document.getString(metaName) : null;
    }
 
@@ -166,7 +207,7 @@ public class ProjectFacade {
     *       name of the meta attribute to remove
     */
    public void dropProjectMetadata(final String projectCode, final String metaName) {
-      dataStorage.dropAttribute(Project.COLLECTION_NAME, projectCodeFilter(projectCode), metaName);
+      dataStorage.dropAttribute(LumeerConst.Project.COLLECTION_NAME, projectCodeFilter(projectCode), metaName);
    }
 
    /**
@@ -178,24 +219,8 @@ public class ProjectFacade {
     *       new name of the project
     */
    public void renameProject(final String projectCode, final String newProjectName) {
-      DataDocument dataDocument = new DataDocument(Project.ATTR_PROJECT_NAME, newProjectName);
-      dataStorage.updateDocument(Project.COLLECTION_NAME, dataDocument, projectCodeFilter(projectCode));
-   }
-
-   /**
-    * Creates new project
-    *
-    * @param projectCode
-    *       code of the project to create
-    * @param projectName
-    *       name of the project
-    */
-   public void createProject(final String projectCode, final String projectName) {
-      DataDocument document = new DataDocument(Project.ATTR_PROJECT_CODE, projectCode)
-            .append(Project.ATTR_PROJECT_NAME, projectName)
-            .append(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
-      dataStorage.createDocument(Project.COLLECTION_NAME, document);
-      databaseInitializer.onProjectCreated(projectCode);
+      DataDocument dataDocument = new DataDocument(LumeerConst.Project.ATTR_PROJECT_NAME, newProjectName);
+      dataStorage.updateDocument(LumeerConst.Project.COLLECTION_NAME, dataDocument, projectCodeFilter(projectCode));
    }
 
    /**
@@ -205,17 +230,17 @@ public class ProjectFacade {
     *       code of the project to drop
     */
    public void dropProject(final String projectCode) {
-      dataStorage.dropDocument(Project.COLLECTION_NAME, projectCodeFilter(projectCode));
+      dataStorage.dropDocument(LumeerConst.Project.COLLECTION_NAME, projectCodeFilter(projectCode));
    }
 
    private DataFilter projectCodeFilter(String projectCode) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
-      filter.put(Project.ATTR_PROJECT_CODE, projectCode);
+      filter.put(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
+      filter.put(LumeerConst.Project.ATTR_PROJECT_CODE, projectCode);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
    }
 
    private DataFilter organizationIdFilter(final String organizationId) {
-      return dataStorageDialect.fieldValueFilter(Project.ATTR_ORGANIZATION_ID, organizationId);
+      return dataStorageDialect.fieldValueFilter(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationId);
    }
 }

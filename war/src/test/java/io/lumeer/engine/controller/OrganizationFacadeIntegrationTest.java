@@ -9,6 +9,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
 
 import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
@@ -38,18 +39,25 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    private OrganizationFacade organizationFacade;
 
    @Test
-   public void testReadOrganizationsMap() throws Exception {
+   public void testReadOrganizations() throws Exception {
       dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
       createDummyEntries();
 
-      Map<String, String> organizationsMap = organizationFacade.readOrganizationsMap();
-      List<DataDocument> organizations = getOrganizationEntries();
-      Map<String, String> newOrganizationsMap = new HashMap<>();
+      List<Organization> organizations = organizationFacade.readOrganizations();
+      assertThat(organizations).extracting("code").contains("TST0", "TST1", "TST2", "TST3", "TST4");
+   }
 
-      organizations.forEach(organization -> newOrganizationsMap.put(organization.getString(LumeerConst.Organization.ATTR_ORG_CODE), organization.getString(LumeerConst.Organization.ATTR_ORG_NAME)));
+   @Test
+   public void testReadAndUpdateOrganization() throws Exception{
+      dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
 
-      assertThat(organizationsMap).isEqualTo(newOrganizationsMap);
-      assertThat(organizationsMap.entrySet().size()).isEqualTo(newOrganizationsMap.entrySet().size());
+      organizationFacade.createOrganization(new Organization("LMR", "Lumeer"));
+
+      assertThat(organizationFacade.readOrganization("LMR")).isNotNull();
+
+      organizationFacade.updateOrganization("LMR", new Organization("LMRR", "Lumeerko", "fa-icn", "#000000"));
+      assertThat(organizationFacade.readOrganization("LMR")).isNull();
+      assertThat(organizationFacade.readOrganization("LMRR")).isNotNull();
    }
 
    @Test
@@ -95,28 +103,17 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateAndDropOrganization() throws Exception {
-      final int DUMMY_ENTRIES_COUNT = 5; // number of simple dummy entries to create
       dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
 
       // #1 create
-      final String NEW_ORG_ID = "LMR";
-      final String NEW_ORG_NAME = "Lumeer";
-      organizationFacade.createOrganization(NEW_ORG_ID, NEW_ORG_NAME);
+      organizationFacade.createOrganization(new Organization("LMR", "Lumeer"));
+      long documentCount = dataStorage.documentCount(LumeerConst.Organization.COLLECTION_NAME);
+      assertThat(documentCount).isEqualTo(1);
 
       // #2 drop
-      organizationFacade.dropOrganization(NEW_ORG_ID);
-      long documentCount1 = dataStorage.documentCount(LumeerConst.Organization.COLLECTION_NAME);
-      assertThat(documentCount1).isEqualTo(0);
-
-      // #3 create
-      createDummyEntries();
-      organizationFacade.createOrganization(NEW_ORG_ID, NEW_ORG_NAME);
-
-      // #4 drop
-      final String DUMMY_ORG_ID = "TST2";
-      organizationFacade.dropOrganization(DUMMY_ORG_ID);
-      long documentCount2 = dataStorage.documentCount(LumeerConst.Organization.COLLECTION_NAME);
-      assertThat(documentCount2).isEqualTo(DUMMY_ENTRIES_COUNT);
+      organizationFacade.dropOrganization("LMR");
+      documentCount = dataStorage.documentCount(LumeerConst.Organization.COLLECTION_NAME);
+      assertThat(documentCount).isEqualTo(0);
    }
 
    @Test
@@ -127,11 +124,10 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       final String DUMMY_ORG_ID = "TST2";
       final String DUMMY_ORG_NAME = "Test2";
       final String NEW_DUMMY_ORG_NAME = "Test2New";
+      assertThat(organizationFacade.readOrganizationName("TST2")).isNotEqualTo(NEW_DUMMY_ORG_NAME);
       organizationFacade.renameOrganization(DUMMY_ORG_ID, NEW_DUMMY_ORG_NAME);
-
-      Map<String, String> organizationsMap = organizationFacade.readOrganizationsMap();
-      assertThat(organizationsMap).containsEntry(DUMMY_ORG_ID, NEW_DUMMY_ORG_NAME);
-      assertThat(organizationsMap).doesNotContainEntry(DUMMY_ORG_ID, DUMMY_ORG_NAME);
+      assertThat(organizationFacade.readOrganizationName("TST2")).isNotEqualTo(DUMMY_ORG_NAME);
+      assertThat(organizationFacade.readOrganizationName("TST2")).isEqualTo(NEW_DUMMY_ORG_NAME);
    }
 
    @Test
@@ -146,9 +142,8 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       final String INFO_WEBSITE_ATTR = "website";
       final String INFO_WEBSITE_VALUE = "www.lumeer.io";
 
-      // #1 Empty info data document was created  while organization was being created, but the document is still empty.
       DataDocument infoDataDocument = organizationFacade.readOrganizationInfoData(DUMMY_ORG_ID);
-      assertThat(infoDataDocument).isEmpty();
+      assertThat(infoDataDocument).isNull();
 
       String notSetAttributeValue = organizationFacade.readOrganizationInfoData(DUMMY_ORG_ID, INFO_YR_ATTR);
       assertThat(notSetAttributeValue).isNull();
@@ -191,10 +186,10 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
       String organization1 = "LMR9998";
       String organization2 = "LMR9999";
-      organizationFacade.createOrganization(organization1, "Organization One");
-      organizationFacade.createOrganization(organization2, "Organization Two");
+      organizationFacade.createOrganization(new Organization(organization1, "Organization One"));
+      organizationFacade.createOrganization(new Organization(organization2, "Organization Two"));
 
-      assertThatThrownBy(() -> organizationFacade.createOrganization(organization1, "Organization One again")).isInstanceOf(MongoWriteException.class);
+      assertThatThrownBy(() -> organizationFacade.createOrganization(new Organization(organization1, "Organization One again", null, null))).isInstanceOf(MongoWriteException.class);
       assertThatThrownBy(() -> organizationFacade.updateOrganizationCode(organization1, organization2)).isInstanceOf(MongoWriteException.class);
    }
 
@@ -205,18 +200,9 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       final String ORG_NAME = "Test";
 
       for (int i = 0; i < DUMMY_ENTRIES_COUNT; i++) {
-         DataDocument organization = new DataDocument();
-         organization.put(LumeerConst.Organization.ATTR_ORG_CODE, ORG_ID + i);
-         organization.put(LumeerConst.Organization.ATTR_ORG_NAME, ORG_NAME + i);
-         organization.put(LumeerConst.Organization.ATTR_META_ICON, "fa-icon");
-         organization.put(LumeerConst.Organization.ATTR_META_COLOR, "#FFFFFF");
-         organization.put(LumeerConst.Organization.ATTR_ORG_DATA, new DataDocument());
-         dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, organization);
+         Organization organization = new Organization(ORG_ID + i, ORG_NAME + i, "fa-icon", "FFFFFF");
+         organizationFacade.createOrganization(organization);
       }
-   }
-
-   private List<DataDocument> getOrganizationEntries() {
-      return dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, Arrays.asList(LumeerConst.Organization.ATTR_ORG_NAME, LumeerConst.Organization.ATTR_ORG_CODE));
    }
 
    private void dropDocuments(final String collectionName) {

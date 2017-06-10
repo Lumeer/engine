@@ -24,9 +24,11 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -57,17 +59,63 @@ public class OrganizationService implements Serializable {
    private SecurityFacade securityFacade;
 
    /**
-    * @return map of organizations' codes and names
+    * @return list of organizations
     */
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public Map<String, String> getOrganizations() {
-      return organizationFacade.readOrganizationsMap();
+   public List<Organization> getOrganizations() {
+      return organizationFacade.readOrganizations();
    }
 
    /**
-    * @param organizationCode organization code
+    * @param organizationCode
+    *       Organization code;
+    * @return Organization data;
+    */
+   @GET
+   @Path("/{organizationCode}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Organization readOrganization(final @PathParam("organizationCode") String organizationCode) {
+      if (organizationCode == null) {
+         throw new BadRequestException();
+      }
+      return organizationFacade.readOrganization(organizationCode);
+   }
+
+   /**
+    * @param organization
+    *       organization data
+    */
+   @POST
+   @Path("/")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void createOrganization(final Organization organization) {
+      if (organization == null) {
+         throw new BadRequestException();
+      }
+      organizationFacade.createOrganization(organization);
+   }
+
+   /**
+    * @param organizationCode
+    *       Code identifying organization.
+    * @param organization
+    *       Organization data.
+    */
+   @PUT
+   @Path("/{organizationCode}")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void updateOrganization(final @PathParam("organizationCode") String organizationCode, final Organization organization) {
+      if (organizationCode == null || organization == null) {
+         throw new BadRequestException();
+      }
+      organizationFacade.updateOrganization(organizationCode, organization);
+   }
+
+   /**
+    * @param organizationCode
+    *       organization code
     * @return name of given organization
     */
    @GET
@@ -81,21 +129,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param organizationName organization name
-    */
-   @POST
-   @Path("/{organizationCode}")
-   public void createOrganization(final @PathParam("organizationCode") String organizationCode, final String organizationName) {
-      if (organizationCode == null || organizationName == null) {
-         throw new BadRequestException();
-      }
-      organizationFacade.createOrganization(organizationCode, organizationName);
-   }
-
-   /**
-    * @param organizationCode organization code
-    * @param newOrganizationName organization name
+    * @param organizationCode
+    *       organization code
+    * @param newOrganizationName
+    *       organization name
     * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
@@ -113,8 +150,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param newCode new organization code
+    * @param organizationCode
+    *       organization code
+    * @param newCode
+    *       new organization code
     * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
@@ -132,7 +171,8 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
+    * @param organizationCode
+    *       organization code
     */
    @DELETE
    @Path("/{organizationCode}")
@@ -144,8 +184,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param attributeName name of metadata attribute
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of metadata attribute
     * @return value of metadata attribute
     */
    @GET
@@ -160,9 +202,13 @@ public class OrganizationService implements Serializable {
 
    /**
     * Adds or updates metadata attribute.
-    * @param organizationCode organization code
-    * @param attributeName name of metadata attribute
-    * @param value value of metadata attribute
+    *
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of metadata attribute
+    * @param value
+    *       value of metadata attribute
     * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
@@ -182,8 +228,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param attributeName name of metadata attribute
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of metadata attribute
     * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
@@ -201,7 +249,8 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
+    * @param organizationCode
+    *       organization code
     * @return DataDocument with additional info
     */
    @GET
@@ -215,8 +264,10 @@ public class OrganizationService implements Serializable {
    }
 
    /**
-    * @param organizationCode organization code
-    * @param attributeName name of attribute from additional info
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of attribute from additional info
     * @return value of the attribute
     */
    @GET
@@ -231,9 +282,13 @@ public class OrganizationService implements Serializable {
 
    /**
     * Creates or updates entry in additional info.
-    * @param organizationCode organization code
-    * @param attributeName name of the attribute
-    * @param value value of the attribute
+    *
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of the attribute
+    * @param value
+    *       value of the attribute
     * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
@@ -254,8 +309,11 @@ public class OrganizationService implements Serializable {
 
    /**
     * Drops attribute from additional info.
-    * @param organizationCode organization code
-    * @param attributeName name of the attribute
+    *
+    * @param organizationCode
+    *       organization code
+    * @param attributeName
+    *       name of the attribute
     * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
@@ -274,7 +332,9 @@ public class OrganizationService implements Serializable {
 
    /**
     * Drops all additional info.
-    * @param organizationCode organization code
+    *
+    * @param organizationCode
+    *       organization code
     * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE

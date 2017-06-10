@@ -24,9 +24,11 @@ import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.api.dto.Project;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -68,13 +70,69 @@ public class ProjectService implements Serializable {
    }
 
    /**
-    * @return Map of projects codes and names.
+    * @return List of projects.
     */
    @GET
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
-   public Map<String, String> getProjects() {
-      return projectFacade.readProjectsMap(organizationCode);
+   public List<Project> getProjects() {
+      return projectFacade.readProjects(organizationCode);
+   }
+
+   /**
+    * @param projectCode
+    *       Project code;
+    * @return Project data;
+    */
+   @GET
+   @Path("/{projectCode}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Project readProject(final @PathParam("projectCode") String projectCode) {
+      if (projectCode == null) {
+         throw new BadRequestException();
+      }
+      return projectFacade.readProject(projectCode);
+   }
+
+   /**
+    * @param project
+    *       Project data.
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    */
+   @POST
+   @Path("/")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void createProject(final Project project) {
+      if (project == null) {
+         throw new BadRequestException();
+      }
+     
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+     
+      projectFacade.createProject(project);
+   }
+
+   /**
+    * @param projectCode
+    *       Code identifying project.
+    * @param project
+    *       Project data.
+    */
+   @PUT
+   @Path("/{projectCode}")
+   @Consumes(MediaType.APPLICATION_JSON)
+   public void updateProject(final @PathParam("projectCode") String projectCode, final Project project) {
+      if (projectCode == null || project == null) {
+         throw new BadRequestException();
+      }
+     
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+     
+      projectFacade.updateProject(projectCode, project);
    }
 
    /**
@@ -90,26 +148,6 @@ public class ProjectService implements Serializable {
          throw new BadRequestException();
       }
       return projectFacade.readProjectName(projectCode);
-   }
-
-   /**
-    * @param projectCode
-    *       Project code.
-    * @param projectName
-    *       Project name.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
-    */
-   @POST
-   @Path("/{projectCode}")
-   public void createProject(final @PathParam("projectCode") String projectCode, final String projectName) throws UnauthorizedAccessException {
-      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_WRITE)) {
-         throw new UnauthorizedAccessException();
-      }
-
-      if (projectCode == null || projectName == null) {
-         throw new BadRequestException();
-      }
-      projectFacade.createProject(projectCode, projectName);
    }
 
    /**
