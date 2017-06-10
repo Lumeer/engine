@@ -24,9 +24,7 @@ import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
@@ -35,7 +33,7 @@ public class CollectionMetadata {
 
    private String name;
    private String internalName;
-   private Map<String, Attribute> attributes = new HashMap<>();
+   private List<Attribute> attributes = new ArrayList<>();
    private Date lastTimeUsed;
    private List<String> recentlyUsedDocumentIds = new ArrayList<>();
    private DataDocument customMetadata = new DataDocument();
@@ -49,14 +47,9 @@ public class CollectionMetadata {
       name = metadata.getString(LumeerConst.Collection.REAL_NAME_KEY);
       internalName = metadata.getString(LumeerConst.Collection.INTERNAL_NAME_KEY);
 
-      DataDocument attributesDocument = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTES_KEY);
-      for (String attributeName : attributesDocument.keySet()) {
-         attributes.put(
-               attributeName,
-               new Attribute(
-                     attributesDocument
-                           .getDataDocument(attributeName)
-                           .append(LumeerConst.Collection.ATTRIBUTE_NAME_KEY, attributeName)));
+      List<DataDocument> attributeDocuments = metadata.getArrayList(LumeerConst.Collection.ATTRIBUTES_KEY, DataDocument.class);
+      for (DataDocument attribute : attributeDocuments) {
+         attributes.add(new Attribute(attribute));
       }
 
       lastTimeUsed = metadata.getDate(LumeerConst.Collection.LAST_TIME_USED_KEY);
@@ -74,7 +67,7 @@ public class CollectionMetadata {
       return internalName;
    }
 
-   public Map<String, Attribute> getAttributes() {
+   public List<Attribute> getAttributes() {
       return attributes;
    }
 

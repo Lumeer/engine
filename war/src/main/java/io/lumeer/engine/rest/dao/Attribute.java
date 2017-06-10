@@ -19,12 +19,10 @@
  */
 package io.lumeer.engine.rest.dao;
 
-import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.LumeerConst.Collection;
 import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
@@ -32,35 +30,21 @@ import java.util.Map;
 public class Attribute {
 
    private String name;
+   private String fullName;
    private int count;
+   private int level;
    private List<String> constraints;
-   private Map<String, Attribute> childAttributes = new HashMap<>();
 
    public Attribute(final DataDocument metadata) {
-      name = metadata.getString(LumeerConst.Collection.ATTRIBUTE_NAME_KEY);
-      count = metadata.getInteger(LumeerConst.Collection.ATTRIBUTE_COUNT_KEY);
-      constraints = metadata.getArrayList(LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY, String.class);
-
-      DataDocument childAttributesDocument = metadata.getDataDocument(LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY);
-      for (String attributeName : childAttributesDocument.keySet()) {
-         String nameWithParent = name + "." + attributeName;
-         childAttributes.put(
-               attributeName,
-               new Attribute(
-                     childAttributesDocument
-                           .getDataDocument(attributeName)
-                           .append(
-                                 LumeerConst.Collection.ATTRIBUTE_NAME_KEY,
-                                 nameWithParent)));
-      }
+      name = metadata.getString(Collection.ATTRIBUTE_NAME_KEY);
+      fullName = metadata.getString(Collection.ATTRIBUTE_FULL_NAME_KEY, name);
+      count = metadata.getInteger(Collection.ATTRIBUTE_COUNT_KEY);
+      level = metadata.getInteger(Collection.ATTRIBUTE_LEVEL_KEY);
+      constraints = metadata.getArrayList(Collection.ATTRIBUTE_CONSTRAINTS_KEY, String.class);
    }
 
    public String getName() {
       return name;
-   }
-
-   public String getNameWithoutParent() {
-      return name.substring(name.lastIndexOf(".") + 1);
    }
 
    public int getCount() {
@@ -71,8 +55,12 @@ public class Attribute {
       return constraints;
    }
 
-   public Map<String, Attribute> getChildAttributes() {
-      return childAttributes;
+   public String getFullName() {
+      return fullName;
+   }
+
+   public int getLevel() {
+      return level;
    }
 
    @Override
@@ -86,22 +74,22 @@ public class Attribute {
 
       final Attribute that = (Attribute) o;
 
-      return name != null ? name.equals(that.name) : that.name == null;
+      return fullName != null ? fullName.equals(that.fullName) : that.fullName == null;
 
    }
 
    @Override
    public int hashCode() {
-      return name != null ? name.hashCode() : 0;
+      return fullName != null ? fullName.hashCode() : 0;
    }
 
-   @Override
-   public String toString() {
-      return "Attribute{"
-            + ", name='" + name + '\''
-            + ", count=" + count
-            + ", constraints=" + constraints
-            + ", childAttributes=" + childAttributes
-            + '}';
-   }
+   //   @Override
+   //   public String toString() {
+   //      return "Attribute{"
+   //            + ", name='" + name + '\''
+   //            + ", count=" + count
+   //            + ", constraints=" + constraints
+   //            + ", childAttributes=" + childAttributes
+   //            + '}';
+   //   }
 }
