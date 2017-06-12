@@ -32,6 +32,8 @@ import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
 import io.lumeer.engine.api.exception.NullParameterException;
+import io.lumeer.engine.api.exception.OrganizationDoesntExistException;
+import io.lumeer.engine.api.exception.ProjectDoesntExistException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
@@ -68,7 +70,8 @@ public class LumeerExceptionMapper implements ExceptionMapper<DbException> {
             e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException ||
             e instanceof NullParameterException || e instanceof LinkAlreadyExistsException ||
             e instanceof ViewAlreadyExistsException || e instanceof InvalidCollectionAttributeTypeException ||
-            e instanceof InvalidValueException) {
+            e instanceof InvalidValueException || e instanceof OrganizationDoesntExistException ||
+            e instanceof ProjectDoesntExistException) {
          return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 

@@ -54,6 +54,17 @@ public class ErrorMessageBuilder {
    private static final String ERROR_USER_ALREADY_EXISTS_IN_PROJECT = "User \"{0}\" already exists in project \"{1}\"";
    private static final String ERROR_USER_ALREADY_EXISTS_IN_ORGANIZATION = "User \"{0}\" already exists in organization \"{1}\"";
 
+   private static final String ERROR_ORGANIZATION_DOESNT_EXIST = "Organization \"{0}\" doesn't exist";
+   private static final String ERROR_PROJECT_DOESNT_EXIST = "Project \"{0}\" doesn't exist in organization \"{1}\"";
+
+   public static String organizationDoesntExist(String orgCode) {
+      return MessageFormat.format(ERROR_ORGANIZATION_DOESNT_EXIST, orgCode);
+   }
+
+   public static String projectDoesntExist(String orgCode, String projCode) {
+      return MessageFormat.format(ERROR_PROJECT_DOESNT_EXIST, projCode, orgCode);
+   }
+
    public static String collectionNotFoundString(String collection) {
       return MessageFormat.format(ERROR_COLLECTION_NOT_FOUND, collection);
    }

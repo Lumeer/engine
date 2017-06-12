@@ -20,6 +20,7 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.dto.UserSettings;
+import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.UserSettingsFacade;
 
 import java.io.Serializable;
@@ -51,7 +52,7 @@ public class UserSettingsService implements Serializable {
    }
 
    @PUT
-   public void upsertUserSettings(final UserSettings userSettings) {
+   public void upsertUserSettings(final UserSettings userSettings) throws DbException {
       if (userSettings == null) {
          throw new BadRequestException();
       }

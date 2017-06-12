@@ -100,39 +100,75 @@ public class UserSettingsServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void upsertUserSettingsTest() throws Exception {
-      organizationFacade.createOrganization(new Organization("org1", "Organization"));
-      organizationFacade.createOrganization(new Organization("org3", "Organization"));
-      organizationFacade.setOrganizationCode("org1");
+      organizationFacade.createOrganization(new Organization("org11", "Organization"));
+      organizationFacade.createOrganization(new Organization("org13", "Organization"));
+      organizationFacade.setOrganizationCode("org11");
       projectFacade.createProject(new Project("proj1", "Project"));
-      organizationFacade.setOrganizationCode("org3");
+      organizationFacade.setOrganizationCode("org13");
       projectFacade.createProject(new Project("projXYZ", "Project"));
-      userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org11", "proj1"));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org11");
       assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
       ClientBuilder.newBuilder().build()
                    .target(TARGET_URI)
                    .path(PATH_PREFIX)
                    .request(MediaType.APPLICATION_JSON)
-                   .buildPut(Entity.json(new UserSettings("org3", null)))
+                   .buildPut(Entity.json(new UserSettings("org13", null)))
                    .invoke();
 
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
-      assertThat(userSettings.getDefaultProject()).isNull();
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org11");
+      assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
       ClientBuilder.newBuilder().build()
                    .target(TARGET_URI)
                    .path(PATH_PREFIX)
                    .request(MediaType.APPLICATION_JSON)
-                   .buildPut(Entity.json(new UserSettings("org3", "projXYZ")))
+                   .buildPut(Entity.json(new UserSettings("org13", "projXYZ")))
                    .invoke();
 
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org13");
       assertThat(userSettings.getDefaultProject()).isEqualTo("projXYZ");
    }
+
+   @Test
+   public void organizationDoesntExistTest() throws Exception {
+      organizationFacade.createOrganization(new Organization("org21", "Organization"));
+      organizationFacade.setOrganizationCode("org21");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org21", "proj1"));
+
+      Response response = ClientBuilder.newBuilder().build()
+                                      .target(TARGET_URI)
+                                      .path(PATH_PREFIX)
+                                      .request(MediaType.APPLICATION_JSON)
+                                      .buildPut(Entity.json(new UserSettings("org23", "projXYZ")))
+                                      .invoke();
+
+      assertThat(response.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
+   }
+
+   @Test
+   public void projectDoesntExistTest() throws Exception{
+      organizationFacade.createOrganization(new Organization("org31", "Organization"));
+      organizationFacade.setOrganizationCode("org31");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org31", "proj1"));
+
+      Response response = ClientBuilder.newBuilder().build()
+                                       .target(TARGET_URI)
+                                       .path(PATH_PREFIX)
+                                       .request(MediaType.APPLICATION_JSON)
+                                       .buildPut(Entity.json(new UserSettings("org31", "projXYZ")))
+                                       .invoke();
+
+      assertThat(response.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
+
+   }
+
 
 }

@@ -26,6 +26,10 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.UserSettings;
+import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.api.exception.OrganizationDoesntExistException;
+import io.lumeer.engine.api.exception.ProjectDoesntExistException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -79,24 +83,24 @@ public class UserSettingsFacade implements Serializable {
     *
     * @param userSettings
     *       Dto object for user settings.
+    * @throws DbException
+    *       When organization or project doesn't exist.
     **/
-   public void upsertUserSettings(UserSettings userSettings) {
-      DataDocument dataDocument = new DataDocument();
-      if (userSettings.getDefaultOrganization() != null) {
-         String organizationId = organizationFacade.getOrganizationId(userSettings.getDefaultOrganization());
-         if (organizationId == null) {
-            return;
-         }
-         dataDocument.append(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION, organizationId);
-         if (userSettings.getDefaultProject() != null) {
-            dataDocument.append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, projectFacade.getProjectId(organizationId, userSettings.getDefaultProject()));
-         } else {
-            dataDocument.append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, null);
-         }
-      } else {
+   public void upsertUserSettings(UserSettings userSettings) throws DbException {
+      if (userSettings.getDefaultOrganization() == null || userSettings.getDefaultProject() == null) {
          return;
       }
-      dataDocument.append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail());
+      String organizationId = organizationFacade.getOrganizationId(userSettings.getDefaultOrganization());
+      if (organizationId == null) {
+         throw new OrganizationDoesntExistException(ErrorMessageBuilder.organizationDoesntExist(userSettings.getDefaultOrganization()));
+      }
+      String projectId = projectFacade.getProjectId(organizationId, userSettings.getDefaultProject());
+      if (projectId == null) {
+         throw new ProjectDoesntExistException(ErrorMessageBuilder.projectDoesntExist(userSettings.getDefaultOrganization(), userSettings.getDefaultProject()));
+      }
+      DataDocument dataDocument = new DataDocument(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION, organizationId)
+            .append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, projectId)
+            .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail());
       dataStorage.updateDocument(LumeerConst.UserSettings.COLLECTION_NAME, dataDocument, userFilter(userFacade.getUserEmail()));
    }
 
