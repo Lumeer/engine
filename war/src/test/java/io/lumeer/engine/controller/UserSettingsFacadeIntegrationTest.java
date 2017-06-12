@@ -30,8 +30,7 @@ import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.dto.UserSettings;
-import io.lumeer.engine.api.exception.OrganizationDoesntExistException;
-import io.lumeer.engine.api.exception.ProjectDoesntExistException;
+import io.lumeer.engine.api.exception.InvalidValueException;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -129,7 +128,7 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(new Project("proj1", "Project"));
       userSettingsFacade.upsertUserSettings(new UserSettings("org31", "proj1"));
 
-      assertThatThrownBy(() -> userSettingsFacade.upsertUserSettings(new UserSettings("org32", "proj1"))).isInstanceOf(OrganizationDoesntExistException.class);
+      assertThatThrownBy(() -> userSettingsFacade.upsertUserSettings(new UserSettings("org32", "proj1"))).isInstanceOf(InvalidValueException.class);
    }
 
    @Test
@@ -139,7 +138,7 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(new Project("proj1", "Project"));
       userSettingsFacade.upsertUserSettings(new UserSettings("org41", "proj1"));
 
-      assertThatThrownBy(() -> userSettingsFacade.upsertUserSettings(new UserSettings("org41", "proj9"))).isInstanceOf(ProjectDoesntExistException.class);
+      assertThatThrownBy(() -> userSettingsFacade.upsertUserSettings(new UserSettings("org41", "proj9"))).isInstanceOf(InvalidValueException.class);
    }
 
 }

@@ -27,12 +27,10 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.UserSettings;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.OrganizationDoesntExistException;
-import io.lumeer.engine.api.exception.ProjectDoesntExistException;
+import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.Objects;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -92,11 +90,13 @@ public class UserSettingsFacade implements Serializable {
       }
       String organizationId = organizationFacade.getOrganizationId(userSettings.getDefaultOrganization());
       if (organizationId == null) {
-         throw new OrganizationDoesntExistException(ErrorMessageBuilder.organizationDoesntExist(userSettings.getDefaultOrganization()));
+         // TODO add another exception by new principle
+         throw new InvalidValueException(ErrorMessageBuilder.organizationDoesntExist(userSettings.getDefaultOrganization()));
       }
       String projectId = projectFacade.getProjectId(organizationId, userSettings.getDefaultProject());
       if (projectId == null) {
-         throw new ProjectDoesntExistException(ErrorMessageBuilder.projectDoesntExist(userSettings.getDefaultOrganization(), userSettings.getDefaultProject()));
+         // TODO add another exception by new principle
+         throw new InvalidValueException(ErrorMessageBuilder.projectDoesntExist(userSettings.getDefaultOrganization(), userSettings.getDefaultProject()));
       }
       DataDocument dataDocument = new DataDocument(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION, organizationId)
             .append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, projectId)
