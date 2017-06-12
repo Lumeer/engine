@@ -20,13 +20,17 @@
 package io.lumeer.engine.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Organization;
+import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.dto.UserSettings;
+import io.lumeer.engine.api.exception.InvalidValueException;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -52,18 +56,27 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
    private UserSettingsFacade userSettingsFacade;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private UserFacade userFacade;
 
    @Before
    public void setUp() throws Exception {
       systemDataStorage.dropManyDocuments(LumeerConst.UserSettings.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+      systemDataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
    }
 
    @Test
    public void readUserSettingsTest() throws Exception {
-      systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings("org1", "proj1").toDataDocument()
-                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
+      organizationFacade.createOrganization(new Organization("org1", "Organization"));
+      organizationFacade.setOrganizationCode("org1");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org1", "proj1"));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
       assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
@@ -72,34 +85,60 @@ public class UserSettingsFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void upsertUserSettingsTest() throws Exception {
-      systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings("org1", "proj1").toDataDocument()
-                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
+      organizationFacade.createOrganization(new Organization("org11", "Organization"));
+      organizationFacade.createOrganization(new Organization("org13", "Organization"));
+      organizationFacade.setOrganizationCode("org11");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      organizationFacade.setOrganizationCode("org13");
+      projectFacade.createProject(new Project("projXYZ", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org11", "proj1"));
 
       UserSettings userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org1");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org11");
       assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
-      userSettingsFacade.upsertUserSettings(new UserSettings("org3", null));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org13", null));
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
+      // same values because of bad upsert request
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org11");
       assertThat(userSettings.getDefaultProject()).isEqualTo("proj1");
 
-      userSettingsFacade.upsertUserSettings(new UserSettings(null, "projXYZ"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org13", "projXYZ"));
       userSettings = userSettingsFacade.readUserSettings();
-      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org3");
+      assertThat(userSettings.getDefaultOrganization()).isEqualTo("org13");
       assertThat(userSettings.getDefaultProject()).isEqualTo("projXYZ");
    }
 
    @Test
    public void removeUserSettingsTest() throws Exception {
-      systemDataStorage.createDocument(LumeerConst.UserSettings.COLLECTION_NAME,
-            new UserSettings("org1", "proj1").toDataDocument()
-                                             .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail()));
+      organizationFacade.createOrganization(new Organization("org21", "Organization"));
+      organizationFacade.setOrganizationCode("org21");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org21", "proj1"));
 
-      assertThat(userSettingsFacade.readUserSettings()).isNotNull();
+      assertThat(userSettingsFacade.readUserSettings().getDefaultOrganization()).isNotNull();
       userSettingsFacade.removeUserSettings();
-      assertThat(userSettingsFacade.readUserSettings()).isNull();
+      assertThat(userSettingsFacade.readUserSettings().getDefaultOrganization()).isNull();
+   }
+
+   @Test
+   public void organizationDoesntExistTest() throws Exception{
+      organizationFacade.createOrganization(new Organization("org31", "Organization"));
+      organizationFacade.setOrganizationCode("org31");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org31", "proj1"));
+
+      assertThatThrownBy(() -> userSettingsFacade.upsertUserSettings(new UserSettings("org32", "proj1"))).isInstanceOf(InvalidValueException.class);
+   }
+
+   @Test
+   public void projectDoesntExistTest() throws Exception{
+      organizationFacade.createOrganization(new Organization("org41", "Organization"));
+      organizationFacade.setOrganizationCode("org41");
+      projectFacade.createProject(new Project("proj1", "Project"));
+      userSettingsFacade.upsertUserSettings(new UserSettings("org41", "proj1"));
+
+      assertThatThrownBy(() -> userSettingsFacade.upsertUserSettings(new UserSettings("org41", "proj9"))).isInstanceOf(InvalidValueException.class);
    }
 
 }

@@ -26,9 +26,11 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.UserSettings;
+import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.api.exception.InvalidValueException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.Objects;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -46,6 +48,12 @@ public class UserSettingsFacade implements Serializable {
    private DataStorageDialect dataStorageDialect;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private UserFacade userFacade;
 
    /**
@@ -55,7 +63,17 @@ public class UserSettingsFacade implements Serializable {
     **/
    public UserSettings readUserSettings() {
       DataDocument dataDocument = dataStorage.readDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(userFacade.getUserEmail()));
-      return dataDocument != null ? new UserSettings(dataDocument) : null;
+      if (dataDocument == null) {
+         return new UserSettings();
+      }
+
+      String organizationId = dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION);
+      String organizationCode = organizationId != null ? organizationFacade.getOrganizationCode(organizationId) : null;
+
+      String projectId = dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT);
+      String projectCode = organizationId != null && projectId != null ? projectFacade.getProjectCode(organizationId, projectId) : null;
+
+      return new UserSettings(organizationCode, projectCode);
    }
 
    /**
@@ -63,17 +81,31 @@ public class UserSettingsFacade implements Serializable {
     *
     * @param userSettings
     *       Dto object for user settings.
+    * @throws DbException
+    *       When organization or project doesn't exist.
     **/
-   public void upsertUserSettings(UserSettings userSettings) {
-      DataDocument dataDocument = userSettings.toDataDocument();
-      dataDocument.values().removeIf(Objects::isNull);
-      dataDocument.append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail());
+   public void upsertUserSettings(UserSettings userSettings) throws DbException {
+      if (userSettings.getDefaultOrganization() == null || userSettings.getDefaultProject() == null) {
+         return;
+      }
+      String organizationId = organizationFacade.getOrganizationId(userSettings.getDefaultOrganization());
+      if (organizationId == null) {
+         // TODO add another exception by new principle
+         throw new InvalidValueException(ErrorMessageBuilder.organizationDoesntExist(userSettings.getDefaultOrganization()));
+      }
+      String projectId = projectFacade.getProjectId(organizationId, userSettings.getDefaultProject());
+      if (projectId == null) {
+         // TODO add another exception by new principle
+         throw new InvalidValueException(ErrorMessageBuilder.projectDoesntExist(userSettings.getDefaultOrganization(), userSettings.getDefaultProject()));
+      }
+      DataDocument dataDocument = new DataDocument(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION, organizationId)
+            .append(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT, projectId)
+            .append(LumeerConst.UserSettings.ATTR_USER, userFacade.getUserEmail());
       dataStorage.updateDocument(LumeerConst.UserSettings.COLLECTION_NAME, dataDocument, userFilter(userFacade.getUserEmail()));
    }
 
    /**
     * Removes user and settings.
-    *
     **/
    public void removeUserSettings() {
       dataStorage.dropDocument(LumeerConst.UserSettings.COLLECTION_NAME, userFilter(userFacade.getUserEmail()));

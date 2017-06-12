@@ -36,6 +36,10 @@ public class UserSettings {
    private final String defaultOrganization;
    private final String defaultProject;
 
+   public UserSettings() {
+      this(null, null);
+   }
+
    public UserSettings(final DataDocument dataDocument) {
       this(dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_ORGANIZATION),
             dataDocument.getString(LumeerConst.UserSettings.ATTR_DEFAULT_PROJECT));

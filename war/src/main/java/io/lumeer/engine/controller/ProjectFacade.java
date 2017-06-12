@@ -69,6 +69,34 @@ public class ProjectFacade {
       return document != null ? document.getString(LumeerConst.Project.ATTR_PROJECT_ID) : null;
    }
 
+   /**
+    * Gets unique and immutable id of the project - _id from DataDocument
+    *
+    * @param organizationId
+    *       Organization identificator
+    * @param projectCode
+    *       project code
+    * @return id
+    */
+   public String getProjectId(final String organizationId, final String projectCode) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Project.COLLECTION_NAME, projectCodeFilter(organizationId, projectCode), Collections.singletonList(LumeerConst.Project.ATTR_PROJECT_ID));
+      return document != null ? document.getString(LumeerConst.Project.ATTR_PROJECT_ID) : null;
+   }
+
+   /**
+    * Gets unique project code
+    *
+    * @param organizationId
+    *       Organization identificator
+    * @param projectId
+    *       Project identificator.
+    * @return Project code
+    */
+   public String getProjectCode(final String organizationId, final String projectId) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Project.COLLECTION_NAME, projectIdFilter(organizationId, projectId), Collections.singletonList(LumeerConst.Project.ATTR_PROJECT_CODE));
+      return document != null ? document.getString(LumeerConst.Project.ATTR_PROJECT_CODE) : null;
+   }
+
    public String getCurrentProjectId() {
       return projectId;
    }
@@ -115,7 +143,7 @@ public class ProjectFacade {
     */
    public String createProject(final Project project) {
       DataDocument dataDocument = project.toDataDocument()
-            .append(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
+                                         .append(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       String id = dataStorage.createDocument(LumeerConst.Project.COLLECTION_NAME, dataDocument);
       databaseInitializer.onProjectCreated(id);
       return id;
@@ -238,6 +266,20 @@ public class ProjectFacade {
       filter.put(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       filter.put(LumeerConst.Project.ATTR_PROJECT_CODE, projectCode);
       return dataStorageDialect.multipleFieldsValueFilter(filter);
+   }
+
+   private DataFilter projectCodeFilter(String organiationId, String projectCode) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.Project.ATTR_ORGANIZATION_ID, organiationId);
+      filter.put(LumeerConst.Project.ATTR_PROJECT_CODE, projectCode);
+      return dataStorageDialect.multipleFieldsValueFilter(filter);
+   }
+
+   private DataFilter projectIdFilter(String organizationId, String projectId) {
+      return dataStorageDialect.combineFilters(
+            dataStorageDialect.fieldValueFilter(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationId),
+            dataStorageDialect.documentIdFilter(projectId)
+      );
    }
 
    private DataFilter organizationIdFilter(final String organizationId) {
