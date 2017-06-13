@@ -27,6 +27,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
@@ -36,7 +37,6 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import com.mongodb.util.JSON;
 import org.jboss.arquillian.junit.Arquillian;

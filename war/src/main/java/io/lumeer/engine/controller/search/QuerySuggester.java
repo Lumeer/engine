@@ -25,13 +25,13 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Attribute;
+import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.ViewFacade;
-import io.lumeer.engine.rest.dao.Attribute;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,7 +113,7 @@ public class QuerySuggester {
 
       try {
          CollectionMetadata collectionMetadata = collectionMetadataFacade.getCollectionMetadata(collectionMetadataFacade.getInternalCollectionName(collectionName));
-         return collectionMetadata.getAttributes().values().stream()
+         return collectionMetadata.getAttributes().stream()
                                   .filter(attribute -> attribute.getName().toLowerCase().contains(attributePart.toLowerCase()))
                                   .map(attribute -> convertAttribute(collectionName, attribute))
                                   .collect(Collectors.toList()); // TODO do not ignore child attributes

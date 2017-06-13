@@ -24,6 +24,7 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
@@ -39,7 +40,6 @@ import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;

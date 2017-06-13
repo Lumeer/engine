@@ -27,13 +27,13 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.ViewMetadata;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -141,9 +141,8 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       response.close();
       client.close();
 
-      // #2 The given view has already existed in the database. It returs Bad Request status code.
+      // #2 The given view has already existed in the database. It returns Bad Request status code.
       final Client client2 = ClientBuilder.newBuilder().build();
-      view.setId(responseViewId);
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(view, MediaType.APPLICATION_JSON)).invoke();
       assertThat(response2.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
       response2.close();
