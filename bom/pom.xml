@@ -98,6 +98,8 @@
       <version.netty>4.1.6.Final</version.netty>
       <version.mongo.driver>3.4.2</version.mongo.driver>
       <version.keycloak>2.4.0.Final</version.keycloak>
+      <version.jcommander>1.72</version.jcommander>
+      <version.json.simple>1.1.1</version.json.simple>
 
       <version.maven.plugin.api>3.3.9</version.maven.plugin.api>
       <version.maven.core>3.3.9</version.maven.core>
@@ -145,6 +147,18 @@
             <groupId>io.lumeer</groupId>
             <artifactId>engine-war</artifactId>
             <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>${version.jcommander}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>${version.json.simple}</version>
          </dependency>
 
          <!-- Logging -->

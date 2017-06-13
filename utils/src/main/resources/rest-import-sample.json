@@ -1,0 +1,26 @@
+{
+  "path": "/this/is/appended_to_the_base_url",
+  "method": "PUT",
+  "headers": {
+    "additional": "header - there is no need to specify Accept and Content-Type, both are application/json by default, when content is string, they are application/xml"
+  },
+  "content": {
+    "some": "json"
+  },
+  "content_xml": "<tag>this would handled as xml, when content only has a string value",
+  "content_array": [
+    {
+      "all": "requests in an array are sent separately"
+    }
+  ],
+  "content_array_xml": [
+    "<tag>first xml</tag>", "<tag>second xml - all these are send separately as xml</tag>"
+  ],
+  "content_array_as_array": [
+    [
+      {
+        "this_request": "is sent like a real array, because it contains an array as an element of the array"
+      }
+    ]
+  ]
+}

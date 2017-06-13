@@ -104,6 +104,7 @@
       <module>war</module>
       <module>mongodb-storage</module>
       <module>simple-cache</module>
+      <module>utils</module>
    </modules>
    <dependencyManagement>
       <dependencies>
