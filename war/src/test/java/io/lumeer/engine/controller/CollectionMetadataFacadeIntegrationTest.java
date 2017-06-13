@@ -28,12 +28,12 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.Attribute;
+import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.provider.DataStorageProvider;
-import io.lumeer.engine.rest.dao.Attribute;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -249,10 +249,12 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
       collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
-      collectionMetadataFacade.dropAttribute(collection, nestedAttribute);
+      // collectionMetadataFacade.dropAttribute(collection, nestedAttribute);
+      collectionMetadataFacade.dropAttribute(collection, name);
 
       assertThat(collectionMetadataFacade.getAttributeInfo(collection, nestedAttribute)).isNull();
-      assertThat(collectionMetadataFacade.getAttributeInfo(collection, name)).isNotNull(); // parent is not changed
+      assertThat(collectionMetadataFacade.getAttributeInfo(collection, name)).isNull();
+      // assertThat(collectionMetadataFacade.getAttributeInfo(collection, name)).isNotNull(); // parent is not changed
 
    }
 

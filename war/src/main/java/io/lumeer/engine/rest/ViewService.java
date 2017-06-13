@@ -20,6 +20,7 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.dto.ViewMetadata;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.controller.OrganizationFacade;
@@ -28,7 +29,6 @@ import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

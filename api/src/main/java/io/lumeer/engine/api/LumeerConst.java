@@ -141,7 +141,6 @@ public final class LumeerConst {
       public static final String ATTRIBUTE_FULL_NAME_KEY = "full-name";
       public static final String ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
       public static final String ATTRIBUTE_COUNT_KEY = "count";
-      public static final String ATTRIBUTE_LEVEL_KEY = "level";
 
       public static final String LAST_TIME_USED_KEY = "last";
       public static final String RECENTLY_USED_DOCUMENTS_KEY = "recently";

@@ -27,6 +27,8 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Attribute;
+import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
@@ -34,8 +36,6 @@ import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.rest.dao.AccessRightsDao;
-import io.lumeer.engine.rest.dao.Attribute;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
@@ -202,7 +202,7 @@ public class CollectionMetadataFacade implements Serializable {
       DataDocument collectionMetadata = new DataDocument()
             .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName)
             .append(LumeerConst.Collection.INTERNAL_NAME_KEY, internalCollectionName)
-            .append(LumeerConst.Collection.ATTRIBUTES_KEY, new DataDocument())
+            .append(LumeerConst.Collection.ATTRIBUTES_KEY, new ArrayList<>())
             .append(LumeerConst.Collection.LAST_TIME_USED_KEY, new Date())
             .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())
             .append(LumeerConst.Collection.CREATE_DATE_KEY, new Date())
@@ -356,8 +356,7 @@ public class CollectionMetadataFacade implements Serializable {
                      .append(LumeerConst.Collection.ATTRIBUTE_FULL_NAME_KEY, attributeName)
                      .append(LumeerConst.Collection.ATTRIBUTE_NAME_KEY, dividedName.get(dividedName.size() - 1))
                      .append(LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
-                     .append(LumeerConst.Collection.ATTRIBUTE_COUNT_KEY, 1)
-                     .append(LumeerConst.Collection.ATTRIBUTE_LEVEL_KEY, dividedName.size()));
+                     .append(LumeerConst.Collection.ATTRIBUTE_COUNT_KEY, 1));
       }
    }
 
