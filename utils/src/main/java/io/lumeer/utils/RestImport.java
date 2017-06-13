@@ -24,6 +24,7 @@ import io.lumeer.utils.rest.RestRequest;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -64,11 +65,15 @@ public class RestImport {
    @Parameter(names = { "--help" }, help = true, description = "Prints out help")
    private boolean help;
 
+   @Parameter(names = { "-v", "--verbose" }, description = "Enables verbose output")
+   private boolean verbose;
+
    private List<JsonResource> includes = new ArrayList<>();
 
    public static void main(final String[] args) throws Exception {
       final RestImport restImport = new RestImport();
-      final JCommander jCommander = new JCommander(restImport, args);
+      final JCommander jCommander = new JCommander(restImport);
+      jCommander.parse(args);
 
       if (restImport.baseUrl == null || restImport.rootDirs.isEmpty() || restImport.help) {
          jCommander.usage();
@@ -135,15 +140,40 @@ public class RestImport {
       final String path = (String) command.get("path");
       final String method = (String) command.get("method");
       final JSONObject commandHeaders = (JSONObject) command.get("headers");
+      final Object content = command.get("content");
+      RestRequest request = null;
 
-      System.out.print(method + " " + path + ": ");
+      if (content instanceof JSONObject) {
+         request = RestRequest.json(baseUrl, path, method, prepareHeaders(commandHeaders), (JSONObject) content);
+      } else if (content instanceof String) {
+         request = RestRequest.xml(baseUrl, path, method, prepareHeaders(commandHeaders), (String) content);
+      } else if (content instanceof JSONArray) {
+         final JSONArray array = (JSONArray) content;
+         array.forEach(o -> {
+            if (o instanceof JSONObject) {
+               final RestRequest r = RestRequest.json(baseUrl, path, method, prepareHeaders(commandHeaders), (JSONObject) o);
+               r.invoke();
+               r.finalizeResponse(verbose);
+            } else if (o instanceof String) {
+               final RestRequest r = RestRequest.xml(baseUrl, path, method, prepareHeaders(commandHeaders), (String) o);
+               r.invoke();
+               r.finalizeResponse(verbose);
+            } else {
+               System.err.println("Unknown content: " + o.toString());
+            }
+         });
+      } else if (content == null) {
+         request = RestRequest.simple(baseUrl, path, method, prepareHeaders(commandHeaders));
+      } else {
+         System.err.println("Unknown content: " + content.toString());
+         return;
+      }
 
-      final RestRequest request = RestRequest.json(baseUrl, path, method, prepareHeaders(commandHeaders), null);
-      final Response response = request.invoke();
-
-      System.out.println(response.getStatus() + " " + response.getStatusInfo().getReasonPhrase());
-
-      response.close();
+      if (request != null) {
+         System.out.print(method + " " + path + ": ");
+         request.invoke();
+         request.finalizeResponse(verbose);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -159,4 +189,5 @@ public class RestImport {
 
       return result;
    }
+
 }

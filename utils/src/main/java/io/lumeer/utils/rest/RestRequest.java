@@ -23,6 +23,7 @@ import org.json.simple.JSONObject;
 
 import java.util.List;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -41,17 +42,53 @@ public class RestRequest {
    }
 
    public static RestRequest json(String url, String path, String method, MultivaluedMap<String, Object> headers, JSONObject content) {
+      System.out.print(method + " " + path + ": ");
+
       return new RestRequest(ClientBuilder.newClient()
             .target(url)
             .path(path)
             .request(MediaType.APPLICATION_JSON_TYPE)
             .accept(MediaType.APPLICATION_JSON_TYPE)
             .headers(headers)
-            .build(method));
+            .build(method, Entity.json(content)));
+   }
+
+   public static RestRequest xml(String url, String path, String method, MultivaluedMap<String, Object> headers, String content) {
+      System.out.print(method + " " + path + ": ");
+
+      return new RestRequest(ClientBuilder.newClient()
+                                          .target(url)
+                                          .path(path)
+                                          .request(MediaType.APPLICATION_JSON_TYPE)
+                                          .accept(MediaType.APPLICATION_JSON_TYPE)
+                                          .headers(headers)
+                                          .build(method, Entity.xml(content)));
+   }
+
+   public static RestRequest simple(String url, String path, String method, MultivaluedMap<String, Object> headers) {
+      System.out.print(method + " " + path + ": ");
+
+      return new RestRequest(ClientBuilder.newClient()
+                                          .target(url)
+                                          .path(path)
+                                          .request(MediaType.APPLICATION_JSON_TYPE)
+                                          .accept(MediaType.APPLICATION_JSON_TYPE)
+                                          .headers(headers)
+                                          .build(method));
    }
 
    public Response invoke() {
       this.response = invocation.invoke();
       return response;
+   }
+
+   public void finalizeResponse(final boolean verbose) {
+      System.out.println(response.getStatus() + " " + response.getStatusInfo().getReasonPhrase());
+
+      if (verbose) {
+         System.out.println(response.getEntity().toString());
+      }
+
+      response.close();
    }
 }
