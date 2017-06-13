@@ -111,12 +111,19 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       // #2 There is one newly created view.
       final String INITIAL_VIEW_NAME = "initialViewName";
 
-      viewFacade.createView(INITIAL_VIEW_NAME, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
-      List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
+      int viewId = viewFacade.createView(INITIAL_VIEW_NAME, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
 
       final Client client2 = ClientBuilder.newBuilder().build();
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
       List<ViewMetadata> viewsByService = response2.readEntity(new GenericType<List<ViewMetadata>>() {
+      });
+      // there is no READ role set for the current user
+      assertThat(viewsByService).isEmpty();
+      addReadRole(viewId);
+
+      List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
+      response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      viewsByService = response2.readEntity(new GenericType<List<ViewMetadata>>() {
       });
       assertThat(viewsByService).isEqualTo(viewsByFacade);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -140,8 +147,6 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(view, MediaType.APPLICATION_JSON)).invoke();
       List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
       int responseViewId = response.readEntity(Integer.class);
-
-      addManageRole(responseViewId);
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(viewsByFacade).hasSize(1);
@@ -189,7 +194,6 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
 
       // inserting the given view to database
       int viewIdByFacade = viewFacade.createView(viewName, viewType, null, viewConf);
-      addManageRole(viewIdByFacade);
 
       // #1 read view configuration
       final Client client = ClientBuilder.newBuilder().build();
@@ -243,6 +247,10 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
 
    private void addManageRole(int view) {
       securityFacade.addViewUserRole(projectFacade.getCurrentProjectCode(), view, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+   }
+
+   private void addReadRole(int view) {
+      securityFacade.addViewUserRole(projectFacade.getCurrentProjectCode(), view, userFacade.getUserEmail(), LumeerConst.Security.ROLE_READ);
    }
 
    private ViewMetadata createViewMetadata(int viewId, String viewName, String viewType) {

@@ -131,14 +131,22 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    public void testGetAllCollections() throws Exception {
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_1);
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_2);
-      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_1);
-      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_2);
+      String c1 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_1);
+      String c2 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_2);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
+      // response is empty because of missing READ rights
       ArrayList<String> collections = response.readEntity(ArrayList.class);
-      assertThat(collections).isEqualTo(new ArrayList<>(collectionFacade.getAllCollections().values()));
+      assertThat(collections).isEmpty();
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+
+      addReadRole(c1);
+      addReadRole(c2);
+      response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      collections = response.readEntity(ArrayList.class);
+      assertThat(collections).containsOnly(COLLECTION_GET_ALL_COLLECTIONS_1, COLLECTION_GET_ALL_COLLECTIONS_2);
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
       response.close();
@@ -178,19 +186,14 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       response.close();
       client.close();
 
-      final Client client2 = ClientBuilder.newBuilder().build();
-      Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(response2.readEntity(List.class)).contains(COLLECTION_CREATE_COLLECTION);
-      response2.close();
-      client2.close();
+      assertThat(collectionFacade.getAllCollections().values()).contains(COLLECTION_CREATE_COLLECTION);
 
       // #2 collection already exists, status code = 400
-      final Client client3 = ClientBuilder.newBuilder().build();
-      Response response3 = client3.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_CREATE_COLLECTION).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      assertThat(response3.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
-      response3.close();
-      client3.close();
+      final Client client2 = ClientBuilder.newBuilder().build();
+      Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_CREATE_COLLECTION).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
+      response2.close();
+      client2.close();
    }
 
    @Test
@@ -337,6 +340,8 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       String attributeName = "metaAttribute";
       DataDocument value = new DataDocument("columnSize", 100);
       String collection = collectionFacade.createCollection(COLLECTION_ADD_COLLECTION_METADATA);
+      addWriteRole(collection);
+
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
       CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(collection);
       DataDocument readMetaDoc = metadata.getCustomMetadata().getDataDocument(attributeName);
@@ -492,5 +497,9 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    private void addWriteRole(String collection) {
       securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+   }
+
+   private void addReadRole(String collection) {
+      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_READ);
    }
 }

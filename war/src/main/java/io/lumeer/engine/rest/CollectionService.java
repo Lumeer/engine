@@ -44,7 +44,9 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -120,7 +122,13 @@ public class CollectionService implements Serializable {
    @GET
    @Path("/")
    public List<String> getAllCollections() {
-      return new ArrayList<>(collectionFacade.getAllCollections().values());
+      List<String> collections = new ArrayList<>();
+      String projectId = projectFacade.getCurrentProjectId();
+      collections.addAll(collectionFacade.getAllCollections().entrySet().stream()
+                                         .filter(c -> securityFacade.hasCollectionRole(projectId, c.getKey(),
+                                               LumeerConst.Security.ROLE_READ)).map(Map.Entry::getValue)
+                                         .collect(Collectors.toList()));
+      return collections;
    }
 
    /**
@@ -131,7 +139,8 @@ public class CollectionService implements Serializable {
     * @return name of internal collection
     * @throws UserCollectionAlreadyExistsException
     *       When collection with given user name already exists.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @POST
    @Path("/{name}")
@@ -296,10 +305,15 @@ public class CollectionService implements Serializable {
       if (collectionName == null || attributeName == null) {
          throw new BadRequestException();
       }
-      // TODO: What about access rights?
+
+      String internalName = getInternalName(collectionName);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       DataDocument metadataDocument = new DataDocument(attributeName, metadata);
-      collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument);
+      collectionMetadataFacade.setCustomMetadata(internalName, metadataDocument);
    }
 
    /**
@@ -333,7 +347,8 @@ public class CollectionService implements Serializable {
     *       value of the given meta attribute
     * @throws UnauthorizedAccessException
     *       When current user is not allowed to write to the collection.
-    * @throws UserCollectionNotFoundException When the given collection does not exist.
+    * @throws UserCollectionNotFoundException
+    *       When the given collection does not exist.
     */
    @PUT
    @Path("/{collectionName}/meta/{attributeName}")

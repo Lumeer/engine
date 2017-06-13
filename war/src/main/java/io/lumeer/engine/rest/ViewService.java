@@ -32,6 +32,7 @@ import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,10 +98,23 @@ public class ViewService {
    @Path("/")
    public List<ViewMetadata> getAllViews(final @QueryParam("typeName") String typeName) {
       if (typeName == null || typeName.isEmpty()) {
-         return viewFacade.getAllViews();
+         return filterViews(viewFacade.getAllViews());
       } else {
-         return viewFacade.getAllViewsOfType(typeName);
+         return filterViews(viewFacade.getAllViewsOfType(typeName));
       }
+   }
+
+   private List<ViewMetadata> filterViews(List<ViewMetadata> allViews) {
+      List<ViewMetadata> views = new ArrayList<>();
+      String projectId = projectFacade.getCurrentProjectId();
+
+      for (ViewMetadata v : allViews) {
+         if (securityFacade.hasViewRole(projectId, v.getId(), LumeerConst.Security.ROLE_READ)) {
+            views.add(v);
+         }
+      }
+
+      return views;
    }
 
    /**
