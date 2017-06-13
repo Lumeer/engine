@@ -134,15 +134,29 @@ public class RestImport {
    private void sendRestCommand(final JSONObject command) {
       final String path = (String) command.get("path");
       final String method = (String) command.get("method");
-      final JSONObject headers = (JSONObject) command.get("headers");
+      final JSONObject commandHeaders = (JSONObject) command.get("headers");
 
       System.out.print(method + " " + path + ": ");
 
-      final RestRequest request = RestRequest.json(baseUrl, path, method, this.headers, null);
+      final RestRequest request = RestRequest.json(baseUrl, path, method, prepareHeaders(commandHeaders), null);
       final Response response = request.invoke();
 
       System.out.println(response.getStatus() + " " + response.getStatusInfo().getReasonPhrase());
 
       response.close();
+   }
+
+   @SuppressWarnings("unchecked")
+   private MultivaluedMap<String, Object> prepareHeaders(final JSONObject commandHeaders) {
+      if (commandHeaders == null || commandHeaders.size() == 0) {
+         return headers;
+      }
+
+      final MultivaluedMap<String, Object> result = new MultivaluedHashMap<>(headers);
+      commandHeaders.forEach((k, v) -> {
+         result.add(k.toString(), v.toString());
+      });
+
+      return result;
    }
 }
