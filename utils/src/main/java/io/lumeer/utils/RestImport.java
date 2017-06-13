@@ -39,10 +39,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 
 /**
  * Imports JSON files through a REST API.
@@ -182,7 +180,8 @@ public class RestImport {
          return headers;
       }
 
-      final MultivaluedMap<String, Object> result = new MultivaluedHashMap<>(headers);
+      final MultivaluedMap<String, Object> result = new MultivaluedHashMap<>();
+      result.putAll(headers);
       commandHeaders.forEach((k, v) -> {
          result.add(k.toString(), v.toString());
       });
