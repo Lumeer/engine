@@ -74,7 +74,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<DbException> {
 
       // 401 - UNAUTHORIZED
       if (e instanceof UnauthorizedAccessException) {
-         return Response.status(Response.Status.NOT_FOUND).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
+         return Response.status(Response.Status.UNAUTHORIZED).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 404 - NOT FOUND
