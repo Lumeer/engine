@@ -20,12 +20,12 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
-import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
@@ -37,7 +37,6 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
-import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -136,6 +135,10 @@ public class DocumentService implements Serializable {
       final String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
 
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, document);
 
       return documentFacade.createDocument(internalCollectionName, convertedDocument);
@@ -159,7 +162,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentFacade.dropDocument(internalCollectionName, documentId);
    }
@@ -188,7 +194,6 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       return collectionMetadataFacade.decodeAttributeValues(internalCollectionName, documentFacade.readDocument(internalCollectionName, documentId));
    }
@@ -216,7 +221,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, updatedDocument.getId());
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, updatedDocument);
 
@@ -246,7 +254,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, replaceDocument.getId());
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, replaceDocument);
 
@@ -276,7 +287,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentMetadataFacade.putDocumentMetadata(internalCollectionName, documentId, attributeName, value);
    }
@@ -301,7 +315,6 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       return documentMetadataFacade.readDocumentMetadata(internalCollectionName, documentId);
    }
@@ -327,7 +340,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentMetadataFacade.updateDocumentMetadata(getInternalName(collectionName), documentId, metadata);
    }
@@ -356,7 +372,6 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       final List<DataDocument> docs = versionFacade.getDocumentVersions(getInternalName(collectionName), documentId);
       final List<DataDocument> convertedDocs = new ArrayList<>();
@@ -388,7 +403,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentFacade.revertDocument(internalCollectionName, documentId, version);
    }
@@ -413,7 +431,10 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForWrite(internalCollectionName, documentId);
+
+      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
 
       documentFacade.dropAttribute(internalCollectionName, documentId, attributeName);
    }
@@ -437,71 +458,8 @@ public class DocumentService implements Serializable {
       }
       String internalCollectionName = getInternalName(collectionName);
       checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
 
       return documentFacade.getDocumentAttributes(collectionName, documentId);
-   }
-
-  /* @GET
-   @Path("/{documentId}/rights")
-   @Produces(MediaType.APPLICATION_JSON)
-   public HashMap readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DocumentNotFoundException, CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
-      if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
-      }
-      return securityFacade.readRightsMap(getInternalName(collectionName), documentId);
-   }*/
-
-   /**
-    * Gets access rights for all users of the given document.
-    *
-    * @param collectionName
-    *       name of the collection
-    * @param documentId
-    *       id of the given document
-    * @return list of access rights of the given collection
-    * @throws DbException
-    *       When there is an error working with the data storage.
-    */
-   @GET
-   @Path("/{documentId}/rights")
-   @Produces(MediaType.APPLICATION_JSON)
-   public List<AccessRightsDao> readAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
-      if (collectionName == null || documentId == null) {
-         throw new BadRequestException();
-      }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
-      checkDocumentForRead(internalCollectionName, documentId);
-
-      return securityFacade.getDaoList(getInternalName(collectionName), documentId);
-   }
-
-   /**
-    * Updates access rights of the given document for currently logged user.
-    *
-    * @param collectionName
-    *       name of the collection
-    * @param documentId
-    *       id of the given document
-    * @param accessRights
-    *       new access rights of the logged user
-    * @throws DbException
-    *       When there is an error working with the database.
-    */
-   @PUT
-   @Path("/{documentId}/rights")
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void updateAccessRights(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final AccessRightsDao accessRights) throws DbException {
-      if (collectionName == null || documentId == null || accessRights == null) {
-         throw new BadRequestException();
-      }
-
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
-      checkDocumentForAddRights(internalCollectionName, documentId);
-
-      securityFacade.setDao(internalCollectionName, documentId, accessRights);
    }
 
    /**
@@ -522,23 +480,4 @@ public class DocumentService implements Serializable {
          throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
       }
    }
-
-   private void checkDocumentForWrite(final String collectionName, final String documentId) throws UnauthorizedAccessException, DocumentNotFoundException {
-      if (!securityFacade.checkForWrite(collectionName, documentId, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkDocumentForRead(final String collectionName, final String documentId) throws DocumentNotFoundException, UnauthorizedAccessException {
-      if (!securityFacade.checkForRead(collectionName, documentId, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
-   private void checkDocumentForAddRights(final String collectionName, final String documentId) throws DocumentNotFoundException, UnauthorizedAccessException {
-      if (!securityFacade.checkForAddRights(collectionName, documentId, userFacade.getUserEmail())) {
-         throw new UnauthorizedAccessException();
-      }
-   }
-
 }

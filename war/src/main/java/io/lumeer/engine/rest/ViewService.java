@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
@@ -27,11 +28,11 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.ViewFacade;
-import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,8 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @Path("/{organisation}/{project}/views/")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
 public class ViewService {
 
@@ -93,13 +96,25 @@ public class ViewService {
     */
    @GET
    @Path("/")
-   @Produces(MediaType.APPLICATION_JSON)
    public List<ViewMetadata> getAllViews(final @QueryParam("typeName") String typeName) {
       if (typeName == null || typeName.isEmpty()) {
-         return viewFacade.getAllViews();
+         return filterViews(viewFacade.getAllViews());
       } else {
-         return viewFacade.getAllViewsOfType(typeName);
+         return filterViews(viewFacade.getAllViewsOfType(typeName));
       }
+   }
+
+   private List<ViewMetadata> filterViews(List<ViewMetadata> allViews) {
+      List<ViewMetadata> views = new ArrayList<>();
+      String projectId = projectFacade.getCurrentProjectId();
+
+      for (ViewMetadata v : allViews) {
+         if (securityFacade.hasViewRole(projectId, v.getId(), LumeerConst.Security.ROLE_READ)) {
+            views.add(v);
+         }
+      }
+
+      return views;
    }
 
    /**
@@ -113,8 +128,6 @@ public class ViewService {
     */
    @POST
    @Path("/")
-   @Consumes(MediaType.APPLICATION_JSON)
-   @Produces(MediaType.APPLICATION_JSON)
    public int createView(final ViewMetadata view) throws ViewAlreadyExistsException {
       return viewFacade.createView(view.getName(), view.getType(), view.getDescription(), view.getConfiguration());
    }
@@ -131,9 +144,8 @@ public class ViewService {
     */
    @PUT
    @Path("/")
-   @Consumes(MediaType.APPLICATION_JSON)
    public void updateView(final ViewMetadata view) throws UnauthorizedAccessException, ViewAlreadyExistsException {
-      if (!viewFacade.checkViewForWrite(view.getId(), getCurrentUser())) {
+      if (!securityFacade.hasViewRole(projectCode, view.getId(), LumeerConst.Security.ROLE_MANAGE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -160,12 +172,10 @@ public class ViewService {
     */
    @PUT
    @Path("/{id}/configure/{attribute}")
-   @Consumes(MediaType.APPLICATION_JSON)
    public void updateViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute, final String configuration) throws UnauthorizedAccessException {
-      if (!viewFacade.checkViewForWrite(id, getCurrentUser())) {
+      if (!securityFacade.hasViewRole(projectCode, id, LumeerConst.Security.ROLE_MANAGE)) {
          throw new UnauthorizedAccessException();
       }
-
       try {
          Map<String, Object> configurationData = new ObjectMapper().readValue(configuration, HashMap.class);
          DataDocument configurationDocument = new DataDocument(configurationData);
@@ -188,12 +198,7 @@ public class ViewService {
     */
    @GET
    @Path("/{id}/configure/{attribute}")
-   @Produces(MediaType.APPLICATION_JSON)
    public Object readViewConfiguration(final @PathParam("id") int id, final @PathParam("attribute") String attribute) throws UnauthorizedAccessException {
-      if (!viewFacade.checkViewForRead(id, getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
       return viewFacade.getViewConfigurationAttribute(id, attribute);
    }
 
@@ -212,78 +217,7 @@ public class ViewService {
     */
    @POST
    @Path("/{id}/clone/{newName}")
-   @Produces(MediaType.APPLICATION_JSON)
-   @Consumes(MediaType.APPLICATION_JSON)
    public int cloneView(final @PathParam("id") int id, final @PathParam("newName") String newName) throws UnauthorizedAccessException, ViewAlreadyExistsException {
-      if (!viewFacade.checkViewForRead(id, getCurrentUser())) {
-         throw new UnauthorizedAccessException();
-      }
-
       return viewFacade.copyView(id, newName);
-   }
-
-   /**
-    * Gets view access rights.
-    *
-    * @param id
-    *       The view id.
-    * @return The access rights.
-    */
-   @GET
-   @Path("/{id}/rights")
-   @Produces(MediaType.APPLICATION_JSON)
-   public AccessRightsDao getViewAccessRights(final @PathParam("id") int id) {
-      DataDocument metadata = viewFacade.getViewMetadataDocument(id);
-      String user = getCurrentUser();
-      return new AccessRightsDao(
-            securityFacade.checkForRead(metadata, user),
-            securityFacade.checkForWrite(metadata, user),
-            securityFacade.checkForExecute(metadata, user),
-            user);
-   }
-
-   /**
-    * Sets view access rights.
-    *
-    * @param id
-    *       The view id.
-    * @param accessRights
-    *       The rights to set.
-    * @throws UnauthorizedAccessException
-    *       when current user is not allowed to set rights for the view
-    */
-   @PUT
-   @Path("/{id}/rights")
-   @Consumes(MediaType.APPLICATION_JSON)
-   public void setViewAccessRights(final @PathParam("id") int id, final AccessRightsDao accessRights) throws UnauthorizedAccessException {
-      final DataDocument view = viewFacade.getViewMetadataDocument(id);
-
-      if (securityFacade.checkForAddRights(view, getCurrentUser())) {
-         if (accessRights.isRead()) {
-            securityFacade.setRightsRead(view, accessRights.getUserName());
-         } else {
-            securityFacade.removeRightsRead(view, accessRights.getUserName());
-         }
-
-         if (accessRights.isWrite()) {
-            securityFacade.setRightsWrite(view, accessRights.getUserName());
-         } else {
-            securityFacade.removeRightsWrite(view, accessRights.getUserName());
-         }
-
-         if (accessRights.isExecute()) {
-            securityFacade.setRightsExecute(view, accessRights.getUserName());
-         } else {
-            securityFacade.removeRightsExecute(view, accessRights.getUserName());
-         }
-
-         viewFacade.updateViewAccessRights(view);
-      } else {
-         throw new UnauthorizedAccessException("Cannot set user rights on this view.");
-      }
-   }
-
-   private String getCurrentUser() {
-      return userFacade.getUserEmail();
    }
 }

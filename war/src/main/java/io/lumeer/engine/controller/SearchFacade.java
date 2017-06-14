@@ -117,10 +117,6 @@ public class SearchFacade implements Serializable {
       } catch (CollectionNotFoundException e) {
          throw new InvalidQueryException("Search asks for collections that are not available: ", e);
       }
-
-      final DataDocument readRightsFilter = securityFacade.getReadRightsQueryFilter();
-      readRightsFilter.putAll(query.getFilters());
-      internalQuery.setFilters(readRightsFilter);
       internalQuery.setProjections(query.getProjections());
       internalQuery.setSorting(query.getSorting());
 

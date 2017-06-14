@@ -22,13 +22,18 @@ package io.lumeer.engine.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.batch.SplitBatch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
+import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,6 +62,21 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
+
+   @Before
+   public void init() {
+      // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
+      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectId());
+   }
+
    @Test
    public void testSplitBatch() throws Exception {
       long t = System.currentTimeMillis();
@@ -80,10 +100,13 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       System.out.println(i++ + " " + (System.currentTimeMillis() - t));
       t = System.currentTimeMillis();
 
+      // we create and drop some collections in the test, so we need to set up user roles to do that
+      securityFacade.addProjectUserRole(projectFacade.getCurrentProjectCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+
       response = client.target(TARGET_URI)
                        .path(buildPathPrefix() + "collections/" + COLLECTION_NAME)
-                       .request(MediaType.APPLICATION_JSON_TYPE)
-                       .buildPost(Entity.text(""))
+                       .request()
+                       .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
                        .invoke();
       status = response.getStatus();
       response.close();

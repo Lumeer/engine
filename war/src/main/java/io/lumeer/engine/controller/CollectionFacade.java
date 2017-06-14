@@ -95,6 +95,12 @@ public class CollectionFacade implements Serializable {
    @Inject
    private Event<DropCollection> dropCollectionEvent;
 
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
+   @Inject
+   private SecurityFacade securityFacade;
+
    // cache of collections - keys are internal names, values are original names
    private Map<String, String> collections;
 
@@ -113,7 +119,8 @@ public class CollectionFacade implements Serializable {
    /**
     * Returns a Map object of collection names for given project.
     *
-    * @param projectCode project code
+    * @param projectCode
+    *       project code
     * @return the map of collection names. Keys are internal names, values are original names.
     */
    public Map<String, String> getAllCollections(String projectCode) {
@@ -172,6 +179,10 @@ public class CollectionFacade implements Serializable {
       dataStorage.createCollection(internalCollectionName);
       collectionMetadataFacade.createInitialMetadata(internalCollectionName, collectionOriginalName);
 
+      String project = projectFacade.getCurrentProjectCode();
+      databaseInitializer.onCollectionCreated(project, internalCollectionName);
+      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+
       createCollectionEvent.fire(new CreateCollection(collectionOriginalName, internalCollectionName));
 
       return internalCollectionName;
@@ -191,6 +202,7 @@ public class CollectionFacade implements Serializable {
       }
       linkingFacade.dropLinksForCollection(collectionName, null, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.dropLinksForCollection(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
+      securityFacade.dropCollectionSecurity(projectFacade.getCurrentProjectCode(), collectionName);
       dropCollectionMetadata(collectionName);
       dataStorage.dropCollection(collectionName);
       versionFacade.trashShadowCollection(collectionName);
@@ -234,10 +246,8 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     * @throws AttributeNotFoundException
     *       if attribute was not found in metadata collection
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public Set<String> getAttributeValues(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public Set<String> getAttributeValues(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
          if (collectionMetadataFacade.getAttributesNames(collectionName).contains(attributeName)) {
             return dataStorage.getAttributeValues(collectionName, attributeName);
@@ -258,10 +268,8 @@ public class CollectionFacade implements Serializable {
     *       name of the attribute to remove
     * @throws CollectionNotFoundException
     *       if collection was not found in database
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
+   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException {
       if (dataStorage.hasCollection(collectionName)) {
          collectionMetadataFacade.dropAttribute(collectionName, attributeName);
          List<DataDocument> documents = getAllDocuments(collectionName);
@@ -289,10 +297,8 @@ public class CollectionFacade implements Serializable {
     *       if collection was not found in database
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException, CollectionMetadataDocumentNotFoundException {
+   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
       if (dataStorage.hasCollection(collectionName)) {
          collectionMetadataFacade.renameAttribute(collectionName, origName, newName);
          dataStorage.renameAttribute(collectionName, origName, newName);

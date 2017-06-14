@@ -30,12 +30,12 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
+import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.rest.dao.AccessRightsDao;
 import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import com.mongodb.util.JSON;
@@ -55,7 +55,6 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -84,8 +83,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    private static final String COLLECTION_UPDATE_COLLECTION_METADATA = "CollectionServiceCollectionUpdateCollectionMetadata";
    private static final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionServiceCollectionReadCollectionAttributes";
    private static final String COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT = "CollectionServiceCollectionSetReadAndDropAttributeConstraint";
-   private static final String COLLECTION_READ_ACCESS_RIGHTS = "CollectionServiceCollectionReadAccessRights";
-   private static final String COLLECTION_UPDATE_ACCESS_RIGHTS = "CollectionServiceCollectionuUpdateAccessRights";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -115,8 +112,13 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
    @Before
    public void init() {
+      // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
+      databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectId());
       PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/collections/";
    }
 
@@ -129,14 +131,22 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    public void testGetAllCollections() throws Exception {
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_1);
       setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_2);
-      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_1);
-      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_2);
+      String c1 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_1);
+      String c2 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_2);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
+      // response is empty because of missing READ rights
       ArrayList<String> collections = response.readEntity(ArrayList.class);
-      assertThat(collections).isEqualTo(new ArrayList<String>(collectionFacade.getAllCollections().values()));
+      assertThat(collections).isEmpty();
+      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+
+      addReadRole(c1);
+      addReadRole(c2);
+      response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      collections = response.readEntity(ArrayList.class);
+      assertThat(collections).containsOnly(COLLECTION_GET_ALL_COLLECTIONS_1, COLLECTION_GET_ALL_COLLECTIONS_2);
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
       response.close();
@@ -164,6 +174,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateCollection() throws Exception {
+      securityFacade.addProjectUserRole(projectFacade.getCurrentProjectCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
       setUpCollections(COLLECTION_CREATE_COLLECTION);
 
       // #1 first time collection creation, status code = 200
@@ -175,19 +186,14 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       response.close();
       client.close();
 
-      final Client client2 = ClientBuilder.newBuilder().build();
-      Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(response2.readEntity(List.class)).contains(COLLECTION_CREATE_COLLECTION);
-      response2.close();
-      client2.close();
+      assertThat(collectionFacade.getAllCollections().values()).contains(COLLECTION_CREATE_COLLECTION);
 
       // #2 collection already exists, status code = 400
-      final Client client3 = ClientBuilder.newBuilder().build();
-      Response response3 = client3.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_CREATE_COLLECTION).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      assertThat(response3.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
-      response3.close();
-      client3.close();
+      final Client client2 = ClientBuilder.newBuilder().build();
+      Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_CREATE_COLLECTION).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
+      response2.close();
+      client2.close();
    }
 
    @Test
@@ -240,6 +246,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
       // #2 the given collection and attribute exists, ready to rename the attribute, status code = 204
       String collection = collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
+      addWriteRole(collection);
       collectionMetadataFacade.addOrIncrementAttribute(collection, oldAttributeName);
 
       final Client client2 = ClientBuilder.newBuilder().build();
@@ -267,6 +274,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
       // #2 the given collection and attribute exists, ready to drop the attribute, status code = 204
       String collection = collectionFacade.createCollection(COLLECTION_DROP_ATTRIBUTE);
+      addWriteRole(collection);
       collectionMetadataFacade.addOrIncrementAttribute(collection, attributeName);
       final Client client2 = ClientBuilder.newBuilder().build();
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_DROP_ATTRIBUTE + "/attributes/" + attributeName).request().buildDelete().invoke();
@@ -332,6 +340,8 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       String attributeName = "metaAttribute";
       DataDocument value = new DataDocument("columnSize", 100);
       String collection = collectionFacade.createCollection(COLLECTION_ADD_COLLECTION_METADATA);
+      addWriteRole(collection);
+
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_ADD_COLLECTION_METADATA + "/meta/" + attributeName).request(MediaType.APPLICATION_JSON).buildPost(Entity.entity(value, MediaType.APPLICATION_JSON)).invoke();
       CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(collection);
       DataDocument readMetaDoc = metadata.getCustomMetadata().getDataDocument(attributeName);
@@ -426,46 +436,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testReadAccessRights() throws Exception {
-      setUpCollections(COLLECTION_READ_ACCESS_RIGHTS);
-      final Client client = ClientBuilder.newBuilder().build();
-      final String user = userFacade.getUserEmail();
-      final AccessRightsDao DEFAULT_ACCESS_RIGHT = new AccessRightsDao(true, true, true, user);
-
-      collectionFacade.createCollection(COLLECTION_READ_ACCESS_RIGHTS);
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_READ_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      List<AccessRightsDao> rights = response.readEntity(new GenericType<List<AccessRightsDao>>() {
-      });
-      AccessRightsDao readRights = rights.get(0);
-      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(readRights.isWrite()).isEqualTo(DEFAULT_ACCESS_RIGHT.isWrite());
-      assertThat(readRights.isRead()).isEqualTo(DEFAULT_ACCESS_RIGHT.isRead());
-      assertThat(readRights.isExecute()).isEqualTo(DEFAULT_ACCESS_RIGHT.isExecute());
-      assertThat(readRights.getUserName()).isEqualTo(DEFAULT_ACCESS_RIGHT.getUserName());
-      response.close();
-      client.close();
-   }
-
-   @Test
-   public void testUpdateAccessRights() throws Exception {
-      setUpCollections(COLLECTION_UPDATE_ACCESS_RIGHTS);
-      final Client client = ClientBuilder.newBuilder().build();
-      final String user = userFacade.getUserEmail();
-      final AccessRightsDao accessRights = new AccessRightsDao(true, true, false, user);
-
-      String collection = collectionFacade.createCollection(COLLECTION_UPDATE_ACCESS_RIGHTS);
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + COLLECTION_UPDATE_ACCESS_RIGHTS + "/rights").request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(accessRights, MediaType.APPLICATION_JSON)).invoke();
-      DataDocument metadata = collectionMetadataFacade.getCollectionMetadataDocument(collection);
-      AccessRightsDao readAccessRights = securityFacade.getDao(collectionMetadataFacade.metadataCollection(), metadata.getId(), user);
-      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      assertThat(readAccessRights.isWrite()).isTrue();
-      assertThat(readAccessRights.isRead()).isTrue();
-      assertThat(readAccessRights.isExecute()).isFalse();
-      response.close();
-      client.close();
-   }
-
-   @Test
    public void testSetReadAndDropAttributeConstraint() throws Exception {
       setUpCollections(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
 
@@ -474,6 +444,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       final String attributeName = "dummyAttributeName";
 
       String collection = collectionFacade.createCollection(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
+      addWriteRole(collection);
       collectionMetadataFacade.addOrIncrementAttribute(collection, attributeName);
 
       // set attribute constraint
@@ -498,14 +469,16 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private void createDummyEntries(final String collectionName) throws DbException, InvalidConstraintException {
+      String internalName = getInternalName(collectionName);
       for (int i = 0; i < 10; i++) {
-         documentFacade.createDocument(getInternalName(collectionName), new DataDocument("dummyAttribute", i));
+         documentFacade.createDocument(internalName, new DataDocument("dummyAttribute", i));
       }
    }
 
    private void setUpCollections(final String collectionName) throws DbException {
-      if (dataStorage.hasCollection(getInternalName(collectionName))) {
-         collectionFacade.dropCollection(getInternalName(collectionName));
+      String internalName = getInternalName(collectionName);
+      if (dataStorage.hasCollection(internalName)) {
+         collectionFacade.dropCollection(internalName);
       }
    }
 
@@ -520,5 +493,13 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    private String percentEncode(final String rawQuery) throws UnsupportedEncodingException {
       return URLEncoder.encode(rawQuery, "UTF-8").replaceAll("\\+", "%20");
+   }
+
+   private void addWriteRole(String collection) {
+      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+   }
+
+   private void addReadRole(String collection) {
+      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_READ);
    }
 }

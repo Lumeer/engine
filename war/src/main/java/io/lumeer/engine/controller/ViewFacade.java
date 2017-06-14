@@ -61,6 +61,9 @@ public class ViewFacade implements Serializable {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private DatabaseInitializer databaseInitializer;
+
    /**
     * Creates initial metadata for the view
     *
@@ -98,12 +101,11 @@ public class ViewFacade implements Serializable {
             .append(LumeerConst.View.TYPE_KEY, viewType)
             .append(LumeerConst.View.CONFIGURATION_KEY, configuration != null ? configuration : new DataDocument());
 
-      // create user has complete access
-      securityFacade.setRightsRead(metadataDocument, createUser);
-      securityFacade.setRightsWrite(metadataDocument, createUser);
-      securityFacade.setRightsExecute(metadataDocument, createUser);
-
       dataStorage.createDocument(metadataCollection(), metadataDocument);
+
+      String project = projectFacade.getCurrentProjectCode();
+      databaseInitializer.onViewCreated(project, viewId);
+      securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_MANAGE);
 
       return viewId;
    }
@@ -126,6 +128,7 @@ public class ViewFacade implements Serializable {
             originalView.getType(),
             originalView.getDescription(),
             originalView.getConfiguration());
+      // TODO: also copy access rights
    }
 
    /**
@@ -278,7 +281,7 @@ public class ViewFacade implements Serializable {
    public List<ViewMetadata> getAllViews(String projectId) {
       List<DataDocument> views = dataStorage.search(
             metadataCollection(projectId), null, null, 0, 0);
-      return createListOfViews(filterViewsForUser(views)); // TODO: filter in query
+      return createListOfViews(views);
    }
 
    /**
@@ -294,22 +297,7 @@ public class ViewFacade implements Serializable {
             dataStorageDialect.fieldValueFilter(LumeerConst.View.TYPE_KEY, type),
             null, 0, 0);
 
-      return createListOfViews(filterViewsForUser(views)); // TODO: filter in query
-   }
-
-   /**
-    * Filters out only views that can be read by current user
-    *
-    * @param views
-    *       list of all views
-    * @return filtered list of views
-    */
-   private List<DataDocument> filterViewsForUser(List<DataDocument> views) {
-      final String user = getCurrentUser();
-
-      return views.stream()
-                  .filter(view -> checkViewForRead(view.getInteger(LumeerConst.View.ID_KEY), user))
-                  .collect(Collectors.toList());
+      return createListOfViews(views);
    }
 
    // creates list of ViewMetadata objects from list of DataDocuments
@@ -319,28 +307,6 @@ public class ViewFacade implements Serializable {
 
    private boolean checkIfViewNameExists(String viewName) {
       return dataStorage.collectionHasDocument(metadataCollection(), dataStorageDialect.fieldValueFilter(LumeerConst.View.NAME_KEY, viewName));
-   }
-
-   /**
-    * Updates access rights of a view.
-    *
-    * @param viewDocument
-    *       The view document with updated rights.
-    */
-   public void updateViewAccessRights(final DataDocument viewDocument) {
-      setViewMetadataValue(viewDocument.getInteger(LumeerConst.View.ID_KEY), LumeerConst.Document.USER_RIGHTS, viewDocument.getDataDocument(LumeerConst.Document.USER_RIGHTS));
-   }
-
-   public boolean checkViewForRead(int viewId, String user) {
-      return securityFacade.checkForRead(getViewMetadataDocument(viewId), user);
-   }
-
-   public boolean checkViewForWrite(int viewId, String user) {
-      return securityFacade.checkForWrite(getViewMetadataDocument(viewId), user);
-   }
-
-   public boolean checkViewForAccessChange(int viewId, String user) {
-      return securityFacade.checkForExecute(getViewMetadataDocument(viewId), user);
    }
 
    private Object getViewMetadataValue(int viewId, String key) {

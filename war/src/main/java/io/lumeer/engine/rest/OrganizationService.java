@@ -19,8 +19,11 @@
  */
 package io.lumeer.engine.rest;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.OrganizationFacade;
+import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
@@ -51,6 +54,9 @@ public class OrganizationService implements Serializable {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
 
    /**
     * @return list of organizations
@@ -127,13 +133,19 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param newOrganizationName
     *       organization name
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/name/{newOrganizationName}")
-   public void renameOrganization(final @PathParam("organizationCode") String organizationCode, final @PathParam("newOrganizationName") String newOrganizationName) {
+   public void renameOrganization(final @PathParam("organizationCode") String organizationCode, final @PathParam("newOrganizationName") String newOrganizationName) throws UnauthorizedAccessException {
       if (organizationCode == null || newOrganizationName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       organizationFacade.renameOrganization(organizationCode, newOrganizationName);
    }
 
@@ -142,13 +154,19 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param newCode
     *       new organization code
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/code/{newCode}")
-   public void updateOrganizationCode(final @PathParam("organizationCode") String organizationCode, final @PathParam("newCode") String newCode) {
+   public void updateOrganizationCode(final @PathParam("organizationCode") String organizationCode, final @PathParam("newCode") String newCode) throws UnauthorizedAccessException {
       if (organizationCode == null || newCode == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       organizationFacade.updateOrganizationCode(organizationCode, newCode);
    }
 
@@ -191,14 +209,20 @@ public class OrganizationService implements Serializable {
     *       name of metadata attribute
     * @param value
     *       value of metadata attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) {
+   public void updateOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) throws UnauthorizedAccessException {
       if (organizationCode == null || attributeName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       DataDocument metaDocument = new DataDocument(attributeName, value);
       organizationFacade.updateOrganizationMetadata(organizationCode, metaDocument);
    }
@@ -208,13 +232,19 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param attributeName
     *       name of metadata attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/meta/{attributeName}")
-   public void dropOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+   public void dropOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException {
       if (organizationCode == null || attributeName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       organizationFacade.dropOrganizationMetadata(organizationCode, attributeName);
    }
 
@@ -259,14 +289,20 @@ public class OrganizationService implements Serializable {
     *       name of the attribute
     * @param value
     *       value of the attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/data/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) {
+   public void updateOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName, final String value) throws UnauthorizedAccessException {
       if (organizationCode == null || attributeName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       DataDocument infoDataDocument = new DataDocument(attributeName, value);
       organizationFacade.updateOrganizationInfoData(organizationCode, infoDataDocument);
    }
@@ -278,13 +314,19 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param attributeName
     *       name of the attribute
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/data/{attributeName}")
-   public void dropOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+   public void dropOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException {
       if (organizationCode == null || attributeName == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       organizationFacade.dropOrganizationInfoDataAttribute(organizationCode, attributeName);
    }
 
@@ -293,13 +335,19 @@ public class OrganizationService implements Serializable {
     *
     * @param organizationCode
     *       organization code
+    * @throws UnauthorizedAccessException when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/data")
-   public void resetOrganizationInfoData(final @PathParam("organizationCode") String organizationCode) {
+   public void resetOrganizationInfoData(final @PathParam("organizationCode") String organizationCode) throws UnauthorizedAccessException {
       if (organizationCode == null) {
          throw new BadRequestException();
       }
+
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
       organizationFacade.resetOrganizationInfoData(organizationCode);
    }
 

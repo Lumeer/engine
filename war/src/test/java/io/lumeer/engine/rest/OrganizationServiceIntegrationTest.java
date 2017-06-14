@@ -29,6 +29,8 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.controller.OrganizationFacade;
+import io.lumeer.engine.controller.SecurityFacade;
+import io.lumeer.engine.controller.UserFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -36,7 +38,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -56,6 +57,12 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
 
    @Inject
    @SystemDataStorage
@@ -397,5 +404,4 @@ public class OrganizationServiceIntegrationTest extends IntegrationTestBase {
             .invoke();
       assertThat(organizationFacade.readOrganizationInfoData(code)).isEmpty();
    }
-
 }

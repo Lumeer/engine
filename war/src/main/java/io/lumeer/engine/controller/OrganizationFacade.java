@@ -55,6 +55,12 @@ public class OrganizationFacade {
    @Inject
    private DatabaseInitializer databaseInitializer;
 
+   @Inject
+   private SecurityFacade securityFacade;
+
+   @Inject
+   private UserFacade userFacade;
+
    /**
     * Gets unique and immutable id of the organization - _id from DataDocument
     *
@@ -124,6 +130,8 @@ public class OrganizationFacade {
    public String createOrganization(final Organization organization) {
       String id = dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, organization.toDataDocument());
       databaseInitializer.onOrganizationCreated(id);
+      securityFacade.addOrganizationUserRole(organization.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+
       return id;
    }
 
