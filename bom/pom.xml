@@ -154,6 +154,12 @@
          </dependency>
 
          <dependency>
+            <groupId>io.lumeer</groupId>
+            <artifactId>engine-utils</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>${version.jcommander}</version>
