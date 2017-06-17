@@ -1,0 +1,14 @@
+{
+  "path": "/this/is/appended_to_the_base_url",
+  "method": "POST",
+  "headers": {
+    "additional": "header 6"
+  },
+  "content": [
+    [
+      {
+        "this_request": "is sent like a real array, because it contains an array as an element of the array"
+      }
+    ]
+  ]
+}

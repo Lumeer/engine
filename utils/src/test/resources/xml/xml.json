@@ -1,0 +1,8 @@
+{
+  "path": "/this/is/appended_to_the_base_url",
+  "method": "PUT",
+  "headers": {
+    "additional": "header 5"
+  },
+  "content": "<tag>some xml</tag>"
+}

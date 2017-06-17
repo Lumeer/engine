@@ -19,9 +19,12 @@
  */
 package io.lumeer.utils.rest;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -41,16 +44,24 @@ public class RestRequest {
       this.invocation = invocation;
    }
 
-   public static RestRequest json(String url, String path, String method, MultivaluedMap<String, Object> headers, JSONObject content) {
+   public static RestRequest json(final String url, final String path, final String method, final MultivaluedMap<String, Object> headers, final JSONObject content) {
+      return jsonAware(url, path, method, headers, content);
+   }
+
+   public static RestRequest jsonArray(final String url, final String path, final String method, final MultivaluedMap<String, Object> headers, final JSONArray content) {
+      return jsonAware(url, path, method, headers, content);
+   }
+
+   private static RestRequest jsonAware(final String url, final String path, final String method, final MultivaluedMap<String, Object> headers, final JSONAware content) {
       System.out.print(method + " " + path + ": ");
 
       return new RestRequest(ClientBuilder.newClient()
-            .target(url)
-            .path(path)
-            .request(MediaType.APPLICATION_JSON_TYPE)
-            .accept(MediaType.APPLICATION_JSON_TYPE)
-            .headers(headers)
-            .build(method, Entity.json(content)));
+                                          .target(url)
+                                          .path(path)
+                                          .request(MediaType.APPLICATION_JSON_TYPE)
+                                          .accept(MediaType.APPLICATION_JSON_TYPE)
+                                          .headers(headers)
+                                          .build(method, Entity.json(content.toJSONString())));
    }
 
    public static RestRequest xml(String url, String path, String method, MultivaluedMap<String, Object> headers, String content) {
@@ -86,7 +97,7 @@ public class RestRequest {
       System.out.println(response.getStatus() + " " + response.getStatusInfo().getReasonPhrase());
 
       if (verbose) {
-         System.out.println(response.getEntity().toString());
+         System.out.println(Optional.ofNullable(response.getEntity()).orElse("").toString());
       }
 
       response.close();

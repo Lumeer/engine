@@ -64,11 +64,11 @@ public class RestImport {
    private boolean help;
 
    @Parameter(names = { "-v", "--verbose" }, description = "Enables verbose output")
-   private boolean verbose;
+   private boolean verbose = false;
 
    private List<JsonResource> includes = new ArrayList<>();
 
-   public static void main(final String[] args) throws Exception {
+   public static void main(final String... args) throws Exception {
       final RestImport restImport = new RestImport();
       final JCommander jCommander = new JCommander(restImport);
       jCommander.parse(args);
@@ -152,6 +152,10 @@ public class RestImport {
                final RestRequest r = RestRequest.json(baseUrl, path, method, prepareHeaders(commandHeaders), (JSONObject) o);
                r.invoke();
                r.finalizeResponse(verbose);
+            } else if (o instanceof JSONArray) {
+               final RestRequest r = RestRequest.jsonArray(baseUrl, path, method, prepareHeaders(commandHeaders), (JSONArray) o);
+               r.invoke();
+               r.finalizeResponse(verbose);
             } else if (o instanceof String) {
                final RestRequest r = RestRequest.xml(baseUrl, path, method, prepareHeaders(commandHeaders), (String) o);
                r.invoke();
@@ -168,7 +172,6 @@ public class RestImport {
       }
 
       if (request != null) {
-         System.out.print(method + " " + path + ": ");
          request.invoke();
          request.finalizeResponse(verbose);
       }

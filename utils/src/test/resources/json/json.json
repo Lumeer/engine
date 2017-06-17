@@ -1,0 +1,10 @@
+{
+  "path": "/this/is/appended_to_the_base_url",
+  "method": "POST",
+  "headers": {
+    "additional": "header 3"
+  },
+  "content": {
+    "some": "json"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "path": "/this/is/appended_to_the_base_url",
+  "method": "PUT",
+  "headers": {
+    "additional": "header 1"
+  },
+  "content": [
+    {
+      "all": "requests in an array are sent separately"
+    },
+    {
+      "one": "another"
+    }
+  ]
+}
