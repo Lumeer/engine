@@ -517,24 +517,22 @@ public class ConfigurationFacade implements Serializable {
     * @return Config value of the given key
     */
    private Config getConfiguration(final String key) {
-      String organization = organizationFacade.getOrganizationId();
-      String project = projectFacade.getCurrentProjectId();
-
-      String configName = createConfigName(organization, project);
       Config projectConfig = getProjectConfiguration(key);
+      boolean projectRestricted = projectConfig != null && projectConfig.isRestricted();
       Config organizationConfig = getOrganizationConfiguration(key);
+      boolean organizationRestricted = organizationConfig != null && organizationConfig.isRestricted();
 
       Config userConfigProject = getUserConfiguration(ConfigurationLevel.USER_PROJECT, key);
-      if (userConfigProject != null && !projectConfig.isRestricted() && !organizationConfig.isRestricted()) {
+      if (userConfigProject != null && !projectRestricted && !organizationRestricted) {
          return userConfigProject;
       }
 
-      if (projectConfig != null && !organizationConfig.isRestricted()) {
+      if (projectConfig != null && !organizationRestricted) {
          return projectConfig;
       }
 
       Config userConfigOrganization = getUserConfiguration(ConfigurationLevel.USER_ORGANIZATION, key);
-      if (userConfigOrganization != null && !organizationConfig.isRestricted()) {
+      if (userConfigOrganization != null && !organizationRestricted) {
          return userConfigOrganization;
       }
 
