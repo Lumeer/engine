@@ -243,4 +243,15 @@ public final class LumeerConst {
       public static final String ATTR_GROUPS = "groups";
 
    }
+
+   public static class Configuration {
+
+      public static final String NAMEVALUE = "namevalue";
+      public static final String CONFIGS = "configs";
+      public static final String CONFIGS_CONFIG_KEY = "key";
+      public static final String CONFIGS_CONFIG_VALUE = "value";
+      public static final String CONFIGS_CONFIG_DESCRIPTION = "description";
+      public static final String CONFIGS_CONFIG_FLAG_RESTRICTED = "restricted";
+
+   }
 }

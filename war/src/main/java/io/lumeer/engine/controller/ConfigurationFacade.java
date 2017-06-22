@@ -22,14 +22,14 @@ package io.lumeer.engine.controller;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.engine.api.dto.Config;
 import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
 import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.util.Resources;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.enterprise.context.SessionScoped;
@@ -42,16 +42,14 @@ import javax.inject.Inject;
 public class ConfigurationFacade implements Serializable {
 
    public enum ConfigurationLevel {
-      USER, PROJECT, ORGANISATION
+      USER_GLOBAL, USER_PROJECT, USER_ORGANIZATION, PROJECT, ORGANIZATION
    }
 
    private static Logger log = Resources.produceLog(ConfigurationLevel.class.getName());
 
    protected static final String USER_CONFIG_COLLECTION = "_config_user";
    protected static final String PROJECT_CONFIG_COLLECTION = "_config_project";
-   protected static final String ORGANISATION_CONFIG_COLLECTION = "_config_organization";
-
-   protected static final String FLAG_RESTRICTED = "restricted";
+   protected static final String ORGANIZATION_CONFIG_COLLECTION = "_config_organization";
 
    @Inject
    private UserFacade userFacade;
@@ -146,34 +144,40 @@ public class ConfigurationFacade implements Serializable {
    /**
     * Returns an Optional String value of the given key for currently logged user configuration.
     *
+    * @param levelIn
+    *       specify type of parent resource
     * @param key
     *       the name of key
     * @return Optional String value of the given key
     */
-   public Optional<String> getUserConfigurationString(final String key) {
-      return createOptionalString(getUserConfiguration(key));
+   public Optional<String> getUserConfigurationString(final ConfigurationLevel levelIn, final String key) {
+      return createOptionalString(getUserConfiguration(levelIn, key));
    }
 
    /**
     * Returns an Optional Integer value of the given key for currently logged user's configuration.
     *
+    * @param levelIn
+    *       specify type of parent resource
     * @param key
     *       the name of key
     * @return Optional Integer value of the given key
     */
-   public Optional<Integer> getUserConfigurationInteger(final String key) {
-      return createOptionalInteger(getUserConfiguration(key));
+   public Optional<Integer> getUserConfigurationInteger(final ConfigurationLevel levelIn, final String key) {
+      return createOptionalInteger(getUserConfiguration(levelIn, key));
    }
 
    /**
     * Returns an Optional DataDocument value of the given key for currently logged user's configuration.
     *
+    * @param levelIn
+    *       specify type of parent resource
     * @param key
     *       the name of key
     * @return Optional DataDocument value of the given key
     */
-   public Optional<DataDocument> getUserConfigurationDocument(final String key) {
-      return createOptionalDataDocument(getUserConfiguration(key));
+   public Optional<DataDocument> getUserConfigurationDocument(final ConfigurationLevel levelIn, final String key) {
+      return createOptionalDataDocument(getUserConfiguration(levelIn, key));
    }
 
    /**
@@ -210,93 +214,196 @@ public class ConfigurationFacade implements Serializable {
    }
 
    /**
-    * Returns an Optional String value of the given key for currently logged organisation configuration.
+    * Returns an Optional String value of the given key for currently logged organization configuration.
     *
     * @param key
     *       the name of key
     * @return Optional String value of the given key
     */
-   public Optional<String> getOrganisationConfigurationString(final String key) {
+   public Optional<String> getOrganizationConfigurationString(final String key) {
       return createOptionalString(getOrganizationConfiguration(key));
    }
 
    /**
-    * Returns an Optional Integer value of the given key for currently logged organisation configuration.
+    * Returns an Optional Integer value of the given key for currently logged organization configuration.
     *
     * @param key
     *       the name of key
     * @return Optional Integer value of the given key
     */
-   public Optional<Integer> getOrganisationConfigurationInteger(final String key) {
+   public Optional<Integer> getOrganizationConfigurationInteger(final String key) {
       return createOptionalInteger(getOrganizationConfiguration(key));
    }
 
    /**
-    * Returns an Optional DataDocument value of the given key for currently logged organisation configuration.
+    * Returns an Optional DataDocument value of the given key for currently logged organization configuration.
     *
     * @param key
     *       the name of key
     * @return Optional DataDocument value of the given key
     */
-   public Optional<DataDocument> getOrganisationConfigurationDocument(final String key) {
+   public Optional<DataDocument> getOrganizationConfigurationDocument(final String key) {
       return createOptionalDataDocument(getOrganizationConfiguration(key));
+   }
+
+   /**
+    * Returns an Config value of the given key for user. It will return null, if the value of the given key does not exist.
+    *
+    * @param levelIn
+    *       specify type of parent resource
+    * @param key
+    *       the name of key
+    * @return Config value of the given key
+    */
+   public Config getUserConfiguration(final ConfigurationLevel levelIn, final String key) {
+      String configName = userConfigName(levelIn, organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId(), userFacade.getUserEmail());
+      return configurationManipulator.getConfiguration(USER_CONFIG_COLLECTION, configName, key);
+   }
+
+   /**
+    * Returns an List of user configurations at specified level
+    *
+    * @param levelIn
+    *       specify type of parent resource
+    * @return List of configurations
+    */
+   public List<Config> getUserConfigurations(final ConfigurationLevel levelIn) {
+      String configName = userConfigName(levelIn, organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId(), userFacade.getUserEmail());
+      return configurationManipulator.getConfigurations(USER_CONFIG_COLLECTION, configName);
+   }
+
+   /**
+    * Returns an Config value of the given key for project. It will return null, if the value of the given key does not exist.
+    *
+    * @param key
+    *       the name of key
+    * @return Config value of the given key
+    */
+   public Config getProjectConfiguration(final String key) {
+      String configName = createConfigName(organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId());
+      return configurationManipulator.getConfiguration(PROJECT_CONFIG_COLLECTION, configName, key);
+   }
+
+   /**
+    * Returns an List of project configurations
+    *
+    * @return List of configurations
+    */
+   public List<Config> getProjectConfigurations() {
+      String configName = createConfigName(organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId());
+      return configurationManipulator.getConfigurations(PROJECT_CONFIG_COLLECTION, configName);
+   }
+
+   /**
+    * Returns an Config value of the given key for organization. It will return null, if the value of the given key does not exist.
+    *
+    * @param key
+    *       the name of key
+    * @return Object value of the given key
+    */
+   public Config getOrganizationConfiguration(final String key) {
+      return configurationManipulator.getConfiguration(ORGANIZATION_CONFIG_COLLECTION, organizationFacade.getOrganizationId(), key);
+   }
+
+   /**
+    * Returns an List of organization configurations
+    *
+    * @return List of configurations
+    */
+   public List<Config> getOrganizationConfigurations() {
+      return configurationManipulator.getConfigurations(ORGANIZATION_CONFIG_COLLECTION, organizationFacade.getOrganizationId());
    }
 
    /**
     * Sets a new key-value to configuration entry for currently logged user. If the given key exists, its value will be updated.
     *
-    * @param key
-    *       the name of key
-    * @param value
-    *       the value for the given key
+    * @param levelIn
+    *       specify type of parent resource
+    * @param config
+    *       config object
     */
-   public void setUserConfiguration(final String key, final Object value) {
-      setConfiguration(ConfigurationLevel.USER, key, value, false);
+   public void setUserConfiguration(final ConfigurationLevel levelIn, final Config config) {
+      setConfiguration(levelIn, config);
+   }
+
+   /**
+    * Sets a new key-values for currently logged user.
+    *
+    * @param levelIn
+    *       specify type of parent resource
+    * @param configs
+    *       configuration objects
+    * @param reset
+    *       indicates whether reset configuration entries or not
+    */
+   public void setUserConfigurations(final ConfigurationLevel levelIn, final List<Config> configs, final boolean reset) {
+      setConfigurations(levelIn, configs, reset);
    }
 
    /**
     * Sets a new key-value to configuration entry for active project. If the given key exists, its value will be updated.
     *
-    * @param key
-    *       the name of key
-    * @param value
-    *       the value of the given key
-    * @param restricted
-    *       indicates if the value of the specified field can be overridden by lower level configuration
+    * @param config
+    *       config object
     */
-   public void setProjectConfiguration(final String key, final Object value, final boolean restricted) {
-      setConfiguration(ConfigurationLevel.PROJECT, key, value, restricted);
+   public void setProjectConfiguration(final Config config) {
+      setConfiguration(ConfigurationLevel.PROJECT, config);
    }
 
    /**
-    * Sets a new key-value to configuration entry for currently logged organisation. If the given key exists, its value will be updated.
+    * Sets a new key-values for currently logged user.
     *
-    * @param key
-    *       the name of key
-    * @param value
-    *       the value of the given key
-    * @param restricted
-    *       indicates if the value of the specified field can be overridden by lower level configuration
+    * @param configs
+    *       configuration objects
+    * @param reset
+    *       indicates whether reset configuration entries or not
     */
-   public void setOrganisationConfiguration(final String key, final Object value, final boolean restricted) {
-      setConfiguration(ConfigurationLevel.ORGANISATION, key, value, restricted);
+   public void setProjectConfigurations(final List<Config> configs, final boolean reset) {
+      setConfigurations(ConfigurationLevel.PROJECT, configs, reset);
+   }
+
+   /**
+    * Sets a new key-value to configuration entry for currently logged organization. If the given key exists, its value will be updated.
+    *
+    * @param config
+    *       config object
+    */
+   public void setOrganizationConfiguration(final Config config) {
+      setConfiguration(ConfigurationLevel.ORGANIZATION, config);
+   }
+
+   /**
+    * Sets a new key-values for currently logged user.
+    *
+    * @param configs
+    *       configuration objects
+    * @param reset
+    *       indicates whether reset configuration entries or not
+    */
+   public void setOrganizationConfigurations(final List<Config> configs, final boolean reset) {
+      setConfigurations(ConfigurationLevel.ORGANIZATION, configs, reset);
    }
 
    /**
     * Resets currently logged user configuration. The whole user configuration entry will not be deleted from the system collection, just the config field!
+    *
+    * @param levelIn
+    *       specify type of parent resource
     */
-   public void resetUserConfiguration() {
-      resetConfiguration(ConfigurationLevel.USER);
+   public void resetUserConfiguration(final ConfigurationLevel levelIn) {
+      resetConfiguration(levelIn);
    }
 
    /**
     * Removes the specified attribute located in user configuration entry.
     *
+    * @param levelIn
+    *       specify type of parent resource
     * @param attributeName
     *       the name of attribute to remove
     */
-   public void resetUserConfigurationAttribute(final String attributeName) {
-      resetConfigurationAttribute(ConfigurationLevel.USER, attributeName);
+   public void resetUserConfigurationAttribute(final ConfigurationLevel levelIn, final String attributeName) {
+      resetConfigurationAttribute(levelIn, attributeName);
    }
 
    /**
@@ -317,24 +424,24 @@ public class ConfigurationFacade implements Serializable {
    }
 
    /**
-    * Resets currently logged organisation configuration. The whole organisation configuration entry will not be deleted from the system collection, just the config field!
+    * Resets currently logged organization configuration. The whole organization configuration entry will not be deleted from the system collection, just the config field!
     */
-   public void resetOrganisationConfiguration() {
-      resetConfiguration(ConfigurationLevel.ORGANISATION);
+   public void resetOrganizationConfiguration() {
+      resetConfiguration(ConfigurationLevel.ORGANIZATION);
    }
 
    /**
-    * Removes the specified attribute located in organisation configuration entry.
+    * Removes the specified attribute located in organization configuration entry.
     *
     * @param attributeName
     *       the name of attribute to remove
     */
-   public void resetOrganisationConfigurationAttribute(final String attributeName) {
-      resetConfigurationAttribute(ConfigurationLevel.ORGANISATION, attributeName);
+   public void resetOrganizationConfigurationAttribute(final String attributeName) {
+      resetConfigurationAttribute(ConfigurationLevel.ORGANIZATION, attributeName);
    }
 
    /**
-    * Resets the configuration of specified group (user or organisation).
+    * Resets the configuration of specified group (user or organization).
     *
     * @param level
     *       configuration level
@@ -345,22 +452,29 @@ public class ConfigurationFacade implements Serializable {
       final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
-         case USER:
-            String userConfigName = createConfigName(organization, project, user);
-            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userConfigName);
+         case USER_GLOBAL:
+            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, user);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userOrgConfigName);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userProjConfigName);
             break;
          case PROJECT:
             String projectConfigName = createConfigName(organization, project);
             configurationManipulator.resetConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName);
             break;
-         case ORGANISATION:
-            configurationManipulator.resetConfiguration(ORGANISATION_CONFIG_COLLECTION, organization);
+         case ORGANIZATION:
+            configurationManipulator.resetConfiguration(ORGANIZATION_CONFIG_COLLECTION, organization);
             break;
       }
    }
 
    /**
-    * Resets the configuration attribute of specified group (user or organisation).
+    * Resets the configuration attribute of specified group (user or organization).
     *
     * @param level
     *       configuration level
@@ -373,86 +487,65 @@ public class ConfigurationFacade implements Serializable {
       final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
-         case USER:
-            String userConfigName = createConfigName(organization, project, user);
-            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userConfigName, attributeName);
+         case USER_GLOBAL:
+            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, user, attributeName);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userOrgConfigName, attributeName);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userProjConfigName, attributeName);
             break;
          case PROJECT:
             String projectConfigName = createConfigName(organization, project);
             configurationManipulator.resetConfigurationAttribute(PROJECT_CONFIG_COLLECTION, projectConfigName, attributeName);
             break;
-         case ORGANISATION:
-            configurationManipulator.resetConfigurationAttribute(ORGANISATION_CONFIG_COLLECTION, organization, attributeName);
+         case ORGANIZATION:
+            configurationManipulator.resetConfigurationAttribute(ORGANIZATION_CONFIG_COLLECTION, organization, attributeName);
             break;
       }
+
    }
 
    /**
-    * Returns an Object value of the given key for user. It will return null, if the value of the given key does not exist.
+    * Returns an Config value of the given key by priority (User, Organization, Project).
     *
     * @param key
     *       the name of key
-    * @return Object value of the given key
+    * @return Config value of the given key
     */
-   private Object getUserConfiguration(final String key) {
-      String configName = createConfigName(organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId(), userFacade.getUserEmail());
-      return configurationManipulator.getConfiguration(USER_CONFIG_COLLECTION, configName, key);
-   }
+   private Config getConfiguration(final String key) {
+      Config projectConfig = getProjectConfiguration(key);
+      boolean projectRestricted = projectConfig != null && projectConfig.isRestricted();
+      Config organizationConfig = getOrganizationConfiguration(key);
+      boolean organizationRestricted = organizationConfig != null && organizationConfig.isRestricted();
 
-   /**
-    * Returns an Object value of the given key for project. It will return null, if the value of the given key does not exist.
-    *
-    * @param key
-    *       the name of key
-    * @return Object value of the given key
-    */
-   private Object getProjectConfiguration(final String key) {
-      String configName = createConfigName(organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId());
-      return configurationManipulator.getConfiguration(PROJECT_CONFIG_COLLECTION, configName, key);
-   }
-
-   /**
-    * Returns an Object value of the given key for organisation. It will return null, if the value of the given key does not exist.
-    *
-    * @param key
-    *       the name of key
-    * @return Object value of the given key
-    */
-   private Object getOrganizationConfiguration(final String key) {
-      return configurationManipulator.getConfiguration(ORGANISATION_CONFIG_COLLECTION, organizationFacade.getOrganizationId(), key);
-   }
-
-   /**
-    * Returns an Object value of the given key. First, the method checks config.user collection, then config.organisation collection - returns first non-null value of the given key. Otherwise, it will return default value. If default value does not exist, the method will return null.
-    *
-    * @param key
-    *       the name of key
-    * @return Object value of the given key
-    */
-   private Object getConfiguration(final String key) {
-      String organization = organizationFacade.getOrganizationId();
-      String project = projectFacade.getCurrentProjectId();
-
-      String configName = createConfigName(organization, project);
-      boolean projectRestricted = configurationManipulator.hasConfigurationAttributeFlag(PROJECT_CONFIG_COLLECTION, configName, key, FLAG_RESTRICTED);
-      boolean organizationRestricted = configurationManipulator.hasConfigurationAttributeFlag(ORGANISATION_CONFIG_COLLECTION, organization, key, FLAG_RESTRICTED);
-
-      Object userConfig = getUserConfiguration(key);
-      if (userConfig != null && !projectRestricted && !organizationRestricted) {
-         return userConfig;
+      Config userConfigProject = getUserConfiguration(ConfigurationLevel.USER_PROJECT, key);
+      if (userConfigProject != null && !projectRestricted && !organizationRestricted) {
+         return userConfigProject;
       }
 
-      Object projectConfig = getProjectConfiguration(key);
       if (projectConfig != null && !organizationRestricted) {
          return projectConfig;
       }
 
-      Object organizationConfig = getOrganizationConfiguration(key);
+      Config userConfigOrganization = getUserConfiguration(ConfigurationLevel.USER_ORGANIZATION, key);
+      if (userConfigOrganization != null && !organizationRestricted) {
+         return userConfigOrganization;
+      }
+
       if (organizationConfig != null) {
          return organizationConfig;
       }
 
-      return defaultConfigurationProducer.get(key);
+      Config userConfigGlobal = getUserConfiguration(ConfigurationLevel.USER_GLOBAL, key);
+      if (userConfigGlobal != null) {
+         return userConfigGlobal;
+      }
+
+      return new Config(key, defaultConfigurationProducer.get(key));
    }
 
    /**
@@ -460,61 +553,106 @@ public class ConfigurationFacade implements Serializable {
     *
     * @param level
     *       configuration level
-    * @param key
-    *       the name of key
-    * @param value
-    *       the Object value of the given key
-    * @param restricted
-    *       indicates if the value of the specified field can be overridden by lower level configuration
+    * @param config
+    *       configuration object
     */
-   private void setConfiguration(final ConfigurationLevel level, final String key, final Object value, final boolean restricted) {
+   private void setConfiguration(final ConfigurationLevel level, final Config config) {
       final String user = userFacade.getUserEmail();
       final String organization = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
-      Set<String> flags = new HashSet<>();
-      if (restricted) {
-         flags.add(FLAG_RESTRICTED);
-      }
-
       switch (level) {
-         case USER:
-            String userConfigName = createConfigName(organization, project, user);
-            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userConfigName, key, value, flags);
+         case USER_GLOBAL:
+            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, user, config);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userOrgConfigName, config);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userProjConfigName, config);
             break;
          case PROJECT:
             String projectConfigName = createConfigName(organization, project);
-            configurationManipulator.setConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName, key, value, flags);
+            configurationManipulator.setConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName, config);
             break;
-         case ORGANISATION:
-            configurationManipulator.setConfiguration(ORGANISATION_CONFIG_COLLECTION, organization, key, value, flags);
+         case ORGANIZATION:
+            configurationManipulator.setConfiguration(ORGANIZATION_CONFIG_COLLECTION, organization, config);
             break;
       }
+
    }
 
-   private static String createConfigName(String organization, String project, String user) {
-      return organization + "/" + project + "/" + user;
+   private void setConfigurations(final ConfigurationLevel level, final List<Config> configs, final boolean reset) {
+      final String user = userFacade.getUserEmail();
+      final String organization = organizationFacade.getOrganizationId();
+      final String project = projectFacade.getCurrentProjectId();
+
+      switch (level) {
+         case USER_GLOBAL:
+            configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, user, configs, reset);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, userOrgConfigName, configs, reset);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, userProjConfigName, configs, reset);
+            break;
+         case PROJECT:
+            String projectConfigName = createConfigName(organization, project);
+            configurationManipulator.setConfigurations(PROJECT_CONFIG_COLLECTION, projectConfigName, configs, reset);
+            break;
+         case ORGANIZATION:
+            configurationManipulator.setConfigurations(ORGANIZATION_CONFIG_COLLECTION, organization, configs, reset);
+            break;
+      }
+
    }
 
-   private static String createConfigName(String organization, String project) {
-      return organization + "/" + project;
+   private String userConfigName(ConfigurationLevel level, String organization, String project, String user) {
+      String userConfigName;
+      switch (level) {
+         case USER_PROJECT:
+            userConfigName = createConfigName(organization, project, user);
+            break;
+         case USER_ORGANIZATION:
+            userConfigName = createConfigName(organization, user);
+            break;
+         default:
+            userConfigName = createConfigName(user);
+      }
+      return userConfigName;
    }
 
-   private static Optional<DataDocument> createOptionalDataDocument(Object value) {
-      return (value instanceof DataDocument) ? Optional.of((DataDocument) value) : Optional.empty();
+   private static String createConfigName(String... args) {
+      if (args.length == 0) {
+         return "";
+      }
+      String val = args[0];
+      for (int i = 1; i < args.length; i++) {
+         val += "/" + args[i];
+      }
+      return val;
    }
 
-   private static Optional<String> createOptionalString(Object value) {
-      return value != null ? Optional.of(value.toString()) : Optional.empty();
+   private static Optional<DataDocument> createOptionalDataDocument(Config config) {
+      return config != null && config.getValue() instanceof DataDocument ? Optional.of((DataDocument) config.getValue()) : Optional.empty();
    }
 
-   private static Optional<Integer> createOptionalInteger(Object value) {
-      if (value == null) {
+   private static Optional<String> createOptionalString(Config config) {
+      return config != null && config.getValue() != null ? Optional.of(config.getValue().toString()) : Optional.empty();
+   }
+
+   private static Optional<Integer> createOptionalInteger(Config config) {
+      if (config == null || config.getValue() == null) {
          return Optional.empty();
       }
 
       try {
-         return Optional.of(Integer.parseInt(value.toString()));
+         return Optional.of(Integer.parseInt(config.getValue().toString()));
       } catch (NumberFormatException ex) {
          log.log(Level.FINEST, "Cannot get integer configuration value", ex);
          return Optional.empty();

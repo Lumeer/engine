@@ -225,7 +225,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     *       the key
     * @return the value as a double, which may be null
     * @throws java.lang.ClassCastException
-    *       if the value is not an double
+    *       if the value is not an boolean
     * @throws java.lang.NullPointerException
     *       if key nested path is not valid
     */
@@ -242,7 +242,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     *       what to return if the value is null
     * @return the value as a double, which may be null
     * @throws java.lang.ClassCastException
-    *       if the value is not an double
+    *       if the value is not an boolean
     * @throws java.lang.NullPointerException
     *       if key nested path is not valid
     */
