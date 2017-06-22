@@ -23,49 +23,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.Config;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 @RunWith(Arquillian.class)
 public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase {
-
-   private final String COLLECTION_USER_SET_CONFIGURATION = "config.user_setConfiguration";
-   private final String COLLECTION_USER_GET_CONFIGURATION = "config.user_getConfiguration";
-   private final String COLLECTION_USER_RESET_CONFIGURATION = "config.user_resetConfiguration";
-   private final String COLLECTION_USER_RESET_CONFIGURATION_BY_KEY = "config.user_resetConfigurationAttribute";
-   private final String COLLECTION_TEAM_SET_CONFIGURATION = "config.team_setConfiguration";
-   private final String COLLECTION_TEAM_GET_CONFIGURATION = "config.team_getConfiguration";
-   private final String COLLECTION_TEAM_RESET_CONFIGURATION = "config.team_resetConfiguration";
-   private final String COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY = "config.team_resetConfigurationAttribute";
-
-   private final String PORT_KEY = "db_port";
-   private final String DBHOST_KEY = "db_host";
-   private final String DBURL_KEY = "db_url";
-   private final String CONFIG_DOCUMENT_KEY = "config";
-   private final String DOCUMENT_PROPERTY_KEY = "document_property";
-
-   private final String DUMMY_EMAIL_PREFIX = "pepa";
-   private final String DUMMY_EMAIL_DOMAIN = "@zdepa.cz";
-   private final String DUMMY_DBHOST_VALUE = "lumeer";
-   private final String DUMMY_DBURL_VALUE = "mongodb://" + DUMMY_DBHOST_VALUE;
-   private final int DUMMY_PORT_VALUE = 27017;
-
-   private final String DUMMY_USER_NAME_VALUE = "pepa2@zdepa.cz";
-   private final String DUMMY_TEAM_NAME_VALUE = "redhat";
-
-   private final String DUMMY_KEY = "dummyKey";
-   private final String DUMMY_VALUE = "dummyValue";
 
    @Inject
    @SystemDataStorage
@@ -74,163 +45,284 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
    @Inject
    private ConfigurationManipulator configurationManipulator;
 
-   @Before
-   public void setUp() throws Exception {
-      if (isDatabaseCollection(COLLECTION_USER_SET_CONFIGURATION)) {
-         systemDataStorage.dropCollection(COLLECTION_USER_SET_CONFIGURATION);
-      }
+   @Test
+   public void testGetConfiguration() throws Exception {
+      final String col = "configuration1";
 
-      if (isDatabaseCollection(COLLECTION_USER_GET_CONFIGURATION)) {
-         systemDataStorage.dropCollection(COLLECTION_USER_GET_CONFIGURATION);
-      }
+      final String id1 = "org/proj/usr";
+      final String id2 = "org/usr";
+      final String id3 = "usr";
 
-      if (isDatabaseCollection(COLLECTION_TEAM_SET_CONFIGURATION)) {
-         systemDataStorage.dropCollection(COLLECTION_TEAM_SET_CONFIGURATION);
-      }
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
 
-      if (isDatabaseCollection(COLLECTION_TEAM_GET_CONFIGURATION)) {
-         systemDataStorage.dropCollection(COLLECTION_TEAM_GET_CONFIGURATION);
-      }
+      Config config11 = new Config("conf1", "value1");
+      Config config12 = new Config("conf1", "value2");
+      Config config13 = new Config("conf1", "value3");
+      Config config21 = new Config("conf2", "value1");
+      Config config22 = new Config("conf2", "value2");
 
-      if (isDatabaseCollection(COLLECTION_USER_RESET_CONFIGURATION)) {
-         systemDataStorage.dropCollection(COLLECTION_USER_RESET_CONFIGURATION);
-      }
+      configurationManipulator.setConfiguration(col, id1, config11);
+      configurationManipulator.setConfiguration(col, id2, config12);
+      configurationManipulator.setConfiguration(col, id3, config13);
+      configurationManipulator.setConfiguration(col, id1, config21);
+      configurationManipulator.setConfiguration(col, id2, config22);
 
-      if (isDatabaseCollection(COLLECTION_TEAM_RESET_CONFIGURATION)) {
-         systemDataStorage.dropCollection(COLLECTION_TEAM_RESET_CONFIGURATION);
-      }
+      assertThat(configurationManipulator.getConfiguration(col, id1, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value1");
+      assertThat(configurationManipulator.getConfiguration(col, id2, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value2");
+      assertThat(configurationManipulator.getConfiguration(col, id3, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value3");
+      assertThat(configurationManipulator.getConfiguration(col, id1, "conf2"))
+            .isNotNull().extracting("value").containsOnly("value1");
+      assertThat(configurationManipulator.getConfiguration(col, id2, "conf2"))
+            .isNotNull().extracting("value").containsOnly("value2");
+      assertThat(configurationManipulator.getConfiguration(col, id3, "conf2"))
+            .isNull();
+   }
 
-      if (isDatabaseCollection(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY)) {
-         systemDataStorage.dropCollection(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY);
-      }
+   @Test
+   public void testGetConfigurations() throws Exception {
+      final String col = "configuration11";
 
-      if (isDatabaseCollection(COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY)) {
-         systemDataStorage.dropCollection(COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY);
-      }
+      final String id1 = "org/proj/usr";
+      final String id2 = "org/usr";
+      final String id3 = "usr";
+
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
+
+      Config config11 = new Config("conf1", "value1");
+      Config config13 = new Config("conf1", "value3");
+      Config config21 = new Config("conf2", "value1");
+      Config config22 = new Config("conf2", "value2");
+
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config11, config22), true);
+      configurationManipulator.setConfigurations(col, id3, Arrays.asList(config13, config21), true);
+
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value1", "value2");
+      assertThat(configurationManipulator.getConfigurations(col, id2))
+            .isEmpty();
+      assertThat(configurationManipulator.getConfigurations(col, id3))
+            .extracting("value").containsOnly("value3", "value1");
    }
 
    @Test
    public void testSetConfiguration() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_USER_SET_CONFIGURATION);
-      systemDataStorage.createCollection(COLLECTION_TEAM_SET_CONFIGURATION);
+      final String col = "configuration21";
 
-      // #1 if the system collection is empty
-      configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, PORT_KEY, DUMMY_PORT_VALUE);
-      configurationManipulator.setConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, PORT_KEY, DUMMY_PORT_VALUE);
+      final String id1 = "org/proj/usr";
+      final String id2 = "org/usr";
+      final String id3 = "usr";
 
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, PORT_KEY).toString()).isEqualTo(String.valueOf(DUMMY_PORT_VALUE));
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, PORT_KEY).toString()).isEqualTo(String.valueOf(DUMMY_PORT_VALUE));
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
 
-      systemDataStorage.dropCollection(COLLECTION_USER_SET_CONFIGURATION);
-      systemDataStorage.dropCollection(COLLECTION_TEAM_SET_CONFIGURATION);
+      Config config11 = new Config("conf1", "value1");
+      Config config12 = new Config("conf1", "value2");
+      Config config13 = new Config("conf1", "value3");
+      Config config14 = new Config("conf1", "value4");
 
-      // #2 if the system collection is filled
-      fillSystemDatabase(COLLECTION_USER_SET_CONFIGURATION, COLLECTION_TEAM_SET_CONFIGURATION);
+      configurationManipulator.setConfiguration(col, id1, config11);
+      configurationManipulator.setConfiguration(col, id2, config12);
+      configurationManipulator.setConfiguration(col, id3, config13);
 
-      configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY, DUMMY_VALUE);
-      configurationManipulator.setConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY, DUMMY_VALUE);
+      assertThat(configurationManipulator.getConfiguration(col, id1, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value1");
+      assertThat(configurationManipulator.getConfiguration(col, id2, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value2");
+      assertThat(configurationManipulator.getConfiguration(col, id3, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value3");
 
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
+      configurationManipulator.setConfiguration(col, id1, config14);
+      configurationManipulator.setConfiguration(col, id2, config13);
+      configurationManipulator.setConfiguration(col, id3, config12);
 
-      // #3 if key exists, value will be updated
-      configurationManipulator.setConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY, DUMMY_VALUE);
-      configurationManipulator.setConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY, DUMMY_VALUE);
-
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_SET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_SET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY).toString()).isEqualTo(String.valueOf(DUMMY_VALUE));
+      assertThat(configurationManipulator.getConfiguration(col, id1, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value4");
+      assertThat(configurationManipulator.getConfiguration(col, id2, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value3");
+      assertThat(configurationManipulator.getConfiguration(col, id3, "conf1"))
+            .isNotNull().extracting("value").containsOnly("value2");
    }
 
    @Test
-   public void testGetConfiguration() throws Exception {
-      systemDataStorage.createCollection(COLLECTION_USER_GET_CONFIGURATION);
-      systemDataStorage.createCollection(COLLECTION_TEAM_GET_CONFIGURATION);
+   public void testSetConfigurations() throws Exception {
+      final String col = "configuration31";
 
-      // #1 if the system collection is empty = key-value does not exist
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DUMMY_KEY)).isNull();
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_GET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DUMMY_KEY)).isNull();
+      final String id1 = "org/proj/usr";
+      final String id3 = "usr";
 
-      systemDataStorage.dropCollection(COLLECTION_USER_GET_CONFIGURATION);
-      systemDataStorage.dropCollection(COLLECTION_TEAM_GET_CONFIGURATION);
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
 
-      // #2 if the system collection is filled
-      fillSystemDatabase(COLLECTION_USER_GET_CONFIGURATION, COLLECTION_TEAM_GET_CONFIGURATION);
+      Config config11 = new Config("conf1", "value11");
+      Config config13 = new Config("conf1", "value13");
+      Config config14 = new Config("conf1", "value14");
+      Config config21 = new Config("conf2", "value21");
+      Config config22 = new Config("conf2", "value22");
+      Config config31 = new Config("conf3", "value31");
+      Config config32 = new Config("conf3", "value32");
 
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_USER_GET_CONFIGURATION, DUMMY_USER_NAME_VALUE, DBURL_KEY)).isEqualTo(DUMMY_DBURL_VALUE + 2);
-      assertThat(configurationManipulator.getConfiguration(COLLECTION_TEAM_GET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE, DBURL_KEY)).isEqualTo(DUMMY_DBURL_VALUE);
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config11, config21), false);
+      configurationManipulator.setConfigurations(col, id3, Arrays.asList(config13, config22, config32), false);
+
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value11", "value21");
+      assertThat(configurationManipulator.getConfigurations(col, id3))
+            .extracting("value").containsOnly("value13", "value22", "value32");
+
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config14, config31), false);
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value14", "value31", "value21");
+
+      configurationManipulator.setConfigurations(col, id3, Arrays.asList(config11, config31, config21), false);
+      assertThat(configurationManipulator.getConfigurations(col, id3))
+            .extracting("value").containsOnly("value11", "value31", "value21");
+   }
+
+   @Test
+   public void testSetConfigurationsAndReset() throws Exception {
+      final String col = "configuration41";
+
+      final String id1 = "org/proj/usr";
+      final String id3 = "usr";
+
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
+
+      Config config11 = new Config("conf1", "value11");
+      Config config13 = new Config("conf1", "value13");
+      Config config14 = new Config("conf1", "value14");
+      Config config21 = new Config("conf2", "value21");
+      Config config22 = new Config("conf2", "value22");
+      Config config31 = new Config("conf3", "value31");
+      Config config32 = new Config("conf3", "value32");
+
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config11, config21), true);
+      configurationManipulator.setConfigurations(col, id3, Arrays.asList(config13, config22, config32), true);
+
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value11", "value21");
+      assertThat(configurationManipulator.getConfigurations(col, id3))
+            .extracting("value").containsOnly("value13", "value22", "value32");
+
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config14, config31), true);
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value14", "value31");
+
+      configurationManipulator.setConfigurations(col, id3, Collections.singletonList(config11), true);
+      assertThat(configurationManipulator.getConfigurations(col, id3))
+            .extracting("value").containsOnly("value11");
    }
 
    @Test
    public void testResetConfiguration() throws Exception {
-      fillSystemDatabase(COLLECTION_USER_RESET_CONFIGURATION, COLLECTION_TEAM_RESET_CONFIGURATION);
+      final String col = "configuration51";
 
-      configurationManipulator.resetConfiguration(COLLECTION_USER_RESET_CONFIGURATION, DUMMY_USER_NAME_VALUE);
-      configurationManipulator.resetConfiguration(COLLECTION_TEAM_RESET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE);
+      final String id1 = "org/proj/usr";
+      final String id3 = "usr";
 
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_RESET_CONFIGURATION, DUMMY_USER_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).hasSize(0);
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_RESET_CONFIGURATION, DUMMY_TEAM_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).hasSize(0);
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
+
+      Config config11 = new Config("conf1", "value11");
+      Config config12 = new Config("conf1", "value12");
+      Config config21 = new Config("conf2", "value21");
+      Config config31 = new Config("conf3", "value31");
+      Config config32 = new Config("conf3", "value32");
+
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config11, config21, config31), true);
+      configurationManipulator.setConfigurations(col, id3, Arrays.asList(config12, config32), true);
+
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value11", "value21", "value31");
+      assertThat(configurationManipulator.getConfigurations(col, id3))
+            .extracting("value").containsOnly("value12", "value32");
+
+      configurationManipulator.resetConfiguration(col, id1);
+      assertThat(configurationManipulator.getConfigurations(col, id1)).isEmpty();
+      assertThat(configurationManipulator.getConfigurations(col, id3)).isNotEmpty();
+
+      configurationManipulator.resetConfiguration(col, id3);
+      assertThat(configurationManipulator.getConfigurations(col, id3)).isEmpty();
    }
 
    @Test
    public void testResetConfigurationAttribute() throws Exception {
-      fillSystemDatabase(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY, COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY);
+      final String col = "configuration61";
 
-      configurationManipulator.resetConfigurationAttribute(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY, DUMMY_USER_NAME_VALUE, DBURL_KEY);
-      configurationManipulator.resetConfigurationAttribute(COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY, DUMMY_TEAM_NAME_VALUE, DBURL_KEY);
+      final String id1 = "org/proj/usr";
+      final String id3 = "usr";
 
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_USER_RESET_CONFIGURATION_BY_KEY, DUMMY_USER_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
-      assertThat(((DataDocument) configurationManipulator.getConfigurationEntry(COLLECTION_TEAM_RESET_CONFIGURATION_BY_KEY, DUMMY_TEAM_NAME_VALUE).get().get(CONFIG_DOCUMENT_KEY))).doesNotContainKey(DBURL_KEY);
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
+
+      Config config11 = new Config("conf1", "value11");
+      Config config12 = new Config("conf1", "value12");
+      Config config21 = new Config("conf2", "value21");
+      Config config31 = new Config("conf3", "value31");
+      Config config32 = new Config("conf3", "value32");
+
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config11, config21, config31), true);
+      configurationManipulator.setConfigurations(col, id3, Arrays.asList(config12, config32), true);
+
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value11", "value21", "value31");
+
+      configurationManipulator.resetConfigurationAttribute(col, id1, "conf1");
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value21", "value31");
+
+      configurationManipulator.resetConfigurationAttribute(col, id1, "conf2");
+      assertThat(configurationManipulator.getConfigurations(col, id1))
+            .extracting("value").containsOnly("value31");
+
+      configurationManipulator.resetConfigurationAttribute(col, id1, "conf3");
+      assertThat(configurationManipulator.getConfigurations(col, id1)).isEmpty();
+
+
+      assertThat(configurationManipulator.getConfigurations(col, id3))
+            .extracting("value").containsOnly("value12", "value32");
+      configurationManipulator.resetConfigurationAttribute(col, id3, "conf1");
+      configurationManipulator.resetConfigurationAttribute(col, id3, "conf3");
+      assertThat(configurationManipulator.getConfigurations(col, id3)).isEmpty();
+
    }
 
-   private void fillSystemDatabase(final String collectionUser, final String collectionTeam) {
-      systemDataStorage.createCollection(collectionUser);
-      systemDataStorage.createCollection(collectionTeam);
+   @Test
+   public void testHasAttributeFlag() throws Exception {
+      final String col = "configuration71";
 
-      // insert user entries
-      for (int i = 0; i < 5; i++) {
-         DataDocument insertedDocument = new DataDocument();
-         insertedDocument.put(ConfigurationManipulator.NAME_KEY, DUMMY_EMAIL_PREFIX + i + DUMMY_EMAIL_DOMAIN);
+      final String id1 = "org/proj/usr";
 
-         DataDocument config = new DataDocument();
-         config.put(DBHOST_KEY, DUMMY_DBHOST_VALUE + i);
-         config.put(PORT_KEY, DUMMY_PORT_VALUE + i);
-         config.put(DBURL_KEY, DUMMY_DBURL_VALUE + i);
-         config.put(DOCUMENT_PROPERTY_KEY, createDummyDataDocument());
+      systemDataStorage.dropCollection(col);
+      systemDataStorage.createCollection(col);
 
-         insertedDocument.put(CONFIG_DOCUMENT_KEY, config);
+      Config config11 = new Config("conf1", "value11", null, true);
+      Config config21 = new Config("conf2", "value21", null, true);
+      Config config31 = new Config("conf3", "value31", null, false);
 
-         systemDataStorage.createDocument(collectionUser, insertedDocument);
-      }
+      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config11, config21, config31), true);
 
-      // insert single team entry
-      DataDocument insertedDocument = new DataDocument();
-      insertedDocument.put(ConfigurationManipulator.NAME_KEY, DUMMY_TEAM_NAME_VALUE);
+      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf1",
+            LumeerConst.Configuration.CONFIGS_CONFIG_FLAG_RESTRICTED)).isTrue();
 
-      DataDocument config = new DataDocument();
-      config.put(DBHOST_KEY, DUMMY_DBHOST_VALUE);
-      config.put(PORT_KEY, DUMMY_PORT_VALUE);
-      config.put(DBURL_KEY, DUMMY_DBURL_VALUE);
-      config.put(DOCUMENT_PROPERTY_KEY, createDummyDataDocument());
+      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf2",
+            LumeerConst.Configuration.CONFIGS_CONFIG_FLAG_RESTRICTED)).isTrue();
 
-      insertedDocument.put(CONFIG_DOCUMENT_KEY, config);
+      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf3",
+            LumeerConst.Configuration.CONFIGS_CONFIG_FLAG_RESTRICTED)).isFalse();
 
-      systemDataStorage.createDocument(collectionTeam, insertedDocument);
-   }
+      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf1",
+            "someNotExistingFlag")).isFalse();
 
-   public static DataDocument createDummyDataDocument() {
-      final String dummyKey1 = "key1";
-      final String dummyKey2 = "key2";
-      final String dummyValue1 = "param1";
-      final String dummyValue2 = "param2";
+      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf2",
+            "someNotExistingFlag")).isFalse();
 
-      final DataDocument dummyDataDocument = new DataDocument();
-      dummyDataDocument.put(dummyKey1, dummyValue1);
-      dummyDataDocument.put(dummyKey2, dummyValue2);
-
-      return dummyDataDocument;
-   }
-
-   private boolean isDatabaseCollection(final String collectionName) {
-      return systemDataStorage.hasCollection(collectionName);
+      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf3",
+            "someNotExistingFlag")).isFalse();
    }
 }
