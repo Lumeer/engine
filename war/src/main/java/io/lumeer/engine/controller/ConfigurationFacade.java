@@ -42,7 +42,7 @@ import javax.inject.Inject;
 public class ConfigurationFacade implements Serializable {
 
    public enum ConfigurationLevel {
-      USER, PROJECT, ORGANIZATION, GLOBAL
+      USER_GLOBAL, USER_PROJECT, USER_ORGANIZATION, PROJECT, ORGANIZATION
    }
 
    private static Logger log = Resources.produceLog(ConfigurationLevel.class.getName());
@@ -50,8 +50,6 @@ public class ConfigurationFacade implements Serializable {
    protected static final String USER_CONFIG_COLLECTION = "_config_user";
    protected static final String PROJECT_CONFIG_COLLECTION = "_config_project";
    protected static final String ORGANIZATION_CONFIG_COLLECTION = "_config_organization";
-
-   protected static final String FLAG_RESTRICTED = "restricted";
 
    @Inject
    private UserFacade userFacade;
@@ -325,7 +323,7 @@ public class ConfigurationFacade implements Serializable {
     *       config object
     */
    public void setUserConfiguration(final ConfigurationLevel levelIn, final Config config) {
-      setConfiguration(ConfigurationLevel.USER, levelIn, config);
+      setConfiguration(levelIn, config);
    }
 
    /**
@@ -339,7 +337,7 @@ public class ConfigurationFacade implements Serializable {
     *       indicates whether reset configuration entries or not
     */
    public void setUserConfigurations(final ConfigurationLevel levelIn, final List<Config> configs, final boolean reset) {
-      setConfigurations(ConfigurationLevel.USER, levelIn, configs, reset);
+      setConfigurations(levelIn, configs, reset);
    }
 
    /**
@@ -349,7 +347,7 @@ public class ConfigurationFacade implements Serializable {
     *       config object
     */
    public void setProjectConfiguration(final Config config) {
-      setConfiguration(ConfigurationLevel.PROJECT, ConfigurationLevel.ORGANIZATION, config);
+      setConfiguration(ConfigurationLevel.PROJECT, config);
    }
 
    /**
@@ -361,7 +359,7 @@ public class ConfigurationFacade implements Serializable {
     *       indicates whether reset configuration entries or not
     */
    public void setProjectConfigurations(final List<Config> configs, final boolean reset) {
-      setConfigurations(ConfigurationLevel.PROJECT, ConfigurationLevel.ORGANIZATION, configs, reset);
+      setConfigurations(ConfigurationLevel.PROJECT, configs, reset);
    }
 
    /**
@@ -371,7 +369,7 @@ public class ConfigurationFacade implements Serializable {
     *       config object
     */
    public void setOrganizationConfiguration(final Config config) {
-      setConfiguration(ConfigurationLevel.ORGANIZATION, ConfigurationLevel.GLOBAL, config);
+      setConfiguration(ConfigurationLevel.ORGANIZATION, config);
    }
 
    /**
@@ -383,7 +381,7 @@ public class ConfigurationFacade implements Serializable {
     *       indicates whether reset configuration entries or not
     */
    public void setOrganizationConfigurations(final List<Config> configs, final boolean reset) {
-      setConfigurations(ConfigurationLevel.ORGANIZATION, ConfigurationLevel.GLOBAL, configs, reset);
+      setConfigurations(ConfigurationLevel.ORGANIZATION, configs, reset);
    }
 
    /**
@@ -393,7 +391,7 @@ public class ConfigurationFacade implements Serializable {
     *       specify type of parent resource
     */
    public void resetUserConfiguration(final ConfigurationLevel levelIn) {
-      resetConfiguration(ConfigurationLevel.USER, levelIn);
+      resetConfiguration(levelIn);
    }
 
    /**
@@ -405,14 +403,14 @@ public class ConfigurationFacade implements Serializable {
     *       the name of attribute to remove
     */
    public void resetUserConfigurationAttribute(final ConfigurationLevel levelIn, final String attributeName) {
-      resetConfigurationAttribute(ConfigurationLevel.USER, levelIn, attributeName);
+      resetConfigurationAttribute(levelIn, attributeName);
    }
 
    /**
     * Resets active project configuration. The whole project configuration entry will not be deleted from the system collection, just the config field!
     */
    public void resetProjectConfiguration() {
-      resetConfiguration(ConfigurationLevel.PROJECT, ConfigurationLevel.ORGANIZATION);
+      resetConfiguration(ConfigurationLevel.PROJECT);
    }
 
    /**
@@ -422,14 +420,14 @@ public class ConfigurationFacade implements Serializable {
     *       the name of attribute to remove
     */
    public void resetProjectConfigurationAttribute(final String attributeName) {
-      resetConfigurationAttribute(ConfigurationLevel.PROJECT, ConfigurationLevel.ORGANIZATION, attributeName);
+      resetConfigurationAttribute(ConfigurationLevel.PROJECT, attributeName);
    }
 
    /**
     * Resets currently logged organization configuration. The whole organization configuration entry will not be deleted from the system collection, just the config field!
     */
    public void resetOrganizationConfiguration() {
-      resetConfiguration(ConfigurationLevel.ORGANIZATION, ConfigurationLevel.GLOBAL);
+      resetConfiguration(ConfigurationLevel.ORGANIZATION);
    }
 
    /**
@@ -439,7 +437,7 @@ public class ConfigurationFacade implements Serializable {
     *       the name of attribute to remove
     */
    public void resetOrganizationConfigurationAttribute(final String attributeName) {
-      resetConfigurationAttribute(ConfigurationLevel.ORGANIZATION, ConfigurationLevel.GLOBAL, attributeName);
+      resetConfigurationAttribute(ConfigurationLevel.ORGANIZATION, attributeName);
    }
 
    /**
@@ -447,29 +445,30 @@ public class ConfigurationFacade implements Serializable {
     *
     * @param level
     *       configuration level
-    * @param levelIn
-    *       specify type of parent resource
     */
-   private void resetConfiguration(final ConfigurationLevel level, final ConfigurationLevel levelIn) {
+   private void resetConfiguration(final ConfigurationLevel level) {
       final String user = userFacade.getUserEmail();
       final String organization = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
-         case USER:
-            String userConfigName = userConfigName(levelIn, organization, project, user);
-            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userConfigName);
+         case USER_GLOBAL:
+            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, user);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userOrgConfigName);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userProjConfigName);
             break;
          case PROJECT:
-            if (levelIn == ConfigurationLevel.ORGANIZATION) {
-               String projectConfigName = createConfigName(organization, project);
-               configurationManipulator.resetConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName);
-            }
+            String projectConfigName = createConfigName(organization, project);
+            configurationManipulator.resetConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName);
             break;
          case ORGANIZATION:
-            if (levelIn == ConfigurationLevel.GLOBAL) {
-               configurationManipulator.resetConfiguration(ORGANIZATION_CONFIG_COLLECTION, organization);
-            }
+            configurationManipulator.resetConfiguration(ORGANIZATION_CONFIG_COLLECTION, organization);
             break;
       }
    }
@@ -479,33 +478,35 @@ public class ConfigurationFacade implements Serializable {
     *
     * @param level
     *       configuration level
-    * @param levelIn
-    *       specify type of parent resource
     * @param attributeName
     *       configuration attribute name
     */
-   private void resetConfigurationAttribute(final ConfigurationLevel level, final ConfigurationLevel levelIn, final String attributeName) {
+   private void resetConfigurationAttribute(final ConfigurationLevel level, final String attributeName) {
       final String user = userFacade.getUserEmail();
       final String organization = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
-         case USER:
-            String userConfigName = userConfigName(levelIn, organization, project, user);
-            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userConfigName, attributeName);
+         case USER_GLOBAL:
+            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, user, attributeName);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userOrgConfigName, attributeName);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userProjConfigName, attributeName);
             break;
          case PROJECT:
-            if (levelIn == ConfigurationLevel.ORGANIZATION) {
-               String projectConfigName = createConfigName(organization, project);
-               configurationManipulator.resetConfigurationAttribute(PROJECT_CONFIG_COLLECTION, projectConfigName, attributeName);
-            }
+            String projectConfigName = createConfigName(organization, project);
+            configurationManipulator.resetConfigurationAttribute(PROJECT_CONFIG_COLLECTION, projectConfigName, attributeName);
             break;
          case ORGANIZATION:
-            if (levelIn == ConfigurationLevel.GLOBAL) {
-               configurationManipulator.resetConfigurationAttribute(ORGANIZATION_CONFIG_COLLECTION, organization, attributeName);
-            }
+            configurationManipulator.resetConfigurationAttribute(ORGANIZATION_CONFIG_COLLECTION, organization, attributeName);
             break;
       }
+
    }
 
    /**
@@ -520,30 +521,28 @@ public class ConfigurationFacade implements Serializable {
       String project = projectFacade.getCurrentProjectId();
 
       String configName = createConfigName(organization, project);
-      boolean projectRestricted = configurationManipulator.hasConfigurationAttributeFlag(PROJECT_CONFIG_COLLECTION, configName, key, FLAG_RESTRICTED);
-      boolean organizationRestricted = configurationManipulator.hasConfigurationAttributeFlag(ORGANIZATION_CONFIG_COLLECTION, organization, key, FLAG_RESTRICTED);
+      Config projectConfig = getProjectConfiguration(key);
+      Config organizationConfig = getOrganizationConfiguration(key);
 
-      Config userConfigProject = getUserConfiguration(ConfigurationLevel.PROJECT, key);
-      if (userConfigProject != null && !projectRestricted && !organizationRestricted) {
+      Config userConfigProject = getUserConfiguration(ConfigurationLevel.USER_PROJECT, key);
+      if (userConfigProject != null && !projectConfig.isRestricted() && !organizationConfig.isRestricted()) {
          return userConfigProject;
       }
 
-      Config projectConfig = getProjectConfiguration(key);
-      if (projectConfig != null && !organizationRestricted) {
+      if (projectConfig != null && !organizationConfig.isRestricted()) {
          return projectConfig;
       }
 
-      Config userConfigOrganization = getUserConfiguration(ConfigurationLevel.ORGANIZATION, key);
-      if (userConfigOrganization != null && !organizationRestricted) {
+      Config userConfigOrganization = getUserConfiguration(ConfigurationLevel.USER_ORGANIZATION, key);
+      if (userConfigOrganization != null && !organizationConfig.isRestricted()) {
          return userConfigOrganization;
       }
 
-      Config organizationConfig = getOrganizationConfiguration(key);
       if (organizationConfig != null) {
          return organizationConfig;
       }
 
-      Config userConfigGlobal = getUserConfiguration(ConfigurationLevel.GLOBAL, key);
+      Config userConfigGlobal = getUserConfiguration(ConfigurationLevel.USER_GLOBAL, key);
       if (userConfigGlobal != null) {
          return userConfigGlobal;
       }
@@ -556,66 +555,72 @@ public class ConfigurationFacade implements Serializable {
     *
     * @param level
     *       configuration level
-    * @param levelIn
-    *       specify type of parent resource
     * @param config
     *       configuration object
     */
-   private void setConfiguration(final ConfigurationLevel level, final ConfigurationLevel levelIn, final Config config) {
+   private void setConfiguration(final ConfigurationLevel level, final Config config) {
       final String user = userFacade.getUserEmail();
       final String organization = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
-         case USER:
-            String userConfigName = userConfigName(levelIn, organization, project, user);
-            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userConfigName, config);
+         case USER_GLOBAL:
+            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, user, config);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userOrgConfigName, config);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userProjConfigName, config);
             break;
          case PROJECT:
-            if (levelIn == ConfigurationLevel.ORGANIZATION) {
-               String projectConfigName = createConfigName(organization, project);
-               configurationManipulator.setConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName, config);
-            }
+            String projectConfigName = createConfigName(organization, project);
+            configurationManipulator.setConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName, config);
             break;
          case ORGANIZATION:
-            if (levelIn == ConfigurationLevel.GLOBAL) {
-               configurationManipulator.setConfiguration(ORGANIZATION_CONFIG_COLLECTION, organization, config);
-            }
+            configurationManipulator.setConfiguration(ORGANIZATION_CONFIG_COLLECTION, organization, config);
             break;
       }
+
    }
 
-   private void setConfigurations(final ConfigurationLevel level, final ConfigurationLevel levelIn, final List<Config> configs, final boolean reset) {
+   private void setConfigurations(final ConfigurationLevel level, final List<Config> configs, final boolean reset) {
       final String user = userFacade.getUserEmail();
       final String organization = organizationFacade.getOrganizationId();
       final String project = projectFacade.getCurrentProjectId();
 
       switch (level) {
-         case USER:
-            String userConfigName = userConfigName(levelIn, organization, project, user);
-            configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, userConfigName, configs, reset);
+         case USER_GLOBAL:
+            configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, user, configs, reset);
+            break;
+         case USER_ORGANIZATION:
+            String userOrgConfigName = createConfigName(organization, user);
+            configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, userOrgConfigName, configs, reset);
+            break;
+         case USER_PROJECT:
+            String userProjConfigName = createConfigName(organization, project, user);
+            configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, userProjConfigName, configs, reset);
             break;
          case PROJECT:
-            if (levelIn == ConfigurationLevel.ORGANIZATION) {
-               String projectConfigName = createConfigName(organization, project);
-               configurationManipulator.setConfigurations(PROJECT_CONFIG_COLLECTION, projectConfigName, configs, reset);
-            }
+            String projectConfigName = createConfigName(organization, project);
+            configurationManipulator.setConfigurations(PROJECT_CONFIG_COLLECTION, projectConfigName, configs, reset);
             break;
          case ORGANIZATION:
-            if (levelIn == ConfigurationLevel.GLOBAL) {
-               configurationManipulator.setConfigurations(ORGANIZATION_CONFIG_COLLECTION, organization, configs, reset);
-            }
+            configurationManipulator.setConfigurations(ORGANIZATION_CONFIG_COLLECTION, organization, configs, reset);
             break;
       }
+
    }
 
    private String userConfigName(ConfigurationLevel level, String organization, String project, String user) {
       String userConfigName;
       switch (level) {
-         case PROJECT:
+         case USER_PROJECT:
             userConfigName = createConfigName(organization, project, user);
             break;
-         case ORGANIZATION:
+         case USER_ORGANIZATION:
             userConfigName = createConfigName(organization, user);
             break;
          default:
@@ -640,11 +645,11 @@ public class ConfigurationFacade implements Serializable {
    }
 
    private static Optional<String> createOptionalString(Config config) {
-      return config != null ? Optional.of(config.getValue().toString()) : Optional.empty();
+      return config != null && config.getValue() != null ? Optional.of(config.getValue().toString()) : Optional.empty();
    }
 
    private static Optional<Integer> createOptionalInteger(Config config) {
-      if (config == null) {
+      if (config == null || config.getValue() == null) {
          return Optional.empty();
       }
 

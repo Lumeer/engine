@@ -19,7 +19,6 @@
  */
 package io.lumeer.engine.controller;
 
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.LumeerConst.*;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
@@ -82,15 +81,15 @@ public class DatabaseInitializer {
    private void initConfigurationCollections() {
       if(!dataStorage.hasCollection(ConfigurationFacade.USER_CONFIG_COLLECTION)){
          dataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
-         dataStorage.createIndex(ConfigurationFacade.USER_CONFIG_COLLECTION, new DataDocument(Configuration.IDENTIFICATOR, Index.ASCENDING), true);
+         dataStorage.createIndex(ConfigurationFacade.USER_CONFIG_COLLECTION, new DataDocument(Configuration.NAMEVALUE, Index.ASCENDING), true);
       }
       if(!dataStorage.hasCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION)){
          dataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
-         dataStorage.createIndex(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, new DataDocument(Configuration.IDENTIFICATOR, Index.ASCENDING), true);
+         dataStorage.createIndex(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, new DataDocument(Configuration.NAMEVALUE, Index.ASCENDING), true);
       }
       if(!dataStorage.hasCollection(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION)){
          dataStorage.createCollection(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION);
-         dataStorage.createIndex(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION, new DataDocument(Configuration.IDENTIFICATOR, Index.ASCENDING), true);
+         dataStorage.createIndex(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION, new DataDocument(Configuration.NAMEVALUE, Index.ASCENDING), true);
       }
    }
 

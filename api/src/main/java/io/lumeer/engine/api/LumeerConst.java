@@ -246,7 +246,7 @@ public final class LumeerConst {
 
    public static class Configuration {
 
-      public static final String IDENTIFICATOR = "identificator";
+      public static final String NAMEVALUE = "namevalue";
       public static final String CONFIGS = "configs";
       public static final String CONFIGS_CONFIG_KEY = "key";
       public static final String CONFIGS_CONFIG_VALUE = "value";

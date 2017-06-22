@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.dto.Config;
 
@@ -292,37 +291,4 @@ public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase
 
    }
 
-   @Test
-   public void testHasAttributeFlag() throws Exception {
-      final String col = "configuration71";
-
-      final String id1 = "org/proj/usr";
-
-      systemDataStorage.dropCollection(col);
-      systemDataStorage.createCollection(col);
-
-      Config config11 = new Config("conf1", "value11", null, true);
-      Config config21 = new Config("conf2", "value21", null, true);
-      Config config31 = new Config("conf3", "value31", null, false);
-
-      configurationManipulator.setConfigurations(col, id1, Arrays.asList(config11, config21, config31), true);
-
-      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf1",
-            LumeerConst.Configuration.CONFIGS_CONFIG_FLAG_RESTRICTED)).isTrue();
-
-      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf2",
-            LumeerConst.Configuration.CONFIGS_CONFIG_FLAG_RESTRICTED)).isTrue();
-
-      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf3",
-            LumeerConst.Configuration.CONFIGS_CONFIG_FLAG_RESTRICTED)).isFalse();
-
-      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf1",
-            "someNotExistingFlag")).isFalse();
-
-      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf2",
-            "someNotExistingFlag")).isFalse();
-
-      assertThat(configurationManipulator.hasConfigurationAttributeFlag(col, id1, "conf3",
-            "someNotExistingFlag")).isFalse();
-   }
 }

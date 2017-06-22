@@ -90,7 +90,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // user in global
       final String userInGlobal = "userInGlobal";
-      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.GLOBAL, new Config(DBHOST_KEY, userInGlobal));
+      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, new Config(DBHOST_KEY, userInGlobal));
       value = configurationFacade.getConfigurationString(DBHOST_KEY);
       assertThat(value).contains(userInGlobal);
 
@@ -102,7 +102,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // user in organization
       final String userInOrg = "userInOrg";
-      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.ORGANIZATION, new Config(DBHOST_KEY, userInOrg));
+      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_ORGANIZATION, new Config(DBHOST_KEY, userInOrg));
       value = configurationFacade.getConfigurationString(DBHOST_KEY);
       assertThat(value).contains(userInOrg);
 
@@ -114,7 +114,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // user in project
       final String userInProj = "userInProj";
-      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.PROJECT, new Config(DBHOST_KEY, userInProj));
+      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_PROJECT, new Config(DBHOST_KEY, userInProj));
       value = configurationFacade.getConfigurationString(DBHOST_KEY);
       assertThat(value).contains(userInProj);
    }
@@ -128,7 +128,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // restricted access by organization
       final String userInOrg = "userInOrg";
-      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.ORGANIZATION, new Config(DBHOST_KEY, userInOrg));
+      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_ORGANIZATION, new Config(DBHOST_KEY, userInOrg));
       value = configurationFacade.getConfigurationString(DBHOST_KEY);
       assertThat(value).contains(organization);
 
@@ -143,7 +143,7 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
       // restricted access by project
       final String userInProj = "userInProj";
-      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.PROJECT, new Config(DBHOST_KEY, userInProj));
+      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_PROJECT, new Config(DBHOST_KEY, userInProj));
       value = configurationFacade.getConfigurationString(DBHOST_KEY);
       assertThat(value).contains(project);
 
@@ -159,16 +159,16 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       Config config2 = new Config("conf12", "value2");
       Config config3 = new Config("conf13", "value3");
 
-      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.GLOBAL, config1);
-      assertThat(configurationFacade.getUserConfiguration(ConfigurationFacade.ConfigurationLevel.GLOBAL, config1.getKey())).isNotNull();
-      configurationFacade.resetUserConfigurationAttribute(ConfigurationFacade.ConfigurationLevel.GLOBAL, config1.getKey());
-      assertThat(configurationFacade.getUserConfiguration(ConfigurationFacade.ConfigurationLevel.GLOBAL, config1.getKey())).isNull();
+      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, config1);
+      assertThat(configurationFacade.getUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, config1.getKey())).isNotNull();
+      configurationFacade.resetUserConfigurationAttribute(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, config1.getKey());
+      assertThat(configurationFacade.getUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, config1.getKey())).isNull();
 
-      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.GLOBAL, Arrays.asList(config1, config2, config3), true);
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.GLOBAL))
+      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, Arrays.asList(config1, config2, config3), true);
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL))
             .extracting("key").containsOnly(config1.getKey(), config2.getKey(), config3.getKey());
-      configurationFacade.resetUserConfiguration(ConfigurationFacade.ConfigurationLevel.GLOBAL);
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.GLOBAL))
+      configurationFacade.resetUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL);
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL))
             .isEmpty();
 
    }
@@ -181,30 +181,30 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
       Config config4 = new Config("conf24", "value4");
       Config config5 = new Config("conf25", "value5");
 
-      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.GLOBAL, Arrays.asList(config1, config2, config3), true);
-      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.PROJECT, Arrays.asList(config3, config4, config5), true);
-      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.ORGANIZATION, Arrays.asList(config1, config3, config5), true);
+      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, Arrays.asList(config1, config2, config3), true);
+      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_PROJECT, Arrays.asList(config3, config4, config5), true);
+      configurationFacade.setUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_ORGANIZATION, Arrays.asList(config1, config3, config5), true);
 
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.GLOBAL))
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL))
             .extracting("key").containsOnly(config1.getKey(), config2.getKey(), config3.getKey());
 
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.PROJECT))
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_PROJECT))
             .extracting("key").containsOnly(config3.getKey(), config4.getKey(), config5.getKey());
 
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.ORGANIZATION))
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_ORGANIZATION))
             .extracting("key").containsOnly(config1.getKey(), config3.getKey(), config5.getKey());
 
-      configurationFacade.resetUserConfiguration(ConfigurationFacade.ConfigurationLevel.PROJECT);
-      configurationFacade.resetUserConfigurationAttribute(ConfigurationFacade.ConfigurationLevel.GLOBAL, config3.getKey());
-      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.ORGANIZATION, config4);
+      configurationFacade.resetUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_PROJECT);
+      configurationFacade.resetUserConfigurationAttribute(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL, config3.getKey());
+      configurationFacade.setUserConfiguration(ConfigurationFacade.ConfigurationLevel.USER_ORGANIZATION, config4);
 
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.GLOBAL))
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_GLOBAL))
             .extracting("key").containsOnly(config1.getKey(), config2.getKey());
 
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.PROJECT))
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_PROJECT))
             .isEmpty();
 
-      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.ORGANIZATION))
+      assertThat(configurationFacade.getUserConfigurations(ConfigurationFacade.ConfigurationLevel.USER_ORGANIZATION))
             .extracting("key").containsOnly(config1.getKey(), config3.getKey(), config4.getKey(), config5.getKey());
 
    }
