@@ -45,7 +45,7 @@ public class GroupServiceIntegrationTest extends IntegrationTestBase {
 
    private static final String organization = "LMR";
    private final String TARGET_URI = "http://localhost:8080";
-   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/" + organization + "/groups/";
+   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organization + "/groups/";
 
    @Before
    public void init() throws Exception {

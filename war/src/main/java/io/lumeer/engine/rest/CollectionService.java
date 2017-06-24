@@ -66,7 +66,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
-@Path("/{organisation}/{project}/collections")
+@Path("/organizations/{organization}/projects/{project}/collections")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @RequestScoped
@@ -96,7 +96,7 @@ public class CollectionService implements Serializable {
    @Inject
    private DataStorageDialect dialect;
 
-   @PathParam("organisation")
+   @PathParam("organization")
    private String organisationCode;
 
    @PathParam("project")

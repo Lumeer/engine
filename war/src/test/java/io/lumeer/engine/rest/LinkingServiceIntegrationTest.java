@@ -180,7 +180,7 @@ public class LinkingServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String buildPathPrefix(final String collectionName) {
-      return PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/collections/" + collectionName + "/links/";
+      return PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/collections/" + collectionName + "/links/";
    }
 
    private String buildAddDropPrefix(final String role, final String targetCollection, final String id, final String targetId) {
