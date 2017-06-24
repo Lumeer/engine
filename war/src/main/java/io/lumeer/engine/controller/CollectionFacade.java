@@ -27,6 +27,7 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.event.CreateCollection;
 import io.lumeer.engine.api.event.DropCollection;
@@ -36,7 +37,6 @@ import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundExceptio
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
-import io.lumeer.engine.rest.dao.Attribute;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
@@ -155,13 +155,11 @@ public class CollectionFacade implements Serializable {
    }
 
    private List<DataDocument> getAllCollectionsDocuments(String projectCode) {
-      List<DataDocument> result = dataStorage.search(
+      return dataStorage.search(
             collectionMetadataFacade.metadataCollection(projectCode),
             null,
             dataStorageDialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER),
             0, 0);
-
-      return result;
    }
 
    /**

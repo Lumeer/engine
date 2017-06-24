@@ -27,8 +27,8 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.ViewMetadata;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
-import io.lumeer.engine.rest.dao.ViewMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;

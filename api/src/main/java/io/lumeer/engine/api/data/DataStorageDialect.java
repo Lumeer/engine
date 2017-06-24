@@ -38,6 +38,8 @@ public interface DataStorageDialect extends Serializable {
 
    DataFilter fieldValueWildcardFilter(final String fieldName, final Object valuePart);
 
+   public DataFilter fieldValueWildcardFilterOneSided(final String fieldName, final Object valuePart);
+
    DataFilter documentFilter(final String documentFilter);
 
    DataFilter documentNestedIdFilter(final String documentId);

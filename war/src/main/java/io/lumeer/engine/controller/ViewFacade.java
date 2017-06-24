@@ -24,8 +24,8 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.ViewMetadata;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
-import io.lumeer.engine.rest.dao.ViewMetadata;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;

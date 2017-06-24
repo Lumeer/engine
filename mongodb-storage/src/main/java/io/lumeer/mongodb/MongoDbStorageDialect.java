@@ -92,6 +92,11 @@ public class MongoDbStorageDialect implements DataStorageDialect {
    }
 
    @Override
+   public DataFilter fieldValueWildcardFilterOneSided(final String fieldName, final Object valuePart) {
+      return createFilter(regex(fieldName, valuePart + ".*", "gi"));
+   }
+
+   @Override
    public DataFilter documentFilter(final String documentFilter) {
       return createFilter(BsonDocument.parse(documentFilter));
    }

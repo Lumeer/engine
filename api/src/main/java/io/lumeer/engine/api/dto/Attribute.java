@@ -17,10 +17,13 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.engine.rest.dao;
+package io.lumeer.engine.api.dto;
 
 import io.lumeer.engine.api.LumeerConst.Collection;
 import io.lumeer.engine.api.data.DataDocument;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -32,19 +35,32 @@ public class Attribute {
    private String name;
    private String fullName;
    private int count;
-   private int level;
    private List<String> constraints;
 
    public Attribute(final DataDocument metadata) {
       name = metadata.getString(Collection.ATTRIBUTE_NAME_KEY);
-      fullName = metadata.getString(Collection.ATTRIBUTE_FULL_NAME_KEY, name);
+      fullName = metadata.getString(Collection.ATTRIBUTE_FULL_NAME_KEY);
       count = metadata.getInteger(Collection.ATTRIBUTE_COUNT_KEY);
-      level = metadata.getInteger(Collection.ATTRIBUTE_LEVEL_KEY);
       constraints = metadata.getArrayList(Collection.ATTRIBUTE_CONSTRAINTS_KEY, String.class);
+   }
+
+   @JsonCreator
+   public Attribute(final @JsonProperty(Collection.ATTRIBUTE_NAME_KEY) String name,
+         final @JsonProperty(Collection.ATTRIBUTE_FULL_NAME_KEY) String fullName,
+         final @JsonProperty(Collection.ATTRIBUTE_COUNT_KEY) int count,
+         final @JsonProperty(Collection.ATTRIBUTE_CONSTRAINTS_KEY) List<String> constraints) {
+      this.name = name;
+      this.fullName = fullName;
+      this.count = count;
+      this.constraints = constraints;
    }
 
    public String getName() {
       return name;
+   }
+
+   public String getFullName() {
+      return fullName;
    }
 
    public int getCount() {
@@ -55,41 +71,10 @@ public class Attribute {
       return constraints;
    }
 
-   public String getFullName() {
-      return fullName;
+   public DataDocument toDataDocument() {
+      return new DataDocument(Collection.ATTRIBUTE_NAME_KEY, name)
+            .append(Collection.ATTRIBUTE_FULL_NAME_KEY, fullName)
+            .append(Collection.ATTRIBUTE_COUNT_KEY, count)
+            .append(Collection.ATTRIBUTE_CONSTRAINTS_KEY, constraints);
    }
-
-   public int getLevel() {
-      return level;
-   }
-
-   @Override
-   public boolean equals(final Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-         return false;
-      }
-
-      final Attribute that = (Attribute) o;
-
-      return fullName != null ? fullName.equals(that.fullName) : that.fullName == null;
-
-   }
-
-   @Override
-   public int hashCode() {
-      return fullName != null ? fullName.hashCode() : 0;
-   }
-
-   //   @Override
-   //   public String toString() {
-   //      return "Attribute{"
-   //            + ", name='" + name + '\''
-   //            + ", count=" + count
-   //            + ", constraints=" + constraints
-   //            + ", childAttributes=" + childAttributes
-   //            + '}';
-   //   }
 }

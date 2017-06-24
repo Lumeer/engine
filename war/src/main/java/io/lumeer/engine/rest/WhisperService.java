@@ -114,6 +114,7 @@ public class WhisperService {
       } catch (UserCollectionNotFoundException e) {
          return Collections.emptySet();
       }
+
       if (attributeName == null || attributeName.isEmpty()) {
          return collectionMetadataFacade.getAttributesNames(internalCollectionName).stream().collect(Collectors.toSet());
       } else {

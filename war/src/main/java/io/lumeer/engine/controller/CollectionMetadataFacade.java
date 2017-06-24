@@ -21,20 +21,22 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.LumeerConst.Collection;
 import io.lumeer.engine.api.constraint.Constraint;
 import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Attribute;
+import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
-import io.lumeer.engine.rest.dao.Attribute;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 import io.lumeer.engine.util.Utils;
 
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.event.Event;
@@ -124,19 +127,13 @@ public class CollectionMetadataFacade implements Serializable {
     *       when metadata document is not found
     */
    public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      DataDocument metadata = dataStorage.readDocument(
-            metadataCollection(),
-            dialect.fieldValueFilter(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName));
+      DataDocument metadata = readMetadata(collectionName, internalNameFilter(collectionName), null);
 
       if (metadata == null) {
          throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName));
       }
 
       return metadata;
-   }
-
-   private String getCollectionMetadataDocumentId(String collection) {
-      return (String) getMetadataValue(collection, LumeerConst.Document.ID);
    }
 
    /**
@@ -178,7 +175,7 @@ public class CollectionMetadataFacade implements Serializable {
       name = name.replace(' ', '_');
       name = Utils.normalize(name);
       name = name.replaceAll("[^_a-z0-9]+", "");
-      name = LumeerConst.Collection.NAME_PREFIX + name;
+      name = Collection.NAME_PREFIX + name;
       int i = 0;
       while (dataStorage.hasCollection(name + "_" + i)) {
          i++;
@@ -197,16 +194,15 @@ public class CollectionMetadataFacade implements Serializable {
     *       name of collection given by user
     */
    public void createInitialMetadata(String internalCollectionName, String originalCollectionName) {
-      String user = getCurrentUser();
       DataDocument collectionMetadata = new DataDocument()
-            .append(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName)
-            .append(LumeerConst.Collection.INTERNAL_NAME_KEY, internalCollectionName)
-            .append(LumeerConst.Collection.ATTRIBUTES_KEY, new DataDocument())
-            .append(LumeerConst.Collection.LAST_TIME_USED_KEY, new Date())
-            .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())
-            .append(LumeerConst.Collection.CREATE_DATE_KEY, new Date())
-            .append(LumeerConst.Collection.CREATE_USER_KEY, user)
-            .append(LumeerConst.Collection.CUSTOM_META_KEY, new DataDocument());
+            .append(Collection.REAL_NAME_KEY, originalCollectionName)
+            .append(Collection.INTERNAL_NAME_KEY, internalCollectionName)
+            .append(Collection.ATTRIBUTES_KEY, new ArrayList<>())
+            .append(Collection.LAST_TIME_USED_KEY, new Date())
+            .append(Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())
+            .append(Collection.CREATE_DATE_KEY, new Date())
+            .append(Collection.CREATE_USER_KEY, userFacade.getUserEmail())
+            .append(Collection.CUSTOM_META_KEY, new DataDocument());
 
       dataStorage.createDocument(metadataCollection(), collectionMetadata);
    }
@@ -219,8 +215,14 @@ public class CollectionMetadataFacade implements Serializable {
     * @return set of collection attributes' names
     */
    public Set<String> getAttributesNames(String collectionName) {
-      // TODO - use projection
-      return getAttributesInfo(collectionName).keySet();
+      String attributeNameKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, Collection.ATTRIBUTE_FULL_NAME_KEY);
+      DataDocument metaData = readMetadata(collectionName, internalNameFilter(collectionName), Collections.singletonList(attributeNameKey));
+
+      return metaData != null ? metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
+                                        .stream()
+                                        .map(d -> d.getString(Collection.ATTRIBUTE_FULL_NAME_KEY))
+                                        .collect(Collectors.toSet())
+            : Collections.emptySet();
    }
 
    /**
@@ -231,44 +233,26 @@ public class CollectionMetadataFacade implements Serializable {
     * @return map, keys are attributes' names, values are objects with attributes info
     */
    public Map<String, Attribute> getAttributesInfo(String collectionName) {
-      List<DataDocument> attributesDocuments =
-            dataStorage.readDocumentIncludeAttrs(
-                  metadataCollection(),
-                  dialect.fieldValueFilter(LumeerConst.Collection.INTERNAL_NAME_KEY, collectionName),
-                  Arrays.asList(LumeerConst.Collection.ATTRIBUTES_KEY))
-                       .getArrayList(LumeerConst.Collection.ATTRIBUTES_KEY, DataDocument.class);
-
-      Map<String, Attribute> attributes = new HashMap<>();
-      for (DataDocument a : attributesDocuments) {
-         attributes.put(a.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME_KEY), new Attribute(a));
-      }
-
-      return attributes;
+      DataDocument metaData = readMetadata(collectionName, internalNameFilter(collectionName), Collections.singletonList(Collection.ATTRIBUTES_KEY));
+      return metaData != null ? metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
+                                        .stream()
+                                        .collect(Collectors.toMap(a -> a.getString(Collection.ATTRIBUTE_FULL_NAME_KEY), Attribute::new))
+            : Collections.emptyMap();
    }
 
    /**
     * Gets complete info about one attribute.
     *
-    * @param collection
+    * @param collectionName
     *       internal collection name
     * @param attributeName
     *       attribute name
     * @return Attribute object
     */
-   public Attribute getAttributeInfo(String collection, String attributeName) {
-      // TODO - use projection
-      return getAttributesInfo(collection).get(attributeName);
-   }
+   public Attribute getAttributeInfo(String collectionName, String attributeName) {
+      DataDocument attribute = readMetadataAttribute(collectionName, attributeName);
 
-   private List<String> divideAttributeName(String attribute) {
-      return Arrays.asList(attribute.split("\\."));
-   }
-
-   private String attributePath(String attribute) {
-      return attribute.replaceAll("\\.",
-            "."
-                  + LumeerConst.Collection.ATTRIBUTE_CHILDREN_KEY
-                  + ".");
+      return attribute != null ? new Attribute(attribute) : null;
    }
 
    /**
@@ -277,23 +261,25 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param collectionName
     *       internal collection name
-    * @param oldName
+    * @param oldFullName
     *       old attribute name
-    * @param newName
+    * @param newFullName
     *       new attribute name
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
     */
-   public void renameAttribute(String collectionName, String oldName, String newName) throws AttributeAlreadyExistsException {
-      if (getAttributeInfo(collectionName, newName) != null) {
-         throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newName, collectionName));
+   public void renameAttribute(String collectionName, String oldFullName, String newFullName) throws AttributeAlreadyExistsException {
+      if (readMetadataAttribute(collectionName, newFullName) != null) {
+         throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newFullName, collectionName));
       }
 
-      //DataDocument renameQuery = dialect.renameAttributeQuery(metadataCollection(), collectionName, oldName, newName);
-      //dataStorage.run(renameQuery);
+      String fullNameKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_FULL_NAME_KEY);
+      String nameKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_NAME_KEY);
 
-      // TODO
-      throw new UnsupportedOperationException();
+      DataDocument renameDocument = new DataDocument(fullNameKey, newFullName)
+            .append(nameKey, attributeName(newFullName));
+
+      dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionName, oldFullName));
    }
 
    /**
@@ -306,20 +292,16 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute to be dropped
     */
    public void dropAttribute(String collectionName, String attributeName) {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
+      DataDocument removeAttributes = dataStorage.readDocumentIncludeAttrs(metadataCollection(),
+            dialect.combineFilters(internalNameFilter(collectionName), attributeWildcardFilter(collectionName, attributeName)),
+            Collections.singletonList(Collection.ATTRIBUTES_KEY));
+
+      if (removeAttributes == null) {
          return;
       }
 
-      dataStorage.dropAttribute(
-            metadataCollection(),
-            dialect.documentIdFilter(id),
-            dialect.concatFields(
-                  LumeerConst.Collection.ATTRIBUTES_KEY,
-                  attributePath(attributeName)));
-
-      throw new UnsupportedOperationException();
-      // TODO: drop children
+      dataStorage.removeItemsFromArray(metadataCollection(), internalNameFilter(collectionName), Collection.ATTRIBUTES_KEY,
+            removeAttributes.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class));
    }
 
    /**
@@ -333,27 +315,21 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute's name
     */
    public void addOrIncrementAttribute(String collectionName, String attributeName) {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
-         return;
-      }
-
       Attribute attribute = getAttributeInfo(collectionName, attributeName);
 
       if (attribute != null) {
-         throw new UnsupportedOperationException();
-         // TODO: use query
+         String updateKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_COUNT_KEY);
+         DataDocument renameDocument = new DataDocument(updateKey, attribute.getCount() + 1);
+         dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionName, attributeName));
       } else {
-         List<String> dividedName = divideAttributeName(attributeName);
          dataStorage.addItemToArray(metadataCollection(),
-               dialect.documentIdFilter(id),
-               LumeerConst.Collection.ATTRIBUTES_KEY,
+               internalNameFilter(collectionName),
+               Collection.ATTRIBUTES_KEY,
                new DataDocument()
-                     .append(LumeerConst.Collection.ATTRIBUTE_FULL_NAME_KEY, attributeName)
-                     .append(LumeerConst.Collection.ATTRIBUTE_NAME_KEY, dividedName.get(dividedName.size() - 1))
-                     .append(LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
-                     .append(LumeerConst.Collection.ATTRIBUTE_COUNT_KEY, 1)
-                     .append(LumeerConst.Collection.ATTRIBUTE_LEVEL_KEY, dividedName.size()));
+                     .append(Collection.ATTRIBUTE_FULL_NAME_KEY, attributeName)
+                     .append(Collection.ATTRIBUTE_NAME_KEY, attributeName(attributeName))
+                     .append(Collection.ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
+                     .append(Collection.ATTRIBUTE_COUNT_KEY, 1));
       }
    }
 
@@ -368,11 +344,6 @@ public class CollectionMetadataFacade implements Serializable {
     *       set of attributes' names
     */
    public void dropOrDecrementAttribute(String collectionName, String attributeName) {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
-         return;
-      }
-
       Attribute attribute = getAttributeInfo(collectionName, attributeName);
 
       if (attribute == null) {
@@ -384,8 +355,10 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      throw new UnsupportedOperationException();
-      // TODO: use query for count decrement
+      String updateKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_COUNT_KEY);
+      DataDocument renameDocument = new DataDocument(updateKey, attribute.getCount() - 1);
+
+      dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionName, attributeName));
    }
 
    /**
@@ -410,7 +383,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return original collection name
     */
    public String getOriginalCollectionName(String collectionName) {
-      return (String) getMetadataValue(collectionName, LumeerConst.Collection.REAL_NAME_KEY);
+      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.REAL_NAME_KEY);
+      return metaData != null ? metaData.getString(Collection.REAL_NAME_KEY) : null;
    }
 
    /**
@@ -425,16 +399,16 @@ public class CollectionMetadataFacade implements Serializable {
    public String getInternalCollectionName(String originalCollectionName) throws UserCollectionNotFoundException {
       DataDocument metadata = dataStorage.readDocumentIncludeAttrs(
             metadataCollection(),
-            dialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME_KEY,
+            dialect.fieldValueFilter(Collection.REAL_NAME_KEY,
                   originalCollectionName),
-            Arrays.asList(LumeerConst.Collection.INTERNAL_NAME_KEY)
+            Collections.singletonList(Collection.INTERNAL_NAME_KEY)
       );
 
       if (metadata == null) {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(originalCollectionName));
       }
 
-      return metadata.getString(LumeerConst.Collection.INTERNAL_NAME_KEY);
+      return metadata.getString(Collection.INTERNAL_NAME_KEY);
    }
 
    /**
@@ -448,11 +422,6 @@ public class CollectionMetadataFacade implements Serializable {
     *       when collection with given user name already exists
     */
    public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException {
-      String id = getCollectionMetadataDocumentId(collectionInternalName);
-      if (id == null) {
-         return;
-      }
-
       if (checkIfUserCollectionExists(collectionOriginalName)) {
          throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
       }
@@ -460,9 +429,9 @@ public class CollectionMetadataFacade implements Serializable {
       dataStorage.updateDocument(
             metadataCollection(),
             new DataDocument(
-                  LumeerConst.Collection.REAL_NAME_KEY,
+                  Collection.REAL_NAME_KEY,
                   collectionOriginalName),
-            dialect.documentIdFilter(id));
+            internalNameFilter(collectionInternalName));
 
       setLastTimeUsedNow(collectionInternalName);
       changeCollectionNameEvent.fire(new ChangeCollectionName(collectionOriginalName, collectionInternalName));
@@ -476,7 +445,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return String representation of the time
     */
    public Date getLastTimeUsed(String collectionName) {
-      return (Date) getMetadataValue(collectionName, LumeerConst.Collection.LAST_TIME_USED_KEY);
+      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.LAST_TIME_USED_KEY);
+      return metaData != null ? metaData.getDate(Collection.LAST_TIME_USED_KEY) : null;
    }
 
    /**
@@ -486,17 +456,12 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     */
    public void setLastTimeUsedNow(String collectionName) {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
-         return;
-      }
-
       dataStorage.updateDocument(
             metadataCollection(),
             new DataDocument(
-                  LumeerConst.Collection.LAST_TIME_USED_KEY,
+                  Collection.LAST_TIME_USED_KEY,
                   new Date()),
-            dialect.documentIdFilter(id));
+            internalNameFilter(collectionName));
    }
 
    /**
@@ -507,7 +472,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @return DataDocument with all custom metadata values
     */
    public DataDocument getCustomMetadata(String collectionName) {
-      return (DataDocument) getMetadataValue(collectionName, LumeerConst.Collection.CUSTOM_META_KEY);
+      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.CUSTOM_META_KEY);
+      return metaData != null ? metaData.getDataDocument(Collection.CUSTOM_META_KEY) : new DataDocument();
    }
 
    /**
@@ -519,18 +485,13 @@ public class CollectionMetadataFacade implements Serializable {
     *       custom metadata
     */
    public void setCustomMetadata(String collectionName, DataDocument metadata) {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
-         return;
-      }
-
       DataDocument metadataDocument = new DataDocument();
 
       for (String key : metadata.keySet()) {
-         metadataDocument.append(dialect.concatFields(LumeerConst.Collection.CUSTOM_META_KEY, key), metadata.get(key));
+         metadataDocument.append(dialect.concatFields(Collection.CUSTOM_META_KEY, key), metadata.get(key));
       }
 
-      dataStorage.updateDocument(metadataCollection(), metadataDocument, dialect.documentIdFilter(id));
+      dataStorage.updateDocument(metadataCollection(), metadataDocument, internalNameFilter(collectionName));
       setLastTimeUsedNow(collectionName);
    }
 
@@ -543,16 +504,11 @@ public class CollectionMetadataFacade implements Serializable {
     *       list of metadata to drop
     */
    public void dropCustomMetadata(String collectionName, String key) {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
-         return;
-      }
-
       dataStorage.dropAttribute(
             metadataCollection(),
-            dialect.documentIdFilter(id),
+            internalNameFilter(collectionName),
             dialect.concatFields(
-                  LumeerConst.Collection.CUSTOM_META_KEY,
+                  Collection.CUSTOM_META_KEY,
                   key));
       setLastTimeUsedNow(collectionName);
    }
@@ -566,8 +522,8 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public boolean isUserCollection(String collectionName) {
       return collectionName != null &&
-            collectionName.length() >= LumeerConst.Collection.NAME_PREFIX.length() &&
-            collectionName.startsWith(LumeerConst.Collection.NAME_PREFIX);
+            collectionName.length() >= Collection.NAME_PREFIX.length() &&
+            collectionName.startsWith(Collection.NAME_PREFIX);
    }
 
    /**
@@ -620,7 +576,7 @@ public class CollectionMetadataFacade implements Serializable {
          encoded = constraintManager.encode(value);
       }
 
-      if (value != null && encoded == null) {
+      if (encoded == null) {
          throw new InvalidValueException("It was not possible to encode user value: " + value.toString());
       }
 
@@ -762,11 +718,6 @@ public class CollectionMetadataFacade implements Serializable {
     *       when new constraint is not valid or is in conflict with existing constraints
     */
    public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
-         return;
-      }
-
       List<String> existingConstraints = getAttributeConstraintsConfigurations(collectionName, attributeName);
 
       ConstraintManager constraintManager = null;
@@ -779,19 +730,10 @@ public class CollectionMetadataFacade implements Serializable {
 
       constraintManager.registerConstraint(constraintConfiguration); // if this doesn't throw an exception, the constraint is valid
 
-      //      dataStorage.addItemToArray(
-      //            metadataCollection(),
-      //            dialect.documentIdFilter(id),
-      //            dialect.concatFields(
-      //                  LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName),
-      //                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
-      //            ),
-      //            constraintConfiguration);
+      String attrParam = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_CONSTRAINTS_KEY);
+      dataStorage.addItemToArray(metadataCollection(), attributeFilter(collectionName, attributeName), attrParam, constraintConfiguration);
 
       setLastTimeUsedNow(collectionName);
-
-      // TODO - add item to array in document which is in array
-      throw new UnsupportedOperationException();
    }
 
    /**
@@ -805,24 +747,10 @@ public class CollectionMetadataFacade implements Serializable {
     *       constraint configuration to be removed
     */
    public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) {
-      String id = getCollectionMetadataDocumentId(collectionName);
-      if (id == null) {
-         return;
-      }
-
-      //      dataStorage.removeItemFromArray(
-      //            metadataCollection(),
-      //            dialect.documentIdFilter(id),
-      //            dialect.concatFields(
-      //                  LumeerConst.Collection.ATTRIBUTES_KEY, attributePath(attributeName),
-      //                  LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS_KEY
-      //            ),
-      //            constraintConfiguration);
+      String attrParam = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_CONSTRAINTS_KEY);
+      dataStorage.removeItemFromArray(metadataCollection(), attributeFilter(collectionName, attributeName), attrParam, constraintConfiguration);
 
       setLastTimeUsedNow(collectionName);
-
-      // TODO - remove item from array in document which is in array
-      throw new UnsupportedOperationException();
    }
 
    /**
@@ -832,8 +760,8 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @return list of document ids sorted in descending order
     */
-   public List<String> getRecentlyUsedDocumentsIds(String collectionName) {
-      return (List<String>) getMetadataValue(collectionName, LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY);
+   public List<String> getRecentlyUsedDocumentsIds(String collectionName) throws CollectionMetadataDocumentNotFoundException {
+      return getMetadataKeyValue(collectionName, Collection.RECENTLY_USED_DOCUMENTS_KEY).getArrayList(Collection.RECENTLY_USED_DOCUMENTS_KEY, String.class);
    }
 
    /**
@@ -844,20 +772,15 @@ public class CollectionMetadataFacade implements Serializable {
     * @param id
     *       document id
     */
-   public void addRecentlyUsedDocumentId(String collectionName, String id) {
-      String metadataId = getCollectionMetadataDocumentId(collectionName);
-      if (metadataId == null) {
-         return;
-      }
-
+   public void addRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
       dataStorage.removeItemFromArray(
             metadataCollection(),
-            dialect.documentIdFilter(metadataId),
-            LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY,
+            internalNameFilter(collectionName),
+            Collection.RECENTLY_USED_DOCUMENTS_KEY,
             id);
 
       int listSize = configurationFacade.getConfigurationInteger(LumeerConst.NUMBER_OF_RECENT_DOCS_PROPERTY)
-                                        .orElse(LumeerConst.Collection.DEFAULT_NUMBER_OF_RECENT_DOCUMENTS);
+                                        .orElse(Collection.DEFAULT_NUMBER_OF_RECENT_DOCUMENTS);
 
       DataDocument query = dialect.addRecentlyUsedDocumentQuery(metadataCollection(), collectionName, id, listSize);
 
@@ -872,32 +795,12 @@ public class CollectionMetadataFacade implements Serializable {
     * @param id
     *       document id
     */
-   public void removeRecentlyUsedDocumentId(String collectionName, String id) {
-      String metadataId = getCollectionMetadataDocumentId(collectionName);
-      if (metadataId == null) {
-         return;
-      }
-
+   public void removeRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
       dataStorage.removeItemFromArray(
             metadataCollection(),
-            dialect.documentIdFilter(metadataId),
-            LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY,
+            internalNameFilter(collectionName),
+            Collection.RECENTLY_USED_DOCUMENTS_KEY,
             id);
-   }
-
-   // checks whether collection with given user name already exists
-   private boolean checkIfUserCollectionExists(String originalCollectionName) {
-      return dataStorage.collectionHasDocument(metadataCollection(), dialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME_KEY, originalCollectionName));
-   }
-
-   // initializes constraint manager
-   private void initConstraintManager(ConstraintManager constraintManager) {
-      constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US")));
-   }
-
-   // returns current user email
-   private String getCurrentUser() {
-      return userFacade.getUserEmail();
    }
 
    /**
@@ -913,15 +816,55 @@ public class CollectionMetadataFacade implements Serializable {
     * @return name of metadata collection for given project code
     */
    public String metadataCollection(String projectCode) {
-      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
+      return Collection.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
    }
 
-   private Object getMetadataValue(String collection, String key) {
-      return dataStorage.readDocumentIncludeAttrs(
-            metadataCollection(),
-            dialect.fieldValueFilter(LumeerConst.Collection.INTERNAL_NAME_KEY,
-                  collection),
-            Arrays.asList(key))
-                        .get(key);
+   // checks whether collection with given user name already exists
+   private boolean checkIfUserCollectionExists(String originalCollectionName) {
+      return dataStorage.collectionHasDocument(metadataCollection(), dialect.fieldValueFilter(Collection.REAL_NAME_KEY, originalCollectionName));
    }
+
+   // initializes constraint manager
+   private void initConstraintManager(ConstraintManager constraintManager) {
+      constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US")));
+   }
+
+   private DataDocument getMetadataKeyValue(String collection, String key) {
+      return readMetadata(collection, internalNameFilter(collection), Collections.singletonList(key));
+   }
+
+   private DataDocument readMetadata(String collectionName, DataFilter filter, List<String> projection) {
+      return projection == null || projection.isEmpty() ? dataStorage.readDocument(metadataCollection(), filter)
+            : dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, projection);
+   }
+
+   // method avoids to throw exception, because we don't know whether collection metadata or attribute doesn't exist
+   private DataDocument readMetadataAttribute(String collectionName, String attributeName) {
+      DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), attributeFilter(collectionName, attributeName),
+            Collections.singletonList(dialect.concatFields(Collection.ATTRIBUTES_KEY, "$")));
+
+      return metaData != null ? metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class).get(0) : null;
+   }
+
+   private DataFilter internalNameFilter(String collectionName) {
+      return dialect.fieldValueFilter(Collection.INTERNAL_NAME_KEY, collectionName);
+   }
+
+   private DataFilter attributeFilter(String collectionName, String attributeName) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(Collection.INTERNAL_NAME_KEY, collectionName);
+      filter.put(dialect.concatFields(Collection.ATTRIBUTES_KEY, Collection.ATTRIBUTE_FULL_NAME_KEY), attributeName);
+      return dialect.multipleFieldsValueFilter(filter);
+   }
+
+   private DataFilter attributeWildcardFilter(String collectionName, String attributeName) {
+      String name = dialect.concatFields(Collection.ATTRIBUTES_KEY, Collection.ATTRIBUTE_FULL_NAME_KEY);
+      return dialect.combineFilters(internalNameFilter(collectionName), dialect.fieldValueWildcardFilterOneSided(name, attributeName));
+   }
+
+   private String attributeName(String attributeFullName) {
+      int ixSeparator = attributeFullName.lastIndexOf(".");
+      return ixSeparator != -1 && ixSeparator < attributeFullName.length() - 1 ? attributeFullName.substring(ixSeparator + 1) : attributeFullName;
+   }
+
 }
