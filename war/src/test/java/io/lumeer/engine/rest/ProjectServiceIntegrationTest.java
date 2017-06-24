@@ -353,7 +353,7 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private String pathPrefix(String organizationCode){
-      return PATH_CONTEXT + "/rest/" + organizationCode + "/projects/";
+      return PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/";
    }
 
    private void addManageRole(String projectCode) {

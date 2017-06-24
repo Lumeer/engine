@@ -59,7 +59,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-@Path("/{organisation}/{project}/collections/{collectionName}/links")
+@Path("/organizations/{organization}/projects/{project}/collections/{collectionName}/links")
 public class LinkingService {
 
    @Inject
@@ -78,7 +78,7 @@ public class LinkingService {
    @Inject
    private DataStorageDialect dataStorageDialect;
 
-   @PathParam("organisation")
+   @PathParam("organization")
    private String organisationCode;
 
    @PathParam("project")

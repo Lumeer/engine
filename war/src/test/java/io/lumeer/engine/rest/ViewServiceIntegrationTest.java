@@ -59,7 +59,7 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
 
    private static final String TARGET_URI = "http://localhost:8080";
 
-   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/ACME/default/views/";
+   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/ACME/projects/default/views/";
 
    @Inject
    @UserDataStorage
@@ -93,7 +93,7 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
    public void init() {
       // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
       databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectCode());
-      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/views/";
+      PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/views/";
       dataStorage.dropManyDocuments(viewFacade.metadataCollection(), dataStorageDialect.documentFilter("{}"));
    }
 

@@ -54,7 +54,7 @@ import javax.ws.rs.core.MediaType;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@Path("/{organisation}/{project}/views/")
+@Path("/organizations/{organization}/projects/{project}/views/")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
@@ -69,7 +69,7 @@ public class ViewService {
    @Inject
    private SecurityFacade securityFacade;
 
-   @PathParam("organisation")
+   @PathParam("organization")
    private String organisationCode;
 
    @PathParam("project")

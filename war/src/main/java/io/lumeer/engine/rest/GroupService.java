@@ -40,7 +40,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 
-@Path("/{organization}/groups")
+@Path("/organizations/{organization}/groups")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @RequestScoped

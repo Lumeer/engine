@@ -47,7 +47,7 @@ public class UserServiceIntegrationTest extends IntegrationTestBase {
 
    private static final String organization = "LMR";
    private final String TARGET_URI = "http://localhost:8080";
-   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/" + organization + "/users/";
+   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organization + "/users/";
 
    @Before
    public void init() throws Exception {

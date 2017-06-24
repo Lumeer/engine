@@ -62,7 +62,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-@Path("/{organisation}/{project}/collections/{collectionName}/documents")
+@Path("/organizations/{organization}/projects/{project}/collections/{collectionName}/documents")
 @RequestScoped
 public class DocumentService implements Serializable {
 
@@ -90,7 +90,7 @@ public class DocumentService implements Serializable {
    @UserDataStorage
    private DataStorage dataStorage;
 
-   @PathParam("organisation")
+   @PathParam("organization")
    private String organisationCode;
 
    @PathParam("project")

@@ -46,7 +46,7 @@ import javax.ws.rs.core.MediaType;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@Path("/{organisation}/{project}/batch/")
+@Path("/organizations/{organization}/projects/{project}/batch/")
 @RequestScoped
 public class BatchService {
 
@@ -56,7 +56,7 @@ public class BatchService {
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
-   @PathParam("organisation")
+   @PathParam("organization")
    private String organisationCode;
 
    @PathParam("project")

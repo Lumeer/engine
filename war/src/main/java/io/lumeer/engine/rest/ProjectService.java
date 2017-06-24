@@ -45,7 +45,7 @@ import javax.ws.rs.core.MediaType;
 /**
  * Service which manipulates with project related data.
  */
-@Path("/{organization}/projects")
+@Path("/organizations/{organization}/projects")
 @RequestScoped
 public class ProjectService implements Serializable {
 

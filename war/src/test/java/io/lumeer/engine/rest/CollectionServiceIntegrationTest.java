@@ -68,7 +68,7 @@ import javax.ws.rs.core.Response;
 public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    private static final String TARGET_URI = "http://localhost:8080";
-   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/ACME/default/collections/";
+   private static String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/ACME/projects/default/collections/";
 
    private static final String COLLECTION_GET_ALL_COLLECTIONS_1 = "CollectionServiceCollectionGetAllCollections1";
    private static final String COLLECTION_GET_ALL_COLLECTIONS_2 = "CollectionServiceCollectionGetAllCollections2";
@@ -119,7 +119,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    public void init() {
       // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
       databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectId());
-      PATH_PREFIX = PATH_CONTEXT + "/rest/" + organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode() + "/collections/";
+      PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/collections/";
    }
 
    @Test

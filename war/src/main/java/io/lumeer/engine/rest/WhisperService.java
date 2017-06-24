@@ -50,7 +50,7 @@ import javax.ws.rs.core.MediaType;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@Path("/{organisation}/{project}/whisper")
+@Path("/organizations/{organization}/projects/{project}/whisper")
 public class WhisperService {
 
    @Inject
@@ -72,7 +72,7 @@ public class WhisperService {
 
    private Locale locale = Locale.getDefault();
 
-   @PathParam("organisation")
+   @PathParam("organization")
    private String organisationCode;
 
    @PathParam("project")

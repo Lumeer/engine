@@ -48,7 +48,7 @@ import javax.ws.rs.core.Response;
 /**
  * Provides suggestions when creating search queries as well as query execution.
  */
-@Path("/{organisation}/{project}/search")
+@Path("/organizations/{organization}/projects/{project}/search")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
@@ -62,7 +62,7 @@ public class SearchService implements Serializable {
    @Inject
    private QuerySuggester querySuggester;
 
-   @PathParam("organisation")
+   @PathParam("organization")
    private String organisationCode;
 
    @PathParam("project")
