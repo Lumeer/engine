@@ -98,7 +98,7 @@ public class CollectionMetadata {
    }
 
    public Date getLastTimeUsed() {
-      return new Date(lastTimeUsed.getTime());
+      return lastTimeUsed != null ? new Date(lastTimeUsed.getTime()) : null;
    }
 
    public List<String> getRecentlyUsedDocumentIds() {
@@ -106,7 +106,7 @@ public class CollectionMetadata {
    }
 
    public DataDocument getCustomMetadata() {
-      return new DataDocument(customMetadata);
+      return customMetadata != null ? new DataDocument(customMetadata) : null;
    }
 
    public String getCreator() {
@@ -114,7 +114,7 @@ public class CollectionMetadata {
    }
 
    public Date getCreateDate() {
-      return new Date(createDate.getTime());
+      return createDate != null ? new Date(createDate.getTime()) : null;
    }
 
    public DataDocument toDataDocument() {

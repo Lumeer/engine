@@ -131,7 +131,7 @@ public class ViewMetadata {
    }
 
    public Date getCreateDate() {
-      return new Date(createDate.getTime());
+      return createDate != null ? new Date(createDate.getTime()) : null;
    }
 
    public String getCreateUser() {
@@ -139,7 +139,7 @@ public class ViewMetadata {
    }
 
    public Date getUpdateDate() {
-      return new Date(updateDate.getTime());
+      return updateDate != null ? new Date(updateDate.getTime()) : null;
    }
 
    public String getUpdateUser() {
@@ -147,17 +147,17 @@ public class ViewMetadata {
    }
 
    public DataDocument getConfiguration() {
-      return new DataDocument(configuration);
+      return configuration != null ? new DataDocument(configuration) : null;
    }
 
    public DataDocument toDataDocument() {
       return new DataDocument(View.ID_KEY, id)
             .append(View.NAME_KEY, name)
-            .append(View.TYPE_KEY, name)
-            .append(View.DESCRIPTION_KEY, name)
-            .append(View.CREATE_DATE_KEY, name)
-            .append(View.CREATE_USER_KEY, name)
-            .append(View.UPDATE_DATE_KEY, name)
-            .append(View.UPDATE_USER_KEY, name);
+            .append(View.TYPE_KEY, type)
+            .append(View.DESCRIPTION_KEY, description)
+            .append(View.CREATE_DATE_KEY, createDate)
+            .append(View.CREATE_USER_KEY, createUser)
+            .append(View.UPDATE_DATE_KEY, updateDate)
+            .append(View.UPDATE_USER_KEY, updateUser);
    }
 }
