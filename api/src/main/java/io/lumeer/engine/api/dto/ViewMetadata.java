@@ -26,58 +26,60 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Describes view information.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
+@Immutable
 public class ViewMetadata {
 
    /**
     * Internal view ID.
     */
-   private int id;
+   private final int id;
 
    /**
     * User name of the view.
     */
-   private String name;
+   private final String name;
 
    /**
     * View type name.
     */
-   private String type;
+   private final String type;
 
    /**
     * View description from user
     */
-   private String description;
+   private final String description;
 
    /**
     * Complete view configuration.
     */
-   private DataDocument configuration;
+   private final DataDocument configuration;
 
    /**
     * Date when view was created
     */
-   private Date createDate;
+   private final Date createDate;
 
    /**
     * Name of user who created the view
     */
-   private String createUser;
+   private final String createUser;
 
    /**
     * Date when view was last updated
     */
-   private Date updateDate;
+   private final Date updateDate;
 
    /**
     * Name of user who last updated the view
     */
-   private String updateUser;
+   private final String updateUser;
 
    public ViewMetadata(DataDocument viewMetadata) {
       this.id = viewMetadata.getInteger(View.ID_KEY);
@@ -129,7 +131,7 @@ public class ViewMetadata {
    }
 
    public Date getCreateDate() {
-      return createDate;
+      return new Date(createDate.getTime());
    }
 
    public String getCreateUser() {
@@ -137,7 +139,7 @@ public class ViewMetadata {
    }
 
    public Date getUpdateDate() {
-      return updateDate;
+      return new Date(updateDate.getTime());
    }
 
    public String getUpdateUser() {
@@ -145,7 +147,7 @@ public class ViewMetadata {
    }
 
    public DataDocument getConfiguration() {
-      return configuration;
+      return new DataDocument(configuration);
    }
 
    public DataDocument toDataDocument() {
