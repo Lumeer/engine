@@ -25,17 +25,20 @@ import io.lumeer.engine.api.data.DataDocument;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.List;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
  */
+@Immutable
 public class Attribute {
 
-   private String name;
-   private String fullName;
-   private int count;
-   private List<String> constraints;
+   private final String name;
+   private final String fullName;
+   private final int count;
+   private final List<String> constraints;
 
    public Attribute(final DataDocument metadata) {
       name = metadata.getString(Collection.ATTRIBUTE_NAME_KEY);
@@ -68,7 +71,7 @@ public class Attribute {
    }
 
    public List<String> getConstraints() {
-      return constraints;
+      return Collections.unmodifiableList(constraints);
    }
 
    public DataDocument toDataDocument() {

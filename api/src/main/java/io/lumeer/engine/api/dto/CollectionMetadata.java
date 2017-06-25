@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,22 +38,24 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class CollectionMetadata {
 
-   private String name;
-   private String internalName;
-   private List<Attribute> attributes = new ArrayList<>();
-   private Date lastTimeUsed;
-   private List<String> recentlyUsedDocumentIds = new ArrayList<>();
-   private DataDocument customMetadata = new DataDocument();
-   private String creator;
-   private Date createDate;
+   private final String name;
+   private final String internalName;
+   private final List<Attribute> attributes;
+   private final Date lastTimeUsed;
+   private final List<String> recentlyUsedDocumentIds;
+   private final DataDocument customMetadata;
+   private final String creator;
+   private final Date createDate;
 
    public CollectionMetadata() {
+      this(null, null, Collections.emptyList(), null, Collections.emptyList(), null, null, null);
    }
 
    public CollectionMetadata(final DataDocument metadata) {
       name = metadata.getString(Collection.REAL_NAME_KEY);
       internalName = metadata.getString(Collection.INTERNAL_NAME_KEY);
 
+      attributes = new ArrayList<>();
       List<DataDocument> attributeDocuments = metadata.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class);
       attributes.addAll(attributeDocuments.stream().map(Attribute::new).collect(Collectors.toList()));
 
@@ -91,19 +94,19 @@ public class CollectionMetadata {
    }
 
    public List<Attribute> getAttributes() {
-      return attributes;
+      return Collections.unmodifiableList(attributes);
    }
 
    public Date getLastTimeUsed() {
-      return lastTimeUsed;
+      return new Date(lastTimeUsed.getTime());
    }
 
    public List<String> getRecentlyUsedDocumentIds() {
-      return recentlyUsedDocumentIds;
+      return Collections.unmodifiableList(recentlyUsedDocumentIds);
    }
 
    public DataDocument getCustomMetadata() {
-      return customMetadata;
+      return new DataDocument(customMetadata);
    }
 
    public String getCreator() {
@@ -111,7 +114,7 @@ public class CollectionMetadata {
    }
 
    public Date getCreateDate() {
-      return createDate;
+      return new Date(createDate.getTime());
    }
 
    public DataDocument toDataDocument() {
