@@ -43,6 +43,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -125,7 +126,10 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
       viewsByService = response2.readEntity(new GenericType<List<ViewMetadata>>() {
       });
-      assertThat(viewsByService).isEqualTo(viewsByFacade);
+
+      List<Integer> serviceIds = viewsByService.stream().map(ViewMetadata::getId).collect(Collectors.toList());
+      Integer[] facadeIds = viewsByService.stream().map(ViewMetadata::getId).toArray(Integer[]::new);
+      assertThat(serviceIds).containsOnly(facadeIds);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       response2.close();
       client2.close();

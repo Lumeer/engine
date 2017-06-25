@@ -42,7 +42,6 @@ import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -127,7 +126,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       when metadata document is not found
     */
    public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      DataDocument metadata = readMetadata(collectionName, internalNameFilter(collectionName), null);
+      DataDocument metadata = readMetadata(internalNameFilter(collectionName), null);
 
       if (metadata == null) {
          throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName));
@@ -216,13 +215,15 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public Set<String> getAttributesNames(String collectionName) {
       String attributeNameKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, Collection.ATTRIBUTE_FULL_NAME_KEY);
-      DataDocument metaData = readMetadata(collectionName, internalNameFilter(collectionName), Collections.singletonList(attributeNameKey));
+      DataDocument metaData = readMetadata(internalNameFilter(collectionName), Collections.singletonList(attributeNameKey));
 
-      return metaData != null ? metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
-                                        .stream()
-                                        .map(d -> d.getString(Collection.ATTRIBUTE_FULL_NAME_KEY))
-                                        .collect(Collectors.toSet())
-            : Collections.emptySet();
+      if (metaData == null) {
+         return Collections.emptySet();
+      }
+      return metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
+                     .stream()
+                     .map(d -> d.getString(Collection.ATTRIBUTE_FULL_NAME_KEY))
+                     .collect(Collectors.toSet());
    }
 
    /**
@@ -233,11 +234,14 @@ public class CollectionMetadataFacade implements Serializable {
     * @return map, keys are attributes' names, values are objects with attributes info
     */
    public Map<String, Attribute> getAttributesInfo(String collectionName) {
-      DataDocument metaData = readMetadata(collectionName, internalNameFilter(collectionName), Collections.singletonList(Collection.ATTRIBUTES_KEY));
-      return metaData != null ? metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
-                                        .stream()
-                                        .collect(Collectors.toMap(a -> a.getString(Collection.ATTRIBUTE_FULL_NAME_KEY), Attribute::new))
-            : Collections.emptyMap();
+      DataDocument metaData = readMetadata(internalNameFilter(collectionName), Collections.singletonList(Collection.ATTRIBUTES_KEY));
+
+      if (metaData == null) {
+         return Collections.emptyMap();
+      }
+      return metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
+                     .stream()
+                     .collect(Collectors.toMap(a -> a.getString(Collection.ATTRIBUTE_FULL_NAME_KEY), Attribute::new));
    }
 
    /**
@@ -252,7 +256,10 @@ public class CollectionMetadataFacade implements Serializable {
    public Attribute getAttributeInfo(String collectionName, String attributeName) {
       DataDocument attribute = readMetadataAttribute(collectionName, attributeName);
 
-      return attribute != null ? new Attribute(attribute) : null;
+      if (attribute == null) {
+         return null;
+      }
+      return new Attribute(attribute);
    }
 
    /**
@@ -372,7 +379,11 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public int getAttributeCount(String collectionName, String attributeName) {
       Attribute attribute = getAttributeInfo(collectionName, attributeName);
-      return attribute == null ? 0 : attribute.getCount();
+
+      if (attribute == null) {
+         return 0;
+      }
+      return attribute.getCount();
    }
 
    /**
@@ -384,7 +395,10 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public String getOriginalCollectionName(String collectionName) {
       DataDocument metaData = getMetadataKeyValue(collectionName, Collection.REAL_NAME_KEY);
-      return metaData != null ? metaData.getString(Collection.REAL_NAME_KEY) : null;
+      if (metaData == null) {
+         return null;
+      }
+      return metaData.getString(Collection.REAL_NAME_KEY);
    }
 
    /**
@@ -446,7 +460,10 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public Date getLastTimeUsed(String collectionName) {
       DataDocument metaData = getMetadataKeyValue(collectionName, Collection.LAST_TIME_USED_KEY);
-      return metaData != null ? metaData.getDate(Collection.LAST_TIME_USED_KEY) : null;
+      if (metaData == null) {
+         return null;
+      }
+      return metaData.getDate(Collection.LAST_TIME_USED_KEY);
    }
 
    /**
@@ -473,7 +490,10 @@ public class CollectionMetadataFacade implements Serializable {
     */
    public DataDocument getCustomMetadata(String collectionName) {
       DataDocument metaData = getMetadataKeyValue(collectionName, Collection.CUSTOM_META_KEY);
-      return metaData != null ? metaData.getDataDocument(Collection.CUSTOM_META_KEY) : new DataDocument();
+      if (metaData == null) {
+         return new DataDocument();
+      }
+      return metaData.getDataDocument(Collection.CUSTOM_META_KEY);
    }
 
    /**
@@ -701,7 +721,6 @@ public class CollectionMetadataFacade implements Serializable {
       if (attribute == null) {
          return Collections.emptyList();
       }
-
       return attribute.getConstraints();
    }
 
@@ -760,8 +779,13 @@ public class CollectionMetadataFacade implements Serializable {
     *       internal collection name
     * @return list of document ids sorted in descending order
     */
-   public List<String> getRecentlyUsedDocumentsIds(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      return getMetadataKeyValue(collectionName, Collection.RECENTLY_USED_DOCUMENTS_KEY).getArrayList(Collection.RECENTLY_USED_DOCUMENTS_KEY, String.class);
+   public List<String> getRecentlyUsedDocumentsIds(String collectionName) {
+      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.RECENTLY_USED_DOCUMENTS_KEY);
+
+      if (metaData == null) {
+         return Collections.emptyList();
+      }
+      return metaData.getArrayList(Collection.RECENTLY_USED_DOCUMENTS_KEY, String.class);
    }
 
    /**
@@ -772,7 +796,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param id
     *       document id
     */
-   public void addRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
+   public void addRecentlyUsedDocumentId(String collectionName, String id) {
       dataStorage.removeItemFromArray(
             metadataCollection(),
             internalNameFilter(collectionName),
@@ -795,7 +819,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @param id
     *       document id
     */
-   public void removeRecentlyUsedDocumentId(String collectionName, String id) throws CollectionMetadataDocumentNotFoundException {
+   public void removeRecentlyUsedDocumentId(String collectionName, String id) {
       dataStorage.removeItemFromArray(
             metadataCollection(),
             internalNameFilter(collectionName),
@@ -830,12 +854,14 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    private DataDocument getMetadataKeyValue(String collection, String key) {
-      return readMetadata(collection, internalNameFilter(collection), Collections.singletonList(key));
+      return readMetadata(internalNameFilter(collection), Collections.singletonList(key));
    }
 
-   private DataDocument readMetadata(String collectionName, DataFilter filter, List<String> projection) {
-      return projection == null || projection.isEmpty() ? dataStorage.readDocument(metadataCollection(), filter)
-            : dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, projection);
+   private DataDocument readMetadata(DataFilter filter, List<String> projection) {
+      if (projection == null || projection.isEmpty()) {
+         return dataStorage.readDocument(metadataCollection(), filter);
+      }
+      return dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, projection);
    }
 
    // method avoids to throw exception, because we don't know whether collection metadata or attribute doesn't exist
