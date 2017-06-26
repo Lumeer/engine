@@ -25,7 +25,7 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.rest.dao.Attribute;
+import io.lumeer.engine.api.dto.Attribute;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;

@@ -20,7 +20,6 @@
 package io.lumeer.engine.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
@@ -29,12 +28,12 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.Attribute;
+import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.provider.DataStorageProvider;
-import io.lumeer.engine.rest.dao.Attribute;
-import io.lumeer.engine.rest.dao.CollectionMetadata;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -183,7 +182,8 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       // existing
       assertThat(attribute).isNotNull();
-      assertThat(attribute.getNameWithoutParent()).isEqualTo(child);
+      assertThat(attribute.getName()).isEqualTo(child);
+      assertThat(attribute.getFullName()).isEqualTo(attributeName);
 
       // double nested attribute
       String child2 = "child 2";
@@ -192,7 +192,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       attribute = collectionMetadataFacade.getAttributeInfo(collection, attributeName2);
 
       assertThat(attribute).isNotNull();
-      assertThat(attribute.getNameWithoutParent()).isEqualTo(child2);
+      assertThat(attribute.getName()).isEqualTo(child2);
    }
 
    @Test
@@ -234,10 +234,12 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+      Set<String> columns = collectionMetadataFacade.getAttributesNames(collection);
+      assertThat(columns).hasSize(1);
+
       collectionMetadataFacade.dropAttribute(collection, name);
 
-      Set<String> columns = collectionMetadataFacade.getAttributesNames(collection);
-
+      columns = collectionMetadataFacade.getAttributesNames(collection);
       assertThat(columns).isEmpty();
 
       // we try to drop non existing attribute - nothing happens
@@ -249,11 +251,15 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
       collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
-      collectionMetadataFacade.dropAttribute(collection, nestedAttribute);
+      columns = collectionMetadataFacade.getAttributesNames(collection);
+      assertThat(columns).hasSize(2);
+
+      collectionMetadataFacade.dropAttribute(collection, name);
+      columns = collectionMetadataFacade.getAttributesNames(collection);
+      assertThat(columns).isEmpty();
 
       assertThat(collectionMetadataFacade.getAttributeInfo(collection, nestedAttribute)).isNull();
-      assertThat(collectionMetadataFacade.getAttributeInfo(collection, name)).isNotNull(); // parent is not changed
-
+      assertThat(collectionMetadataFacade.getAttributeInfo(collection, name)).isNull();
    }
 
    @Test
