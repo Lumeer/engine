@@ -25,13 +25,16 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Role;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.DataFormatException;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -341,5 +344,51 @@ public class SecurityFacade implements Serializable {
 
    private String userOrGroupName(String user, String group) {
       return user != null ? user : group;
+   }
+   /********* GETTING ROLES *********/
+   public List<Role> getOrganizationRoles(String organizationCode) {
+      DataDocument doc = systemDataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
+            dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY,
+                  organizationFacade.getOrganizationId(organizationCode)),
+            Arrays.asList(LumeerConst.Security.ROLES_KEY));
+
+      return getRolesList(doc);
+   }
+
+   public List<Role> getProjectRoles(String projectCode) {
+      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectCode)),
+            Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY)));
+
+      return getRolesList(doc);
+   }
+
+   public List<Role> getCollectionRoles(String projectCode, String collectionName) {
+      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(collectionFilter(projectCode, collectionName)),
+            Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY)));
+
+      return getRolesList(doc);
+   }
+
+   public List<Role> getViewRoles(String projectCode, int viewId) {
+      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
+            LumeerConst.Security.ROLES_COLLECTION_NAME,
+            dataStorageDialect.multipleFieldsValueFilter(viewFilter(projectCode, viewId)),
+            Arrays.asList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY)));
+
+      return getRolesList(doc);
+   }
+
+   private List<Role> getRolesList(DataDocument doc) {
+      List<Role> output = new ArrayList<>();
+      doc.getDataDocument(LumeerConst.Security.ROLES_KEY).forEach((k, v)-> {
+         output.add(new Role(k, (DataDocument) v));
+      });
+
+      return output;
    }
 }

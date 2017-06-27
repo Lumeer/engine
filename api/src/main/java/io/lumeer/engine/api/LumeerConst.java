@@ -20,7 +20,12 @@
 package io.lumeer.engine.api;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Lumeer constants.
@@ -180,6 +185,30 @@ public final class LumeerConst {
 
       public static final String USERS_KEY = "users";
       public static final String GROUP_KEY = "groups";
+
+      public static final String ORGANIZATION_RESOURCE = "organizations";
+      public static final String PROJECT_RESOURCE = "projects";
+      public static final String COLLECTION_RESOURCE = "collections";
+      public static final String VIEW_RESOURCE = "views";
+
+      private static final String[] ORGANIZATION_ROLES = new String[]
+            {ROLE_MANAGE, ROLE_WRITE};
+      private static final String[] PROJECT_ROLES = new String[]
+            {ROLE_MANAGE, ROLE_WRITE};
+      private static final String[] COLLECTION_ROLES = new String[]
+            {ROLE_MANAGE, ROLE_READ, ROLE_SHARE, ROLE_WRITE};
+      private static final String[] VIEW_ROLES = new String[]
+            {ROLE_MANAGE, ROLE_READ, ROLE_CLONE};
+
+      public static final Map<String, Set<String>> RESOURCE_ROLES =
+            Collections.unmodifiableMap(new HashMap<String, Set<String>>() {
+               {
+                  put(ORGANIZATION_RESOURCE, new HashSet<>(Arrays.asList(ORGANIZATION_ROLES)));
+                  put(PROJECT_RESOURCE, new HashSet<>(Arrays.asList(PROJECT_ROLES)));
+                  put(COLLECTION_RESOURCE, new HashSet<>(Arrays.asList(COLLECTION_ROLES)));
+                  put(VIEW_RESOURCE, new HashSet<>(Arrays.asList(VIEW_ROLES)));
+               }
+            });
 
       /****** OLD ******/
       public static final String RULE = "rule";
