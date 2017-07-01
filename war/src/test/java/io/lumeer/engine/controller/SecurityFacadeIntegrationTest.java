@@ -29,12 +29,15 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.api.dto.Project;
+import io.lumeer.engine.api.dto.Role;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -106,8 +109,27 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addOrganizationUserRole(org, user, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getOrganizationRoles(org);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).toArray(new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.ORGANIZATION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).contains(new ArrayList<String>() {{add(user);}});
+
       securityFacade.removeOrganizationUserRole(org, user, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isFalse();
+
+      roles = securityFacade.getOrganizationRoles(org);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).toArray(new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).doesNotContain(new ArrayList<String>() {{add(user);}});
+
    }
 
    @Test
@@ -119,17 +141,58 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addOrganizationGroupRole(org, group1, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getOrganizationRoles(org);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).toArray(new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).contains(new ArrayList<String>() {{add(group1);}});
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).doesNotContain(new ArrayList<String>() {{add(group2);}});
+
+
       // both groups have role
       securityFacade.addOrganizationGroupRole(org, group2, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isTrue();
+
+      roles = securityFacade.getOrganizationRoles(org);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).toArray(new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).contains(new ArrayList<String>() {{add(group1);add(group2);}});
 
       // again, one group has role
       securityFacade.removeOrganizationGroupRole(org, group1, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isTrue();
 
+      roles = securityFacade.getOrganizationRoles(org);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).toArray(new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).contains(new ArrayList<String>() {{add(group2);}});
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).doesNotContain(new ArrayList<String>() {{add(group1);}});
+
       // no group has role
       securityFacade.removeOrganizationGroupRole(org, group2, roleManage);
       assertThat(securityFacade.hasOrganizationRole(org, roleManage)).isFalse();
+
+      roles = securityFacade.getOrganizationRoles(org);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).toArray(new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.ORGANIZATION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).doesNotContain(new ArrayList<String>() {{add(group1);add(group2);}});
    }
 
    @Test
@@ -137,8 +200,28 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addProjectUserRole(project, user, roleManage);
       assertThat(securityFacade.hasProjectRole(project, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getProjectRoles(project);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.PROJECT_RESOURCE).toArray(
+                                   new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.PROJECT_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).contains(new ArrayList<String>() {{add(user);}});
+
       securityFacade.removeProjectUserRole(project, user, roleManage);
       assertThat(securityFacade.hasProjectRole(project, roleManage)).isFalse();
+
+      roles = securityFacade.getProjectRoles(project);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.PROJECT_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.PROJECT_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).doesNotContain(new ArrayList<String>() {{add(user);}});
    }
 
    @Test
@@ -149,8 +232,28 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addProjectGroupRole(project, group1, roleManage);
       assertThat(securityFacade.hasProjectRole(project, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getProjectRoles(project);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.PROJECT_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.PROJECT_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).contains(new ArrayList<String>() {{add(group1);}});
+
       securityFacade.removeProjectGroupRole(project, group1, roleManage);
       assertThat(securityFacade.hasProjectRole(project, roleManage)).isFalse();
+
+      roles = securityFacade.getProjectRoles(project);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.PROJECT_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.PROJECT_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).doesNotContain(new ArrayList<String>() {{add(group1);}});
    }
 
    @Test
@@ -161,8 +264,28 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addCollectionUserRole(project, collection, user, roleManage);
       assertThat(securityFacade.hasCollectionRole(project, collection, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getCollectionRoles(project, collection);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.COLLECTION_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.COLLECTION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).contains(new ArrayList<String>() {{add(user);}});
+
       securityFacade.removeCollectionUserRole(project, collection, user, roleManage);
       assertThat(securityFacade.hasCollectionRole(project, collection, roleManage)).isFalse();
+
+      roles = securityFacade.getCollectionRoles(project, collection);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.COLLECTION_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.COLLECTION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).doesNotContain(new ArrayList<String>() {{add(user);}});
    }
 
    @Test
@@ -173,8 +296,28 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addCollectionGroupRole(project, collection, group1, roleManage);
       assertThat(securityFacade.hasCollectionRole(project, collection, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getCollectionRoles(project, collection);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.COLLECTION_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.COLLECTION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).contains(new ArrayList<String>() {{add(group1);}});
+
       securityFacade.removeCollectionGroupRole(project, collection, group1, roleManage);
       assertThat(securityFacade.hasCollectionRole(project, collection, roleManage)).isFalse();
+
+      roles = securityFacade.getCollectionRoles(project, collection);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.COLLECTION_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.COLLECTION_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).doesNotContain(new ArrayList<String>() {{add(group1);}});
    }
 
    @Test
@@ -185,8 +328,28 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addViewUserRole(project, viewId, user, roleManage);
       assertThat(securityFacade.hasViewRole(project, viewId, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getViewRoles(project, viewId);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.VIEW_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.VIEW_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).contains(new ArrayList<String>() {{add(user);}});
+
       securityFacade.removeViewUserRole(project, viewId, user, roleManage);
       assertThat(securityFacade.hasViewRole(project, viewId, roleManage)).isFalse();
+
+      roles = securityFacade.getViewRoles(project, viewId);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.VIEW_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.VIEW_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getUsers()).doesNotContain(new ArrayList<String>() {{add(user);}});
    }
 
    @Test
@@ -197,7 +360,27 @@ public class SecurityFacadeIntegrationTest extends IntegrationTestBase {
       securityFacade.addViewGroupRole(project, viewId, group1, roleManage);
       assertThat(securityFacade.hasViewRole(project, viewId, roleManage)).isTrue();
 
+      List<Role> roles = securityFacade.getViewRoles(project, viewId);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.VIEW_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.VIEW_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).contains(new ArrayList<String>() {{add(group1);}});
+
       securityFacade.removeViewGroupRole(project, viewId, group1, roleManage);
       assertThat(securityFacade.hasViewRole(project, viewId, roleManage)).isFalse();
+
+      roles = securityFacade.getViewRoles(project, viewId);
+      assertThat(roles).extracting(role -> role.getName())
+                       .containsOnly(LumeerConst.Security.RESOURCE_ROLES.get(
+                             LumeerConst.Security.VIEW_RESOURCE).toArray(
+                             new String[LumeerConst.Security.RESOURCE_ROLES.get(
+                                   LumeerConst.Security.VIEW_RESOURCE).size()]));
+
+      assertThat(roles).filteredOn(role -> role.getName().equals(roleManage))
+                       .extracting(role -> role.getGroups()).doesNotContain(new ArrayList<String>() {{add(group1);}});
    }
 }
