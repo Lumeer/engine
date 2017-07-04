@@ -36,7 +36,9 @@ import io.lumeer.engine.controller.ViewFacade;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -105,41 +107,68 @@ public class QuerySuggester {
    List<SearchSuggestion> suggestAttributes(String text, int limit) {
       String[] parts = text.split("\\.", 2);
       if (parts.length < 2) {
-         return suggestCollectionsForAttribute(text, limit); // TODO look for attributes of all collections instead
+         return suggestAttributesForAllCollections(text, limit);
       }
 
       String collectionName = parts[0];
       String attributePart = parts[1];
 
-      try {
-         CollectionMetadata collectionMetadata = collectionMetadataFacade.getCollectionMetadata(collectionMetadataFacade.getInternalCollectionName(collectionName));
-         return collectionMetadata.getAttributes().stream()
-                                  .filter(attribute -> attribute.getName().toLowerCase().contains(attributePart.toLowerCase()))
-                                  .map(attribute -> convertAttribute(collectionName, attribute))
-                                  .collect(Collectors.toList()); // TODO do not ignore child attributes
-      } catch (UserCollectionNotFoundException e) {
+      String attributeKey = storageDialect.concatFields(LumeerConst.Collection.ATTRIBUTES_KEY, LumeerConst.Collection.ATTRIBUTE_NAME_KEY);
+
+      DataFilter collectionFilter = storageDialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME_KEY, collectionName);
+      DataFilter attributePartFilter = storageDialect.fieldValueWildcardFilter(attributeKey, attributePart);
+
+      DataDocument metadata = userDataStorage.readDocumentIncludeAttrs(collectionMetadataFacade.metadataCollection(),
+            storageDialect.combineFilters(collectionFilter, attributePartFilter), Collections.singletonList(LumeerConst.Collection.ATTRIBUTES_KEY));
+
+      if (metadata == null) {
          return Collections.emptyList();
       }
+
+      return metadata.getArrayList(LumeerConst.Collection.ATTRIBUTES_KEY, DataDocument.class).stream()
+                     .filter(dataDocument -> dataDocument.getString(LumeerConst.Collection.ATTRIBUTE_NAME_KEY).toLowerCase().contains(attributePart.toLowerCase()))
+                     .map(Attribute::new)
+                     .map(attribute -> convertAttribute(collectionName, attribute))
+                     .limit(limit)
+                     .collect(Collectors.toList());
+   }
+
+   private List<SearchSuggestion> suggestAttributesForAllCollections(String attributePart, int limit) {
+      String metadataCollection = collectionMetadataFacade.metadataCollection();
+      String attributeKey = storageDialect.concatFields(LumeerConst.Collection.ATTRIBUTES_KEY, LumeerConst.Collection.ATTRIBUTE_NAME_KEY);
+      DataFilter attributePartFilter = storageDialect.fieldValueWildcardFilter(attributeKey, attributePart);
+
+      List<DataDocument> collectionsRaw = userDataStorage.search(metadataCollection, attributePartFilter,
+            Arrays.asList(LumeerConst.Collection.REAL_NAME_KEY, LumeerConst.Collection.ATTRIBUTES_KEY));
+
+      List<SearchSuggestion> suggestions = new ArrayList<>();
+      for (DataDocument metadata : collectionsRaw) {
+         if (suggestions.size() >= limit) {
+            break;
+         }
+         String collectionName = metadata.getString(LumeerConst.Collection.REAL_NAME_KEY);
+         List<SearchSuggestion> s = metadata.getArrayList(LumeerConst.Collection.ATTRIBUTES_KEY, DataDocument.class).stream()
+                                            .filter(dataDocument -> dataDocument.getString(LumeerConst.Collection.ATTRIBUTE_NAME_KEY).toLowerCase().contains(attributePart.toLowerCase()))
+                                            .map(Attribute::new)
+                                            .map(attribute -> convertAttribute(collectionName, attribute))
+                                            .limit(limit - suggestions.size())
+                                            .collect(Collectors.toList());
+         suggestions.addAll(s);
+      }
+      return suggestions;
    }
 
    private SearchSuggestion convertAttribute(String collectionName, Attribute attribute) {
-      String text = collectionName + "." + attribute.getName();
+      String text = collectionName + "." + attribute.getFullName();
       List<String> constraints = attribute.getConstraints();
       String icon = "";
       return new SearchSuggestion(SearchSuggestion.TYPE_ATTRIBUTE, text, constraints, icon);
    }
 
-   private List<SearchSuggestion> suggestCollectionsForAttribute(String text, int limit) {
-      return suggestCollections(text, limit)
-            .stream()
-            .map(s -> new SearchSuggestion(SearchSuggestion.TYPE_ATTRIBUTE, s.getText(), s.getIcon()))
-            .collect(Collectors.toList());
-   }
-
    List<SearchSuggestion> suggestCollections(String text, int limit) {
       String metadataCollection = collectionMetadataFacade.metadataCollection();
       DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.Collection.REAL_NAME_KEY, text);
-      List<String> projection = Arrays.asList(LumeerConst.Collection.REAL_NAME_KEY);
+      List<String> projection = Collections.singletonList(LumeerConst.Collection.REAL_NAME_KEY);
 
       return userDataStorage.search(metadataCollection, filter, null, projection, 0, limit)
                             .stream()
@@ -161,7 +190,7 @@ public class QuerySuggester {
       String metadataCollection = viewFacade.metadataCollection();
       DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.View.NAME_KEY, text);
 
-      return userDataStorage.search(metadataCollection, filter, null, Arrays.asList(LumeerConst.View.NAME_KEY), 0, limit)
+      return userDataStorage.search(metadataCollection, filter, null, Collections.singletonList(LumeerConst.View.NAME_KEY), 0, limit)
                             .stream()
                             .map(QuerySuggester::convertView)
                             .collect(Collectors.toList());

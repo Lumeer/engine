@@ -19,6 +19,9 @@
  */
 package io.lumeer.engine.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +49,9 @@ public class SearchSuggestion implements Serializable {
       this(type, text, Collections.emptyList(), icon);
    }
 
-   public SearchSuggestion(final String type, final String text, final List<String> constraints, final String icon) {
+   @JsonCreator
+   public SearchSuggestion(final @JsonProperty("type") String type, final @JsonProperty("text") String text,
+         final @JsonProperty("constraints") List<String> constraints, final @JsonProperty("icon") String icon) {
       this.type = type;
       this.text = text;
       this.constraints = constraints;
