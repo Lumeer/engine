@@ -45,6 +45,7 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
    private static final String ATTRIBUTE_KNEES = "knees";
    private static final String ATTRIBUTE_AGE = "age";
    private static final String ATTRIBUTE_SPECIES = "species";
+   private static final String ATTRIBUTE_GUN = "gun";
 
    private static final String COLLECTION_BANANAS = "bananas";
    private static final String COLLECTION_NANS = "nans";
@@ -109,7 +110,7 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
       List<SearchSuggestion> suggestions = querySuggester.suggestAll("ees", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(suggestions).containsOnly(
-            new SearchSuggestion(SearchSuggestion.TYPE_ATTRIBUTE, COLLECTION_TREES),
+            new SearchSuggestion(SearchSuggestion.TYPE_ATTRIBUTE, COLLECTION_TREES + "." + ATTRIBUTE_KNEES),
             new SearchSuggestion(SearchSuggestion.TYPE_COLLECTION, COLLECTION_TREES),
             new SearchSuggestion(SearchSuggestion.TYPE_VIEW, VIEW_BEES)
       );
@@ -139,26 +140,20 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testSuggestAttributesNoCollection() {
-      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("spices", QuerySuggester.SUGGESTIONS_LIMIT);
-      assertThat(attributes).isEmpty();
-   }
-
-   @Test
-   public void testSuggestAttributesPartialCollection() throws Exception {
+   public void testSuggestAttributesNoCollection() throws Exception {
       collectionFacade.createCollection(COLLECTION_GUNS);
-      collectionFacade.createCollection(COLLECTION_SHOTGUNS);
+      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_GUNS), ATTRIBUTE_GUN);
+      collectionFacade.createCollection(COLLECTION_MATCHES);
+      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_MATCHES), ATTRIBUTE_GUN);
+      collectionFacade.createCollection(COLLECTION_SOFTWARE);
+      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_SOFTWARE), ATTRIBUTE_GUN);
 
-      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("gun", QuerySuggester.SUGGESTIONS_LIMIT);
-      assertThat(attributes).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_GUNS, COLLECTION_SHOTGUNS);
-   }
-
-   @Test
-   public void testSuggestAttributesCompleteCollection() throws Exception {
-      collectionFacade.createCollection(COLLECTION_SUNGLASSES);
-
-      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("sunglasses", QuerySuggester.SUGGESTIONS_LIMIT);
-      assertThat(attributes).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_SUNGLASSES);
+      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("un", QuerySuggester.SUGGESTIONS_LIMIT);
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(attributes).hasSize(3);
+      assertions.assertThat(attributes).extracting(SearchSuggestion::getText)
+                .containsOnly(COLLECTION_GUNS + "." + ATTRIBUTE_GUN, COLLECTION_MATCHES + "." + ATTRIBUTE_GUN, COLLECTION_SOFTWARE + "." + ATTRIBUTE_GUN);
+      assertions.assertAll();
    }
 
    @Test
@@ -185,6 +180,22 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
       assertions.assertThat(attributes.get(0).getText()).isEqualTo(COLLECTION_PEOPLE + "." + ATTRIBUTE_AGE);
       assertions.assertThat(attributes.get(0).getConstraints()).containsOnly("isNumber");
       assertions.assertAll();
+   }
+
+   @Test
+   public void testSuggestAttributesChilds() throws Exception {
+      collectionFacade.createCollection(COLLECTION_COMPANIES);
+      String internalCollectionName = collectionMetadataFacade.getInternalCollectionName(COLLECTION_COMPANIES);
+      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "Lumeer");
+      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "First.Lumeer");
+      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "Second.First.Lumeer");
+      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "a.b.c.d.e.Lumee");
+
+      List<SearchSuggestion> attributes = querySuggester.suggestAttributes("companies.lumee", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(attributes).hasSize(4).extracting("text").containsOnly("companies.Lumeer", "companies.First.Lumeer", "companies.Second.First.Lumeer", "companies.a.b.c.d.e.Lumee");
+
+      attributes = querySuggester.suggestAttributes("companies.lumeer", QuerySuggester.SUGGESTIONS_LIMIT);
+      assertThat(attributes).hasSize(3).extracting("text").containsOnly("companies.Lumeer", "companies.First.Lumeer", "companies.Second.First.Lumeer");
    }
 
    @Test

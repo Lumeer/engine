@@ -46,6 +46,7 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -96,7 +97,7 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
       List suggestions = response.readEntity(List.class);
-      assertThat(suggestions).hasSize(4);
+      assertThat(suggestions).hasSize(2);
 
       response.close();
       client.close();
@@ -115,7 +116,7 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
-      List<SearchSuggestion> suggestions = response.readEntity(List.class);
+      List<SearchSuggestion> suggestions = response.readEntity(new GenericType<List<SearchSuggestion>>(){});
       assertThat(suggestions).hasSize(2);
 
       response.close();
@@ -138,7 +139,7 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
       collections.add(COLLECTION_QUERY_SEARCH);
       final Query query = new Query(collections, emptyFilters, emptyProjection, emptySorting, limit, null);
       Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(QUERY_PATH).request().buildPost(Entity.entity(query, MediaType.APPLICATION_JSON)).invoke();
-      List<DataDocument> matchResult = response.readEntity(ArrayList.class);
+      List<DataDocument> matchResult = response.readEntity(new GenericType<List<DataDocument>>(){});
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(matchResult).hasSize(limit);
       response.close();
