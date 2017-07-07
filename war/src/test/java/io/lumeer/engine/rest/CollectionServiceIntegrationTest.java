@@ -122,6 +122,14 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/collections/";
    }
 
+   @Before
+   public void clearAllCollections() throws DbException {
+      Set<String> collections = new HashSet<>(collectionFacade.getAllCollections().keySet());
+      for (String internalName : collections) {
+         collectionFacade.dropCollection(internalName);
+      }
+   }
+
    @Test
    public void testRegister() throws Exception {
       assertThat(collectionService).isNotNull();
@@ -129,23 +137,12 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testGetAllCollections() throws Exception {
-      setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_1);
-      setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_2);
-      String c1 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_1);
-      String c2 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_2);
+      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_1);
+      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_2);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-
-      // response is empty because of missing READ rights
       ArrayList<String> collections = response.readEntity(ArrayList.class);
-      assertThat(collections).isEmpty();
-      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-
-      addReadRole(c1);
-      addReadRole(c2);
-      response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      collections = response.readEntity(ArrayList.class);
       assertThat(collections).containsOnly(COLLECTION_GET_ALL_COLLECTIONS_1, COLLECTION_GET_ALL_COLLECTIONS_2);
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
@@ -156,9 +153,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Ignore("we ignore that test because we don't use cache anymore")
    @Test
    public void testGetAllCollectionsRequestCaching() throws Exception {
-      setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_1);
-      setUpCollections(COLLECTION_GET_ALL_COLLECTIONS_2);
-
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -175,7 +169,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testCreateCollection() throws Exception {
       securityFacade.addProjectUserRole(projectFacade.getCurrentProjectCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
-      setUpCollections(COLLECTION_CREATE_COLLECTION);
 
       // #1 first time collection creation, status code = 200
       final Client client = ClientBuilder.newBuilder().build();
@@ -198,7 +191,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testDropCollection() throws Exception {
-      setUpCollections(COLLECTION_DROP_COLLECTION);
       final Client client = ClientBuilder.newBuilder().build();
 
       // #1 nothing to delete, status code = 404
@@ -228,8 +220,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testRenameAttribute() throws Exception {
-      setUpCollections(COLLECTION_RENAME_ATTRIBUTE);
-
       final String oldAttributeName = "testAttribute";
       final String newAttributeName = "testNewAttribute";
 
@@ -262,7 +252,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testDropAttribute() throws Exception {
-      setUpCollections(COLLECTION_DROP_ATTRIBUTE);
       final String attributeName = "testAttributeToAdd";
 
       // #1 the given collection does not exist, status code = 404
@@ -289,7 +278,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testOptionSearch() throws Exception {
-      setUpCollections(COLLECTION_OPTION_SEARCH);
       final Client client = ClientBuilder.newBuilder().build();
       final int limit = 5;
 
@@ -312,7 +300,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testQuerySearch() throws Exception {
-      setUpCollections(COLLECTION_QUERY_SEARCH);
       final Client client = ClientBuilder.newBuilder().build();
       final DataDocument queryDoc = queryDocument(getInternalName(COLLECTION_QUERY_SEARCH)); // = "{\"find\":" + "\"" + getInternalName(COLLECTION_QUERY_SEARCH) + "\"}"
       final String queryJson = JSON.serialize(queryDoc);
@@ -334,7 +321,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testAddCollectionMetadata() throws Exception {
-      setUpCollections(COLLECTION_ADD_COLLECTION_METADATA);
       final Client client = ClientBuilder.newBuilder().build();
 
       String attributeName = "metaAttribute";
@@ -354,7 +340,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testReadCollectionMetadata() throws Exception {
-      setUpCollections(COLLECTION_READ_COLLECTION_METADATA);
       final Client client = ClientBuilder.newBuilder().build();
 
       // #1 no metadata collection exists, status code = 404
@@ -380,7 +365,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testUpdateCollectionMetadata() throws Exception {
-      setUpCollections(COLLECTION_UPDATE_COLLECTION_METADATA);
       final Client client = ClientBuilder.newBuilder().build();
       final String columnSizeAttributeName = "columnSize";
       final int value = 100;
@@ -406,8 +390,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testReadCollectionAttributes() throws Exception {
-      setUpCollections(COLLECTION_READ_COLLECTION_ATTRIBUTES);
-
       final Client client = ClientBuilder.newBuilder().build();
       final String dummyAttribute1 = "dummyAttribute1";
       final String dummyAttribute2 = "dummyAttribute2";
@@ -437,8 +419,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSetReadAndDropAttributeConstraint() throws Exception {
-      setUpCollections(COLLECTION_SET_READ_AND_DROP_ATTRIBUTE_CONSTRAINT);
-
       final Client client = ClientBuilder.newBuilder().build();
       final String constraintConfiguration = "case:lower";
       final String attributeName = "dummyAttributeName";
@@ -472,13 +452,6 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       String internalName = getInternalName(collectionName);
       for (int i = 0; i < 10; i++) {
          documentFacade.createDocument(internalName, new DataDocument("dummyAttribute", i));
-      }
-   }
-
-   private void setUpCollections(final String collectionName) throws DbException {
-      String internalName = getInternalName(collectionName);
-      if (dataStorage.hasCollection(internalName)) {
-         collectionFacade.dropCollection(internalName);
       }
    }
 
