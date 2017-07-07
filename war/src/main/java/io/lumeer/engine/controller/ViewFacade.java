@@ -106,6 +106,8 @@ public class ViewFacade implements Serializable {
       String project = projectFacade.getCurrentProjectCode();
       databaseInitializer.onViewCreated(project, viewId);
       securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_READ);
+      securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_CLONE);
 
       return viewId;
    }

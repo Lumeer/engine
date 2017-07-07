@@ -110,25 +110,20 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       client.close();
 
       // #2 There is one newly created view.
-      final String INITIAL_VIEW_NAME = "initialViewName";
+      final String initialViewName = "initialViewName";
 
-      int viewId = viewFacade.createView(INITIAL_VIEW_NAME, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
+      viewFacade.createView(initialViewName, LumeerConst.View.TYPE_DEFAULT_VALUE, null, null);
 
       final Client client2 = ClientBuilder.newBuilder().build();
+
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
       List<ViewMetadata> viewsByService = response2.readEntity(new GenericType<List<ViewMetadata>>() {
       });
-      // there is no READ role set for the current user
-      assertThat(viewsByService).isEmpty();
-      addReadRole(viewId);
+      List<Integer> serviceIds = viewsByService.stream().map(ViewMetadata::getId).collect(Collectors.toList());
 
       List<ViewMetadata> viewsByFacade = viewFacade.getAllViews();
-      response2 = client2.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      viewsByService = response2.readEntity(new GenericType<List<ViewMetadata>>() {
-      });
+      Integer[] facadeIds = viewsByFacade.stream().map(ViewMetadata::getId).toArray(Integer[]::new);
 
-      List<Integer> serviceIds = viewsByService.stream().map(ViewMetadata::getId).collect(Collectors.toList());
-      Integer[] facadeIds = viewsByService.stream().map(ViewMetadata::getId).toArray(Integer[]::new);
       assertThat(serviceIds).containsOnly(facadeIds);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       response2.close();

@@ -131,6 +131,7 @@ public class OrganizationFacade {
       String id = dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, organization.toDataDocument());
       databaseInitializer.onOrganizationCreated(id);
       securityFacade.addOrganizationUserRole(organization.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addOrganizationUserRole(organization.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
 
       return id;
    }

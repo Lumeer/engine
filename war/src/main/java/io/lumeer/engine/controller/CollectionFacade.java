@@ -180,6 +180,9 @@ public class CollectionFacade implements Serializable {
       String project = projectFacade.getCurrentProjectCode();
       databaseInitializer.onCollectionCreated(project, internalCollectionName);
       securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_READ);
+      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_SHARE);
+      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
 
       createCollectionEvent.fire(new CreateCollection(collectionOriginalName, internalCollectionName));
 

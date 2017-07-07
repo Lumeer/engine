@@ -153,6 +153,7 @@ public class ProjectFacade {
       String id = dataStorage.createDocument(LumeerConst.Project.COLLECTION_NAME, dataDocument);
       databaseInitializer.onProjectCreated(id);
       securityFacade.addProjectUserRole(project.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addProjectUserRole(project.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
 
       return id;
    }
