@@ -28,7 +28,7 @@ import io.lumeer.engine.api.data.DataDocument;
  */
 public class DropDocument extends DocumentEvent {
 
-   public DropDocument(final String collectionName, final DataDocument document) {
-      super(collectionName, document);
+   public DropDocument(final String collectionCode, final DataDocument document) {
+      super(collectionCode, document);
    }
 }

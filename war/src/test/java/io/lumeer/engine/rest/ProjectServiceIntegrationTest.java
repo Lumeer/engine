@@ -137,7 +137,6 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       final String org = "ORG21";
 
       organizationFacade.createOrganization(new Organization(org, "Organization"));
-      securityFacade.addOrganizationUserRole(org, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
@@ -164,8 +163,6 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(new Project(project, projectNameOld));
       assertThat(projectFacade.readProjectName(project)).isEqualTo(projectNameOld);
 
-      addManageRole(project);
-
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
             .path(pathPrefix(org) + project + "/name/" + projectNameNew)
@@ -191,8 +188,6 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       assertThat(projects).hasSize(1);
       assertThat(projects).extracting("code").containsOnly(project);
 
-      addManageRole(project);
-
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
             .path(pathPrefix(org) + project + "/code/" + projectNew)
@@ -217,8 +212,6 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(new Project(project, projectName));
       List<Project> projects = projectFacade.readProjects(org);
       assertThat(projects).hasSize(1).extracting("code").containsOnly(project);
-
-      addManageRole(project);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
@@ -268,8 +261,6 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isEqualTo("value");
 
-      addManageRole(project);
-
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
             .path(pathPrefix(org) + project + "/meta/" + metaAttr)
@@ -293,8 +284,6 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       projectFacade.createProject(new Project(project, projectName));
       projectFacade.updateProjectMetadata(project, new DataDocument(metaAttr, "value"));
       assertThat(projectFacade.readProjectMetadata(project, metaAttr)).isNotNull();
-
-      addManageRole(project);
 
       final Client client = ClientBuilder.newBuilder().build();
       client.target(TARGET_URI)
@@ -356,7 +345,4 @@ public class ProjectServiceIntegrationTest extends IntegrationTestBase {
       return PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/";
    }
 
-   private void addManageRole(String projectCode) {
-      securityFacade.addProjectUserRole(projectCode, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
-   }
 }

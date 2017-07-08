@@ -28,36 +28,25 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Attribute;
-import io.lumeer.engine.api.event.ChangeCollectionName;
-import io.lumeer.engine.api.event.CreateCollection;
-import io.lumeer.engine.api.event.DropCollection;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
-import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.SessionScoped;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.event.Reception;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 @Named
 @SessionScoped
 public class CollectionFacade implements Serializable {
@@ -90,320 +79,256 @@ public class CollectionFacade implements Serializable {
    private OrganizationFacade organizationFacade;
 
    @Inject
-   private Event<CreateCollection> createCollectionEvent;
-
-   @Inject
-   private Event<DropCollection> dropCollectionEvent;
-
-   @Inject
    private DatabaseInitializer databaseInitializer;
 
    @Inject
    private SecurityFacade securityFacade;
 
-   // cache of collections - keys are internal names, values are original names
-   private Map<String, String> collections;
-
    /**
-    * Returns a Map object of collection names for current project.
+    * Gets limited info about all collections in database
     *
-    * @return the map of collection names. Keys are internal names, values are original names.
+    * @return list with metadata
     */
-   public Map<String, String> getAllCollections() {
-      Map<String, String> collections = getAllCollections(projectFacade.getCurrentProjectCode());
-
-      this.collections = collections;
-      return collections;
-   }
-
-   /**
-    * Returns a Map object of collection names for given project.
-    *
-    * @param projectCode
-    *       project code
-    * @return the map of collection names. Keys are internal names, values are original names.
-    */
-   public Map<String, String> getAllCollections(String projectCode) {
-      List<DataDocument> result = getAllCollectionsDocuments(projectCode);
-
-      Map<String, String> collections = new HashMap<>();
-
-      for (DataDocument d : result) {
-         collections.put(
-               d.getString(LumeerConst.Collection.INTERNAL_NAME_KEY),
-               d.getString(LumeerConst.Collection.REAL_NAME_KEY));
-      }
-
-      return collections;
-   }
-
-   /**
-    * Returns a list of collection names sorted by last time used date in descending order.
-    *
-    * @return a list of internal collection names.
-    */
-   public List<String> getAllCollectionsByLastTimeUsed() {
-      List<DataDocument> result = getAllCollectionsDocuments(projectFacade.getCurrentProjectCode());
-
-      List<String> collections = new ArrayList<>();
-
-      for (DataDocument d : result) {
-         collections.add(d.getString(LumeerConst.Collection.INTERNAL_NAME_KEY));
-      }
-
-      return collections;
-   }
-
-   private List<DataDocument> getAllCollectionsDocuments(String projectCode) {
-      return dataStorage.search(
-            collectionMetadataFacade.metadataCollection(projectCode),
-            null,
-            dataStorageDialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED_KEY, LumeerConst.SORT_DESCENDING_ORDER),
-            0, 0);
+   public List<Collection> getCollections() {
+      return collectionMetadataFacade.getCollections();
    }
 
    /**
     * Creates a new collection and its initial metadata.
     *
-    * @param collectionOriginalName
-    *       name of the collection to create (name given by user)
-    * @return name of internal collection
+    * @param collection
+    *       collection attributes
+    * @return code
     * @throws UserCollectionAlreadyExistsException
     *       when collection with given user name already exists
     */
-   public String createCollection(final String collectionOriginalName) throws UserCollectionAlreadyExistsException {
-      String internalCollectionName = collectionMetadataFacade.createInternalName(collectionOriginalName);
+   public String createCollection(Collection collection) throws UserCollectionAlreadyExistsException {
+      Map<String, String> collectionsCodeAndName = collectionMetadataFacade.getCollectionsCodeName();
+      if (collectionsCodeAndName.containsValue(collection.getName())) {
+         throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collection.getName()));
+      }
 
-      dataStorage.createCollection(internalCollectionName);
-      collectionMetadataFacade.createInitialMetadata(internalCollectionName, collectionOriginalName);
+      String collectionCode;
+      if (collection.getCode() != null) {
+         collectionCode = collection.getCode();
+      } else {
+         Set<String> collectionsFromDb = dataStorage.getAllCollections().stream().collect(Collectors.toSet());
+         collectionCode = generateCollectionCodeHash(collection.getName());
+         int i = 0;
+         while (collectionsFromDb.contains(collectionCode)) {
+            collectionCode = generateCollectionCodeHash(collection.getName() + i++);
+         }
+      }
+
+      dataStorage.createCollection(collectionCode);
+      String collectionId = collectionMetadataFacade.createInitialMetadata(collectionCode, collection);
 
       String project = projectFacade.getCurrentProjectCode();
-      databaseInitializer.onCollectionCreated(project, internalCollectionName);
-      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
-      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_READ);
-      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_SHARE);
-      securityFacade.addCollectionUserRole(project, internalCollectionName, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+      databaseInitializer.onCollectionCreated(project, collectionId);
 
-      createCollectionEvent.fire(new CreateCollection(collectionOriginalName, internalCollectionName));
+      List<String> user = Collections.singletonList(userFacade.getUserEmail());
+      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_READ);
+      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_SHARE);
+      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_WRITE);
 
-      return internalCollectionName;
+      return collectionCode;
+   }
+
+   /**
+    * Creates a new collection and its initial metadata.
+    *
+    * @param collectionCode
+    *       collection code
+    * @param collection
+    *       collection attributes
+    * @throws UserCollectionAlreadyExistsException
+    *       when collection with given user name already exists
+    */
+   public void updateCollection(String collectionCode, Collection collection) throws UserCollectionAlreadyExistsException {
+      Map<String, String> collectionsCodeAndName = collectionMetadataFacade.getCollectionsCodeName();
+      collectionsCodeAndName.remove(collectionCode);
+
+      if (collectionsCodeAndName.containsValue(collection.getName())) {
+         throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collection.getName()));
+      }
+
+      if (collection.getCode() != null && !collectionCode.equals(collection.getCode())) {
+         dataStorage.renameCollection(collectionCode, collection.getCode());
+      }
+      collectionMetadataFacade.updateMetadata(collectionCode, collection);
    }
 
    /**
     * Drops the collection, its links, metadata and shadow.
     *
-    * @param collectionName
-    *       internal name of the collection to drop
+    * @param collectionCode
+    *       collection code
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public void dropCollection(final String collectionName) throws DbException {
-      if (!dataStorage.hasCollection(collectionName)) {
+   public void dropCollection(final String collectionCode) throws DbException {
+      if (!dataStorage.hasCollection(collectionCode)) {
          return;
       }
-      linkingFacade.dropLinksForCollection(collectionName, null, LumeerConst.Linking.LinkDirection.FROM);
-      linkingFacade.dropLinksForCollection(collectionName, null, LumeerConst.Linking.LinkDirection.TO);
-      securityFacade.dropCollectionSecurity(projectFacade.getCurrentProjectCode(), collectionName);
-      dropCollectionMetadata(collectionName);
-      dataStorage.dropCollection(collectionName);
-      versionFacade.trashShadowCollection(collectionName);
 
-      dropCollectionEvent.fire(new DropCollection(null, collectionName));
+      linkingFacade.dropLinksForCollection(collectionCode, null, LumeerConst.Linking.LinkDirection.FROM);
+      linkingFacade.dropLinksForCollection(collectionCode, null, LumeerConst.Linking.LinkDirection.TO);
+      securityFacade.dropCollectionSecurity(projectFacade.getCurrentProjectCode(), collectionCode);
+      collectionMetadataFacade.dropMetadata(collectionCode);
+      dataStorage.dropCollection(collectionCode);
+      versionFacade.trashShadowCollection(collectionCode);
+   }
+
+   public boolean hasCollection(String collectionCode){
+      return collectionMetadataFacade.getCollectionsCodeName().containsKey(collectionCode);
    }
 
    /**
     * Reads all attributes of given collection.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @return map, keys are attributes' names, values are objects with attributes' metadata
     */
-   public Map<String, Attribute> readCollectionAttributes(final String collectionName) {
-      return collectionMetadataFacade.getAttributesInfo(collectionName);
-   }
-
-   /**
-    * Drops a metadata of given collection.
-    *
-    * @param collectionName
-    *       internal collection name
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
-    */
-   private void dropCollectionMetadata(final String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      String documentId = collectionMetadataFacade.getCollectionMetadataDocument(collectionName).getId();
-      dataStorage.dropDocument(collectionMetadataFacade.metadataCollection(), dataStorageDialect.documentIdFilter(documentId));
+   public Map<String, Attribute> readCollectionAttributes(final String collectionCode) {
+      return collectionMetadataFacade.getAttributesInfo(collectionCode);
    }
 
    /**
     * Gets the first 100 distinct values of the given attribute in the given collection.
     *
-    * @param collectionName
-    *       the internal name of the collection where documents contain the given attribute
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       the name of the attribute
     * @return the distinct set of values of the given attribute
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
     * @throws AttributeNotFoundException
     *       if attribute was not found in metadata collection
     */
-   public Set<String> getAttributeValues(final String collectionName, final String attributeName) throws CollectionNotFoundException, AttributeNotFoundException {
-      if (dataStorage.hasCollection(collectionName)) {
-         if (collectionMetadataFacade.getAttributesNames(collectionName).contains(attributeName)) {
-            return dataStorage.getAttributeValues(collectionName, attributeName);
-         } else {
-            throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundInColString(attributeName, collectionName));
-         }
+   public Set<String> getAttributeValues(final String collectionCode, final String attributeName) throws AttributeNotFoundException {
+      if (collectionMetadataFacade.getAttributesNames(collectionCode).contains(attributeName)) {
+         return dataStorage.getAttributeValues(collectionCode, attributeName);
       } else {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+         throw new AttributeNotFoundException(ErrorMessageBuilder.attributeNotFoundInColString(attributeName, collectionCode));
       }
    }
 
    /**
     * Removes given attribute from all existing documents in a collection.
     *
-    * @param collectionName
-    *       the internal name of the collection where the given attribute should be removed
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       name of the attribute to remove
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
     */
-   public void dropAttribute(final String collectionName, final String attributeName) throws CollectionNotFoundException {
-      if (dataStorage.hasCollection(collectionName)) {
-         collectionMetadataFacade.dropAttribute(collectionName, attributeName);
-         List<DataDocument> documents = getAllDocuments(collectionName);
+   public void dropAttribute(final String collectionCode, final String attributeName) {
+      collectionMetadataFacade.dropAttribute(collectionCode, attributeName);
+      List<DataDocument> documents = getAllDocuments(collectionCode);
 
-         for (DataDocument document : documents) {
-            dataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(document.getId()), attributeName);
-         }
-
-         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
-      } else {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      for (DataDocument document : documents) {
+         dataStorage.dropAttribute(collectionCode, dataStorageDialect.documentIdFilter(document.getId()), attributeName);
       }
+
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Updates the name of an attribute in all documents of given collection.
     *
-    * @param collectionName
-    *       internal name of the collection where the given attribute should be renamed
+    * @param collectionCode
+    *       collection code
     * @param origName
     *       old name of an attribute
     * @param newName
     *       new name of an attribute
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
     */
-   public void renameAttribute(final String collectionName, final String origName, final String newName) throws CollectionNotFoundException, AttributeAlreadyExistsException {
-      if (dataStorage.hasCollection(collectionName)) {
-         collectionMetadataFacade.renameAttribute(collectionName, origName, newName);
-         dataStorage.renameAttribute(collectionName, origName, newName);
+   public void renameAttribute(final String collectionCode, final String origName, final String newName) throws AttributeAlreadyExistsException {
+      collectionMetadataFacade.renameAttribute(collectionCode, origName, newName);
+      dataStorage.renameAttribute(collectionCode, origName, newName);
 
-         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
-      } else {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Adds new constraint for given attribute.
     *
-    * @param collectionName
-    *       internal name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @param constraintConfiguration
     *       string with constraint configuration
     * @return true if add is successful, false if some of existing values in collection does not satisfy new constraint
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
     * @throws InvalidConstraintException
     *       when given constraint configuration is not valid
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public boolean addAttributeConstraint(final String collectionName, final String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, InvalidConstraintException, CollectionMetadataDocumentNotFoundException {
-      if (dataStorage.hasCollection(collectionName)) {
+   public boolean addAttributeConstraint(final String collectionCode, final String attributeName, final String constraintConfiguration) throws InvalidConstraintException {
+      // we check if attribute value in all existing documents satisfies new constraint
+      ConstraintManager constraintManager = new ConstraintManager(Collections.singletonList(constraintConfiguration));
 
-         // we check if attribute value in all existing documents satisfies new constraint
-         ConstraintManager constraintManager = new ConstraintManager(Collections.singletonList(constraintConfiguration));
-
-         List<DataDocument> allDocuments = getAllDocuments(collectionName);
-         for (DataDocument document : allDocuments) {
-            // TODO: fix fixable value
-            String value = document.get(attributeName).toString();
-            if (value == null) { // document does not contain given attribute
-               continue;
-            }
-            if (!(constraintManager.isValid(value) == Constraint.ConstraintResult.VALID)) {
-               return false; // we have found invalid value, so the constraint cannot be added
-            }
+      List<DataDocument> allDocuments = getAllDocuments(collectionCode);
+      for (DataDocument document : allDocuments) {
+         // TODO: fix fixable value
+         String value = document.get(attributeName).toString();
+         if (value == null) { // document does not contain given attribute
+            continue;
          }
-
-         collectionMetadataFacade.addAttributeConstraint(collectionName, attributeName, constraintConfiguration);
-
-         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
-         return true;
-      } else {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+         if (!(constraintManager.isValid(value) == Constraint.ConstraintResult.VALID)) {
+            return false; // we have found invalid value, so the constraint cannot be added
+         }
       }
+
+      collectionMetadataFacade.addAttributeConstraint(collectionCode, attributeName, constraintConfiguration);
+
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
+      return true;
    }
 
    /**
     * Drops given constraint configuration from attribute list of constraints
     *
-    * @param collectionName
-    *       internal name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @param constraintConfiguration
     *       constraint configuration to drop
-    * @throws CollectionNotFoundException
-    *       if collection was not found in database
-    * @throws CollectionMetadataDocumentNotFoundException
-    *       when metadata is not found
     */
-   public void dropAttributeConstraint(final String collectionName, final String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, CollectionMetadataDocumentNotFoundException {
-      if (dataStorage.hasCollection(collectionName)) {
-         collectionMetadataFacade.dropAttributeConstraint(collectionName, attributeName, constraintConfiguration);
-         collectionMetadataFacade.setLastTimeUsedNow(collectionName);
-      } else {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
-      }
-   }
-
-   public void onCollectionCreate(@Observes(notifyObserver = Reception.IF_EXISTS) final CreateCollection event) {
-      if (collections != null) {
-         collections.put(event.getInternalName(), event.getUserName());
-      }
-   }
-
-   public void onCollectionDrop(@Observes(notifyObserver = Reception.IF_EXISTS) final DropCollection event) {
-      if (collections != null) {
-         collections.remove(event.getInternalName());
-      }
-   }
-
-   public void onCollectionRename(@Observes(notifyObserver = Reception.IF_EXISTS) final ChangeCollectionName event) {
-      if (collections != null) {
-         collections.put(event.getInternalName(), event.getUserName());
-      }
+   public void dropAttributeConstraint(final String collectionCode, final String attributeName, final String constraintConfiguration) {
+      collectionMetadataFacade.dropAttributeConstraint(collectionCode, attributeName, constraintConfiguration);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Returns a list of all DataDocument objects in given collection.
     *
-    * @param collectionName
+    * @param collectionCode
     *       name of the collection
     * @return list of all documents
     */
-   private List<DataDocument> getAllDocuments(String collectionName) {
-      return dataStorage.search(collectionName, null, null, 0, 0);
+   private List<DataDocument> getAllDocuments(String collectionCode) {
+      return dataStorage.search(collectionCode, null, null, 0, 0);
+   }
+
+   private static String generateCollectionCodeHash(String collectionName) {
+      try {
+         MessageDigest md = MessageDigest.getInstance("SHA-512");
+
+         md.update(collectionName.getBytes());
+         byte byteData[] = md.digest();
+
+         //convert the byte to hex format method 1
+         StringBuilder hashCodeBuffer = new StringBuilder();
+         for (final byte aByteData : byteData) {
+            hashCodeBuffer.append(Integer.toString((aByteData & 0xff) + 0x100, 16).substring(1));
+         }
+         return hashCodeBuffer.toString().substring(0, 16);
+      } catch (NoSuchAlgorithmException e) {
+         return null;
+      }
    }
 
 }

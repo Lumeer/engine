@@ -21,6 +21,7 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.dto.Role;
+import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
@@ -51,21 +52,20 @@ public class SecurityService implements Serializable {
 
    @Inject
    private SecurityFacade securityFacade;
+
    @Inject
    private OrganizationFacade organizationFacade;
+
    @Inject
    private ProjectFacade projectFacade;
 
    @PostConstruct
    public void init() {
-      if (organizationCode == null)
+      if (organizationCode == null) {
          throw new BadRequestException();
+      }
 
       organizationFacade.setOrganizationCode(organizationCode);
-   }
-
-   private boolean isRoleCorrect(String resource, String roleName) {
-      return LumeerConst.Security.RESOURCE_ROLES.get(resource).contains(roleName);
    }
 
    /**
@@ -77,30 +77,35 @@ public class SecurityService implements Serializable {
     *       the users to be added the role for
     * @param groups
     *       the groups to be added the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @PUT
    @Path("/roles/{role}")
    public void addOrganizationUsersGroupsRole(
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
-      if (role == null || !isRoleCorrect(LumeerConst.Security.ORGANIZATION_RESOURCE, role))
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
+      if (role == null || !isRoleCorrect(LumeerConst.Security.ORGANIZATION_RESOURCE, role)) {
          throw new BadRequestException();
-
-      for (String user: users) {
-         securityFacade.addOrganizationUserRole(organizationCode, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.addOrganizationGroupRole(organizationCode, group, role);
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.addOrganizationUsersRole(organizationCode, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.addOrganizationGroupsRole(organizationCode, groups, role);
       }
    }
 
    /**
     * Get roles of an organization.
     *
-    * @return
-    *       the role object with all roles for the organization
+    * @return the role object with all roles for the organization
     * @throws DataFormatException
     *       if obtained data cannot be transformed to a role object
     */
@@ -119,23 +124,28 @@ public class SecurityService implements Serializable {
     *       the users to be deleted the role for
     * @param groups
     *       the groups to be deleted the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @DELETE
    @Path("/roles/{role}")
    public void removeOrganizationUsersGroupsRole(
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
-      if (role == null || !isRoleCorrect(LumeerConst.Security.ORGANIZATION_RESOURCE, role))
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
+      if (role == null || !isRoleCorrect(LumeerConst.Security.ORGANIZATION_RESOURCE, role)) {
          throw new BadRequestException();
-
-
-      for (String user: users) {
-         securityFacade.removeOrganizationUserRole(organizationCode, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.removeOrganizationGroupRole(organizationCode, group, role);
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.removeOrganizationUsersRole(organizationCode, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.removeOrganizationGroupsRole(organizationCode, groups, role);
       }
    }
 
@@ -150,6 +160,8 @@ public class SecurityService implements Serializable {
     *       the users to be added the role for
     * @param groups
     *       the groups to be added the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @PUT
    @Path("/projects/{project}/roles/{role}")
@@ -157,19 +169,23 @@ public class SecurityService implements Serializable {
          final @PathParam("project") String projectCode,
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
       if (projectCode == null || role == null ||
-            !isRoleCorrect(LumeerConst.Security.PROJECT_RESOURCE, role))
+            !isRoleCorrect(LumeerConst.Security.PROJECT_RESOURCE, role)) {
          throw new BadRequestException();
-
-      projectFacade.setCurrentProjectCode(projectCode);
-
-      for (String user: users) {
-         securityFacade.addProjectUserRole(projectCode, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.addProjectGroupRole(projectCode, group, role);
+      projectFacade.setCurrentProjectCode(projectCode);
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.addProjectUsersRole(projectCode, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.addProjectGroupsRole(projectCode, groups, role);
       }
    }
 
@@ -178,15 +194,16 @@ public class SecurityService implements Serializable {
     *
     * @param projectCode
     *       the project code to be added the role for
-    * @return
-    *       the role object with all roles for the project
+    * @return the role object with all roles for the project
     * @throws DataFormatException
     *       if obtained data cannot be transformed to a role object
     */
    @GET
    @Path("/projects/{project}/roles")
    public List<Role> getProjectRoles(final @PathParam("project") String projectCode) throws DataFormatException {
-      if (projectCode == null) throw new BadRequestException();
+      if (projectCode == null) {
+         throw new BadRequestException();
+      }
 
       projectFacade.setCurrentProjectCode(projectCode);
       return securityFacade.getProjectRoles(projectCode);
@@ -203,6 +220,8 @@ public class SecurityService implements Serializable {
     *       the users to be deleted the role for
     * @param groups
     *       the groups to be deleted the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @DELETE
    @Path("/projects/{project}/roles/{role}")
@@ -210,19 +229,22 @@ public class SecurityService implements Serializable {
          final @PathParam("project") String projectCode,
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
       if (projectCode == null || role == null ||
-            !isRoleCorrect(LumeerConst.Security.PROJECT_RESOURCE, role))
+            !isRoleCorrect(LumeerConst.Security.PROJECT_RESOURCE, role)) {
          throw new BadRequestException();
-
-      projectFacade.setCurrentProjectCode(projectCode);
-
-      for (String user: users) {
-         securityFacade.removeProjectUserRole(projectCode, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.removeProjectGroupRole(projectCode, group, role);
+      projectFacade.setCurrentProjectCode(projectCode);
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.removeProjectUsersRole(projectCode, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.removeProjectGroupsRole(projectCode, groups, role);
       }
    }
 
@@ -231,35 +253,41 @@ public class SecurityService implements Serializable {
     *
     * @param projectCode
     *       the project code to be added the role for
-    * @param collectionName
-    *       the collection name to be added the role for
+    * @param collectionCode
+    *       the collection code to be added the role for
     * @param role
     *       the role to be added
     * @param users
     *       the users to be added the role for
     * @param groups
     *       the groups to be added the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @PUT
    @Path("/projects/{project}/collections/{collection}/roles/{role}")
    public void addCollectionUsersGroupsRole(
          final @PathParam("project") String projectCode,
-         final @PathParam("collection") String collectionName,
+         final @PathParam("collection") String collectionCode,
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
-      if (projectCode == null || collectionName == null || role == null ||
-            !isRoleCorrect(LumeerConst.Security.COLLECTION_RESOURCE, role))
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
+      if (projectCode == null || collectionCode == null || role == null ||
+            !isRoleCorrect(LumeerConst.Security.COLLECTION_RESOURCE, role)) {
          throw new BadRequestException();
-
-      projectFacade.setCurrentProjectCode(projectCode);
-
-      for (String user: users) {
-         securityFacade.addCollectionUserRole(projectCode, collectionName, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.addCollectionGroupRole(projectCode, collectionName, group, role);
+      projectFacade.setCurrentProjectCode(projectCode);
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.addCollectionUsersRole(projectCode, collectionCode, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.addCollectionGroupsRole(projectCode, collectionCode, groups, role);
       }
    }
 
@@ -268,23 +296,29 @@ public class SecurityService implements Serializable {
     *
     * @param projectCode
     *       the project code to be obtained the roles for
-    * @param collectionName
-    *       the collection name to be obtained the roles for
-    * @return
-    *       the role object with all roles for the collection
+    * @param collectionCode
+    *       the collection code to be obtained the roles for
+    * @return the role object with all roles for the collection
     * @throws DataFormatException
     *       if obtained data cannot be transformed to a role object
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to read rights
     */
    @GET
    @Path("/projects/{project}/collections/{collection}/roles")
    public List<Role> getCollectionRoles(
          final @PathParam("project") String projectCode,
-         final @PathParam("collection") String collectionName) throws DataFormatException {
-      if (projectCode == null || collectionName == null)
+         final @PathParam("collection") String collectionCode) throws DataFormatException, UnauthorizedAccessException {
+      if (projectCode == null || collectionCode == null) {
          throw new BadRequestException();
+      }
 
       projectFacade.setCurrentProjectCode(projectCode);
-      return securityFacade.getCollectionRoles(projectCode, collectionName);
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return securityFacade.getCollectionRoles(projectCode, collectionCode);
    }
 
    /**
@@ -292,35 +326,40 @@ public class SecurityService implements Serializable {
     *
     * @param projectCode
     *       the project code to be deleted the role for
-    * @param collectionName
-    *       the collection name to be deleted the role for
+    * @param collectionCode
+    *       the collection code to be deleted the role for
     * @param role
     *       the role to be deleted
     * @param users
     *       the users to be deleted the role for
     * @param groups
     *       the groups to be deleted the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @DELETE
    @Path("/projects/{project}/collections/{collection}/roles/{role}")
    public void removeCollectionUsersGroupsRole(
          final @PathParam("project") String projectCode,
-         final @PathParam("collection") String collectionName,
+         final @PathParam("collection") String collectionCode,
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
-      if (projectCode == null || collectionName == null || role == null
-            || !isRoleCorrect(LumeerConst.Security.COLLECTION_RESOURCE, role))
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
+      if (projectCode == null || collectionCode == null || role == null
+            || !isRoleCorrect(LumeerConst.Security.COLLECTION_RESOURCE, role)) {
          throw new BadRequestException();
-
-      projectFacade.setCurrentProjectCode(projectCode);
-
-      for (String user: users) {
-         securityFacade.removeCollectionUserRole(projectCode, collectionName, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.removeCollectionGroupRole(projectCode, collectionName, group, role);
+      projectFacade.setCurrentProjectCode(projectCode);
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.removeCollectionUsersRole(projectCode, collectionCode, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.removeCollectionGroupsRole(projectCode, collectionCode, groups, role);
       }
 
    }
@@ -338,6 +377,8 @@ public class SecurityService implements Serializable {
     *       the users to be added the role for
     * @param groups
     *       the groups to be added the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @PUT
    @Path("/projects/{project}/views/{view}/roles/{role}")
@@ -346,19 +387,22 @@ public class SecurityService implements Serializable {
          final @PathParam("view") Integer viewId,
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
       if (projectCode == null || viewId == null || role == null ||
-            !isRoleCorrect(LumeerConst.Security.VIEW_RESOURCE, role))
+            !isRoleCorrect(LumeerConst.Security.VIEW_RESOURCE, role)) {
          throw new BadRequestException();
-
-      projectFacade.setCurrentProjectCode(projectCode);
-
-      for (String user: users) {
-         securityFacade.addViewUserRole(projectCode, viewId, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.addViewGroupRole(projectCode, viewId, group, role);
+      projectFacade.setCurrentProjectCode(projectCode);
+      if (!securityFacade.hasViewRole(projectCode, viewId, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.addViewUsersRole(projectCode, viewId, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.addViewGroupsRole(projectCode, viewId, groups, role);
       }
    }
 
@@ -369,19 +413,26 @@ public class SecurityService implements Serializable {
     *       the project code to be obtained the roles for
     * @param viewId
     *       the view id to be obtained the role for
-    * @return
-    *       the role object with all roles for the view
+    * @return the role object with all roles for the view
     * @throws DataFormatException
     *       if obtained data cannot be transformed to a role object
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to read rights
     */
    @GET
    @Path("/projects/{project}/views/{view}/roles")
    public List<Role> getViewRoles(
          final @PathParam("project") String projectCode,
-         final @PathParam("view") Integer viewId) throws DataFormatException {
-      if (projectCode == null || viewId == null) throw new BadRequestException();
+         final @PathParam("view") Integer viewId) throws DataFormatException, UnauthorizedAccessException {
+      if (projectCode == null || viewId == null) {
+         throw new BadRequestException();
+      }
 
       projectFacade.setCurrentProjectCode(projectCode);
+      if (!securityFacade.hasViewRole(projectCode, viewId, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
       return securityFacade.getViewRoles(projectCode, viewId);
    }
 
@@ -398,6 +449,8 @@ public class SecurityService implements Serializable {
     *       the users to be deleted the role for
     * @param groups
     *       the groups to be deleted the role for
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have permission to manage rights
     */
    @DELETE
    @Path("/projects/{project}/views/{view}/roles/{role}")
@@ -406,20 +459,28 @@ public class SecurityService implements Serializable {
          final @PathParam("view") Integer viewId,
          final @PathParam("role") String role,
          final @QueryParam("users") List<String> users,
-         final @QueryParam("groups") List<String> groups) {
+         final @QueryParam("groups") List<String> groups) throws UnauthorizedAccessException {
       if (projectCode == null || viewId == null || role == null ||
-            !isRoleCorrect(LumeerConst.Security.VIEW_RESOURCE, role))
+            !isRoleCorrect(LumeerConst.Security.VIEW_RESOURCE, role)) {
          throw new BadRequestException();
-
-      projectFacade.setCurrentProjectCode(projectCode);
-
-      for (String user: users) {
-         securityFacade.removeViewUserRole(projectCode, viewId, user, role);
       }
 
-      for (String group: groups) {
-         securityFacade.removeViewGroupRole(projectCode, viewId, group, role);
+      projectFacade.setCurrentProjectCode(projectCode);
+      if (!securityFacade.hasViewRole(projectCode, viewId, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      if (users != null && !users.isEmpty()) {
+         securityFacade.removeViewUsersRole(projectCode, viewId, users, role);
+      }
+      if (groups != null && !groups.isEmpty()) {
+         securityFacade.removeViewGroupsRole(projectCode, viewId, groups, role);
       }
 
    }
+
+   private boolean isRoleCorrect(String resource, String roleName) {
+      return LumeerConst.Security.RESOURCE_ROLES.get(resource).contains(roleName);
+   }
+
 }

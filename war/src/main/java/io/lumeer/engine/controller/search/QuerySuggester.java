@@ -26,9 +26,7 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Attribute;
-import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.dto.SearchSuggestion;
-import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.ViewFacade;
@@ -36,9 +34,7 @@ import io.lumeer.engine.controller.ViewFacade;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -113,20 +109,20 @@ public class QuerySuggester {
       String collectionName = parts[0];
       String attributePart = parts[1];
 
-      String attributeKey = storageDialect.concatFields(LumeerConst.Collection.ATTRIBUTES_KEY, LumeerConst.Collection.ATTRIBUTE_NAME_KEY);
+      String attributeKey = storageDialect.concatFields(LumeerConst.Collection.ATTRIBUTES, LumeerConst.Collection.ATTRIBUTE_NAME);
 
-      DataFilter collectionFilter = storageDialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME_KEY, collectionName);
+      DataFilter collectionFilter = storageDialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME, collectionName);
       DataFilter attributePartFilter = storageDialect.fieldValueWildcardFilter(attributeKey, attributePart);
 
       DataDocument metadata = userDataStorage.readDocumentIncludeAttrs(collectionMetadataFacade.metadataCollection(),
-            storageDialect.combineFilters(collectionFilter, attributePartFilter), Collections.singletonList(LumeerConst.Collection.ATTRIBUTES_KEY));
+            storageDialect.combineFilters(collectionFilter, attributePartFilter), Collections.singletonList(LumeerConst.Collection.ATTRIBUTES));
 
       if (metadata == null) {
          return Collections.emptyList();
       }
 
-      return metadata.getArrayList(LumeerConst.Collection.ATTRIBUTES_KEY, DataDocument.class).stream()
-                     .filter(dataDocument -> dataDocument.getString(LumeerConst.Collection.ATTRIBUTE_NAME_KEY).toLowerCase().contains(attributePart.toLowerCase()))
+      return metadata.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class).stream()
+                     .filter(dataDocument -> dataDocument.getString(LumeerConst.Collection.ATTRIBUTE_NAME).toLowerCase().contains(attributePart.toLowerCase()))
                      .map(Attribute::new)
                      .map(attribute -> convertAttribute(collectionName, attribute))
                      .limit(limit)
@@ -135,20 +131,20 @@ public class QuerySuggester {
 
    private List<SearchSuggestion> suggestAttributesForAllCollections(String attributePart, int limit) {
       String metadataCollection = collectionMetadataFacade.metadataCollection();
-      String attributeKey = storageDialect.concatFields(LumeerConst.Collection.ATTRIBUTES_KEY, LumeerConst.Collection.ATTRIBUTE_NAME_KEY);
+      String attributeKey = storageDialect.concatFields(LumeerConst.Collection.ATTRIBUTES, LumeerConst.Collection.ATTRIBUTE_NAME);
       DataFilter attributePartFilter = storageDialect.fieldValueWildcardFilter(attributeKey, attributePart);
 
       List<DataDocument> collectionsRaw = userDataStorage.search(metadataCollection, attributePartFilter,
-            Arrays.asList(LumeerConst.Collection.REAL_NAME_KEY, LumeerConst.Collection.ATTRIBUTES_KEY));
+            Arrays.asList(LumeerConst.Collection.REAL_NAME, LumeerConst.Collection.ATTRIBUTES));
 
       List<SearchSuggestion> suggestions = new ArrayList<>();
       for (DataDocument metadata : collectionsRaw) {
          if (suggestions.size() >= limit) {
             break;
          }
-         String collectionName = metadata.getString(LumeerConst.Collection.REAL_NAME_KEY);
-         List<SearchSuggestion> s = metadata.getArrayList(LumeerConst.Collection.ATTRIBUTES_KEY, DataDocument.class).stream()
-                                            .filter(dataDocument -> dataDocument.getString(LumeerConst.Collection.ATTRIBUTE_NAME_KEY).toLowerCase().contains(attributePart.toLowerCase()))
+         String collectionName = metadata.getString(LumeerConst.Collection.REAL_NAME);
+         List<SearchSuggestion> s = metadata.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class).stream()
+                                            .filter(dataDocument -> dataDocument.getString(LumeerConst.Collection.ATTRIBUTE_NAME).toLowerCase().contains(attributePart.toLowerCase()))
                                             .map(Attribute::new)
                                             .map(attribute -> convertAttribute(collectionName, attribute))
                                             .limit(limit - suggestions.size())
@@ -167,8 +163,8 @@ public class QuerySuggester {
 
    List<SearchSuggestion> suggestCollections(String text, int limit) {
       String metadataCollection = collectionMetadataFacade.metadataCollection();
-      DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.Collection.REAL_NAME_KEY, text);
-      List<String> projection = Collections.singletonList(LumeerConst.Collection.REAL_NAME_KEY);
+      DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.Collection.REAL_NAME, text);
+      List<String> projection = Collections.singletonList(LumeerConst.Collection.REAL_NAME);
 
       return userDataStorage.search(metadataCollection, filter, null, projection, 0, limit)
                             .stream()
@@ -177,7 +173,7 @@ public class QuerySuggester {
    }
 
    private static SearchSuggestion convertCollection(DataDocument collection) {
-      String name = collection.getString(LumeerConst.Collection.REAL_NAME_KEY);
+      String name = collection.getString(LumeerConst.Collection.REAL_NAME);
       String icon = "";  // TODO store paths to icons in the database or somewhere else
       return new SearchSuggestion(SearchSuggestion.TYPE_COLLECTION, name, icon);
    }

@@ -26,8 +26,10 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
+import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
@@ -43,7 +45,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
@@ -54,6 +55,7 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -68,6 +70,9 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
 
    @Inject
    @UserDataStorage
@@ -118,34 +123,33 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       setUpCollections(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
       final Client client = ClientBuilder.newBuilder().build();
 
-      String collection = collectionFacade.createCollection(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
-      addWriteRole(collection);
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT));
 
       // 200 - the document will be inserted into the given collection
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT)).request().buildPost(Entity.json(new DataDocument())).invoke();
+      Response response = client.target(TARGET_URI).path(setPathPrefix(code)).request().buildPost(Entity.json(new DataDocument())).invoke();
       String documentId = response.readEntity(String.class);
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId)).isNotNull();
+      assertThat(documentFacade.readDocument(code, documentId)).isNotNull();
       response.close();
 
       // 200 - read the given document by its id
-      Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + documentId).request().buildGet().invoke();
+      Response response2 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId).request().buildGet().invoke();
       DataDocument document = response2.readEntity(DataDocument.class);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId)).isEqualTo(document);
+      assertThat(documentFacade.readDocument(code, documentId)).isEqualTo(document);
       response2.close();
 
       // 204 - update the document
       DataDocument updatedDocument = new DataDocument();
       updatedDocument.put("_id", documentId);
       updatedDocument.put("name", "updatedDocument");
-      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + "update/").request().buildPut(Entity.json(updatedDocument)).invoke();
+      Response response3 = client.target(TARGET_URI).path(setPathPrefix(code) + "update/").request().buildPut(Entity.json(updatedDocument)).invoke();
       assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      assertThat(documentFacade.readDocument(getInternalName(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT), documentId).getString("name")).isEqualTo("updatedDocument");
+      assertThat(documentFacade.readDocument(code, documentId).getString("name")).isEqualTo("updatedDocument");
       response3.close();
 
       // 204 - drop the given document by its id
-      Response response4 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT) + documentId).request().buildDelete().invoke();
+      Response response4 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId).request().buildDelete().invoke();
       assertThat(response4.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       response4.close();
 
@@ -163,16 +167,15 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       setUpCollections(COLLECTION_ATTRIBUTE_TYPES);
       final Client client = ClientBuilder.newBuilder().build();
 
-      String collection = collectionFacade.createCollection(COLLECTION_ATTRIBUTE_TYPES);
-      addWriteRole(collection);
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_ATTRIBUTE_TYPES));
 
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ATTRIBUTE_TYPES)).request().buildPost(Entity.json(doc)).invoke();
+      Response response = client.target(TARGET_URI).path(setPathPrefix(code)).request().buildPost(Entity.json(doc)).invoke();
       String documentId = response.readEntity(String.class);
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       response.close();
 
-      final DataDocument responseDoc = documentFacade.readDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), documentId);
+      final DataDocument responseDoc = documentFacade.readDocument(code, documentId);
       assertThat(responseDoc).isNotNull();
       assertThat(responseDoc.getDouble("dbl")).isInstanceOf(Double.class).isEqualTo(2.34);
       assertThat(responseDoc.getString("str")).isInstanceOf(String.class).isEqualTo("hello");
@@ -188,8 +191,8 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
             log.info(k + " (" + v.getClass().getName() + ") = " + v.toString())
       );
 
-      String nId = documentFacade.createDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), doc);
-      final DataDocument readDoc = documentFacade.readDocument(getInternalName(COLLECTION_ATTRIBUTE_TYPES), nId);
+      String nId = documentFacade.createDocument(code, doc);
+      final DataDocument readDoc = documentFacade.readDocument(code, nId);
 
       assertThat(readDoc.getDouble("dbl")).isInstanceOf(Double.class).isEqualTo(2.34);
       assertThat(readDoc.getString("str")).isInstanceOf(String.class).isEqualTo("hello");
@@ -213,19 +216,18 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       final String attributeName = "_meta-update-user";
       final Object metaObjectValue = 123;
 
-      String collection = collectionFacade.createCollection(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA);
-      addWriteRole(collection);
-      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), new DataDocument());
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA));
+      String documentId = documentFacade.createDocument(code, new DataDocument());
 
       // 204 - add the document metadata
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta/" + attributeName).request().buildPost(Entity.entity(metaObjectValue, MediaType.APPLICATION_JSON)).invoke();
-      Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), documentId);
+      Response response = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta/" + attributeName).request().buildPost(Entity.entity(metaObjectValue, MediaType.APPLICATION_JSON)).invoke();
+      Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(code, documentId);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(documentMetadata.get(attributeName)).isEqualTo(metaObjectValue);
       response.close();
 
       // 200 - read the document metadata
-      Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta/").request().buildGet().invoke();
+      Response response2 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta/").request().buildGet().invoke();
       Map<String, Object> metaDocument = response2.readEntity(Map.class);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(metaDocument).isEqualTo(documentMetadata);
@@ -234,9 +236,9 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       // 204 - update the document metadata
       DataDocument updatedMetaDocument = new DataDocument();
       updatedMetaDocument.put(attributeName, "updatedValue");
-      Response response3 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA) + documentId + "/meta").request().buildPut(Entity.json(updatedMetaDocument)).invoke();
+      Response response3 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta").request().buildPut(Entity.json(updatedMetaDocument)).invoke();
       assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      assertThat(documentMetadataFacade.readDocumentMetadata(getInternalName(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA), documentId).get(attributeName)).isEqualTo("updatedValue");
+      assertThat(documentMetadataFacade.readDocumentMetadata(code, documentId).get(attributeName)).isEqualTo("updatedValue");
       response3.close();
 
       client.close();
@@ -247,12 +249,13 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       setUpCollections(COLLECTION_SEARCH_HISTORY_CHANGES);
       final Client client = ClientBuilder.newBuilder().build();
 
-      collectionFacade.createCollection(COLLECTION_SEARCH_HISTORY_CHANGES);
-      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_SEARCH_HISTORY_CHANGES), new DataDocument());
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_SEARCH_HISTORY_CHANGES));
+      String documentId = documentFacade.createDocument(code, new DataDocument());
 
       // only document exists, no changes in the past, code 200, listsize = 1
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_SEARCH_HISTORY_CHANGES) + documentId + "/versions/").request().buildGet().invoke();
-      List<DataDocument> changedDocuments = response.readEntity(ArrayList.class);
+      Response response = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/").request().buildGet().invoke();
+      List<DataDocument> changedDocuments = response.readEntity(new GenericType<List<DataDocument>>() {
+      });
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(changedDocuments).hasSize(1);
       response.close();
@@ -262,11 +265,12 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       DataDocument documentVersionTwo = new DataDocument("_id", documentId);
       documentVersionOne.put("dummyVersionOneAttribute", 1);
       documentVersionTwo.put("dummyVersionTwoAttribute", 2);
-      documentFacade.updateDocument(getInternalName(COLLECTION_SEARCH_HISTORY_CHANGES), documentVersionOne);
-      documentFacade.updateDocument(getInternalName(COLLECTION_SEARCH_HISTORY_CHANGES), documentVersionTwo);
+      documentFacade.updateDocument(code, documentVersionOne);
+      documentFacade.updateDocument(code, documentVersionTwo);
 
-      Response response2 = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_SEARCH_HISTORY_CHANGES) + documentId + "/versions/").request().buildGet().invoke();
-      List<DataDocument> changedDocuments2 = response2.readEntity(ArrayList.class);
+      Response response2 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/").request().buildGet().invoke();
+      List<DataDocument> changedDocuments2 = response2.readEntity(new GenericType<List<DataDocument>>() {
+      });
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(changedDocuments2).hasSize(3);
       response2.close();
@@ -279,23 +283,22 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       setUpCollections(COLLECTION_REVERT_DOCUMENT_VERSION);
       final Client client = ClientBuilder.newBuilder().build();
 
-      String collection = collectionFacade.createCollection(COLLECTION_REVERT_DOCUMENT_VERSION);
-      addWriteRole(collection);
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_REVERT_DOCUMENT_VERSION));
 
-      String documentId = documentFacade.createDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), new DataDocument());
+      String documentId = documentFacade.createDocument(code, new DataDocument());
       DataDocument documentVersionOne = new DataDocument("_id", documentId);
       DataDocument documentVersionTwo = new DataDocument("_id", documentId);
       documentVersionOne.put("dummyVersionOneAttribute", 1);
       documentVersionTwo.put("dummyVersionTwoAttribute", 2);
-      documentFacade.updateDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentVersionOne);
-      documentFacade.updateDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentVersionTwo);
+      documentFacade.updateDocument(code, documentVersionOne);
+      documentFacade.updateDocument(code, documentVersionTwo);
 
-      DataDocument documentVersion2 = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
+      DataDocument documentVersion2 = documentFacade.readDocument(code, documentId);
       int versionTwo = documentVersion2.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
       assertThat(versionTwo).isEqualTo(2);
 
-      Response response = client.target(TARGET_URI).path(setPathPrefix(COLLECTION_REVERT_DOCUMENT_VERSION) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
-      DataDocument currentDocument = documentFacade.readDocument(getInternalName(COLLECTION_REVERT_DOCUMENT_VERSION), documentId);
+      Response response = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      DataDocument currentDocument = documentFacade.readDocument(code, documentId);
       int versionThree = currentDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
       boolean isFirstVersion = !currentDocument.containsKey("dummyVersionTwoAttribute");
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
@@ -307,20 +310,14 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    }
 
    private void setUpCollections(final String collectionName) throws DbException {
-      if (dataStorage.hasCollection(getInternalName(collectionName))) {
-         collectionFacade.dropCollection(getInternalName(collectionName));
+      String code = collectionMetadataFacade.getCollectionCodeFromName(collectionName);
+      if (dataStorage.hasCollection(code)) {
+         collectionFacade.dropCollection(code);
       }
    }
 
-   private String setPathPrefix(final String collectionName) {
-      return PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/collections/" + collectionName + "/documents/";
+   private String setPathPrefix(final String collectionCode) {
+      return PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/collections/" + collectionCode + "/documents/";
    }
 
-   private String getInternalName(final String collectionOriginalName) {
-      return "collection." + collectionOriginalName.toLowerCase() + "_0";
-   }
-
-   private void addWriteRole(String collection) {
-      securityFacade.addCollectionUserRole(projectFacade.getCurrentProjectCode(), collection, userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
-   }
 }

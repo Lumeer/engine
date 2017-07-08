@@ -26,6 +26,8 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.batch.SplitBatch;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.api.dto.Collection;
+import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
@@ -38,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import javax.inject.Inject;
@@ -71,6 +74,9 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private UserFacade userFacade;
 
+   @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
+
    @Before
    public void init() {
       // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
@@ -101,14 +107,15 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       // we create and drop some collections in the test, so we need to set up user roles to do that
-      securityFacade.addProjectUserRole(projectFacade.getCurrentProjectCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+      securityFacade.addProjectUsersRole(projectFacade.getCurrentProjectCode(), Collections.singletonList(userFacade.getUserEmail()), LumeerConst.Security.ROLE_WRITE);
 
       response = client.target(TARGET_URI)
-                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME)
+                       .path(buildPathPrefix() + "collections")
                        .request()
-                       .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
+                       .buildPost(Entity.json(new Collection(COLLECTION_NAME)))
                        .invoke();
       status = response.getStatus();
+      String collectionCode = response.readEntity(String.class);
       response.close();
       assertThat(status).isEqualTo(200);
 
@@ -116,7 +123,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME + "/documents/")
+                       .path(buildPathPrefix() + "collections/" + collectionCode + "/documents/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 1")))
@@ -132,7 +139,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME + "/documents/")
+                       .path(buildPathPrefix() + "collections/" + collectionCode + "/documents/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 2")))
@@ -143,7 +150,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       t = System.currentTimeMillis();
 
       response = client.target(TARGET_URI)
-                       .path(buildPathPrefix() + "collections/" + COLLECTION_NAME + "/documents/")
+                       .path(buildPathPrefix() + "collections/" + collectionCode + "/documents/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
                        .accept(MediaType.APPLICATION_JSON_TYPE)
                        .buildPost(Entity.json(new DataDocument("attr1", 5).append("attr2", "hello, how are, you 3")))
@@ -156,7 +163,7 @@ public class BatchServiceIntegrationTest extends IntegrationTestBase {
       response = client.target(TARGET_URI)
                        .path(buildPathPrefix() + "batch/split/")
                        .request(MediaType.APPLICATION_JSON_TYPE)
-                       .buildPost(Entity.json(new SplitBatch(COLLECTION_NAME, "attr2", ",", true, Arrays.asList("attr2a", "attr2b", "attr2c", "attr2d"), false)))
+                       .buildPost(Entity.json(new SplitBatch(collectionCode, "attr2", ",", true, Arrays.asList("attr2a", "attr2b", "attr2c", "attr2d"), false)))
                        .invoke();
       response.close();
 

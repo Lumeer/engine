@@ -90,8 +90,8 @@ public final class LumeerConst {
 
       public class Type {
          public static final String NAME = "_system-linking";
-         public static final String ATTR_FROM_COLLECTION = "from_collection";
-         public static final String ATTR_TO_COLLECTION = "to_collection";
+         public static final String ATTR_FROM_COLLECTION_ID = "from_collection";
+         public static final String ATTR_TO_COLLECTION_ID = "to_collection";
          public static final String ATTR_PROJECT = "project_id";
          public static final String ATTR_ROLE = "role";
       }
@@ -136,24 +136,28 @@ public final class LumeerConst {
 
    public static class Collection {
       public static final String METADATA_COLLECTION_PREFIX = "meta.collection_";
-      public static final String NAME_PREFIX = "collection.";
 
-      public static final String REAL_NAME_KEY = "name";
-      public static final String INTERNAL_NAME_KEY = "internal";
+      public static final String REAL_NAME = "name";
+      public static final String CODE = "code";
 
-      public static final String ATTRIBUTES_KEY = "attributes";
-      public static final String ATTRIBUTE_NAME_KEY = "name";
-      public static final String ATTRIBUTE_FULL_NAME_KEY = "full-name";
-      public static final String ATTRIBUTE_CONSTRAINTS_KEY = "constraints";
-      public static final String ATTRIBUTE_COUNT_KEY = "count";
+      public static final String ATTRIBUTES = "attributes";
+      public static final String ATTRIBUTE_NAME = "name";
+      public static final String ATTRIBUTE_FULL_NAME = "full-name";
+      public static final String ATTRIBUTE_CONSTRAINTS = "constraints";
+      public static final String ATTRIBUTE_COUNT = "count";
 
-      public static final String LAST_TIME_USED_KEY = "last";
-      public static final String RECENTLY_USED_DOCUMENTS_KEY = "recently";
-      public static final String ATTRIBUTE_CHILDREN_KEY = "children";
-      public static final String CUSTOM_META_KEY = "custom";
+      public static final String ICON = "icon";
+      public static final String COLOR = "color";
+      public static final String DOCUMENT_COUNT = "document-count";
+      public static final String LAST_TIME_USED = "last";
+      public static final String RECENTLY_USED_DOCUMENTS = "recently";
+      public static final String ATTRIBUTE_CHILDREN = "children";
+      public static final String CUSTOM_META = "custom";
 
-      public static final String CREATE_USER_KEY = Document.CREATE_BY_USER_KEY;
-      public static final String CREATE_DATE_KEY = Document.CREATE_DATE_KEY;
+      public static final String CREATE_USER = Document.CREATE_BY_USER_KEY;
+      public static final String CREATE_DATE = Document.CREATE_DATE_KEY;
+      public static final String UPDATE_USER = Document.UPDATED_BY_USER_KEY;
+      public static final String UPDATE_DATE = Document.UPDATED_BY_USER_KEY;
 
       public static final String COLLECTION_SHADOW_PREFFIX = "_shadow";
       public static final String COLLECTION_TRASH_PREFFIX = "_trash";
@@ -168,8 +172,7 @@ public final class LumeerConst {
       public static final String ORGANIZATION_ID_KEY = "org-id";
 
       public static final String PROJECT_ID_KEY = "pro-id";
-      public static final String COLLECTION_NAME_KEY = "col-name";
-      public static final String VIEW_ID_KEY = "view-id";
+      public static final String TYPE_ID_KEY = "source-id";
 
       public static final String TYPE_KEY = "type";
       public static final String TYPE_PROJECT = "project";

@@ -20,12 +20,15 @@
 package io.lumeer.engine.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.dto.Attribute;
+import io.lumeer.engine.api.dto.Collection;
+import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -48,6 +51,8 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1 = "CollectionFacadeCollectionGetAllCollectionsLastTime1";
    private final String COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2 = "CollectionFacadeCollectionGetAllCollectionsLastTime2";
    private final String COLLECTION_CREATE_AND_DROP = "CollectionFacadeCollectionCreateAndDrop";
+   private final String COLLECTION_CREATE_DUPLICATE = "CollectionFacadeCollectionCreateDuplicate";
+   private final String COLLECTION_UPDATE = "CollectionFacadeCollectionUpdate";
    private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionFacadeReadCollectionCollectionAttributes";
    private final String COLLECTION_DROP_COLLECTION_ATTRIBUTE = "CollectionFacadeCollectionDropCollectionAttribute";
    private final String COLLECTION_GET_ATTRIBUTE_VALUES = "CollectionFacadeCollectionGetAttributeValues";
@@ -68,8 +73,8 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    public void testGetAllCollections() throws Exception {
       setUpCollection(COLLECTION_GET_ALL_COLLECTIONS);
 
-      String collection = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS);
-      assertThat(collectionFacade.getAllCollections()).containsKey(collection);
+      String collection = collectionFacade.createCollection(new Collection(COLLECTION_GET_ALL_COLLECTIONS));
+      assertThat(collectionFacade.getCollections()).extracting("code").contains(collection);
    }
 
    @Test
@@ -77,26 +82,49 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       setUpCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1);
       setUpCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2);
 
-      String collection1 = collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1);
-      collectionFacade.createCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2);
+      String collectionCode = collectionFacade.createCollection(new Collection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1));
+      collectionFacade.createCollection(new Collection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2));
 
-      assertThat(collectionFacade.getAllCollectionsByLastTimeUsed().get(1)).isEqualTo(collection1);
+      assertThat(collectionFacade.getCollections().get(1).getCode()).isEqualTo(collectionCode);
+   }
+
+   @Test
+   public void testUpdateCollection() throws Exception {
+      setUpCollection(COLLECTION_UPDATE);
+
+      String lumeer = collectionFacade.createCollection(new Collection("Lumeer"));
+
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsKey(lumeer);
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsValue("Lumeer");
+
+      collectionFacade.updateCollection(lumeer, new Collection("Lumeerko"));
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).doesNotContainValue("Lumeer");
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsValue("Lumeerko");
    }
 
    @Test
    public void testCreateAndDropCollection() throws Exception {
       setUpCollection(COLLECTION_CREATE_AND_DROP);
 
-      assertThat(collectionFacade.getAllCollections()).doesNotContainKey(internalName(COLLECTION_CREATE_AND_DROP));
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).doesNotContainValue(COLLECTION_CREATE_AND_DROP);
 
-      String collection = collectionFacade.createCollection(COLLECTION_CREATE_AND_DROP);
-      assertThat(collectionFacade.getAllCollections()).containsKey(collection);
+      String collection = collectionFacade.createCollection(new Collection(COLLECTION_CREATE_AND_DROP));
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsKey(collection);
 
       collectionFacade.dropCollection(collection);
-      assertThat(collectionFacade.getAllCollections()).doesNotContainKey(collection);
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).doesNotContainKey(collection);
 
       // when we try to remove non-existing collection, nothing happens
       collectionFacade.dropCollection(collection);
+   }
+
+   @Test
+   public void testDuplicatedCollection() throws Exception {
+      setUpCollection(COLLECTION_CREATE_DUPLICATE);
+
+      collectionFacade.createCollection(new Collection(COLLECTION_CREATE_DUPLICATE));
+
+      assertThatThrownBy(() -> collectionFacade.createCollection(new Collection(COLLECTION_CREATE_DUPLICATE))).isInstanceOf(UserCollectionAlreadyExistsException.class);
    }
 
    @Test
@@ -106,7 +134,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       String a1 = "attribute1";
       String a2 = "attribute2";
 
-      String collection = collectionFacade.createCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
+      String collection = collectionFacade.createCollection(new Collection(COLLECTION_READ_COLLECTION_ATTRIBUTES));
       collectionMetadataFacade.addOrIncrementAttribute(collection, a1);
       collectionMetadataFacade.addOrIncrementAttribute(collection, a2);
 
@@ -121,7 +149,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    public void testGetAttributeValues() throws Exception {
       setUpCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
 
-      String collection = collectionFacade.createCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
+      String collection = collectionFacade.createCollection(new Collection(COLLECTION_GET_ATTRIBUTE_VALUES));
 
       String a1 = "attribute";
       String a2 = "dummyattribute";
@@ -154,7 +182,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    public void testDropAttribute() throws Exception {
       setUpCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
 
-      String collection = collectionFacade.createCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(new Collection(COLLECTION_DROP_COLLECTION_ATTRIBUTE));
 
       String attribute1 = "attribute-to-drop";
       String attribute2 = "attribute";
@@ -192,7 +220,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    public void testRenameAttribute() throws Exception {
       setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
 
-      String collection = collectionFacade.createCollection(COLLECTION_RENAME_ATTRIBUTE);
+      String collection = collectionFacade.createCollection(new Collection(COLLECTION_RENAME_ATTRIBUTE));
 
       String name = "attribute 1";
       String newName = "new attribute 1";
@@ -223,7 +251,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    public void testAddDropConstraint() throws Exception {
       setUpCollection(COLLECTION_ADD_DROP_CONSTRAINT);
 
-      String collection = collectionFacade.createCollection(COLLECTION_ADD_DROP_CONSTRAINT);
+      String collection = collectionFacade.createCollection(new Collection(COLLECTION_ADD_DROP_CONSTRAINT));
 
       String attribute = "attribute";
       int value1 = 5;
@@ -247,15 +275,6 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(collectionFacade.addAttributeConstraint(collection, attribute, constraint1)).isFalse();
    }
 
-   @Test
-   public void testOnCollectionEvent() throws Exception {
-
-   }
-
-   private String internalName(String collectionOriginalName) {
-      return "collection." + collectionOriginalName.toLowerCase() + "_0";
-   }
-
    private boolean isEveryDocumentFilledByNewAttribute(String collection, String attributeName) {
       List<DataDocument> documents = dataStorage.search(collection, null, null, 0, 0);
 
@@ -267,7 +286,10 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       return true;
    }
 
-   private void setUpCollection(String originalCollectionName) {
-      dataStorage.dropCollection(internalName(originalCollectionName));
+   private void setUpCollection(String collectionName) {
+      String collectionCode = collectionMetadataFacade.getCollectionCodeFromName(collectionName);
+      if (collectionCode != null) {
+         dataStorage.dropCollection(collectionCode);
+      }
    }
 }

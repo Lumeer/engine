@@ -27,8 +27,10 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.event.DropDocument;
-import io.lumeer.engine.rest.dao.LinkInstance;
-import io.lumeer.engine.rest.dao.LinkType;
+import io.lumeer.engine.api.dto.LinkInstance;
+import io.lumeer.engine.api.dto.LinkType;
+import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
+import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -59,22 +61,25 @@ public class LinkingFacade implements Serializable {
    @Inject
    private ProjectFacade projectFacade;
 
-   public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) {
+   @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
+
+   public void onDropDocument(@Observes(notifyObserver = Reception.IF_EXISTS) final DropDocument dropDocument) throws UserCollectionNotFoundException {
       dropLinksForDocument(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.FROM);
       dropLinksForDocument(dropDocument.getCollectionName(), dropDocument.getDocument().getId(), null, Linking.LinkDirection.TO);
    }
 
    @PostConstruct
-   public void init(){
+   public void init() {
       if (!dataStorage.hasCollection(Linking.Type.NAME)) {
          dataStorage.createCollection(Linking.Type.NAME);
          dataStorage.createIndex(Linking.Type.NAME, new DataDocument(Linking.Type.ATTR_PROJECT, Index.ASCENDING)
-               .append(Linking.Type.ATTR_FROM_COLLECTION, Index.ASCENDING)
-               .append(Linking.Type.ATTR_TO_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_FROM_COLLECTION_ID, Index.ASCENDING)
+               .append(Linking.Type.ATTR_TO_COLLECTION_ID, Index.ASCENDING)
                .append(Linking.Type.ATTR_ROLE, Index.ASCENDING), true);
          dataStorage.createIndex(Linking.Type.NAME, new DataDocument(Linking.Type.ATTR_PROJECT, Index.ASCENDING)
-               .append(Linking.Type.ATTR_TO_COLLECTION, Index.ASCENDING)
-               .append(Linking.Type.ATTR_FROM_COLLECTION, Index.ASCENDING)
+               .append(Linking.Type.ATTR_TO_COLLECTION_ID, Index.ASCENDING)
+               .append(Linking.Type.ATTR_FROM_COLLECTION_ID, Index.ASCENDING)
                .append(Linking.Type.ATTR_ROLE, Index.ASCENDING), true);
       }
    }
@@ -82,37 +87,40 @@ public class LinkingFacade implements Serializable {
    /**
     * Read all link types for selected collection.
     *
-    * @param collectionName
-    *       The name of the collection.
+    * @param collectionCode
+    *       Collection code
     * @param linkDirection
     *       Direction of link.
     * @return List of all link types.
     */
-   public List<LinkType> readLinkTypesForCollection(final String collectionName, final Linking.LinkDirection linkDirection) {
-      return readLinkingTypesForCollection(collectionName, null, linkDirection)
+   public List<LinkType> readLinkTypesForCollection(final String collectionCode, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String collectionId = getCollectionId(collectionCode);
+      return readLinkingTypesForCollection(collectionId, null, linkDirection)
             .stream()
-            .map(LinkType::new)
+            .map(this::convertLinkTypeToRealNames)
             .collect(Collectors.toList());
    }
 
    /**
     * Read all links for selected collection.
     *
-    * @param collectionName
-    *       The name of the collection.
+    * @param collectionCode
+    *       Collection code
     * @param linkDirection
     *       Direction of link.
     * @param role
     *       Role name.
     * @return List of all links.
     */
-   public List<LinkInstance> readLinkInstancesForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
+   public List<LinkInstance> readLinkInstancesForCollection(final String collectionCode, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String collectionId = getCollectionId(collectionCode);
+
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionId, role, linkDirection);
 
       List<LinkInstance> linkInstances = new ArrayList<>();
       String linkingCollectionName = buildCollectionName();
       for (DataDocument lt : linkingDocs) {
-         LinkType linkType = new LinkType(lt);
+         LinkType linkType = convertLinkTypeToRealNames(lt);
 
          List<DataDocument> ls = dataStorage.search(linkingCollectionName, dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, lt.getId()), null, 0, 0);
          for (DataDocument doc : ls) {
@@ -127,12 +135,12 @@ public class LinkingFacade implements Serializable {
    /**
     * Read all links between two documents
     *
-    * @param firstCollectionName
-    *       The name of the first document's collection.
+    * @param firstCollectionCode
+    *       The code of the first document's collection.
     * @param firstDocumentId
     *       The id of the first document.
-    * @param secondCollectionName
-    *       The name of the second document's collection.
+    * @param secondCollectionCode
+    *       The code of the second document's collection.
     * @param secondDocumentId
     *       The id of the second document.
     * @param role
@@ -141,8 +149,10 @@ public class LinkingFacade implements Serializable {
     *       Direction of link.
     * @return List of all links.
     */
-   public List<LinkInstance> readLinkInstancesBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
+   public List<LinkInstance> readLinkInstancesBetweenDocuments(final String firstCollectionCode, final String firstDocumentId, final String secondCollectionCode, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String firstCollectionId = getCollectionId(firstCollectionCode);
+      String secondCollectionId = getCollectionId(secondCollectionCode);
+      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionId, secondCollectionId, role, linkDirection);
 
       List<LinkInstance> linkInstances = new ArrayList<>();
       String collectionName = buildCollectionName();
@@ -164,8 +174,8 @@ public class LinkingFacade implements Serializable {
    /**
     * Read all linking documents for specified document.
     *
-    * @param collectionName
-    *       The name of the document's collection.
+    * @param collectionCode
+    *       Collection code
     * @param documentId
     *       The id of the document to search for links.
     * @param role
@@ -174,38 +184,41 @@ public class LinkingFacade implements Serializable {
     *       Direction of link.
     * @return List of all linked documents.
     */
-   public List<DataDocument> readLinkedDocumentsForDocument(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
+   public List<DataDocument> readLinkedDocumentsForDocument(final String collectionCode, final String documentId, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String collectionId = getCollectionId(collectionCode);
 
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionId, role, linkDirection);
       return readDocumentsFromLinkInstances(linkingDocs, documentId, linkDirection);
    }
 
    /**
     * Read all linking documents for specified document and collection.
     *
-    * @param firstCollectionName
-    *       The name of the document's collection.
+    * @param firstCollectionCode
+    *       The code of the document's collection.
     * @param firstDocumentId
     *       The id of the document to search for links.
-    * @param secondCollectionName
-    *       The name of the collection to search for linking documents.
+    * @param secondCollectionCode
+    *       The code of the collection to search for linking documents.
     * @param role
     *       Role name.
     * @param linkDirection
     *       Direction of link.
     * @return List of all linked documents.
     */
-   public List<DataDocument> readLinkedDocumentsBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
+   public List<DataDocument> readLinkedDocumentsBetweenDocumentAndCollection(final String firstCollectionCode, final String firstDocumentId, final String secondCollectionCode, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String firstCollectionId = getCollectionId(firstCollectionCode);
+      String secondCollectionId = getCollectionId(secondCollectionCode);
 
+      List<DataDocument> linkingDocs = readLinkingTypesBetweenCollections(firstCollectionId, secondCollectionId, role, linkDirection);
       return readDocumentsFromLinkInstances(linkingDocs, firstDocumentId, linkDirection);
    }
 
    /**
     * Drop all links for specified document
     *
-    * @param collectionName
-    *       The name of the document's collection.
+    * @param collectionCode
+    *       Collection code
     * @param documentId
     *       The id of the document to drop links.
     * @param role
@@ -213,23 +226,27 @@ public class LinkingFacade implements Serializable {
     * @param linkDirection
     *       Direction of link.
     */
-   public void dropLinksForDocument(final String collectionName, final String documentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionName, role, linkDirection);
+   public void dropLinksForDocument(final String collectionCode, final String documentId, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String collectionId = getCollectionId(collectionCode);
+
+      List<DataDocument> linkingDocs = readLinkingTypesForCollection(collectionId, role, linkDirection);
       dropLinksForDocument(linkingDocs, documentId, linkDirection);
    }
 
    /**
     * Drop all links for specified collection.
     *
-    * @param collectionName
-    *       the name of the collection to drop links.
+    * @param collectionCode
+    *       Collection code
     * @param role
     *       Role name.
     * @param linkDirection
     *       Direction of link.
     */
-   public void dropLinksForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingTypes = readLinkingTypesForCollection(collectionName, role, linkDirection);
+   public void dropLinksForCollection(final String collectionCode, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String collectionId = getCollectionId(collectionCode);
+
+      List<DataDocument> linkingTypes = readLinkingTypesForCollection(collectionId, role, linkDirection);
       String linkingCollectionName = buildCollectionName();
       for (DataDocument lt : linkingTypes) {
          String id = lt.getId();
@@ -241,12 +258,12 @@ public class LinkingFacade implements Serializable {
    /**
     * Drop link between two documents.
     *
-    * @param firstCollectionName
-    *       The name of the first document's collection.
+    * @param firstCollectionCode
+    *       The code of the first document's collection.
     * @param firstDocumentId
     *       The id of the first document.
-    * @param secondCollectionName
-    *       The name of the second document's collection.
+    * @param secondCollectionCode
+    *       The code of the second document's collection.
     * @param secondDocumentId
     *       The id of the second document.
     * @param role
@@ -254,8 +271,11 @@ public class LinkingFacade implements Serializable {
     * @param linkDirection
     *       Direction of link.
     */
-   public void dropLinksBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
+   public void dropLinksBetweenDocuments(final String firstCollectionCode, final String firstDocumentId, final String secondCollectionCode, final String secondDocumentId, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String firstCollectionId = getCollectionId(firstCollectionCode);
+      String secondCollectionId = getCollectionId(secondCollectionCode);
+
+      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionId, secondCollectionId, role, linkDirection);
       String collectionName = buildCollectionName();
       for (DataDocument lt : linkingTypes) {
          String id = lt.getId();
@@ -269,31 +289,34 @@ public class LinkingFacade implements Serializable {
    /**
     * Drop link between document and collection.
     *
-    * @param firstCollectionName
-    *       The name of the document's collection.
+    * @param firstCollectionCode
+    *       The code of the first document's collection.
     * @param firstDocumentId
-    *       The id of the document.
-    * @param secondCollectionName
-    *       The name of the collection to drop links.
+    *       The id of the first document.
+    * @param secondCollectionCode
+    *       The code of the second document's collection.
     * @param role
     *       Role name.
     * @param linkDirection
     *       Direction of link.
     */
-   public void dropLinksBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
-      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionName, secondCollectionName, role, linkDirection);
+   public void dropLinksBetweenDocumentAndCollection(final String firstCollectionCode, final String firstDocumentId, final String secondCollectionCode, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String firstCollectionId = getCollectionId(firstCollectionCode);
+      String secondCollectionId = getCollectionId(secondCollectionCode);
+
+      List<DataDocument> linkingTypes = readLinkingTypesBetweenCollections(firstCollectionId, secondCollectionId, role, linkDirection);
       dropLinksForDocument(linkingTypes, firstDocumentId, linkDirection);
    }
 
    /**
     * Create link between two documents.
     *
-    * @param firstCollectionName
-    *       The name of the first document's collection.
+    * @param firstCollectionCode
+    *       The code of the first document's collection.
     * @param firstDocumentId
     *       The id of the first document.
-    * @param secondCollectionName
-    *       The name of the second document's collection.
+    * @param secondCollectionCode
+    *       The code of the second document's collection.
     * @param secondDocumentId
     *       The id of the second document.
     * @param attributes
@@ -303,8 +326,11 @@ public class LinkingFacade implements Serializable {
     * @param linkDirection
     *       Direction of link.
     */
-   public void createLinkInstanceBetweenDocuments(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final String secondDocumentId, final DataDocument attributes, final String role, final Linking.LinkDirection linkDirection) {
-      String typeId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
+   public void createLinkInstanceBetweenDocuments(final String firstCollectionCode, final String firstDocumentId, final String secondCollectionCode, final String secondDocumentId, final DataDocument attributes, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String firstCollectionId = getCollectionId(firstCollectionCode);
+      String secondCollectionId = getCollectionId(secondCollectionCode);
+
+      String typeId = createNewLinkingTypeIfNecessary(firstCollectionId, secondCollectionId, role, linkDirection);
 
       DataDocument dataDocument = new DataDocument(Linking.Instance.ATTR_TYPE_ID, typeId)
             .append(Linking.Instance.ATTR_FROM_ID, linkDirection == Linking.LinkDirection.FROM ? firstDocumentId : secondDocumentId)
@@ -316,12 +342,12 @@ public class LinkingFacade implements Serializable {
    /**
     * Create link from document to many documents.
     *
-    * @param firstCollectionName
-    *       The name of the first document's collection.
+    * @param firstCollectionCode
+    *       The code of the first document's collection.
     * @param firstDocumentId
     *       The id of the first document.
-    * @param secondCollectionName
-    *       The name of the second document's collection.
+    * @param secondCollectionCode
+    *       The code of the second document's collection.
     * @param secondDocumentsIds
     *       The ids of documents to create link.
     * @param attributesList
@@ -331,8 +357,11 @@ public class LinkingFacade implements Serializable {
     * @param linkDirection
     *       Direction of link.
     */
-   public void createLinkInstancesBetweenDocumentAndCollection(final String firstCollectionName, final String firstDocumentId, final String secondCollectionName, final List<String> secondDocumentsIds, final List<DataDocument> attributesList, final String role, final Linking.LinkDirection linkDirection) {
-      String typeId = createNewLinkingTypeIfNecessary(firstCollectionName, secondCollectionName, role, linkDirection);
+   public void createLinkInstancesBetweenDocumentAndCollection(final String firstCollectionCode, final String firstDocumentId, final String secondCollectionCode, final List<String> secondDocumentsIds, final List<DataDocument> attributesList, final String role, final Linking.LinkDirection linkDirection) throws UserCollectionNotFoundException {
+      String firstCollectionId = getCollectionId(firstCollectionCode);
+      String secondCollectionId = getCollectionId(secondCollectionCode);
+
+      String typeId = createNewLinkingTypeIfNecessary(firstCollectionId, secondCollectionId, role, linkDirection);
 
       List<DataDocument> dataDocuments = new LinkedList<>();
       for (int i = 0; i < secondDocumentsIds.size(); i++) {
@@ -349,7 +378,8 @@ public class LinkingFacade implements Serializable {
       List<DataDocument> links = new ArrayList<>();
       String collectionName = buildCollectionName();
       for (DataDocument lt : linkingDocs) {
-         String readCollectionName = linkDirection == Linking.LinkDirection.FROM ? lt.getString(Linking.Type.ATTR_TO_COLLECTION) : lt.getString(Linking.Type.ATTR_FROM_COLLECTION);
+         String readCollectionNameId = linkDirection == Linking.LinkDirection.FROM ? lt.getString(Linking.Type.ATTR_TO_COLLECTION_ID) : lt.getString(Linking.Type.ATTR_FROM_COLLECTION_ID);
+         String readCollectionName = collectionMetadataFacade.getCollectionCode(readCollectionNameId);
          String param = linkDirection == Linking.LinkDirection.FROM ? Linking.Instance.ATTR_TO_ID : Linking.Instance.ATTR_FROM_ID;
          List<DataDocument> docs = dataStorage.search(collectionName, filterLinkingInstanceForDocument(lt.getId(), documentId, linkDirection), null, 0, 0);
          for (DataDocument dc : docs) {
@@ -378,30 +408,30 @@ public class LinkingFacade implements Serializable {
       return dataStorage.search(buildCollectionName(), dataStorageDialect.fieldValueFilter(Linking.Instance.ATTR_TYPE_ID, id), null, 0, 1).isEmpty();
    }
 
-   private List<DataDocument> readLinkingTypesForCollection(final String collectionName, final String role, final Linking.LinkDirection linkDirection) {
-      String param = linkDirection == Linking.LinkDirection.FROM ? Linking.Type.ATTR_FROM_COLLECTION : Linking.Type.ATTR_TO_COLLECTION;
-      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeForCollection(param, collectionName, role), null, 0, 0);
+   private List<DataDocument> readLinkingTypesForCollection(final String collectionId, final String role, final Linking.LinkDirection linkDirection) {
+      String param = linkDirection == Linking.LinkDirection.FROM ? Linking.Type.ATTR_FROM_COLLECTION_ID : Linking.Type.ATTR_TO_COLLECTION_ID;
+      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeForCollection(param, collectionId, role), null, 0, 0);
    }
 
-   private List<DataDocument> readLinkingTypesBetweenCollections(final String firstCollectionName, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
-      String fromCollectionName = linkDirection == Linking.LinkDirection.FROM ? firstCollectionName : secondCollectionName;
-      String toCollectionName = linkDirection == Linking.LinkDirection.FROM ? secondCollectionName : firstCollectionName;
-      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionName, toCollectionName, role), null, 0, 0);
+   private List<DataDocument> readLinkingTypesBetweenCollections(final String firstCollectionId, final String secondCollectionId, final String role, final Linking.LinkDirection linkDirection) {
+      String fromCollectionId = linkDirection == Linking.LinkDirection.FROM ? firstCollectionId : secondCollectionId;
+      String toCollectionId = linkDirection == Linking.LinkDirection.FROM ? secondCollectionId : firstCollectionId;
+      return dataStorage.search(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionId, toCollectionId, role), null, 0, 0);
    }
 
-   private String createNewLinkingTypeIfNecessary(final String firstCollectionName, final String secondCollectionName, final String role, final Linking.LinkDirection linkDirection) {
-      String fromCollectionName = linkDirection == Linking.LinkDirection.FROM ? firstCollectionName : secondCollectionName;
-      String toCollectionName = linkDirection == Linking.LinkDirection.FROM ? secondCollectionName : firstCollectionName;
+   private String createNewLinkingTypeIfNecessary(final String firstCollectionId, final String secondCollectionId, final String role, final Linking.LinkDirection linkDirection) {
+      String fromCollectionId = linkDirection == Linking.LinkDirection.FROM ? firstCollectionId : secondCollectionId;
+      String toCollectionId = linkDirection == Linking.LinkDirection.FROM ? secondCollectionId : firstCollectionId;
 
-      DataDocument linkingType = dataStorage.readDocument(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionName, toCollectionName, role));
+      DataDocument linkingType = dataStorage.readDocument(Linking.Type.NAME, filterLinkingTypeBetweenCollections(fromCollectionId, toCollectionId, role));
       if (linkingType != null) { // if linking type already exists, we return it
          return linkingType.getId();
       }
 
       //otherwise we create linking type and also collection for link if necessary
       DataDocument doc = new DataDocument();
-      doc.put(Linking.Type.ATTR_FROM_COLLECTION, fromCollectionName);
-      doc.put(Linking.Type.ATTR_TO_COLLECTION, toCollectionName);
+      doc.put(Linking.Type.ATTR_FROM_COLLECTION_ID, fromCollectionId);
+      doc.put(Linking.Type.ATTR_TO_COLLECTION_ID, toCollectionId);
       doc.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
       doc.put(Linking.Type.ATTR_ROLE, role);
 
@@ -440,21 +470,21 @@ public class LinkingFacade implements Serializable {
       return dataStorageDialect.multipleFieldsValueFilter(fields);
    }
 
-   private DataFilter filterLinkingTypeForCollection(final String param, final String collectionName, final String role) {
+   private DataFilter filterLinkingTypeForCollection(final String param, final String collectionId, final String role) {
       Map<String, Object> fields = new HashMap<>();
       fields.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
-      fields.put(param, collectionName);
+      fields.put(param, collectionId);
       if (role != null) {
          fields.put(Linking.Type.ATTR_ROLE, role);
       }
       return dataStorageDialect.multipleFieldsValueFilter(fields);
    }
 
-   private DataFilter filterLinkingTypeBetweenCollections(final String fromCollectionName, final String toCollectionName, final String role) {
+   private DataFilter filterLinkingTypeBetweenCollections(final String fromCollectionId, final String toCollectionId, final String role) {
       Map<String, Object> fields = new HashMap<>();
       fields.put(Linking.Type.ATTR_PROJECT, projectFacade.getCurrentProjectId());
-      fields.put(Linking.Type.ATTR_FROM_COLLECTION, fromCollectionName);
-      fields.put(Linking.Type.ATTR_TO_COLLECTION, toCollectionName);
+      fields.put(Linking.Type.ATTR_FROM_COLLECTION_ID, fromCollectionId);
+      fields.put(Linking.Type.ATTR_TO_COLLECTION_ID, toCollectionId);
       if (role != null) {
          fields.put(Linking.Type.ATTR_ROLE, role);
       }
@@ -463,6 +493,20 @@ public class LinkingFacade implements Serializable {
 
    private String buildCollectionName() {
       return Linking.PREFIX + "_" + projectFacade.getCurrentProjectId();
+   }
+
+   private LinkType convertLinkTypeToRealNames(DataDocument linkType) {
+      String fromCollection = collectionMetadataFacade.getCollectionName(linkType.getString(Linking.Type.ATTR_FROM_COLLECTION_ID));
+      String toCollection = collectionMetadataFacade.getCollectionName(linkType.getString(Linking.Type.ATTR_TO_COLLECTION_ID));
+      return new LinkType(fromCollection, toCollection, Linking.Type.ATTR_ROLE);
+   }
+
+   private String getCollectionId(String code) throws UserCollectionNotFoundException {
+      String collectionId = collectionMetadataFacade.getCollectionId(code);
+      if (collectionId == null) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(code));
+      }
+      return collectionId;
    }
 
 }

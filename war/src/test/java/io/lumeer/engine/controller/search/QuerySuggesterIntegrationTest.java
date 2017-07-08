@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
@@ -98,13 +99,14 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestAll() throws Exception {
-      collectionFacade.createCollection(COLLECTION_TREES);
-      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_TREES), ATTRIBUTE_KNEES);
+      String collectionTreesCode = collectionFacade.createCollection(new Collection(COLLECTION_TREES));
 
-      collectionFacade.createCollection(COLLECTION_DOGS);
-      String dogId = documentFacade.createDocument(collectionMetadataFacade.getInternalCollectionName(COLLECTION_DOGS), new DataDocument());
-      String treeId = documentFacade.createDocument(collectionMetadataFacade.getInternalCollectionName(COLLECTION_TREES), new DataDocument());
-      linkingFacade.createLinkInstanceBetweenDocuments(COLLECTION_DOGS, dogId, COLLECTION_TREES, treeId, null, LINK_PEES_ON, LumeerConst.Linking.LinkDirection.FROM);
+      collectionMetadataFacade.addOrIncrementAttribute(collectionTreesCode, ATTRIBUTE_KNEES);
+
+      String collectionDogsCode = collectionFacade.createCollection(new Collection(COLLECTION_DOGS));
+      String dogId = documentFacade.createDocument(collectionDogsCode, new DataDocument());
+      String treeId = documentFacade.createDocument(collectionDogsCode, new DataDocument());
+      linkingFacade.createLinkInstanceBetweenDocuments(collectionDogsCode, dogId, collectionTreesCode, treeId, null, LINK_PEES_ON, LumeerConst.Linking.LinkDirection.FROM);
 
       viewFacade.createView(VIEW_BEES, null, null, null);
 
@@ -124,8 +126,8 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestCollectionsPartial() throws Exception {
-      collectionFacade.createCollection(COLLECTION_BANANAS);
-      collectionFacade.createCollection(COLLECTION_NANS);
+      collectionFacade.createCollection(new Collection(COLLECTION_BANANAS));
+      collectionFacade.createCollection(new Collection(COLLECTION_NANS));
 
       List<SearchSuggestion> collections = querySuggester.suggestCollections("nan", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(collections).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_BANANAS, COLLECTION_NANS);
@@ -133,7 +135,7 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestCollectionsComplete() throws Exception {
-      collectionFacade.createCollection(COLLECTION_SOFAS);
+      collectionFacade.createCollection(new Collection(COLLECTION_SOFAS));
 
       List<SearchSuggestion> collections = querySuggester.suggestCollections("sofas", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(collections).extracting(SearchSuggestion::getText).containsOnly(COLLECTION_SOFAS);
@@ -141,12 +143,12 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestAttributesNoCollection() throws Exception {
-      collectionFacade.createCollection(COLLECTION_GUNS);
-      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_GUNS), ATTRIBUTE_GUN);
-      collectionFacade.createCollection(COLLECTION_MATCHES);
-      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_MATCHES), ATTRIBUTE_GUN);
-      collectionFacade.createCollection(COLLECTION_SOFTWARE);
-      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_SOFTWARE), ATTRIBUTE_GUN);
+      String collectionGunsCode = collectionFacade.createCollection(new Collection(COLLECTION_GUNS));
+      collectionMetadataFacade.addOrIncrementAttribute(collectionGunsCode, ATTRIBUTE_GUN);
+      String collectionMatchesCode = collectionFacade.createCollection(new Collection(COLLECTION_MATCHES));
+      collectionMetadataFacade.addOrIncrementAttribute(collectionMatchesCode, ATTRIBUTE_GUN);
+      String collectionSoftwareCode = collectionFacade.createCollection(new Collection(COLLECTION_SOFTWARE));
+      collectionMetadataFacade.addOrIncrementAttribute(collectionSoftwareCode, ATTRIBUTE_GUN);
 
       List<SearchSuggestion> attributes = querySuggester.suggestAttributes("un", QuerySuggester.SUGGESTIONS_LIMIT);
       SoftAssertions assertions = new SoftAssertions();
@@ -158,8 +160,8 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestAttributesPartialAttribute() throws Exception {
-      collectionFacade.createCollection(COLLECTION_ANIMALS);
-      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_ANIMALS), ATTRIBUTE_SPECIES);
+      String collectionCode = collectionFacade.createCollection(new Collection(COLLECTION_ANIMALS));
+      collectionMetadataFacade.addOrIncrementAttribute(collectionCode, ATTRIBUTE_SPECIES);
 
       List<SearchSuggestion> attributes = querySuggester.suggestAttributes("animals.spec", QuerySuggester.SUGGESTIONS_LIMIT);
       SoftAssertions assertions = new SoftAssertions();
@@ -170,9 +172,9 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestAttributesCompleteAttribute() throws Exception {
-      collectionFacade.createCollection(COLLECTION_PEOPLE);
-      collectionMetadataFacade.addOrIncrementAttribute(collectionMetadataFacade.getInternalCollectionName(COLLECTION_PEOPLE), ATTRIBUTE_AGE);
-      collectionMetadataFacade.addAttributeConstraint(collectionMetadataFacade.getInternalCollectionName(COLLECTION_PEOPLE), ATTRIBUTE_AGE, "isNumber");
+      String collectionode = collectionFacade.createCollection(new Collection(COLLECTION_PEOPLE));
+      collectionMetadataFacade.addOrIncrementAttribute(collectionode, ATTRIBUTE_AGE);
+      collectionMetadataFacade.addAttributeConstraint(collectionode, ATTRIBUTE_AGE, "isNumber");
 
       List<SearchSuggestion> attributes = querySuggester.suggestAttributes("people.age", QuerySuggester.SUGGESTIONS_LIMIT);
       SoftAssertions assertions = new SoftAssertions();
@@ -184,12 +186,11 @@ public class QuerySuggesterIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestAttributesChilds() throws Exception {
-      collectionFacade.createCollection(COLLECTION_COMPANIES);
-      String internalCollectionName = collectionMetadataFacade.getInternalCollectionName(COLLECTION_COMPANIES);
-      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "Lumeer");
-      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "First.Lumeer");
-      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "Second.First.Lumeer");
-      collectionMetadataFacade.addOrIncrementAttribute(internalCollectionName, "a.b.c.d.e.Lumee");
+      String collectionCode = collectionFacade.createCollection(new Collection(COLLECTION_COMPANIES));
+      collectionMetadataFacade.addOrIncrementAttribute(collectionCode, "Lumeer");
+      collectionMetadataFacade.addOrIncrementAttribute(collectionCode, "First.Lumeer");
+      collectionMetadataFacade.addOrIncrementAttribute(collectionCode, "Second.First.Lumeer");
+      collectionMetadataFacade.addOrIncrementAttribute(collectionCode, "a.b.c.d.e.Lumee");
 
       List<SearchSuggestion> attributes = querySuggester.suggestAttributes("companies.lumee", QuerySuggester.SUGGESTIONS_LIMIT);
       assertThat(attributes).hasSize(4).extracting("text").containsOnly("companies.Lumeer", "companies.First.Lumeer", "companies.Second.First.Lumeer", "companies.a.b.c.d.e.Lumee");

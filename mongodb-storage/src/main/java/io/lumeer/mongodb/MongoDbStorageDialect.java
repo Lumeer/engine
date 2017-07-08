@@ -50,21 +50,21 @@ public class MongoDbStorageDialect implements DataStorageDialect {
    public DataDocument renameAttributeQuery(final String metadataCollection, final String collection, final String oldName, final String newName) {
       return new DataDocument()
             .append("findAndModify", metadataCollection)
-            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collection))
+            .append("query", new DataDocument(LumeerConst.Collection.CODE, collection))
             .append("update", new DataDocument()
                   .append("$rename", new DataDocument(
-                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES_KEY, oldName),
-                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES_KEY, newName))));
+                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES, oldName),
+                        MongoUtils.concatParams(LumeerConst.Collection.ATTRIBUTES, newName))));
    }
 
    @Override
    public DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize) {
       return new DataDocument()
             .append("findAndModify", metadataCollection)
-            .append("query", new DataDocument(LumeerConst.Collection.INTERNAL_NAME_KEY, collection))
+            .append("query", new DataDocument(LumeerConst.Collection.CODE, collection))
             .append("update", new DataDocument()
                   .append("$push", new DataDocument()
-                        .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS_KEY, new DataDocument()
+                        .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS, new DataDocument()
                               .append("$each", Collections.singletonList(id))
                               .append("$position", 0)
                               .append("$slice", listSize))));

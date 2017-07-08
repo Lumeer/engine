@@ -24,10 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.DbException;
+import io.lumeer.engine.api.dto.Collection;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -67,15 +66,31 @@ public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testGetDocumentMetadata() throws Exception {
-      String documentId = setupCollectionAndCreateNewDocument(COLLECTION_GET_METADATA);
-      Object metadataValue = documentMetadataFacade.getDocumentMetadata(COLLECTION_GET_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
+      String oldCode = collectionMetadataFacade.getCollectionCodeFromName(COLLECTION_GET_METADATA);
+      if (oldCode != null) {
+         dataStorage.dropCollection(oldCode);
+      }
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_GET_METADATA));
+
+      DataDocument document = new DataDocument("a", 1).append("b", 2).append("c", 3);
+      String documentId = documentFacade.createDocument(code, document);
+
+      Object metadataValue = documentMetadataFacade.getDocumentMetadata(code, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
       assertThat(metadataValue).isNotNull();
    }
 
    @Test
    public void testReadDocumentMetadata() throws Exception {
-      String documentId = setupCollectionAndCreateNewDocument(COLLECTION_READ_METADATA);
-      Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(COLLECTION_READ_METADATA, documentId);
+      String oldCode = collectionMetadataFacade.getCollectionCodeFromName(COLLECTION_READ_METADATA);
+      if (oldCode != null) {
+         dataStorage.dropCollection(oldCode);
+      }
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_READ_METADATA));
+
+      DataDocument document = new DataDocument("a", 1).append("b", 2).append("c", 3);
+      String documentId = documentFacade.createDocument(code, document);
+
+      Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(code, documentId);
 
       assertThat(documentMetadata).containsKey(LumeerConst.Document.CREATE_BY_USER_KEY);
       assertThat(documentMetadata).containsKey(LumeerConst.Document.CREATE_DATE_KEY);
@@ -84,25 +99,25 @@ public class DocumentMetadataFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testPutAndUpdateAndDropDocumentMetadata() throws Exception {
-      String documentId = setupCollectionAndCreateNewDocument(COLLECTION_PUT_AND_UPDATE_METADATA);
-      documentMetadataFacade.putDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY, DUMMY_META_VALUE);
-      assertThat(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString()).isEqualTo(DUMMY_META_VALUE);
+      String oldCode = collectionMetadataFacade.getCollectionCodeFromName(COLLECTION_PUT_AND_UPDATE_METADATA);
+      if (oldCode != null) {
+         dataStorage.dropCollection(oldCode);
+      }
 
-      DataDocument metadata = new DataDocument(LumeerConst.Document.CREATE_BY_USER_KEY, DUMMY_META_UPDATE_VALUE);
-      documentMetadataFacade.updateDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, metadata);
-      assertThat(documentMetadataFacade.getDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString()).isEqualTo(DUMMY_META_UPDATE_VALUE);
-
-      documentMetadataFacade.dropDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
-      assertThat(documentMetadataFacade.readDocumentMetadata(COLLECTION_PUT_AND_UPDATE_METADATA, documentId)).doesNotContainKey(LumeerConst.Document.CREATE_BY_USER_KEY);
-   }
-
-   private String setupCollectionAndCreateNewDocument(final String collection) throws DbException, InvalidConstraintException {
-      dataStorage.dropCollection(collection);
-      dataStorage.createCollection(collection);
-      collectionMetadataFacade.createInitialMetadata(collection, collection);
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_PUT_AND_UPDATE_METADATA));
 
       DataDocument document = new DataDocument("a", 1).append("b", 2).append("c", 3);
-      return documentFacade.createDocument(collection, document);
+      String documentId = documentFacade.createDocument(code, document);
+
+      documentMetadataFacade.putDocumentMetadata(code, documentId, LumeerConst.Document.CREATE_BY_USER_KEY, DUMMY_META_VALUE);
+      assertThat(documentMetadataFacade.getDocumentMetadata(code, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString()).isEqualTo(DUMMY_META_VALUE);
+
+      DataDocument metadata = new DataDocument(LumeerConst.Document.CREATE_BY_USER_KEY, DUMMY_META_UPDATE_VALUE);
+      documentMetadataFacade.updateDocumentMetadata(code, documentId, metadata);
+      assertThat(documentMetadataFacade.getDocumentMetadata(code, documentId, LumeerConst.Document.CREATE_BY_USER_KEY).toString()).isEqualTo(DUMMY_META_UPDATE_VALUE);
+
+      documentMetadataFacade.dropDocumentMetadata(code, documentId, LumeerConst.Document.CREATE_BY_USER_KEY);
+      assertThat(documentMetadataFacade.readDocumentMetadata(code, documentId)).doesNotContainKey(LumeerConst.Document.CREATE_BY_USER_KEY);
    }
 
 }

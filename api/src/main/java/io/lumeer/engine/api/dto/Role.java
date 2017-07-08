@@ -22,6 +22,9 @@ package io.lumeer.engine.api.dto;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,9 +38,16 @@ public class Role {
    private final List<String> groups;
 
    public Role(final String name, final DataDocument data) {
+      this(name, data.getArrayList(LumeerConst.Security.USERS_KEY, String.class), data.getArrayList(LumeerConst.Security.GROUP_KEY, String.class));
+   }
+
+   @JsonCreator
+   public Role(final @JsonProperty("name") String name,
+         final @JsonProperty("users") List<String> users,
+         final @JsonProperty("groups") List<String> groups) {
       this.name = name;
-      this.users = data.getArrayList(LumeerConst.Security.USERS_KEY, String.class);
-      this.groups = data.getArrayList(LumeerConst.Security.GROUP_KEY, String.class);
+      this.users = users;
+      this.groups = groups;
    }
 
    public List<String> getUsers() {

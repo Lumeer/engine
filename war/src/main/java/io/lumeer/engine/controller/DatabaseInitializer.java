@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.controller;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.LumeerConst.*;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
@@ -27,7 +28,10 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
@@ -79,15 +83,15 @@ public class DatabaseInitializer {
    }
 
    private void initConfigurationCollections() {
-      if(!dataStorage.hasCollection(ConfigurationFacade.USER_CONFIG_COLLECTION)){
+      if (!dataStorage.hasCollection(ConfigurationFacade.USER_CONFIG_COLLECTION)) {
          dataStorage.createCollection(ConfigurationFacade.USER_CONFIG_COLLECTION);
          dataStorage.createIndex(ConfigurationFacade.USER_CONFIG_COLLECTION, new DataDocument(Configuration.NAMEVALUE, Index.ASCENDING), true);
       }
-      if(!dataStorage.hasCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION)){
+      if (!dataStorage.hasCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION)) {
          dataStorage.createCollection(ConfigurationFacade.PROJECT_CONFIG_COLLECTION);
          dataStorage.createIndex(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, new DataDocument(Configuration.NAMEVALUE, Index.ASCENDING), true);
       }
-      if(!dataStorage.hasCollection(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION)){
+      if (!dataStorage.hasCollection(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION)) {
          dataStorage.createCollection(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION);
          dataStorage.createIndex(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION, new DataDocument(Configuration.NAMEVALUE, Index.ASCENDING), true);
       }
@@ -142,8 +146,8 @@ public class DatabaseInitializer {
       String collectionMetadataCollection = collectionMetadataFacade.metadataCollection(projectId);
       if (!userDataStorage.hasCollection(collectionMetadataCollection)) {
          userDataStorage.createCollection(collectionMetadataCollection);
-         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(Collection.INTERNAL_NAME_KEY, Index.ASCENDING), true);
-         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(Collection.REAL_NAME_KEY, Index.ASCENDING), true);
+         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(Collection.CODE, Index.ASCENDING), true);
+         userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(Collection.REAL_NAME, Index.ASCENDING), true);
       }
    }
 
@@ -166,22 +170,10 @@ public class DatabaseInitializer {
       if (!userDataStorage.hasCollection(Security.ROLES_COLLECTION_NAME)) {
          userDataStorage.createCollection(Security.ROLES_COLLECTION_NAME);
 
-         // SecurityFacade#projectFilter
          userDataStorage.createIndex(Security.ROLES_COLLECTION_NAME,
                new DataDocument(Security.PROJECT_ID_KEY, Index.ASCENDING)
-                     .append(Security.TYPE_KEY, Index.ASCENDING), true);
-
-         // SecurityFacade#collectionFilter
-         userDataStorage.createIndex(Security.ROLES_COLLECTION_NAME,
-               new DataDocument(Security.PROJECT_ID_KEY, Index.ASCENDING)
-                     .append(Security.COLLECTION_NAME_KEY, Index.ASCENDING)
-                     .append(Security.TYPE_KEY, Index.ASCENDING), true);
-
-         // SecurityFacade#viewFilter
-         userDataStorage.createIndex(Security.ROLES_COLLECTION_NAME,
-               new DataDocument(Security.PROJECT_ID_KEY, Index.ASCENDING)
-                     .append(Security.VIEW_ID_KEY, Index.ASCENDING)
-                     .append(Security.TYPE_KEY, Index.ASCENDING), true);
+                     .append(Security.TYPE_KEY, Index.ASCENDING)
+                     .append(Security.TYPE_ID_KEY, Index.ASCENDING), true);
       }
    }
 
@@ -214,20 +206,7 @@ public class DatabaseInitializer {
     *       project id
     */
    private void initProjectRoles(String projectId) {
-      DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectId)
-            .append(Security.TYPE_KEY, Security.TYPE_PROJECT)
-            .append(Security.ROLES_KEY, new DataDocument()
-                  .append(Security.ROLE_MANAGE,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList()))
-                  .append(Security.ROLE_WRITE,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList())));
-
-      userDataStorage.createDocument(Security.ROLES_COLLECTION_NAME, roles);
+      initTypeRoles(projectId, Security.TYPE_PROJECT, null, Security.RESOURCE_ROLES.get(Security.PROJECT_RESOURCE));
    }
 
    /**
@@ -235,33 +214,11 @@ public class DatabaseInitializer {
     *
     * @param projectCode
     *       project code
-    * @param collectionName
-    *       collection
+    * @param collectionId
+    *       collection id
     */
-   private void initCollectionRoles(String projectCode, String collectionName) {
-      DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode))
-            .append(Security.TYPE_KEY, Security.TYPE_COLLECTION)
-            .append(Security.COLLECTION_NAME_KEY, collectionName)
-            .append(Security.ROLES_KEY, new DataDocument()
-                  .append(Security.ROLE_MANAGE,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList()))
-                  .append(Security.ROLE_READ,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList()))
-                  .append(Security.ROLE_SHARE,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList()))
-                  .append(Security.ROLE_WRITE,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList())));
-
-      userDataStorage.createDocument(Security.ROLES_COLLECTION_NAME, roles);
+   private void initCollectionRoles(String projectCode, String collectionId) {
+      initTypeRoles(projectFacade.getProjectId(projectCode), Security.TYPE_COLLECTION, collectionId, Security.RESOURCE_ROLES.get(Security.COLLECTION_RESOURCE));
    }
 
    /**
@@ -273,25 +230,22 @@ public class DatabaseInitializer {
     *       view
     */
    private void initViewRoles(String projectCode, int viewId) {
-      DataDocument roles = new DataDocument()
-            .append(Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode))
-            .append(Security.TYPE_KEY, Security.TYPE_VIEW)
-            .append(Security.VIEW_ID_KEY, viewId)
-            .append(Security.ROLES_KEY, new DataDocument()
-                  .append(Security.ROLE_MANAGE,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList()))
-                  .append(Security.ROLE_READ,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList()))
-                  .append(Security.ROLE_CLONE,
-                        new DataDocument()
-                              .append(Security.USERS_KEY, Collections.emptyList())
-                              .append(Security.GROUP_KEY, Collections.emptyList())));
+      initTypeRoles(projectFacade.getProjectId(projectCode), Security.TYPE_VIEW, Integer.toString(viewId), Security.RESOURCE_ROLES.get(Security.VIEW_RESOURCE));
+   }
 
-      userDataStorage.createDocument(Security.ROLES_COLLECTION_NAME, roles);
+   private void initTypeRoles(String projectId, String typeKey, String typeId, Set<String> roles) {
+      DataDocument doc = new DataDocument()
+            .append(Security.PROJECT_ID_KEY, projectId)
+            .append(Security.TYPE_KEY, typeKey)
+            .append(Security.TYPE_ID_KEY, typeId);
+      DataDocument rolesDoc = new DataDocument();
+      for (String r : roles) {
+         rolesDoc.append(r, new DataDocument()
+               .append(Security.USERS_KEY, Collections.emptyList())
+               .append(Security.GROUP_KEY, Collections.emptyList()));
+      }
+      doc.append(Security.ROLES_KEY, rolesDoc);
+      userDataStorage.createDocument(Security.ROLES_COLLECTION_NAME, doc);
    }
 
    private void initProjectCollection() {
@@ -346,11 +300,11 @@ public class DatabaseInitializer {
     *
     * @param projectCode
     *       project code
-    * @param collection
-    *       collection name
+    * @param collectionId
+    *       collection id
     */
-   public void onCollectionCreated(final String projectCode, final String collection) {
-      initCollectionRoles(projectCode, collection);
+   public void onCollectionCreated(final String projectCode, final String collectionId) {
+      initCollectionRoles(projectCode, collectionId);
    }
 
    /**

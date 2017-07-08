@@ -135,7 +135,7 @@ public class DataStorageStats {
    public String toString() {
       return "DataStorageStats{" +
             "databaseName='" + databaseName + '\'' +
-            ", collectionName='" + collectionName + '\'' +
+            ", collectionCode='" + collectionName + '\'' +
             ", collections=" + collections +
             ", documents=" + documents +
             ", dataSize=" + dataSize +

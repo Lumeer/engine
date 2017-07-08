@@ -130,8 +130,10 @@ public class OrganizationFacade {
    public String createOrganization(final Organization organization) {
       String id = dataStorage.createDocument(LumeerConst.Organization.COLLECTION_NAME, organization.toDataDocument());
       databaseInitializer.onOrganizationCreated(id);
-      securityFacade.addOrganizationUserRole(organization.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
-      securityFacade.addOrganizationUserRole(organization.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+
+      List<String> user = Collections.singletonList(userFacade.getUserEmail());
+      securityFacade.addOrganizationUsersRole(organization.getCode(), user, LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addOrganizationUsersRole(organization.getCode(), user, LumeerConst.Security.ROLE_WRITE);
 
       return id;
    }

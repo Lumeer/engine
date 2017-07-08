@@ -25,6 +25,7 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
@@ -42,9 +43,7 @@ import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -53,6 +52,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -62,10 +62,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 @Path("/organizations/{organization}/projects/{project}/collections")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -97,7 +93,7 @@ public class CollectionService implements Serializable {
    private DataStorageDialect dialect;
 
    @PathParam("organization")
-   private String organisationCode;
+   private String organizationCode;
 
    @PathParam("project")
    private String projectCode;
@@ -110,7 +106,7 @@ public class CollectionService implements Serializable {
 
    @PostConstruct
    public void init() {
-      organizationFacade.setOrganizationCode(organisationCode);
+      organizationFacade.setOrganizationCode(organizationCode);
       projectFacade.setCurrentProjectCode(projectCode);
    }
 
@@ -121,21 +117,27 @@ public class CollectionService implements Serializable {
     */
    @GET
    @Path("/")
-   public List<String> getAllCollections() {
-      List<String> collections = new ArrayList<>();
-      String projectId = projectFacade.getCurrentProjectId();
-      collections.addAll(collectionFacade.getAllCollections().entrySet().stream()
-                                         .filter(c -> securityFacade.hasCollectionRole(projectId, c.getKey(),
-                                               LumeerConst.Security.ROLE_READ)).map(Map.Entry::getValue)
-                                         .collect(Collectors.toList()));
-      return collections;
+   public List<Collection> getCollections(@QueryParam("page") @DefaultValue("1") int page, @QueryParam("size") @DefaultValue("0") int size) {
+      int skip;
+      if (size <= 0) {
+         size = Integer.MAX_VALUE;
+         skip = 0;
+      } else {
+         skip = page > 1 ? (page - 1) * size : 0;
+      }
+      return collectionFacade.getCollections().stream()
+                             .filter(c -> securityFacade.hasCollectionRole(projectCode, c.getCode(),
+                                   LumeerConst.Security.ROLE_READ))
+                             .skip(skip)
+                             .limit(size)
+                             .collect(Collectors.toList());
    }
 
    /**
     * Creates a new collection including its metadata collection with the specified name given by user.
     *
-    * @param name
-    *       name of the collection to create
+    * @param collection
+    *       collection params to create
     * @return name of internal collection
     * @throws UserCollectionAlreadyExistsException
     *       When collection with given user name already exists.
@@ -143,39 +145,75 @@ public class CollectionService implements Serializable {
     *       when user doesn't have appropriate role
     */
    @POST
-   @Path("/{name}")
-   public String createCollection(final @PathParam("name") String name) throws UserCollectionAlreadyExistsException, UnauthorizedAccessException {
+   @Path("/")
+   public String createCollection(final Collection collection) throws UserCollectionAlreadyExistsException, UnauthorizedAccessException {
+      if (collection == null || collection.getName() == null) {
+         throw new BadRequestException();
+      }
+
       if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      if (name == null) {
+      return collectionFacade.createCollection(collection);
+   }
+
+   /**
+    * Updates a new collection including its metadata collection with the specified name given by user.
+    *
+    * @param collectionCode
+    *       collection code to update
+    * @param collection
+    *       collection params to update
+    * @throws UserCollectionAlreadyExistsException
+    *       When collection with given user name already exists.
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
+    * @throws UserCollectionNotFoundException
+    *       when user collection is not found in db
+    */
+   @PUT
+   @Path("/{collectionCode}")
+   public void updateCollection(@PathParam("collectionCode") final String collectionCode, final Collection collection) throws UserCollectionAlreadyExistsException, UnauthorizedAccessException, UserCollectionNotFoundException {
+      if (collectionCode == null || collection == null || collection.getName() == null) {
          throw new BadRequestException();
       }
-      return collectionFacade.createCollection(name);
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionFacade.updateCollection(collectionCode, collection);
    }
 
    /**
     * Drops the collection including its metadata collection with the specified name.
     *
-    * @param name
+    * @param collectionCode
     *       name of the collection to drop
     * @throws DbException
     *       When there is an error working with the database.
     */
    @DELETE
-   @Path("/{name}")
-   public void dropCollection(final @PathParam("name") String name) throws DbException {
-      if (name == null) {
+   @Path("/{collectionCode}")
+   public void dropCollection(final @PathParam("collectionCode") String collectionCode) throws DbException {
+      if (collectionCode == null) {
          throw new BadRequestException();
       }
 
-      String internalName = getInternalName(name);
-      if (!securityFacade.hasCollectionRole(projectCode, internalName, LumeerConst.Security.ROLE_MANAGE)) {
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
          throw new UnauthorizedAccessException();
       }
 
-      collectionFacade.dropCollection(internalName);
+      collectionFacade.dropCollection(collectionCode);
    }
 
    /**
@@ -183,8 +221,8 @@ public class CollectionService implements Serializable {
     * This method should be called only when also renaming attribute in documents,
     * and access rights should be checked there so they are not checked twice.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @param oldName
     *       old attribute name
     * @param newName
@@ -197,25 +235,28 @@ public class CollectionService implements Serializable {
     *       When current user is not allowed to write to the collection.
     */
    @PUT
-   @Path("/{collectionName}/attributes/{oldName}/rename/{newName}")
-   public void renameAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws AttributeAlreadyExistsException, UnauthorizedAccessException, CollectionNotFoundException {
-      if (collectionName == null || oldName == null || newName == null) {
+   @Path("/{collectionCode}/attributes/{oldName}/rename/{newName}")
+   public void renameAttribute(final @PathParam("collectionCode") String collectionCode, final @PathParam("oldName") String oldName, final @PathParam("newName") String newName) throws AttributeAlreadyExistsException, UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionCode == null || oldName == null || newName == null) {
          throw new BadRequestException();
       }
 
-      String internalName = getInternalName(collectionName);
-      if (!securityFacade.hasCollectionRole(projectCode, internalName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      collectionFacade.renameAttribute(internalName, oldName, newName);
+      collectionFacade.renameAttribute(collectionCode, oldName, newName);
    }
 
    /**
     * Removes given attribute from all existing document specified by its id.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       name of the attribute to remove
     * @throws CollectionNotFoundException
@@ -224,24 +265,27 @@ public class CollectionService implements Serializable {
     *       When current user is not allowed to write to the collection.
     */
    @DELETE
-   @Path("/{collectionName}/attributes/{attributeName}")
-   public void dropAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (collectionName == null || attributeName == null) {
+   @Path("/{collectionCode}/attributes/{attributeName}")
+   public void dropAttribute(final @PathParam("collectionCode") String collectionCode, final @PathParam("attributeName") String attributeName) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null || attributeName == null) {
          throw new BadRequestException();
       }
 
-      String internalName = getInternalName(collectionName);
-      if (!securityFacade.hasCollectionRole(projectCode, internalName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      collectionFacade.dropAttribute(internalName, attributeName);
+      collectionFacade.dropAttribute(collectionCode, attributeName);
    }
 
    /**
     * Searches the specified collection for specified documents using filter, sort, skip and limit option.
     *
-    * @param collectionName
+    * @param collectionCode
     *       name of the collection where the run will be performed
     * @param filter
     *       query predicate. If unspecified, then all documents in the collection will match the predicate.
@@ -252,20 +296,27 @@ public class CollectionService implements Serializable {
     * @param limit
     *       maximum number of documents to return
     * @return list of the found documents
+    * @throws UnauthorizedAccessException
+    *       When current user is not allowed to read to the collection data
     * @throws CollectionNotFoundException
     *       When the collection in which we want to search does not exist.
     */
    @POST
-   @Path("/{collectionName}/search/")
-   public List<DataDocument> search(final @PathParam("collectionName") String collectionName, final @QueryParam("filter") String filter, final @QueryParam("sort") String sort, final @QueryParam("skip") int skip, final @QueryParam("limit") int limit) throws CollectionNotFoundException {
-      if (collectionName == null) {
+   @Path("/{collectionCode}/search/")
+   public List<DataDocument> search(final @PathParam("collectionCode") String collectionCode, final @QueryParam("filter") String filter, final @QueryParam("sort") String sort, final @QueryParam("skip") int skip, final @QueryParam("limit") int limit) throws UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionCode == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      if (!dataStorage.hasCollection(internalCollectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
-      return searchFacade.search(internalCollectionName, dialect.documentFilter(filter == null ? "{}" : filter), dialect.documentSort(sort == null ? "{}" : sort), skip, limit);
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return searchFacade.search(collectionCode, dialect.documentFilter(filter == null ? "{}" : filter), dialect.documentSort(sort == null ? "{}" : sort), skip, limit);
    }
 
    /**
@@ -277,7 +328,7 @@ public class CollectionService implements Serializable {
     * @see <a href="https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find">https://docs.mongodb.com/v3.2/reference/command/find/#dbcmd.find</a>
     */
    @POST
-   @Path("/{collectionName}/run/")
+   @Path("/run")
    public List<DataDocument> search(final @QueryParam("query") String query) {
       if (query == null) {
          throw new BadRequestException();
@@ -288,8 +339,8 @@ public class CollectionService implements Serializable {
    /**
     * Adds collection metadata document.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       metadata attribute name
     * @param metadata
@@ -300,27 +351,28 @@ public class CollectionService implements Serializable {
     *       When current user is not allowed to write to the collection
     */
    @POST
-   @Path("/{collectionName}/meta/{attributeName}")
-   public void addCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final DataDocument metadata) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (collectionName == null || attributeName == null) {
+   @Path("/{collectionCode}/meta/{attributeName}")
+   public void addCollectionMetadata(final @PathParam("collectionCode") String collectionCode, final @PathParam("attributeName") String attributeName, final DataDocument metadata) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null || attributeName == null) {
          throw new BadRequestException();
       }
 
-      String internalName = getInternalName(collectionName);
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      DataDocument metadataDocument = new DataDocument(attributeName, metadata);
-      collectionMetadataFacade.setCustomMetadata(internalName, metadataDocument);
+      collectionMetadataFacade.setCustomMetadata(collectionCode, new DataDocument(attributeName, metadata));
    }
 
    /**
     * Reads a metadata collection of given collection.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @return list of all documents from metadata collection
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
@@ -328,19 +380,28 @@ public class CollectionService implements Serializable {
     *       When current user is not allowed to read the collection.
     */
    @GET
-   @Path("/{collectionName}/meta/")
-   public CollectionMetadata readCollectionMetadata(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (collectionName == null) {
+   @Path("/{collectionCode}/meta/")
+   public CollectionMetadata readCollectionMetadata(final @PathParam("collectionCode") String collectionCode) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
          throw new BadRequestException();
       }
-      return collectionMetadataFacade.getCollectionMetadata(getInternalName(collectionName));
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return collectionMetadataFacade.getCollectionMetadata(collectionCode);
    }
 
    /**
     * Updates collection metadata document.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       metadata attribute name
     * @param value
@@ -351,20 +412,28 @@ public class CollectionService implements Serializable {
     *       When the given collection does not exist.
     */
    @PUT
-   @Path("/{collectionName}/meta/{attributeName}")
-   public void updateCollectionMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final Object value) throws UnauthorizedAccessException, UserCollectionNotFoundException {
-      if (collectionName == null || attributeName == null) {
+   @Path("/{collectionCode}/meta/{attributeName}")
+   public void updateCollectionMetadata(final @PathParam("collectionCode") String collectionCode, final @PathParam("attributeName") String attributeName, final Object value) throws UnauthorizedAccessException, UserCollectionNotFoundException {
+      if (collectionCode == null || attributeName == null) {
          throw new BadRequestException();
       }
-      DataDocument metadataDocument = new DataDocument(attributeName, value);
-      collectionMetadataFacade.setCustomMetadata(getInternalName(collectionName), metadataDocument);
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionMetadataFacade.setCustomMetadata(collectionCode, new DataDocument(attributeName, value));
    }
 
    /**
     * Reads all collection attributes of given collection.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @return list of names of all attributes in the collection
     * @throws CollectionNotFoundException
     *       When the given collection does not exist.
@@ -372,19 +441,28 @@ public class CollectionService implements Serializable {
     *       When current user is not allowed to read the collection.
     */
    @GET
-   @Path("/{collectionName}/attributes")
-   public Set<String> readCollectionAttributes(final @PathParam("collectionName") String collectionName) throws CollectionNotFoundException, UnauthorizedAccessException {
-      if (collectionName == null) {
+   @Path("/{collectionCode}/attributes")
+   public Set<String> readCollectionAttributes(final @PathParam("collectionCode") String collectionCode) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
          throw new BadRequestException();
       }
-      return collectionFacade.readCollectionAttributes(getInternalName(collectionName)).keySet();
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return collectionFacade.readCollectionAttributes(collectionCode).keySet();
    }
 
    /**
     * Adds new constraint for the given attribute and checks if it is valid.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @param constraintConfiguration
@@ -397,25 +475,28 @@ public class CollectionService implements Serializable {
     *       When current user is not allowed to write to the collection.
     */
    @PUT
-   @Path("/{collectionName}/attributes/{attributeName}/constraints")
-   public void setAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, InvalidConstraintException, UnauthorizedAccessException {
-      if (collectionName == null || attributeName == null || constraintConfiguration == null) {
+   @Path("/{collectionCode}/attributes/{attributeName}/constraints")
+   public void setAttributeConstraint(final @PathParam("collectionCode") String collectionCode, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws CollectionNotFoundException, InvalidConstraintException, UnauthorizedAccessException {
+      if (collectionCode == null || attributeName == null || constraintConfiguration == null) {
          throw new BadRequestException();
       }
 
-      String internalName = getInternalName(collectionName);
-      if (!securityFacade.hasCollectionRole(projectCode, internalName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      collectionMetadataFacade.addAttributeConstraint(internalName, attributeName, constraintConfiguration);
+      collectionFacade.addAttributeConstraint(collectionCode, attributeName, constraintConfiguration);
    }
 
    /**
     * Reads constraint for the given attribute.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @return list of constraint configurations for the given attribute, empty list if constraints were not found
@@ -425,19 +506,28 @@ public class CollectionService implements Serializable {
     *       When the given collection does not exist.
     */
    @GET
-   @Path("/{collectionName}/attributes/{attributeName}/constraints")
-   public List<String> readAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException, CollectionNotFoundException {
-      if (collectionName == null || attributeName == null) {
+   @Path("/{collectionCode}/attributes/{attributeName}/constraints")
+   public List<String> readAttributeConstraint(final @PathParam("collectionCode") String collectionCode, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionCode == null || attributeName == null) {
          throw new BadRequestException();
       }
-      return collectionMetadataFacade.getAttributeConstraintsConfigurations(getInternalName(collectionName), attributeName);
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return collectionMetadataFacade.getAttributeConstraintsConfigurations(collectionCode, attributeName);
    }
 
    /**
     * Drops constraint for the given attribute.
     *
-    * @param collectionName
-    *       collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @param constraintConfiguration
@@ -448,30 +538,21 @@ public class CollectionService implements Serializable {
     *       When the given collection does not exist.
     */
    @DELETE
-   @Path("/{collectionName}/attributes/{attributeName}/constraints")
-   public void dropAttributeConstraint(final @PathParam("collectionName") String collectionName, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws UnauthorizedAccessException, CollectionNotFoundException {
-      if (collectionName == null || attributeName == null || constraintConfiguration == null) {
+   @Path("/{collectionCode}/attributes/{attributeName}/constraints")
+   public void dropAttributeConstraint(final @PathParam("collectionCode") String collectionCode, final @PathParam("attributeName") String attributeName, final String constraintConfiguration) throws UnauthorizedAccessException, CollectionNotFoundException {
+      if (collectionCode == null || attributeName == null || constraintConfiguration == null) {
          throw new BadRequestException();
       }
 
-      String internalName = getInternalName(collectionName);
-      if (!securityFacade.hasCollectionRole(projectCode, internalName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      collectionMetadataFacade.dropAttributeConstraint(getInternalName(collectionName), attributeName, constraintConfiguration);
+      collectionMetadataFacade.dropAttributeConstraint(collectionCode, attributeName, constraintConfiguration);
    }
 
-   /**
-    * Returns internal name of the given collection stored in the database.
-    *
-    * @param collectionOriginalName
-    *       original name of the collection given by user
-    * @return internal name of the given collection
-    * @throws UserCollectionNotFoundException
-    *       When the given user collection does not exist.
-    */
-   private String getInternalName(final String collectionOriginalName) throws UserCollectionNotFoundException {
-      return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
-   }
 }

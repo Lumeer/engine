@@ -27,6 +27,7 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
@@ -86,8 +87,8 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestAll() throws Exception {
-      collectionFacade.createCollection(COLLECTION_BEERS);
-      collectionFacade.createCollection(COLLECTION_PEERS);
+      collectionFacade.createCollection(new Collection(COLLECTION_BEERS));
+      collectionFacade.createCollection(new Collection(COLLECTION_PEERS));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(SUGGESTION_PATH)
@@ -105,8 +106,8 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSuggestCollectionType() throws Exception {
-      collectionFacade.createCollection(COLLECTION_ANTS);
-      collectionFacade.createCollection(COLLECTION_PANTS);
+      collectionFacade.createCollection(new Collection(COLLECTION_ANTS));
+      collectionFacade.createCollection(new Collection(COLLECTION_PANTS));
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(SUGGESTION_PATH)
@@ -116,7 +117,8 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
-      List<SearchSuggestion> suggestions = response.readEntity(new GenericType<List<SearchSuggestion>>(){});
+      List<SearchSuggestion> suggestions = response.readEntity(new GenericType<List<SearchSuggestion>>() {
+      });
       assertThat(suggestions).hasSize(2);
 
       response.close();
@@ -132,23 +134,24 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
       final DataDocument emptyProjection = new DataDocument();
       final DataDocument emptySorting = new DataDocument();
 
-      String collection = collectionFacade.createCollection(COLLECTION_QUERY_SEARCH);
-      createDummyEntries(collection);
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_QUERY_SEARCH));
+      createDummyEntries(code);
 
       final Set<String> collections = new HashSet<>();
-      collections.add(COLLECTION_QUERY_SEARCH);
+      collections.add(code);
       final Query query = new Query(collections, emptyFilters, emptyProjection, emptySorting, limit, null);
       Response response = client.target(TARGET_URI).path(buildPathPrefix()).path(QUERY_PATH).request().buildPost(Entity.entity(query, MediaType.APPLICATION_JSON)).invoke();
-      List<DataDocument> matchResult = response.readEntity(new GenericType<List<DataDocument>>(){});
+      List<DataDocument> matchResult = response.readEntity(new GenericType<List<DataDocument>>() {
+      });
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(matchResult).hasSize(limit);
       response.close();
       client.close();
    }
 
-   private void createDummyEntries(final String collectionName) throws DbException, InvalidConstraintException {
+   private void createDummyEntries(final String collectionCode) throws DbException, InvalidConstraintException {
       for (int i = 0; i < 10; i++) {
-         documentFacade.createDocument(collectionName, new DataDocument("dummyAttribute", i));
+         documentFacade.createDocument(collectionCode, new DataDocument("dummyAttribute", i));
       }
    }
 
@@ -160,10 +163,6 @@ public class SearchServiceIntegrationTest extends IntegrationTestBase {
 
    private String buildPathPrefix() {
       return PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/";
-   }
-
-   private String getInternalName(final String collectionOriginalName) {
-      return "collection." + collectionOriginalName.toLowerCase() + "_0";
    }
 
 }

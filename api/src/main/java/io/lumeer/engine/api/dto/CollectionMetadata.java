@@ -32,65 +32,82 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
-/**
- * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
- */
 @Immutable
 public class CollectionMetadata {
 
    private final String name;
-   private final String internalName;
+   private final String code;
    private final List<Attribute> attributes;
    private final Date lastTimeUsed;
    private final List<String> recentlyUsedDocumentIds;
    private final DataDocument customMetadata;
-   private final String creator;
+   private final String createdBy;
    private final Date createDate;
+   private final String updatedBy;
+   private final Date updateDate;
+   private final String icon;
+   private final String color;
+   private final int documentCount;
 
    public CollectionMetadata() {
-      this(null, null, Collections.emptyList(), null, Collections.emptyList(), null, null, null);
+      this(null, null, Collections.emptyList(), null, Collections.emptyList(), null, null, null, null, null, null, null, 0);
    }
 
    public CollectionMetadata(final DataDocument metadata) {
-      name = metadata.getString(Collection.REAL_NAME_KEY);
-      internalName = metadata.getString(Collection.INTERNAL_NAME_KEY);
+      name = metadata.getString(Collection.REAL_NAME);
+      code = metadata.getString(Collection.CODE);
 
       attributes = new ArrayList<>();
-      List<DataDocument> attributeDocuments = metadata.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class);
+      List<DataDocument> attributeDocuments = metadata.getArrayList(Collection.ATTRIBUTES, DataDocument.class);
       attributes.addAll(attributeDocuments.stream().map(Attribute::new).collect(Collectors.toList()));
 
-      lastTimeUsed = metadata.getDate(Collection.LAST_TIME_USED_KEY);
-      recentlyUsedDocumentIds = metadata.getArrayList(Collection.RECENTLY_USED_DOCUMENTS_KEY, String.class);
-      customMetadata = metadata.getDataDocument(Collection.CUSTOM_META_KEY);
-      creator = metadata.getString(Collection.CREATE_USER_KEY);
-      createDate = metadata.getDate(Collection.CREATE_DATE_KEY);
+      lastTimeUsed = metadata.getDate(Collection.LAST_TIME_USED);
+      recentlyUsedDocumentIds = metadata.getArrayList(Collection.RECENTLY_USED_DOCUMENTS, String.class);
+      customMetadata = metadata.getDataDocument(Collection.CUSTOM_META);
+      createdBy = metadata.getString(Collection.CREATE_USER);
+      createDate = metadata.getDate(Collection.CREATE_DATE);
+      updatedBy = metadata.getString(Collection.UPDATE_USER);
+      updateDate = metadata.getDate(Collection.UPDATE_DATE);
+      icon = metadata.getString(Collection.ICON);
+      color = metadata.getString(Collection.COLOR);
+      documentCount = metadata.getInteger(Collection.DOCUMENT_COUNT, 0);
    }
 
    @JsonCreator
-   public CollectionMetadata(final @JsonProperty(Collection.REAL_NAME_KEY) String name,
-         final @JsonProperty(Collection.INTERNAL_NAME_KEY) String internalName,
-         final @JsonProperty(Collection.ATTRIBUTES_KEY) List<Attribute> attributes,
-         final @JsonProperty(Collection.LAST_TIME_USED_KEY) Date lastTimeUsed,
-         final @JsonProperty(Collection.RECENTLY_USED_DOCUMENTS_KEY) List<String> recentlyUsedDocumentIds,
-         final @JsonProperty(Collection.CUSTOM_META_KEY) DataDocument customMetadata,
-         final @JsonProperty(Collection.CREATE_USER_KEY) String creator,
-         final @JsonProperty(Collection.CREATE_DATE_KEY) Date createDate) {
+   public CollectionMetadata(final @JsonProperty("name") String name,
+         final @JsonProperty("code") String code,
+         final @JsonProperty("attributes") List<Attribute> attributes,
+         final @JsonProperty("lastTimeUsed") Date lastTimeUsed,
+         final @JsonProperty("recentlyUsedDocumentIds") List<String> recentlyUsedDocumentIds,
+         final @JsonProperty("customMetadata") DataDocument customMetadata,
+         final @JsonProperty("createdBy") String createdBy,
+         final @JsonProperty("createDate") Date createDate,
+         final @JsonProperty("updatedBy") String updatedBy,
+         final @JsonProperty("updateDate") Date updateDate,
+         final @JsonProperty("icon") String icon,
+         final @JsonProperty("color") String color,
+         final @JsonProperty("documentCount") int documentCount) {
       this.name = name;
-      this.internalName = internalName;
+      this.code = code;
       this.attributes = attributes;
       this.lastTimeUsed = lastTimeUsed;
       this.recentlyUsedDocumentIds = recentlyUsedDocumentIds;
       this.customMetadata = customMetadata;
-      this.creator = creator;
+      this.createdBy = createdBy;
       this.createDate = createDate;
+      this.updatedBy = updatedBy;
+      this.updateDate = updateDate;
+      this.icon = icon;
+      this.color = color;
+      this.documentCount = documentCount;
    }
 
    public String getName() {
       return name;
    }
 
-   public String getInternalName() {
-      return internalName;
+   public String getCode() {
+      return code;
    }
 
    public List<Attribute> getAttributes() {
@@ -109,24 +126,41 @@ public class CollectionMetadata {
       return customMetadata != null ? new DataDocument(customMetadata) : null;
    }
 
-   public String getCreator() {
-      return creator;
+   public String getCreatedBy() {
+      return createdBy;
    }
 
    public Date getCreateDate() {
       return createDate != null ? new Date(createDate.getTime()) : null;
    }
 
+   public String getColor() {
+      return color;
+   }
+
+   public String getIcon() {
+      return icon;
+   }
+
+   public int getDocumentCount() {
+      return documentCount;
+   }
+
    public DataDocument toDataDocument() {
       List<DataDocument> attributesList = attributes.stream().map(Attribute::toDataDocument).collect(Collectors.toList());
 
-      return new DataDocument(Collection.REAL_NAME_KEY, name)
-            .append(Collection.INTERNAL_NAME_KEY, internalName)
-            .append(Collection.ATTRIBUTES_KEY, attributesList)
-            .append(Collection.LAST_TIME_USED_KEY, lastTimeUsed)
-            .append(Collection.RECENTLY_USED_DOCUMENTS_KEY, recentlyUsedDocumentIds)
-            .append(Collection.CUSTOM_META_KEY, customMetadata)
-            .append(Collection.CREATE_USER_KEY, creator)
-            .append(Collection.CREATE_DATE_KEY, createDate);
+      return new DataDocument(Collection.REAL_NAME, name)
+            .append(Collection.CODE, code)
+            .append(Collection.ATTRIBUTES, attributesList)
+            .append(Collection.LAST_TIME_USED, lastTimeUsed)
+            .append(Collection.RECENTLY_USED_DOCUMENTS, recentlyUsedDocumentIds)
+            .append(Collection.CUSTOM_META, customMetadata)
+            .append(Collection.CREATE_USER, createdBy)
+            .append(Collection.CREATE_DATE, createDate)
+            .append(Collection.UPDATE_USER, updatedBy)
+            .append(Collection.UPDATE_DATE, updateDate)
+            .append(Collection.ICON, icon)
+            .append(Collection.COLOR, color)
+            .append(Collection.DOCUMENT_COUNT, documentCount);
    }
 }

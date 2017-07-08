@@ -26,6 +26,6 @@ package io.lumeer.engine.api.batch;
  */
 public interface Batch {
 
-   String getCollectionName();
+   String getCollectionCode();
 
 }

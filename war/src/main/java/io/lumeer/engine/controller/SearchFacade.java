@@ -106,17 +106,11 @@ public class SearchFacade implements Serializable {
       final List<DataDocument> result = new ArrayList<>();
       final Query internalQuery = new Query();
 
-      try {
-         for (final String collectionName : query.getCollections()) {
-            collections.add(collectionMetadataFacade.getInternalCollectionName(collectionName));
-         }
-
-         if (collections.size() == 0) {
-            collections.addAll(collectionFacade.getAllCollections().keySet());
-         }
-      } catch (CollectionNotFoundException e) {
-         throw new InvalidQueryException("Search asks for collections that are not available: ", e);
+      collections.addAll(query.getCollections());
+      if (collections.size() == 0) {
+         collections.addAll(collectionMetadataFacade.getCollectionsCodeName().values());
       }
+
       internalQuery.setProjections(query.getProjections());
       internalQuery.setSorting(query.getSorting());
 
