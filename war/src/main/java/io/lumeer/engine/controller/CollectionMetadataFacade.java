@@ -21,27 +21,25 @@ package io.lumeer.engine.controller;
 
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.LumeerConst.Collection;
 import io.lumeer.engine.api.constraint.Constraint;
 import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
+import io.lumeer.engine.api.data.DataSort;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Attribute;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.CollectionMetadata;
-import io.lumeer.engine.api.event.ChangeCollectionName;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidValueException;
-import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
-import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
-import io.lumeer.engine.util.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -49,18 +47,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
-import javax.enterprise.event.Event;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
-
-/**
- * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
- */
 
 @SessionScoped
 public class CollectionMetadataFacade implements Serializable {
@@ -86,9 +80,6 @@ public class CollectionMetadataFacade implements Serializable {
 
    @Inject
    private OrganizationFacade organizationFacade;
-
-   @Inject
-   private Event<ChangeCollectionName> changeCollectionNameEvent;
 
    private ConstraintManager constraintManager;
 
@@ -119,17 +110,17 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Gets metadata document of given collection.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @return DataDocument with collection metadata
     * @throws CollectionMetadataDocumentNotFoundException
     *       when metadata document is not found
     */
-   public DataDocument getCollectionMetadataDocument(String collectionName) throws CollectionMetadataDocumentNotFoundException {
-      DataDocument metadata = readMetadata(internalNameFilter(collectionName), null);
+   public DataDocument getCollectionMetadataDocument(String collectionCode) throws CollectionMetadataDocumentNotFoundException {
+      DataDocument metadata = readMetadata(collectionCodeFilter(collectionCode), null);
 
       if (metadata == null) {
-         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionName));
+         throw new CollectionMetadataDocumentNotFoundException(ErrorMessageBuilder.collectionMetadataNotFoundString(collectionCode));
       }
 
       return metadata;
@@ -138,13 +129,13 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Gets object with collection metadata.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @return object with collection metadata
     */
-   public CollectionMetadata getCollectionMetadata(String collectionName) {
+   public CollectionMetadata getCollectionMetadata(String collectionCode) {
       try {
-         DataDocument metadata = getCollectionMetadataDocument(collectionName);
+         DataDocument metadata = getCollectionMetadataDocument(collectionCode);
          return new CollectionMetadata(metadata);
       } catch (CollectionMetadataDocumentNotFoundException e) {
          return new CollectionMetadata();
@@ -152,122 +143,174 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    /**
-    * Converts collection name given by user to internal representation.
-    * First, the name is trimmed of whitespaces.
-    * Spaces are replaced by "_". Converted to lowercase.
-    * Diacritics are replaced by ASCII characters.
-    * Everything except a-z, 0-9 and _ is removed.
-    * Number is added to the end of the name to ensure it is unique.
+    * Gets limited info about all collections in database
     *
-    * @param originalCollectionName
-    *       name given by user
-    * @return internal collection name
-    * @throws UserCollectionAlreadyExistsException
-    *       when collection with given original name already exists
+    * @return list with metadata
     */
-   public String createInternalName(String originalCollectionName) throws UserCollectionAlreadyExistsException {
-      if (checkIfUserCollectionExists(originalCollectionName)) {
-         throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(originalCollectionName));
-      }
+   public List<Collection> getCollections() {
+      DataSort sort = dialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED, LumeerConst.SORT_DESCENDING_ORDER);
+      List<String> projection = Arrays.asList(LumeerConst.Collection.CODE, LumeerConst.Collection.REAL_NAME, LumeerConst.Collection.COLOR, LumeerConst.Collection.ICON, LumeerConst.Collection.DOCUMENT_COUNT);
+      return dataStorage.search(metadataCollection(), null, sort, projection, 0, 0).stream()
+                        .map(Collection::new).collect(Collectors.toList());
+   }
 
-      String name = originalCollectionName.trim();
-      name = name.replace(' ', '_');
-      name = Utils.normalize(name);
-      name = name.replaceAll("[^_a-z0-9]+", "");
-      name = Collection.NAME_PREFIX + name;
-      int i = 0;
-      while (dataStorage.hasCollection(name + "_" + i)) {
-         i++;
-      }
-      name = name + "_" + i;
+   /**
+    * @return map of collection codes and their names
+    */
+   public Map<String, String> getCollectionsCodeName() {
+      List<DataDocument> documents = dataStorage.search(metadataCollection(), null, Arrays.asList(LumeerConst.Collection.REAL_NAME, LumeerConst.Collection.CODE));
+      return documents.stream()
+                      .collect(Collectors.toMap(d -> d.getString(LumeerConst.Collection.CODE), d -> d.getString(LumeerConst.Collection.REAL_NAME)));
+   }
 
-      return name;
+   /**
+    * @param collectionId
+    *       collection id
+    * @return collection name
+    */
+   public String getCollectionName(String collectionId){
+      DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), collectionIdFilter(collectionId), Collections.singletonList(LumeerConst.Collection.REAL_NAME));
+      return metaData != null ? metaData.getString(LumeerConst.Collection.REAL_NAME) : null;
+   }
+
+   /**
+    * @param collectionName
+    *       collection name
+    * @return collection code
+    */
+   public String getCollectionCodeFromName(String collectionName){
+      DataFilter filter = dialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME, collectionName);
+      DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, Collections.singletonList(LumeerConst.Collection.CODE));
+      return metaData != null ? metaData.getString(LumeerConst.Collection.CODE) : null;
+   }
+
+   /**
+    * @param collectionId
+    *       collection id
+    * @return collection code
+    */
+   public String getCollectionCode(String collectionId){
+      DataFilter filter = collectionIdFilter(collectionId);
+      DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, Collections.singletonList(LumeerConst.Collection.CODE));
+      return metaData != null ? metaData.getString(LumeerConst.Collection.CODE) : null;
+   }
+
+   /**
+    * @param collectionCode
+    *       collection code
+    * @return collection id
+    */
+   public String getCollectionId(String collectionCode){
+      DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), collectionCodeFilter(collectionCode), Collections.emptyList());
+      return metaData != null ? metaData.getId() : null;
    }
 
    /**
     * Creates initial metadata in metadata collection.
     *
-    * @param internalCollectionName
-    *       internal collection name
-    * @param originalCollectionName
-    *       name of collection given by user
+    * @param collectionCode
+    *       collection code
+    * @param collection
+    *       collection metadata values
     */
-   public void createInitialMetadata(String internalCollectionName, String originalCollectionName) {
-      DataDocument collectionMetadata = new DataDocument()
-            .append(Collection.REAL_NAME_KEY, originalCollectionName)
-            .append(Collection.INTERNAL_NAME_KEY, internalCollectionName)
-            .append(Collection.ATTRIBUTES_KEY, new ArrayList<>())
-            .append(Collection.LAST_TIME_USED_KEY, new Date())
-            .append(Collection.RECENTLY_USED_DOCUMENTS_KEY, new LinkedList<>())
-            .append(Collection.CREATE_DATE_KEY, new Date())
-            .append(Collection.CREATE_USER_KEY, userFacade.getUserEmail())
-            .append(Collection.CUSTOM_META_KEY, new DataDocument());
+   public String createInitialMetadata(String collectionCode, Collection collection) {
+      DataDocument toCreateDocument = collection.toDataDocument()
+                                                .append(LumeerConst.Collection.CODE, collectionCode)
+                                                .append(LumeerConst.Collection.ATTRIBUTES, new ArrayList<>())
+                                                .append(LumeerConst.Collection.LAST_TIME_USED, new Date())
+                                                .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS, new LinkedList<>())
+                                                .append(LumeerConst.Collection.CREATE_DATE, new Date())
+                                                .append(LumeerConst.Collection.CREATE_USER, userFacade.getUserEmail())
+                                                .append(LumeerConst.Collection.UPDATE_DATE, null)
+                                                .append(LumeerConst.Collection.UPDATE_USER, null)
+                                                .append(LumeerConst.Collection.CUSTOM_META, new DataDocument());
+      return dataStorage.createDocument(metadataCollection(), toCreateDocument);
+   }
 
-      dataStorage.createDocument(metadataCollection(), collectionMetadata);
+   /**
+    * Updates metadata in metadata collection.
+    *
+    * @param collectionCode
+    *       collection code
+    * @param collection
+    *       collection metadata values
+    */
+   public void updateMetadata(String collectionCode, Collection collection) {
+      DataDocument toUpdateDocument = collection.toDataDocument()
+                                                .append(LumeerConst.Collection.UPDATE_USER, userFacade.getUserEmail())
+                                                .append(LumeerConst.Collection.UPDATE_DATE, new Date());
+      toUpdateDocument.values().removeIf(Objects::isNull);
+      dataStorage.updateDocument(metadataCollection(), toUpdateDocument, collectionCodeFilter(collectionCode));
+   }
+
+   /**
+    * Drops metadata in metadata collection.
+    *
+    * @param collectionCode
+    *       collection code
+    */
+   public void dropMetadata(String collectionCode) {
+      dataStorage.dropDocument(metadataCollection(), collectionCodeFilter(collectionCode));
    }
 
    /**
     * Gets set of names of collection attributes.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @return set of collection attributes' names
     */
-   public Set<String> getAttributesNames(String collectionName) {
-      String attributeNameKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, Collection.ATTRIBUTE_FULL_NAME_KEY);
-      DataDocument metaData = readMetadata(internalNameFilter(collectionName), Collections.singletonList(attributeNameKey));
+   public Set<String> getAttributesNames(String collectionCode) {
+      String attributeNameKey = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, LumeerConst.Collection.ATTRIBUTE_FULL_NAME);
+      DataDocument metaData = readMetadata(collectionCodeFilter(collectionCode), Collections.singletonList(attributeNameKey));
 
       if (metaData == null) {
          return Collections.emptySet();
       }
-      return metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
+      return metaData.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class)
                      .stream()
-                     .map(d -> d.getString(Collection.ATTRIBUTE_FULL_NAME_KEY))
+                     .map(d -> d.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME))
                      .collect(Collectors.toSet());
    }
 
    /**
     * Gets complete info about collection attributes.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @return map, keys are attributes' names, values are objects with attributes info
     */
-   public Map<String, Attribute> getAttributesInfo(String collectionName) {
-      DataDocument metaData = readMetadata(internalNameFilter(collectionName), Collections.singletonList(Collection.ATTRIBUTES_KEY));
+   public Map<String, Attribute> getAttributesInfo(String collectionCode) {
+      DataDocument metaData = readMetadata(collectionCodeFilter(collectionCode), Collections.singletonList(LumeerConst.Collection.ATTRIBUTES));
 
       if (metaData == null) {
          return Collections.emptyMap();
       }
-      return metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class)
+      return metaData.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class)
                      .stream()
-                     .collect(Collectors.toMap(a -> a.getString(Collection.ATTRIBUTE_FULL_NAME_KEY), Attribute::new));
+                     .collect(Collectors.toMap(a -> a.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME), Attribute::new));
    }
 
    /**
     * Gets complete info about one attribute.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @return Attribute object
     */
-   public Attribute getAttributeInfo(String collectionName, String attributeName) {
-      DataDocument attribute = readMetadataAttribute(collectionName, attributeName);
-
-      if (attribute == null) {
-         return null;
-      }
-      return new Attribute(attribute);
+   public Attribute getAttributeInfo(String collectionCode, String attributeName) {
+      DataDocument attribute = readMetadataAttribute(collectionCode, attributeName);
+      return attribute != null ? new Attribute(attribute) : null;
    }
 
    /**
     * Renames existing attribute in collection metadata.
     * This method should be called only when also renaming attribute in all collection documents.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param oldFullName
     *       old attribute name
     * @param newFullName
@@ -275,40 +318,73 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws AttributeAlreadyExistsException
     *       when attribute with new name already exists
     */
-   public void renameAttribute(String collectionName, String oldFullName, String newFullName) throws AttributeAlreadyExistsException {
-      if (readMetadataAttribute(collectionName, newFullName) != null) {
-         throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newFullName, collectionName));
+   public void renameAttribute(String collectionCode, String oldFullName, String newFullName) throws AttributeAlreadyExistsException {
+      if (readMetadataAttribute(collectionCode, newFullName) != null) {
+         throw new AttributeAlreadyExistsException(ErrorMessageBuilder.attributeAlreadyExistsString(newFullName, collectionCode));
       }
 
-      String fullNameKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_FULL_NAME_KEY);
-      String nameKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_NAME_KEY);
+      String fullNameKey = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, "$", LumeerConst.Collection.ATTRIBUTE_FULL_NAME);
+      String nameKey = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, "$", LumeerConst.Collection.ATTRIBUTE_NAME);
 
       DataDocument renameDocument = new DataDocument(fullNameKey, newFullName)
             .append(nameKey, attributeName(newFullName));
 
-      dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionName, oldFullName));
+      dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionCode, oldFullName));
    }
 
    /**
     * Deletes an attribute from collection metadata. Nothing is done if attribute metadata is not found, just return.
     * This method should be called only when also dropping attribute in all collection documents.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute to be dropped
     */
-   public void dropAttribute(String collectionName, String attributeName) {
+   public void dropAttribute(String collectionCode, String attributeName) {
       DataDocument removeAttributes = dataStorage.readDocumentIncludeAttrs(metadataCollection(),
-            dialect.combineFilters(internalNameFilter(collectionName), attributeWildcardFilter(collectionName, attributeName)),
-            Collections.singletonList(Collection.ATTRIBUTES_KEY));
+            dialect.combineFilters(collectionCodeFilter(collectionCode), attributeWildcardFilter(collectionCode, attributeName)),
+            Collections.singletonList(LumeerConst.Collection.ATTRIBUTES));
 
       if (removeAttributes == null) {
          return;
       }
 
-      dataStorage.removeItemsFromArray(metadataCollection(), internalNameFilter(collectionName), Collection.ATTRIBUTES_KEY,
-            removeAttributes.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class));
+      dataStorage.removeItemsFromArray(metadataCollection(), collectionCodeFilter(collectionCode), LumeerConst.Collection.ATTRIBUTES,
+            removeAttributes.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class));
+   }
+
+   /**
+    * Increment number of documents by specified value
+    *
+    * @param collectionCode
+    *       collection code
+    * @param count
+    *       increment by
+    */
+   public void incrementDocumentCount(String collectionCode, int count) {
+      dataStorage.incrementAttributeValueBy(metadataCollection(), collectionCodeFilter(collectionCode), LumeerConst.Collection.DOCUMENT_COUNT, count);
+   }
+
+   /**
+    * Decrement number of documents by specified value
+    *
+    * @param collectionCode
+    *       collection code
+    * @param count
+    *       decrement by
+    */
+   public void decrementDocumentCount(String collectionCode, int count) {
+      int documentCount = getDocumentCount(collectionCode);
+      if (documentCount == 0) {
+         return;
+      }
+      dataStorage.updateDocument(metadataCollection(), new DataDocument(LumeerConst.Collection.DOCUMENT_COUNT, Math.min(documentCount - count, 0)), collectionCodeFilter(collectionCode));
+   }
+
+   private int getDocumentCount(String collectionCode) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(metadataCollection(), collectionCodeFilter(collectionCode), Collections.singletonList(LumeerConst.Collection.DOCUMENT_COUNT));
+      return document != null ? document.getInteger(LumeerConst.Collection.DOCUMENT_COUNT) : 0;
    }
 
    /**
@@ -316,27 +392,27 @@ public class CollectionMetadataFacade implements Serializable {
     * Otherwise just increments count.
     * This should be called only when adding/updating document.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute's name
     */
-   public void addOrIncrementAttribute(String collectionName, String attributeName) {
-      Attribute attribute = getAttributeInfo(collectionName, attributeName);
+   public void addOrIncrementAttribute(String collectionCode, String attributeName) {
+      Attribute attribute = getAttributeInfo(collectionCode, attributeName);
 
       if (attribute != null) {
-         String updateKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_COUNT_KEY);
+         String updateKey = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, "$", LumeerConst.Collection.ATTRIBUTE_COUNT);
          DataDocument renameDocument = new DataDocument(updateKey, attribute.getCount() + 1);
-         dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionName, attributeName));
+         dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionCode, attributeName));
       } else {
          dataStorage.addItemToArray(metadataCollection(),
-               internalNameFilter(collectionName),
-               Collection.ATTRIBUTES_KEY,
+               collectionCodeFilter(collectionCode),
+               LumeerConst.Collection.ATTRIBUTES,
                new DataDocument()
-                     .append(Collection.ATTRIBUTE_FULL_NAME_KEY, attributeName)
-                     .append(Collection.ATTRIBUTE_NAME_KEY, attributeName(attributeName))
-                     .append(Collection.ATTRIBUTE_CONSTRAINTS_KEY, new ArrayList<String>())
-                     .append(Collection.ATTRIBUTE_COUNT_KEY, 1));
+                     .append(LumeerConst.Collection.ATTRIBUTE_FULL_NAME, attributeName)
+                     .append(LumeerConst.Collection.ATTRIBUTE_NAME, attributeName(attributeName))
+                     .append(LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS, new ArrayList<String>())
+                     .append(LumeerConst.Collection.ATTRIBUTE_COUNT, 1));
       }
    }
 
@@ -345,205 +421,117 @@ public class CollectionMetadataFacade implements Serializable {
     * otherwise just decrements count.
     * This should be called only when adding/updating document.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       set of attributes' names
     */
-   public void dropOrDecrementAttribute(String collectionName, String attributeName) {
-      Attribute attribute = getAttributeInfo(collectionName, attributeName);
+   public void dropOrDecrementAttribute(String collectionCode, String attributeName) {
+      Attribute attribute = getAttributeInfo(collectionCode, attributeName);
 
       if (attribute == null) {
          return;
       }
 
       if (attribute.getCount() <= 1L) {
-         dropAttribute(collectionName, attributeName);
+         dropAttribute(collectionCode, attributeName);
          return;
       }
 
-      String updateKey = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_COUNT_KEY);
+      String updateKey = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, "$", LumeerConst.Collection.ATTRIBUTE_COUNT);
       DataDocument renameDocument = new DataDocument(updateKey, attribute.getCount() - 1);
 
-      dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionName, attributeName));
+      dataStorage.updateDocument(metadataCollection(), renameDocument, attributeFilter(collectionCode, attributeName));
    }
 
    /**
     * Returns count for specific attribute.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @return attribute count, zero if the attribute does not exist
     */
-   public int getAttributeCount(String collectionName, String attributeName) {
-      Attribute attribute = getAttributeInfo(collectionName, attributeName);
-
-      if (attribute == null) {
-         return 0;
-      }
-      return attribute.getCount();
-   }
-
-   /**
-    * Searches for original (given by user) collection name in metadata.
-    *
-    * @param collectionName
-    *       internal collection name
-    * @return original collection name
-    */
-   public String getOriginalCollectionName(String collectionName) {
-      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.REAL_NAME_KEY);
-      if (metaData == null) {
-         return null;
-      }
-      return metaData.getString(Collection.REAL_NAME_KEY);
-   }
-
-   /**
-    * Searches for internal representation of collection name.
-    *
-    * @param originalCollectionName
-    *       original collection name
-    * @return internal representation of collection name
-    * @throws UserCollectionNotFoundException
-    *       when collection with given user name is not found
-    */
-   public String getInternalCollectionName(String originalCollectionName) throws UserCollectionNotFoundException {
-      DataDocument metadata = dataStorage.readDocumentIncludeAttrs(
-            metadataCollection(),
-            dialect.fieldValueFilter(Collection.REAL_NAME_KEY,
-                  originalCollectionName),
-            Collections.singletonList(Collection.INTERNAL_NAME_KEY)
-      );
-
-      if (metadata == null) {
-         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(originalCollectionName));
-      }
-
-      return metadata.getString(Collection.INTERNAL_NAME_KEY);
-   }
-
-   /**
-    * Sets original (given by user) collection name in metadata.
-    *
-    * @param collectionInternalName
-    *       internal collection name
-    * @param collectionOriginalName
-    *       name given by user
-    * @throws UserCollectionAlreadyExistsException
-    *       when collection with given user name already exists
-    */
-   public void setOriginalCollectionName(String collectionInternalName, String collectionOriginalName) throws UserCollectionAlreadyExistsException {
-      if (checkIfUserCollectionExists(collectionOriginalName)) {
-         throw new UserCollectionAlreadyExistsException(ErrorMessageBuilder.userCollectionAlreadyExistsString(collectionOriginalName));
-      }
-
-      dataStorage.updateDocument(
-            metadataCollection(),
-            new DataDocument(
-                  Collection.REAL_NAME_KEY,
-                  collectionOriginalName),
-            internalNameFilter(collectionInternalName));
-
-      setLastTimeUsedNow(collectionInternalName);
-      changeCollectionNameEvent.fire(new ChangeCollectionName(collectionOriginalName, collectionInternalName));
+   public int getAttributeCount(String collectionCode, String attributeName) {
+      Attribute attribute = getAttributeInfo(collectionCode, attributeName);
+      return attribute != null ? attribute.getCount() : 0;
    }
 
    /**
     * Reads time of last collection usage.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @return String representation of the time
     */
-   public Date getLastTimeUsed(String collectionName) {
-      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.LAST_TIME_USED_KEY);
-      if (metaData == null) {
-         return null;
-      }
-      return metaData.getDate(Collection.LAST_TIME_USED_KEY);
+   public Date getLastTimeUsed(String collectionCode) {
+      DataDocument metaData = getMetadataKeyValue(collectionCode, LumeerConst.Collection.LAST_TIME_USED);
+      return metaData != null ? metaData.getDate(LumeerConst.Collection.LAST_TIME_USED) : null;
    }
 
    /**
     * Sets the time of last collection usage to current time
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     */
-   public void setLastTimeUsedNow(String collectionName) {
+   public void setLastTimeUsedNow(String collectionCode) {
       dataStorage.updateDocument(
             metadataCollection(),
             new DataDocument(
-                  Collection.LAST_TIME_USED_KEY,
+                  LumeerConst.Collection.LAST_TIME_USED,
                   new Date()),
-            internalNameFilter(collectionName));
+            collectionCodeFilter(collectionCode));
    }
 
    /**
     * Gets document with custom metadata.
     *
-    * @param collectionName
-    *       internal name
+    * @param collectionCode
+    *       collection code
     * @return DataDocument with all custom metadata values
     */
-   public DataDocument getCustomMetadata(String collectionName) {
-      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.CUSTOM_META_KEY);
-      if (metaData == null) {
-         return new DataDocument();
-      }
-      return metaData.getDataDocument(Collection.CUSTOM_META_KEY);
+   public DataDocument getCustomMetadata(String collectionCode) {
+      DataDocument metaData = getMetadataKeyValue(collectionCode, LumeerConst.Collection.CUSTOM_META);
+      return metaData != null ? metaData.getDataDocument(LumeerConst.Collection.CUSTOM_META) : new DataDocument();
    }
 
    /**
     * Adds all pairs key:value to custom metadata.
     *
-    * @param collectionName
-    *       internal name
+    * @param collectionCode
+    *       collection code
     * @param metadata
     *       custom metadata
     */
-   public void setCustomMetadata(String collectionName, DataDocument metadata) {
+   public void setCustomMetadata(String collectionCode, DataDocument metadata) {
       DataDocument metadataDocument = new DataDocument();
 
       for (String key : metadata.keySet()) {
-         metadataDocument.append(dialect.concatFields(Collection.CUSTOM_META_KEY, key), metadata.get(key));
+         metadataDocument.append(dialect.concatFields(LumeerConst.Collection.CUSTOM_META, key), metadata.get(key));
       }
 
-      dataStorage.updateDocument(metadataCollection(), metadataDocument, internalNameFilter(collectionName));
-      setLastTimeUsedNow(collectionName);
+      dataStorage.updateDocument(metadataCollection(), metadataDocument, collectionCodeFilter(collectionCode));
+      setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Drops all custom metadata value associated with given key.
     *
-    * @param collectionName
-    *       internal name
+    * @param collectionCode
+    *       collection code
     * @param key
     *       list of metadata to drop
     */
-   public void dropCustomMetadata(String collectionName, String key) {
+   public void dropCustomMetadata(String collectionCode, String key) {
       dataStorage.dropAttribute(
             metadataCollection(),
-            internalNameFilter(collectionName),
+            collectionCodeFilter(collectionCode),
             dialect.concatFields(
-                  Collection.CUSTOM_META_KEY,
+                  LumeerConst.Collection.CUSTOM_META,
                   key));
-      setLastTimeUsedNow(collectionName);
-   }
-
-   /**
-    * Check whether the name is name of user collection.
-    *
-    * @param collectionName
-    *       internal collection name
-    * @return true if the name is a name of "classical" collection containing data from user
-    */
-   public boolean isUserCollection(String collectionName) {
-      return collectionName != null &&
-            collectionName.length() >= Collection.NAME_PREFIX.length() &&
-            collectionName.startsWith(Collection.NAME_PREFIX);
+      setLastTimeUsedNow(collectionCode);
    }
 
    /**
@@ -553,26 +541,28 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute name
     * @param value
     *       attribute value
+    * @param collectionCode
+    *       collection code
     * @return null when the value is not valid, fixed value when the value is fixable, original value when the value is valid
     * @throws InvalidConstraintException
     *       When the constraint configuration was wrong.
     * @throws InvalidValueException
     *       When it was not possible to properly encode the value.
     */
-   private Object checkAndConvertAttributeValue(final Attribute attribute, final Object value, final String collection) throws InvalidConstraintException, InvalidValueException {
+   private Object checkAndConvertAttributeValue(final Attribute attribute, final Object value, final String collectionCode) throws InvalidConstraintException, InvalidValueException {
       // if the value is DataDocument, we check it recursively
       if (value instanceof DataDocument) {
 
          final DataDocument beforeCheck = (DataDocument) value;
          final DataDocument afterCheck = new DataDocument();
 
-         Set<String> names = getAttributesNames(collection);
+         Set<String> names = getAttributesNames(collectionCode);
 
          for (String key : beforeCheck.keySet()) {
             if (!names.contains(key)) { // attribute does not exist - no need to check anything
                afterCheck.put(key, beforeCheck.get(key));
             } else {
-               Object newValue = checkAndConvertAttributeValue(getAttributeInfo(collection, key), beforeCheck.get(key), collection);
+               Object newValue = checkAndConvertAttributeValue(getAttributeInfo(collectionCode, key), beforeCheck.get(key), collectionCode);
                afterCheck.put(key, newValue);
             }
          }
@@ -606,8 +596,8 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Checks value of every attribute of given document.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param document
     *       document with attributes and their values to check
     * @return map of results, key is attribute name and value is result of checkAndConvertAttributeValue on that attribute
@@ -616,16 +606,16 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws InvalidValueException
     *       When it was not possible to properly encode the value.
     */
-   public DataDocument checkAndConvertAttributesValues(final String collectionName, final DataDocument document) throws InvalidValueException, InvalidConstraintException {
+   public DataDocument checkAndConvertAttributesValues(final String collectionCode, final DataDocument document) throws InvalidValueException, InvalidConstraintException {
       final DataDocument results = new DataDocument();
-      Set<String> names = getAttributesNames(collectionName);
+      Set<String> names = getAttributesNames(collectionCode);
 
       for (Map.Entry<String, Object> entry : document.entrySet()) {
          String key = entry.getKey();
          if (!names.contains(key)) { // attribute does not exist - no need to check anything
             results.append(key, entry.getValue());
          } else {
-            results.append(key, checkAndConvertAttributeValue(getAttributeInfo(collectionName, key), entry.getValue(), collectionName));
+            results.append(key, checkAndConvertAttributeValue(getAttributeInfo(collectionCode, key), entry.getValue(), collectionCode));
          }
       }
 
@@ -635,8 +625,8 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Decodes document attributes based on the constraints so that they can be sent to the presentation layer properly.
     *
-    * @param collectionName
-    *       Name of the collection from which the document was read.
+    * @param collectionCode
+    *       collection code
     * @param document
     *       The document the attributes of which should be decoded.
     * @return A new document with decoded values.
@@ -645,16 +635,16 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws InvalidValueException
     *       When it was not possible to properly decode the value.
     */
-   public DataDocument decodeAttributeValues(final String collectionName, final DataDocument document) throws InvalidConstraintException, InvalidValueException {
+   public DataDocument decodeAttributeValues(final String collectionCode, final DataDocument document) throws InvalidConstraintException, InvalidValueException {
       final DataDocument results = new DataDocument();
-      Set<String> names = getAttributesNames(collectionName);
+      Set<String> names = getAttributesNames(collectionCode);
 
       for (Map.Entry<String, Object> entry : document.entrySet()) {
          String key = entry.getKey();
          if (!names.contains(key)) { // attribute does not exist - no need to check anything
             results.append(key, entry.getValue());
          } else {
-            results.append(key, decodeDocumentValue(getAttributeInfo(collectionName, key), entry.getValue(), collectionName));
+            results.append(key, decodeDocumentValue(getAttributeInfo(collectionCode, key), entry.getValue(), collectionCode));
          }
       }
       return results;
@@ -668,26 +658,28 @@ public class CollectionMetadataFacade implements Serializable {
     *       The attribute meta-data.
     * @param value
     *       The attribute value.
+    * @param collectionCode
+    *       collection code
     * @return Decoded value.
     * @throws InvalidConstraintException
     *       When the constraint configuration was wrong.
     * @throws InvalidValueException
     *       When it was not possible to properly decode the value.
     */
-   private Object decodeDocumentValue(final Attribute attribute, final Object value, final String collection) throws InvalidConstraintException, InvalidValueException {
+   private Object decodeDocumentValue(final Attribute attribute, final Object value, final String collectionCode) throws InvalidConstraintException, InvalidValueException {
       // if the value is DataDocument, we check it recursively
       if (value instanceof DataDocument) {
 
          final DataDocument beforeCheck = (DataDocument) value;
          final DataDocument afterCheck = new DataDocument();
 
-         Set<String> names = getAttributesNames(collection);
+         Set<String> names = getAttributesNames(collectionCode);
 
          for (String key : beforeCheck.keySet()) {
             if (!names.contains(key)) { // attribute does not exist - no need to check anything
                afterCheck.put(key, beforeCheck.get(key));
             } else {
-               Object newValue = decodeDocumentValue(getAttributeInfo(collection, key), beforeCheck.get(key), collection);
+               Object newValue = decodeDocumentValue(getAttributeInfo(collectionCode, key), beforeCheck.get(key), collectionCode);
                afterCheck.put(key, newValue);
             }
          }
@@ -709,26 +701,22 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Reads constraint for the given attribute.
     *
-    * @param collectionName
-    *       collection internal name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       name of the attribute
     * @return list of constraint configurations for given attribute, empty list if constraints were not found
     */
-   public List<String> getAttributeConstraintsConfigurations(String collectionName, String attributeName) {
-      Attribute attribute = getAttributeInfo(collectionName, attributeName);
-
-      if (attribute == null) {
-         return Collections.emptyList();
-      }
-      return attribute.getConstraints();
+   public List<String> getAttributeConstraintsConfigurations(String collectionCode, String attributeName) {
+      Attribute attribute = getAttributeInfo(collectionCode, attributeName);
+      return attribute != null ? attribute.getConstraints() : Collections.emptyList();
    }
 
    /**
     * Adds new constraint for an attribute and checks if it is valid.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @param constraintConfiguration
@@ -736,8 +724,8 @@ public class CollectionMetadataFacade implements Serializable {
     * @throws InvalidConstraintException
     *       when new constraint is not valid or is in conflict with existing constraints
     */
-   public void addAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) throws InvalidConstraintException {
-      List<String> existingConstraints = getAttributeConstraintsConfigurations(collectionName, attributeName);
+   public void addAttributeConstraint(String collectionCode, String attributeName, String constraintConfiguration) throws InvalidConstraintException {
+      List<String> existingConstraints = getAttributeConstraintsConfigurations(collectionCode, attributeName);
 
       ConstraintManager constraintManager = null;
       try {
@@ -749,64 +737,60 @@ public class CollectionMetadataFacade implements Serializable {
 
       constraintManager.registerConstraint(constraintConfiguration); // if this doesn't throw an exception, the constraint is valid
 
-      String attrParam = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_CONSTRAINTS_KEY);
-      dataStorage.addItemToArray(metadataCollection(), attributeFilter(collectionName, attributeName), attrParam, constraintConfiguration);
+      String attrParam = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, "$", LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS);
+      dataStorage.addItemToArray(metadataCollection(), attributeFilter(collectionCode, attributeName), attrParam, constraintConfiguration);
 
-      setLastTimeUsedNow(collectionName);
+      setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Removes the constraint from list of constraints for given attribute.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param attributeName
     *       attribute name
     * @param constraintConfiguration
     *       constraint configuration to be removed
     */
-   public void dropAttributeConstraint(String collectionName, String attributeName, String constraintConfiguration) {
-      String attrParam = dialect.concatFields(Collection.ATTRIBUTES_KEY, "$", Collection.ATTRIBUTE_CONSTRAINTS_KEY);
-      dataStorage.removeItemFromArray(metadataCollection(), attributeFilter(collectionName, attributeName), attrParam, constraintConfiguration);
+   public void dropAttributeConstraint(String collectionCode, String attributeName, String constraintConfiguration) {
+      String attrParam = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, "$", LumeerConst.Collection.ATTRIBUTE_CONSTRAINTS);
+      dataStorage.removeItemFromArray(metadataCollection(), attributeFilter(collectionCode, attributeName), attrParam, constraintConfiguration);
 
-      setLastTimeUsedNow(collectionName);
+      setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Gets the list of recently used documents in collection.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @return list of document ids sorted in descending order
     */
-   public List<String> getRecentlyUsedDocumentsIds(String collectionName) {
-      DataDocument metaData = getMetadataKeyValue(collectionName, Collection.RECENTLY_USED_DOCUMENTS_KEY);
-
-      if (metaData == null) {
-         return Collections.emptyList();
-      }
-      return metaData.getArrayList(Collection.RECENTLY_USED_DOCUMENTS_KEY, String.class);
+   public List<String> getRecentlyUsedDocumentsIds(String collectionCode) {
+      DataDocument metaData = getMetadataKeyValue(collectionCode, LumeerConst.Collection.RECENTLY_USED_DOCUMENTS);
+      return metaData != null ? metaData.getArrayList(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS, String.class) : Collections.emptyList();
    }
 
    /**
     * Adds document id to the beginning of the list of recently used documents. If id is already present, it is moved to the beginning.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param id
     *       document id
     */
-   public void addRecentlyUsedDocumentId(String collectionName, String id) {
+   public void addRecentlyUsedDocumentId(String collectionCode, String id) {
       dataStorage.removeItemFromArray(
             metadataCollection(),
-            internalNameFilter(collectionName),
-            Collection.RECENTLY_USED_DOCUMENTS_KEY,
+            collectionCodeFilter(collectionCode),
+            LumeerConst.Collection.RECENTLY_USED_DOCUMENTS,
             id);
 
       int listSize = configurationFacade.getConfigurationInteger(LumeerConst.NUMBER_OF_RECENT_DOCS_PROPERTY)
-                                        .orElse(Collection.DEFAULT_NUMBER_OF_RECENT_DOCUMENTS);
+                                        .orElse(LumeerConst.Collection.DEFAULT_NUMBER_OF_RECENT_DOCUMENTS);
 
-      DataDocument query = dialect.addRecentlyUsedDocumentQuery(metadataCollection(), collectionName, id, listSize);
+      DataDocument query = dialect.addRecentlyUsedDocumentQuery(metadataCollection(), collectionCode, id, listSize);
 
       dataStorage.run(query);
    }
@@ -814,16 +798,16 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Removes document id from the list of recently used documents.
     *
-    * @param collectionName
-    *       internal collection name
+    * @param collectionCode
+    *       collection code
     * @param id
     *       document id
     */
-   public void removeRecentlyUsedDocumentId(String collectionName, String id) {
+   public void removeRecentlyUsedDocumentId(String collectionCode, String id) {
       dataStorage.removeItemFromArray(
             metadataCollection(),
-            internalNameFilter(collectionName),
-            Collection.RECENTLY_USED_DOCUMENTS_KEY,
+            collectionCodeFilter(collectionCode),
+            LumeerConst.Collection.RECENTLY_USED_DOCUMENTS,
             id);
    }
 
@@ -840,12 +824,7 @@ public class CollectionMetadataFacade implements Serializable {
     * @return name of metadata collection for given project code
     */
    public String metadataCollection(String projectCode) {
-      return Collection.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
-   }
-
-   // checks whether collection with given user name already exists
-   private boolean checkIfUserCollectionExists(String originalCollectionName) {
-      return dataStorage.collectionHasDocument(metadataCollection(), dialect.fieldValueFilter(Collection.REAL_NAME_KEY, originalCollectionName));
+      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
    }
 
    // initializes constraint manager
@@ -853,8 +832,8 @@ public class CollectionMetadataFacade implements Serializable {
       constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY).orElse("en-US")));
    }
 
-   private DataDocument getMetadataKeyValue(String collection, String key) {
-      return readMetadata(internalNameFilter(collection), Collections.singletonList(key));
+   private DataDocument getMetadataKeyValue(String collectionCode, String key) {
+      return readMetadata(collectionCodeFilter(collectionCode), Collections.singletonList(key));
    }
 
    private DataDocument readMetadata(DataFilter filter, List<String> projection) {
@@ -865,27 +844,32 @@ public class CollectionMetadataFacade implements Serializable {
    }
 
    // method avoids to throw exception, because we don't know whether collection metadata or attribute doesn't exist
-   private DataDocument readMetadataAttribute(String collectionName, String attributeName) {
-      DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), attributeFilter(collectionName, attributeName),
-            Collections.singletonList(dialect.concatFields(Collection.ATTRIBUTES_KEY, "$")));
+   private DataDocument readMetadataAttribute(String collectionCode, String attributeName) {
+      DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), attributeFilter(collectionCode, attributeName),
+            Collections.singletonList(dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, "$")));
 
-      return metaData != null ? metaData.getArrayList(Collection.ATTRIBUTES_KEY, DataDocument.class).get(0) : null;
+      return metaData != null ? metaData.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class).get(0) : null;
    }
 
-   private DataFilter internalNameFilter(String collectionName) {
-      return dialect.fieldValueFilter(Collection.INTERNAL_NAME_KEY, collectionName);
+   private DataFilter collectionCodeFilter(String collectionCode) {
+      return dialect.fieldValueFilter(LumeerConst.Collection.CODE, collectionCode);
    }
 
-   private DataFilter attributeFilter(String collectionName, String attributeName) {
+
+   private DataFilter collectionIdFilter(final String collectionId) {
+      return dialect.documentIdFilter(collectionId);
+   }
+
+   private DataFilter attributeFilter(String collectionCode, String attributeName) {
       Map<String, Object> filter = new HashMap<>();
-      filter.put(Collection.INTERNAL_NAME_KEY, collectionName);
-      filter.put(dialect.concatFields(Collection.ATTRIBUTES_KEY, Collection.ATTRIBUTE_FULL_NAME_KEY), attributeName);
+      filter.put(LumeerConst.Collection.CODE, collectionCode);
+      filter.put(dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, LumeerConst.Collection.ATTRIBUTE_FULL_NAME), attributeName);
       return dialect.multipleFieldsValueFilter(filter);
    }
 
-   private DataFilter attributeWildcardFilter(String collectionName, String attributeName) {
-      String name = dialect.concatFields(Collection.ATTRIBUTES_KEY, Collection.ATTRIBUTE_FULL_NAME_KEY);
-      return dialect.combineFilters(internalNameFilter(collectionName), dialect.fieldValueWildcardFilterOneSided(name, attributeName));
+   private DataFilter attributeWildcardFilter(String collectionCode, String attributeName) {
+      String name = dialect.concatFields(LumeerConst.Collection.ATTRIBUTES, LumeerConst.Collection.ATTRIBUTE_FULL_NAME);
+      return dialect.combineFilters(collectionCodeFilter(collectionCode), dialect.fieldValueWildcardFilterOneSided(name, attributeName));
    }
 
    private String attributeName(String attributeFullName) {

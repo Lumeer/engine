@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -95,30 +96,27 @@ public class WhisperService {
    @GET
    @Path("/collection")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionNames(@QueryParam("collectionName") final String collectionName) {
+   public Set<String> getPossibleCollectionNames(@QueryParam("collectionCode") final String collectionName) {
       if (collectionName == null || collectionName.isEmpty()) {
-         return collectionFacade.getAllCollections().values().stream().collect(Collectors.toSet());
+         return collectionMetadataFacade.getCollectionsCodeName().values().stream().collect(Collectors.toSet());
       } else {
-         return collectionFacade.getAllCollections().values().stream().filter(name -> name.toLowerCase(locale).startsWith(collectionName.toLowerCase(locale))).collect(Collectors.toSet());
+         return collectionMetadataFacade.getCollectionsCodeName().values().stream().filter(name -> name.toLowerCase(locale).startsWith(collectionName.toLowerCase(locale))).collect(Collectors.toSet());
       }
    }
 
    @GET
-   @Path("/collection/{collectionName}")
+   @Path("/collection/{collectionCode}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Set<String> getPossibleCollectionAttributeNames(@PathParam("collectionName") final String userCollectionName, @QueryParam("attributeName") final String attributeName) throws CollectionNotFoundException {
+   public Set<String> getPossibleCollectionAttributeNames(@PathParam("collectionCode") final String collectionCode, @QueryParam("attributeName") final String attributeName) throws CollectionNotFoundException {
       // returns empty set if user collection name does not exists
-      String internalCollectionName = null;
-      try {
-         internalCollectionName = collectionMetadataFacade.getInternalCollectionName(userCollectionName);
-      } catch (UserCollectionNotFoundException e) {
-         return Collections.emptySet();
+      if (collectionCode == null) {
+         throw new BadRequestException();
       }
 
       if (attributeName == null || attributeName.isEmpty()) {
-         return collectionMetadataFacade.getAttributesNames(internalCollectionName).stream().collect(Collectors.toSet());
+         return collectionMetadataFacade.getAttributesNames(collectionCode).stream().collect(Collectors.toSet());
       } else {
-         return collectionMetadataFacade.getAttributesNames(internalCollectionName)
+         return collectionMetadataFacade.getAttributesNames(collectionCode)
                                         .stream()
                                         .filter(name -> name.toLowerCase(locale)
                                                             .startsWith(attributeName.toLowerCase(locale)))

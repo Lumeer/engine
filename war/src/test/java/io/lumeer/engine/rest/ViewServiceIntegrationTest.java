@@ -243,14 +243,6 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
       assertThat(cloneView.getName()).isEqualTo(cloneName);
    }
 
-   private void addManageRole(int view) {
-      securityFacade.addViewUserRole(projectFacade.getCurrentProjectCode(), view, userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
-   }
-
-   private void addReadRole(int view) {
-      securityFacade.addViewUserRole(projectFacade.getCurrentProjectCode(), view, userFacade.getUserEmail(), LumeerConst.Security.ROLE_READ);
-   }
-
    private ViewMetadata createViewMetadata(int viewId, String viewName, String viewType) {
       DataDocument metadataDocument = new DataDocument(LumeerConst.View.NAME_KEY, viewName)
             .append(LumeerConst.View.ID_KEY, viewId)

@@ -52,9 +52,12 @@ public class BatchFacade implements Serializable {
    @Inject
    private DocumentFacade documentFacade;
 
+   @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
+
    public void executeBatch(final Batch batch) throws DbException, InvalidConstraintException {
       // first check collection size
-      if (dataStorage.count(batch.getCollectionName(), null) > 10000) {
+      if (dataStorage.count(batch.getCollectionCode(), null) > 10000) {
          throw new UnsupportedOperationException("Cannot run a batch process on collections with more than 10000 documents.");
       }
 
@@ -66,7 +69,7 @@ public class BatchFacade implements Serializable {
    }
 
    private void internalExecuteBatch(final MergeBatch batch) throws DbException, InvalidConstraintException {
-      List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, 0, 0);
+      List<DataDocument> documents = dataStorage.search(batch.getCollectionCode(), null, null, 0, 0);
 
       for (final DataDocument doc : documents) {
          if (batch.getMergeType() == MergeBatch.MergeType.JOIN) {
@@ -157,7 +160,7 @@ public class BatchFacade implements Serializable {
          if (!batch.isKeepOriginal()) {
             batch.getAttributes().forEach(a -> {
                try {
-                  documentFacade.dropAttribute(batch.getCollectionName(), doc.getId(), a);
+                  documentFacade.dropAttribute(batch.getCollectionCode(), doc.getId(), a);
                } catch (DbException e) {
                   // nps, we cannot do m ore
                }
@@ -165,12 +168,12 @@ public class BatchFacade implements Serializable {
             });
          }
 
-         documentFacade.updateDocument(batch.getCollectionName(), doc);
+         documentFacade.updateDocument(batch.getCollectionCode(), doc);
       }
    }
 
    private void internalExecuteBatch(final SplitBatch batch) throws DbException, InvalidConstraintException {
-      List<DataDocument> documents = dataStorage.search(batch.getCollectionName(), null, null, 0, 0);
+      List<DataDocument> documents = dataStorage.search(batch.getCollectionCode(), null, null, 0, 0);
 
       for (final DataDocument doc : documents) {
          final Object value = doc.get(batch.getAttribute());
@@ -183,13 +186,12 @@ public class BatchFacade implements Serializable {
                doc.put(batch.getSplitAttributes().get(i), batch.isTrim() ? parts[i].trim() : parts[i]);
             }
          }
-
          if (!batch.isKeepOriginal()) {
-            documentFacade.dropAttribute(batch.getCollectionName(), doc.getId(), batch.getAttribute());
+            documentFacade.dropAttribute(batch.getCollectionCode(), doc.getId(), batch.getAttribute());
             doc.remove(batch.getAttribute()); // TODO check - for future compatibility
          }
 
-         documentFacade.updateDocument(batch.getCollectionName(), doc);
+         documentFacade.updateDocument(batch.getCollectionCode(), doc);
       }
    }
 

@@ -29,7 +29,7 @@ public abstract class AbstractCollectionBatch implements Batch {
    /**
     * Name of the collection to run batch on.
     */
-   protected String collectionName;
+   protected String collectionCode;
 
    /**
     * When false, the original attributes are removed from the documents.
@@ -37,12 +37,12 @@ public abstract class AbstractCollectionBatch implements Batch {
    protected boolean keepOriginal = false;
 
    @Override
-   public String getCollectionName() {
-      return collectionName;
+   public String getCollectionCode() {
+      return collectionCode;
    }
 
-   public void setCollectionName(final String collectionName) {
-      this.collectionName = collectionName;
+   public void setCollectionCode(final String collectionCode) {
+      this.collectionCode = collectionCode;
    }
 
    public boolean isKeepOriginal() {

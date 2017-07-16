@@ -30,6 +30,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -105,9 +106,11 @@ public class ViewFacade implements Serializable {
 
       String project = projectFacade.getCurrentProjectCode();
       databaseInitializer.onViewCreated(project, viewId);
-      securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_MANAGE);
-      securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_READ);
-      securityFacade.addViewUserRole(project, viewId, createUser, LumeerConst.Security.ROLE_CLONE);
+
+      List<String> user = Collections.singletonList(createUser);
+      securityFacade.addViewUsersRole(project, viewId, user, LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addViewUsersRole(project, viewId, user, LumeerConst.Security.ROLE_READ);
+      securityFacade.addViewUsersRole(project, viewId, user, LumeerConst.Security.ROLE_CLONE);
 
       return viewId;
    }
@@ -315,7 +318,7 @@ public class ViewFacade implements Serializable {
       DataDocument metadata = dataStorage.readDocumentIncludeAttrs(
             metadataCollection(),
             dataStorageDialect.fieldValueFilter(LumeerConst.View.ID_KEY, viewId),
-            Arrays.asList(key));
+            Collections.singletonList(key));
       return metadata != null ? metadata.get(key) : null;
    }
 

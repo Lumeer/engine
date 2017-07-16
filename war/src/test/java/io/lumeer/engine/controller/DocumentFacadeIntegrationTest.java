@@ -27,6 +27,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.exception.DbException;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -191,18 +192,12 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(attrs).containsOnly("_id", "a", "f", "c", "d", "c.cc", "d.dd", "d.dd.ddd", "d.dd.ddd.dddd", "d.dd.ddd.dddd.ddddd");
    }
 
-   private String setUpCollection(final String collection) {
-      try {
-         collectionFacade.dropCollection(collectionMetadataFacade.getInternalCollectionName(collection));
-      } catch (DbException e) {
-         // nothing to do
+   private String setUpCollection(final String collectionName) throws DbException {
+      String collectionCode = collectionMetadataFacade.getCollectionCodeFromName(collectionName);
+      if(collectionCode != null) {
+         dataStorage.dropCollection(collectionCode);
       }
-      try {
-         return collectionFacade.createCollection(collection);
-      } catch (DbException e) {
-         e.printStackTrace();
-      }
-      return null;
+      return collectionFacade.createCollection(new Collection(collectionName));
    }
 
 }

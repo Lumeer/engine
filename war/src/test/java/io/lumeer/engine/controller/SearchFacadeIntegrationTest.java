@@ -26,6 +26,8 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.Query;
+import io.lumeer.engine.api.dto.Collection;
+import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -62,28 +64,28 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSearch() throws Exception {
-      setUpCollection(COLLECTION_SEARCH);
+      String code = setUpCollection(COLLECTION_SEARCH);
 
       for (int i = 0; i < 20; i++) {
          DataDocument insertedDocument = new DataDocument();
-         documentFacade.createDocument(COLLECTION_SEARCH, insertedDocument);
+         documentFacade.createDocument(code, insertedDocument);
       }
 
-      List<DataDocument> searchDocuments = searchFacade.search(COLLECTION_SEARCH, null, null, 5, 5);
+      List<DataDocument> searchDocuments = searchFacade.search(code, null, null, 5, 5);
 
       assertThat(searchDocuments).hasSize(5);
    }
 
    @Test
    public void testRawSearch() throws Exception {
-      setUpCollection(COLLECTION_SEARCH_RAW);
+      String code = setUpCollection(COLLECTION_SEARCH_RAW);
 
       for (int i = 0; i < 20; i++) {
          DataDocument insertedDocument = new DataDocument();
-         documentFacade.createDocument(COLLECTION_SEARCH_RAW, insertedDocument);
+         documentFacade.createDocument(code, insertedDocument);
       }
 
-      String query = "{find: \"" + COLLECTION_SEARCH_RAW + "\"}";
+      String query = "{find: \"" + code + "\"}";
 
       List<DataDocument> searchDocuments = searchFacade.search(query);
 
@@ -102,10 +104,12 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
       final Query q = new Query();
    }
 
-   private void setUpCollection(final String collection) {
-      dataStorage.dropCollection(collection);
-      dataStorage.createCollection(collection);
-      collectionMetadataFacade.createInitialMetadata(collection, collection);
+   private String setUpCollection(final String collection) throws UserCollectionAlreadyExistsException {
+      String code = collectionMetadataFacade.getCollectionCodeFromName(collection);
+      if(code != null) {
+         dataStorage.dropCollection(code);
+      }
+      return collectionFacade.createCollection(new Collection(collection));
    }
 
 }

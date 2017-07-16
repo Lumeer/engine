@@ -79,29 +79,30 @@ public class DocumentFacade implements Serializable {
    /**
     * Creates and inserts a new document to specified collection and create collection if not exists
     *
-    * @param collectionName
-    *       the name of the collection where the document will be created
+    * @param collectionCode
+    *       the name of the collection where the document is located
     * @param document
     *       the DataDocument object representing a document to be created
     * @return the id of the newly created document
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public String createDocument(final String collectionName, final DataDocument document) throws DbException {
+   public String createDocument(final String collectionCode, final DataDocument document) throws DbException {
       DataDocument documentCleaned = checkDocumentKeysValidity(document);
       // add metadata attributes
       documentMetadataFacade.putInitDocumentMetadataInternally(documentCleaned, userFacade.getUserEmail());
       versionFacade.putInitDocumentVersionInternally(documentCleaned);
 
-      String documentId = dataStorage.createDocument(collectionName, documentCleaned);
+      String documentId = dataStorage.createDocument(collectionCode, documentCleaned);
       if (documentId == null) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.createDocumentUnsuccesfulString());
       }
 
-      addOrIncrementAttributes(collectionName, documentCleaned);
+      addOrIncrementAttributes(collectionCode, documentCleaned);
 
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
-      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+      collectionMetadataFacade.incrementDocumentCount(collectionCode, 1);
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionCode, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
 
       return documentId;
    }
@@ -109,7 +110,7 @@ public class DocumentFacade implements Serializable {
    /**
     * Reads the specified document in given collection by its id.
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the document is located
     * @param documentId
     *       the id of the read document
@@ -117,94 +118,95 @@ public class DocumentFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public DataDocument readDocument(final String collectionName, final String documentId) throws DbException {
-      return dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
+   public DataDocument readDocument(final String collectionCode, final String documentId) throws DbException {
+      return dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(documentId));
    }
 
    /**
     * Modifies an existing document in given collection by its id and create collection if not exists
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the existing document is located
     * @param updatedDocument
     *       the DataDocument object representing a document with changes to update
     * @throws DbException
     *       When there is an error working with the data storage.
     */
-   public void updateDocument(final String collectionName, final DataDocument updatedDocument) throws DbException {
-      DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(updatedDocument.getId()));
+   public void updateDocument(final String collectionCode, final DataDocument updatedDocument) throws DbException {
+      DataDocument existingDocument = dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(updatedDocument.getId()));
 
       final DataDocument updateDocumentCleaned = cleanInvalidAttributes(updatedDocument);
       documentMetadataFacade.putUpdateDocumentMetadataInternally(updateDocumentCleaned, userFacade.getUserEmail());
-      versionFacade.newDocumentVersion(collectionName, existingDocument, updateDocumentCleaned, false);
+      versionFacade.newDocumentVersion(collectionCode, existingDocument, updateDocumentCleaned, false);
 
       Set<String> existingAttributes = getDocumentAttributes(existingDocument);
       Set<String> updateAttributes = getDocumentAttributes(updateDocumentCleaned);
-      addOrIncrementAttributes(collectionName, updateAttributes, existingAttributes);
+      addOrIncrementAttributes(collectionCode, updateAttributes, existingAttributes);
 
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
-      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionCode, existingDocument.getId());
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Replace an existing document in given collection by its id and create collection if not exists
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the existing document is located
     * @param replacedDocument
     *       the DataDocument object representing a replace document
     * @throws DbException
     *       When there is an error working with the data storage.
     */
-   public void replaceDocument(final String collectionName, final DataDocument replacedDocument) throws DbException {
-      DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(replacedDocument.getId()));
+   public void replaceDocument(final String collectionCode, final DataDocument replacedDocument) throws DbException {
+      DataDocument existingDocument = dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(replacedDocument.getId()));
       final DataDocument replacedDocumentCleaned = cleanInvalidAttributes(replacedDocument);
       LumeerConst.Document.METADATA_KEYS.stream().filter(existingDocument::containsKey).forEach(metaKey -> replacedDocumentCleaned.put(metaKey, existingDocument.get(metaKey)));
       documentMetadataFacade.putUpdateDocumentMetadataInternally(replacedDocumentCleaned, userFacade.getUserEmail());
-      versionFacade.newDocumentVersion(collectionName, existingDocument, replacedDocumentCleaned, true);
+      versionFacade.newDocumentVersion(collectionCode, existingDocument, replacedDocumentCleaned, true);
 
       Set<String> existingAttributes = getDocumentAttributes(existingDocument);
       Set<String> replacedAttributes = getDocumentAttributes(existingDocument);
 
-      addOrIncrementAttributes(collectionName, replacedAttributes, existingAttributes);
-      dropOrDecrementAttributes(collectionName, existingAttributes, replacedAttributes);
+      addOrIncrementAttributes(collectionCode, replacedAttributes, existingAttributes);
+      dropOrDecrementAttributes(collectionCode, existingAttributes, replacedAttributes);
 
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, existingDocument.getId());
-      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionCode, existingDocument.getId());
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Drops an existing document in given collection by its id.
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the document is located
     * @param documentId
     *       the id of the document to drop
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public void dropDocument(final String collectionName, final String documentId) throws DbException {
+   public void dropDocument(final String collectionCode, final String documentId) throws DbException {
       final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(documentId);
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, documentIdFilter);
+      DataDocument dataDocument = dataStorage.readDocument(collectionCode, documentIdFilter);
 
-      versionFacade.backUpDocument(collectionName, dataDocument);
-      dataStorage.dropDocument(collectionName, documentIdFilter);
+      versionFacade.backUpDocument(collectionCode, dataDocument);
+      dataStorage.dropDocument(collectionCode, documentIdFilter);
 
-      if (dataStorage.collectionHasDocument(collectionName, documentIdFilter)) {
+      if (dataStorage.collectionHasDocument(collectionCode, documentIdFilter)) {
          throw new UnsuccessfulOperationException(ErrorMessageBuilder.dropDocumentUnsuccesfulString());
       } else {
-         dropDocumentEvent.fire(new DropDocument(collectionName, dataDocument));
-         dropOrDecrementAttributes(collectionName, dataDocument);
+         dropDocumentEvent.fire(new DropDocument(collectionCode, dataDocument));
+         dropOrDecrementAttributes(collectionCode, dataDocument);
       }
 
-      collectionMetadataFacade.removeRecentlyUsedDocumentId(collectionName, documentId);
-      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+      collectionMetadataFacade.removeRecentlyUsedDocumentId(collectionCode, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
+      collectionMetadataFacade.decrementDocumentCount(collectionCode, 1);
    }
 
    /**
     * Reverts old version of document.
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection
     * @param documentId
     *       id of document to revert
@@ -213,30 +215,30 @@ public class DocumentFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the data storage.
     */
-   public void revertDocument(final String collectionName, final String documentId, final int revertVersion) throws DbException {
-      DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
+   public void revertDocument(final String collectionCode, final String documentId, final int revertVersion) throws DbException {
+      DataDocument existingDocument = dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(documentId));
 
-      DataDocument revertDocument = versionFacade.readOldDocumentVersion(collectionName, documentId, revertVersion);
+      DataDocument revertDocument = versionFacade.readOldDocumentVersion(collectionCode, documentId, revertVersion);
       DataDocument meta = filterAndRemoveMeta(revertDocument);
       revertDocument.putAll(meta);
       documentMetadataFacade.putUpdateDocumentMetadataInternally(revertDocument, userFacade.getUserEmail());
 
-      versionFacade.revertDocumentVersion(collectionName, existingDocument, revertDocument);
+      versionFacade.revertDocumentVersion(collectionCode, existingDocument, revertDocument);
 
       Set<String> existingAttributes = getDocumentAttributes(existingDocument);
       Set<String> revertedAttributes = getDocumentAttributes(existingDocument);
 
-      addOrIncrementAttributes(collectionName, revertedAttributes, existingAttributes);
-      dropOrDecrementAttributes(collectionName, existingAttributes, revertedAttributes);
+      addOrIncrementAttributes(collectionCode, revertedAttributes, existingAttributes);
+      dropOrDecrementAttributes(collectionCode, existingAttributes, revertedAttributes);
 
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
-      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionCode, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Remove specific attribute of document
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the document is located
     * @param documentId
     *       the id of the document
@@ -245,20 +247,20 @@ public class DocumentFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public void dropAttribute(final String collectionName, final String documentId, final String attributeName) throws DbException {
-      DataDocument existingDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
+   public void dropAttribute(final String collectionCode, final String documentId, final String attributeName) throws DbException {
+      DataDocument existingDocument = dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(documentId));
 
-      versionFacade.dropDocumentAttribute(collectionName, existingDocument, attributeName);
-      collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attributeName);
+      versionFacade.dropDocumentAttribute(collectionCode, existingDocument, attributeName);
 
-      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionName, documentId);
-      collectionMetadataFacade.setLastTimeUsedNow(collectionName);
+      collectionMetadataFacade.dropOrDecrementAttribute(collectionCode, attributeName);
+      collectionMetadataFacade.addRecentlyUsedDocumentId(collectionCode, documentId);
+      collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
    /**
     * Read all non-metadata document attributes
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the document is located
     * @param documentId
     *       the id of the document to drop
@@ -266,8 +268,8 @@ public class DocumentFacade implements Serializable {
     * @throws DbException
     *       When there is an error working with the database.
     */
-   public Set<String> getDocumentAttributes(final String collectionName, final String documentId) throws DbException {
-      DataDocument dataDocument = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
+   public Set<String> getDocumentAttributes(final String collectionCode, final String documentId) throws DbException {
+      DataDocument dataDocument = dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(documentId));
       return dataDocument != null ? getDocumentAttributes(dataDocument) : null;
    }
 
@@ -299,29 +301,29 @@ public class DocumentFacade implements Serializable {
       return attrs;
    }
 
-   private void addOrIncrementAttributes(final String collectionName, DataDocument doc) {
+   private void addOrIncrementAttributes(final String collectionCode, DataDocument doc) {
       // we add all document attributes to collection metadata
       getDocumentAttributes(doc).forEach(attribute -> {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         collectionMetadataFacade.addOrIncrementAttribute(collectionCode, attribute);
       });
    }
 
-   private void addOrIncrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
+   private void addOrIncrementAttributes(final String collectionCode, Set<String> attributes, Set<String> filter) {
       attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.addOrIncrementAttribute(collectionName, attribute);
+         collectionMetadataFacade.addOrIncrementAttribute(collectionCode, attribute);
       });
    }
 
-   private void dropOrDecrementAttributes(final String collectionName, DataDocument doc) {
+   private void dropOrDecrementAttributes(final String collectionCode, DataDocument doc) {
       // we add all document attributes to collection metadata
       getDocumentAttributes(doc).forEach(attribute -> {
-         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionCode, attribute);
       });
    }
 
-   private void dropOrDecrementAttributes(final String collectionName, Set<String> attributes, Set<String> filter) {
+   private void dropOrDecrementAttributes(final String collectionCode, Set<String> attributes, Set<String> filter) {
       attributes.stream().filter(attribute -> !filter.contains(attribute)).forEach(attribute -> {
-         collectionMetadataFacade.dropOrDecrementAttribute(collectionName, attribute);
+         collectionMetadataFacade.dropOrDecrementAttribute(collectionCode, attribute);
       });
    }
 

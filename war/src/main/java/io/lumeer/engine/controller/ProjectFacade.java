@@ -152,8 +152,10 @@ public class ProjectFacade {
                                          .append(LumeerConst.Project.ATTR_ORGANIZATION_ID, organizationFacade.getOrganizationId());
       String id = dataStorage.createDocument(LumeerConst.Project.COLLECTION_NAME, dataDocument);
       databaseInitializer.onProjectCreated(id);
-      securityFacade.addProjectUserRole(project.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_MANAGE);
-      securityFacade.addProjectUserRole(project.getCode(), userFacade.getUserEmail(), LumeerConst.Security.ROLE_WRITE);
+
+      List<String> user = Collections.singletonList(userFacade.getUserEmail());
+      securityFacade.addProjectUsersRole(project.getCode(), user, LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addProjectUsersRole(project.getCode(), user, LumeerConst.Security.ROLE_WRITE);
 
       return id;
    }

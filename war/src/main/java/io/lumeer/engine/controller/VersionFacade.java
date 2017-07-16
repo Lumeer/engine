@@ -52,7 +52,7 @@ public class VersionFacade implements Serializable {
    /**
     * Return document version.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection name in which document is stored
     * @param documentId
     *       the id of readed document
@@ -62,12 +62,12 @@ public class VersionFacade implements Serializable {
     * @throws CollectionNotFoundException
     *       if collection is not found
     */
-   public int getDocumentVersion(String collectionName, String documentId) throws DocumentNotFoundException, CollectionNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+   public int getDocumentVersion(String collectionCode, String documentId) throws DocumentNotFoundException, CollectionNotFoundException {
+      if (!dataStorage.hasCollection(collectionCode)) {
+         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionCode));
       }
 
-      DataDocument document = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
+      DataDocument document = dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(documentId));
       if (document == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -89,11 +89,11 @@ public class VersionFacade implements Serializable {
    /**
     * Move shadow collection to trash
     *
-    * @param collectionName
+    * @param collectionCode
     *       name of the collection to move
     */
-   public void trashShadowCollection(final String collectionName) {
-      String shadowCollectionName = buildShadowCollectionName(collectionName);
+   public void trashShadowCollection(final String collectionCode) {
+      String shadowCollectionName = buildShadowCollectionName(collectionCode);
       String trashShadowCollectionName = buildTrashShadowCollectionName(shadowCollectionName);
       dataStorage.renameCollection(shadowCollectionName, trashShadowCollectionName);
    }
@@ -101,11 +101,11 @@ public class VersionFacade implements Serializable {
    /**
     * Restore shadow collection frm trash
     *
-    * @param collectionName
+    * @param collectionCode
     *       name of the collection to move
     */
-   public void restoreShadowCollection(final String collectionName) {
-      String shadowCollectionName = buildShadowCollectionName(collectionName);
+   public void restoreShadowCollection(final String collectionCode) {
+      String shadowCollectionName = buildShadowCollectionName(collectionCode);
       String trashShadowCollectionName = buildTrashShadowCollectionName(shadowCollectionName);
       dataStorage.renameCollection(trashShadowCollectionName, shadowCollectionName);
    }
@@ -116,7 +116,7 @@ public class VersionFacade implements Serializable {
     * collection with document from input. This method is atomic.
     * As lock there is document in shadow collection.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection name, where document is stored
     * @param newDocument
     *       document, which will be stored in SHADOW collection
@@ -133,22 +133,22 @@ public class VersionFacade implements Serializable {
     * @throws AttributeNotFoundException
     *       if document doesnt containst id
     */
-   public int newDocumentVersion(String collectionName, DataDocument actualDocument, DataDocument newDocument, boolean replace) throws VersionUpdateConflictException, AttributeNotFoundException {
+   public int newDocumentVersion(String collectionCode, DataDocument actualDocument, DataDocument newDocument, boolean replace) throws VersionUpdateConflictException, AttributeNotFoundException {
       String id = actualDocument.getId();
       if (id == null) {
          throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());
       }
       createMetadata(newDocument);
 
-      int oldVersion = backUpDocument(collectionName, actualDocument);
+      int oldVersion = backUpDocument(collectionCode, actualDocument);
       int newVersion = oldVersion + 1;
 
       newDocument.replace(LumeerConst.Document.METADATA_VERSION_KEY, newVersion);
 
       if (replace) {
-         dataStorage.replaceDocument(collectionName, newDocument, dataStorageDialect.documentIdFilter(id));
+         dataStorage.replaceDocument(collectionCode, newDocument, dataStorageDialect.documentIdFilter(id));
       } else {
-         dataStorage.updateDocument(collectionName, newDocument, dataStorageDialect.documentIdFilter(id));
+         dataStorage.updateDocument(collectionCode, newDocument, dataStorageDialect.documentIdFilter(id));
       }
 
       return newVersion;
@@ -160,7 +160,7 @@ public class VersionFacade implements Serializable {
     * collection with document from input. This method is atomic.
     * As lock there is document in shadow collection.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection name, where document is stored
     * @param actualDocument
     *       document, which will be stored in SHADOW collection
@@ -173,18 +173,18 @@ public class VersionFacade implements Serializable {
     * @throws AttributeNotFoundException
     *       if document doesnt containst id
     */
-   public int dropDocumentAttribute(String collectionName, DataDocument actualDocument, String attributeName) throws AttributeNotFoundException, VersionUpdateConflictException {
+   public int dropDocumentAttribute(String collectionCode, DataDocument actualDocument, String attributeName) throws AttributeNotFoundException, VersionUpdateConflictException {
       String id = actualDocument.getId();
       if (id == null) {
          throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());
       }
 
-      int oldVersion = backUpDocument(collectionName, actualDocument);
+      int oldVersion = backUpDocument(collectionCode, actualDocument);
       int newVersion = oldVersion + 1;
 
       final DataFilter documentIdFilter = dataStorageDialect.documentIdFilter(id);
-      dataStorage.dropAttribute(collectionName, documentIdFilter, attributeName);
-      dataStorage.incrementAttributeValueBy(collectionName, documentIdFilter, LumeerConst.Document.METADATA_VERSION_KEY, 1);
+      dataStorage.dropAttribute(collectionCode, documentIdFilter, attributeName);
+      dataStorage.incrementAttributeValueBy(collectionCode, documentIdFilter, LumeerConst.Document.METADATA_VERSION_KEY, 1);
 
       return newVersion;
    }
@@ -202,19 +202,19 @@ public class VersionFacade implements Serializable {
    /**
     * Create shadow collection if not exists.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection name to imput.
     */
-   private void createShadowCollection(String collectionName) {
-      if (!dataStorage.hasCollection(buildShadowCollectionName(collectionName))) {
-         dataStorage.createCollection(buildShadowCollectionName(collectionName));
+   private void createShadowCollection(String collectionCode) {
+      if (!dataStorage.hasCollection(buildShadowCollectionName(collectionCode))) {
+         dataStorage.createCollection(buildShadowCollectionName(collectionCode));
       }
    }
 
    /**
     * Create in shadow collection backup of document from input
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection where document is stored
     * @param document
     *       document to back up
@@ -222,12 +222,12 @@ public class VersionFacade implements Serializable {
     * @throws VersionUpdateConflictException
     *       throws if document is already in shadow collection
     */
-   public int backUpDocument(String collectionName, DataDocument document) throws VersionUpdateConflictException {
+   public int backUpDocument(String collectionCode, DataDocument document) throws VersionUpdateConflictException {
       createMetadata(document);
-      createShadowCollection(collectionName);
+      createShadowCollection(collectionCode);
 
       try {
-         dataStorage.createOldDocument(buildShadowCollectionName(collectionName), document, document.getId(), getDocumentVersion(document));
+         dataStorage.createOldDocument(buildShadowCollectionName(collectionCode), document, document.getId(), getDocumentVersion(document));
       } catch (Exception e) {
          throw new VersionUpdateConflictException(e.getMessage(), e.getCause());
       }
@@ -240,7 +240,7 @@ public class VersionFacade implements Serializable {
     * as old version and replace document in collection with document from shadow
     * collection.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection where document is stored
     * @param actualDocument
     *       document to be saved with newDocumentVersion
@@ -252,24 +252,24 @@ public class VersionFacade implements Serializable {
     * @throws AttributeNotFoundException
     *       if document does not contains id
     */
-   public void revertDocumentVersion(String collectionName, DataDocument actualDocument, DataDocument newDocument) throws VersionUpdateConflictException, AttributeNotFoundException {
+   public void revertDocumentVersion(String collectionCode, DataDocument actualDocument, DataDocument newDocument) throws VersionUpdateConflictException, AttributeNotFoundException {
       String id = actualDocument.getId();
       if (id == null) {
          throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());
       }
 
-      int oldVersion = backUpDocument(collectionName, actualDocument);
+      int oldVersion = backUpDocument(collectionCode, actualDocument);
       int newVersion = oldVersion + 1;
 
       newDocument.replace(LumeerConst.Document.METADATA_VERSION_KEY, newVersion);
-      dataStorage.replaceDocument(collectionName, newDocument, dataStorageDialect.documentIdFilter(id));
+      dataStorage.replaceDocument(collectionCode, newDocument, dataStorageDialect.documentIdFilter(id));
    }
 
    /**
     * Parse id from document from input. Read document from shadow and
     * replace id with id specified in input document.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection of document to be readed
     * @param document
     *       document containingg ID
@@ -281,18 +281,18 @@ public class VersionFacade implements Serializable {
     * @throws AttributeNotFoundException
     *       if document does not contains id
     */
-   public DataDocument readOldDocumentVersion(String collectionName, DataDocument document, int version) throws DocumentNotFoundException, AttributeNotFoundException {
+   public DataDocument readOldDocumentVersion(String collectionCode, DataDocument document, int version) throws DocumentNotFoundException, AttributeNotFoundException {
       String id = document.getId();
       if (id == null) {
          throw new AttributeNotFoundException(ErrorMessageBuilder.idNotFoundString());
       }
-      return readOldDocumentVersion(collectionName, id, version);
+      return readOldDocumentVersion(collectionCode, id, version);
    }
 
    /**
     * Read document from shadow collection with specified id and version.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection to read
     * @param documentId
     *       id of document
@@ -302,8 +302,8 @@ public class VersionFacade implements Serializable {
     * @throws DocumentNotFoundException
     *       if document cannot be found
     */
-   public DataDocument readOldDocumentVersion(String collectionName, String documentId, int version) throws DocumentNotFoundException {
-      final DataDocument data = dataStorage.readDocument(buildShadowCollectionName(collectionName), dataStorageDialect.documentNestedIdFilterWithVersion(documentId, version));
+   public DataDocument readOldDocumentVersion(String collectionCode, String documentId, int version) throws DocumentNotFoundException {
+      final DataDocument data = dataStorage.readDocument(buildShadowCollectionName(collectionCode), dataStorageDialect.documentNestedIdFilterWithVersion(documentId, version));
       if (data == null) {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
@@ -314,7 +314,7 @@ public class VersionFacade implements Serializable {
     * Read all version from shadow collection and normal collection,
     * return it as list.
     *
-    * @param collectionName
+    * @param collectionCode
     *       collection where document is stored
     * @param documentId
     *       id of document
@@ -322,11 +322,11 @@ public class VersionFacade implements Serializable {
     * @throws CollectionNotFoundException
     *       if collection does not exists
     */
-   public List<DataDocument> getDocumentVersions(String collectionName, String documentId) throws CollectionNotFoundException {
+   public List<DataDocument> getDocumentVersions(String collectionCode, String documentId) throws CollectionNotFoundException {
       final DataFilter filter = dataStorageDialect.documentNestedIdFilter(documentId);
-      List<DataDocument> dataDocuments = dataStorage.search(buildShadowCollectionName(collectionName), filter, null, 0, 100);
+      List<DataDocument> dataDocuments = dataStorage.search(buildShadowCollectionName(collectionCode), filter, null, 0, 100);
 
-      DataDocument main = dataStorage.readDocument(collectionName, dataStorageDialect.documentIdFilter(documentId));
+      DataDocument main = dataStorage.readDocument(collectionCode, dataStorageDialect.documentIdFilter(documentId));
       dataDocuments.add(main);
 
       return dataDocuments;
@@ -336,8 +336,8 @@ public class VersionFacade implements Serializable {
       dataDocument.put(LumeerConst.Document.METADATA_VERSION_KEY, 0);
    }
 
-   public String buildShadowCollectionName(String collectionName) {
-      return LumeerConst.Collection.COLLECTION_SHADOW_PREFFIX + "_" + collectionName;
+   public String buildShadowCollectionName(String collectionCode) {
+      return LumeerConst.Collection.COLLECTION_SHADOW_PREFFIX + "_" + collectionCode;
    }
 
    private String buildTrashShadowCollectionName(String shadowCollectionName) {

@@ -99,7 +99,7 @@ public class DocumentMetadataFacade implements Serializable {
    /**
     * Put attributes and its values to document metadata
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the document is located
     * @param documentId
     *       the id of the read document
@@ -108,19 +108,19 @@ public class DocumentMetadataFacade implements Serializable {
     * @throws IllegalArgumentException
     *       if key is not metadata attribute
     */
-   public void updateDocumentMetadata(String collectionName, String documentId, DataDocument metadata) throws IllegalArgumentException {
+   public void updateDocumentMetadata(String collectionCode, String documentId, DataDocument metadata) throws IllegalArgumentException {
       for (String key : metadata.keySet()) {
          if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
             throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
          }
       }
-      dataStorage.updateDocument(collectionName, metadata, dataStorageDialect.documentIdFilter(documentId));
+      dataStorage.updateDocument(collectionCode, metadata, dataStorageDialect.documentIdFilter(documentId));
    }
 
    /**
     * Remove single metadata attribute for the document
     *
-    * @param collectionName
+    * @param collectionCode
     *       the name of the collection where the document is located
     * @param documentId
     *       the id of the read document
@@ -129,11 +129,11 @@ public class DocumentMetadataFacade implements Serializable {
     * @throws IllegalArgumentException
     *       if key is not metadata attribute
     */
-   public void dropDocumentMetadata(String collectionName, String documentId, String key) throws IllegalArgumentException {
+   public void dropDocumentMetadata(String collectionCode, String documentId, String key) throws IllegalArgumentException {
       if (!LumeerConst.Document.METADATA_KEYS.contains(key)) {
          throw new IllegalArgumentException(ErrorMessageBuilder.invalidMetadataKeyString(key));
       }
-      dataStorage.dropAttribute(collectionName, dataStorageDialect.documentIdFilter(documentId), key);
+      dataStorage.dropAttribute(collectionCode, dataStorageDialect.documentIdFilter(documentId), key);
    }
 
    public void putInitDocumentMetadataInternally(DataDocument dataDocument, String userEmail) {

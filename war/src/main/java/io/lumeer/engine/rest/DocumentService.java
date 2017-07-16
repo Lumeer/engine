@@ -29,6 +29,7 @@ import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
+import io.lumeer.engine.controller.CollectionFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DocumentFacade;
 import io.lumeer.engine.controller.DocumentMetadataFacade;
@@ -62,7 +63,7 @@ import javax.ws.rs.core.MediaType;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
-@Path("/organizations/{organization}/projects/{project}/collections/{collectionName}/documents")
+@Path("/organizations/{organization}/projects/{project}/collections/{collection}/documents")
 @RequestScoped
 public class DocumentService implements Serializable {
 
@@ -84,7 +85,7 @@ public class DocumentService implements Serializable {
    private VersionFacade versionFacade;
 
    @Inject
-   private UserFacade userFacade;
+   private CollectionFacade collectionFacade;
 
    @Inject
    @UserDataStorage
@@ -96,6 +97,9 @@ public class DocumentService implements Serializable {
    @PathParam("project")
    private String projectCode;
 
+   @PathParam("collection")
+   private String collectionCode;
+
    @Inject
    private OrganizationFacade organizationFacade;
 
@@ -103,16 +107,18 @@ public class DocumentService implements Serializable {
    private ProjectFacade projectFacade;
 
    @PostConstruct
-   public void init() {
+   public void init() throws DbException {
       organizationFacade.setOrganizationCode(organisationCode);
       projectFacade.setCurrentProjectCode(projectCode);
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
    }
 
    /**
     * Creates and inserts a new document to specified collection. The method creates the given collection if does not exist.
     *
-    * @param collectionName
-    *       the name of the collection where the document will be created
     * @param document
     *       the DataDocument object representing a document to be created
     * @return the id of the newly created document
@@ -120,35 +126,27 @@ public class DocumentService implements Serializable {
     *       When there is an error working with the database.
     * @throws InvalidConstraintException
     *       When the constraint configuration was wrong.
-    * @throws InvalidValueException
-    *       When the attribute values did not meet constraint requirements.
     */
    @POST
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public String createDocument(final @PathParam("collectionName") String collectionName, final DataDocument document) throws DbException, InvalidConstraintException, InvalidValueException {
-      if (collectionName == null || document == null) {
+   public String createDocument(final DataDocument document) throws DbException, InvalidConstraintException {
+      if (collectionCode == null || document == null) {
          throw new BadRequestException();
       }
 
-      final String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
-
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, document);
-
-      return documentFacade.createDocument(internalCollectionName, convertedDocument);
+      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(collectionCode, document);
+      return documentFacade.createDocument(collectionCode, convertedDocument);
    }
 
    /**
     * Drops an existing document in given collection by its id.
     *
-    * @param collectionName
-    *       the name of the collection where the document is located
     * @param documentId
     *       the id of the document to drop
     * @throws DbException
@@ -156,25 +154,21 @@ public class DocumentService implements Serializable {
     */
    @DELETE
    @Path("/{documentId}")
-   public void dropDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
-      if (collectionName == null || documentId == null) {
+   public void dropDocument(final @PathParam("documentId") String documentId) throws DbException {
+      if (collectionCode == null || documentId == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      documentFacade.dropDocument(internalCollectionName, documentId);
+      documentFacade.dropDocument(collectionCode, documentId);
    }
 
    /**
     * Reads the specified document in given collection by its id.
     *
-    * @param collectionName
-    *       the name of the collection where the document is located
     * @param documentId
     *       the id of the read document
     * @return the DataDocument object representing the read document
@@ -182,60 +176,51 @@ public class DocumentService implements Serializable {
     *       When there is an error working with the database.
     * @throws InvalidConstraintException
     *       When the constraint configuration was wrong.
-    * @throws InvalidValueException
-    *       When it was not possible to properly decode the value.
     */
    @GET
    @Path("/{documentId}")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readDocument(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
-      if (collectionName == null || documentId == null) {
+   public DataDocument readDocument(final @PathParam("documentId") String documentId) throws DbException, InvalidConstraintException {
+      if (collectionCode == null || documentId == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      return collectionMetadataFacade.decodeAttributeValues(internalCollectionName, documentFacade.readDocument(internalCollectionName, documentId));
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return collectionMetadataFacade.decodeAttributeValues(collectionCode, documentFacade.readDocument(collectionCode, documentId));
    }
 
    /**
     * Modifies an existing document in given collection by its id and create collection if not exists.
     *
-    * @param collectionName
-    *       the name of the collection where the existing document is located
     * @param updatedDocument
     *       the DataDocument object representing a document with changes to update
     * @throws DbException
     *       When there is an error working with the data storage.
     * @throws InvalidConstraintException
     *       When the constraint configuration was wrong.
-    * @throws InvalidValueException
-    *       When the attribute values did not meet constraint requirements.
     */
    @PUT
    @Path("/update/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateDocument(final @PathParam("collectionName") String collectionName, final DataDocument updatedDocument) throws DbException, InvalidConstraintException, InvalidValueException {
-      if (collectionName == null || updatedDocument == null || updatedDocument.getId() == null) {
+   public void updateDocument(final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
+      if (collectionCode == null || updatedDocument == null || updatedDocument.getId() == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, updatedDocument);
-
-      documentFacade.updateDocument(internalCollectionName, convertedDocument);
+      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(collectionCode, updatedDocument);
+      documentFacade.updateDocument(collectionCode, convertedDocument);
    }
 
    /**
     * Replace an existing document in given collection by its id and create collection if not exists.
     *
-    * @param collectionName
-    *       the name of the collection where the existing document is located
     * @param replaceDocument
     *       the DataDocument object representing a replacing document
     * @throws DbException
@@ -248,27 +233,22 @@ public class DocumentService implements Serializable {
    @PUT
    @Path("/replace/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void replaceDocument(final @PathParam("collectionName") String collectionName, final DataDocument replaceDocument) throws DbException, InvalidConstraintException, InvalidValueException {
-      if (collectionName == null || replaceDocument == null || replaceDocument.getId() == null) {
+   public void replaceDocument(final DataDocument replaceDocument) throws DbException, InvalidConstraintException, InvalidValueException {
+      if (collectionCode == null || replaceDocument == null || replaceDocument.getId() == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(internalCollectionName, replaceDocument);
-
-      documentFacade.replaceDocument(internalCollectionName, convertedDocument);
+      final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(collectionCode, replaceDocument);
+      documentFacade.replaceDocument(collectionCode, convertedDocument);
    }
 
    /**
     * Put attribute and value to document metadata.
     *
-    * @param collectionName
-    *       the name of the collection where the document is located
     * @param documentId
     *       the id of the read document
     * @param attributeName
@@ -281,25 +261,21 @@ public class DocumentService implements Serializable {
    @POST
    @Path("/{documentId}/meta/{attributeName}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void addDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName, final Object value) throws DbException {
-      if (collectionName == null || documentId == null || attributeName == null || value == null) {
+   public void addDocumentMetadata(final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName, final Object value) throws DbException {
+      if (collectionCode == null || documentId == null || attributeName == null || value == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      documentMetadataFacade.putDocumentMetadata(internalCollectionName, documentId, attributeName, value);
+      documentMetadataFacade.putDocumentMetadata(collectionCode, documentId, attributeName, value);
    }
 
    /**
     * Reads the metadata keys and values of specified document.
     *
-    * @param collectionName
-    *       the name of the collection where the document is located
     * @param documentId
     *       the id of the read document
     * @return the map where key is name of metadata attribute and its value
@@ -309,21 +285,21 @@ public class DocumentService implements Serializable {
    @GET
    @Path("/{documentId}/meta")
    @Produces(MediaType.APPLICATION_JSON)
-   public Map<String, Object> readDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
-      if (collectionName == null || documentId == null) {
+   public Map<String, Object> readDocumentMetadata(final @PathParam("documentId") String documentId) throws DbException {
+      if (collectionCode == null || documentId == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      return documentMetadataFacade.readDocumentMetadata(internalCollectionName, documentId);
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return documentMetadataFacade.readDocumentMetadata(collectionCode, documentId);
    }
 
    /**
     * Put attributes and its values to document metadata.
     *
-    * @param collectionName
-    *       the name of the collection where the document is located
     * @param documentId
     *       the id of the read document
     * @param metadata
@@ -334,25 +310,21 @@ public class DocumentService implements Serializable {
    @PUT
    @Path("/{documentId}/meta")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateDocumentMetadata(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final DataDocument metadata) throws DbException {
-      if (collectionName == null || documentId == null || metadata == null) {
+   public void updateDocumentMetadata(final @PathParam("documentId") String documentId, final DataDocument metadata) throws DbException {
+      if (collectionCode == null || documentId == null || metadata == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      documentMetadataFacade.updateDocumentMetadata(getInternalName(collectionName), documentId, metadata);
+      documentMetadataFacade.updateDocumentMetadata(collectionCode, documentId, metadata);
    }
 
    /**
     * Read all versions of the given document and returns it as a list.
     *
-    * @param collectionName
-    *       collection name where document is stored
     * @param documentId
     *       id of the document
     * @return list of documents in different version
@@ -366,18 +338,20 @@ public class DocumentService implements Serializable {
    @GET
    @Path("/{documentId}/versions")
    @Produces(MediaType.APPLICATION_JSON)
-   public List<DataDocument> searchHistoryChanges(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
-      if (collectionName == null || documentId == null) {
+   public List<DataDocument> searchHistoryChanges(final @PathParam("documentId") String documentId) throws DbException, InvalidValueException, InvalidConstraintException {
+      if (collectionCode == null || documentId == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      final List<DataDocument> docs = versionFacade.getDocumentVersions(getInternalName(collectionName), documentId);
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      final List<DataDocument> docs = versionFacade.getDocumentVersions(collectionCode, documentId);
       final List<DataDocument> convertedDocs = new ArrayList<>();
 
       for (final DataDocument doc : docs) {
-         convertedDocs.add(collectionMetadataFacade.decodeAttributeValues(internalCollectionName, doc));
+         convertedDocs.add(collectionMetadataFacade.decodeAttributeValues(collectionCode, doc));
       }
 
       return convertedDocs;
@@ -386,8 +360,6 @@ public class DocumentService implements Serializable {
    /**
     * Reverts old version of the given document.
     *
-    * @param collectionName
-    *       the name of the collection
     * @param documentId
     *       id of document to revert
     * @param version
@@ -397,25 +369,21 @@ public class DocumentService implements Serializable {
     */
    @POST
    @Path("/{documentId}/versions/{version}")
-   public void revertDocumentVersion(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("version") int version) throws DbException {
-      if (collectionName == null || documentId == null) {
+   public void revertDocumentVersion(final @PathParam("documentId") String documentId, final @PathParam("version") int version) throws DbException {
+      if (collectionCode == null || documentId == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      documentFacade.revertDocument(internalCollectionName, documentId, version);
+      documentFacade.revertDocument(collectionCode, documentId, version);
    }
 
    /**
     * Drops specific document's attribute
     *
-    * @param collectionName
-    *       the name of the collection
     * @param documentId
     *       id of document
     * @param attributeName
@@ -425,25 +393,21 @@ public class DocumentService implements Serializable {
     */
    @DELETE
    @Path("/{documentId}/attribute/{attributeName}")
-   public void dropDocumentAttribute(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName) throws DbException {
-      if (collectionName == null || documentId == null || attributeName == null) {
+   public void dropDocumentAttribute(final @PathParam("documentId") String documentId, final @PathParam("attributeName") String attributeName) throws DbException {
+      if (collectionCode == null || documentId == null || attributeName == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      if (!securityFacade.hasCollectionRole(projectCode, internalCollectionName, LumeerConst.Security.ROLE_WRITE)) {
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
-      documentFacade.dropAttribute(internalCollectionName, documentId, attributeName);
+      documentFacade.dropAttribute(collectionCode, documentId, attributeName);
    }
 
    /**
     * Gets attribute names of a document.
     *
-    * @param collectionName
-    *       the name of the collection
     * @param documentId
     *       id of document
     * @return set of document's attributes
@@ -452,32 +416,16 @@ public class DocumentService implements Serializable {
     */
    @GET
    @Path("/{documentId}/attributes/")
-   public Set<String> readDocumentAttributes(final @PathParam("collectionName") String collectionName, final @PathParam("documentId") String documentId) throws DbException {
-      if (collectionName == null || documentId == null) {
+   public Set<String> readDocumentAttributes(final @PathParam("documentId") String documentId) throws DbException {
+      if (collectionCode == null || documentId == null) {
          throw new BadRequestException();
       }
-      String internalCollectionName = getInternalName(collectionName);
-      checkCollectionExistency(internalCollectionName);
 
-      return documentFacade.getDocumentAttributes(collectionName, documentId);
-   }
-
-   /**
-    * Returns internal name of the given collection stored in the database.
-    *
-    * @param collectionOriginalName
-    *       original name of the collection given by user
-    * @return internal name of the given collection
-    * @throws UserCollectionNotFoundException
-    *       When the given user collection does not exist.
-    */
-   private String getInternalName(String collectionOriginalName) throws UserCollectionNotFoundException {
-      return collectionMetadataFacade.getInternalCollectionName(collectionOriginalName);
-   }
-
-   private void checkCollectionExistency(final String collectionName) throws CollectionNotFoundException {
-      if (!dataStorage.hasCollection(collectionName)) {
-         throw new CollectionNotFoundException(ErrorMessageBuilder.collectionNotFoundString(collectionName));
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
       }
+
+      return documentFacade.getDocumentAttributes(collectionCode, documentId);
    }
+
 }

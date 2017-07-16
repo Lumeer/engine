@@ -24,7 +24,6 @@ import io.lumeer.engine.api.batch.Batch;
 import io.lumeer.engine.api.batch.MergeBatch;
 import io.lumeer.engine.api.batch.SplitBatch;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.BatchFacade;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
@@ -35,7 +34,6 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -109,13 +107,9 @@ public class BatchService {
    }
 
    private void runBatch(final Batch batch) throws DbException, InvalidConstraintException {
-      try {
-         if (batch instanceof AbstractCollectionBatch) {
-            final AbstractCollectionBatch collectionBatch = (AbstractCollectionBatch) batch;
-            collectionBatch.setCollectionName(collectionMetadataFacade.getInternalCollectionName(collectionBatch.getCollectionName()));
-         }
-      } catch (CollectionNotFoundException e) {
-         throw new NotAcceptableException("Cannot determine collection name in the system: ", e);
+      if (batch instanceof AbstractCollectionBatch) {
+         final AbstractCollectionBatch collectionBatch = (AbstractCollectionBatch) batch;
+         collectionBatch.setCollectionCode(collectionBatch.getCollectionCode());
       }
 
       batchFacade.executeBatch(batch);

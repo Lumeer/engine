@@ -20,7 +20,6 @@
 package io.lumeer.engine.api.batch;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -42,8 +41,8 @@ public class MergeBatch extends AbstractCollectionBatch {
    public MergeBatch() {
    }
 
-   public MergeBatch(final String collectionName, final List<String> attributes, final String resultAttribute, final String join, final MergeType mergeType, boolean keepOriginal) {
-      this.collectionName = collectionName;
+   public MergeBatch(final String collectionCode, final List<String> attributes, final String resultAttribute, final String join, final MergeType mergeType, boolean keepOriginal) {
+      this.collectionCode = collectionCode;
       this.attributes = attributes;
       this.resultAttribute = resultAttribute;
       this.join = join;
@@ -122,7 +121,7 @@ public class MergeBatch extends AbstractCollectionBatch {
    @Override
    public String toString() {
       return "MergeBatch{"
-            + "collectionName='" + collectionName + '\''
+            + "collectionCode='" + collectionCode + '\''
             + ", attributes=" + attributes
             + ", resultAttribute='" + resultAttribute + '\''
             + ", join='" + join + '\''

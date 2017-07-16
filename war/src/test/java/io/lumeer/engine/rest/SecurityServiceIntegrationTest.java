@@ -1,9 +1,9 @@
 /*
  * -----------------------------------------------------------------------\
  * Lumeer
- *  
+ *
  * Copyright (C) since 2016 the original author or authors.
- *  
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,23 +24,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.dto.Role;
+import io.lumeer.engine.controller.CollectionFacade;
+import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.DatabaseInitializer;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
-import io.lumeer.engine.controller.UserGroupFacade;
+import io.lumeer.engine.controller.ViewFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +55,7 @@ import java.util.StringJoiner;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
@@ -59,59 +67,64 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    @SystemDataStorage
    private DataStorage dataStorage;
+
    @Inject
    @SystemDataStorage
    private DataStorage sysDataStorage;
+
    @Inject
    private DataStorageDialect dataStorageDialect;
+
    @Inject
    private OrganizationFacade organizationFacade;
-   @Inject
-   private UserGroupFacade userGroupFacade;
+
    @Inject
    private SecurityFacade securityFacade;
+
    @Inject
    private ProjectFacade projectFacade;
+
    @Inject
    private DatabaseInitializer databaseInitializer;
+
    @Inject
    private UserFacade userFacade;
+
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private CollectionMetadataFacade collectionMetadataFacade;
+
+   @Inject
+   private ViewFacade viewFacade;
 
    private final String USER_X = "user X";
    private final String USER_Y = "userY";
    private final String GROUP_A = "groupA";
    private final String GROUP_B = "groupB";
    private final String organizationCode = "LMR";
-   private final String ORGANIZATION_NAME = "Lumeer";
    private final String projectCode = "PR";
-   private final String PROJECT_NAME = "project";
-   private final String COLLECTION_NAME = "collection name";
-   private final Integer VIEW_ID = 42;
+   private int viewId = 42;
 
    private final String USERS_QP = "users";
    private final String GROUPS_QP = "groups";
 
-   private final String EMPTY_FILTER = "{}";
-
-   private String user;
-
    @Before
-   public void init() {
-      sysDataStorage.dropManyDocuments(
-            LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
-            dataStorageDialect.documentFilter(EMPTY_FILTER));
-      dataStorage.dropManyDocuments(
-            LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.documentFilter(EMPTY_FILTER));
+   public void init() throws Exception {
+      DataFilter filter = dataStorageDialect.documentFilter("{}");
+      sysDataStorage.dropManyDocuments(LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME, filter);
+      dataStorage.dropManyDocuments(LumeerConst.Security.ROLES_COLLECTION_NAME, filter);
+      sysDataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, filter);
+      sysDataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, filter);
 
-      organizationFacade.dropOrganization(organizationCode);
-      organizationFacade.createOrganization(new Organization(organizationCode, ORGANIZATION_NAME));
+      organizationFacade.createOrganization(new Organization(organizationCode, "Lumeer"));
       organizationFacade.setOrganizationCode(organizationCode);
 
-      projectFacade.createProject(new Project(projectCode, PROJECT_NAME));
+      projectFacade.createProject(new Project(projectCode, "project"));
+      projectFacade.setCurrentProjectCode(projectCode);
 
-      databaseInitializer.onCollectionCreated(projectCode, COLLECTION_NAME);
-      databaseInitializer.onViewCreated(projectCode, VIEW_ID);
+      viewId = viewFacade.createView("View", "Type", "Description", new DataDocument());
    }
 
    @Test
@@ -136,7 +149,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getOrganizationRoles(organizationCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -149,13 +162,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -171,15 +190,15 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       final String role = "thisIsNotAllowedRole";
 
       Response response = client.target(TARGET_URI)
-            .path(createUrl(
-                  LumeerConst.Security.ORGANIZATION_RESOURCE,
-                  organizationCode,
-                  LumeerConst.Security.ROLES_KEY,
-                  role))
-            .queryParam(USERS_QP, USER_X, USER_Y)
-            .queryParam(GROUPS_QP, GROUP_A, GROUP_B)
-            .request().build(PUT_METHOD_NAME)
-            .invoke();
+                                .path(createUrl(
+                                      LumeerConst.Security.ORGANIZATION_RESOURCE,
+                                      organizationCode,
+                                      LumeerConst.Security.ROLES_KEY,
+                                      role))
+                                .queryParam(USERS_QP, USER_X, USER_Y)
+                                .queryParam(GROUPS_QP, GROUP_A, GROUP_B)
+                                .request().build(PUT_METHOD_NAME)
+                                .invoke();
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
    }
@@ -188,10 +207,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    public void testAddOrganizationUsersGroupsRoleCallTwoTimes() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addOrganizationUserRole(organizationCode, USER_X, role);
-      securityFacade.addOrganizationUserRole(organizationCode, USER_Y, role);
-      securityFacade.addOrganizationGroupRole(organizationCode, GROUP_A, role);
-      securityFacade.addOrganizationGroupRole(organizationCode, GROUP_B, role);
+      securityFacade.addOrganizationUsersRole(organizationCode, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addOrganizationGroupsRole(organizationCode, Arrays.asList(GROUP_A, GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -211,7 +228,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getOrganizationRoles(organizationCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -224,13 +241,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -270,8 +293,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    public void testGetOrganizationRolesBasic() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addOrganizationUserRole(organizationCode, USER_Y, role);
-      securityFacade.addOrganizationGroupRole(organizationCode, GROUP_B, role);
+      securityFacade.addOrganizationUsersRole(organizationCode, Collections.singletonList(USER_Y), role);
+      securityFacade.addOrganizationGroupsRole(organizationCode, Collections.singletonList(GROUP_B), role);
       List<Role> fromFacade = securityFacade.getOrganizationRoles(organizationCode);
 
       final Client client = ClientBuilder.newBuilder().build();
@@ -284,7 +307,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -307,7 +331,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -319,10 +344,11 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRemoveOrganizationUsersGroupsRoleBasic() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addOrganizationUserRole(organizationCode, USER_X, role);
-      securityFacade.addOrganizationUserRole(organizationCode, USER_Y, role);
-      securityFacade.addOrganizationGroupRole(organizationCode, GROUP_A, role);
-      securityFacade.addOrganizationGroupRole(organizationCode, GROUP_B, role);
+
+      securityFacade.addOrganizationUsersRole(organizationCode, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addOrganizationGroupsRole(organizationCode, Arrays.asList(GROUP_A, GROUP_B), role);
+      securityFacade.addOrganizationUsersRole(organizationCode, Collections.singletonList(USER_X), role);
+      securityFacade.addOrganizationUsersRole(organizationCode, Collections.singletonList(USER_Y), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -342,7 +368,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getOrganizationRoles(organizationCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -355,13 +381,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -375,8 +407,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRemoveOrganizationUsersGroupsRoleNotExistingUsers() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addOrganizationUserRole(organizationCode, USER_X, role);
-      securityFacade.addOrganizationGroupRole(organizationCode, GROUP_A, role);
+      securityFacade.addOrganizationUsersRole(organizationCode, Collections.singletonList(USER_X), role);
+      securityFacade.addOrganizationGroupsRole(organizationCode, Collections.singletonList(GROUP_A), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -396,7 +428,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getOrganizationRoles(organizationCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -408,13 +440,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -449,7 +487,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getProjectRoles(projectCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -462,13 +500,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -504,10 +548,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    public void testAddProjectUsersGroupsRoleCallTwoTimes() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addProjectUserRole(projectCode, USER_X, role);
-      securityFacade.addProjectUserRole(projectCode, USER_Y, role);
-      securityFacade.addProjectGroupRole(projectCode, GROUP_A, role);
-      securityFacade.addProjectGroupRole(projectCode, GROUP_B, role);
+      securityFacade.addProjectUsersRole(projectCode, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addProjectGroupsRole(projectCode, Arrays.asList(GROUP_A, GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -529,7 +571,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getProjectRoles(projectCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -542,13 +584,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -590,8 +638,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    public void testGetProjectRolesBasic() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addProjectUserRole(projectCode, USER_Y, role);
-      securityFacade.addProjectGroupRole(projectCode, GROUP_B, role);
+      securityFacade.addProjectUsersRole(projectCode, Collections.singletonList(USER_Y), role);
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(GROUP_B), role);
       List<Role> fromFacade = securityFacade.getProjectRoles(projectCode);
 
       final Client client = ClientBuilder.newBuilder().build();
@@ -606,7 +654,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -631,7 +680,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -643,10 +693,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRemoveProjectUsersGroupsRoleBasic() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addProjectUserRole(projectCode, USER_X, role);
-      securityFacade.addProjectUserRole(projectCode, USER_Y, role);
-      securityFacade.addProjectGroupRole(projectCode, GROUP_A, role);
-      securityFacade.addProjectGroupRole(projectCode, GROUP_B, role);
+      securityFacade.addProjectUsersRole(projectCode, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addProjectGroupsRole(projectCode, Arrays.asList(GROUP_A, GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -668,7 +716,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getProjectRoles(projectCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -681,13 +729,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -701,8 +755,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRemoveProjectUsersGroupsRoleNotExistingUsers() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addProjectUserRole(projectCode, USER_X, role);
-      securityFacade.addProjectGroupRole(projectCode, GROUP_A, role);
+      securityFacade.addProjectUsersRole(projectCode, Collections.singletonList(USER_X), role);
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(GROUP_A), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -724,7 +778,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       List<Role> fromFacade = securityFacade.getProjectRoles(projectCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -737,13 +791,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -755,9 +815,12 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testAddCollectionUsersGroupsRoleBasic() {
+   public void testAddCollectionUsersGroupsRoleBasic() throws Exception {
       final Client client = ClientBuilder.newBuilder().build();
       final String role = LumeerConst.Security.ROLE_MANAGE;
+
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection1"));
+
       // PUT
       Response response = client
             .target(TARGET_URI)
@@ -767,7 +830,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_X, USER_Y)
@@ -777,10 +840,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       response.close();
 
-      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, collectionCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -793,13 +856,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -810,9 +879,11 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testAddCollectionUsersGroupsRoleNotAllowedRole() {
+   public void testAddCollectionUsersGroupsRoleNotAllowedRole() throws Exception {
       final Client client = ClientBuilder.newBuilder().build();
       final String role = "thisIsNotAllowedRole";
+
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection2"));
 
       Response response = client
             .target(TARGET_URI)
@@ -822,7 +893,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_X, USER_Y)
@@ -834,13 +905,13 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testAddCollectionUsersGroupsRoleCallTwoTimes() {
+   public void testAddCollectionUsersGroupsRoleCallTwoTimes() throws Exception {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addCollectionUserRole(projectCode, COLLECTION_NAME, USER_X, role);
-      securityFacade.addCollectionUserRole(projectCode, COLLECTION_NAME, USER_Y, role);
-      securityFacade.addCollectionGroupRole(projectCode, COLLECTION_NAME, GROUP_A, role);
-      securityFacade.addCollectionGroupRole(projectCode, COLLECTION_NAME, GROUP_B, role);
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection3"));
+
+      securityFacade.addCollectionUsersRole(projectCode, collectionCode, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addCollectionGroupsRole(projectCode, collectionCode, Arrays.asList(GROUP_A, GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -851,7 +922,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_X, USER_Y)
@@ -861,10 +932,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       response.close();
 
-      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, collectionCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -877,13 +948,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -894,11 +971,14 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetCollectionRolesNoQueryParam() {
-      final List<Role> before = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+   public void testGetCollectionRolesNoQueryParam() throws Exception {
+
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection4"));
 
       final Client client = ClientBuilder.newBuilder().build();
       final String role = LumeerConst.Security.ROLE_MANAGE;
+
+      final List<Role> before = securityFacade.getCollectionRoles(projectCode, collectionCode);
 
       Response response = client
             .target(TARGET_URI)
@@ -908,14 +988,14 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .request().build(PUT_METHOD_NAME)
             .invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
 
-      final List<Role> after = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+      final List<Role> after = securityFacade.getCollectionRoles(projectCode, collectionCode);
 
       assertThat(before.size()).isEqualTo(after.size());
       for (Role r : before) {
@@ -924,12 +1004,14 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetCollectionRolesBasic() {
+   public void testGetCollectionRolesBasic() throws Exception {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addCollectionUserRole(projectCode, COLLECTION_NAME, USER_Y, role);
-      securityFacade.addCollectionGroupRole(projectCode, COLLECTION_NAME, GROUP_B, role);
-      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection5"));
+
+      securityFacade.addCollectionUsersRole(projectCode, collectionCode, Collections.singletonList(USER_Y), role);
+      securityFacade.addCollectionGroupsRole(projectCode, collectionCode, Collections.singletonList(GROUP_B), role);
+      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, collectionCode);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -940,12 +1022,13 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY))
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -955,8 +1038,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetCollectionRolesNothingAdded() {
-      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+   public void testGetCollectionRolesNothingAdded() throws Exception {
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection6"));
+
+      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, collectionCode);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -967,12 +1052,13 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY))
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -982,12 +1068,13 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testRemoveCollectionUsersGroupsRoleBasic() {
+   public void testRemoveCollectionUsersGroupsRoleBasic() throws Exception {
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection7"));
+
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addCollectionUserRole(projectCode, COLLECTION_NAME, USER_X, role);
-      securityFacade.addCollectionUserRole(projectCode, COLLECTION_NAME, USER_Y, role);
-      securityFacade.addCollectionGroupRole(projectCode, COLLECTION_NAME, GROUP_A, role);
-      securityFacade.addCollectionGroupRole(projectCode, COLLECTION_NAME, GROUP_B, role);
+
+      securityFacade.addCollectionUsersRole(projectCode, collectionCode, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addCollectionGroupsRole(projectCode, collectionCode, Arrays.asList(GROUP_A, GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -999,7 +1086,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_Y)
@@ -1008,10 +1095,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
 
-      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, collectionCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -1024,13 +1111,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -1042,10 +1135,13 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testRemoveCollectionUsersGroupsRoleNotExistingUsers() {
+   public void testRemoveCollectionUsersGroupsRoleNotExistingUsers() throws Exception {
+      String collectionCode = collectionFacade.createCollection(new Collection("test collection8"));
+
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addCollectionUserRole(projectCode, COLLECTION_NAME, USER_X, role);
-      securityFacade.addCollectionGroupRole(projectCode, COLLECTION_NAME, GROUP_A, role);
+
+      securityFacade.addCollectionUsersRole(projectCode, collectionCode, Collections.singletonList(USER_X), role);
+      securityFacade.addCollectionGroupsRole(projectCode, collectionCode, Collections.singletonList(GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -1057,7 +1153,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.COLLECTION_RESOURCE,
-                  COLLECTION_NAME,
+                  collectionCode,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_Y)
@@ -1066,10 +1162,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
 
-      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, COLLECTION_NAME);
+      List<Role> fromFacade = securityFacade.getCollectionRoles(projectCode, collectionCode);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -1082,13 +1178,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -1112,7 +1214,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_X, USER_Y)
@@ -1122,10 +1224,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       response.close();
 
-      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, viewId);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -1138,13 +1240,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -1167,7 +1275,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_X, USER_Y)
@@ -1182,10 +1290,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    public void testAddViewUsersGroupsRoleCallTwoTimes() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addViewUserRole(projectCode, VIEW_ID, USER_X, role);
-      securityFacade.addViewUserRole(projectCode, VIEW_ID, USER_Y, role);
-      securityFacade.addViewGroupRole(projectCode, VIEW_ID, GROUP_A, role);
-      securityFacade.addViewGroupRole(projectCode, VIEW_ID, GROUP_B, role);
+      securityFacade.addViewUsersRole(projectCode, viewId, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addViewGroupsRole(projectCode, viewId, Arrays.asList(GROUP_A, GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -1196,7 +1302,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_X, USER_Y)
@@ -1206,10 +1312,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       response.close();
 
-      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, viewId);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -1222,13 +1328,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isTrue();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -1240,7 +1352,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testGetViewRolesNoQueryParam() {
-      final List<Role> before = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      final List<Role> before = securityFacade.getViewRoles(projectCode, viewId);
 
       final Client client = ClientBuilder.newBuilder().build();
       final String role = LumeerConst.Security.ROLE_MANAGE;
@@ -1253,14 +1365,14 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .request().build(PUT_METHOD_NAME)
             .invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
 
-      final List<Role> after = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      final List<Role> after = securityFacade.getViewRoles(projectCode, viewId);
 
       assertThat(before.size()).isEqualTo(after.size());
       for (Role r : before) {
@@ -1272,9 +1384,9 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    public void testGetViewRolesBasic() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
 
-      securityFacade.addViewUserRole(projectCode, VIEW_ID, USER_Y, role);
-      securityFacade.addViewGroupRole(projectCode, VIEW_ID, GROUP_B, role);
-      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      securityFacade.addViewUsersRole(projectCode, viewId, Collections.singletonList(USER_Y), role);
+      securityFacade.addViewGroupsRole(projectCode, viewId, Collections.singletonList(GROUP_B), role);
+      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, viewId);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -1285,12 +1397,13 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY))
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -1301,7 +1414,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testGetViewRolesNothingAdded() {
-      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, viewId);
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client
@@ -1312,12 +1425,13 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY))
             .request().buildGet()
             .invoke();
 
-      List<Role> fromService = response.readEntity(List.class);
+      List<Role> fromService = response.readEntity(new GenericType<List<Role>>(List.class) {
+      });
       assertThat(fromService).hasSize(fromFacade.size());
       for (Role r : fromFacade) {
          assertThat(fromService.contains(r));
@@ -1329,10 +1443,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRemoveViewUsersGroupsRoleBasic() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addViewUserRole(projectCode, VIEW_ID, USER_X, role);
-      securityFacade.addViewUserRole(projectCode, VIEW_ID, USER_Y, role);
-      securityFacade.addViewGroupRole(projectCode, VIEW_ID, GROUP_A, role);
-      securityFacade.addViewGroupRole(projectCode, VIEW_ID, GROUP_B, role);
+      securityFacade.addViewUsersRole(projectCode, viewId, Arrays.asList(USER_X, USER_Y), role);
+      securityFacade.addViewGroupsRole(projectCode, viewId, Arrays.asList(GROUP_A, GROUP_B), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -1344,7 +1456,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_Y)
@@ -1353,10 +1465,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
 
-      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, viewId);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -1369,13 +1481,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();
@@ -1389,8 +1507,8 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRemoveViewUsersGroupsRoleNotExistingUsers() {
       final String role = LumeerConst.Security.ROLE_MANAGE;
-      securityFacade.addViewUserRole(projectCode, VIEW_ID, USER_X, role);
-      securityFacade.addViewGroupRole(projectCode, VIEW_ID, GROUP_A, role);
+      securityFacade.addViewUsersRole(projectCode, viewId, Collections.singletonList(USER_X), role);
+      securityFacade.addViewGroupsRole(projectCode, viewId, Collections.singletonList(GROUP_A), role);
 
       final Client client = ClientBuilder.newBuilder().build();
 
@@ -1402,7 +1520,7 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
                   LumeerConst.Security.PROJECT_RESOURCE,
                   projectCode,
                   LumeerConst.Security.VIEW_RESOURCE,
-                  "" + VIEW_ID,
+                  "" + viewId,
                   LumeerConst.Security.ROLES_KEY,
                   role))
             .queryParam(USERS_QP, USER_Y)
@@ -1411,10 +1529,10 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
             .invoke();
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
 
-      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, VIEW_ID);
+      List<Role> fromFacade = securityFacade.getViewRoles(projectCode, viewId);
       List<String> users = null;
       List<String> groups = null;
-      for (Role item: fromFacade) {
+      for (Role item : fromFacade) {
          if (item.getName().equals(role)) {
             users = item.getUsers();
             groups = item.getGroups();
@@ -1427,13 +1545,19 @@ public class SecurityServiceIntegrationTest extends IntegrationTestBase {
       assertThat(groups.contains(GROUP_B)).isFalse();
       final Map<String, Integer> userCount = new LinkedHashMap<>();
       final Map<String, Integer> groupCount = new LinkedHashMap<>();
-      users.forEach((s)-> {
-         if (userCount.containsKey(s)) userCount.put(s, userCount.get(s) + 1);
-         else userCount.put(s, 1);
+      users.forEach((s) -> {
+         if (userCount.containsKey(s)) {
+            userCount.put(s, userCount.get(s) + 1);
+         } else {
+            userCount.put(s, 1);
+         }
       });
-      groups.forEach((s)-> {
-         if (groupCount.containsKey(s)) groupCount.put(s, groupCount.get(s) + 1);
-         else groupCount.put(s, 1);
+      groups.forEach((s) -> {
+         if (groupCount.containsKey(s)) {
+            groupCount.put(s, groupCount.get(s) + 1);
+         } else {
+            groupCount.put(s, 1);
+         }
       });
       userCount.forEach((k, v) -> {
          assertThat(v == 1).isTrue();

@@ -41,17 +41,17 @@ public class Attribute {
    private final List<String> constraints;
 
    public Attribute(final DataDocument metadata) {
-      name = metadata.getString(Collection.ATTRIBUTE_NAME_KEY);
-      fullName = metadata.getString(Collection.ATTRIBUTE_FULL_NAME_KEY);
-      count = metadata.getInteger(Collection.ATTRIBUTE_COUNT_KEY);
-      constraints = metadata.getArrayList(Collection.ATTRIBUTE_CONSTRAINTS_KEY, String.class);
+      name = metadata.getString(Collection.ATTRIBUTE_NAME);
+      fullName = metadata.getString(Collection.ATTRIBUTE_FULL_NAME);
+      count = metadata.getInteger(Collection.ATTRIBUTE_COUNT);
+      constraints = metadata.getArrayList(Collection.ATTRIBUTE_CONSTRAINTS, String.class);
    }
 
    @JsonCreator
-   public Attribute(final @JsonProperty(Collection.ATTRIBUTE_NAME_KEY) String name,
-         final @JsonProperty(Collection.ATTRIBUTE_FULL_NAME_KEY) String fullName,
-         final @JsonProperty(Collection.ATTRIBUTE_COUNT_KEY) int count,
-         final @JsonProperty(Collection.ATTRIBUTE_CONSTRAINTS_KEY) List<String> constraints) {
+   public Attribute(final @JsonProperty(Collection.ATTRIBUTE_NAME) String name,
+         final @JsonProperty(Collection.ATTRIBUTE_FULL_NAME) String fullName,
+         final @JsonProperty(Collection.ATTRIBUTE_COUNT) int count,
+         final @JsonProperty(Collection.ATTRIBUTE_CONSTRAINTS) List<String> constraints) {
       this.name = name;
       this.fullName = fullName;
       this.count = count;
@@ -75,9 +75,9 @@ public class Attribute {
    }
 
    public DataDocument toDataDocument() {
-      return new DataDocument(Collection.ATTRIBUTE_NAME_KEY, name)
-            .append(Collection.ATTRIBUTE_FULL_NAME_KEY, fullName)
-            .append(Collection.ATTRIBUTE_COUNT_KEY, count)
-            .append(Collection.ATTRIBUTE_CONSTRAINTS_KEY, constraints);
+      return new DataDocument(Collection.ATTRIBUTE_NAME, name)
+            .append(Collection.ATTRIBUTE_FULL_NAME, fullName)
+            .append(Collection.ATTRIBUTE_COUNT, count)
+            .append(Collection.ATTRIBUTE_CONSTRAINTS, constraints);
    }
 }

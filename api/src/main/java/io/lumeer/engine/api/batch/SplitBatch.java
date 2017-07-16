@@ -54,8 +54,8 @@ public class SplitBatch extends AbstractCollectionBatch {
    public SplitBatch() {
    }
 
-   public SplitBatch(final String collectionName, final String attribute, final String delimiter, final boolean trim, final List<String> splitAttributes, final boolean keepOriginal) {
-      this.collectionName = collectionName;
+   public SplitBatch(final String collectionCode, final String attribute, final String delimiter, final boolean trim, final List<String> splitAttributes, final boolean keepOriginal) {
+      this.collectionCode = collectionCode;
       this.attribute = attribute;
       this.delimiter = delimiter;
       this.trim = trim;
@@ -115,7 +115,7 @@ public class SplitBatch extends AbstractCollectionBatch {
       if (attribute != null ? !attribute.equals(that.attribute) : that.attribute != null) {
          return false;
       }
-      if (collectionName != null ? !collectionName.equals(that.collectionName) : that.collectionName != null) {
+      if (collectionCode != null ? !collectionCode.equals(that.collectionCode) : that.collectionCode != null) {
          return false;
       }
       if (delimiter != null ? !delimiter.equals(that.delimiter) : that.delimiter != null) {
@@ -126,7 +126,7 @@ public class SplitBatch extends AbstractCollectionBatch {
 
    @Override
    public int hashCode() {
-      int result = collectionName != null ? collectionName.hashCode() : 0;
+      int result = collectionCode != null ? collectionCode.hashCode() : 0;
       result = 31 * result + (attribute != null ? attribute.hashCode() : 0);
       result = 31 * result + (delimiter != null ? delimiter.hashCode() : 0);
       result = 31 * result + (splitAttributes != null ? splitAttributes.hashCode() : 0);
@@ -138,7 +138,7 @@ public class SplitBatch extends AbstractCollectionBatch {
    @Override
    public String toString() {
       return "SplitBatch{"
-            + "collectionName='" + collectionName + '\''
+            + "collectionCode='" + collectionCode + '\''
             + ", attribute='" + attribute + '\''
             + ", delimiter='" + delimiter + '\''
             + ", trim='" + trim + '\''
