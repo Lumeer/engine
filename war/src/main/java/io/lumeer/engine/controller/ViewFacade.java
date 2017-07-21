@@ -355,6 +355,10 @@ public class ViewFacade implements Serializable {
     * @return name of view metadata collection for given project id
     */
    public String metadataCollection(String projectCode) {
-      return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
+      return metadataCollectionFromId(projectFacade.getProjectId(projectCode));
+   }
+
+   public String metadataCollectionFromId(String projectId) {
+      return LumeerConst.View.METADATA_COLLECTION_PREFIX + projectId;
    }
 }

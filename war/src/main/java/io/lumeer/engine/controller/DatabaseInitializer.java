@@ -128,7 +128,7 @@ public class DatabaseInitializer {
     *       project id
     */
    private void initViewsMetadata(String projectId) {
-      String viewsCollection = viewFacade.metadataCollection(projectId);
+      String viewsCollection = viewFacade.metadataCollectionFromId(projectId);
       if (!userDataStorage.hasCollection(viewsCollection)) {
          userDataStorage.createCollection(viewsCollection);
          userDataStorage.createIndex(viewsCollection, new DataDocument(View.ID_KEY, Index.ASCENDING), true);
@@ -143,7 +143,7 @@ public class DatabaseInitializer {
     *       project id
     */
    private void initCollectionsMetadata(String projectId) {
-      String collectionMetadataCollection = collectionMetadataFacade.metadataCollection(projectId);
+      String collectionMetadataCollection = collectionMetadataFacade.metadataCollectionFromId(projectId);
       if (!userDataStorage.hasCollection(collectionMetadataCollection)) {
          userDataStorage.createCollection(collectionMetadataCollection);
          userDataStorage.createIndex(collectionMetadataCollection, new DataDocument(Collection.CODE, Index.ASCENDING), true);
