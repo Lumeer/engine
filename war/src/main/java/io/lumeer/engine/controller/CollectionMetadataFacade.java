@@ -168,7 +168,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       collection id
     * @return collection name
     */
-   public String getCollectionName(String collectionId){
+   public String getCollectionName(String collectionId) {
       DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), collectionIdFilter(collectionId), Collections.singletonList(LumeerConst.Collection.REAL_NAME));
       return metaData != null ? metaData.getString(LumeerConst.Collection.REAL_NAME) : null;
    }
@@ -178,7 +178,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       collection name
     * @return collection code
     */
-   public String getCollectionCodeFromName(String collectionName){
+   public String getCollectionCodeFromName(String collectionName) {
       DataFilter filter = dialect.fieldValueFilter(LumeerConst.Collection.REAL_NAME, collectionName);
       DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, Collections.singletonList(LumeerConst.Collection.CODE));
       return metaData != null ? metaData.getString(LumeerConst.Collection.CODE) : null;
@@ -189,7 +189,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       collection id
     * @return collection code
     */
-   public String getCollectionCode(String collectionId){
+   public String getCollectionCode(String collectionId) {
       DataFilter filter = collectionIdFilter(collectionId);
       DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, Collections.singletonList(LumeerConst.Collection.CODE));
       return metaData != null ? metaData.getString(LumeerConst.Collection.CODE) : null;
@@ -200,7 +200,7 @@ public class CollectionMetadataFacade implements Serializable {
     *       collection code
     * @return collection id
     */
-   public String getCollectionId(String collectionCode){
+   public String getCollectionId(String collectionCode) {
       DataDocument metaData = dataStorage.readDocumentIncludeAttrs(metadataCollection(), collectionCodeFilter(collectionCode), Collections.emptyList());
       return metaData != null ? metaData.getId() : null;
    }
@@ -824,7 +824,11 @@ public class CollectionMetadataFacade implements Serializable {
     * @return name of metadata collection for given project code
     */
    public String metadataCollection(String projectCode) {
-      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + projectFacade.getProjectId(projectCode);
+      return metadataCollectionFromId(projectFacade.getProjectId(projectCode));
+   }
+
+   public String metadataCollectionFromId(String projectId) {
+      return LumeerConst.Collection.METADATA_COLLECTION_PREFIX + projectId;
    }
 
    // initializes constraint manager
@@ -854,7 +858,6 @@ public class CollectionMetadataFacade implements Serializable {
    private DataFilter collectionCodeFilter(String collectionCode) {
       return dialect.fieldValueFilter(LumeerConst.Collection.CODE, collectionCode);
    }
-
 
    private DataFilter collectionIdFilter(final String collectionId) {
       return dialect.documentIdFilter(collectionId);
