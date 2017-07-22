@@ -51,17 +51,7 @@
 
       <java.level>1.8</java.level>
    </properties>
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <groupId>io.lumeer</groupId>
-            <artifactId>engine-bom</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
+
    <dependencies>
       <!-- Logging -->
       <dependency>

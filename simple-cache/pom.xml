@@ -43,31 +43,11 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-      <wildfly.bom.version>10.1.0.Final</wildfly.bom.version>
-
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
 
       <java.level>1.8</java.level>
    </properties>
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <groupId>io.lumeer</groupId>
-            <artifactId>engine-bom</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.bom</groupId>
-            <artifactId>wildfly-javaee7-with-tools</artifactId>
-            <version>${wildfly.bom.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
    <dependencies>
       <dependency>
          <groupId>io.lumeer</groupId>
