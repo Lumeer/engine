@@ -50,24 +50,6 @@
       <java.level>1.8</java.level>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
    </properties>
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <groupId>io.lumeer</groupId>
-            <artifactId>engine-bom</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.bom</groupId>
-            <artifactId>wildfly-javaee7-with-tools</artifactId>
-            <version>${version.wildfly}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
 
    <dependencies>
       <dependency>
