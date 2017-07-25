@@ -80,7 +80,7 @@ public class OrganizationFacade {
     *       Organization identificator
     * @return Organization code.
     */
-   public String getOrganizationCode(final String organizationId){
+   public String getOrganizationCode(final String organizationId) {
       DataDocument document = dataStorage.readDocumentIncludeAttrs(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentIdFilter(organizationId), Collections.singletonList(LumeerConst.Organization.ATTR_ORG_CODE));
       return document != null ? document.getString(LumeerConst.Organization.ATTR_ORG_CODE) : null;
    }
@@ -105,7 +105,9 @@ public class OrganizationFacade {
     */
    public List<Organization> readOrganizations() {
       return dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, null, 0, 0)
-                        .stream().map(Organization::new).collect(Collectors.toList());
+                        .stream().map(Organization::new)
+                        .filter(o -> securityFacade.hasOrganizationRole(o.getCode(), LumeerConst.Security.ROLE_READ))
+                        .collect(Collectors.toList());
    }
 
    /**
@@ -132,9 +134,9 @@ public class OrganizationFacade {
       databaseInitializer.onOrganizationCreated(id);
 
       List<String> user = Collections.singletonList(userFacade.getUserEmail());
+      securityFacade.addOrganizationUsersRole(organization.getCode(), user, LumeerConst.Security.ROLE_READ);
       securityFacade.addOrganizationUsersRole(organization.getCode(), user, LumeerConst.Security.ROLE_MANAGE);
       securityFacade.addOrganizationUsersRole(organization.getCode(), user, LumeerConst.Security.ROLE_WRITE);
-
       return id;
    }
 

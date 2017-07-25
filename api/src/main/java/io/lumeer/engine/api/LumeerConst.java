@@ -195,13 +195,13 @@ public final class LumeerConst {
       public static final String VIEW_RESOURCE = "views";
 
       private static final String[] ORGANIZATION_ROLES = new String[]
-            {ROLE_MANAGE, ROLE_WRITE};
+            { ROLE_MANAGE, ROLE_WRITE, ROLE_READ };
       private static final String[] PROJECT_ROLES = new String[]
-            {ROLE_MANAGE, ROLE_WRITE};
+            { ROLE_MANAGE, ROLE_WRITE };
       private static final String[] COLLECTION_ROLES = new String[]
-            {ROLE_MANAGE, ROLE_READ, ROLE_SHARE, ROLE_WRITE};
+            { ROLE_MANAGE, ROLE_READ, ROLE_SHARE, ROLE_WRITE };
       private static final String[] VIEW_ROLES = new String[]
-            {ROLE_MANAGE, ROLE_READ, ROLE_CLONE};
+            { ROLE_MANAGE, ROLE_READ, ROLE_CLONE };
 
       public static final Map<String, Set<String>> RESOURCE_ROLES =
             Collections.unmodifiableMap(new HashMap<String, Set<String>>() {

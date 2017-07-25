@@ -28,7 +28,7 @@ import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.stream.Collectors;
+//import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -72,13 +72,18 @@ public class OrganizationService implements Serializable {
     * @param organizationCode
     *       Organization code;
     * @return Organization data;
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @GET
    @Path("/{organizationCode}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Organization readOrganization(final @PathParam("organizationCode") String organizationCode) {
+   public Organization readOrganization(final @PathParam("organizationCode") String organizationCode) throws UnauthorizedAccessException {
       if (organizationCode == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
       }
       return organizationFacade.readOrganization(organizationCode);
    }
@@ -90,7 +95,7 @@ public class OrganizationService implements Serializable {
    @POST
    @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void createOrganization(final Organization organization) {
+   public void createOrganization(final Organization organization) throws UnauthorizedAccessException {
       if (organization == null) {
          throw new BadRequestException();
       }
@@ -102,13 +107,18 @@ public class OrganizationService implements Serializable {
     *       Code identifying organization.
     * @param organization
     *       Organization data.
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}")
    @Consumes(MediaType.APPLICATION_JSON)
-   public void updateOrganization(final @PathParam("organizationCode") String organizationCode, final Organization organization) {
+   public void updateOrganization(final @PathParam("organizationCode") String organizationCode, final Organization organization) throws UnauthorizedAccessException {
       if (organizationCode == null || organization == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
       }
       organizationFacade.updateOrganization(organizationCode, organization);
    }
@@ -117,14 +127,20 @@ public class OrganizationService implements Serializable {
     * @param organizationCode
     *       organization code
     * @return name of given organization
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @GET
    @Path("/{organizationCode}/name")
    @Produces(MediaType.APPLICATION_JSON)
-   public String getOrganizationName(final @PathParam("organizationCode") String organizationCode) {
+   public String getOrganizationName(final @PathParam("organizationCode") String organizationCode) throws UnauthorizedAccessException {
       if (organizationCode == null) {
          throw new BadRequestException();
       }
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
       return organizationFacade.readOrganizationName(organizationCode);
    }
 
@@ -133,7 +149,8 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param newOrganizationName
     *       organization name
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/name/{newOrganizationName}")
@@ -154,7 +171,8 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param newCode
     *       new organization code
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/code/{newCode}")
@@ -173,12 +191,17 @@ public class OrganizationService implements Serializable {
    /**
     * @param organizationCode
     *       organization code
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}")
-   public void dropOrganization(final @PathParam("organizationCode") String organizationCode) {
+   public void dropOrganization(final @PathParam("organizationCode") String organizationCode) throws UnauthorizedAccessException {
       if (organizationCode == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
       }
       organizationFacade.dropOrganization(organizationCode);
    }
@@ -189,13 +212,18 @@ public class OrganizationService implements Serializable {
     * @param attributeName
     *       name of metadata attribute
     * @return value of metadata attribute
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @GET
    @Path("/{organizationCode}/meta/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public String readOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+   public String readOrganizationMetadata(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException {
       if (organizationCode == null || attributeName == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
       }
       return organizationFacade.readOrganizationMetadata(organizationCode, attributeName);
    }
@@ -209,7 +237,8 @@ public class OrganizationService implements Serializable {
     *       name of metadata attribute
     * @param value
     *       value of metadata attribute
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/meta/{attributeName}")
@@ -232,7 +261,8 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param attributeName
     *       name of metadata attribute
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/meta/{attributeName}")
@@ -252,13 +282,18 @@ public class OrganizationService implements Serializable {
     * @param organizationCode
     *       organization code
     * @return DataDocument with additional info
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @GET
    @Path("/{organizationCode}/data/")
    @Produces(MediaType.APPLICATION_JSON)
-   public DataDocument readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode) {
+   public DataDocument readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode) throws UnauthorizedAccessException {
       if (organizationCode == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
       }
       return organizationFacade.readOrganizationInfoData(organizationCode);
    }
@@ -269,13 +304,18 @@ public class OrganizationService implements Serializable {
     * @param attributeName
     *       name of attribute from additional info
     * @return value of the attribute
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @GET
    @Path("/{organizationCode}/data/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public String readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) {
+   public String readOrganizationAdditionalInfo(final @PathParam("organizationCode") String organizationCode, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException {
       if (organizationCode == null || attributeName == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
       }
       return organizationFacade.readOrganizationInfoData(organizationCode, attributeName);
    }
@@ -289,7 +329,8 @@ public class OrganizationService implements Serializable {
     *       name of the attribute
     * @param value
     *       value of the attribute
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{organizationCode}/data/{attributeName}")
@@ -314,7 +355,8 @@ public class OrganizationService implements Serializable {
     *       organization code
     * @param attributeName
     *       name of the attribute
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/data/{attributeName}")
@@ -335,7 +377,8 @@ public class OrganizationService implements Serializable {
     *
     * @param organizationCode
     *       organization code
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{organizationCode}/data")

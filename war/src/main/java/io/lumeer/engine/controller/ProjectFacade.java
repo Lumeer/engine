@@ -154,6 +154,7 @@ public class ProjectFacade {
       databaseInitializer.onProjectCreated(id);
 
       List<String> user = Collections.singletonList(userFacade.getUserEmail());
+      securityFacade.addProjectUsersRole(project.getCode(), user, LumeerConst.Security.ROLE_READ);
       securityFacade.addProjectUsersRole(project.getCode(), user, LumeerConst.Security.ROLE_MANAGE);
       securityFacade.addProjectUsersRole(project.getCode(), user, LumeerConst.Security.ROLE_WRITE);
 
