@@ -22,7 +22,6 @@ package io.lumeer.engine.api.data;
 import io.lumeer.engine.api.LumeerConst;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -329,4 +328,40 @@ public class DataDocument extends LinkedHashMap<String, Object> {
       }
    }
 
+   @Override
+   public int hashCode() {
+      String id = getId();
+
+      if (id == null) {
+         return super.hashCode();
+      } else {
+         return id.hashCode();
+      }
+   }
+
+   @Override
+   public boolean equals(Object compared) {
+      if (compared == null) {
+         return false;
+      }
+
+      if (compared instanceof DataDocument) {
+         DataDocument comparedDoc = (DataDocument) compared;
+
+         if (this.getId() == null && comparedDoc.getId() == null) {
+            return true;
+         }
+
+         return this.getId().equals(comparedDoc.getId());
+      }
+
+      return false;
+   }
+
+   @Override
+   public String toString() {
+      StringBuilder result = new StringBuilder("DataDocument: ");
+      this.forEach((key, value) -> result.append(key).append(": ").append(value).append(", "));
+      return result.toString();
+   }
 }

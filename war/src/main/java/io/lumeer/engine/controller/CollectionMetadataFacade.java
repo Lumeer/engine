@@ -570,9 +570,18 @@ public class CollectionMetadataFacade implements Serializable {
          return afterCheck;
       }
 
+      // no encoding required
+      if (value == null) {
+         return null;
+      }
+
+      // other types
       final List<String> constraintConfigurations = attribute.getConstraints();
 
       final ConstraintManager constraintManager = new ConstraintManager(constraintConfigurations);
+      constraintManager.setLocale(Locale.forLanguageTag(configurationFacade.getConfigurationString(LumeerConst.USER_LOCALE_PROPERTY)
+                                                                           .orElse("en-US")));
+
       Constraint.ConstraintResult result = constraintManager.isValid(value.toString());
 
       if (result == Constraint.ConstraintResult.INVALID) {

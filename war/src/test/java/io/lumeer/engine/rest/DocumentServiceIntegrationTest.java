@@ -40,6 +40,7 @@ import io.lumeer.engine.controller.UserFacade;
 
 import org.bson.types.Decimal128;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,10 +108,24 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    private final String COLLECTION_REVERT_DOCUMENT_VERSION = "DocumentServiceCollectionRevertDocumentVersion";
    private final String COLLECTION_ATTRIBUTE_TYPES = "DocumentServiceCollectionAttributeTypes";
 
+   private Client[] clients = new Client[3];
+
    @Before
    public void init() {
       // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
       databaseInitializer.onProjectCreated(projectFacade.getCurrentProjectCode());
+
+      ClientBuilder builder = ClientBuilder.newBuilder();
+      for (int i = 0; i < clients.length; i++) {
+         clients[i] = builder.build();
+      }
+   }
+
+   @After
+   public void closeClients() {
+      for (Client client : clients) {
+         client.close();
+      }
    }
 
    @Test
@@ -121,39 +136,69 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testCreateReadUpdateAndDropDocument() throws Exception {
       setUpCollections(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT);
-      final Client client = ClientBuilder.newBuilder().build();
 
       String code = collectionFacade.createCollection(new Collection(COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT));
 
+      String[] documentIds = new String[clients.length];
+
       // 200 - the document will be inserted into the given collection
-      Response response = client.target(TARGET_URI).path(setPathPrefix(code)).request().buildPost(Entity.json(new DataDocument())).invoke();
-      String documentId = response.readEntity(String.class);
-      assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(documentFacade.readDocument(code, documentId)).isNotNull();
-      response.close();
+      for (int i = 0; i < clients.length; i++) {
+         Response response = clients[i].target(TARGET_URI)
+                                       .path(setPathPrefix(code))
+                                       .request()
+                                       .buildPost(Entity.json(
+                                             new DataDocument("first_attribute", i)
+                                                   .append("second_attribute", "test_value")
+                                                   .append("third_attribute", "some_test " + i)
+                                                   .append("fourth_attribute", null)))
+                                       .invoke();
+
+         documentIds[i] = response.readEntity(String.class);
+         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+         assertThat(documentFacade.readDocument(code, documentIds[i])).isNotNull();
+         response.close();
+      }
 
       // 200 - read the given document by its id
-      Response response2 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId).request().buildGet().invoke();
-      DataDocument document = response2.readEntity(DataDocument.class);
-      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(documentFacade.readDocument(code, documentId)).isEqualTo(document);
-      response2.close();
+      for (int i = 0; i < clients.length; i++) {
+         Response response = clients[i].target(TARGET_URI)
+                                       .path(setPathPrefix(code) + documentIds[i])
+                                       .request()
+                                       .buildGet()
+                                       .invoke();
+
+         DataDocument document = response.readEntity(DataDocument.class);
+         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+         assertThat(documentFacade.readDocument(code, documentIds[i])).isEqualTo(document);
+         response.close();
+      }
 
       // 204 - update the document
-      DataDocument updatedDocument = new DataDocument();
-      updatedDocument.put("_id", documentId);
-      updatedDocument.put("name", "updatedDocument");
-      Response response3 = client.target(TARGET_URI).path(setPathPrefix(code) + "update/").request().buildPut(Entity.json(updatedDocument)).invoke();
-      assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      assertThat(documentFacade.readDocument(code, documentId).getString("name")).isEqualTo("updatedDocument");
-      response3.close();
+      for (int i = 0; i < clients.length; i++) {
+         Response response = clients[i].target(TARGET_URI)
+                                       .path(setPathPrefix(code) + "update/")
+                                       .request()
+                                       .buildPut(Entity.json(new DataDocument()
+                                             .append("_id", documentIds[i])
+                                             .append("name", "updatedDocument" + i)))
+                                       .invoke();
+
+         assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+         assertThat(documentFacade.readDocument(code, documentIds[i]).getString("name")).isEqualTo("updatedDocument" + i);
+         response.close();
+      }
 
       // 204 - drop the given document by its id
-      Response response4 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId).request().buildDelete().invoke();
-      assertThat(response4.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
-      response4.close();
+      for (int i = 0; i < clients.length; i++) {
+         Response response = clients[i].target(TARGET_URI)
+                                       .path(setPathPrefix(code) + documentIds[i])
+                                       .request()
+                                       .buildDelete()
+                                       .invoke();
 
-      client.close();
+         assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+         response.close();
+      }
    }
 
    @Test
