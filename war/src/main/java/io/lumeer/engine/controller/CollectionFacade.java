@@ -309,7 +309,7 @@ public class CollectionFacade implements Serializable {
     *       name of the collection
     * @return list of all documents
     */
-   private List<DataDocument> getAllDocuments(String collectionCode) {
+   public List<DataDocument> getAllDocuments(String collectionCode) {
       return dataStorage.search(collectionCode, null, null, 0, 0);
    }
 
