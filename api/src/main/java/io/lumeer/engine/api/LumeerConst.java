@@ -197,7 +197,7 @@ public final class LumeerConst {
       private static final String[] ORGANIZATION_ROLES = new String[]
             { ROLE_MANAGE, ROLE_WRITE, ROLE_READ };
       private static final String[] PROJECT_ROLES = new String[]
-            { ROLE_MANAGE, ROLE_WRITE };
+            { ROLE_MANAGE, ROLE_WRITE, ROLE_READ };
       private static final String[] COLLECTION_ROLES = new String[]
             { ROLE_MANAGE, ROLE_READ, ROLE_SHARE, ROLE_WRITE };
       private static final String[] VIEW_ROLES = new String[]

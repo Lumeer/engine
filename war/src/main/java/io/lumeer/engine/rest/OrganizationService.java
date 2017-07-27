@@ -28,7 +28,6 @@ import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
 import java.util.List;
-//import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;

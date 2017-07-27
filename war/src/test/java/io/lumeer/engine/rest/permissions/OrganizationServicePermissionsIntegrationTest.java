@@ -70,18 +70,9 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
    @Inject
    UserGroupFacade userGroupFacade;
 
-   // Clear Collection which holds information about Organizations in System DB
    @Before
-   public void init() {
+   public void clearCollectionOfOrganizationsInSystemDB() {
       dataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
-   }
-
-   @Test
-   public void testRegister() throws Exception {
-      assertThat(organizationFacade).isNotNull();
-      assertThat(securityFacade).isNotNull();
-      assertThat(userFacade).isNotNull();
-      assertThat(userGroupFacade).isNotNull();
    }
 
    private final String TARGET_URI = "http://localhost:8080";
@@ -111,14 +102,12 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + code).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      String reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("Unauthorized");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
       client.close();
       final Client client1 = ClientBuilder.newBuilder().build();
       response = client1.target(TARGET_URI).path(PATH_PREFIX + code + "/name").
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("Unauthorized");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
       client1.close();
    }
 
@@ -142,14 +131,12 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + code).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      String reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("OK");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       client.close();
       final Client client1 = ClientBuilder.newBuilder().build();
       response = client1.target(TARGET_URI).path(PATH_PREFIX + code + "/name").
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("OK");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       client1.close();
    }
 
@@ -164,8 +151,8 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       String code3 = "testGetOrganizationsSomeReadRoles3_id";
       String code4 = "testGetOrganizationsSomeReadRoles4_id";
 
-      List<String> names = new ArrayList<>(Arrays.asList(name1, name2, name3, name4));
-      List<String> codes = new ArrayList<>(Arrays.asList(code1, code2, code3, code4));
+      List<String> names = Arrays.asList(name1, name2, name3, name4);
+      List<String> codes = Arrays.asList(code1, code2, code3, code4);
 
       for (int i = 0; i < codes.size(); i++) {
          organizationFacade.createOrganization(new Organization(codes.get(i), names.get(i)));
@@ -192,8 +179,7 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      String reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("OK");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
       List<Organization> organizations = response.readEntity(new GenericType<List<Organization>>(List.class) {
       });
@@ -227,8 +213,7 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
                                 .invoke();
-      String reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("Unauthorized");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
       client.close();
       final Client client1 = ClientBuilder.newBuilder().build();
       String newOrgName = "NewName1";
@@ -237,8 +222,7 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
                         .request(MediaType.APPLICATION_JSON)
                         .buildPut(Entity.json(new Organization(code, newOrgName)))
                         .invoke();
-      reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("Unauthorized");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
       client1.close();
    }
 
@@ -261,9 +245,8 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
                                 .invoke();
-      String reasonPhrase = response.getStatusInfo().getReasonPhrase();
       //204 No Content The request has been successfully processed, but is not returning any content
-      assertThat(reasonPhrase).isEqualTo("No Content");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
       client.close();
       final Client client1 = ClientBuilder.newBuilder().build();
       String newOrgName = "NewName2";
@@ -272,8 +255,7 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
                         .request(MediaType.APPLICATION_JSON)
                         .buildPut(Entity.json(new Organization(newCode, newOrgName)))
                         .invoke();
-      reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("No Content");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
       client1.close();
    }
 
@@ -299,12 +281,11 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
-                                .path(pathPrefix(code))
+                                .path(projectsPathPrefix(code))
                                 .request()
                                 .buildPost(Entity.json(new Project(project, projectName)))
                                 .invoke();
-      String reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("Unauthorized");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
       client.close();
    }
 
@@ -325,16 +306,15 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
 
       final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
-                                .path(pathPrefix(code))
+                                .path(projectsPathPrefix(code))
                                 .request()
                                 .buildPost(Entity.json(new Project(project, projectName)))
                                 .invoke();
-      String reasonPhrase = response.getStatusInfo().getReasonPhrase();
-      assertThat(reasonPhrase).isEqualTo("No Content");
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
       client.close();
    }
 
-   private String pathPrefix(String organizationCode) {
+   private String projectsPathPrefix(String organizationCode) {
       return PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/";
    }
 }
