@@ -23,6 +23,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.concurrent.Immutable;
@@ -31,6 +32,7 @@ import javax.annotation.concurrent.Immutable;
  * DTO object for Project
  */
 @Immutable
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Project {
 
    private final String name;
