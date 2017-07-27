@@ -358,6 +358,11 @@ public class ConstraintManager {
     */
    public Object encode(final Object value) {
       if (constraints.size() == 0) {
+
+         if (locale == null) {
+            throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
+         }
+
          final Number n = Coders.encodeNumber(locale, value);
          return n == null ? value : n;
       }
