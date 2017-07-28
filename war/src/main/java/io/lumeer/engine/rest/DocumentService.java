@@ -137,7 +137,7 @@ public class DocumentService implements Serializable {
          throw new UnauthorizedAccessException();
       }
 
-      return collectionFacade.getAllDocuments(collectionCode);
+      return documentFacade.getAllDocuments(collectionCode);
    }
 
    /**
@@ -227,7 +227,7 @@ public class DocumentService implements Serializable {
     *       When the constraint configuration was wrong.
     */
    @PUT
-   @Path("/update/")
+   @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocument(final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
       if (collectionCode == null || updatedDocument == null || updatedDocument.getId() == null) {

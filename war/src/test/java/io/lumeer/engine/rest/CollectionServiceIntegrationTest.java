@@ -74,6 +74,8 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    private static final String TARGET_URI = "http://localhost:8080";
    private static String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/ACME/projects/default/collections/";
 
+   private static final String COLLECTION_GET_COLLECTION_1 = "CollectionServiceCollectionGetCollection1";
+   private static final String COLLECTION_GET_COLLECTION_2 = "CollectionServiceCollectionGetCollection2";
    private static final String COLLECTION_GET_ALL_COLLECTIONS_1 = "CollectionServiceCollectionGetAllCollections1";
    private static final String COLLECTION_GET_ALL_COLLECTIONS_2 = "CollectionServiceCollectionGetAllCollections2";
    private static final String COLLECTION_CREATE_COLLECTION = "CollectionServiceCollectionCreateCollection";
@@ -143,6 +145,28 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRegister() throws Exception {
       assertThat(collectionService).isNotNull();
+   }
+
+   @Test
+   public void testGetCollection() throws Exception {
+      String collectionCode1 = collectionFacade.createCollection(new Collection(COLLECTION_GET_COLLECTION_1));
+      String collectionCode2 = collectionFacade.createCollection(new Collection(COLLECTION_GET_COLLECTION_2));
+
+      Client client = ClientBuilder.newBuilder().build();
+      Response response1 = client.target(TARGET_URI).path(PATH_PREFIX + collectionCode1).request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      Collection collection1 = response1.readEntity(new GenericType<Collection>(Collection.class));
+      assertThat(collection1.getName()).isEqualTo(COLLECTION_GET_COLLECTION_1);
+      assertThat(response1.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      response1.close();
+      client.close();
+
+      client = ClientBuilder.newBuilder().build();
+      Response response2 = client.target(TARGET_URI).path(PATH_PREFIX + collectionCode2).request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      Collection collection2 = response2.readEntity(new GenericType<Collection>(Collection.class));
+      assertThat(collection2.getName()).isEqualTo(COLLECTION_GET_COLLECTION_2);
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      response2.close();
+      client.close();
    }
 
    @Test

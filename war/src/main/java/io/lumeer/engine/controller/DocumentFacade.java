@@ -77,6 +77,17 @@ public class DocumentFacade implements Serializable {
    private UserFacade userFacade;
 
    /**
+    * Returns a list of all DataDocument objects in given collection.
+    *
+    * @param collectionCode
+    *       name of the collection
+    * @return list of all documents
+    */
+   public List<DataDocument> getAllDocuments(String collectionCode) {
+      return dataStorage.search(collectionCode, null, null, 0, 0);
+   }
+
+   /**
     * Creates and inserts a new document to specified collection and create collection if not exists
     *
     * @param collectionCode
@@ -400,5 +411,4 @@ public class DocumentFacade implements Serializable {
    private static boolean isList(Object obj) {
       return obj != null && obj instanceof List;
    }
-
 }
