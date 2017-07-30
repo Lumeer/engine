@@ -86,17 +86,22 @@ public class ProjectService implements Serializable {
    @GET
    @Path("/{projectCode}")
    @Produces(MediaType.APPLICATION_JSON)
-   public Project readProject(final @PathParam("projectCode") String projectCode) {
+   public Project readProject(final @PathParam("projectCode") String projectCode) throws UnauthorizedAccessException {
       if (projectCode == null) {
          throw new BadRequestException();
       }
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
       return projectFacade.readProject(projectCode);
    }
 
    /**
     * @param project
     *       Project data.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @POST
    @Path("/")
@@ -105,11 +110,11 @@ public class ProjectService implements Serializable {
       if (project == null) {
          throw new BadRequestException();
       }
-     
+
       if (!securityFacade.hasOrganizationRole(organizationCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
-     
+
       projectFacade.createProject(project);
    }
 
@@ -118,7 +123,8 @@ public class ProjectService implements Serializable {
     *       Code identifying project.
     * @param project
     *       Project data.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}")
@@ -127,11 +133,11 @@ public class ProjectService implements Serializable {
       if (projectCode == null || project == null) {
          throw new BadRequestException();
       }
-     
+
       if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)) {
          throw new UnauthorizedAccessException();
       }
-     
+
       projectFacade.updateProject(projectCode, project);
    }
 
@@ -143,9 +149,12 @@ public class ProjectService implements Serializable {
    @GET
    @Path("/{projectCode}/name")
    @Produces(MediaType.APPLICATION_JSON)
-   public String getProjectName(final @PathParam("projectCode") String projectCode) {
+   public String getProjectName(final @PathParam("projectCode") String projectCode) throws UnauthorizedAccessException {
       if (projectCode == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
       }
       return projectFacade.readProjectName(projectCode);
    }
@@ -155,7 +164,8 @@ public class ProjectService implements Serializable {
     *       Project code.
     * @param newProjectName
     *       Project name.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}/name/{newProjectName}")
@@ -178,7 +188,8 @@ public class ProjectService implements Serializable {
     *       Project code.
     * @param newProjectCode
     *       New project code.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}/code/{newProjectCode}")
@@ -198,7 +209,8 @@ public class ProjectService implements Serializable {
    /**
     * @param projectCode
     *       Project code.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{projectCode}")
@@ -224,9 +236,12 @@ public class ProjectService implements Serializable {
    @GET
    @Path("/{projectCode}/meta/{attributeName}")
    @Produces(MediaType.APPLICATION_JSON)
-   public String readProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) {
+   public String readProjectMetadata(final @PathParam("projectCode") String projectCode, final @PathParam("attributeName") String attributeName) throws UnauthorizedAccessException {
       if (projectCode == null || attributeName == null) {
          throw new BadRequestException();
+      }
+      if (!securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
       }
       return projectFacade.readProjectMetadata(projectCode, attributeName);
    }
@@ -240,7 +255,8 @@ public class ProjectService implements Serializable {
     *       Name of metadata attribute.
     * @param value
     *       Value of metadata attribute.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @PUT
    @Path("/{projectCode}/meta/{attributeName}")
@@ -262,7 +278,8 @@ public class ProjectService implements Serializable {
     *       Project code.
     * @param attributeName
     *       Name of metadata attribute.
-    * @throws UnauthorizedAccessException when user doesn't have appropriate role
+    * @throws UnauthorizedAccessException
+    *       when user doesn't have appropriate role
     */
    @DELETE
    @Path("/{projectCode}/meta/{attributeName}")

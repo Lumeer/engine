@@ -117,15 +117,18 @@ public class ProjectFacade {
    }
 
    /**
-    * Reads all projects in an organisation that is specified as a parameter
+    * Reads all projects in an organization that is specified as a parameter
     *
     * @param organizationCode
     *       code of the organization
     * @return list of all projects in an organization
     */
    public List<Project> readProjects(final String organizationCode) {
-      return dataStorage.search(LumeerConst.Project.COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), null, 0, 0)
-                        .stream().map(Project::new).collect(Collectors.toList());
+      return dataStorage.search(LumeerConst.Project
+            .COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), null, 0, 0)
+                        .stream().map(Project::new)
+                        .filter(o -> securityFacade.hasProjectRole(o.getCode(), LumeerConst.Security.ROLE_READ))
+                        .collect(Collectors.toList());
    }
 
    /**
