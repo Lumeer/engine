@@ -134,6 +134,34 @@ public class CollectionService implements Serializable {
    }
 
    /**
+    * Returns a collection from the database by it's code.
+    * @param collectionCode
+    *       collection code
+    * @throws CollectionNotFoundException
+    *       When the given collection does not exist.
+    * @throws UnauthorizedAccessException
+    *       When current user is not allowed to read the collection.
+    * @return Collection with provided code
+    */
+   @GET
+   @Path("/{collectionCode}/")
+   public Collection getCollection(final @PathParam("collectionCode") String collectionCode) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return collectionFacade.getCollection(collectionCode);
+   }
+
+   /**
     * Creates a new collection including its metadata collection with the specified name given by user.
     *
     * @param collection

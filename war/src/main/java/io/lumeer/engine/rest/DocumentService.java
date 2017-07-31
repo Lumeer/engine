@@ -61,7 +61,7 @@ import javax.ws.rs.core.MediaType;
 
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- *         <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
+ * <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 @Path("/organizations/{organization}/projects/{project}/collections/{collection}/documents")
 @RequestScoped
@@ -114,6 +114,30 @@ public class DocumentService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
+   }
+
+   /**
+    * Reads all documents in given collection.
+    *
+    * @return the DataDocument object representing the read document
+    * @throws DbException
+    *       When there is an error working with the database.
+    * @throws InvalidConstraintException
+    *       When the constraint configuration was wrong.
+    */
+   @GET
+   @Path("/")
+   @Produces(MediaType.APPLICATION_JSON)
+   public List<DataDocument> readDocuments() throws DbException, InvalidConstraintException {
+      if (organisationCode == null || projectCode == null || collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return documentFacade.getAllDocuments(collectionCode);
    }
 
    /**
@@ -203,7 +227,7 @@ public class DocumentService implements Serializable {
     *       When the constraint configuration was wrong.
     */
    @PUT
-   @Path("/update/")
+   @Path("/")
    @Consumes(MediaType.APPLICATION_JSON)
    public void updateDocument(final DataDocument updatedDocument) throws DbException, InvalidConstraintException {
       if (collectionCode == null || updatedDocument == null || updatedDocument.getId() == null) {

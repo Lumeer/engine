@@ -25,12 +25,14 @@ import io.lumeer.engine.api.constraint.Constraint;
 import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataSort;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
+import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
@@ -38,7 +40,9 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +63,9 @@ public class CollectionFacade implements Serializable {
 
    @Inject
    private DataStorageDialect dataStorageDialect;
+
+   @Inject
+   private DocumentFacade documentFacade;
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
@@ -94,6 +101,22 @@ public class CollectionFacade implements Serializable {
    }
 
    /**
+    * Finds and returns a collection by it's code
+    *
+    * @param collectionCode
+    *       collection code
+    * @throws CollectionNotFoundException
+    *       Requested collection isn't stored in the dataStorage.
+    */
+   public Collection getCollection(final String collectionCode) throws CollectionNotFoundException {
+      if (!dataStorage.hasCollection(collectionCode)) {
+         throw new CollectionNotFoundException("Collection " + collectionCode + " was not found in dataStorage. Check if you didn't use CollectionName by accident.");
+      }
+
+      return new Collection(collectionMetadataFacade.getCollectionMetadata(collectionCode).toDataDocument());
+   }
+
+   /**
     * Creates a new collection and its initial metadata.
     *
     * @param collection
@@ -112,7 +135,7 @@ public class CollectionFacade implements Serializable {
       if (collection.getCode() != null) {
          collectionCode = collection.getCode();
       } else {
-         Set<String> collectionsFromDb = dataStorage.getAllCollections().stream().collect(Collectors.toSet());
+         Set<String> collectionsFromDb = new HashSet<>(dataStorage.getAllCollections());
          collectionCode = generateCollectionCodeHash(collection.getName());
          int i = 0;
          while (collectionsFromDb.contains(collectionCode)) {
@@ -180,7 +203,7 @@ public class CollectionFacade implements Serializable {
       versionFacade.trashShadowCollection(collectionCode);
    }
 
-   public boolean hasCollection(String collectionCode){
+   public boolean hasCollection(String collectionCode) {
       return collectionMetadataFacade.getCollectionsCodeName().containsKey(collectionCode);
    }
 
@@ -224,7 +247,7 @@ public class CollectionFacade implements Serializable {
     */
    public void dropAttribute(final String collectionCode, final String attributeName) {
       collectionMetadataFacade.dropAttribute(collectionCode, attributeName);
-      List<DataDocument> documents = getAllDocuments(collectionCode);
+      List<DataDocument> documents = documentFacade.getAllDocuments(collectionCode);
 
       for (DataDocument document : documents) {
          dataStorage.dropAttribute(collectionCode, dataStorageDialect.documentIdFilter(document.getId()), attributeName);
@@ -269,7 +292,7 @@ public class CollectionFacade implements Serializable {
       // we check if attribute value in all existing documents satisfies new constraint
       ConstraintManager constraintManager = new ConstraintManager(Collections.singletonList(constraintConfiguration));
 
-      List<DataDocument> allDocuments = getAllDocuments(collectionCode);
+      List<DataDocument> allDocuments = documentFacade.getAllDocuments(collectionCode);
       for (DataDocument document : allDocuments) {
          // TODO: fix fixable value
          String value = document.get(attributeName).toString();
@@ -302,17 +325,6 @@ public class CollectionFacade implements Serializable {
       collectionMetadataFacade.setLastTimeUsedNow(collectionCode);
    }
 
-   /**
-    * Returns a list of all DataDocument objects in given collection.
-    *
-    * @param collectionCode
-    *       name of the collection
-    * @return list of all documents
-    */
-   private List<DataDocument> getAllDocuments(String collectionCode) {
-      return dataStorage.search(collectionCode, null, null, 0, 0);
-   }
-
    private static String generateCollectionCodeHash(String collectionName) {
       try {
          MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -330,5 +342,4 @@ public class CollectionFacade implements Serializable {
          return null;
       }
    }
-
 }

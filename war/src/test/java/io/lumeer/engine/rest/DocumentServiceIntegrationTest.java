@@ -102,6 +102,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
 
+   private final String COLLECTION_READ_ALL_DOCUMENTS = "DocumentServiceCollectionReadALLDocuments";
    private final String COLLECTION_CREATE_READ_UPDATE_AND_DROP_DOCUMENT = "DocumentServiceCollectionCreateReadUpdateAndDropDocument";
    private final String COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA = "DocumentServiceCollectionAddReadAndUpdateDocumentMetadata";
    private final String COLLECTION_SEARCH_HISTORY_CHANGES = "DocumentServiceCollectionSearchHistoryChanges";
@@ -131,6 +132,39 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testRegister() throws Exception {
       assertThat(documentFacade).isNotNull();
+   }
+
+   @Test
+   public void testReadDocuments() throws Exception {
+      setUpCollections(COLLECTION_READ_ALL_DOCUMENTS);
+      String code = collectionFacade.createCollection(new Collection(COLLECTION_READ_ALL_DOCUMENTS));
+
+      // 200 - the document will be inserted into the given collection
+      for (int i = 0; i < 4; i++) {
+         Response response = clients[0].target(TARGET_URI)
+                                   .path(setPathPrefix(code))
+                                   .request()
+                                   .buildPost(Entity.json(new DataDocument("Order", i)))
+                                   .invoke();
+         String documentId = response.readEntity(String.class);
+         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+         assertThat(documentFacade.readDocument(code, documentId)).isNotNull();
+         response.close();
+      }
+
+      // 200 - read the given document by its id
+      Response response2 = clients[0].target(TARGET_URI)
+                                 .path(setPathPrefix(code))
+                                 .request()
+                                 .buildGet()
+                                 .invoke();
+      List<DataDocument> dataDocuments = response2.readEntity(new GenericType<List<DataDocument>>() {
+      });
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+      assertThat(dataDocuments).hasSize(4);
+      assertThat(dataDocuments).extracting("Order", Integer.class)
+                               .containsExactly(0, 1, 2, 3);
+      response2.close();
    }
 
    @Test
@@ -176,7 +210,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       // 204 - update the document
       for (int i = 0; i < clients.length; i++) {
          Response response = clients[i].target(TARGET_URI)
-                                       .path(setPathPrefix(code) + "update/")
+                                       .path(setPathPrefix(code))
                                        .request()
                                        .buildPut(Entity.json(new DataDocument()
                                              .append("_id", documentIds[i])
@@ -210,11 +244,9 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
                                                  .append("int", 42).append("decimal", new BigDecimal("35.03535"));
 
       setUpCollections(COLLECTION_ATTRIBUTE_TYPES);
-      final Client client = ClientBuilder.newBuilder().build();
-
       String code = collectionFacade.createCollection(new Collection(COLLECTION_ATTRIBUTE_TYPES));
 
-      Response response = client.target(TARGET_URI).path(setPathPrefix(code)).request().buildPost(Entity.json(doc)).invoke();
+      Response response = clients[0].target(TARGET_URI).path(setPathPrefix(code)).request().buildPost(Entity.json(doc)).invoke();
       String documentId = response.readEntity(String.class);
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -257,7 +289,6 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
    @Test
    public void testAddReadAndUpdateDocumentMetadata() throws Exception {
       setUpCollections(COLLECTION_ADD_READ_AND_UPDATE_DOCUMENT_METADATA);
-      final Client client = ClientBuilder.newBuilder().build();
       final String attributeName = "_meta-update-user";
       final Object metaObjectValue = 123;
 
@@ -265,14 +296,14 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       String documentId = documentFacade.createDocument(code, new DataDocument());
 
       // 204 - add the document metadata
-      Response response = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta/" + attributeName).request().buildPost(Entity.entity(metaObjectValue, MediaType.APPLICATION_JSON)).invoke();
+      Response response = clients[0].target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta/" + attributeName).request().buildPost(Entity.entity(metaObjectValue, MediaType.APPLICATION_JSON)).invoke();
       Map<String, Object> documentMetadata = documentMetadataFacade.readDocumentMetadata(code, documentId);
       assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(documentMetadata.get(attributeName)).isEqualTo(metaObjectValue);
       response.close();
 
       // 200 - read the document metadata
-      Response response2 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta/").request().buildGet().invoke();
+      Response response2 = clients[0].target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta/").request().buildGet().invoke();
       Map<String, Object> metaDocument = response2.readEntity(Map.class);
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(metaDocument).isEqualTo(documentMetadata);
@@ -281,24 +312,20 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       // 204 - update the document metadata
       DataDocument updatedMetaDocument = new DataDocument();
       updatedMetaDocument.put(attributeName, "updatedValue");
-      Response response3 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta").request().buildPut(Entity.json(updatedMetaDocument)).invoke();
+      Response response3 = clients[0].target(TARGET_URI).path(setPathPrefix(code) + documentId + "/meta").request().buildPut(Entity.json(updatedMetaDocument)).invoke();
       assertThat(response3.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
       assertThat(documentMetadataFacade.readDocumentMetadata(code, documentId).get(attributeName)).isEqualTo("updatedValue");
       response3.close();
-
-      client.close();
    }
 
    @Test
    public void testSearchHistoryChanges() throws Exception {
       setUpCollections(COLLECTION_SEARCH_HISTORY_CHANGES);
-      final Client client = ClientBuilder.newBuilder().build();
-
       String code = collectionFacade.createCollection(new Collection(COLLECTION_SEARCH_HISTORY_CHANGES));
       String documentId = documentFacade.createDocument(code, new DataDocument());
 
       // only document exists, no changes in the past, code 200, listsize = 1
-      Response response = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/").request().buildGet().invoke();
+      Response response = clients[0].target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/").request().buildGet().invoke();
       List<DataDocument> changedDocuments = response.readEntity(new GenericType<List<DataDocument>>() {
       });
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -313,21 +340,17 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       documentFacade.updateDocument(code, documentVersionOne);
       documentFacade.updateDocument(code, documentVersionTwo);
 
-      Response response2 = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/").request().buildGet().invoke();
+      Response response2 = clients[0].target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/").request().buildGet().invoke();
       List<DataDocument> changedDocuments2 = response2.readEntity(new GenericType<List<DataDocument>>() {
       });
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       assertThat(changedDocuments2).hasSize(3);
       response2.close();
-
-      client.close();
    }
 
    @Test
    public void testRevertDocumentVersion() throws Exception {
       setUpCollections(COLLECTION_REVERT_DOCUMENT_VERSION);
-      final Client client = ClientBuilder.newBuilder().build();
-
       String code = collectionFacade.createCollection(new Collection(COLLECTION_REVERT_DOCUMENT_VERSION));
 
       String documentId = documentFacade.createDocument(code, new DataDocument());
@@ -342,7 +365,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       int versionTwo = documentVersion2.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
       assertThat(versionTwo).isEqualTo(2);
 
-      Response response = client.target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      Response response = clients[0].target(TARGET_URI).path(setPathPrefix(code) + documentId + "/versions/" + 1).request().buildPost(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
       DataDocument currentDocument = documentFacade.readDocument(code, documentId);
       int versionThree = currentDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY);
       boolean isFirstVersion = !currentDocument.containsKey("dummyVersionTwoAttribute");
@@ -350,8 +373,6 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       assertThat(versionThree).isEqualTo(3);
       assertThat(isFirstVersion).isTrue();
       response.close();
-
-      client.close();
    }
 
    private void setUpCollections(final String collectionName) throws DbException {
