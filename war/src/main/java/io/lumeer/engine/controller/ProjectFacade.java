@@ -127,7 +127,6 @@ public class ProjectFacade {
       return dataStorage.search(LumeerConst.Project
             .COLLECTION_NAME, organizationIdFilter(organizationFacade.getOrganizationId(organizationCode)), null, 0, 0)
                         .stream().map(Project::new)
-                        .filter(o -> securityFacade.hasProjectRole(o.getCode(), LumeerConst.Security.ROLE_READ))
                         .collect(Collectors.toList());
    }
 

@@ -28,6 +28,7 @@ import io.lumeer.engine.controller.SecurityFacade;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -75,7 +76,10 @@ public class ProjectService implements Serializable {
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    public List<Project> getProjects() {
-      return projectFacade.readProjects(organizationCode);
+      return projectFacade.readProjects(organizationCode)
+                          .stream()
+                          .filter(o -> securityFacade.hasProjectRole(o.getCode(), LumeerConst.Security.ROLE_READ))
+                          .collect(Collectors.toList());
    }
 
    /**

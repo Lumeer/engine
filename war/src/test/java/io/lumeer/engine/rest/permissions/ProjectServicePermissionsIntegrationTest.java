@@ -1,3 +1,23 @@
+/*
+ * -----------------------------------------------------------------------\
+ * Lumeer
+ *
+ * Copyright (C) since 2016 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -----------------------------------------------------------------------/
+ */
+
 package io.lumeer.engine.rest.permissions;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -172,7 +192,7 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
    }
 
    @Test
-   public void testGetUpdateProjectManageRole() throws UserAlreadyExistsException {
+   public void testUpdateProjectManageRole() throws UserAlreadyExistsException {
       String groupName = "TestGroup4";
       userGroupFacade.addGroups(organizationCode, groupName);
       userGroupFacade.addUser(organizationCode, userEmail, groupName);
@@ -213,6 +233,8 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
       String projectName4 = "ProjectServiceTestProject4";
       List<String> projectCodes = Arrays.asList(projectCode1, projectCode2, projectCode3, projectCode4);
       List<String> projectNames = Arrays.asList(projectName1, projectName2, projectName3, projectName4);
+      String projectCodeRoleByGroup = "ProjectHavingReadByGroup_code";
+      String projectNameRoleByGroup = "ProjectHavingReadByGroup";
 
       for (int i = 0; i < projectCodes.size(); i++) {
          projectFacade.createProject(new Project(projectCodes.get(i), projectNames.get(i)));
@@ -226,13 +248,23 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
          }
       }
 
+      projectFacade.createProject(new Project(projectCodeRoleByGroup, projectNameRoleByGroup));
+      securityFacade.removeProjectUsersRole(projectCodeRoleByGroup, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeProjectUsersRole(projectCodeRoleByGroup, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      securityFacade.removeProjectUsersRole(projectCodeRoleByGroup, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasProjectRole(projectCodeRoleByGroup, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCodeRoleByGroup, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCodeRoleByGroup, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      securityFacade.addProjectGroupsRole(projectCodeRoleByGroup, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      assertThat(securityFacade.hasProjectRole(projectCodeRoleByGroup, LumeerConst.Security.ROLE_READ)).isTrue();
+
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       List<Project> projects = response.readEntity(new GenericType<List<Project>>(List.class) {
       });
-      assertThat(projects).extracting("code").containsOnly(projectCode1, projectCode3);
-      assertThat(projects).extracting("name").containsOnly(projectName1, projectName3);
+      assertThat(projects).extracting("code").containsOnly(projectCode1, projectCode3, projectCodeRoleByGroup);
+      assertThat(projects).extracting("name").containsOnly(projectName1, projectName3, projectNameRoleByGroup);
    }
 
    @Test
@@ -316,4 +348,124 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
             request(MediaType.APPLICATION_JSON).buildPost(Entity.json(new Collection(collectionName))).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
+
+   @Test
+   public void testGetProjectGroupReadRole() throws UserAlreadyExistsException {
+      String groupName = "TestGroup10";
+      userGroupFacade.addGroups(organizationCode, groupName);
+      userGroupFacade.addUser(organizationCode, userEmail, groupName);
+
+      String projectCode = "ProjectServiceTestProject_code";
+      String projectName = "ProjectServiceTestProject";
+      // This adds all roles (read, manage write) to currently logged in user.
+      projectFacade.createProject(new Project(projectCode, projectName));
+
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      // Add the role for the group which contains currently logged in user.
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)).isTrue();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_WRITE)).isFalse();
+
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
+            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      client.close();
+      createClient();
+      response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/name").
+            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+   }
+
+   @Test
+   public void testUpdateProjectGroupManageRole() throws UserAlreadyExistsException {
+      String groupName = "TestGroup11";
+      userGroupFacade.addGroups(organizationCode, groupName);
+      userGroupFacade.addUser(organizationCode, userEmail, groupName);
+
+      String projectCode = "ProjectServiceTestProject_id";
+      String projectName = "ProjectServiceTestProject";
+      projectFacade.createProject(new Project(projectCode, projectName));
+
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)).isTrue();
+
+      String newProjectName = "NewName";
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/name/" + newProjectName).
+            request(MediaType.APPLICATION_JSON).buildPut(Entity.entity(null, MediaType.APPLICATION_JSON)).invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
+      client.close();
+      createClient();
+      String newprojectCode = "NewCode";
+      String newProjectName2 = "NewName2";
+      response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
+            request(MediaType.APPLICATION_JSON).buildPut(Entity.json(new Project(newprojectCode, newProjectName2))).invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
+   }
+
+   @Test
+   public void testDeleteProjectGroupManageRole() throws UserAlreadyExistsException {
+      String groupName = "TestGroup12";
+      userGroupFacade.addGroups(organizationCode, groupName);
+      userGroupFacade.addUser(organizationCode, userEmail, groupName);
+
+      String projectCode = "ProjectServiceTestProject_code1";
+      String projectName = "ProjectServiceTestProject1";
+      projectFacade.createProject(new Project(projectCode, projectName));
+
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)).isTrue();
+
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
+            request(MediaType.APPLICATION_JSON).buildDelete().invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
+
+   }
+
+   @Test
+   public void testCreateCollectionInProjectGroupWriteRole() throws UserAlreadyExistsException {
+      String groupName = "TestGroup13";
+      userGroupFacade.addGroups(organizationCode, groupName);
+      userGroupFacade.addUser(organizationCode, userEmail, groupName);
+
+      String projectCode = "ProjectServiceTestProject_code1";
+      String projectName = "ProjectServiceTestProject1";
+      projectFacade.createProject(new Project(projectCode, projectName));
+
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      securityFacade.removeProjectUsersRole(projectCode, Collections.singletonList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addProjectGroupsRole(projectCode, Collections.singletonList(groupName), LumeerConst.Security.ROLE_WRITE);
+      assertThat(securityFacade.hasProjectRole(projectCode, LumeerConst.Security.ROLE_WRITE)).isTrue();
+
+      String collectionName = "CollectionName3";
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/collections/").
+            request(MediaType.APPLICATION_JSON).buildPost(Entity.json(new Collection(collectionName))).invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+   }
+
 }
