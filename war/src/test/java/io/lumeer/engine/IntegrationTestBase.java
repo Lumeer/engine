@@ -30,6 +30,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.MongodProcess;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.IMongodConfig;
 import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
@@ -46,6 +47,10 @@ public abstract class IntegrationTestBase {
    private static final int DB_PORT = Integer.getInteger("lumeer.db.port", 27017);
 
    private static MongodExecutable mongodExecutable;
+   /**
+    * Running process created by mongodExecutable.
+    */
+   private static MongodProcess mongodProcess;
 
    @Deployment
    public static Archive<?> createTestArchive() {
@@ -79,13 +84,14 @@ public abstract class IntegrationTestBase {
             .build();
 
       mongodExecutable = starter.prepare(mongodConfig);
-      mongodExecutable.start();
+      mongodProcess = mongodExecutable.start();
    }
 
    @AfterClass
    @RunAsClient
    public static void stopEmbeddedMongoDb() {
-      if (mongodExecutable != null) {
+      if (mongodExecutable != null && mongodProcess != null && mongodProcess.isProcessRunning()) {
+         mongodProcess.stop();
          mongodExecutable.stop();
       }
    }

@@ -28,6 +28,7 @@ import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -64,7 +65,10 @@ public class OrganizationService implements Serializable {
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    public List<Organization> getOrganizations() {
-      return organizationFacade.readOrganizations();
+      return organizationFacade.readOrganizations()
+                               .stream()
+                               .filter(o -> securityFacade.hasOrganizationRole(o.getCode(), LumeerConst.Security.ROLE_READ))
+                               .collect(Collectors.toList());
    }
 
    /**

@@ -106,7 +106,6 @@ public class OrganizationFacade {
    public List<Organization> readOrganizations() {
       return dataStorage.search(LumeerConst.Organization.COLLECTION_NAME, null, null, 0, 0)
                         .stream().map(Organization::new)
-                        .filter(o -> securityFacade.hasOrganizationRole(o.getCode(), LumeerConst.Security.ROLE_READ))
                         .collect(Collectors.toList());
    }
 

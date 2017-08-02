@@ -150,6 +150,8 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       String name4 = "testGetOrganizationsSomeReadRoles4";
       String code3 = "testGetOrganizationsSomeReadRoles3_id";
       String code4 = "testGetOrganizationsSomeReadRoles4_id";
+      String nameRoleFromGroup = "testGetOrganizationsSomeReadRolesGroup";
+      String codeRoleFromGroup = "testGetOrganizationsSomeReadRolesGroup_code";
 
       List<String> names = Arrays.asList(name1, name2, name3, name4);
       List<String> codes = Arrays.asList(code1, code2, code3, code4);
@@ -165,6 +167,16 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
          userGroupFacade.addGroups(codes.get(i), groupName);
          userGroupFacade.addUser(codes.get(i), userEmail, groupName);
       }
+
+      organizationFacade.createOrganization(new Organization(codeRoleFromGroup, nameRoleFromGroup));
+      userGroupFacade.addGroups(codeRoleFromGroup, groupName);
+      userGroupFacade.addUser(codeRoleFromGroup, userEmail, groupName);
+
+      securityFacade.removeOrganizationUsersRole(codeRoleFromGroup, Arrays.asList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeOrganizationUsersRole(codeRoleFromGroup, Arrays.asList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.removeOrganizationUsersRole(codeRoleFromGroup, Arrays.asList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      securityFacade.addOrganizationGroupsRole(codeRoleFromGroup, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      assertThat(securityFacade.hasOrganizationRole(codeRoleFromGroup, LumeerConst.Security.ROLE_READ)).isTrue();
 
       securityFacade.removeOrganizationUsersRole(code1, Arrays.asList(userEmail), LumeerConst.Security.ROLE_READ);
       securityFacade.removeOrganizationUsersRole(code1, Arrays.asList(userEmail), LumeerConst.Security.ROLE_MANAGE);
@@ -184,8 +196,8 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       List<Organization> organizations = response.readEntity(new GenericType<List<Organization>>(List.class) {
       });
 
-      assertThat(organizations).extracting("code").containsOnly(code2, code4);
-      assertThat(organizations).extracting("name").containsOnly(name2, name4);
+      assertThat(organizations).extracting("code").containsOnly(code2, code4, codeRoleFromGroup);
+      assertThat(organizations).extracting("name").containsOnly(name2, name4, nameRoleFromGroup);
       client.close();
    }
 
@@ -302,6 +314,113 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       userGroupFacade.addGroups(code, groupName);
       userGroupFacade.addUser(code, userEmail, groupName);
 
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_WRITE)).isTrue();
+
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target(TARGET_URI)
+                                .path(projectsPathPrefix(code))
+                                .request()
+                                .buildPost(Entity.json(new Project(project, projectName)))
+                                .invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
+      client.close();
+   }
+
+   public void testGetOrganizationGroupReadRole() throws UserAlreadyExistsException {
+      String name = "testGetOrganizationGroupReadRole";
+      String code = "testGetOrganizationGroupReadRole_code";
+
+      String userEmail = userFacade.getUserEmail();
+      String groupName = "TestGroup7";
+      userGroupFacade.addGroups(code, groupName);
+      userGroupFacade.addUser(code, userEmail, groupName);
+      //This adds all roles (read, manage, write) for currently logged in user.
+      organizationFacade.createOrganization(new Organization(code, name));
+
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      // Add role by adding role to the whole group that the currently logged in user belongs to.
+      securityFacade.addOrganizationGroupsRole(code, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_READ)).isTrue();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_WRITE)).isFalse();
+
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + code).
+            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      client.close();
+      final Client client1 = ClientBuilder.newBuilder().build();
+      response = client1.target(TARGET_URI).path(PATH_PREFIX + code + "/name").
+            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      client1.close();
+   }
+
+   public void testUpdateOrganizationGroupManageRole() throws UserAlreadyExistsException {
+      String name = "TestUpdateOrganizationManageRole";
+      String code = "TestUpdateOrganizationManageRole_id";
+      String newCode = "NewTestUpdateOrganizationManageRole_id";
+      organizationFacade.createOrganization(new Organization(code, name));
+
+      String userEmail = userFacade.getUserEmail();
+      String groupName = "TestGroup8";
+      userGroupFacade.addGroups(code, groupName);
+      userGroupFacade.addUser(code, userEmail, groupName);
+
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      securityFacade.addOrganizationGroupsRole(code, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      securityFacade.addOrganizationGroupsRole(code, Collections.singletonList(groupName), LumeerConst.Security.ROLE_MANAGE);
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_MANAGE)).isTrue();
+
+      final Client client = ClientBuilder.newBuilder().build();
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + code + "/code/" + newCode)
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                .invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
+      client.close();
+      final Client client1 = ClientBuilder.newBuilder().build();
+      String newOrgName = "NewName2";
+      response = client1.target(TARGET_URI)
+                        .path(PATH_PREFIX + newCode)
+                        .request(MediaType.APPLICATION_JSON)
+                        .buildPut(Entity.json(new Organization(newCode, newOrgName)))
+                        .invoke();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.NO_CONTENT);
+      client1.close();
+   }
+
+   public void testCreateProjectInOrganizationGroupWriteRole() throws UserAlreadyExistsException {
+      final String project = "project3";
+      final String projectName = "Project3Name";
+      final String code = "TestCreateProjectInOrganizationGroupWriteRole_id";
+      final String name = "TestCreateProjectInOrganizationGroupWriteRole";
+      organizationFacade.createOrganization(new Organization(code, name));
+
+      String userEmail = userFacade.getUserEmail();
+      String groupName = "TestGroup9";
+      userGroupFacade.addGroups(code, groupName);
+      userGroupFacade.addUser(code, userEmail, groupName);
+
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_READ);
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.removeOrganizationUsersRole(code, Arrays.asList(userEmail), LumeerConst.Security.ROLE_WRITE);
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_READ)).isFalse();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_MANAGE)).isFalse();
+      assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_WRITE)).isFalse();
+      securityFacade.addOrganizationGroupsRole(code, Collections.singletonList(groupName), LumeerConst.Security.ROLE_READ);
+      securityFacade.addOrganizationGroupsRole(code, Collections.singletonList(groupName), LumeerConst.Security.ROLE_MANAGE);
+      securityFacade.addOrganizationGroupsRole(code, Collections.singletonList(groupName), LumeerConst.Security.ROLE_WRITE);
       assertThat(securityFacade.hasOrganizationRole(code, LumeerConst.Security.ROLE_WRITE)).isTrue();
 
       final Client client = ClientBuilder.newBuilder().build();
