@@ -191,7 +191,7 @@ public class DatabaseInitializer {
    private void initOrganizationRoles(String organizationId) {
       DataDocument roles = new DataDocument()
             .append(Security.ORGANIZATION_ID_KEY, organizationId)
-            .append(Security.ROLES_KEY, new DataDocument()
+            .append(Security.PERMISSIONS_KEY, new DataDocument()
                   .append(Security.ROLE_MANAGE,
                         new DataDocument()
                               .append(Security.USERS_KEY, Collections.emptyList())
@@ -249,7 +249,7 @@ public class DatabaseInitializer {
                .append(Security.USERS_KEY, Collections.emptyList())
                .append(Security.GROUP_KEY, Collections.emptyList()));
       }
-      doc.append(Security.ROLES_KEY, rolesDoc);
+      doc.append(Security.PERMISSIONS_KEY, rolesDoc);
       userDataStorage.createDocument(Security.ROLES_COLLECTION_NAME, doc);
    }
 

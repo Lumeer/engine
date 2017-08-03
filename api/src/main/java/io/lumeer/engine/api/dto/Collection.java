@@ -25,6 +25,11 @@ import io.lumeer.engine.api.data.DataDocument;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
@@ -35,17 +40,26 @@ public class Collection {
    private final String icon;
    private final String color;
    private final int documentCount;
+   private final List<String> userRoles;
 
    public Collection(String name) {
-      this(null, name, "", "", 0);
+      this(null, name, "", "", 0, Collections.emptyList());
    }
 
-   public Collection(DataDocument document) {
+   public Collection(DataDocument document, String user, List<String> userGroups) {
       this(document.getString(LumeerConst.Collection.CODE),
             document.getString(LumeerConst.Collection.REAL_NAME),
             document.getString(LumeerConst.Collection.ICON),
             document.getString(LumeerConst.Collection.COLOR),
-            document.getInteger(LumeerConst.Collection.DOCUMENT_COUNT));
+            document.getInteger(LumeerConst.Collection.DOCUMENT_COUNT),
+            new ArrayList<>());
+
+      Set<String> roles = new HashSet<>();
+      List<DataDocument> usersList = document.getDataDocument(LumeerConst.Security.PERMISSIONS_KEY).getArrayList(LumeerConst.Security.USERS_KEY, DataDocument.class);
+      List<DataDocument> groupsList = document.getDataDocument(LumeerConst.Security.PERMISSIONS_KEY).getArrayList(LumeerConst.Security.GROUP_KEY, DataDocument.class);
+      usersList.stream().filter(u -> u.getString(LumeerConst.Security.USERGROUP_NAME_KEY).equals(user)).forEach(d -> roles.addAll(d.getArrayList(LumeerConst.Security.USERGROUP_ROLES_KEY, String.class)));
+      groupsList.stream().filter(u -> userGroups.contains(u.getString(LumeerConst.Security.USERGROUP_NAME_KEY))).forEach(d -> roles.addAll(d.getArrayList(LumeerConst.Security.USERGROUP_ROLES_KEY, String.class)));
+      this.userRoles.addAll(roles);
    }
 
    @JsonCreator
@@ -53,12 +67,14 @@ public class Collection {
          final @JsonProperty("name") String name,
          final @JsonProperty("icon") String icon,
          final @JsonProperty("color") String color,
-         final @JsonProperty("documentCount") int documentCount) {
+         final @JsonProperty("documentCount") int documentCount,
+         final @JsonProperty("userRoles") List<String> userRoles) {
       this.code = code;
       this.name = name;
       this.icon = icon;
       this.color = color;
       this.documentCount = documentCount;
+      this.userRoles = userRoles;
    }
 
    public String getCode() {
@@ -79,6 +95,10 @@ public class Collection {
 
    public int getDocumentCount() {
       return documentCount;
+   }
+
+   public List<String> getUserRoles() {
+      return userRoles != null ? Collections.unmodifiableList(userRoles) : Collections.emptyList();
    }
 
    public DataDocument toDataDocument() {

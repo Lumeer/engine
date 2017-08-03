@@ -25,8 +25,10 @@ import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.CollectionMetadata;
+import io.lumeer.engine.api.dto.Permission;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
@@ -40,10 +42,12 @@ import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SearchFacade;
 import io.lumeer.engine.controller.SecurityFacade;
 import io.lumeer.engine.controller.UserFacade;
+import io.lumeer.engine.controller.UserGroupFacade;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -86,6 +90,9 @@ public class CollectionService implements Serializable {
    private UserFacade userFacade;
 
    @Inject
+   private UserGroupFacade userGroupFacade;
+
+   @Inject
    @UserDataStorage
    private DataStorage dataStorage;
 
@@ -117,20 +124,17 @@ public class CollectionService implements Serializable {
     */
    @GET
    @Path("/")
-   public List<Collection> getCollections(@QueryParam("page") @DefaultValue("1") int page, @QueryParam("size") @DefaultValue("0") int size) {
+   public List<Collection> getCollections(@QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("0") int size) {
       int skip;
       if (size <= 0) {
          size = Integer.MAX_VALUE;
          skip = 0;
       } else {
-         skip = page > 1 ? (page - 1) * size : 0;
+         skip = page * size;
       }
-      return collectionFacade.getCollections().stream()
-                             .filter(c -> securityFacade.hasCollectionRole(projectCode, c.getCode(),
-                                   LumeerConst.Security.ROLE_READ))
-                             .skip(skip)
-                             .limit(size)
-                             .collect(Collectors.toList());
+      String user = userFacade.getUserEmail();
+      List<String> groups = userGroupFacade.getGroupsOfUser(organizationCode, user);
+      return collectionFacade.getCollections(user, groups, skip, size);
    }
 
    /**
@@ -144,17 +148,17 @@ public class CollectionService implements Serializable {
     * @return Collection with provided code
     */
    @GET
-   @Path("/{collectionCode}/")
+   @Path("{collectionCode}")
    public Collection getCollection(final @PathParam("collectionCode") String collectionCode) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionCode == null) {
          throw new BadRequestException();
       }
 
-      if (!collectionFacade.hasCollection(collectionCode)) {
+      Collection collection = collectionFacade.getCollection(collectionCode);
+      if (collection == null) {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
-
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collection.getUserRoles().contains(LumeerConst.Security.ROLE_MANAGE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -211,7 +215,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -237,7 +241,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -273,7 +277,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -303,7 +307,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -340,7 +344,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -389,7 +393,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -418,7 +422,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -450,7 +454,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -470,7 +474,7 @@ public class CollectionService implements Serializable {
     */
    @GET
    @Path("/{collectionCode}/attributes")
-   public Set<String> readCollectionAttributes(final @PathParam("collectionCode") String collectionCode) throws CollectionNotFoundException, UnauthorizedAccessException {
+   public List<Attribute> readCollectionAttributes(final @PathParam("collectionCode") String collectionCode) throws CollectionNotFoundException, UnauthorizedAccessException {
       if (collectionCode == null) {
          throw new BadRequestException();
       }
@@ -479,11 +483,11 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
-      return collectionFacade.readCollectionAttributes(collectionCode).keySet();
+      return collectionFacade.readCollectionAttributes(collectionCode);
    }
 
    /**
@@ -513,7 +517,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -544,7 +548,7 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -576,11 +580,141 @@ public class CollectionService implements Serializable {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
       collectionMetadataFacade.dropAttributeConstraint(collectionCode, attributeName, constraintConfiguration);
+   }
+
+   @GET
+   @Path("/{collectionCode}/permissions")
+   public Map<String, List<Permission>> getPermissions(final @PathParam("collectionCode") String collectionCode) throws CollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      return collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+   }
+
+   @DELETE
+   @Path("/{collectionCode}/permissions/users")
+   public void removeUser(final @PathParam("collectionCode") String collectionCode, final @QueryParam("user") String user) throws UserCollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionMetadataFacade.removeUser(projectCode, collectionCode, user);
+   }
+
+   @DELETE
+   @Path("/{collectionCode}/permissions/groups")
+   public void removeGroup(final @PathParam("collectionCode") String collectionCode, final @QueryParam("group") String group) throws UserCollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionMetadataFacade.removeGroup(projectCode, collectionCode, group);
+   }
+
+   @PUT
+   @Path("/{collectionCode}/permissions/users")
+   public void setRolesToUser(final @PathParam("collectionCode") String collectionCode,
+         final @QueryParam("user") String user, final @QueryParam("roles") List<String> roles) throws UserCollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionMetadataFacade.setRolesToUser(projectCode, collectionCode, roles, user);
+   }
+
+   @PUT
+   @Path("/{collectionCode}/permissions/groups")
+   public void setRolesToGroup(final @PathParam("collectionCode") String collectionCode,
+         final @QueryParam("group") String group, final @QueryParam("roles") List<String> roles) throws UserCollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionMetadataFacade.setRolesToGroup(projectCode, collectionCode, roles, group);
+   }
+
+   @POST
+   @Path("/{collectionCode}/permissions/users")
+   public void addUserWithRoles(final @PathParam("collectionCode") String collectionCode,
+         final @QueryParam("user") String user, final @QueryParam("roles") List<String> roles) throws UserCollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, roles, user);
+   }
+
+   @POST
+   @Path("/{collectionCode}/permissions/groups")
+   public void addGroupWithRoles(final @PathParam("collectionCode") String collectionCode,
+         final @QueryParam("group") String group, final @QueryParam("roles") List<String> roles) throws UserCollectionNotFoundException, UnauthorizedAccessException {
+      if (collectionCode == null) {
+         throw new BadRequestException();
+      }
+
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
+      }
+
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_MANAGE)) {
+         throw new UnauthorizedAccessException();
+      }
+
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, roles, group);
    }
 
 }

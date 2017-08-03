@@ -32,6 +32,7 @@ import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.CollectionMetadata;
+import io.lumeer.engine.api.dto.Permission;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidValueException;
@@ -73,7 +74,7 @@ public class CollectionMetadataFacade implements Serializable {
    private UserFacade userFacade;
 
    @Inject
-   private SecurityFacade securityFacade;
+   private UserGroupFacade userGroupFacade;
 
    @Inject
    private ProjectFacade projectFacade;
@@ -145,13 +146,33 @@ public class CollectionMetadataFacade implements Serializable {
    /**
     * Gets limited info about all collections in database
     *
+    * @param user
+    *       User identificator
+    * @param groups
+    *       User groups
+    * @param skip
+    *       Number of skipped collections
+    * @param size
+    *       Max number of collections
     * @return list with metadata
     */
-   public List<Collection> getCollections() {
+   public List<Collection> getCollections(String user, List<String> groups, int skip, int size) {
       DataSort sort = dialect.documentFieldSort(LumeerConst.Collection.LAST_TIME_USED, LumeerConst.SORT_DESCENDING_ORDER);
-      List<String> projection = Arrays.asList(LumeerConst.Collection.CODE, LumeerConst.Collection.REAL_NAME, LumeerConst.Collection.COLOR, LumeerConst.Collection.ICON, LumeerConst.Collection.DOCUMENT_COUNT);
-      return dataStorage.search(metadataCollection(), null, sort, projection, 0, 0).stream()
-                        .map(Collection::new).collect(Collectors.toList());
+      List<String> projection = Arrays.asList(LumeerConst.Collection.CODE, LumeerConst.Collection.REAL_NAME, LumeerConst.Collection.COLOR, LumeerConst.Collection.ICON, LumeerConst.Collection.DOCUMENT_COUNT, LumeerConst.Security.PERMISSIONS_KEY);
+      DataFilter filter = dialect.collectionPermissionsRoleFilter(LumeerConst.Security.ROLE_READ, user, groups);
+      return dataStorage.search(metadataCollection(), filter, sort, projection, skip, size).stream()
+                        .map(doc -> new Collection(doc, user, groups)).collect(Collectors.toList());
+   }
+
+   public Collection getCollection(String collectionCode) {
+      List<String> projection = Arrays.asList(LumeerConst.Collection.CODE, LumeerConst.Collection.REAL_NAME, LumeerConst.Collection.COLOR, LumeerConst.Collection.ICON, LumeerConst.Collection.DOCUMENT_COUNT, LumeerConst.Security.PERMISSIONS_KEY);
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(metadataCollection(), collectionCodeFilter(collectionCode), projection);
+      if (document == null) {
+         return null;
+      }
+      String user = userFacade.getUserEmail();
+      List<String> groups = userGroupFacade.getGroupsOfUser(organizationFacade.getOrganizationCode(), user);
+      return new Collection(document, user, groups);
    }
 
    /**
@@ -213,17 +234,21 @@ public class CollectionMetadataFacade implements Serializable {
     * @param collection
     *       collection metadata values
     */
-   public String createInitialMetadata(String collectionCode, Collection collection) {
-      DataDocument toCreateDocument = collection.toDataDocument()
-                                                .append(LumeerConst.Collection.CODE, collectionCode)
-                                                .append(LumeerConst.Collection.ATTRIBUTES, new ArrayList<>())
-                                                .append(LumeerConst.Collection.LAST_TIME_USED, new Date())
-                                                .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS, new LinkedList<>())
-                                                .append(LumeerConst.Collection.CREATE_DATE, new Date())
-                                                .append(LumeerConst.Collection.CREATE_USER, userFacade.getUserEmail())
-                                                .append(LumeerConst.Collection.UPDATE_DATE, null)
-                                                .append(LumeerConst.Collection.UPDATE_USER, null)
-                                                .append(LumeerConst.Collection.CUSTOM_META, new DataDocument());
+   public String createInitialMetadata(String collectionCode, Collection collection, String user, List<String> roles) {
+      DataDocument toCreateDocument = collection.toDataDocument();
+      toCreateDocument.append(LumeerConst.Collection.CODE, collectionCode)
+                      .append(LumeerConst.Collection.ATTRIBUTES, new ArrayList<>())
+                      .append(LumeerConst.Collection.LAST_TIME_USED, new Date())
+                      .append(LumeerConst.Collection.RECENTLY_USED_DOCUMENTS, new LinkedList<>())
+                      .append(LumeerConst.Collection.CREATE_DATE, new Date())
+                      .append(LumeerConst.Collection.CREATE_USER, userFacade.getUserEmail())
+                      .append(LumeerConst.Collection.UPDATE_DATE, null)
+                      .append(LumeerConst.Collection.UPDATE_USER, null)
+                      .append(LumeerConst.Collection.CUSTOM_META, new DataDocument())
+                      .append(LumeerConst.Security.PERMISSIONS_KEY, new DataDocument(LumeerConst.Security.USERS_KEY,
+                            Collections.singletonList(new DataDocument(LumeerConst.Security.USERGROUP_NAME_KEY, user)
+                                  .append(LumeerConst.Security.USERGROUP_ROLES_KEY, roles)))
+                            .append(LumeerConst.Security.GROUP_KEY, new ArrayList<>()));
       return dataStorage.createDocument(metadataCollection(), toCreateDocument);
    }
 
@@ -253,6 +278,69 @@ public class CollectionMetadataFacade implements Serializable {
       dataStorage.dropDocument(metadataCollection(), collectionCodeFilter(collectionCode));
    }
 
+   public boolean hasRole(String projectCode, String collectionCode, String role) {
+      String user = userFacade.getUserEmail();
+      List<String> groups = userGroupFacade.getGroupsOfUser(organizationFacade.getOrganizationCode(), user);
+      return dataStorage.readDocumentIncludeAttrs(metadataCollection(projectCode), permissionsRoleFilter(collectionCode, role, user, groups), Collections.emptyList()) != null;
+   }
+
+   public Map<String, List<Permission>> getPermissions(String projectCode, String collectionCode) {
+      DataDocument document = dataStorage.readDocumentIncludeAttrs(metadataCollection(projectCode),
+            collectionCodeFilter(collectionCode), Collections.singletonList(LumeerConst.Security.PERMISSIONS_KEY));
+      if (document == null || !document.containsKey(LumeerConst.Security.PERMISSIONS_KEY)) {
+         return Collections.emptyMap();
+      }
+
+      Map<String, List<Permission>> permissions = new HashMap<>();
+      List<String> keys = Arrays.asList(LumeerConst.Security.USERS_KEY, LumeerConst.Security.GROUP_KEY);
+      DataDocument permissionsDocument = document.getDataDocument(LumeerConst.Security.PERMISSIONS_KEY);
+      for (String key : keys) {
+         permissions.put(key, permissionsDocument.getArrayList(key, DataDocument.class).stream()
+                                                 .map(Permission::new).collect(Collectors.toList()));
+      }
+      return permissions;
+   }
+
+   public void setRolesToUser(String projectCode, String collectionCode, List<String> roles, String user) {
+      setRole(projectCode, collectionCode, LumeerConst.Security.USERS_KEY, roles, user);
+   }
+
+   public void setRolesToGroup(String projectCode, String collectionCode, List<String> roles, String group) {
+      setRole(projectCode, collectionCode, LumeerConst.Security.GROUP_KEY, roles, group);
+   }
+
+   private void setRole(String projectCode, String collectionCode, String key, List<String> roles, String name) {
+      DataDocument toUpdate = new DataDocument(dialect.concatFields(LumeerConst.Security.PERMISSIONS_KEY, key, "$", LumeerConst.Security.USERGROUP_ROLES_KEY), roles);
+      dataStorage.updateDocument(metadataCollection(projectCode), toUpdate, permissionsFilter(collectionCode, key, name));
+   }
+
+   public void removeUser(String projectCode, String collectionCode, String user) {
+      removeUserOrGroup(projectCode, collectionCode, LumeerConst.Security.USERS_KEY, user);
+   }
+
+   public void removeGroup(String projectCode, String collectionCode, String group) {
+      removeUserOrGroup(projectCode, collectionCode, LumeerConst.Security.GROUP_KEY, group);
+   }
+
+   private void removeUserOrGroup(String projectCode, String collectionCode, String key, String name) {
+      dataStorage.removeItemFromArray(metadataCollection(projectCode), permissionsFilter(collectionCode, key, name),
+            dialect.concatFields(LumeerConst.Security.PERMISSIONS_KEY, key), new DataDocument(LumeerConst.Security.USERGROUP_NAME_KEY, name));
+   }
+
+   public void addUserWithRoles(String projectCode, String collectionCode, List<String> roles, String user) {
+      addNewWithRoles(projectCode, collectionCode, LumeerConst.Security.USERS_KEY, roles, user);
+   }
+
+   public void addGroupWithRoles(String projectCode, String collectionCode, List<String> roles, String group) {
+      addNewWithRoles(projectCode, collectionCode, LumeerConst.Security.GROUP_KEY, roles, group);
+   }
+
+   private void addNewWithRoles(String projectCode, String collectionCode, String key, List<String> roles, String name) {
+      dataStorage.addItemToArray(metadataCollection(projectCode), collectionCodeFilter(collectionCode),
+            dialect.concatFields(LumeerConst.Security.PERMISSIONS_KEY, key),
+            new DataDocument(LumeerConst.Security.USERGROUP_NAME_KEY, name).append(LumeerConst.Security.USERGROUP_ROLES_KEY, roles));
+   }
+
    /**
     * Gets set of names of collection attributes.
     *
@@ -278,17 +366,18 @@ public class CollectionMetadataFacade implements Serializable {
     *
     * @param collectionCode
     *       collection code
-    * @return map, keys are attributes' names, values are objects with attributes info
+    * @return list of collection attributes
     */
-   public Map<String, Attribute> getAttributesInfo(String collectionCode) {
+   public List<Attribute> getAttributesInfo(String collectionCode) {
       DataDocument metaData = readMetadata(collectionCodeFilter(collectionCode), Collections.singletonList(LumeerConst.Collection.ATTRIBUTES));
 
       if (metaData == null) {
-         return Collections.emptyMap();
+         return Collections.emptyList();
       }
       return metaData.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class)
                      .stream()
-                     .collect(Collectors.toMap(a -> a.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME), Attribute::new));
+                     .map(Attribute::new)
+                     .collect(Collectors.toList());
    }
 
    /**
@@ -866,6 +955,17 @@ public class CollectionMetadataFacade implements Serializable {
 
    private DataFilter collectionCodeFilter(String collectionCode) {
       return dialect.fieldValueFilter(LumeerConst.Collection.CODE, collectionCode);
+   }
+
+   private DataFilter permissionsRoleFilter(String collectionCode, String role, String user, List<String> groups) {
+      return dialect.combineFilters(dialect.collectionPermissionsRoleFilter(role, user, groups), collectionCodeFilter(collectionCode));
+   }
+
+   private DataFilter permissionsFilter(String collectionCode, String key, String name) {
+      Map<String, Object> filter = new HashMap<>();
+      filter.put(LumeerConst.Collection.CODE, collectionCode);
+      filter.put(dialect.concatFields(LumeerConst.Security.PERMISSIONS_KEY, key, LumeerConst.Security.USERGROUP_NAME_KEY), name);
+      return dialect.multipleFieldsValueFilter(filter);
    }
 
    private DataFilter collectionIdFilter(final String collectionId) {

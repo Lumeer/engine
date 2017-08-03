@@ -23,24 +23,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.CollectionMetadata;
+import io.lumeer.engine.api.dto.Organization;
+import io.lumeer.engine.api.dto.Permission;
+import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -54,14 +62,24 @@ import javax.inject.Inject;
 public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
+   @UserDataStorage
+   private DataStorage dataStorage;
+
+   @Inject
+   @SystemDataStorage
+   private DataStorage systemDataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
+
+   @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
 
    @Inject
    private CollectionFacade collectionFacade;
 
    @Inject
-   @UserDataStorage
-   private DataStorage dataStorage;
+   private OrganizationFacade organizationFacade;
 
    @Inject
    private ProjectFacade projectFacade;
@@ -70,49 +88,273 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private UserFacade userFacade;
 
    @Inject
+   private UserGroupFacade userGroupFacade;
+
+   @Inject
    private ConfigurationFacade configurationFacade;
 
    @Inject
    private DocumentFacade documentFacade;
 
-   // do not change collection names, because it can mess up internal name creation in method internalName()
-   private final String COLLECTION_ATTRIBUTES_NAMES = "CollectionMetadataFacadeCollectionAttributesNames";
-   private final String COLLECTION_ATTRIBUTES_INFO = "CollectionMetadataFacadeCollectionAttributesInfo";
-   private final String COLLECTION_ATTRIBUTE_INFO = "CollectionMetadataFacadeCollectionAttributeInfo";
-   private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionMetadataFacadeCollectionRenameAttribute";
-   private final String COLLECTION_DROP_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropAttribute";
-   private final String COLLECTION_CREATE_INITIAL_METADATA = "CollectionMetadataFacadeCollectionCreateInitialMetadata";
-   private final String COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionAddOrIncrementAttribute";
-   private final String COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE = "CollectionMetadataFacadeCollectionDropOrDecrementAttribute";
-   private final String COLLECTION_CHECK_ATTRIBUTES_VALUES = "CollectionMetadataFacadeCollectionCheckAttributesValues";
-   private final String COLLECTION_LAST_TIME_USED = "CollectionMetadataFacadeCollectionLastTimeUsed";
-   private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
-   private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
-   private final String COLLECTION_RECENTLY_USED_DOCUMENTS = "CollectionMetadataFacadeCollectionRecentlyUsedDocuments";
-   private final String COLLECTION_CHECK_DOCUMENT_COUNT = "CollectionMetadataFacadeCollectionCheckDocumentCount";
+   private final String organizationCode = "LMR";
+   private final String projectCode = "PR";
+
+   @Before
+   public void setUp() throws Exception {
+      DataFilter filter = dataStorageDialect.documentFilter("{}");
+      systemDataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, filter);
+      systemDataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, filter);
+
+      organizationFacade.createOrganization(new Organization(organizationCode, "Lumeer"));
+      organizationFacade.setOrganizationCode(organizationCode);
+
+      projectFacade.createProject(new Project(projectCode, "project"));
+      projectFacade.setCurrentProjectCode(projectCode);
+
+   }
 
    @Test
    public void testCreateInitialMetadata() throws Exception {
-      String collection = "someCode";
-      collectionMetadataFacade.createInitialMetadata(collection, new Collection(COLLECTION_CREATE_INITIAL_METADATA));
+      final String collection = "someCode";
+      final String collectionName = "CollectionMetadataFacadeCollectionCreateInitialMetadata";
+      collectionMetadataFacade.createInitialMetadata(collection, new Collection(collectionName), "user", Arrays.asList("r1", "r2"));
 
       CollectionMetadata metadata = collectionMetadataFacade.getCollectionMetadata(collection);
 
-      assertThat(metadata.getName()).as("real name").isEqualTo(COLLECTION_CREATE_INITIAL_METADATA);
-      assertThat(metadata.getCode()).as("code").isEqualTo(collection);
-      assertThat(metadata.getAttributes()).as("attributes").isEmpty();
-      assertThat(metadata.getLastTimeUsed()).as("last time used").isBeforeOrEqualsTo(new Date());
-      assertThat(metadata.getRecentlyUsedDocumentIds()).as("recently used documents").isEmpty();
-      assertThat(metadata.getCreateDate()).as("create date").isBeforeOrEqualsTo(new Date());
-      assertThat(metadata.getCreatedBy()).as("create user").isEqualTo(userFacade.getUserEmail());
-      assertThat(metadata.getCustomMetadata()).as("custom metadata").isEmpty();
+      assertThat(metadata.getName()).isEqualTo(collectionName);
+      assertThat(metadata.getCode()).isEqualTo(collection);
+      assertThat(metadata.getAttributes()).isEmpty();
+      assertThat(metadata.getLastTimeUsed()).isBeforeOrEqualsTo(new Date());
+      assertThat(metadata.getRecentlyUsedDocumentIds()).isEmpty();
+      assertThat(metadata.getCreateDate()).isBeforeOrEqualsTo(new Date());
+      assertThat(metadata.getCreatedBy()).isEqualTo(userFacade.getUserEmail());
+      assertThat(metadata.getCustomMetadata()).isEmpty();
+      assertThat(metadata.getDocumentCount()).isEqualTo(0);
+      assertThat(metadata.getPermissions().get(LumeerConst.Security.USERS_KEY)).hasSize(1);
+      assertThat(metadata.getPermissions().get(LumeerConst.Security.GROUP_KEY)).isEmpty();
+   }
+
+   @Test
+   public void testGetPermissions() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeGetPermissions";
+      setUpCollection(collectionName);
+
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      Map<String, List<Permission>> permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+
+      Set<String> roleNamesSet = LumeerConst.Security.RESOURCE_ROLES.get(LumeerConst.Security.COLLECTION_RESOURCE);
+      String[] roleNames = roleNamesSet.toArray(new String[roleNamesSet.size()]);
+      assertThat(permissions).isNotNull().containsOnlyKeys(LumeerConst.Security.USERS_KEY, LumeerConst.Security.GROUP_KEY);
+      assertThat(permissions.get(LumeerConst.Security.USERS_KEY)).extracting("name").containsOnly(userFacade.getUserEmail());
+      assertThat(permissions.get(LumeerConst.Security.USERS_KEY).get(0).getRoles()).containsOnly(roleNames);
+
+      assertThat(permissions.get(LumeerConst.Security.GROUP_KEY).isEmpty());
+   }
+
+   @Test
+   public void testHasRole() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeHasRole";
+      setUpCollection(collectionName);
+
+      final String role = LumeerConst.Security.ROLE_MANAGE;
+      final String user = userFacade.getUserEmail();
+      final String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+
+      assertThat(collectionMetadataFacade.hasRole(projectCode, collectionCode, role)).isTrue();
+
+      List<String> roleNames = new ArrayList<>(LumeerConst.Security.RESOURCE_ROLES.get(LumeerConst.Security.COLLECTION_RESOURCE));
+      roleNames.remove(role);
+      collectionMetadataFacade.setRolesToUser(projectCode, collectionCode, roleNames, user);
+      assertThat(collectionMetadataFacade.hasRole(projectCode, collectionCode, role)).isFalse();
+
+      final String g1 = "g1";
+      userGroupFacade.addGroups(organizationCode, g1);
+      userGroupFacade.addUser(organizationCode, user, g1);
+
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, Collections.singletonList(role), g1);
+      assertThat(collectionMetadataFacade.hasRole(projectCode, collectionCode, role)).isTrue();
+
+      collectionMetadataFacade.setRolesToGroup(projectCode, collectionCode, Collections.emptyList(), g1);
+      assertThat(collectionMetadataFacade.hasRole(projectCode, collectionCode, role)).isFalse();
+   }
+
+   @Test
+   public void testAddUserWithRoles() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeAddUserWithRoles";
+      setUpCollection(collectionName);
+
+      final String role = LumeerConst.Security.ROLE_MANAGE;
+      final String user = userFacade.getUserEmail();
+      final String user2 = "user2";
+      final String user3 = "user3";
+      final String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+
+      Map<String, List<Permission>> permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      List<Permission> usersList = permissions.get(LumeerConst.Security.USERS_KEY);
+
+      assertThat(usersList).hasSize(1).extracting("name").containsOnly(user);
+
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, Collections.singletonList(role), user2);
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, Collections.singletonList(role), user3);
+
+      permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      usersList = permissions.get(LumeerConst.Security.USERS_KEY);
+      assertThat(usersList).hasSize(3).extracting("name").containsOnly(user, user2, user3);
+
+      for (String u : Arrays.asList(user2, user3)) {
+         Permission permission = usersList.stream().filter(p -> p.getName().equals(u)).findFirst().orElse(null);
+         assertThat(permission).isNotNull();
+         assertThat(permission.getRoles()).containsOnly(role);
+      }
+   }
+
+   @Test
+   public void testAddGroupWithRoles() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeAddGroupWithRoles";
+      setUpCollection(collectionName);
+
+      final String role = LumeerConst.Security.ROLE_MANAGE;
+      final String group = "group";
+      final String group2 = "group2";
+      final String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+
+      Map<String, List<Permission>> permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      List<Permission> groupList = permissions.get(LumeerConst.Security.GROUP_KEY);
+
+      assertThat(groupList).isEmpty();
+
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, Collections.singletonList(role), group);
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, Collections.singletonList(role), group2);
+
+      permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      groupList = permissions.get(LumeerConst.Security.GROUP_KEY);
+      assertThat(groupList).hasSize(2).extracting("name").containsOnly(group, group2);
+
+      for (String g : Arrays.asList(group, group2)) {
+         Permission permission = groupList.stream().filter(p -> p.getName().equals(g)).findFirst().orElse(null);
+         assertThat(permission).isNotNull();
+         assertThat(permission.getRoles()).containsOnly(role);
+      }
+   }
+
+   @Test
+   public void testRemoveUser() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeRemoveUser";
+      setUpCollection(collectionName);
+
+      final String role = LumeerConst.Security.ROLE_MANAGE;
+      final String user = userFacade.getUserEmail();
+      final String user2 = "user2";
+      final String user3 = "user3";
+      final String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, Collections.singletonList(role), user2);
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, Collections.singletonList(role), user3);
+
+      Map<String, List<Permission>> permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      List<Permission> usersList = permissions.get(LumeerConst.Security.USERS_KEY);
+
+      assertThat(usersList).hasSize(3).extracting("name").containsOnly(user, user2, user3);
+
+      collectionMetadataFacade.removeUser(projectCode, collectionCode, user3);
+      collectionMetadataFacade.removeUser(projectCode, collectionCode, user);
+
+      permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      usersList = permissions.get(LumeerConst.Security.USERS_KEY);
+
+      assertThat(usersList).hasSize(1).extracting("name").containsOnly(user2);
+   }
+
+   @Test
+   public void testRemoveGroup() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeRemoveGroup";
+      setUpCollection(collectionName);
+
+      final String role = LumeerConst.Security.ROLE_MANAGE;
+      final String group = "group";
+      final String group2 = "group2";
+      final String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, Collections.singletonList(role), group);
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, Collections.singletonList(role), group2);
+
+      Map<String, List<Permission>> permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      List<Permission> groupList = permissions.get(LumeerConst.Security.GROUP_KEY);
+
+      assertThat(groupList).hasSize(2).extracting("name").containsOnly(group, group2);
+
+      collectionMetadataFacade.removeGroup(projectCode, collectionCode, group);
+
+      permissions = collectionMetadataFacade.getPermissions(projectCode, collectionCode);
+      groupList = permissions.get(LumeerConst.Security.GROUP_KEY);
+
+      assertThat(groupList).hasSize(1).extracting("name").containsOnly(group2);
+   }
+
+   @Test
+   public void testSetRolesToUser() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeAddRolesToUser";
+      setUpCollection(collectionName);
+
+      final String role1 = LumeerConst.Security.ROLE_MANAGE;
+      final String role2 = LumeerConst.Security.ROLE_READ;
+      final String role3 = LumeerConst.Security.ROLE_WRITE;
+      final String user = "someUser";
+      final String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, Collections.singletonList(role1), user);
+
+      Permission permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)
+                                                      .stream().filter(p -> p.getName().equals(user)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).containsOnly(role1);
+
+      collectionMetadataFacade.setRolesToUser(projectCode, collectionCode, Arrays.asList(role1, role2, role3), user);
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)
+                                           .stream().filter(p -> p.getName().equals(user)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).containsOnly(role1, role2, role3);
+
+      collectionMetadataFacade.setRolesToUser(projectCode, collectionCode, Collections.emptyList(), user);
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)
+                                           .stream().filter(p -> p.getName().equals(user)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).isEmpty();
+   }
+
+   @Test
+   public void testSetRolesToGroup() throws Exception {
+      final String collectionName = "CollectionMetadataFacadeAddRolesToGroup";
+      setUpCollection(collectionName);
+
+      final String role1 = LumeerConst.Security.ROLE_MANAGE;
+      final String role2 = LumeerConst.Security.ROLE_READ;
+      final String role3 = LumeerConst.Security.ROLE_WRITE;
+      final String group = "someGroup";
+      final String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, Collections.singletonList(role1), group);
+
+      Permission permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY)
+                                                      .stream().filter(p -> p.getName().equals(group)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).containsOnly(role1);
+
+      collectionMetadataFacade.setRolesToGroup(projectCode, collectionCode, Arrays.asList(role1, role2, role3), group);
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY)
+                                           .stream().filter(p -> p.getName().equals(group)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).containsOnly(role1, role2, role3);
+
+      collectionMetadataFacade.setRolesToGroup(projectCode, collectionCode, Collections.emptyList(), group);
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY)
+                                           .stream().filter(p -> p.getName().equals(group)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).isEmpty();
    }
 
    @Test
    public void testGetAttributesNames() throws Exception {
-      setUpCollection(COLLECTION_ATTRIBUTES_NAMES);
+      final String collectionName = "CollectionMetadataFacadeCollectionAttributesNames";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_ATTRIBUTES_NAMES));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String name1 = "attribute 1";
       String name2 = "attribute 2";
@@ -126,11 +368,12 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testGetAttributesInfo() throws Exception {
-      setUpCollection(COLLECTION_ATTRIBUTES_INFO);
+      final String collectionName = "CollectionMetadataFacadeCollectionAttributesInfo";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_ATTRIBUTES_INFO));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
-      Map<String, Attribute> attributesInfo = collectionMetadataFacade.getAttributesInfo(collection);
+      List<Attribute> attributesInfo = collectionMetadataFacade.getAttributesInfo(collection);
       assertThat(attributesInfo).isEmpty();
 
       String name1 = "attribute 1";
@@ -145,9 +388,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testGetAttributeInfo() throws Exception {
-      setUpCollection(COLLECTION_ATTRIBUTE_INFO);
+      final String collectionName = "CollectionMetadataFacadeCollectionAttributeInfo";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_ATTRIBUTE_INFO));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       // nested attribute
       String parent = "attribute";
@@ -179,9 +423,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testRenameAttribute() throws Exception {
-      setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
+      final String collectionName = "CollectionMetadataFacadeCollectionRenameAttribute";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_RENAME_ATTRIBUTE));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String oldName = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, oldName);
@@ -210,9 +455,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testDropAttribute() throws Exception {
-      setUpCollection(COLLECTION_DROP_ATTRIBUTE);
+      final String collectionName = "CollectionMetadataFacadeCollectionDropAttribute";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_DROP_ATTRIBUTE));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
@@ -246,9 +492,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testAddOrIncrementAttribute() throws Exception {
-      setUpCollection(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE);
+      final String collectionName = "CollectionMetadataFacadeCollectionAddOrIncrementAttribute";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_ADD_OR_INCREMENT_ATTRIBUTE));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
@@ -275,9 +522,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testDropOrDecrementAttribute() throws Exception {
-      setUpCollection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE);
+      final String collectionName = "CollectionMetadataFacadeCollectionDropOrDecrementAttribute";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String name = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
@@ -312,9 +560,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testGetSetDropCustomMetadata() throws Exception {
-      setUpCollection(COLLECTION_SET_GET_DROP_CUSTOM_METADATA);
+      final String collectionName = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_SET_GET_DROP_CUSTOM_METADATA));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       // there is no custom metadata - we should obtain empty list
       assertThat(collectionMetadataFacade.getCustomMetadata(collection)).isEmpty();
@@ -336,9 +585,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testCheckAndConvertAttributesValues() throws Exception {
-      setUpCollection(COLLECTION_CHECK_ATTRIBUTES_VALUES);
+      final String collectionName = "CollectionMetadataFacadeCollectionCheckAttributesValues";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_CHECK_ATTRIBUTES_VALUES));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String attribute = "attribute";
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
@@ -406,9 +656,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testGetSetLastTimeUsed() throws Exception {
-      setUpCollection(COLLECTION_LAST_TIME_USED);
+      final String collectionName = "CollectionMetadataFacadeCollectionLastTimeUsed";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_LAST_TIME_USED));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       collectionMetadataFacade.setLastTimeUsedNow(collection);
       Date last = collectionMetadataFacade.getLastTimeUsed(collection);
@@ -419,9 +670,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testGetAddDropConstraint() throws Exception {
-      setUpCollection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT);
+      final String collectionName = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_ADD_ATTRIBUTE_CONSTRAINT));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String attribute = "attribute 1";
       collectionMetadataFacade.addOrIncrementAttribute(collection, attribute);
@@ -460,9 +712,10 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    @Test
    public void testGetAddRecentlyUsedDocumentsIds() throws Exception {
-      setUpCollection(COLLECTION_RECENTLY_USED_DOCUMENTS);
+      final String collectionName = "CollectionMetadataFacadeCollectionRecentlyUsedDocuments";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_RECENTLY_USED_DOCUMENTS));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       List<String> ids = new ArrayList<>();
 
@@ -491,17 +744,21 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       assertThat(recentlyUsed2).doesNotContain(ids.get(0)); // the first (and firstly added) id is no more in the list
    }
 
-   private void setUpCollection(String collection) {
-      dataStorage.dropCollection(collection);
+   private void setUpCollection(String collectionName) {
+      String collectionCode = collectionMetadataFacade.getCollectionCodeFromName(collectionName);
+      if (collectionCode != null) {
+         dataStorage.dropCollection(collectionCode);
+      }
    }
 
    @Test
    public void testDecrementDocumentCount() throws DbException {
-      String collectionCode = collectionFacade.createCollection(new Collection(COLLECTION_CHECK_DOCUMENT_COUNT));
+      final String collectionName = "CollectionMetadataFacadeCollectionCheckDocumentCount";
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
       List<String> keys = Arrays.asList("keySuper", "key2", "key3", "key4", "key5", "key6", "key7");
       List<String> objects = Arrays.asList("object1", "object2", "object3", "object4", "object5", "object6", "object7");
       List<String> documentIds = new ArrayList<>();
-      
+
       for (int i = 0; i < keys.size(); i++) {
          String documentID = documentFacade.createDocument(collectionCode, new DataDocument(keys.get(i), objects.get(i)));
          documentIds.add(documentID);

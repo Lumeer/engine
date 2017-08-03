@@ -23,17 +23,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.Collection;
+import io.lumeer.engine.api.dto.Organization;
+import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,69 +56,155 @@ import javax.inject.Inject;
 @RunWith(Arquillian.class)
 public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
-   // do not change collection names, because it can mess up internal name creation in method internalName()
-   private final String COLLECTION_GET_ALL_COLLECTIONS = "CollectionFacadeCollectionGetAllCollections";
-   private final String COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1 = "CollectionFacadeCollectionGetAllCollectionsLastTime1";
-   private final String COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2 = "CollectionFacadeCollectionGetAllCollectionsLastTime2";
-   private final String COLLECTION_CREATE_AND_DROP = "CollectionFacadeCollectionCreateAndDrop";
-   private final String COLLECTION_CREATE_DUPLICATE = "CollectionFacadeCollectionCreateDuplicate";
-   private final String COLLECTION_UPDATE = "CollectionFacadeCollectionUpdate";
-   private final String COLLECTION_READ_COLLECTION_ATTRIBUTES = "CollectionFacadeReadCollectionCollectionAttributes";
-   private final String COLLECTION_DROP_COLLECTION_ATTRIBUTE = "CollectionFacadeCollectionDropCollectionAttribute";
-   private final String COLLECTION_GET_ATTRIBUTE_VALUES = "CollectionFacadeCollectionGetAttributeValues";
-   private final String COLLECTION_RENAME_ATTRIBUTE = "CollectionFacadeCollectionRenameAttribute";
-   private final String COLLECTION_ADD_DROP_CONSTRAINT = "CollectionFacadeCollectionAddDropConstraint";
-
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private UserFacade userFacade;
+
+   @Inject
+   private UserGroupFacade userGroupFacade;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
 
    @Inject
+   @SystemDataStorage
+   private DataStorage systemDataStorage;
+
+   @Inject
+   private DataStorageDialect dataStorageDialect;
+
+   @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
+
+   private final String organizationCode = "LMR";
+   private final String projectCode = "PR";
+
+   @Before
+   public void setUp() throws Exception {
+      DataFilter filter = dataStorageDialect.documentFilter("{}");
+      systemDataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, filter);
+      systemDataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, filter);
+
+      organizationFacade.createOrganization(new Organization(organizationCode, "LMR"));
+      organizationFacade.setOrganizationCode(organizationCode);
+
+      projectFacade.createProject(new Project(projectCode, "PR"));
+      projectFacade.setCurrentProjectCode(projectCode);
+   }
 
    @Test
    public void testGetAllCollections() throws Exception {
-      setUpCollection(COLLECTION_GET_ALL_COLLECTIONS);
+      final String collectionName = "CollectionFacadeCollectionGetAllCollections";
+      final String collection2Name = "CollectionFacadeCollectionGetAllCollections2";
+      final String collection3Name = "CollectionFacadeCollectionGetAllCollections3";
+      setUpCollection(collectionName);
+      setUpCollection(collection2Name);
+      setUpCollection(collection3Name);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      String collection2Code = collectionFacade.createCollection(new Collection(collection2Name));
+      String collection3Code = collectionFacade.createCollection(new Collection(collection3Name));
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_GET_ALL_COLLECTIONS));
-      assertThat(collectionFacade.getCollections()).extracting("code").contains(collection);
+      String currentUser = userFacade.getUserEmail();
+      List<String> userGroups = userGroupFacade.getGroupsOfUser(organizationCode, currentUser);
+
+      assertThat(collectionFacade.getCollections(currentUser, userGroups, 0, 0)).extracting("code").contains(collectionCode, collection2Code, collection3Code);
+
+      collectionMetadataFacade.removeUser(projectCode, collection2Code, currentUser);
+      collectionMetadataFacade.removeUser(projectCode, collection3Code, currentUser);
+
+      assertThat(collectionFacade.getCollections(currentUser, userGroups, 0, 0)).extracting("code").contains(collectionCode);
+
+      String group = "g1";
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collection3Code, Collections.singletonList(LumeerConst.Security.ROLE_READ), group);
+      userGroups = userGroupFacade.getGroupsOfUser(organizationCode, currentUser);
+
+      assertThat(collectionFacade.getCollections(currentUser, userGroups, 0, 0)).extracting("code").contains(collectionCode);
+      userGroupFacade.addUser(organizationCode, currentUser, group);
+
+      userGroups = userGroupFacade.getGroupsOfUser(organizationCode, currentUser);
+      assertThat(collectionFacade.getCollections(currentUser, userGroups, 0, 0)).extracting("code").contains(collectionCode, collection3Code);
+
    }
 
    @Test
    public void testGetAllCollectionsByLastTimeUsed() throws Exception {
-      setUpCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1);
-      setUpCollection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2);
+      final String collectionName = "CollectionFacadeCollectionGetAllCollectionsLastTime1";
+      setUpCollection(collectionName);
+      final String collection2Name = "CollectionFacadeCollectionGetAllCollectionsLastTime2";
+      setUpCollection(collection2Name);
 
-      String collectionCode = collectionFacade.createCollection(new Collection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_1));
-      collectionFacade.createCollection(new Collection(COLLECTION_GET_ALL_COLLECTIONS_LAST_TIME_2));
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      collectionFacade.createCollection(new Collection(collection2Name));
 
-      assertThat(collectionFacade.getCollections().get(1).getCode()).isEqualTo(collectionCode);
+      String currentUser = userFacade.getUserEmail();
+      List<String> userGroups = userGroupFacade.getGroupsOfUser(organizationCode, currentUser);
+
+      List<Collection> collections = collectionFacade.getCollections(currentUser, userGroups, 0, 0);
+      assertThat(collections).hasSize(2);
+      assertThat(collections.get(1).getCode()).isEqualTo(collectionCode);
+   }
+
+   @Test
+   public void testGetCollection() throws Exception {
+      final String collectionName = "CollectionFacadeGetCollection";
+      setUpCollection(collectionName);
+
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+
+      Collection collection = collectionFacade.getCollection(collectionCode);
+      assertThat(collection).isNotNull();
+      List<String> roleNames = new ArrayList<>(LumeerConst.Security.RESOURCE_ROLES.get(LumeerConst.Security.COLLECTION_RESOURCE));
+      assertThat(collection.getUserRoles()).containsOnly(roleNames.toArray(new String[roleNames.size()]));
+
+      String user = userFacade.getUserEmail();
+      String role = roleNames.iterator().next();
+      String group = "group";
+      roleNames.remove(role);
+      collectionMetadataFacade.setRolesToUser(projectCode, collectionCode, roleNames, user);
+      collection = collectionFacade.getCollection(collectionCode);
+      assertThat(collection.getUserRoles()).containsOnly(roleNames.toArray(new String[roleNames.size()]));
+
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, Collections.singletonList(role), group);
+      userGroupFacade.addUser(organizationCode, user, group);
+
+      roleNames.add(role);
+      collection = collectionFacade.getCollection(collectionCode);
+      assertThat(collection.getUserRoles()).containsOnly(roleNames.toArray(new String[roleNames.size()]));
+
    }
 
    @Test
    public void testUpdateCollection() throws Exception {
-      setUpCollection(COLLECTION_UPDATE);
+      final String collectionName = "CollectionFacadeCollectionUpdate";
+      setUpCollection(collectionName);
 
-      String lumeer = collectionFacade.createCollection(new Collection("Lumeer"));
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
 
-      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsKey(lumeer);
-      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsValue("Lumeer");
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsKey(collectionCode);
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsValue(collectionName);
 
-      collectionFacade.updateCollection(lumeer, new Collection("Lumeerko"));
-      assertThat(collectionMetadataFacade.getCollectionsCodeName()).doesNotContainValue("Lumeer");
+      collectionFacade.updateCollection(collectionCode, new Collection("Lumeerko"));
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).doesNotContainValue(collectionName);
       assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsValue("Lumeerko");
    }
 
    @Test
    public void testCreateAndDropCollection() throws Exception {
-      setUpCollection(COLLECTION_CREATE_AND_DROP);
+      final String collectionName = "CollectionFacadeCollectionCreateAndDrop";
+      setUpCollection(collectionName);
 
-      assertThat(collectionMetadataFacade.getCollectionsCodeName()).doesNotContainValue(COLLECTION_CREATE_AND_DROP);
+      assertThat(collectionMetadataFacade.getCollectionsCodeName()).doesNotContainValue(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_CREATE_AND_DROP));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
       assertThat(collectionMetadataFacade.getCollectionsCodeName()).containsKey(collection);
 
       collectionFacade.dropCollection(collection);
@@ -120,36 +216,41 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testDuplicatedCollection() throws Exception {
-      setUpCollection(COLLECTION_CREATE_DUPLICATE);
+      String collectionName = "CollectionFacadeCollectionCreateDuplicate";
+      setUpCollection(collectionName);
 
-      collectionFacade.createCollection(new Collection(COLLECTION_CREATE_DUPLICATE));
+      collectionFacade.createCollection(new Collection(collectionName));
 
-      assertThatThrownBy(() -> collectionFacade.createCollection(new Collection(COLLECTION_CREATE_DUPLICATE))).isInstanceOf(UserCollectionAlreadyExistsException.class);
+      assertThatThrownBy(() -> collectionFacade.createCollection(new Collection(collectionName))).isInstanceOf(UserCollectionAlreadyExistsException.class);
    }
 
    @Test
    public void testReadCollectionAttributes() throws Exception {
-      setUpCollection(COLLECTION_READ_COLLECTION_ATTRIBUTES);
+      final String collectionName = "CollectionFacadeReadCollectionCollectionAttributes";
+      setUpCollection(collectionName);
 
       String a1 = "attribute1";
       String a2 = "attribute2";
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_READ_COLLECTION_ATTRIBUTES));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
       collectionMetadataFacade.addOrIncrementAttribute(collection, a1);
       collectionMetadataFacade.addOrIncrementAttribute(collection, a2);
 
-      Map<String, Attribute> attributes = collectionFacade.readCollectionAttributes(collection);
+     List<Attribute> attributes = collectionFacade.readCollectionAttributes(collection);
 
-      assertThat(attributes.keySet()).containsOnly(a1, a2);
-      assertThat(attributes.get(a1).getCount()).isEqualTo(1);
-      assertThat(attributes.get(a2).getCount()).isEqualTo(1);
+      assertThat(attributes).extracting("fullName").containsOnly(a1, a2);
+      Attribute attributeA1 = attributes.stream().filter(a-> a.getFullName().equals(a1)).findFirst().orElse(null);
+      assertThat(attributeA1.getCount()).isEqualTo(1);
+      Attribute attributeA2 = attributes.stream().filter(a-> a.getFullName().equals(a2)).findFirst().orElse(null);
+      assertThat(attributeA2.getCount()).isEqualTo(1);
    }
 
    @Test
    public void testGetAttributeValues() throws Exception {
-      setUpCollection(COLLECTION_GET_ATTRIBUTE_VALUES);
+      final String collectionName = "CollectionFacadeCollectionGetAttributeValues";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_GET_ATTRIBUTE_VALUES));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String a1 = "attribute";
       String a2 = "dummyattribute";
@@ -180,9 +281,10 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testDropAttribute() throws Exception {
-      setUpCollection(COLLECTION_DROP_COLLECTION_ATTRIBUTE);
+      final String collectionName = "CollectionFacadeCollectionDropCollectionAttribute";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_DROP_COLLECTION_ATTRIBUTE));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String attribute1 = "attribute-to-drop";
       String attribute2 = "attribute";
@@ -218,9 +320,10 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testRenameAttribute() throws Exception {
-      setUpCollection(COLLECTION_RENAME_ATTRIBUTE);
+      final String collectionName = "CollectionFacadeCollectionRenameAttribute";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_RENAME_ATTRIBUTE));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String name = "attribute 1";
       String newName = "new attribute 1";
@@ -249,9 +352,10 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testAddDropConstraint() throws Exception {
-      setUpCollection(COLLECTION_ADD_DROP_CONSTRAINT);
+      final String collectionName = "CollectionFacadeCollectionAddDropConstraint";
+      setUpCollection(collectionName);
 
-      String collection = collectionFacade.createCollection(new Collection(COLLECTION_ADD_DROP_CONSTRAINT));
+      String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String attribute = "attribute";
       int value1 = 5;

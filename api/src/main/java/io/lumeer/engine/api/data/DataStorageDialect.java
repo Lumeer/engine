@@ -20,6 +20,7 @@
 package io.lumeer.engine.api.data;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +39,7 @@ public interface DataStorageDialect extends Serializable {
 
    DataFilter fieldValueWildcardFilter(final String fieldName, final Object valuePart);
 
-   public DataFilter fieldValueWildcardFilterOneSided(final String fieldName, final Object valuePart);
+   DataFilter fieldValueWildcardFilterOneSided(final String fieldName, final Object valuePart);
 
    DataFilter documentFilter(final String documentFilter);
 
@@ -51,6 +52,8 @@ public interface DataStorageDialect extends Serializable {
    DataFilter multipleFieldsValueFilter(final Map<String, Object> fields);
 
    DataFilter combineFilters(DataFilter... filters);
+
+   DataFilter collectionPermissionsRoleFilter(final String role, final String user, final List<String> groups);
 
    DataSort documentSort(final String documentSort);
 

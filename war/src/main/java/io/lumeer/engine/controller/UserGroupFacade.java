@@ -204,7 +204,7 @@ public class UserGroupFacade implements Serializable {
     */
    public List<String> getGroupsOfUser(final String organization, final String user) {
       DataDocument userDoc = readUser(organization, user);
-      return userDoc != null ? userDoc.getArrayList(UserGroup.ATTR_USERS_GROUPS, String.class) : null;
+      return userDoc != null ? userDoc.getArrayList(UserGroup.ATTR_USERS_GROUPS, String.class) : Collections.emptyList();
    }
 
    /**
@@ -230,7 +230,7 @@ public class UserGroupFacade implements Serializable {
     */
    public List<String> getGroups(final String organization) {
       DataDocument document = dataStorage.readDocumentIncludeAttrs(Group.COLLECTION_NAME, organizationFilterGroups(organization), Collections.singletonList(Group.ATTR_GROUPS));
-      return document.getArrayList(Group.ATTR_GROUPS, String.class);
+      return document != null ? document.getArrayList(Group.ATTR_GROUPS, String.class) : Collections.emptyList();
    }
 
    private DataDocument readUser(final String organization, final String user) {

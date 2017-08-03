@@ -115,7 +115,7 @@ public class LinkingService {
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    public List<LinkType> getLinkTypes(final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -146,7 +146,7 @@ public class LinkingService {
    @Path("/{role}")
    @Produces(MediaType.APPLICATION_JSON)
    public List<LinkInstance> getLinks(final @PathParam("role") String role, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -180,7 +180,7 @@ public class LinkingService {
    @Path("/{role}/documents/{id}")
    @Produces(MediaType.APPLICATION_JSON)
    public List<DataDocument> getLinkedDocuments(final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -224,8 +224,8 @@ public class LinkingService {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)
-            || !securityFacade.hasCollectionRole(projectCode, targetCollectionCode, LumeerConst.Security.ROLE_SHARE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_SHARE)
+            || !collectionMetadataFacade.hasRole(projectCode, targetCollectionCode, LumeerConst.Security.ROLE_SHARE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -257,7 +257,7 @@ public class LinkingService {
    @Path("/{role}/documents/{id}")
    @Produces(MediaType.APPLICATION_JSON)
    public void deleteLinks(final @PathParam("role") String role, final @PathParam("id") String documentId, final @QueryParam("direction") @DefaultValue("FROM") LumeerConst.Linking.LinkDirection linkDirection) throws DbException {
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -295,8 +295,8 @@ public class LinkingService {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)
-            || !securityFacade.hasCollectionRole(projectCode, targetCollectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)
+            || !collectionMetadataFacade.hasRole(projectCode, targetCollectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -340,8 +340,8 @@ public class LinkingService {
          throw new DocumentNotFoundException(ErrorMessageBuilder.documentNotFoundString());
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)
-            || !securityFacade.hasCollectionRole(projectCode, targetCollectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)
+            || !collectionMetadataFacade.hasRole(projectCode, targetCollectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 

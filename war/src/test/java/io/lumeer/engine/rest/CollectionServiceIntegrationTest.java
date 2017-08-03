@@ -27,9 +27,11 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.dto.Organization;
+import io.lumeer.engine.api.dto.Permission;
 import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.controller.CollectionFacade;
@@ -50,10 +52,13 @@ import org.junit.runner.RunWith;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -64,9 +69,6 @@ import javax.ws.rs.core.Response;
 
 /**
  * Tests the collection service while deployed on the application server.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @RunWith(Arquillian.class)
 public class CollectionServiceIntegrationTest extends IntegrationTestBase {
@@ -121,17 +123,19 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
    @Inject
    private DatabaseInitializer databaseInitializer;
 
+   private String organizationCode = "LMR";
+   private String projectCode = "PR";
+
    @Before
    public void init() {
-      // I (Alica) suppose we operate inside some default project which has not been initialized, so we do that here
-      organizationFacade.setOrganizationCode("LMR");
-      projectFacade.dropProject("P1");
-      organizationFacade.dropOrganization("LMR");
-      organizationFacade.createOrganization(new Organization("LMR", "Lumeer"));
-      organizationFacade.setOrganizationCode("LMR");
-      projectFacade.createProject(new Project("P1", "Proj1"));
-      projectFacade.setCurrentProjectCode("P1");
-      PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationFacade.getOrganizationCode() + "/projects/" + projectFacade.getCurrentProjectCode() + "/collections/";
+      organizationFacade.setOrganizationCode(organizationCode);
+      projectFacade.dropProject(projectCode);
+      organizationFacade.dropOrganization(organizationCode);
+      organizationFacade.createOrganization(new Organization(organizationCode, "Lumeer"));
+      organizationFacade.setOrganizationCode(organizationCode);
+      projectFacade.createProject(new Project(projectCode, "Proj1"));
+      projectFacade.setCurrentProjectCode(projectCode);
+      PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/" + projectCode + "/collections/";
    }
 
    @Before
@@ -220,7 +224,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       response = ClientBuilder.newBuilder().build()
                               .target(TARGET_URI).path(PATH_PREFIX)
                               .queryParam("size", 3)
-                              .queryParam("page", 2)
+                              .queryParam("page", 1)
                               .request(MediaType.APPLICATION_JSON)
                               .buildGet().invoke();
 
@@ -231,7 +235,7 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       response = ClientBuilder.newBuilder().build()
                               .target(TARGET_URI).path(PATH_PREFIX)
                               .queryParam("size", 3)
-                              .queryParam("page", 3)
+                              .queryParam("page", 2)
                               .request(MediaType.APPLICATION_JSON)
                               .buildGet().invoke();
 
@@ -484,9 +488,14 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
 
       final Client client2 = ClientBuilder.newBuilder().build();
       Response response2 = client2.target(TARGET_URI).path(PATH_PREFIX + code + "/attributes/").request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      Set<String> collectionAttributes = response2.readEntity(HashSet.class);
+      List<Attribute> collectionAttributes = response2.readEntity(new GenericType<List<Attribute>>() {
+      });
       assertThat(response2.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-      assertThat(collectionAttributes).isEqualTo(collectionFacade.readCollectionAttributes(code).keySet());
+
+      List<String> attributesNamesRest = collectionAttributes.stream()
+                                                             .map(Attribute::getFullName).collect(Collectors.toList());
+      List<String> attributesNamesFacade = collectionFacade.readCollectionAttributes(code).stream().map(Attribute::getFullName).collect(Collectors.toList());
+      assertThat(attributesNamesRest).containsOnly(attributesNamesFacade.toArray(new String[attributesNamesFacade.size()]));
       response2.close();
 
       client2.close();
@@ -523,14 +532,262 @@ public class CollectionServiceIntegrationTest extends IntegrationTestBase {
       client.close();
    }
 
+   @Test
+   public void testGetPermissions() throws Exception {
+      final String collectionName = "CollectionServiceIntegrationTestGetPermissions";
+      setUpCollection(collectionName);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      String user = "user";
+      String group = "group";
+      List<String> rolesUser = Arrays.asList("r1", "r2", "r3");
+      List<String> rolesGroup = Arrays.asList("r10", "r20", "r30");
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, rolesUser, user);
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, rolesGroup, group);
+
+      Response response = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                       .path(PATH_PREFIX + collectionCode + "/permissions")
+                                       .request(MediaType.APPLICATION_JSON).buildGet().invoke();
+
+      Map<String, List<Permission>> permissions = response.readEntity(new GenericType<Map<String, List<Permission>>>() {
+      });
+      assertThat(permissions).hasSize(2).containsOnlyKeys(LumeerConst.Security.USERS_KEY, LumeerConst.Security.GROUP_KEY);
+      assertThat(permissions.get(LumeerConst.Security.USERS_KEY)).hasSize(2).extracting("name").containsOnly(userFacade.getUserEmail(), user);
+      assertThat(permissions.get(LumeerConst.Security.GROUP_KEY)).hasSize(1).extracting("name").containsOnly(group);
+   }
+
+   @Test
+   public void testRemoveUser() throws Exception {
+      final String collectionName = "CollectionServiceIntegrationTestRemoveUser";
+      setUpCollection(collectionName);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      String user = "user";
+      String user2 = "user2";
+      List<String> roles = Arrays.asList("r1", "r2", "r3");
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, roles, user);
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, roles, user2);
+
+      assertThat(collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY))
+            .hasSize(3).extracting("name").containsOnly(userFacade.getUserEmail(), user, user2);
+
+      Response response = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                       .path(PATH_PREFIX + collectionCode + "/permissions/users")
+                                       .queryParam("user", user)
+                                       .request().buildDelete().invoke();
+
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+
+      assertThat(collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY))
+            .hasSize(2).extracting("name").containsOnly(userFacade.getUserEmail(), user2);
+   }
+
+   @Test
+   public void testRemoveGroup() throws Exception {
+      final String collectionName = "CollectionServiceIntegrationTestRemoveGroup";
+      setUpCollection(collectionName);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      String group = "group";
+      String group2 = "group2";
+      List<String> roles = Arrays.asList("r1", "r2", "r3");
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, roles, group);
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, roles, group2);
+
+      assertThat(collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY))
+            .hasSize(2).extracting("name").containsOnly(group, group2);
+
+      Response response = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                       .path(PATH_PREFIX + collectionCode + "/permissions/groups")
+                                       .queryParam("group", group)
+                                       .request().buildDelete().invoke();
+
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+
+      assertThat(collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY))
+            .hasSize(1).extracting("name").containsOnly(group2);
+   }
+
+   @Test
+   public void testSetRolesToUser() throws Exception {
+      final String collectionName = "CollectionServiceIntegrationTestSetRolesToUser";
+      setUpCollection(collectionName);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      String user = "user";
+      List<String> roles = Arrays.asList("r1", "r2", "r3");
+      String[] rolesChange = new String[] { "r1", "r5", "r6", "r7" };
+      collectionMetadataFacade.addUserWithRoles(projectCode, collectionCode, roles, user);
+
+      Permission permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)
+                                                      .stream().filter(p -> p.getName().equals(user)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).hasSize(3).containsOnly(roles.toArray(new String[roles.size()]));
+
+      Response response = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                       .path(PATH_PREFIX + collectionCode + "/permissions/users")
+                                       .queryParam("user", user)
+                                       .queryParam("roles", (Object[]) rolesChange)
+                                       .request()
+                                       .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                       .invoke();
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)
+                                           .stream().filter(p -> p.getName().equals(user)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).hasSize(4).containsOnly(rolesChange);
+
+      Response response2 = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                        .path(PATH_PREFIX + collectionCode + "/permissions/users")
+                                        .queryParam("user", user)
+                                        .queryParam("roles")
+                                        .request()
+                                        .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                        .invoke();
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response2.close();
+
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)
+                                           .stream().filter(p -> p.getName().equals(user)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).isEmpty();
+   }
+
+   @Test
+   public void testSetRolesToGroup() throws Exception {
+      final String collectionName = "CollectionServiceIntegrationTestSetRolesToGroup";
+      setUpCollection(collectionName);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+      String group = "group";
+      List<String> roles = Arrays.asList("r1", "r2", "r3");
+      String[] rolesChange = new String[] { "r1", "r4" };
+      collectionMetadataFacade.addGroupWithRoles(projectCode, collectionCode, roles, group);
+
+      Permission permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY)
+                                                      .stream().filter(p -> p.getName().equals(group)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).hasSize(3).containsOnly(roles.toArray(new String[roles.size()]));
+
+      Response response = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                       .path(PATH_PREFIX + collectionCode + "/permissions/groups")
+                                       .queryParam("group", group)
+                                       .queryParam("roles", (Object[]) rolesChange)
+                                       .request()
+                                       .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                       .invoke();
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY)
+                                           .stream().filter(p -> p.getName().equals(group)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).hasSize(2).containsOnly(rolesChange);
+
+      Response response2 = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                        .path(PATH_PREFIX + collectionCode + "/permissions/groups")
+                                        .queryParam("group", group)
+                                        .queryParam("roles")
+                                        .request()
+                                        .buildPut(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                        .invoke();
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response2.close();
+
+      permission = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY)
+                                           .stream().filter(p -> p.getName().equals(group)).findFirst().orElse(null);
+      assertThat(permission).isNotNull();
+      assertThat(permission.getRoles()).isEmpty();
+   }
+
+   @Test
+   public void testAddUserWithRoles() throws Exception {
+      final String collectionName = "CollectionServiceIntegrationTestAddUserWithRoles";
+      setUpCollection(collectionName);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+
+      assertThat(collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)).hasSize(1);
+
+      String user1 = "user1";
+      String user2 = "user2";
+      String[] roles1 = new String[] { "r1", "r2", "r3" };
+      String[] roles2 = new String[] { "r4", "r5", "r3" };
+
+      Response response = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                       .path(PATH_PREFIX + collectionCode + "/permissions/users")
+                                       .queryParam("user", user1)
+                                       .queryParam("roles", (Object[]) roles1)
+                                       .request()
+                                       .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                       .invoke();
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+
+      Response response2 = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                        .path(PATH_PREFIX + collectionCode + "/permissions/users")
+                                        .queryParam("user", user2)
+                                        .queryParam("roles", (Object[]) roles2)
+                                        .request()
+                                        .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                        .invoke();
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response2.close();
+
+      List<Permission> userList = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY);
+      assertThat(userList).hasSize(3);
+      assertThat(userList.stream().filter(p -> p.getName().equals(user1)).findFirst().orElse(null).getRoles()).containsOnly(roles1);
+      assertThat(userList.stream().filter(p -> p.getName().equals(user2)).findFirst().orElse(null).getRoles()).containsOnly(roles2);
+   }
+
+   @Test
+   public void testAddGroupWithRoles() throws Exception {
+      final String collectionName = "CollectionServiceIntegrationTestAddGroupWithRoles";
+      setUpCollection(collectionName);
+      String collectionCode = collectionFacade.createCollection(new Collection(collectionName));
+
+      assertThat(collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.USERS_KEY)).hasSize(1);
+
+      String group1 = "group1";
+      String group2 = "group2";
+      String[] roles1 = new String[] { "r1", "r2", "r3" };
+      String[] roles2 = new String[] { "r4", "r5", "r3" };
+
+      Response response = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                       .path(PATH_PREFIX + collectionCode + "/permissions/groups")
+                                       .queryParam("group", group1)
+                                       .queryParam("roles", (Object[]) roles1)
+                                       .request()
+                                       .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                       .invoke();
+      assertThat(response.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response.close();
+
+      Response response2 = ClientBuilder.newBuilder().build().target(TARGET_URI)
+                                        .path(PATH_PREFIX + collectionCode + "/permissions/groups")
+                                        .queryParam("group", group2)
+                                        .queryParam("roles", (Object[]) roles2)
+                                        .request()
+                                        .buildPost(Entity.entity(null, MediaType.APPLICATION_JSON))
+                                        .invoke();
+      assertThat(response2.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+      response2.close();
+
+      List<Permission> groupList = collectionMetadataFacade.getPermissions(projectCode, collectionCode).get(LumeerConst.Security.GROUP_KEY);
+      assertThat(groupList).hasSize(2);
+      assertThat(groupList.stream().filter(p -> p.getName().equals(group1)).findFirst().orElse(null).getRoles()).containsOnly(roles1);
+      assertThat(groupList.stream().filter(p -> p.getName().equals(group2)).findFirst().orElse(null).getRoles()).containsOnly(roles2);
+   }
+
    private void createDummyEntries(final String collectionCode) throws DbException, InvalidConstraintException {
       for (int i = 0; i < 10; i++) {
          documentFacade.createDocument(collectionCode, new DataDocument("dummyAttribute", i));
       }
    }
 
-   private String getInternalName(final String collectionOriginalName) {
-      return "collection." + collectionOriginalName.toLowerCase() + "_0";
+   private void setUpCollection(String collectionName) {
+      String collectionCode = collectionMetadataFacade.getCollectionCodeFromName(collectionName);
+      if (collectionCode != null) {
+         dataStorage.dropCollection(collectionCode);
+      }
    }
 
    private DataDocument queryDocument(final String collectionName) {
