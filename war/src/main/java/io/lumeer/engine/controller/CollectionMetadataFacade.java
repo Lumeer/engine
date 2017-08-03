@@ -379,7 +379,7 @@ public class CollectionMetadataFacade implements Serializable {
       if (documentCount == 0) {
          return;
       }
-      dataStorage.updateDocument(metadataCollection(), new DataDocument(LumeerConst.Collection.DOCUMENT_COUNT, Math.min(documentCount - count, 0)), collectionCodeFilter(collectionCode));
+      dataStorage.updateDocument(metadataCollection(), new DataDocument(LumeerConst.Collection.DOCUMENT_COUNT, Math.max(documentCount - count, 0)), collectionCodeFilter(collectionCode));
    }
 
    private int getDocumentCount(String collectionCode) {

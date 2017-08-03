@@ -122,7 +122,7 @@ public class DocumentFacade implements Serializable {
     * Reads the specified document in given collection by its id.
     *
     * @param collectionCode
-    *       the name of the collection where the document is located
+    *       the code of the collection where the document is located
     * @param documentId
     *       the id of the read document
     * @return the DataDocument object representing the read document
