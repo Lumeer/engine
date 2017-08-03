@@ -146,7 +146,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
                                    .request()
                                    .buildPost(Entity.json(new DataDocument("Order", i)))
                                    .invoke();
-         String documentId = response.readEntity(String.class);
+         String documentId = response.readEntity(DataDocument.class).getId();
          assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
          assertThat(documentFacade.readDocument(code, documentId)).isNotNull();
          response.close();
@@ -187,7 +187,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
                                                    .append("fourth_attribute", null)))
                                        .invoke();
 
-         documentIds[i] = response.readEntity(String.class);
+         documentIds[i] = response.readEntity(DataDocument.class).getId();
          assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
          assertThat(documentFacade.readDocument(code, documentIds[i])).isNotNull();
          response.close();
@@ -247,7 +247,7 @@ public class DocumentServiceIntegrationTest extends IntegrationTestBase {
       String code = collectionFacade.createCollection(new Collection(COLLECTION_ATTRIBUTE_TYPES));
 
       Response response = clients[0].target(TARGET_URI).path(setPathPrefix(code)).request().buildPost(Entity.json(doc)).invoke();
-      String documentId = response.readEntity(String.class);
+      String documentId = response.readEntity(DataDocument.class).getId();
 
       assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
       response.close();

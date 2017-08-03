@@ -21,7 +21,6 @@ package io.lumeer.engine.hints;
 
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.push.PushMessage;
-import io.lumeer.engine.push.PushService;
 
 import java.util.Date;
 import java.util.HashMap;

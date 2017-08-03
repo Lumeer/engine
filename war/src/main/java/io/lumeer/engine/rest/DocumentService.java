@@ -24,7 +24,6 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.exception.CollectionNotFoundException;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
@@ -36,7 +35,6 @@ import io.lumeer.engine.controller.DocumentMetadataFacade;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 import io.lumeer.engine.controller.SecurityFacade;
-import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.controller.VersionFacade;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
@@ -145,7 +143,7 @@ public class DocumentService implements Serializable {
     *
     * @param document
     *       the DataDocument object representing a document to be created
-    * @return the id of the newly created document
+    * @return json with the id of newly created document under "_id" key.
     * @throws DbException
     *       When there is an error working with the database.
     * @throws InvalidConstraintException
@@ -155,7 +153,7 @@ public class DocumentService implements Serializable {
    @Path("/")
    @Produces(MediaType.APPLICATION_JSON)
    @Consumes(MediaType.APPLICATION_JSON)
-   public String createDocument(final DataDocument document) throws DbException, InvalidConstraintException {
+   public DataDocument createDocument(final DataDocument document) throws DbException, InvalidConstraintException {
       if (collectionCode == null || document == null) {
          throw new BadRequestException();
       }
@@ -165,7 +163,12 @@ public class DocumentService implements Serializable {
       }
 
       final DataDocument convertedDocument = collectionMetadataFacade.checkAndConvertAttributesValues(collectionCode, document);
-      return documentFacade.createDocument(collectionCode, convertedDocument);
+      String id = documentFacade.createDocument(collectionCode, convertedDocument);
+
+      final DataDocument idDocument = new DataDocument();
+      idDocument.setId(id);
+
+      return idDocument;
    }
 
    /**

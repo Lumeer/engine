@@ -20,11 +20,9 @@
 package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.data.Query;
-import io.lumeer.engine.api.task.SearchTask;
+import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.push.PushService;
-import io.lumeer.engine.util.JmsService;
 
 import java.util.Arrays;
 import java.util.Collections;
