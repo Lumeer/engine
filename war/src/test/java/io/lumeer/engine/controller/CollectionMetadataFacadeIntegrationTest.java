@@ -32,6 +32,7 @@ import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.CollectionMetadata;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
+import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -39,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +72,9 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    @Inject
    private ConfigurationFacade configurationFacade;
 
+   @Inject
+   private DocumentFacade documentFacade;
+
    // do not change collection names, because it can mess up internal name creation in method internalName()
    private final String COLLECTION_ATTRIBUTES_NAMES = "CollectionMetadataFacadeCollectionAttributesNames";
    private final String COLLECTION_ATTRIBUTES_INFO = "CollectionMetadataFacadeCollectionAttributesInfo";
@@ -84,8 +89,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
    private final String COLLECTION_SET_GET_DROP_CUSTOM_METADATA = "CollectionMetadataFacadeCollectionSetGetDropCustomMetadata";
    private final String COLLECTION_ADD_ATTRIBUTE_CONSTRAINT = "CollectionMetadataFacadeCollectionAddAttributeConstraint";
    private final String COLLECTION_RECENTLY_USED_DOCUMENTS = "CollectionMetadataFacadeCollectionRecentlyUsedDocuments";
-
-
+   private final String COLLECTION_CHECK_DOCUMENT_COUNT = "CollectionMetadataFacadeCollectionCheckDocumentCount";
 
    @Test
    public void testCreateInitialMetadata() throws Exception {
@@ -489,5 +493,24 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
    private void setUpCollection(String collection) {
       dataStorage.dropCollection(collection);
+   }
+
+   @Test
+   public void testDecrementDocumentCount() throws DbException {
+      String collectionCode = collectionFacade.createCollection(new Collection(COLLECTION_CHECK_DOCUMENT_COUNT));
+      List<String> keys = Arrays.asList("keySuper", "key2", "key3", "key4", "key5", "key6", "key7");
+      List<String> objects = Arrays.asList("object1", "object2", "object3", "object4", "object5", "object6", "object7");
+      List<String> documentIds = new ArrayList<>();
+      
+      for (int i = 0; i < keys.size(); i++) {
+         String documentID = documentFacade.createDocument(collectionCode, new DataDocument(keys.get(i), objects.get(i)));
+         documentIds.add(documentID);
+      }
+
+      assertThat(collectionFacade.getCollection(collectionCode).getDocumentCount()).isEqualTo(keys.size());
+      documentFacade.dropDocument(collectionCode, documentIds.get(4));
+      assertThat(collectionFacade.getCollection(collectionCode).getDocumentCount()).isEqualTo(keys.size() - 1);
+      documentFacade.dropDocument(collectionCode, documentIds.get(2));
+      assertThat(collectionFacade.getCollection(collectionCode).getDocumentCount()).isEqualTo(keys.size() - 2);
    }
 }
