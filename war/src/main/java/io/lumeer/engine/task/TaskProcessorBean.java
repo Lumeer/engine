@@ -19,14 +19,6 @@
  */
 package io.lumeer.engine.task;
 
-import javax.annotation.Resource;
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.ejb.MessageDrivenContext;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
-
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */

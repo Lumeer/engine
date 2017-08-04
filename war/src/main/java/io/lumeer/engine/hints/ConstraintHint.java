@@ -23,10 +23,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.push.PushMessage;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>

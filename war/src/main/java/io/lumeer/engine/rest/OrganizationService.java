@@ -21,10 +21,10 @@ package io.lumeer.engine.rest;
 
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.SecurityFacade;
-import io.lumeer.engine.api.dto.Organization;
 
 import java.io.Serializable;
 import java.util.List;

@@ -27,10 +27,10 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.dto.Collection;
-import io.lumeer.engine.api.dto.Project;
-import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.dto.LinkInstance;
 import io.lumeer.engine.api.dto.LinkType;
+import io.lumeer.engine.api.dto.Project;
+import io.lumeer.engine.api.exception.DbException;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;

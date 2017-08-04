@@ -29,7 +29,6 @@ import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;

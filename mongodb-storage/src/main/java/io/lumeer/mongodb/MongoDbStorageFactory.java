@@ -19,10 +19,7 @@
  */
 package io.lumeer.mongodb;
 
-import io.lumeer.engine.api.cache.Cache;
-import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.engine.api.cache.CacheProvider;
-import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 import io.lumeer.engine.api.data.StorageConnection;

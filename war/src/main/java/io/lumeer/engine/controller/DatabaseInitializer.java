@@ -19,18 +19,23 @@
  */
 package io.lumeer.engine.controller;
 
-import io.lumeer.engine.api.LumeerConst;
-import io.lumeer.engine.api.LumeerConst.*;
-
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.api.LumeerConst.Collection;
+import io.lumeer.engine.api.LumeerConst.Configuration;
+import io.lumeer.engine.api.LumeerConst.Group;
+import io.lumeer.engine.api.LumeerConst.Index;
+import io.lumeer.engine.api.LumeerConst.Organization;
+import io.lumeer.engine.api.LumeerConst.Project;
+import io.lumeer.engine.api.LumeerConst.Security;
+import io.lumeer.engine.api.LumeerConst.UserGroup;
+import io.lumeer.engine.api.LumeerConst.UserSettings;
+import io.lumeer.engine.api.LumeerConst.View;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;

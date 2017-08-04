@@ -20,7 +20,6 @@
 package io.lumeer.engine.hints;
 
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.controller.UserFacade;
 import io.lumeer.engine.push.PushService;
 
@@ -31,7 +30,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import javax.xml.crypto.Data;
 
 /**
  * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>

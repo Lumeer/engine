@@ -19,16 +19,17 @@
  */
 package io.lumeer.engine.controller;
 
-import static io.lumeer.engine.api.LumeerConst.*;
+import static io.lumeer.engine.api.LumeerConst.Index;
+import static io.lumeer.engine.api.LumeerConst.Linking;
 
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.dto.LinkInstance;
 import io.lumeer.engine.api.dto.LinkType;
+import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.util.ErrorMessageBuilder;
 
