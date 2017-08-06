@@ -280,13 +280,19 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       String collection = collectionFacade.createCollection(new Collection(COLLECTION_DROP_OR_DECREMENT_ATTRIBUTE));
 
       String name = "attribute 1";
+      String name2 = "attribute 2";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name2);
 
       collectionMetadataFacade.dropOrDecrementAttribute(collection, name);
+      collectionMetadataFacade.dropOrDecrementAttribute(collection, name2);
+
       long count = collectionMetadataFacade.getAttributeCount(collection, name);
+      long count2 = collectionMetadataFacade.getAttributeCount(collection, name2);
 
       assertThat(count).isEqualTo(1);
+      assertThat(count2).isEqualTo(0);
 
       collectionMetadataFacade.dropOrDecrementAttribute(collection, name);
       count = collectionMetadataFacade.getAttributeCount(collection, name);
@@ -301,6 +307,9 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
       collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+
+      count = collectionMetadataFacade.getAttributeCount(collection, nestedAttribute);
+      assertThat(count).isEqualTo(2);
 
       collectionMetadataFacade.dropOrDecrementAttribute(collection, nestedAttribute);
       collectionMetadataFacade.dropOrDecrementAttribute(collection, nestedAttribute);
@@ -501,7 +510,7 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       List<String> keys = Arrays.asList("keySuper", "key2", "key3", "key4", "key5", "key6", "key7");
       List<String> objects = Arrays.asList("object1", "object2", "object3", "object4", "object5", "object6", "object7");
       List<String> documentIds = new ArrayList<>();
-      
+
       for (int i = 0; i < keys.size(); i++) {
          String documentID = documentFacade.createDocument(collectionCode, new DataDocument(keys.get(i), objects.get(i)));
          documentIds.add(documentID);

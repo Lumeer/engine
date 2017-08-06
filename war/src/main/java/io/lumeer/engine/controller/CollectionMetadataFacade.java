@@ -342,16 +342,19 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute to be dropped
     */
    public void dropAttribute(String collectionCode, String attributeName) {
-      DataDocument removeAttributes = dataStorage.readDocumentIncludeAttrs(metadataCollection(),
-            dialect.combineFilters(collectionCodeFilter(collectionCode), attributeWildcardFilter(collectionCode, attributeName)),
-            Collections.singletonList(LumeerConst.Collection.ATTRIBUTES));
+      DataFilter filter = collectionCodeFilter(collectionCode);
+      List<String> attributes = Collections.singletonList(LumeerConst.Collection.ATTRIBUTES);
 
-      if (removeAttributes == null) {
+      DataDocument collectionToRemoveFrom = dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, attributes);
+
+      if (collectionToRemoveFrom == null) {
          return;
       }
 
-      dataStorage.removeItemsFromArray(metadataCollection(), collectionCodeFilter(collectionCode), LumeerConst.Collection.ATTRIBUTES,
-            removeAttributes.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class));
+      collectionToRemoveFrom.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class).stream()
+                            .filter(attribute -> attribute.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME).equals(attributeName))
+                            .findFirst()
+                            .ifPresent(removedAttribute -> dataStorage.removeItemFromArray(metadataCollection(), filter, LumeerConst.Collection.ATTRIBUTES, removedAttribute));
    }
 
    /**
