@@ -46,6 +46,16 @@ public class Collection {
       this(null, name, "", "", 0, Collections.emptyList());
    }
 
+   /**
+    * Constructor used when inserting a document to a collection that does not exist
+    *
+    * @param code
+    * @param name
+    */
+   public Collection(String code, String name) {
+      this(code, name, "", "", 0, Collections.emptyList());
+   }
+
    public Collection(DataDocument document, String user, List<String> userGroups) {
       this(document.getString(LumeerConst.Collection.CODE),
             document.getString(LumeerConst.Collection.REAL_NAME),

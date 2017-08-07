@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
+import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.event.DropDocument;
 import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
@@ -91,7 +92,7 @@ public class DocumentFacade implements Serializable {
     * Creates and inserts a new document to specified collection and create collection if not exists
     *
     * @param collectionCode
-    *       the name of the collection where the document is located
+    *       the code of the collection where the document is located
     * @param document
     *       the DataDocument object representing a document to be created
     * @return the id of the newly created document
@@ -103,6 +104,13 @@ public class DocumentFacade implements Serializable {
       // add metadata attributes
       documentMetadataFacade.putInitDocumentMetadataInternally(documentCleaned, userFacade.getUserEmail());
       versionFacade.putInitDocumentVersionInternally(documentCleaned);
+
+      /**
+       * Check if the document is being added to an existing collection, if not, create one with that code.
+       */
+      if (!collectionFacade.hasCollection(collectionCode)) {
+         collectionFacade.createCollection(new Collection(collectionCode, "Untitled"));
+      }
 
       String documentId = dataStorage.createDocument(collectionCode, documentCleaned);
       if (documentId == null) {
