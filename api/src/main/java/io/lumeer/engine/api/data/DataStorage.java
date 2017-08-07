@@ -288,9 +288,9 @@ public interface DataStorage extends Serializable {
     * @param filter
     *       the filter to identify document
     * @param attributeName
-    *       the name of an attribute to add item
+    *       the name of an attribute to remove item
     * @param items
-    *       the items  that will be deleted from the array
+    *       the items that will be deleted from the array
     */
    <T> void removeItemsFromArray(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items);
 

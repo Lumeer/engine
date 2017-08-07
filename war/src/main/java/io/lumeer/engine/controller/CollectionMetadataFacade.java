@@ -50,6 +50,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
@@ -431,16 +433,24 @@ public class CollectionMetadataFacade implements Serializable {
     *       attribute to be dropped
     */
    public void dropAttribute(String collectionCode, String attributeName) {
-      DataDocument removeAttributes = dataStorage.readDocumentIncludeAttrs(metadataCollection(),
-            dialect.combineFilters(collectionCodeFilter(collectionCode), attributeWildcardFilter(collectionCode, attributeName)),
-            Collections.singletonList(LumeerConst.Collection.ATTRIBUTES));
+      DataFilter filter = collectionCodeFilter(collectionCode);
+      List<String> attributes = Collections.singletonList(LumeerConst.Collection.ATTRIBUTES);
 
-      if (removeAttributes == null) {
+      DataDocument collectionToRemoveFrom = dataStorage.readDocumentIncludeAttrs(metadataCollection(), filter, attributes);
+
+      if (collectionToRemoveFrom == null) {
          return;
       }
 
-      dataStorage.removeItemsFromArray(metadataCollection(), collectionCodeFilter(collectionCode), LumeerConst.Collection.ATTRIBUTES,
-            removeAttributes.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class));
+      // match "<attributeName>", or "<attributeName>.<child>"
+      Pattern pattern = Pattern.compile(Pattern.quote(attributeName) + "(\\..*)?");
+      Matcher matcher = pattern.matcher("");
+
+      List<DataDocument> attributesToRemove = collectionToRemoveFrom.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class).stream()
+                                                         .filter(attribute -> matcher.reset(attribute.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME)).matches())
+                                                         .collect(Collectors.toList());
+
+      dataStorage.removeItemsFromArray(metadataCollection(), filter, LumeerConst.Collection.ATTRIBUTES, attributesToRemove);
    }
 
    /**

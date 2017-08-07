@@ -528,13 +528,19 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       String collection = collectionFacade.createCollection(new Collection(collectionName));
 
       String name = "attribute 1";
+      String name2 = "attribute 2";
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
       collectionMetadataFacade.addOrIncrementAttribute(collection, name);
+      collectionMetadataFacade.addOrIncrementAttribute(collection, name2);
 
       collectionMetadataFacade.dropOrDecrementAttribute(collection, name);
+      collectionMetadataFacade.dropOrDecrementAttribute(collection, name2);
+
       long count = collectionMetadataFacade.getAttributeCount(collection, name);
+      long count2 = collectionMetadataFacade.getAttributeCount(collection, name2);
 
       assertThat(count).isEqualTo(1);
+      assertThat(count2).isEqualTo(0);
 
       collectionMetadataFacade.dropOrDecrementAttribute(collection, name);
       count = collectionMetadataFacade.getAttributeCount(collection, name);
@@ -549,6 +555,9 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
 
       collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
       collectionMetadataFacade.addOrIncrementAttribute(collection, nestedAttribute);
+
+      count = collectionMetadataFacade.getAttributeCount(collection, nestedAttribute);
+      assertThat(count).isEqualTo(2);
 
       collectionMetadataFacade.dropOrDecrementAttribute(collection, nestedAttribute);
       collectionMetadataFacade.dropOrDecrementAttribute(collection, nestedAttribute);
