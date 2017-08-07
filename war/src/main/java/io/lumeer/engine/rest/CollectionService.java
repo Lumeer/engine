@@ -158,7 +158,7 @@ public class CollectionService implements Serializable {
       if (collection == null) {
          throw new UserCollectionNotFoundException(ErrorMessageBuilder.userCollectionNotFoundString(collectionCode));
       }
-      if (!collection.getUserRoles().contains(LumeerConst.Security.ROLE_MANAGE)) {
+      if (!collection.getUserRoles().contains(LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
