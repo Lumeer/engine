@@ -74,7 +74,7 @@ public class SecurityFacade implements Serializable {
       DataDocument doc = systemDataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
             dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationId(organizationCode)),
-            Collections.singletonList(LumeerConst.Security.ROLES_KEY));
+            Collections.singletonList(LumeerConst.Security.PERMISSIONS_KEY));
 
       return checkRole(doc, userFacade.getUserEmail(), role, organizationCode);
    }
@@ -83,16 +83,7 @@ public class SecurityFacade implements Serializable {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectCode)),
-            Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
-
-      return checkRole(doc, userFacade.getUserEmail(), role, organizationFacade.getOrganizationCode());
-   }
-
-   public boolean hasCollectionRole(String projectCode, String collectionCode, String role) {
-      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
-            LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.multipleFieldsValueFilter(collectionFilter(projectCode, collectionCode)),
-            Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
+            Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Security.PERMISSIONS_KEY, role)));
 
       return checkRole(doc, userFacade.getUserEmail(), role, organizationFacade.getOrganizationCode());
    }
@@ -101,7 +92,7 @@ public class SecurityFacade implements Serializable {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(viewFilter(projectCode, viewId)),
-            Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Security.ROLES_KEY, role)));
+            Collections.singletonList(dataStorageDialect.concatFields(LumeerConst.Security.PERMISSIONS_KEY, role)));
 
       return checkRole(doc, userFacade.getUserEmail(), role, organizationFacade.getOrganizationCode());
    }
@@ -112,7 +103,7 @@ public class SecurityFacade implements Serializable {
          groupsForUser = Collections.emptyList();
       }
 
-      DataDocument roleDoc = rolesDocument.getDataDocument(LumeerConst.Security.ROLES_KEY).getDataDocument(role);
+      DataDocument roleDoc = rolesDocument.getDataDocument(LumeerConst.Security.PERMISSIONS_KEY).getDataDocument(role);
 
       if (roleDoc.getArrayList(LumeerConst.Security.USERS_KEY, String.class).contains(user)) {
          return true;
@@ -139,7 +130,7 @@ public class SecurityFacade implements Serializable {
             LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
             dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationId(organizationCode)),
             dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
+                  LumeerConst.Security.PERMISSIONS_KEY,
                   role,
                   key),
             values);
@@ -158,29 +149,7 @@ public class SecurityFacade implements Serializable {
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectCode)),
             dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
-                  role,
-                  key),
-            values);
-   }
-
-   public void addCollectionUsersRole(String projectCode, String collectionCode, List<String> users, String role) {
-      addCollectionRole(collectionCode, projectCode, LumeerConst.Security.USERS_KEY, users, role);
-   }
-
-   public void addCollectionGroupsRole(String projectCode, String collectionCode, List<String> groups, String role) {
-      addCollectionRole(collectionCode, projectCode, LumeerConst.Security.GROUP_KEY, groups, role);
-   }
-
-   private void addCollectionRole(String collectionCode, String projectCode, String key, List<String> values, String role) {
-
-      Map<String, Object> filter = collectionFilter(projectCode, collectionCode);
-
-      dataStorage.addItemsToArray(
-            LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.multipleFieldsValueFilter(filter),
-            dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
+                  LumeerConst.Security.PERMISSIONS_KEY,
                   role,
                   key),
             values);
@@ -202,7 +171,7 @@ public class SecurityFacade implements Serializable {
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(filter),
             dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
+                  LumeerConst.Security.PERMISSIONS_KEY,
                   role,
                   key),
             values);
@@ -223,7 +192,7 @@ public class SecurityFacade implements Serializable {
             LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
             dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY, organizationFacade.getOrganizationId(organizationCode)),
             dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
+                  LumeerConst.Security.PERMISSIONS_KEY,
                   role,
                   key),
             values);
@@ -242,28 +211,7 @@ public class SecurityFacade implements Serializable {
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectCode)),
             dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
-                  role,
-                  key),
-            values);
-   }
-
-   public void removeCollectionUsersRole(String projectCode, String collectionCode, List<String> users, String role) {
-      removeCollectionRole(projectCode, collectionCode, LumeerConst.Security.USERS_KEY, users, role);
-   }
-
-   public void removeCollectionGroupsRole(String projectCode, String collectionCode, List<String> groups, String role) {
-      removeCollectionRole(projectCode, collectionCode, LumeerConst.Security.GROUP_KEY, groups, role);
-   }
-
-   private void removeCollectionRole(String projectCode, String collectionCode, String key, List<String> values, String role) {
-      Map<String, Object> filter = collectionFilter(projectCode, collectionCode);
-
-      dataStorage.removeItemsFromArray(
-            LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.multipleFieldsValueFilter(filter),
-            dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
+                  LumeerConst.Security.PERMISSIONS_KEY,
                   role,
                   key),
             values);
@@ -284,28 +232,16 @@ public class SecurityFacade implements Serializable {
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(filter),
             dataStorageDialect.concatFields(
-                  LumeerConst.Security.ROLES_KEY,
+                  LumeerConst.Security.PERMISSIONS_KEY,
                   role,
                   key),
             values);
-   }
-
-   public void dropCollectionSecurity(String projectCode, String collectionCode) {
-      dataStorage.dropDocument(LumeerConst.Security.ROLES_COLLECTION_NAME, dataStorageDialect.multipleFieldsValueFilter(collectionFilter(projectCode, collectionCode)));
    }
 
    private Map<String, Object> projectFilter(String projectCode) {
       Map<String, Object> filter = new HashMap<>();
       filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode));
       filter.put(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_PROJECT);
-      return filter;
-   }
-
-   private Map<String, Object> collectionFilter(String projectCode, String collectionCode) {
-      Map<String, Object> filter = new HashMap<>();
-      filter.put(LumeerConst.Security.PROJECT_ID_KEY, projectFacade.getProjectId(projectCode));
-      filter.put(LumeerConst.Security.TYPE_KEY, LumeerConst.Security.TYPE_COLLECTION);
-      filter.put(LumeerConst.Security.TYPE_ID_KEY, collectionMetadataFacade.getCollectionId(collectionCode));
       return filter;
    }
 
@@ -323,7 +259,7 @@ public class SecurityFacade implements Serializable {
             LumeerConst.Security.ORGANIZATION_ROLES_COLLECTION_NAME,
             dataStorageDialect.fieldValueFilter(LumeerConst.Security.ORGANIZATION_ID_KEY,
                   organizationFacade.getOrganizationId(organizationCode)),
-            Collections.singletonList(LumeerConst.Security.ROLES_KEY));
+            Collections.singletonList(LumeerConst.Security.PERMISSIONS_KEY));
 
       return getRolesList(doc);
    }
@@ -332,16 +268,7 @@ public class SecurityFacade implements Serializable {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(projectFilter(projectCode)),
-            Collections.singletonList(LumeerConst.Security.ROLES_KEY));
-
-      return getRolesList(doc);
-   }
-
-   public List<Role> getCollectionRoles(String projectCode, String collectionCode) {
-      DataDocument doc = dataStorage.readDocumentIncludeAttrs(
-            LumeerConst.Security.ROLES_COLLECTION_NAME,
-            dataStorageDialect.multipleFieldsValueFilter(collectionFilter(projectCode, collectionCode)),
-            Collections.singletonList(LumeerConst.Security.ROLES_KEY));
+            Collections.singletonList(LumeerConst.Security.PERMISSIONS_KEY));
 
       return getRolesList(doc);
    }
@@ -350,14 +277,14 @@ public class SecurityFacade implements Serializable {
       DataDocument doc = dataStorage.readDocumentIncludeAttrs(
             LumeerConst.Security.ROLES_COLLECTION_NAME,
             dataStorageDialect.multipleFieldsValueFilter(viewFilter(projectCode, viewId)),
-            Collections.singletonList(LumeerConst.Security.ROLES_KEY));
+            Collections.singletonList(LumeerConst.Security.PERMISSIONS_KEY));
 
       return getRolesList(doc);
    }
 
    private List<Role> getRolesList(DataDocument doc) {
       List<Role> output = new ArrayList<>();
-      doc.getDataDocument(LumeerConst.Security.ROLES_KEY).forEach((k, v) -> {
+      doc.getDataDocument(LumeerConst.Security.PERMISSIONS_KEY).forEach((k, v) -> {
          output.add(new Role(k, (DataDocument) v));
       });
 

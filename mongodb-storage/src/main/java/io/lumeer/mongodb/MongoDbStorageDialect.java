@@ -27,6 +27,7 @@ import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataSort;
 import io.lumeer.engine.api.data.DataStorageDialect;
 
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
@@ -70,6 +71,7 @@ public class MongoDbStorageDialect implements DataStorageDialect {
                               .append("$slice", listSize))));
    }
 
+   @Override
    public DataDocument[] usersOfGroupAggregate(final String organization, final String group) {
       return new DataDocument[] { new DataDocument("$match", new DataDocument(LumeerConst.UserGroup.ATTR_ORG_ID, organization)),
             new DataDocument("$unwind", "$" + LumeerConst.UserGroup.ATTR_USERS),
@@ -129,6 +131,19 @@ public class MongoDbStorageDialect implements DataStorageDialect {
                                         .map(DataFilter::<Bson>get)
                                         .collect(Collectors.toList());
       return createFilter(and(mongoDbFilters));
+   }
+
+   @Override
+   public DataFilter collectionPermissionsRoleFilter(final String role, final String user, final List<String> groups) {
+      List<Bson> groupsFilters = groups.stream()
+                                       .map(g -> collectionPermissionRoleFilterHelper(LumeerConst.Security.GROUP_KEY, g, role))
+                                       .collect(Collectors.toList());
+      groupsFilters.add(collectionPermissionRoleFilterHelper(LumeerConst.Security.USERS_KEY, user, role));
+      return createFilter(Filters.or(groupsFilters.toArray(new Bson[groupsFilters.size()])));
+   }
+
+   private Bson collectionPermissionRoleFilterHelper(final String key, final String name, final String role) {
+      return Filters.elemMatch(concatFields(LumeerConst.Security.PERMISSIONS_KEY, key), Filters.and(Filters.eq(LumeerConst.Security.USERGROUP_NAME_KEY, name), Filters.in(LumeerConst.Security.USERGROUP_ROLES_KEY, role)));
    }
 
    private DataSort createSort(final Bson sort) {

@@ -39,6 +39,7 @@ import io.lumeer.engine.util.ErrorMessageBuilder;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -91,10 +92,18 @@ public class CollectionFacade implements Serializable {
    /**
     * Gets limited info about all collections in database
     *
+    * @param user
+    *       User identificator
+    * @param groups
+    *       User groups
+    * @param skip
+    *       Number of skipped collections
+    * @param size
+    *       Max number of collections
     * @return list with metadata
     */
-   public List<Collection> getCollections() {
-      return collectionMetadataFacade.getCollections();
+   public List<Collection> getCollections(String user, List<String> groups, int skip, int size) {
+      return collectionMetadataFacade.getCollections(user, groups, skip, size);
    }
 
    /**
@@ -102,15 +111,9 @@ public class CollectionFacade implements Serializable {
     *
     * @param collectionCode
     *       collection code
-    * @throws CollectionNotFoundException
-    *       Requested collection isn't stored in the dataStorage.
     */
-   public Collection getCollection(final String collectionCode) throws CollectionNotFoundException {
-      if (!dataStorage.hasCollection(collectionCode)) {
-         throw new CollectionNotFoundException("Collection " + collectionCode + " was not found in dataStorage. Check if you didn't use CollectionName by accident.");
-      }
-
-      return new Collection(collectionMetadataFacade.getCollectionMetadata(collectionCode).toDataDocument());
+   public Collection getCollection(final String collectionCode) {
+      return collectionMetadataFacade.getCollection(collectionCode);
    }
 
    /**
@@ -141,16 +144,11 @@ public class CollectionFacade implements Serializable {
       }
 
       dataStorage.createCollection(collectionCode);
-      String collectionId = collectionMetadataFacade.createInitialMetadata(collectionCode, collection);
+      List<String> roleNames = new ArrayList<>(LumeerConst.Security.RESOURCE_ROLES.get(LumeerConst.Security.COLLECTION_RESOURCE));
+      String collectionId = collectionMetadataFacade.createInitialMetadata(collectionCode, collection, userFacade.getUserEmail(), roleNames);
 
       String project = projectFacade.getCurrentProjectCode();
       databaseInitializer.onCollectionCreated(project, collectionId);
-
-      List<String> user = Collections.singletonList(userFacade.getUserEmail());
-      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_MANAGE);
-      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_READ);
-      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_SHARE);
-      securityFacade.addCollectionUsersRole(project, collectionCode, user, LumeerConst.Security.ROLE_WRITE);
 
       return collectionCode;
    }
@@ -194,7 +192,6 @@ public class CollectionFacade implements Serializable {
 
       linkingFacade.dropLinksForCollection(collectionCode, null, LumeerConst.Linking.LinkDirection.FROM);
       linkingFacade.dropLinksForCollection(collectionCode, null, LumeerConst.Linking.LinkDirection.TO);
-      securityFacade.dropCollectionSecurity(projectFacade.getCurrentProjectCode(), collectionCode);
       collectionMetadataFacade.dropMetadata(collectionCode);
       dataStorage.dropCollection(collectionCode);
       versionFacade.trashShadowCollection(collectionCode);
@@ -209,9 +206,9 @@ public class CollectionFacade implements Serializable {
     *
     * @param collectionCode
     *       collection code
-    * @return map, keys are attributes' names, values are objects with attributes' metadata
+    * @return list of collection attributes
     */
-   public Map<String, Attribute> readCollectionAttributes(final String collectionCode) {
+   public List<Attribute> readCollectionAttributes(final String collectionCode) {
       return collectionMetadataFacade.getAttributesInfo(collectionCode);
    }
 

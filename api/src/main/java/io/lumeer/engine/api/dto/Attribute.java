@@ -29,9 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.concurrent.Immutable;
 
-/**
- * @author <a href="alica.kacengova@gmail.com">Alica Kačengová</a>
- */
 @Immutable
 public class Attribute {
 
@@ -48,10 +45,10 @@ public class Attribute {
    }
 
    @JsonCreator
-   public Attribute(final @JsonProperty(Collection.ATTRIBUTE_NAME) String name,
-         final @JsonProperty(Collection.ATTRIBUTE_FULL_NAME) String fullName,
-         final @JsonProperty(Collection.ATTRIBUTE_COUNT) int count,
-         final @JsonProperty(Collection.ATTRIBUTE_CONSTRAINTS) List<String> constraints) {
+   public Attribute(final @JsonProperty("name") String name,
+         final @JsonProperty("fullName") String fullName,
+         final @JsonProperty("count") int count,
+         final @JsonProperty("constraints") List<String> constraints) {
       this.name = name;
       this.fullName = fullName;
       this.count = count;
@@ -71,7 +68,7 @@ public class Attribute {
    }
 
    public List<String> getConstraints() {
-      return Collections.unmodifiableList(constraints);
+      return constraints != null ? Collections.unmodifiableList(constraints) : Collections.emptyList();
    }
 
    public DataDocument toDataDocument() {

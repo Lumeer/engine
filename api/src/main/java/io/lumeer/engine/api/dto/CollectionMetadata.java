@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine.api.dto;
 
+import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.LumeerConst.Collection;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -26,9 +27,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
@@ -48,9 +52,10 @@ public class CollectionMetadata {
    private final String icon;
    private final String color;
    private final int documentCount;
+   private final Map<String, List<Permission>> permissions;
 
    public CollectionMetadata() {
-      this(null, null, Collections.emptyList(), null, Collections.emptyList(), null, null, null, null, null, null, null, 0);
+      this(null, null, Collections.emptyList(), null, Collections.emptyList(), null, null, null, null, null, null, null, 0, Collections.emptyMap());
    }
 
    public CollectionMetadata(final DataDocument metadata) {
@@ -71,6 +76,15 @@ public class CollectionMetadata {
       icon = metadata.getString(Collection.ICON);
       color = metadata.getString(Collection.COLOR);
       documentCount = metadata.getInteger(Collection.DOCUMENT_COUNT, 0);
+
+      permissions = new HashMap<>();
+
+      List<String> keys = Arrays.asList(LumeerConst.Security.USERS_KEY, LumeerConst.Security.GROUP_KEY);
+      DataDocument permissionsDocument = metadata.getDataDocument(LumeerConst.Security.PERMISSIONS_KEY);
+      for (String key : keys) {
+         permissions.put(key, permissionsDocument.getArrayList(key, DataDocument.class).stream()
+                                                 .map(Permission::new).collect(Collectors.toList()));
+      }
    }
 
    @JsonCreator
@@ -86,7 +100,8 @@ public class CollectionMetadata {
          final @JsonProperty("updateDate") Date updateDate,
          final @JsonProperty("icon") String icon,
          final @JsonProperty("color") String color,
-         final @JsonProperty("documentCount") int documentCount) {
+         final @JsonProperty("documentCount") int documentCount,
+         final @JsonProperty("permissions") Map<String, List<Permission>> permissions) {
       this.name = name;
       this.code = code;
       this.attributes = attributes;
@@ -100,6 +115,7 @@ public class CollectionMetadata {
       this.icon = icon;
       this.color = color;
       this.documentCount = documentCount;
+      this.permissions = permissions;
    }
 
    public String getName() {
@@ -144,6 +160,10 @@ public class CollectionMetadata {
 
    public int getDocumentCount() {
       return documentCount;
+   }
+
+   public Map<String, List<Permission>> getPermissions() {
+      return Collections.unmodifiableMap(permissions);
    }
 
    public DataDocument toDataDocument() {

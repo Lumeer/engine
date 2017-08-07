@@ -131,7 +131,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -158,7 +158,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -186,7 +186,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -212,7 +212,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -237,7 +237,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -265,7 +265,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -293,7 +293,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -317,7 +317,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -342,7 +342,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -370,7 +370,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -401,7 +401,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -425,7 +425,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_WRITE)) {
          throw new UnauthorizedAccessException();
       }
 
@@ -448,7 +448,7 @@ public class DocumentService implements Serializable {
          throw new BadRequestException();
       }
 
-      if (!securityFacade.hasCollectionRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
+      if (!collectionMetadataFacade.hasRole(projectCode, collectionCode, LumeerConst.Security.ROLE_READ)) {
          throw new UnauthorizedAccessException();
       }
 

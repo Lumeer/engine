@@ -179,7 +179,7 @@ public final class LumeerConst {
       public static final String TYPE_COLLECTION = "collection";
       public static final String TYPE_VIEW = "view";
 
-      public static final String ROLES_KEY = "roles";
+      public static final String PERMISSIONS_KEY = "permissions";
       public static final String ROLE_MANAGE = "manage";
       public static final String ROLE_WRITE = "write";
       public static final String ROLE_READ = "read";
@@ -188,6 +188,8 @@ public final class LumeerConst {
 
       public static final String USERS_KEY = "users";
       public static final String GROUP_KEY = "groups";
+      public static final String USERGROUP_NAME_KEY = "name";
+      public static final String USERGROUP_ROLES_KEY = "roles";
 
       public static final String ORGANIZATION_RESOURCE = "organizations";
       public static final String PROJECT_RESOURCE = "projects";
@@ -213,13 +215,6 @@ public final class LumeerConst {
                }
             });
 
-      /****** OLD ******/
-      public static final String RULE = "rule";
-      public static final String USER_ID = "user_email";
-
-      public static final int READ = 4;
-      public static final int WRITE = 2;
-      public static final int EXECUTE = 1;
    }
 
    public static class Project {
