@@ -49,6 +49,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
@@ -351,10 +353,15 @@ public class CollectionMetadataFacade implements Serializable {
          return;
       }
 
-      collectionToRemoveFrom.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class).stream()
-                            .filter(attribute -> attribute.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME).equals(attributeName))
-                            .findFirst()
-                            .ifPresent(removedAttribute -> dataStorage.removeItemFromArray(metadataCollection(), filter, LumeerConst.Collection.ATTRIBUTES, removedAttribute));
+      // match "<attributeName>", or "<attributeName>.<child>"
+      Pattern pattern = Pattern.compile(Pattern.quote(attributeName) + "(\\..*)?");
+      Matcher matcher = pattern.matcher("");
+
+      List<DataDocument> attributesToRemove = collectionToRemoveFrom.getArrayList(LumeerConst.Collection.ATTRIBUTES, DataDocument.class).stream()
+                                                         .filter(attribute -> matcher.reset(attribute.getString(LumeerConst.Collection.ATTRIBUTE_FULL_NAME)).matches())
+                                                         .collect(Collectors.toList());
+
+      dataStorage.removeItemsFromArray(metadataCollection(), filter, LumeerConst.Collection.ATTRIBUTES, attributesToRemove);
    }
 
    /**
