@@ -779,4 +779,19 @@ public class CollectionMetadataFacadeIntegrationTest extends IntegrationTestBase
       documentFacade.dropDocument(collectionCode, documentIds.get(2));
       assertThat(collectionFacade.getCollection(collectionCode).getDocumentCount()).isEqualTo(keys.size() - 2);
    }
+
+   @Test
+   public void testCreateDocumentInNonexistingCollectionCheckCount() throws DbException {
+      String nonexistingCollectionCode = "I don't exist_code";
+      dataStorage.dropCollection(nonexistingCollectionCode);
+      assertThat(dataStorage.hasCollection(nonexistingCollectionCode)).isFalse();
+
+      documentFacade.createDocument(nonexistingCollectionCode, new DataDocument("val", "key"));
+      int documentCount = collectionFacade.getCollection(nonexistingCollectionCode).getDocumentCount();
+      assertThat(documentCount).isEqualTo(1);
+      documentFacade.createDocument(nonexistingCollectionCode, new DataDocument("val2", "key2"));
+      documentFacade.createDocument(nonexistingCollectionCode, new DataDocument("val3", "key3"));
+      documentCount = collectionFacade.getCollection(nonexistingCollectionCode).getDocumentCount();
+      assertThat(documentCount).isEqualTo(3);
+   }
 }
