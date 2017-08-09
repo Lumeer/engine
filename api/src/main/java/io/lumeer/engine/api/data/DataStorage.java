@@ -112,7 +112,7 @@ public interface DataStorage extends Serializable {
     * Creates and inserts a new document to specified collection.
     *
     * @param collectionName
-    *       the code of the collection where the document will be created
+    *       the name of the collection where the document will be created
     * @param document
     *       the DataDocument object representing a document to be created
     * @return the id of the newly created document
