@@ -13,6 +13,7 @@ import io.lumeer.engine.api.dto.Organization;
 
 import com.mongodb.MongoWriteException;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -35,6 +36,12 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    @Inject
    private OrganizationFacade organizationFacade;
 
+   @Before
+   public void initOrganizationCollection() {
+      dataStorage.createCollection(LumeerConst.Organization.COLLECTION_NAME);
+      dataStorage.createIndex(LumeerConst.Organization.COLLECTION_NAME, new DataDocument(LumeerConst.Organization.ATTR_ORG_CODE, LumeerConst.Index.ASCENDING), true);
+   }
+
    @Test
    public void testReadOrganizations() throws Exception {
       dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
@@ -45,7 +52,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testReadAndUpdateOrganization() throws Exception{
+   public void testReadAndUpdateOrganization() throws Exception {
       dropDocuments(LumeerConst.Organization.COLLECTION_NAME);
 
       organizationFacade.createOrganization(new Organization("LMR", "Lumeer"));

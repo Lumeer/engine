@@ -28,14 +28,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.enterprise.context.SessionScoped;
+import javax.enterprise.context.ApplicationScoped;
 
-/**
- * Produces default configuration values based on system properties.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-@SessionScoped
+@ApplicationScoped
 public class DefaultConfigurationProducer implements Serializable {
 
    private static final long serialVersionUID = -9139613375175238783L;

@@ -30,7 +30,6 @@ import io.lumeer.engine.api.LumeerConst.Project;
 import io.lumeer.engine.api.LumeerConst.Security;
 import io.lumeer.engine.api.LumeerConst.UserGroup;
 import io.lumeer.engine.api.LumeerConst.UserSettings;
-import io.lumeer.engine.api.LumeerConst.View;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
@@ -57,9 +56,6 @@ public class DatabaseInitializer {
 
    @Inject
    private DataStorageDialect dataStorageDialect;
-
-   @Inject
-   private ViewFacade viewFacade;
 
    @Inject
    private CollectionMetadataFacade collectionMetadataFacade;
@@ -123,21 +119,6 @@ public class DatabaseInitializer {
       if (!dataStorage.hasCollection(Organization.COLLECTION_NAME)) {
          dataStorage.createCollection(Organization.COLLECTION_NAME);
          dataStorage.createIndex(Organization.COLLECTION_NAME, new DataDocument(Organization.ATTR_ORG_CODE, Index.ASCENDING), true);
-      }
-   }
-
-   /**
-    * Initializes collection which holds metadata for all views in given project.
-    *
-    * @param projectId
-    *       project id
-    */
-   private void initViewsMetadata(String projectId) {
-      String viewsCollection = viewFacade.metadataCollectionFromId(projectId);
-      if (!userDataStorage.hasCollection(viewsCollection)) {
-         userDataStorage.createCollection(viewsCollection);
-         userDataStorage.createIndex(viewsCollection, new DataDocument(View.ID_KEY, Index.ASCENDING), true);
-         userDataStorage.createIndex(viewsCollection, new DataDocument(View.NAME_KEY, Index.ASCENDING), true);
       }
    }
 
@@ -297,7 +278,7 @@ public class DatabaseInitializer {
    public void onProjectCreated(final String projectId) {
       initProjectRoles(projectId);
       initCollectionsMetadata(projectId);
-      initViewsMetadata(projectId);
+      // TODO initialize view metadata
    }
 
    /**

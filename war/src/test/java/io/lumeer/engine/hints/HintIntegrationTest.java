@@ -27,7 +27,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.controller.CollectionFacade;
-import io.lumeer.mongodb.MongoUtils;
+import io.lumeer.storage.mongodb.MongoUtils;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
