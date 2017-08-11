@@ -72,7 +72,7 @@ public class ViewService extends AbstractService {
    public Response createView(JsonView view) {
       View storedView = viewFacade.createView(view);
 
-      URI resourceUri = getResourceURI(storedView);
+      URI resourceUri = getResourceUri(storedView);
       return Response.created(resourceUri).build();
    }
 
@@ -90,7 +90,7 @@ public class ViewService extends AbstractService {
    public Response deleteView(@PathParam("viewCode") String code) {
       viewFacade.deleteView(code);
 
-      return Response.ok().link(getParentURI(), "parent").build();
+      return Response.ok().link(getParentUri(code), "parent").build();
    }
 
    @GET
@@ -127,7 +127,7 @@ public class ViewService extends AbstractService {
    public Response removeUserPermission(@PathParam("viewCode") String code, @PathParam("user") String user) {
       viewFacade.removeUserPermission(code, user);
 
-      return Response.ok().link(getGrandParentURI(), "parent").build();
+      return Response.ok().link(getParentUri("users", user), "parent").build();
    }
 
    @PUT
@@ -143,6 +143,6 @@ public class ViewService extends AbstractService {
    public Response removeGroupPermission(@PathParam("viewCode") String code, @PathParam("group") String group) {
       viewFacade.removeGroupPermission(code, group);
 
-      return Response.ok().link(getGrandParentURI(), "parent").build();
+      return Response.ok().link(getParentUri("groups", group), "parent").build();
    }
 }

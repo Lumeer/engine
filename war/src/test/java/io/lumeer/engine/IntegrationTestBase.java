@@ -19,6 +19,7 @@
  */
 package io.lumeer.engine;
 
+import io.lumeer.core.WorkspaceCache;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
@@ -59,8 +60,16 @@ public abstract class IntegrationTestBase extends MongoDbTestBase {
    @SystemDataStorage
    public DataStorage systemDataStorage;
 
+   @Inject
+   public WorkspaceCache workspaceCache;
+
    @Before
    public void cleanDatabase() {
       ((MongoDatabase) systemDataStorage.getDatabase()).drop();
+   }
+
+   @Before
+   public void clearCaches() {
+      workspaceCache.clear();
    }
 }

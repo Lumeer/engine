@@ -22,8 +22,6 @@ package io.lumeer.core;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.ProjectDao;
 
 import java.util.Optional;
 import javax.enterprise.context.RequestScoped;
@@ -32,31 +30,34 @@ import javax.inject.Inject;
 @RequestScoped
 public class WorkspaceKeeper implements SelectedWorkspace {
 
-   private Organization organization;
-   private Project project;
+   private String organizationCode;
+   private String projectCode;
 
    @Inject
-   private OrganizationDao organizationDao;
-
-   @Inject
-   private ProjectDao projectDao;
+   private WorkspaceCache workspaceCache;
 
    @Override
    public Optional<Organization> getOrganization() {
-      return Optional.ofNullable(organization);
+      if (organizationCode == null) {
+         return Optional.empty();
+      }
+      return Optional.of(workspaceCache.getOrganization(organizationCode));
    }
 
    @Override
    public Optional<Project> getProject() {
-      return Optional.ofNullable(project);
+      if (projectCode == null) {
+         return Optional.empty();
+      }
+      return Optional.of(workspaceCache.getProject(projectCode));
    }
 
    public void setOrganization(String organizationCode) {
-      this.organization = organizationDao.getOrganizationByCode(organizationCode); // TODO cache this in the future
+      this.organizationCode = organizationCode;
    }
 
    public void setProject(String projectCode) {
-      this.project = projectDao.getProjectByCode(projectCode); // TODO cache this in the future
+      this.projectCode = projectCode;
    }
 
    public void setWorkspace(String organizationCode, String projectCode) {

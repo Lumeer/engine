@@ -31,8 +31,8 @@ import javax.servlet.http.HttpServletRequest;
 @RequestScoped
 public class AuthenticatedUser {
 
-   public static final String DEFAULT_USERNAME = "demouser";
-   public static final String DEFAULT_EMAIL = "demouser@lumeer.io";
+   public static final String DEFAULT_USERNAME = "aturing";
+   public static final String DEFAULT_EMAIL = "aturing@lumeer.io";
 
    @Inject
    private HttpServletRequest request;

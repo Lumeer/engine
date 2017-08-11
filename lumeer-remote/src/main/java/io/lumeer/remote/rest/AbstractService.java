@@ -22,6 +22,8 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Resource;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.UriBuilder;
@@ -31,20 +33,14 @@ public abstract class AbstractService {
    @Inject
    private HttpServletRequest request;
 
-   protected URI getResourceURI(Resource resource) {
+   protected URI getResourceUri(Resource resource) {
       return UriBuilder.fromUri(request.getRequestURL() + "/" + resource.getCode()).build();
    }
 
-   protected URI getParentURI() {
+   protected URI getParentUri(String... urlEnd) {
       String fullPath = request.getRequestURL().toString();
-      String parentPath = fullPath.substring(0, fullPath.lastIndexOf("/"));
+      String regex = "\\/" + Arrays.stream(urlEnd).collect(Collectors.joining("\\/")) + "\\/?$";
+      String parentPath = fullPath.replaceFirst(regex, "");
       return UriBuilder.fromUri(parentPath).build();
-   }
-
-   protected URI getGrandParentURI() {
-      String fullPath = request.getRequestURL().toString();
-      String parentPath = fullPath.substring(0, fullPath.lastIndexOf("/"));
-      String grandParentPath = parentPath.substring(0, parentPath.lastIndexOf("/"));
-      return UriBuilder.fromUri(grandParentPath).build();
    }
 }
