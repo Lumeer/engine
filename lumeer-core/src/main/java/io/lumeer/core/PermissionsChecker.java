@@ -19,10 +19,10 @@
  */
 package io.lumeer.core;
 
-import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.storage.api.dao.UserDao;
 
 import java.util.Set;
@@ -64,20 +64,6 @@ public class PermissionsChecker {
 
    public boolean hasRole(Resource resource, Role role) {
       return getActualRoles(resource).contains(role);
-   }
-
-   private boolean hasUserRole(Set<Permission> userRoles, String user, Role role) {
-      return userRoles.stream()
-                      .filter(entity -> entity.getName().equals(user))
-                      .flatMap(entity -> entity.getRoles().stream())
-                      .anyMatch(actualRole -> actualRole.equals(role));
-   }
-
-   private boolean hasGroupRole(Set<Permission> groupRoles, Set<String> groups, Role role) {
-      return groupRoles.stream()
-                       .filter(entity -> groups.contains(entity.getName()))
-                       .flatMap(entity -> entity.getRoles().stream())
-                       .anyMatch(actualRole -> actualRole.equals(role));
    }
 
    public Set<Role> getActualRoles(Resource resource) {
