@@ -39,7 +39,8 @@ public class EmbeddedMongoDb {
    public static final String PASSWORD = System.getProperty("lumeer.db.passwd", "");
    public static final Boolean SSL = Boolean.getBoolean("lumeer.db.ssl");
 
-   private static final MongodStarter mongodStarter = MongodStarter.getDefaultInstance();
+   private static MongodStarter mongodStarter = MongodStarter.getDefaultInstance();
+   private static IMongodConfig mongodConfig = createMongoConfig();
 
    private MongodExecutable mongodExecutable;
    private MongodProcess mongodProcess;
@@ -50,7 +51,6 @@ public class EmbeddedMongoDb {
          return;
       }
 
-      IMongodConfig mongodConfig = createMongoConfig();
       mongodExecutable = mongodStarter.prepare(mongodConfig);
    }
 
