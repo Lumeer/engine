@@ -19,52 +19,57 @@
  */
 package io.lumeer.storage.mongodb;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import static io.lumeer.storage.mongodb.EmbeddedMongoDb.*;
 
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Net;
-import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.runtime.Network;
+import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.storage.mongodb.model.MongoView;
+
+import com.mongodb.client.MongoDatabase;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.mongodb.morphia.AdvancedDatastore;
+import org.mongodb.morphia.Morphia;
 
 public abstract class MongoDbTestBase {
 
-   protected static final String DB_HOST = System.getProperty("lumeer.db.host", "localhost");
-   protected static final String DB_NAME = System.getProperty("lumeer.db.name", "lumeer-test");
-   protected static final int DB_PORT = Integer.getInteger("lumeer.db.port", 27017);
-   protected static final String DB_USER = System.getProperty("lumeer.db.user", "");
-   protected static final String DB_PASSWORD = System.getProperty("lumeer.db.passwd", "");
-   protected static final Boolean DB_SSL = Boolean.getBoolean("lumeer.db.ssl");
+   private static Morphia morphia = new Morphia().mapPackage(MongoView.class.getPackage().getName());
+   private static EmbeddedMongoDb embeddedMongoDb;
 
-   private static MongodStarter mongodStarter = MongodStarter.getDefaultInstance();
-   private static MongodExecutable mongodExecutable;
-   private static MongodProcess mongodProcess;
+   protected MongoDbStorage mongoDbStorage;
+
+   protected MongoDatabase database;
+   protected AdvancedDatastore datastore;
 
    @BeforeClass
-   public static void startEmbeddedMongoDb() throws Exception {
-      if (!"localhost".equals(DB_HOST)) {
-         // do not start embedded MongoDB when remote database is used
-         return;
-      }
-
-      IMongodConfig mongodConfig = new MongodConfigBuilder()
-            .version(Version.Main.V3_4)
-            .net(new Net(DB_HOST, DB_PORT, Network.localhostIsIPv6()))
-            .build();
-
-      mongodExecutable = mongodStarter.prepare(mongodConfig);
-      mongodProcess = mongodExecutable.start();
+   public static void startEmbeddedMongoDb() {
+      embeddedMongoDb = new EmbeddedMongoDb();
+      embeddedMongoDb.start();
    }
 
    @AfterClass
    public static void stopEmbeddedMongoDb() {
-      if (mongodExecutable != null && mongodProcess != null && mongodProcess.isProcessRunning()) {
-         mongodProcess.stop();
-         mongodExecutable.stop();
+      if (embeddedMongoDb != null) {
+         embeddedMongoDb.stop();
+      }
+   }
+
+   @Before
+   public void connectMongoDbStorage() {
+      mongoDbStorage = new MongoDbStorage(morphia);
+      mongoDbStorage.connect(new StorageConnection(HOST, PORT, USER, PASSWORD), NAME, SSL);
+
+      database = mongoDbStorage.getDatabase();
+      datastore = mongoDbStorage.getDataStore();
+
+      database.drop();
+   }
+
+   @After
+   public void disconnectMongoDbStorage() {
+      if (mongoDbStorage != null) {
+         mongoDbStorage.disconnect();
       }
    }
 }

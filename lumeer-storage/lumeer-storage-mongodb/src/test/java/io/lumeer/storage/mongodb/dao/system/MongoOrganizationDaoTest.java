@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
-import io.lumeer.storage.mongodb.MongoDbStorageTestBase;
+import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.model.MongoOrganization;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermission;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermissions;
@@ -38,7 +38,7 @@ import org.junit.Test;
 
 import java.util.stream.Collectors;
 
-public class MongoOrganizationDaoTest extends MongoDbStorageTestBase {
+public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    private static final String USER = "testUser";
 

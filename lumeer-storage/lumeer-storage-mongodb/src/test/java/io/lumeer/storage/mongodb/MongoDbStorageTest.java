@@ -40,7 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class MongoDbStorageTest extends MongoDbStorageTestBase {
+public class MongoDbStorageTest extends MongoDbTestBase {
 
    private final String DUMMY_KEY1 = "key1";
    private final String DUMMY_KEY2 = "key2";
@@ -688,7 +688,7 @@ public class MongoDbStorageTest extends MongoDbStorageTestBase {
 
       final DataStorageStats dss = mongoDbStorage.getDbStats();
 
-      assertThat(dss.getDatabaseName()).isEqualTo(DB_NAME);
+      assertThat(dss.getDatabaseName()).isEqualTo(EmbeddedMongoDb.NAME);
       assertThat(dss.getCollections()).isGreaterThan(0);
       assertThat(dss.getDocuments()).isGreaterThan(0);
       assertThat(dss.getIndexes()).isGreaterThan(0);
@@ -707,7 +707,7 @@ public class MongoDbStorageTest extends MongoDbStorageTestBase {
 
       final DataStorageStats dss = mongoDbStorage.getCollectionStats(COLLECTION_CSTATS);
 
-      assertThat(dss.getDatabaseName()).isEqualTo(DB_NAME);
+      assertThat(dss.getDatabaseName()).isEqualTo(EmbeddedMongoDb.NAME);
       assertThat(dss.getCollectionName()).isEqualTo(COLLECTION_CSTATS);
       assertThat(dss.getDocuments()).isEqualTo(1);
       assertThat(dss.getIndexes()).isEqualTo(2);

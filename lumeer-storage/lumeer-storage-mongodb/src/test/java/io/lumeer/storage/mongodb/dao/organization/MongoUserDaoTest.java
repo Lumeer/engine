@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.User;
-import io.lumeer.storage.mongodb.MongoDbStorageTestBase;
+import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.MongoUser;
 
@@ -37,7 +37,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Set;
 
-public class MongoUserDaoTest extends MongoDbStorageTestBase {
+public class MongoUserDaoTest extends MongoDbTestBase {
 
    private static final String USERNAME = "testUser";
    private static final String USERNAME2 = "testUser2";

@@ -27,7 +27,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.mongodb.MongoDbStorageTestBase;
+import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.MongoView;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermission;
@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MongoViewDaoTest extends MongoDbStorageTestBase {
+public class MongoViewDaoTest extends MongoDbTestBase {
 
    private static final String PROJECT_ID = "596e3b86d412bc5a3caaa22a";
 

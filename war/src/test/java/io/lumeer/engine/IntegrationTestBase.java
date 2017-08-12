@@ -22,10 +22,13 @@ package io.lumeer.engine;
 import io.lumeer.core.WorkspaceCache;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.storage.mongodb.MongoDbTestBase;
+import io.lumeer.storage.mongodb.EmbeddedMongoDb;
+import io.lumeer.test.arquillian.annotation.AfterUnDeploy;
+import io.lumeer.test.arquillian.annotation.BeforeDeploy;
 
 import com.mongodb.client.MongoDatabase;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -35,10 +38,19 @@ import org.junit.Before;
 
 import javax.inject.Inject;
 
-public abstract class IntegrationTestBase extends MongoDbTestBase {
+public abstract class IntegrationTestBase {
 
    protected static final String PATH_CONTEXT = "lumeer-test";
    private static final String ARCHIVE_NAME = PATH_CONTEXT + ".war";
+
+   private static EmbeddedMongoDb embeddedMongoDb;
+
+   @Inject
+   @SystemDataStorage
+   public DataStorage systemDataStorage;
+
+   @Inject
+   public WorkspaceCache workspaceCache;
 
    @Deployment
    public static Archive<?> createTestArchive() {
@@ -56,12 +68,20 @@ public abstract class IntegrationTestBase extends MongoDbTestBase {
                        );
    }
 
-   @Inject
-   @SystemDataStorage
-   public DataStorage systemDataStorage;
+   @RunAsClient
+   @BeforeDeploy
+   public static void startEmbeddedMongoDb() {
+      embeddedMongoDb = new EmbeddedMongoDb();
+      embeddedMongoDb.start();
+   }
 
-   @Inject
-   public WorkspaceCache workspaceCache;
+   @RunAsClient
+   @AfterUnDeploy
+   public static void stopEmbeddedMongoDb() {
+      if (embeddedMongoDb != null) {
+         embeddedMongoDb.stop();
+      }
+   }
 
    @Before
    public void cleanDatabase() {
