@@ -29,7 +29,6 @@ import io.lumeer.engine.api.dto.Attribute;
 import io.lumeer.engine.api.dto.SearchSuggestion;
 import io.lumeer.engine.controller.CollectionMetadataFacade;
 import io.lumeer.engine.controller.ProjectFacade;
-import io.lumeer.engine.controller.ViewFacade;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,9 +58,6 @@ public class QuerySuggester {
 
    @Inject
    private ProjectFacade projectFacade;
-
-   @Inject
-   private ViewFacade viewFacade;
 
    /**
     * Suggests how to complete the part of the query the user is typing
@@ -183,13 +179,8 @@ public class QuerySuggester {
    }
 
    List<SearchSuggestion> suggestViews(String text, int limit) {
-      String metadataCollection = viewFacade.metadataCollection();
-      DataFilter filter = storageDialect.fieldValueWildcardFilter(LumeerConst.View.NAME_KEY, text);
-
-      return userDataStorage.search(metadataCollection, filter, null, Collections.singletonList(LumeerConst.View.NAME_KEY), 0, limit)
-                            .stream()
-                            .map(QuerySuggester::convertView)
-                            .collect(Collectors.toList());
+      // TODO implement query method in ViewDao first
+      return Collections.emptyList();
    }
 
    private static SearchSuggestion convertView(DataDocument view) {

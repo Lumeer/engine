@@ -27,7 +27,6 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.dto.Collection;
 import io.lumeer.engine.api.dto.Organization;
 import io.lumeer.engine.api.dto.Project;
 import io.lumeer.engine.api.dto.Role;

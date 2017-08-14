@@ -495,4 +495,8 @@ public interface DataStorage extends Serializable {
     * @return Statistics about collection usage.
     */
    DataStorageStats getCollectionStats(final String collectionName);
+
+   Object getDatabase();
+
+   Object getDataStore();
 }

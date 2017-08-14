@@ -102,9 +102,11 @@
       <module>bom</module>
       <module>api</module>
       <module>war</module>
-      <module>mongodb-storage</module>
       <module>simple-cache</module>
       <module>utils</module>
+      <module>lumeer-core</module>
+      <module>lumeer-remote</module>
+      <module>lumeer-storage</module>
    </modules>
    <dependencyManagement>
       <dependencies>
@@ -188,7 +190,7 @@
                   <deployer/>
                   <configuration>
                      <properties>
-                        <cargo.jvmargs>-Xmx128m -Xms128m</cargo.jvmargs>
+                        <cargo.jvmargs>-Xmx256m -Xms256m</cargo.jvmargs>
                         <cargo.wildfly.script.cli.embedded.adapter-install>${wildfly.dir}/bin/adapter-install.cli</cargo.wildfly.script.cli.embedded.adapter-install>
                      </properties>
                      <users>
@@ -214,6 +216,45 @@
                      <goals>
                         <goal>stop</goal>
                      </goals>
+                  </execution>
+               </executions>
+            </plugin>
+            <plugin>
+               <groupId>org.wildfly.plugins</groupId>
+               <artifactId>wildfly-maven-plugin</artifactId>
+               <version>${maven.wildfly.plugin.version}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-dependency-plugin</artifactId>
+               <version>${maven.dependency.plugin.version}</version>
+               <executions>
+                  <execution>
+                     <id>unpack</id>
+                     <phase>pre-integration-test</phase>
+                     <goals>
+                        <goal>unpack</goal>
+                     </goals>
+                     <configuration>
+                        <artifactItems>
+                           <artifactItem>
+                              <groupId>org.wildfly</groupId>
+                              <artifactId>wildfly-dist</artifactId>
+                              <version>${version.wildfly}</version>
+                              <type>zip</type>
+                              <overWrite>false</overWrite>
+                              <outputDirectory>${project.build.directory}</outputDirectory>
+                           </artifactItem>
+                           <artifactItem>
+                              <groupId>org.keycloak</groupId>
+                              <artifactId>keycloak-wildfly-adapter-dist</artifactId>
+                              <version>${version.keycloak}</version>
+                              <type>zip</type>
+                              <overWrite>true</overWrite>
+                              <outputDirectory>${wildfly.dir}</outputDirectory>
+                           </artifactItem>
+                        </artifactItems>
+                     </configuration>
                   </execution>
                </executions>
             </plugin>

@@ -19,18 +19,20 @@
  */
 package io.lumeer.engine.util;
 
+import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.CollectionMetadataDocumentNotFoundException;
 import io.lumeer.engine.api.exception.CollectionNotFoundException;
-import io.lumeer.engine.api.exception.DbException;
 import io.lumeer.engine.api.exception.DocumentNotFoundException;
 import io.lumeer.engine.api.exception.InvalidCollectionAttributeTypeException;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
+import io.lumeer.api.exception.LumeerException;
 import io.lumeer.engine.api.exception.NullParameterException;
 import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
@@ -52,13 +54,13 @@ import javax.ws.rs.ext.Provider;
  * * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 @Provider
-public class LumeerExceptionMapper implements ExceptionMapper<DbException> {
+public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
 
    @Inject
    private Logger log;
 
    @Override
-   public Response toResponse(final DbException e) {
+   public Response toResponse(final LumeerException e) {
       log.log(Level.INFO, "Exception while serving request: ", e);
 
       // 400 - BAD REQUEST
@@ -73,14 +75,14 @@ public class LumeerExceptionMapper implements ExceptionMapper<DbException> {
       }
 
       // 401 - UNAUTHORIZED
-      if (e instanceof UnauthorizedAccessException) {
+      if (e instanceof UnauthorizedAccessException || e instanceof NoPermissionException) {
          return Response.status(Response.Status.UNAUTHORIZED).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 404 - NOT FOUND
       if (e instanceof UserCollectionNotFoundException || e instanceof CollectionNotFoundException ||
             e instanceof CollectionMetadataDocumentNotFoundException || e instanceof DocumentNotFoundException ||
-            e instanceof ViewMetadataNotFoundException) {
+            e instanceof ViewMetadataNotFoundException || e instanceof ResourceNotFoundException) {
          return Response.status(Response.Status.NOT_FOUND).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 

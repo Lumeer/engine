@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageDialect;
 import io.lumeer.engine.api.dto.Organization;
@@ -59,9 +60,10 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    private OrganizationFacade organizationFacade;
 
    @Before
-   public void setUp() throws Exception {
-      systemDataStorage.dropManyDocuments(LumeerConst.Project.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
-      systemDataStorage.dropManyDocuments(LumeerConst.Organization.COLLECTION_NAME, dataStorageDialect.documentFilter("{}"));
+   public void initProjectCollection() throws Exception {
+      systemDataStorage.createCollection(LumeerConst.Project.COLLECTION_NAME);
+      systemDataStorage.createIndex(LumeerConst.Project.COLLECTION_NAME, new DataDocument(LumeerConst.Project.ATTR_ORGANIZATION_ID, LumeerConst.Index.ASCENDING)
+            .append(LumeerConst.Project.ATTR_PROJECT_CODE, LumeerConst.Index.ASCENDING), true);
    }
 
    @Test
@@ -103,7 +105,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testReadAndUpdateProject(){
+   public void testReadAndUpdateProject() {
       final String project = "project11";
       final String projectName = "Project One";
       final String newProjectName = "Project One New";
@@ -138,7 +140,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void organizationSwitching() throws Exception{
+   public void organizationSwitching() throws Exception {
       final String project1 = "project31";
       final String project2 = "project32";
       final String org1 = "ORG31";
@@ -157,7 +159,6 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
       projects = projectFacade.readProjects(org2);
       assertThat(projects).hasSize(1).extracting("code").containsOnly(project2);
-
 
    }
 }
