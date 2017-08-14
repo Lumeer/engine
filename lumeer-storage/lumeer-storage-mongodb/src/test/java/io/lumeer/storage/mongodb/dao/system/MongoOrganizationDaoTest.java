@@ -24,7 +24,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.model.MongoOrganization;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermission;
@@ -122,8 +124,9 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjectByCodeNotExisting() {
-      Organization organization = organizationDao.getOrganizationByCode("notExistingCode");
-      assertThat(organization).isNull();
+      assertThatThrownBy(() -> organizationDao.getOrganizationByCode("notExistingCode"))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasFieldOrPropertyWithValue("resourceType", ResourceType.ORGANIZATION);
    }
 
 }

@@ -25,6 +25,7 @@ import io.lumeer.api.model.Role;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Property;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,11 @@ public class MongoPermission implements Permission {
    private Set<String> roles;
 
    public MongoPermission() {
+   }
+
+   public MongoPermission(String name, Set<String> roles) {
+      this.name = name;
+      this.roles = new HashSet<>(roles);
    }
 
    public MongoPermission(final Permission entity) {
@@ -87,5 +93,13 @@ public class MongoPermission implements Permission {
    @Override
    public int hashCode() {
       return getName() != null ? getName().hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "MongoPermission{" +
+            "name='" + name + '\'' +
+            ", roles=" + roles +
+            '}';
    }
 }

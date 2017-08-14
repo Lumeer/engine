@@ -23,7 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.model.MongoProject;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermission;
@@ -127,8 +129,9 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjectByCodeNotExisting() {
-      Project project = projectDao.getProjectByCode("notExistingCode");
-      assertThat(project).isNull();
+      assertThatThrownBy(() -> projectDao.getProjectByCode("notExistingCode"))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasFieldOrPropertyWithValue("resourceType", ResourceType.PROJECT);
    }
 
 }

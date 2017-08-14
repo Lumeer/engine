@@ -22,10 +22,12 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
+import io.lumeer.storage.api.DatabaseQuery;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
@@ -65,6 +67,8 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    private static final MongoPermission GROUP_PERMISSION = new MongoPermission();
 
    private static final String CODE2 = "TVIEW2";
+   private static final String USER2 = "testUser2";
+   private static final String GROUP2 = "testGroup2";
 
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
@@ -77,6 +81,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
       GROUP_PERMISSION.setName(GROUP);
       GROUP_PERMISSION.setRoles(Collections.singleton(Role.READ.toString()));
+      PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
 
       QUERY.setPage(0);
    }
@@ -102,7 +107,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       view.setName(NAME);
       view.setColor(COLOR);
       view.setIcon(ICON);
-      view.setPermissions(PERMISSIONS);
+      view.setPermissions(new MongoPermissions(PERMISSIONS));
       view.setQuery(QUERY);
       view.setPerspective(PERSPECTIVE.toString());
       return view;
@@ -222,7 +227,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testGetAllViews() {
+   public void testGetViews() {
       MongoView view = prepareView();
       datastore.save(viewDao.viewCollection(), view);
 
@@ -230,14 +235,41 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       view2.setCode(CODE2);
       datastore.save(viewDao.viewCollection(), view2);
 
-      List<View> views = viewDao.getAllViews();
+      DatabaseQuery query = new DatabaseQuery.Builder(USER).build();
+      List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
    }
 
    @Test
-   public void testGetAllViewsEmpty() {
-      List<View> views = viewDao.getAllViews();
+   public void testGetViewsNoReadRole() {
+      MongoView view = prepareView();
+      Permission userPermission = new MongoPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      view.getPermissions().updateUserPermissions(userPermission);
+      datastore.save(viewDao.viewCollection(), view);
+
+      MongoView view2 = prepareView();
+      view2.setCode(CODE2);
+      Permission groupPermission = new MongoPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      view2.getPermissions().updateGroupPermissions(groupPermission);
+      datastore.save(viewDao.viewCollection(), view2);
+
+      DatabaseQuery query = new DatabaseQuery.Builder(USER2).groups(Collections.singleton(GROUP2)).build();
+      List<View> views = viewDao.getViews(query);
       assertThat(views).isEmpty();
+   }
+
+   @Test
+   public void testGetViewsGroupRole() {
+      MongoView view = prepareView();
+      datastore.save(viewDao.viewCollection(), view);
+
+      MongoView view2 = prepareView();
+      view2.setCode(CODE2);
+      datastore.save(viewDao.viewCollection(), view2);
+
+      DatabaseQuery query = new DatabaseQuery.Builder(USER2).groups(Collections.singleton(GROUP)).build();
+      List<View> views = viewDao.getViews(query);
+      assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
    }
 
 }

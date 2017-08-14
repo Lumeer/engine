@@ -22,8 +22,8 @@ package io.lumeer.core;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
-import io.lumeer.storage.api.dao.UserDao;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,7 +34,7 @@ import javax.inject.Inject;
 public class PermissionsChecker {
 
    @Inject
-   private UserDao userDao;
+   private UserCache userCache;
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -42,8 +42,8 @@ public class PermissionsChecker {
    public PermissionsChecker() {
    }
 
-   PermissionsChecker(UserDao userDao, AuthenticatedUser authenticatedUser) {
-      this.userDao = userDao;
+   PermissionsChecker(UserCache userCache, AuthenticatedUser authenticatedUser) {
+      this.userCache = userCache;
       this.authenticatedUser = authenticatedUser;
    }
 
@@ -62,13 +62,20 @@ public class PermissionsChecker {
       }
    }
 
-   public boolean hasRole(Resource resource, Role role) {
+   private boolean hasRole(Resource resource, Role role) {
       return getActualRoles(resource).contains(role);
    }
 
+   /**
+    * Returns all roles assigned to the authenticated user (whether direct or gained through group membership).
+    *
+    * @param resource
+    *       any resource with defined permissions
+    * @return set of actual roles
+    */
    public Set<Role> getActualRoles(Resource resource) {
       String user = authenticatedUser.getUserEmail();
-      Set<String> groups = userDao.getUserByUsername(user).getGroups(); // TODO cache this
+      Set<String> groups = userCache.getUser(user).getGroups();
 
       Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), user);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));

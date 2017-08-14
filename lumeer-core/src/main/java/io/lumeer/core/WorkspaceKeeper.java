@@ -22,6 +22,7 @@ package io.lumeer.core;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.core.cache.WorkspaceCache;
 
 import java.util.Optional;
 import javax.enterprise.context.RequestScoped;

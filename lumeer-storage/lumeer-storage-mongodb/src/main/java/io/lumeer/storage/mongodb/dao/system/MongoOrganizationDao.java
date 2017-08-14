@@ -20,7 +20,9 @@
 package io.lumeer.storage.mongodb.dao.system;
 
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.model.MongoOrganization;
 
 import javax.annotation.PostConstruct;
@@ -43,8 +45,12 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
 
    @Override
    public Organization getOrganizationByCode(final String organizationCode) {
-      return datastore.createQuery(MongoOrganization.class)
-                      .field(MongoOrganization.CODE).equal(organizationCode)
-                      .get();
+      Organization organization = datastore.createQuery(MongoOrganization.class)
+                                           .field(MongoOrganization.CODE).equal(organizationCode)
+                                           .get();
+      if (organization == null) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      return organization;
    }
 }

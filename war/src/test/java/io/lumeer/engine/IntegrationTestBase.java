@@ -19,7 +19,8 @@
  */
 package io.lumeer.engine;
 
-import io.lumeer.core.WorkspaceCache;
+import io.lumeer.core.cache.UserCache;
+import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.mongodb.EmbeddedMongoDb;
@@ -48,6 +49,9 @@ public abstract class IntegrationTestBase {
    @Inject
    @SystemDataStorage
    public DataStorage systemDataStorage;
+
+   @Inject
+   public UserCache userCache;
 
    @Inject
    public WorkspaceCache workspaceCache;
@@ -90,6 +94,7 @@ public abstract class IntegrationTestBase {
 
    @Before
    public void clearCaches() {
+      userCache.clear();
       workspaceCache.clear();
    }
 }

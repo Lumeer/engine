@@ -21,6 +21,7 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.View;
+import io.lumeer.storage.api.DatabaseQuery;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public interface ViewDao {
 
    View getViewByCode(String code);
 
-   List<View> getAllViews();
+   List<View> getViews(DatabaseQuery query);
 
    void setProject(final Project project);
 

@@ -28,8 +28,8 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
-import io.lumeer.storage.api.dao.UserDao;
 
 import org.assertj.core.util.Sets;
 import org.junit.Before;
@@ -51,13 +51,13 @@ public class PermissionsCheckerTest {
       User user = Mockito.mock(User.class);
       Mockito.when(user.getGroups()).thenReturn(Collections.singleton(GROUP));
 
-      UserDao userDao = Mockito.mock(UserDao.class);
-      Mockito.when(userDao.getUserByUsername(USER)).thenReturn(user);
+      UserCache userCache = Mockito.mock(UserCache.class);
+      Mockito.when(userCache.getUser(USER)).thenReturn(user);
 
       AuthenticatedUser authenticatedUser = Mockito.mock(AuthenticatedUser.class);
       Mockito.when(authenticatedUser.getUserEmail()).thenReturn(USER);
 
-      permissionsChecker = new PermissionsChecker(userDao, authenticatedUser);
+      permissionsChecker = new PermissionsChecker(userCache, authenticatedUser);
    }
 
    private Resource prepareResource(Set<Role> userRoles, Set<Role> groupRoles) {

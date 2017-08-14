@@ -17,7 +17,7 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.core;
+package io.lumeer.core.cache;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;

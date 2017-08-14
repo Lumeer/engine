@@ -20,16 +20,24 @@
 package io.lumeer.storage.mongodb.dao.project;
 
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
+import io.lumeer.storage.api.DatabaseQuery;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.MongoView;
+import io.lumeer.storage.mongodb.model.embedded.MongoPermission;
+import io.lumeer.storage.mongodb.model.embedded.MongoPermissions;
 
 import com.mongodb.WriteResult;
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.query.Criteria;
+import org.mongodb.morphia.query.FindOptions;
+import org.mongodb.morphia.query.Query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
 
@@ -73,8 +81,51 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       return view;
    }
 
-   public List<View> getAllViews() {
-      return new ArrayList<>(datastore.createQuery(viewCollection(), MongoView.class).asList());
+   public List<View> getViews(DatabaseQuery query) {
+      Query<MongoView> viewQuery = createViewQuery(query);
+      FindOptions findOptions = createFindOptions(query);
+
+      return new ArrayList<>(viewQuery.asList(findOptions));
+   }
+
+   private Query<MongoView> createViewQuery(DatabaseQuery query) {
+      Query<MongoView> viewQuery = datastore.createQuery(viewCollection(), MongoView.class);
+
+      List<Criteria> criteria = new ArrayList<>();
+      criteria.add(createUserCriteria(viewQuery, query.getUser()));
+      query.getGroups().forEach(group -> criteria.add(createGroupCriteria(viewQuery, group)));
+      viewQuery.or(criteria.toArray(new Criteria[] {}));
+
+      return viewQuery;
+   }
+
+   private Criteria createUserCriteria(Query<MongoView> viewQuery, String user) {
+      return viewQuery.criteria(MongoView.PERMISSIONS + "." + MongoPermissions.USER_ROLES)
+                      .elemMatch(createPermissionQuery(user));
+   }
+
+   private Criteria createGroupCriteria(Query<MongoView> viewQuery, String group) {
+      return viewQuery.criteria(MongoView.PERMISSIONS + "." + MongoPermissions.GROUP_ROLES)
+                      .elemMatch(createPermissionQuery(group));
+   }
+
+   private Query<MongoPermission> createPermissionQuery(String name) {
+      return datastore.createQuery(MongoPermission.class)
+                      .filter(MongoPermission.NAME, name)
+                      .field(MongoPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
+   }
+
+   private FindOptions createFindOptions(DatabaseQuery query) {
+      FindOptions findOptions = new FindOptions();
+      Integer page = query.getPage();
+      Integer pageSize = query.getPageSize();
+
+      if (page != null && pageSize != null) {
+         findOptions.skip(page * pageSize)
+                    .limit(pageSize);
+      }
+
+      return findOptions;
    }
 
    String viewCollection() {

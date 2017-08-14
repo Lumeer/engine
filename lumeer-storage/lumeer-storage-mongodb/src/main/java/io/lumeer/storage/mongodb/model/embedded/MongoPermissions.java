@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 @Embedded
 public class MongoPermissions implements Permissions {
 
-   public static final String USER_ROLES = "userPermissions";
-   public static final String GROUP_ROLES = "groupPermissions";
+   public static final String USER_ROLES = "users";
+   public static final String GROUP_ROLES = "groups";
 
    @Embedded(USER_ROLES)
    private Set<MongoPermission> userPermissions = new HashSet<>();

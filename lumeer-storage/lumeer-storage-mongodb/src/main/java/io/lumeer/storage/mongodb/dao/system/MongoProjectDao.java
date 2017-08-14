@@ -20,7 +20,9 @@
 package io.lumeer.storage.mongodb.dao.system;
 
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.model.MongoProject;
 
 import javax.annotation.PostConstruct;
@@ -43,8 +45,12 @@ public class MongoProjectDao extends SystemScopedDao implements ProjectDao {
 
    @Override
    public Project getProjectByCode(final String projectCode) {
-      return datastore.createQuery(MongoProject.class)
-                      .field(MongoProject.CODE).equal(projectCode)
-                      .get();
+      Project project = datastore.createQuery(MongoProject.class)
+                                 .field(MongoProject.CODE).equal(projectCode)
+                                 .get();
+      if (project == null) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return project;
    }
 }

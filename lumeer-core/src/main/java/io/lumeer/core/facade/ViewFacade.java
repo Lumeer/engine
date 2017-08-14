@@ -26,7 +26,9 @@ import io.lumeer.api.model.View;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
+import io.lumeer.storage.api.DatabaseQuery;
 import io.lumeer.storage.api.dao.ViewDao;
 
 import java.util.List;
@@ -44,6 +46,9 @@ public class ViewFacade {
 
    @Inject
    private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private UserCache userCache;
 
    @Inject
    private ViewDao viewDao;
@@ -112,8 +117,12 @@ public class ViewFacade {
    }
 
    public List<View> getAllViews() {
-      return viewDao.getAllViews().stream()
-                    .filter(view -> permissionsChecker.hasRole(view, Role.READ))
+      String user = authenticatedUser.getUserEmail();
+      DatabaseQuery query = new DatabaseQuery.Builder(user)
+            .groups(userCache.getUser(user).getGroups())
+            .build();
+
+      return viewDao.getViews(query).stream()
                     .map(this::keepOnlyActualUserRoles)
                     .collect(Collectors.toList());
    }
