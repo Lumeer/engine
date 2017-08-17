@@ -20,11 +20,20 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Organization;
+import io.lumeer.storage.api.DatabaseQuery;
+
+import java.util.List;
 
 public interface OrganizationDao {
 
    Organization createOrganization(Organization organization);
 
    Organization getOrganizationByCode(String organizationCode);
+
+   List<Organization> getOrganizations(DatabaseQuery query);
+
+   void deleteOrganization(String organizationCode);
+
+   Organization editOrganization(String organizationCode, Organization organization);
 
 }

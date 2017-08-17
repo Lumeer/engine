@@ -23,11 +23,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.storage.api.DatabaseQuery;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
+import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.MongoOrganization;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermission;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermissions;
@@ -38,25 +40,41 @@ import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    private static final String USER = "testUser";
+   private static final String USER2 = "testUser2";
 
-   private static final String CODE = "TPROJ";
-   private static final String NAME = "Testing project";
+   private static final String GROUP = "testGroup";
+   private static final String GROUP2 = "testGroup2";
+
+   private static final String CODE1 = "TORG";
+   private static final String CODE2 = "TORG2";
+   private static final String NAME = "Testing organization";
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
    private static final MongoPermissions PERMISSIONS;
+   private static final MongoPermission GROUP_PERMISSION;
+
+   private static final String NOT_EXISTING_CODE = "NOT_EXISTING_CODE";
 
    static {
       MongoPermission userPermission = new MongoPermission();
-      userPermission.setName(USER);
-      userPermission.setRoles(Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
-
       PERMISSIONS = new MongoPermissions();
+      GROUP_PERMISSION = new MongoPermission();
+
+      userPermission.setName(USER);
+      userPermission.setRoles(Organization.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+
       PERMISSIONS.updateUserPermissions(userPermission);
+
+      GROUP_PERMISSION.setName(GROUP);
+      GROUP_PERMISSION.setRoles(Collections.singleton(Role.READ.toString()));
+      PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
 
    private MongoOrganizationDao organizationDao;
@@ -70,19 +88,19 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       organizationDao.ensureIndexes();
    }
 
-   private Organization prepareOrganization() {
+   private Organization prepareOrganization(String code) {
       MongoOrganization organization = new MongoOrganization();
-      organization.setCode(CODE);
+      organization.setCode(code);
       organization.setName(NAME);
       organization.setColor(COLOR);
       organization.setIcon(ICON);
-      organization.setPermissions(PERMISSIONS);
+      organization.setPermissions(new MongoPermissions(PERMISSIONS));
       return organization;
    }
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = prepareOrganization();
+      Organization organization = prepareOrganization(CODE1);
 
       String id = organizationDao.createOrganization(organization).getId();
       assertThat(id).isNotNull().isNotEmpty();
@@ -92,7 +110,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       assertThat(storedOrganization).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(storedOrganization.getCode()).isEqualTo(CODE);
+      assertions.assertThat(storedOrganization.getCode()).isEqualTo(CODE1);
       assertions.assertThat(storedOrganization.getName()).isEqualTo(NAME);
       assertions.assertThat(storedOrganization.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedOrganization.getIcon()).isEqualTo(ICON);
@@ -102,31 +120,135 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateOrganizationExistingCode() {
-      Organization organization = prepareOrganization();
+      Organization organization = prepareOrganization(CODE1);
       datastore.save(organization);
 
-      Organization organization2 = prepareOrganization();
+      Organization organization2 = prepareOrganization(CODE1);
       assertThatThrownBy(() -> organizationDao.createOrganization(organization2))
             .isInstanceOf(DuplicateKeyException.class);
    }
 
    @Test
-   public void testGetProjectByCode() {
-      Organization organization = prepareOrganization();
+   public void testGetOrganizationByCode() {
+      Organization organization = prepareOrganization(CODE1);
       datastore.save(organization);
 
-      Organization storedOrganization = organizationDao.getOrganizationByCode(CODE);
+      Organization storedOrganization = organizationDao.getOrganizationByCode(CODE1);
       assertThat(storedOrganization).isNotNull();
       assertThat(storedOrganization.getId()).isNotNull().isNotEmpty();
-      assertThat(storedOrganization.getCode()).isEqualTo(CODE);
+      assertThat(storedOrganization.getCode()).isEqualTo(CODE1);
       assertThat(storedOrganization.getName()).isEqualTo(NAME);
    }
 
    @Test
-   public void testGetProjectByCodeNotExisting() {
-      assertThatThrownBy(() -> organizationDao.getOrganizationByCode("notExistingCode"))
+   public void testGetOrganizationByCodeNotExisting() {
+      assertThatThrownBy(() -> organizationDao.getOrganizationByCode(NOT_EXISTING_CODE))
             .isInstanceOf(ResourceNotFoundException.class)
             .hasFieldOrPropertyWithValue("resourceType", ResourceType.ORGANIZATION);
+   }
+
+   @Test
+   public void testGetOrganizations() {
+      Organization organization = prepareOrganization(CODE1);
+      datastore.save(organization);
+
+      Organization organization2 = prepareOrganization(CODE2);
+      datastore.save(organization2);
+
+      DatabaseQuery query = new DatabaseQuery.Builder(USER).build();
+      List<Organization> organizations = organizationDao.getOrganizations(query);
+      assertThat(organizations).extracting(Organization::getCode).containsOnly(CODE1, CODE2);
+   }
+
+   @Test
+   public void testGetOrganizationsNoReadRole() {
+      Organization organization = prepareOrganization(CODE1);
+      Permission userPermission = new MongoPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      organization.getPermissions().updateUserPermissions(userPermission);
+      datastore.save(organization);
+
+      Organization organization2 = prepareOrganization(CODE2);
+      Permission groupPermission = new MongoPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      organization2.getPermissions().updateGroupPermissions(groupPermission);
+      datastore.save(organization2);
+
+      DatabaseQuery query = new DatabaseQuery.Builder(USER2).groups(Collections.singleton(GROUP2)).build();
+      List<Organization> organizations = organizationDao.getOrganizations(query);
+      assertThat(organizations).isEmpty();
+   }
+
+   @Test
+   public void testGetOrganizationsGroupRole() {
+      Organization organization = prepareOrganization(CODE1);
+      datastore.save(organization);
+
+      Organization organization2 = prepareOrganization(CODE2);
+      datastore.save(organization2);
+
+      DatabaseQuery query = new DatabaseQuery.Builder(USER2).groups(Collections.singleton(GROUP)).build();
+      List<Organization> organizations = organizationDao.getOrganizations(query);
+      assertThat(organizations).extracting(Organization::getCode).containsOnly(CODE1, CODE2);
+   }
+
+   @Test
+   public void testDeleteOrganization() {
+      Organization organization = prepareOrganization(CODE1);
+      datastore.save(organization);
+      assertThat(organization.getId()).isNotNull();
+
+      organizationDao.deleteOrganization(organization.getCode());
+
+      Organization storedOrganization = datastore.createQuery(MongoOrganization.class)
+                     .field(MongoOrganization.CODE).equal(organization.getCode()).get();
+      assertThat(storedOrganization).isNull();
+   }
+
+   @Test
+   public void testDeleteOrganizationNotExisting() {
+      assertThatThrownBy(() -> organizationDao.deleteOrganization(NOT_EXISTING_CODE))
+            .isInstanceOf(WriteFailedException.class);
+   }
+
+   @Test
+   public void testEditOrganizationCode() {
+      MongoOrganization organization = (MongoOrganization) prepareOrganization(CODE1);
+      String id = datastore.save(organization).getId().toString();
+      assertThat(id).isNotNull().isNotEmpty();
+
+      organization.setCode(CODE2);
+      organizationDao.editOrganization(CODE1, organization);
+
+      MongoOrganization storedOrganization = datastore.get(MongoOrganization.class, new ObjectId(id));
+      assertThat(storedOrganization).isNotNull();
+      assertThat(storedOrganization.getCode()).isEqualTo(CODE2);
+   }
+
+   @Test
+   public void testEditOrganizationPermissions() {
+      MongoOrganization organization = (MongoOrganization) prepareOrganization(CODE1);
+      String id = datastore.save(organization).getId().toString();
+      assertThat(id).isNotNull().isNotEmpty();
+
+      organization.getPermissions().removeUserPermission(USER);
+      organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      organizationDao.editOrganization(CODE1, organization);
+
+      MongoOrganization storedOrganization = datastore.get(MongoOrganization.class, new ObjectId(id));
+      assertThat(storedOrganization).isNotNull();
+      assertThat(storedOrganization.getPermissions().getUserPermissions()).isEmpty();
+      assertThat(storedOrganization.getPermissions().getGroupPermissions()).containsExactly(GROUP_PERMISSION);
+   }
+
+   @Test
+   public void testUEditOrganizationExistingCode() {
+      MongoOrganization organization = (MongoOrganization) prepareOrganization(CODE1);
+      datastore.save(organization);
+
+      MongoOrganization organization2 = (MongoOrganization) prepareOrganization(CODE2);
+      datastore.save(organization2);
+
+      assertThatThrownBy(() -> organizationDao.editOrganization(CODE2, organization))
+            .isInstanceOf(DuplicateKeyException.class);
    }
 
 }
