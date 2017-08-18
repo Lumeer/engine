@@ -20,11 +20,15 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.dto.JsonOrganization;
+import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.OrganizationFacade;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -80,10 +84,49 @@ public class OrganizationService extends AbstractService {
 
    @PUT
    @Path("{organizationCode}")
-   public Response editOrganization(@PathParam("organizationCode") String organizationCode, JsonOrganization organization) {
-      Organization storedOrganization = organizationFacade.editOrganization(organizationCode, organization);
+   public Response updateOrganization(@PathParam("organizationCode") String organizationCode, JsonOrganization organization) {
+      Organization storedOrganization = organizationFacade.updateOrganization(organizationCode, organization);
 
       JsonOrganization jsonOrganization = new JsonOrganization(storedOrganization);
       return Response.ok(jsonOrganization).build();
+   }
+
+   @GET
+   @Path("{organizationCode}/permissions")
+   public JsonPermissions getOrganizationPermissions(@PathParam("organizationCode") String organizationCode) {
+      Permissions permissions = organizationFacade.getOrganizationPermissions(organizationCode);
+      return new JsonPermissions(permissions);
+   }
+
+   @PUT
+   @Path("{organizationCode}/permissions/users")
+   public Set<JsonPermission> updateUserPermission(@PathParam("organizationCode") String organizationCode, JsonPermission userPermission) {
+      return organizationFacade.updateUserPermissions(organizationCode, userPermission).stream()
+                       .map(JsonPermission::new)
+                       .collect(Collectors.toSet());
+   }
+
+   @DELETE
+   @Path("{organizationCode}/permissions/users/{user}")
+   public Response removeUserPermission(@PathParam("organizationCode") String organizationCode, @PathParam("user") String user) {
+      organizationFacade.removeUserPermission(organizationCode, user);
+
+      return Response.ok().link(getParentUri("users", user), "parent").build();
+   }
+
+   @PUT
+   @Path("{organizationCode}/permissions/groups")
+   public Set<JsonPermission> updateGroupPermission(@PathParam("organizationCode") String organizationCode, JsonPermission groupPermission) {
+      return organizationFacade.updateGroupPermissions(organizationCode, groupPermission).stream()
+                       .map(JsonPermission::new)
+                       .collect(Collectors.toSet());
+   }
+
+   @DELETE
+   @Path("{organizationCode}/permissions/groups/{group}")
+   public Response removeGroupPermission(@PathParam("organizationCode") String organizationCode, @PathParam("group") String group) {
+      organizationFacade.removeGroupPermission(organizationCode, group);
+
+      return Response.ok().link(getParentUri("groups", group), "parent").build();
    }
 }

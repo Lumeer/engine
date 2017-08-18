@@ -1,9 +1,9 @@
 /*
  * -----------------------------------------------------------------------\
  * Lumeer
- *  
+ *  
  * Copyright (C) since 2016 the original author or authors.
- *  
+ *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,23 +17,29 @@
  * limitations under the License.
  * -----------------------------------------------------------------------/
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.remote.rest;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.storage.api.DatabaseQuery;
+import io.lumeer.engine.IntegrationTestBase;
 
-import java.util.List;
+import org.junit.After;
+import org.junit.Before;
 
-public interface OrganizationDao {
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 
-   Organization createOrganization(Organization organization);
+public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
 
-   Organization getOrganizationByCode(String organizationCode);
+   protected Client client;
 
-   List<Organization> getOrganizations(DatabaseQuery query);
+   @Before
+   public void createClient() {
+      client = ClientBuilder.newBuilder().build();
+   }
 
-   void deleteOrganization(String organizationCode);
-
-   Organization updateOrganization(String organizationCode, Organization organization);
-
+   @After
+   public void closeClient() {
+      if (client != null) {
+         client.close();
+      }
+   }
 }

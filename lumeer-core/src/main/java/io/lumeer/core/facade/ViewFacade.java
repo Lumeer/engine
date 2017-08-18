@@ -39,13 +39,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 @RequestScoped
-public class ViewFacade {
-
-   @Inject
-   private AuthenticatedUser authenticatedUser;
-
-   @Inject
-   private PermissionsChecker permissionsChecker;
+public class ViewFacade extends AbstractFacade {
 
    @Inject
    private UserCache userCache;
@@ -91,15 +85,7 @@ public class ViewFacade {
       keepStoredPermissions(view, storedView.getPermissions());
       View updatedView = viewDao.updateView(storedView.getId(), view);
 
-      return keepOnlyActualUserRoles(updatedView);
-   }
-
-   private void keepStoredPermissions(View view, Permissions storedPermissions) {
-      Set<Permission> userPermissions = storedPermissions.getUserPermissions();
-      view.getPermissions().updateUserPermissions(userPermissions.toArray(new Permission[0]));
-
-      Set<Permission> groupPermissions = storedPermissions.getGroupPermissions();
-      view.getPermissions().updateGroupPermissions(groupPermissions.toArray(new Permission[0]));
+      return (View) keepOnlyActualUserRoles(updatedView);
    }
 
    public void deleteView(final String code) {
@@ -113,7 +99,7 @@ public class ViewFacade {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.READ);
 
-      return keepOnlyActualUserRoles(view);
+      return (View) keepOnlyActualUserRoles(view);
    }
 
    public List<View> getAllViews() {
@@ -123,18 +109,8 @@ public class ViewFacade {
             .build();
 
       return viewDao.getViews(query).stream()
-                    .map(this::keepOnlyActualUserRoles)
+                    .map(resource -> (View) keepOnlyActualUserRoles(resource))
                     .collect(Collectors.toList());
-   }
-
-   private View keepOnlyActualUserRoles(View view) {
-      Set<Role> roles = permissionsChecker.getActualRoles(view);
-      Permission permission = new SimplePermission(authenticatedUser.getUserEmail(), roles);
-
-      view.getPermissions().clear();
-      view.getPermissions().updateUserPermissions(permission);
-
-      return view;
    }
 
    public Permissions getViewPermissions(final String code) {

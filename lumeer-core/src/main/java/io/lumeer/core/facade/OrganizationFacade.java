@@ -37,7 +37,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 @RequestScoped
-public class OrganizationFacade {
+public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -67,18 +67,8 @@ public class OrganizationFacade {
             .build();
 
       return organizationDao.getOrganizations(query).stream()
-            .map(this::keepOnlyActualUserRoles)
+            .map(resource -> (Organization) keepOnlyActualUserRoles(resource))
             .collect(Collectors.toList());
-   }
-
-   private Organization keepOnlyActualUserRoles(final Organization organization) {
-      Set<Role> roles = permissionsChecker.getActualRoles(organization);
-      Permission permission = new SimplePermission(authenticatedUser.getUserEmail(), roles);
-
-      organization.getPermissions().clear();
-      organization.getPermissions().updateUserPermissions(permission);
-
-      return organization;
    }
 
    public Organization createOrganization(final Organization organization) {
@@ -92,7 +82,7 @@ public class OrganizationFacade {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(organization, Role.READ);
 
-      return keepOnlyActualUserRoles(organization);
+      return (Organization) keepOnlyActualUserRoles(organization);
    }
 
    public void deleteOrganization(final String organizationCode) {
@@ -102,21 +92,58 @@ public class OrganizationFacade {
       organizationDao.deleteOrganization(organizationCode);
    }
 
-   public Organization editOrganization(final String organizationCode, final Organization organization) {
+   public Organization updateOrganization(final String organizationCode, final Organization organization) {
       Organization storedOrganization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(storedOrganization, Role.MANAGE);
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
-      Organization updatedOrganization = organizationDao.editOrganization(organizationCode, organization);
+      Organization updatedOrganization = organizationDao.updateOrganization(organizationCode, organization);
 
-      return keepOnlyActualUserRoles(updatedOrganization);
+      return (Organization) keepOnlyActualUserRoles(organization);
    }
 
-   private void keepStoredPermissions(final Organization organization, final Permissions storedPermissions) {
-      Set<Permission> userPermissions = storedPermissions.getUserPermissions();
-      organization.getPermissions().updateUserPermissions(userPermissions.toArray(new Permission[0]));
+   private Organization checkRoleAndGetOrganization(final String organizationCode, final Role role) {
+      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
+      permissionsChecker.checkRole(organization, role);
 
-      Set<Permission> groupPermissions = storedPermissions.getGroupPermissions();
-      organization.getPermissions().updateGroupPermissions(groupPermissions.toArray(new Permission[0]));
+      return organization;
+   }
+
+   public Permissions getOrganizationPermissions(final String organizationCode) {
+      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+
+      return organization.getPermissions();
+   }
+
+   public Set<Permission> updateUserPermissions(final String organizationCode, final Permission... userPermissions) {
+      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+
+      organization.getPermissions().updateUserPermissions(userPermissions);
+      organizationDao.updateOrganization(organizationCode, organization);
+
+      return organization.getPermissions().getUserPermissions();
+   }
+
+   public void removeUserPermission(final String organizationCode, final String user) {
+      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+
+      organization.getPermissions().removeUserPermission(user);
+      organizationDao.updateOrganization(organizationCode, organization);
+   }
+
+   public Set<Permission> updateGroupPermissions(final String organizationCode, final Permission... groupPermissions) {
+      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+
+      organization.getPermissions().updateGroupPermissions(groupPermissions);
+      organizationDao.updateOrganization(organizationCode, organization);
+
+      return organization.getPermissions().getGroupPermissions();
+   }
+
+   public void removeGroupPermission(final String organizationCode, final String group) {
+      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+
+      organization.getPermissions().removeGroupPermission(group);
+      organizationDao.updateOrganization(organizationCode, organization);
    }
 }

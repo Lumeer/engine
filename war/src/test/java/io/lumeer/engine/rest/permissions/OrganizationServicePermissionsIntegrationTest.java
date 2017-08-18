@@ -36,6 +36,7 @@ import io.lumeer.engine.controller.UserGroupFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -50,6 +51,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Ignore
 @RunWith(Arquillian.class)
 public class OrganizationServicePermissionsIntegrationTest extends IntegrationTestBase {
 

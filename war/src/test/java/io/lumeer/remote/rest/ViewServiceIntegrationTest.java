@@ -70,7 +70,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
-public class ViewServiceIntegrationTest extends IntegrationTestBase {
+public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String GROUP = "testGroup";
@@ -112,20 +112,6 @@ public class ViewServiceIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private ViewDao viewDao;
-
-   private Client client;
-
-   @Before
-   public void createClient() {
-      client = ClientBuilder.newBuilder().build();
-   }
-
-   @After
-   public void closeClient() {
-      if (client != null) {
-         client.close();
-      }
-   }
 
    @Before
    public void configureProject() {

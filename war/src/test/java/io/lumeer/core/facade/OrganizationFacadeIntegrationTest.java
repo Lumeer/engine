@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUser;
@@ -42,7 +43,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -153,12 +156,12 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testEditOrganization() {
+   public void testUpdateOrganization() {
       String id = createOrganization(CODE1);
 
       Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR);
 
-      organizationFacade.editOrganization(CODE1, updatedOrganization);
+      organizationFacade.updateOrganization(CODE1, updatedOrganization);
 
       Organization storedOrganization = organizationDao.getOrganizationByCode(CODE2);
 
@@ -168,6 +171,66 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(storedOrganization.getIcon()).isEqualTo(ICON);
       assertThat(storedOrganization.getColor()).isEqualTo(COLOR);
       assertThat(storedOrganization.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+   }
+
+   @Test
+   public void testGetOrganizationPermissions() {
+      createOrganization(CODE1);
+
+      Permissions permissions = organizationFacade.getOrganizationPermissions(CODE1);
+      assertThat(permissions).isNotNull();
+      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+   }
+
+   @Test
+   public void testUpdateUserPermissions() {
+      createOrganization(CODE1);
+
+      SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      organizationFacade.updateUserPermissions(CODE1, userPermission);
+
+      Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      assertThat(permissions).isNotNull();
+      assertPermissions(permissions.getUserPermissions(), userPermission);
+      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+   }
+
+   @Test
+   public void testRemoveUserPermission() {
+      createOrganization(CODE1);
+
+      organizationFacade.removeUserPermission(CODE1, USER);
+
+      Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      assertThat(permissions).isNotNull();
+      assertThat(permissions.getUserPermissions()).isEmpty();
+      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+   }
+
+   @Test
+   public void testUpdateGroupPermissions() {
+      createOrganization(CODE1);
+
+      SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      organizationFacade.updateGroupPermissions(CODE1, groupPermission);
+
+      Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      assertThat(permissions).isNotNull();
+      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
+   }
+
+   @Test
+   public void testRemoveGroupPermission() {
+      createOrganization(CODE1);
+
+      organizationFacade.removeGroupPermission(CODE1, GROUP);
+
+      Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      assertThat(permissions).isNotNull();
+      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 
 }

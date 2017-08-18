@@ -129,7 +129,7 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
    }
 
    @Override
-   public Organization editOrganization(final String organizationCode, final Organization organization) {
+   public Organization updateOrganization(final String organizationCode, final Organization organization) {
       MongoOrganization mongoOrganization = new MongoOrganization(organization);
       String id = datastore.createQuery(MongoOrganization.class)
                .field(MongoOrganization.CODE).equal(organizationCode).get().getId();

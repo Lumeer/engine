@@ -88,7 +88,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       organizationDao.ensureIndexes();
    }
 
-   private Organization prepareOrganization(String code) {
+   private MongoOrganization prepareOrganization(String code) {
       MongoOrganization organization = new MongoOrganization();
       organization.setCode(code);
       organization.setName(NAME);
@@ -210,13 +210,13 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testEditOrganizationCode() {
-      MongoOrganization organization = (MongoOrganization) prepareOrganization(CODE1);
+   public void testUpdateOrganizationCode() {
+      MongoOrganization organization = prepareOrganization(CODE1);
       String id = datastore.save(organization).getId().toString();
       assertThat(id).isNotNull().isNotEmpty();
 
       organization.setCode(CODE2);
-      organizationDao.editOrganization(CODE1, organization);
+      organizationDao.updateOrganization(CODE1, organization);
 
       MongoOrganization storedOrganization = datastore.get(MongoOrganization.class, new ObjectId(id));
       assertThat(storedOrganization).isNotNull();
@@ -224,14 +224,14 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testEditOrganizationPermissions() {
-      MongoOrganization organization = (MongoOrganization) prepareOrganization(CODE1);
+   public void testUpdateOrganizationPermissions() {
+      MongoOrganization organization = prepareOrganization(CODE1);
       String id = datastore.save(organization).getId().toString();
       assertThat(id).isNotNull().isNotEmpty();
 
       organization.getPermissions().removeUserPermission(USER);
       organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
-      organizationDao.editOrganization(CODE1, organization);
+      organizationDao.updateOrganization(CODE1, organization);
 
       MongoOrganization storedOrganization = datastore.get(MongoOrganization.class, new ObjectId(id));
       assertThat(storedOrganization).isNotNull();
@@ -240,14 +240,14 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testUEditOrganizationExistingCode() {
-      MongoOrganization organization = (MongoOrganization) prepareOrganization(CODE1);
+   public void testUpdateOrganizationExistingCode() {
+      MongoOrganization organization = prepareOrganization(CODE1);
       datastore.save(organization);
 
-      MongoOrganization organization2 = (MongoOrganization) prepareOrganization(CODE2);
+      MongoOrganization organization2 = prepareOrganization(CODE2);
       datastore.save(organization2);
 
-      assertThatThrownBy(() -> organizationDao.editOrganization(CODE2, organization))
+      assertThatThrownBy(() -> organizationDao.updateOrganization(CODE2, organization))
             .isInstanceOf(DuplicateKeyException.class);
    }
 
