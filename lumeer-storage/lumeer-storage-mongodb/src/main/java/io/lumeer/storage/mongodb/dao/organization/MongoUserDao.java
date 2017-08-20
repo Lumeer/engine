@@ -29,7 +29,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -59,10 +59,11 @@ public class MongoUserDao extends OrganizationScopedDao implements UserDao {
    }
 
    @Override
-   public User getUserByUsername(final String username) {
-      return datastore.createQuery(MongoUser.class)
-                      .field(MongoUser.USERNAME).equal(username)
-                      .get();
+   public Optional<User> getUserByUsername(final String username) {
+      User user = datastore.createQuery(MongoUser.class)
+                           .field(MongoUser.USERNAME).equal(username)
+                           .get();
+      return Optional.ofNullable(user);
    }
 
    @Override
