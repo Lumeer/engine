@@ -20,10 +20,12 @@
 package io.lumeer.core.cache;
 
 import io.lumeer.api.model.User;
+import io.lumeer.core.model.SimpleUser;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.storage.api.dao.UserDao;
 
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -45,7 +47,17 @@ public class UserCache {
    }
 
    public User getUser(String username) {
-      return userCache.computeIfAbsent(username, user -> userDao.getUserByUsername(user));
+      return userCache.computeIfAbsent(username, this::getOrCreateUser);
+   }
+
+   private User getOrCreateUser(String username) {
+      Optional<User> userOptional = userDao.getUserByUsername(username);
+      if (userOptional.isPresent()) {
+         return userOptional.get();
+      }
+
+      User user = new SimpleUser(username);
+      return userDao.createUser(user); // TODO remove this for production
    }
 
    public void updateUser(String username, User user) {

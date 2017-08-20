@@ -35,6 +35,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class MongoUserDaoTest extends MongoDbTestBase {
@@ -158,15 +159,14 @@ public class MongoUserDaoTest extends MongoDbTestBase {
       User user = prepareUser();
       datastore.save(user);
 
-      User storedUser = mongoUserDao.getUserByUsername(USERNAME);
-      assertThat(storedUser).isNotNull();
-      assertThat(storedUser).isEqualTo(user);
+      Optional<User> storedUser = mongoUserDao.getUserByUsername(USERNAME);
+      assertThat(storedUser).isNotEmpty().hasValue(user);
    }
 
    @Test
    public void testGetUserByUsernameNotExisting() {
-      User storedUser = mongoUserDao.getUserByUsername(USERNAME);
-      assertThat(storedUser).isNull();
+      Optional<User> storedUser = mongoUserDao.getUserByUsername(USERNAME);
+      assertThat(storedUser).isEmpty();
    }
 
    @Test
