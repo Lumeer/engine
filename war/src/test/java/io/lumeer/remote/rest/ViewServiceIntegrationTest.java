@@ -47,8 +47,10 @@ import io.lumeer.storage.mongodb.model.MongoUser;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermissions;
 
 import org.assertj.core.api.SoftAssertions;
+import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,6 +65,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
+@RunWith(Arquillian.class)
 public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
