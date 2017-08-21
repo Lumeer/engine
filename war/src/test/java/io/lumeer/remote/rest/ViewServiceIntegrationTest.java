@@ -36,7 +36,6 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.model.SimplePermission;
-import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -48,11 +47,8 @@ import io.lumeer.storage.mongodb.model.MongoUser;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermissions;
 
 import org.assertj.core.api.SoftAssertions;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,8 +56,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Link;
@@ -69,7 +63,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
-@RunWith(Arquillian.class)
 public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;

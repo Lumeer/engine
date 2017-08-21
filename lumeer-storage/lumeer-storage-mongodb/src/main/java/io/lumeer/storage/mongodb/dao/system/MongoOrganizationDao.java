@@ -119,21 +119,17 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
    }
 
    @Override
-   public void deleteOrganization(final String organizationCode) {
-      WriteResult writeResult = datastore.delete(
-            datastore.createQuery(MongoOrganization.class)
-                     .field(MongoOrganization.CODE).equal(organizationCode));
+   public void deleteOrganization(final String organizationId) {
+      WriteResult writeResult = datastore.delete(MongoOrganization.class, new ObjectId(organizationId));
       if (writeResult.getN() != 1) {
          throw new WriteFailedException(writeResult);
       }
    }
 
    @Override
-   public Organization updateOrganization(final String organizationCode, final Organization organization) {
+   public Organization updateOrganization(final String organizationId, final Organization organization) {
       MongoOrganization mongoOrganization = new MongoOrganization(organization);
-      String id = datastore.createQuery(MongoOrganization.class)
-               .field(MongoOrganization.CODE).equal(organizationCode).get().getId();
-      mongoOrganization.setId(new ObjectId(id));
+      mongoOrganization.setId(new ObjectId(organizationId));
       datastore.save(mongoOrganization);
       return mongoOrganization;
    }

@@ -61,6 +61,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    private static final MongoPermission GROUP_PERMISSION;
 
    private static final String NOT_EXISTING_CODE = "NOT_EXISTING_CODE";
+   private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
    static {
       MongoPermission userPermission = new MongoPermission();
@@ -196,16 +197,15 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       datastore.save(organization);
       assertThat(organization.getId()).isNotNull();
 
-      organizationDao.deleteOrganization(organization.getCode());
+      organizationDao.deleteOrganization(organization.getId());
 
-      Organization storedOrganization = datastore.createQuery(MongoOrganization.class)
-                     .field(MongoOrganization.CODE).equal(organization.getCode()).get();
+      Organization storedOrganization = datastore.get(MongoOrganization.class, new ObjectId(organization.getId()));
       assertThat(storedOrganization).isNull();
    }
 
    @Test
    public void testDeleteOrganizationNotExisting() {
-      assertThatThrownBy(() -> organizationDao.deleteOrganization(NOT_EXISTING_CODE))
+      assertThatThrownBy(() -> organizationDao.deleteOrganization(NOT_EXISTING_ID))
             .isInstanceOf(WriteFailedException.class);
    }
 
@@ -215,8 +215,8 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       String id = datastore.save(organization).getId().toString();
       assertThat(id).isNotNull().isNotEmpty();
 
-      organization.setCode(CODE2);
-      organizationDao.updateOrganization(CODE1, organization);
+      MongoOrganization organization2 = prepareOrganization(CODE2);
+      organizationDao.updateOrganization(id, organization2);
 
       MongoOrganization storedOrganization = datastore.get(MongoOrganization.class, new ObjectId(id));
       assertThat(storedOrganization).isNotNull();
@@ -231,7 +231,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
       organization.getPermissions().removeUserPermission(USER);
       organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
-      organizationDao.updateOrganization(CODE1, organization);
+      organizationDao.updateOrganization(id, organization);
 
       MongoOrganization storedOrganization = datastore.get(MongoOrganization.class, new ObjectId(id));
       assertThat(storedOrganization).isNotNull();
@@ -247,7 +247,8 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       MongoOrganization organization2 = prepareOrganization(CODE2);
       datastore.save(organization2);
 
-      assertThatThrownBy(() -> organizationDao.updateOrganization(CODE2, organization))
+      organization2.setCode(CODE1);
+      assertThatThrownBy(() -> organizationDao.updateOrganization(organization2.getId(), organization2))
             .isInstanceOf(DuplicateKeyException.class);
    }
 

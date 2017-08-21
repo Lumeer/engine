@@ -85,7 +85,7 @@ public class ViewFacade extends AbstractFacade {
       keepStoredPermissions(view, storedView.getPermissions());
       View updatedView = viewDao.updateView(storedView.getId(), view);
 
-      return (View) keepOnlyActualUserRoles(updatedView);
+      return keepOnlyActualUserRoles(updatedView);
    }
 
    public void deleteView(final String code) {
@@ -99,7 +99,7 @@ public class ViewFacade extends AbstractFacade {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.READ);
 
-      return (View) keepOnlyActualUserRoles(view);
+      return keepOnlyActualUserRoles(view);
    }
 
    public List<View> getAllViews() {
@@ -109,7 +109,7 @@ public class ViewFacade extends AbstractFacade {
             .build();
 
       return viewDao.getViews(query).stream()
-                    .map(resource -> (View) keepOnlyActualUserRoles(resource))
+                    .map(resource -> keepOnlyActualUserRoles(resource))
                     .collect(Collectors.toList());
    }
 

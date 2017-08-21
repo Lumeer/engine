@@ -38,7 +38,7 @@ public abstract class AbstractFacade {
    @Inject
    protected AuthenticatedUser authenticatedUser;
 
-   public Resource keepOnlyActualUserRoles(final Resource resource) {
+   public <T extends Resource> T keepOnlyActualUserRoles(final T resource) {
       Set<Role> roles = permissionsChecker.getActualRoles(resource);
       Permission permission = new SimplePermission(authenticatedUser.getUserEmail(), roles);
 

@@ -99,17 +99,17 @@ public class JsonOrganization implements Organization {
       if (this == o) {
          return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (!(o instanceof Organization)) {
          return false;
       }
 
-      final JsonOrganization that = (JsonOrganization) o;
+      final Organization that = (Organization) o;
 
-      return code.equals(that.code);
+      return getCode().equals(that.getCode());
    }
 
    @Override
    public int hashCode() {
-      return code.hashCode();
+      return getCode().hashCode();
    }
 }

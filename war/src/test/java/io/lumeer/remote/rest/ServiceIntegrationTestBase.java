@@ -21,12 +21,15 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.engine.IntegrationTestBase;
 
+import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
+@RunWith(Arquillian.class)
 public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
 
    protected Client client;

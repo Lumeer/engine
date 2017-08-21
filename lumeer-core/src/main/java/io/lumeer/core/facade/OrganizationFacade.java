@@ -67,7 +67,7 @@ public class OrganizationFacade extends AbstractFacade {
             .build();
 
       return organizationDao.getOrganizations(query).stream()
-            .map(resource -> (Organization) keepOnlyActualUserRoles(resource))
+            .map(resource -> keepOnlyActualUserRoles(resource))
             .collect(Collectors.toList());
    }
 
@@ -82,14 +82,14 @@ public class OrganizationFacade extends AbstractFacade {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(organization, Role.READ);
 
-      return (Organization) keepOnlyActualUserRoles(organization);
+      return keepOnlyActualUserRoles(organization);
    }
 
    public void deleteOrganization(final String organizationCode) {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(organization, Role.MANAGE);
 
-      organizationDao.deleteOrganization(organizationCode);
+      organizationDao.deleteOrganization(organization.getId());
    }
 
    public Organization updateOrganization(final String organizationCode, final Organization organization) {
@@ -97,9 +97,9 @@ public class OrganizationFacade extends AbstractFacade {
       permissionsChecker.checkRole(storedOrganization, Role.MANAGE);
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
-      Organization updatedOrganization = organizationDao.updateOrganization(organizationCode, organization);
+      Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization);
 
-      return (Organization) keepOnlyActualUserRoles(organization);
+      return keepOnlyActualUserRoles(updatedOrganization);
    }
 
    private Organization checkRoleAndGetOrganization(final String organizationCode, final Role role) {
@@ -119,7 +119,7 @@ public class OrganizationFacade extends AbstractFacade {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
       organization.getPermissions().updateUserPermissions(userPermissions);
-      organizationDao.updateOrganization(organizationCode, organization);
+      organizationDao.updateOrganization(organization.getId(), organization);
 
       return organization.getPermissions().getUserPermissions();
    }
@@ -128,14 +128,14 @@ public class OrganizationFacade extends AbstractFacade {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
       organization.getPermissions().removeUserPermission(user);
-      organizationDao.updateOrganization(organizationCode, organization);
+      organizationDao.updateOrganization(organization.getId(), organization);
    }
 
    public Set<Permission> updateGroupPermissions(final String organizationCode, final Permission... groupPermissions) {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
       organization.getPermissions().updateGroupPermissions(groupPermissions);
-      organizationDao.updateOrganization(organizationCode, organization);
+      organizationDao.updateOrganization(organization.getId(), organization);
 
       return organization.getPermissions().getGroupPermissions();
    }
@@ -144,6 +144,6 @@ public class OrganizationFacade extends AbstractFacade {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
       organization.getPermissions().removeGroupPermission(group);
-      organizationDao.updateOrganization(organizationCode, organization);
+      organizationDao.updateOrganization(organization.getId(), organization);
    }
 }
