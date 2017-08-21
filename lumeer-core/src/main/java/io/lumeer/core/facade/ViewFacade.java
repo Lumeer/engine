@@ -39,13 +39,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 @RequestScoped
-public class ViewFacade {
-
-   @Inject
-   private AuthenticatedUser authenticatedUser;
-
-   @Inject
-   private PermissionsChecker permissionsChecker;
+public class ViewFacade extends AbstractFacade {
 
    @Inject
    private UserCache userCache;
@@ -94,14 +88,6 @@ public class ViewFacade {
       return keepOnlyActualUserRoles(updatedView);
    }
 
-   private void keepStoredPermissions(View view, Permissions storedPermissions) {
-      Set<Permission> userPermissions = storedPermissions.getUserPermissions();
-      view.getPermissions().updateUserPermissions(userPermissions.toArray(new Permission[0]));
-
-      Set<Permission> groupPermissions = storedPermissions.getGroupPermissions();
-      view.getPermissions().updateGroupPermissions(groupPermissions.toArray(new Permission[0]));
-   }
-
    public void deleteView(final String code) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
@@ -123,18 +109,8 @@ public class ViewFacade {
             .build();
 
       return viewDao.getViews(query).stream()
-                    .map(this::keepOnlyActualUserRoles)
+                    .map(resource -> keepOnlyActualUserRoles(resource))
                     .collect(Collectors.toList());
-   }
-
-   private View keepOnlyActualUserRoles(View view) {
-      Set<Role> roles = permissionsChecker.getActualRoles(view);
-      Permission permission = new SimplePermission(authenticatedUser.getUserEmail(), roles);
-
-      view.getPermissions().clear();
-      view.getPermissions().updateUserPermissions(permission);
-
-      return view;
    }
 
    public Permissions getViewPermissions(final String code) {
