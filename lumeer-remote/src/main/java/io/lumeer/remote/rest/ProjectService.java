@@ -22,6 +22,7 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.core.WorkspaceKeeper;
@@ -30,7 +31,6 @@ import io.lumeer.core.facade.ProjectFacade;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -65,18 +65,20 @@ public class ProjectService extends AbstractService {
       workspaceKeeper.setOrganization(organizationCode);
    }
 
-   @GET
-   public List<JsonProject> getProjects() {
-      return projectFacade.getProjects().stream()
-                          .map(JsonProject::new)
-                          .collect(Collectors.toList());
+   @POST
+   public Response createProject(JsonProject project) {
+      Project storedProject = projectFacade.createProject(project);
+
+      URI resourceUri = getResourceUri(storedProject.getCode());
+      return Response.created(resourceUri).build();
    }
 
-   @GET
+   @PUT
    @Path("{projectCode}")
-   public JsonProject getProject(@PathParam("projectCode") String projectCode) {
-      Project project = projectFacade.getProject(projectCode);
-      return new JsonProject(project);
+   public Response updateProject(@PathParam("projectCode") String projectCode, JsonProject project) {
+      Project storedProject = projectFacade.updateProject(projectCode, project);
+
+      return Response.ok(JsonProject.convert(storedProject)).build();
    }
 
    @DELETE
@@ -87,36 +89,31 @@ public class ProjectService extends AbstractService {
       return Response.ok().link(getParentUri(projectCode), "parent").build();
    }
 
-   @POST
-   public Response createProject(JsonProject project) {
-      Project storedProject = projectFacade.createProject(project);
-
-      URI resourceUri = getResourceUri(storedProject);
-      return Response.created(resourceUri).build();
+   @GET
+   @Path("{projectCode}")
+   public JsonProject getProject(@PathParam("projectCode") String projectCode) {
+      Project project = projectFacade.getProject(projectCode);
+      return JsonProject.convert(project);
    }
 
-   @PUT
-   @Path("{projectCode}")
-   public Response updateProject(@PathParam("projectCode") String projectCode, JsonProject project) {
-      Project storedProject = projectFacade.updateProject(projectCode, project);
-
-      JsonProject jsonProject = new JsonProject(storedProject);
-      return Response.ok(jsonProject).build();
+   @GET
+   public List<JsonProject> getProjects() {
+      List<Project> projects = projectFacade.getProjects();
+      return JsonProject.convert(projects);
    }
 
    @GET
    @Path("{projectCode}/permissions")
    public JsonPermissions getProjectPermissions(@PathParam("projectCode") String projectCode) {
       Permissions permissions = projectFacade.getProjectPermissions(projectCode);
-      return new JsonPermissions(permissions);
+      return JsonPermissions.convert(permissions);
    }
 
    @PUT
    @Path("{projectCode}/permissions/users")
    public Set<JsonPermission> updateUserPermission(@PathParam("projectCode") String projectCode, JsonPermission userPermission) {
-      return projectFacade.updateUserPermissions(projectCode, userPermission).stream()
-                          .map(JsonPermission::new)
-                          .collect(Collectors.toSet());
+      Set<Permission> storedUserPermissions = projectFacade.updateUserPermissions(projectCode, userPermission);
+      return JsonPermission.convert(storedUserPermissions);
    }
 
    @DELETE
@@ -130,9 +127,8 @@ public class ProjectService extends AbstractService {
    @PUT
    @Path("{projectCode}/permissions/groups")
    public Set<JsonPermission> updateGroupPermission(@PathParam("projectCode") String projectCode, JsonPermission groupPermission) {
-      return projectFacade.updateGroupPermissions(projectCode, groupPermission).stream()
-                          .map(JsonPermission::new)
-                          .collect(Collectors.toSet());
+      Set<Permission> storedGroupPermissions = projectFacade.updateGroupPermissions(projectCode, groupPermission);
+      return JsonPermission.convert(storedGroupPermissions);
    }
 
    @DELETE

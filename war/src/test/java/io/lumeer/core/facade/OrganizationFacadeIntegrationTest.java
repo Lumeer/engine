@@ -33,13 +33,10 @@ import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.mongodb.model.MongoUser;
 
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -56,9 +53,6 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Inject
    private OrganizationFacade organizationFacade;
-
-   @Inject
-   private UserDao userDao;
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String GROUP = "testGroup";
@@ -78,13 +72,6 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
    }
 
-   @Before
-   public void configureOrganization() {
-      MongoUser user = new MongoUser();
-      user.setUsername(USER);
-      userDao.createUser(user);
-   }
-
    @Test
    public void testGetOrganizations() {
       createOrganization(CODE1);
@@ -95,7 +82,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private String createOrganization(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR);
+      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null);
       organization.getPermissions().updateUserPermissions(USER_PERMISSION);
       organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       return organizationDao.createOrganization(organization).getId();
@@ -136,7 +123,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR);
+      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR, null);
 
       Organization createdOrganization = organizationFacade.createOrganization(organization);
       assertThat(createdOrganization).isNotNull();
@@ -159,7 +146,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    public void testUpdateOrganization() {
       String id = createOrganization(CODE1);
 
-      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR);
+      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR, null);
 
       organizationFacade.updateOrganization(CODE1, updatedOrganization);
 

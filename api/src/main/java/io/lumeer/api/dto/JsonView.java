@@ -19,7 +19,7 @@
  */
 package io.lumeer.api.dto;
 
-import io.lumeer.api.model.Permissions;
+import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.View;
@@ -27,70 +27,36 @@ import io.lumeer.api.model.View;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JsonView implements View {
+import java.util.List;
+import java.util.stream.Collectors;
 
-   private final String code;
-   private final String name;
-   private final String icon;
-   private final String color;
-   private final JsonPermissions permissions;
-   private final JsonQuery query;
-   private final String perspective;
+public class JsonView extends JsonResource implements View {
+
+   public static final String QUERY = "query";
+   public static final String PERSPECTIVE = "perspective";
+
+   private JsonQuery query;
+   private String perspective;
 
    @JsonCreator
-   public JsonView(@JsonProperty("code") final String code,
-         @JsonProperty("name") final String name,
-         @JsonProperty("icon") final String icon,
-         @JsonProperty("color") final String color,
-         @JsonProperty("query") final JsonQuery query,
-         @JsonProperty("perspective") final String perspective) {
-      this.code = code;
-      this.name = name;
-      this.icon = icon;
-      this.color = color;
-      this.permissions = new JsonPermissions();
+   public JsonView(@JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(PERMISSIONS) final JsonPermissions permissions,
+         @JsonProperty(QUERY) final JsonQuery query,
+         @JsonProperty(PERSPECTIVE) final String perspective) {
+      super(code, name, icon, color, permissions);
+
       this.query = query;
       this.perspective = perspective;
    }
 
    public JsonView(View view) {
-      this.code = view.getCode();
-      this.name = view.getName();
-      this.icon = view.getIcon();
-      this.color = view.getColor();
-      this.permissions = new JsonPermissions(view.getPermissions());
+      super(view);
+
       this.query = new JsonQuery(view.getQuery());
       this.perspective = view.getPerspective().toString();
-   }
-
-   @Override
-   public String getId() {
-      return null;
-   }
-
-   @Override
-   public String getCode() {
-      return code;
-   }
-
-   @Override
-   public String getName() {
-      return name;
-   }
-
-   @Override
-   public String getIcon() {
-      return icon;
-   }
-
-   @Override
-   public String getColor() {
-      return color;
-   }
-
-   @Override
-   public Permissions getPermissions() {
-      return permissions;
    }
 
    @Override
@@ -106,6 +72,7 @@ public class JsonView implements View {
    @Override
    public String toString() {
       return "JsonView{" +
+            "id='" + id + '\'' +
             ", code='" + code + '\'' +
             ", name='" + name + '\'' +
             ", icon='" + icon + '\'' +
@@ -114,5 +81,15 @@ public class JsonView implements View {
             ", query=" + query +
             ", perspective='" + perspective + '\'' +
             '}';
+   }
+
+   public static JsonView convert(View view) {
+      return view instanceof JsonView ? (JsonView) view : new JsonView(view);
+   }
+
+   public static List<JsonView> convert(List<View> views) {
+      return views.stream()
+                  .map(JsonView::convert)
+                  .collect(Collectors.toList());
    }
 }

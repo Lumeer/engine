@@ -22,36 +22,39 @@ package io.lumeer.api.dto;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class JsonPermissions implements Permissions {
 
+   public static final String USER_PERMISSIONS = "users";
+   public static final String GROUP_PERMISSIONS = "groups";
+
+   @JsonProperty(USER_PERMISSIONS)
    private final Set<JsonPermission> userPermissions;
+
+   @JsonProperty(GROUP_PERMISSIONS)
    private final Set<JsonPermission> groupPermissions;
 
-   JsonPermissions() {
+   public JsonPermissions() {
       this(new HashSet<>(), new HashSet<>());
    }
 
    public JsonPermissions(Permissions permissions) {
-      this.userPermissions = permissions.getUserPermissions().stream()
-                                        .map(JsonPermission::new)
-                                        .collect(Collectors.toSet());
-      this.groupPermissions = permissions.getGroupPermissions().stream()
-                                         .map(JsonPermission::new)
-                                         .collect(Collectors.toSet());
+      this.userPermissions = JsonPermission.convert(permissions.getUserPermissions());
+      this.groupPermissions = JsonPermission.convert(permissions.getGroupPermissions());
    }
 
-   public JsonPermissions(@JsonProperty("users") final Set<JsonPermission> userPermissions,
-         @JsonProperty("groups") final Set<JsonPermission> groups) {
+   @JsonCreator
+   public JsonPermissions(@JsonProperty(USER_PERMISSIONS) final Set<JsonPermission> userPermissions,
+         @JsonProperty(GROUP_PERMISSIONS) final Set<JsonPermission> groupPermissions) {
       this.userPermissions = userPermissions;
-      this.groupPermissions = groups;
+      this.groupPermissions = groupPermissions;
    }
 
    @Override
@@ -130,5 +133,9 @@ public class JsonPermissions implements Permissions {
             "users=" + userPermissions +
             ", groups=" + groupPermissions +
             '}';
+   }
+
+   public static JsonPermissions convert(Permissions permissions) {
+      return permissions instanceof JsonPermissions ? (JsonPermissions) permissions : new JsonPermissions(permissions);
    }
 }

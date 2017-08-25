@@ -50,7 +50,6 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
@@ -316,14 +315,14 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public DataDocument readDocumentIncludeAttrs(final String collectionName, final DataFilter filter, final List<String> attributes) {
       Document document = database.getCollection(collectionName).find(filter.<Bson>get()).projection(Projections.include(attributes)).limit(1).first();
-      return document != null ? convertDocument(document) : null;
+      return document != null ? MongoUtils.convertDocument(document) : null;
    }
 
    @Override
    public DataDocument readDocument(final String collectionName, final DataFilter filter) {
       Document document = database.getCollection(collectionName).find(filter.<Bson>get()).limit(1).first();
 
-      return document != null ? convertDocument(document) : null;
+      return document != null ? MongoUtils.convertDocument(document) : null;
    }
 
    @Override
@@ -457,7 +456,7 @@ public class MongoDbStorage implements DataStorage {
 
       if (cursor != null) {
          ((ArrayList<Document>) cursor.get(FIRST_BATCH_KEY)).forEach(d -> {
-            result.add(convertDocument(d));
+            result.add(MongoUtils.convertDocument(d));
          });
       }
 
@@ -491,7 +490,7 @@ public class MongoDbStorage implements DataStorage {
          documents = documents.limit(limit);
       }
 
-      return convertIterableToList(documents);
+      return MongoUtils.convertIterableToList(documents);
    }
 
    @Override
@@ -569,7 +568,7 @@ public class MongoDbStorage implements DataStorage {
 
       AggregateIterable<Document> resultDocuments = database.getCollection(collectionName).aggregate(documents);
       resultDocuments.into(new LinkedList<>()).forEach(d -> {
-         result.add(convertDocument(d));
+         result.add(MongoUtils.convertDocument(d));
       });
 
       return result;
@@ -670,22 +669,6 @@ public class MongoDbStorage implements DataStorage {
       dss.setIndexSize(collStats.getInteger("totalIndexSize"));
 
       return dss;
-   }
-
-   private List<DataDocument> convertIterableToList(MongoIterable<Document> documents) {
-      final List<DataDocument> result = new ArrayList<>();
-      documents.into(new ArrayList<>()).forEach(d -> {
-         result.add(convertDocument(d));
-      });
-
-      return result;
-   }
-
-   private DataDocument convertDocument(Document document) {
-      MongoUtils.replaceId(document);
-      DataDocument dataDocument = new DataDocument(document);
-      MongoUtils.convertNestedAndListDocuments(dataDocument);
-      return dataDocument;
    }
 
    public MongoDatabase getDatabase() {

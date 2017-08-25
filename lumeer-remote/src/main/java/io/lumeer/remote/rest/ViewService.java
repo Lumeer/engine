@@ -22,15 +22,15 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Pagination;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.View;
-import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ViewFacade;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -42,6 +42,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -60,9 +61,6 @@ public class ViewService extends AbstractService {
    @Inject
    private ViewFacade viewFacade;
 
-   @Inject
-   private WorkspaceKeeper workspaceKeeper;
-
    @PostConstruct
    public void init() {
       workspaceKeeper.setWorkspace(organizationCode, projectCode);
@@ -72,7 +70,7 @@ public class ViewService extends AbstractService {
    public Response createView(JsonView view) {
       View storedView = viewFacade.createView(view);
 
-      URI resourceUri = getResourceUri(storedView);
+      URI resourceUri = getResourceUri(storedView.getCode());
       return Response.created(resourceUri).build();
    }
 
@@ -97,29 +95,29 @@ public class ViewService extends AbstractService {
    @Path("{viewCode}")
    public JsonView getView(@PathParam("viewCode") String code) {
       View view = viewFacade.getViewByCode(code);
-      return new JsonView(view);
+      return JsonView.convert(view);
    }
 
    @GET
-   public List<JsonView> getAllViews() {
-      return viewFacade.getAllViews().stream()
-                       .map(JsonView::new)
-                       .collect(Collectors.toList());
+   public List<JsonView> getViews(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
+      Pagination pagination = new Pagination(page, pageSize);
+
+      List<View> views = viewFacade.getViews(pagination);
+      return JsonView.convert(views);
    }
 
    @GET
    @Path("{viewCode}/permissions")
    public JsonPermissions getViewPermissions(@PathParam("viewCode") String code) {
       Permissions permissions = viewFacade.getViewPermissions(code);
-      return new JsonPermissions(permissions);
+      return JsonPermissions.convert(permissions);
    }
 
    @PUT
    @Path("{viewCode}/permissions/users")
    public Set<JsonPermission> updateUserPermission(@PathParam("viewCode") String code, JsonPermission userPermission) {
-      return viewFacade.updateUserPermissions(code, userPermission).stream()
-                       .map(JsonPermission::new)
-                       .collect(Collectors.toSet());
+      Set<Permission> storedUserPermissions = viewFacade.updateUserPermissions(code, userPermission);
+      return JsonPermission.convert(storedUserPermissions);
    }
 
    @DELETE
@@ -133,9 +131,8 @@ public class ViewService extends AbstractService {
    @PUT
    @Path("{viewCode}/permissions/groups")
    public Set<JsonPermission> updateGroupPermission(@PathParam("viewCode") String code, JsonPermission groupPermission) {
-      return viewFacade.updateGroupPermissions(code, groupPermission).stream()
-                       .map(JsonPermission::new)
-                       .collect(Collectors.toSet());
+      Set<Permission> storedGroupPermissions = viewFacade.updateGroupPermissions(code, groupPermission);
+      return JsonPermission.convert(storedGroupPermissions);
    }
 
    @DELETE

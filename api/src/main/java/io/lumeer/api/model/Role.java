@@ -19,6 +19,9 @@
  */
 package io.lumeer.api.model;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public enum Role {
 
    MANAGE,
@@ -34,5 +37,17 @@ public enum Role {
 
    public static Role fromString(String role) {
       return Role.valueOf(role.toUpperCase());
+   }
+
+   public static Set<String> toStringRoles(Set<Role> roles) {
+      return roles.stream()
+                  .map(Role::toString)
+                  .collect(Collectors.toSet());
+   }
+
+   public static Set<Role> fromStringRoles(Set<String> roles) {
+      return roles.stream()
+                  .map(Role::fromString)
+                  .collect(Collectors.toSet());
    }
 }

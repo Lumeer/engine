@@ -19,12 +19,14 @@
  */
 package io.lumeer.core;
 
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -75,11 +77,18 @@ public class PermissionsChecker {
     */
    public Set<Role> getActualRoles(Resource resource) {
       String user = authenticatedUser.getUserEmail();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = getUserGroups(user, resource);
 
       Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), user);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
       return actualRoles;
+   }
+
+   private Set<String> getUserGroups(String user, Resource resource) {
+      if (resource instanceof Organization) {
+         return Collections.emptySet();
+      }
+      return userCache.getUser(user).getGroups();
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String user) {

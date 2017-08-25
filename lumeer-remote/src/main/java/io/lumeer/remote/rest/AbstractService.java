@@ -19,7 +19,7 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.model.Resource;
+import io.lumeer.core.WorkspaceKeeper;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -28,13 +28,16 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.UriBuilder;
 
-public abstract class AbstractService {
+abstract class AbstractService {
 
    @Inject
    private HttpServletRequest request;
 
-   protected URI getResourceUri(Resource resource) {
-      return UriBuilder.fromUri(request.getRequestURL() + "/" + resource.getCode()).build();
+   @Inject
+   protected WorkspaceKeeper workspaceKeeper;
+
+   protected URI getResourceUri(String additionalPath) {
+      return UriBuilder.fromUri(request.getRequestURL() + "/" + additionalPath).build();
    }
 
    protected URI getParentUri(String... urlEnd) {

@@ -23,7 +23,7 @@ import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 import io.lumeer.engine.api.data.StorageConnection;
-import io.lumeer.storage.mongodb.model.MongoView;
+import io.lumeer.storage.mongodb.model.MorphiaView;
 
 import org.mongodb.morphia.Morphia;
 
@@ -38,7 +38,8 @@ public class MongoDbStorageFactory implements DataStorageFactory {
 
    @PostConstruct
    public void init() {
-      this.morphia = new Morphia().mapPackage(MongoView.class.getPackage().getName());
+      morphia = new Morphia().mapPackage(MorphiaView.class.getPackage().getName());
+      morphia.getMapper().getOptions().setStoreEmpties(true);
    }
 
    @Override

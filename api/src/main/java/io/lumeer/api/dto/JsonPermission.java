@@ -87,4 +87,14 @@ public class JsonPermission implements Permission {
             ", roles=" + roles +
             '}';
    }
+
+   public static JsonPermission convert(Permission permission) {
+      return permission instanceof JsonPermission ? (JsonPermission) permission : new JsonPermission(permission);
+   }
+
+   public static Set<JsonPermission> convert(Set<Permission> permissions) {
+      return permissions.stream()
+                        .map(JsonPermission::convert)
+                        .collect(Collectors.toSet());
+   }
 }

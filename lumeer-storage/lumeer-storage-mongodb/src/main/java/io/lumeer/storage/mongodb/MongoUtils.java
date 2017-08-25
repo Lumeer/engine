@@ -23,6 +23,7 @@ import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.mongodb.MongoClient;
+import com.mongodb.client.MongoIterable;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -38,6 +39,20 @@ public class MongoUtils {
 
    private MongoUtils() {
 
+   }
+
+   public static DataDocument convertDocument(Document document) {
+      MongoUtils.replaceId(document);
+      DataDocument dataDocument = new DataDocument(document);
+      MongoUtils.convertNestedAndListDocuments(dataDocument);
+      return dataDocument;
+   }
+
+   public static List<DataDocument> convertIterableToList(MongoIterable<Document> documents) {
+      final List<DataDocument> result = new ArrayList<>();
+      documents.into(new ArrayList<>()).forEach(d -> result.add(MongoUtils.convertDocument(d)));
+
+      return result;
    }
 
    public static String convertBsonToJson(Bson object) {

@@ -19,8 +19,10 @@
  */
 package io.lumeer.api.model;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public interface Collection extends Resource {
@@ -31,4 +33,13 @@ public interface Collection extends Resource {
    default ResourceType getType() {
       return ResourceType.COLLECTION;
    }
+
+   List<Attribute> getAttributes();
+
+   void setAttributes(List<Attribute> attributes);
+
+   Integer getDocumentsCount();
+
+   LocalDateTime getLastTimeUsed();
+
 }
