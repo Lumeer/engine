@@ -19,12 +19,24 @@
  */
 package io.lumeer.storage.api.dao;
 
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.storage.api.DatabaseQuery;
+
+import java.util.List;
 
 public interface ProjectDao {
 
    Project createProject(Project project);
 
    Project getProjectByCode(String projectCode);
+
+   List<Project> getProjects(DatabaseQuery query);
+
+   void deleteProject(String projectId);
+
+   Project updateProject(String projectId, Project project);
+
+   void setOrganization(final Organization organization);
 
 }

@@ -36,10 +36,12 @@ import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+import io.lumeer.storage.mongodb.model.MongoOrganization;
 import io.lumeer.storage.mongodb.model.MongoProject;
 import io.lumeer.storage.mongodb.model.MongoUser;
 import io.lumeer.storage.mongodb.model.embedded.MongoPermissions;
@@ -75,6 +77,8 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
 
    private static final String CODE2 = "TVIEW2";
 
+   private static final String ORGANIZATION_CODE = "TORG";
+
    static {
       QUERY = new JsonQuery(Collections.singleton("testCollection"), Collections.singleton("testAttribute=42"), "test", 0, Integer.MAX_VALUE);
 
@@ -92,6 +96,9 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    private ViewDao viewDao;
 
    @Inject
+   private OrganizationDao organizationDao;
+
+   @Inject
    private ViewFacade viewFacade;
 
    @Inject
@@ -103,8 +110,16 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       user.setUsername(USER);
       userDao.createUser(user);
 
+      MongoOrganization organization = new MongoOrganization();
+      organization.setCode(ORGANIZATION_CODE);
+      organization.setPermissions(new MongoPermissions());
+      organizationDao.createOrganization(organization);
+
+      projectDao.setOrganization(organization);
+
       MongoProject project = new MongoProject();
       project.setCode(PROJECT_CODE);
+      project.setOrganizationId(organization.getId());
       project.setPermissions(new MongoPermissions());
       Project returnedProject = projectDao.createProject(project);
 
