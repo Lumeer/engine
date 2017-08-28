@@ -37,6 +37,7 @@ public class MongoProject extends MorphiaEntity implements Project {
    public static final String NAME = LumeerConst.Project.ATTR_PROJECT_NAME;
    public static final String ICON = LumeerConst.Project.ATTR_META_ICON;
    public static final String COLOR = LumeerConst.Project.ATTR_META_COLOR;
+   public static final String ORGANIZATION_ID = LumeerConst.Project.ATTR_ORGANIZATION_ID;
    public static final String PERMISSIONS = "permissions";
 
    @Property(CODE)
@@ -52,6 +53,9 @@ public class MongoProject extends MorphiaEntity implements Project {
    @Property(COLOR)
    private String color;
 
+   @Property(ORGANIZATION_ID)
+   private String organizationId;
+
    @Embedded(PERMISSIONS)
    private MongoPermissions permissions;
 
@@ -65,6 +69,7 @@ public class MongoProject extends MorphiaEntity implements Project {
       this.name = project.getName();
       this.icon = project.getIcon();
       this.color = project.getColor();
+      this.organizationId = null;
       this.permissions = new MongoPermissions(project.getPermissions());
    }
 
@@ -88,6 +93,10 @@ public class MongoProject extends MorphiaEntity implements Project {
       return color;
    }
 
+   public String getOrganizationId() {
+      return organizationId;
+   }
+
    @Override
    public Permissions getPermissions() {
       return permissions;
@@ -107,6 +116,10 @@ public class MongoProject extends MorphiaEntity implements Project {
 
    public void setColor(final String color) {
       this.color = color;
+   }
+
+   public void setOrganizationId(final String organizationId) {
+      this.organizationId = organizationId;
    }
 
    public void setPermissions(final MongoPermissions permissions) {
