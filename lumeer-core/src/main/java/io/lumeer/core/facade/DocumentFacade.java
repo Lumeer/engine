@@ -92,7 +92,7 @@ public class DocumentFacade extends AbstractFacade {
             Attribute attribute = oldAttributes.get(attributeName);
             attribute.setUsageCount(attribute.getUsageCount() + 1);
          } else {
-            Attribute attribute = new JsonAttribute(attributeName, attributeName, Collections.emptySet(), 0);
+            Attribute attribute = new JsonAttribute(attributeName, attributeName, Collections.emptySet(), 1);
             newAttributes.add(attribute);
          }
       });
