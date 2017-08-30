@@ -145,13 +145,6 @@ public class DocumentFacade extends AbstractFacade {
                     .collect(Collectors.toMap(DataDocument::getId, Function.identity()));
    }
 
-   private SearchQuery createPaginationQuery(Pagination pagination) {
-      return SearchQuery.createBuilder(authenticatedUser.getCurrentUsername()) // TODO user not needed
-                        .page(pagination.getPage())
-                        .pageSize(pagination.getPageSize())
-                        .build();
-   }
-
    private List<Document> getDocuments(String collectionCode, Map<String, DataDocument> dataDocuments) {
       String[] documentIds = dataDocuments.keySet().toArray(new String[] {});
       List<Document> documents = documentDao.getDocumentsByIds(documentIds);

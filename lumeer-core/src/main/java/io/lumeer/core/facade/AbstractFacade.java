@@ -67,12 +67,14 @@ abstract class AbstractFacade {
       resource.getPermissions().updateGroupPermissions(groupPermissions.toArray(new Permission[0]));
    }
 
-   protected SearchQuery createSearchQuery(Pagination pagination) {
+   protected SearchQuery createPaginationQuery(Pagination pagination) {
       String user = authenticatedUser.getCurrentUsername();
       Set<String> groups = userCache.getUser(user).getGroups();
 
       return SearchQuery.createBuilder(user)
                         .groups(groups)
+                        .page(pagination.getPage())
+                        .pageSize(pagination.getPageSize())
                         .build();
    }
 }

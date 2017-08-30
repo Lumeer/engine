@@ -57,7 +57,6 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -114,7 +113,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new JsonPermission(USER, Role.toStringRoles(Project.ROLES)));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 

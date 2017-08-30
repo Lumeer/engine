@@ -76,7 +76,7 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public List<View> getViews(Pagination pagination) {
-      SearchQuery searchQuery = createSearchQuery(pagination);
+      SearchQuery searchQuery = createPaginationQuery(pagination);
 
       return viewDao.getViews(searchQuery).stream()
                     .map(this::keepOnlyActualUserRoles)

@@ -40,7 +40,7 @@ import java.util.List;
 @Entity
 @Indexes({
       @Index(fields = { @Field(MorphiaCollection.CODE) }, options = @IndexOptions(unique = true)),
-      @Index(fields = { @Field(MorphiaCollection.NAME) }),
+      @Index(fields = { @Field(MorphiaCollection.NAME) }, options = @IndexOptions(unique = true)),
       @Index(fields = { @Field(MorphiaCollection.ATTRIBUTES + "." + MorphiaAttribute.NAME) }),
       @Index(fields = {
             @Field(value = MorphiaCollection.CODE, type = IndexType.TEXT),

@@ -88,7 +88,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public List<Collection> getCollections(Pagination pagination) {
-      SearchQuery searchQuery = createSearchQuery(pagination);
+      SearchQuery searchQuery = createPaginationQuery(pagination);
       return collectionDao.getCollections(searchQuery).stream()
                           .map(this::keepOnlyActualUserRoles)
                           .collect(Collectors.toList());

@@ -38,15 +38,15 @@ public class JsonSuggestions {
    }
 
    public List<JsonCollection> getAttributes() {
-      return attributes;
+      return Collections.unmodifiableList(attributes);
    }
 
    public List<JsonCollection> getCollections() {
-      return collections;
+      return Collections.unmodifiableList(collections);
    }
 
    public List<JsonView> getViews() {
-      return views;
+      return Collections.unmodifiableList(views);
    }
 
    public static JsonSuggestions emptySuggestions() {
