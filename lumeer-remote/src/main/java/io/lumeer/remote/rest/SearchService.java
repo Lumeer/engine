@@ -110,7 +110,7 @@ public class SearchService extends AbstractService {
       }
 
       try {
-         return SuggestionType.valueOf(type);
+         return SuggestionType.fromString(type);
       } catch (IllegalArgumentException ex) {
          throw new BadRequestException("Unknown suggestion type");
       }
