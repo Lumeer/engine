@@ -21,15 +21,13 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonDocument;
+import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonSuggestions;
 import io.lumeer.api.dto.JsonView;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
-import io.lumeer.engine.api.dto.SearchSuggestion;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -38,6 +36,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -78,27 +77,27 @@ public class SearchService extends AbstractService {
       return suggestionFacade.suggest(text, suggestionType);
    }
 
-   @GET
+   @POST
    @Path("collections")
-   public List<JsonCollection> getCollections(Query query) {
+   public List<JsonCollection> searchCollections(JsonQuery query) {
       return searchFacade.searchCollections(query).stream()
                          .map(JsonCollection::convert)
                          .collect(Collectors.toList());
 
    }
 
-   @GET
+   @POST
    @Path("documents")
-   public List<JsonDocument> getDocuments(Query query) {
+   public List<JsonDocument> searchDocuments(JsonQuery query) {
       return searchFacade.searchDocuments(query).stream()
                          .map(JsonDocument::convert)
                          .collect(Collectors.toList());
 
    }
 
-   @GET
+   @POST
    @Path("views")
-   public List<JsonView> getViews(Query query) {
+   public List<JsonView> searchViews(JsonQuery query) {
       return searchFacade.searchViews(query).stream()
                          .map(JsonView::convert)
                          .collect(Collectors.toList());
