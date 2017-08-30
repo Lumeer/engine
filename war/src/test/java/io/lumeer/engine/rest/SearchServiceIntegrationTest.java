@@ -36,6 +36,7 @@ import io.lumeer.engine.controller.OrganizationFacade;
 import io.lumeer.engine.controller.ProjectFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,6 +54,7 @@ import javax.ws.rs.core.Response;
 /**
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
+@Ignore
 @RunWith(Arquillian.class)
 public class SearchServiceIntegrationTest extends IntegrationTestBase {
 

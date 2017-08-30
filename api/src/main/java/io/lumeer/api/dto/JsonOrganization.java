@@ -19,74 +19,39 @@
  */
 package io.lumeer.api.dto;
 
+import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Organization;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JsonOrganization implements Organization {
+import java.util.List;
+import java.util.stream.Collectors;
 
-   private final String code;
-   private final String name;
-   private final String icon;
-   private final String color;
-   private final JsonPermissions permissions;
+public class JsonOrganization extends JsonResource implements Organization {
+
+   public JsonOrganization() {
+   }
 
    @JsonCreator
    public JsonOrganization(
-         @JsonProperty("code") final String code,
-         @JsonProperty("name") final String name,
-         @JsonProperty("icon") final String icon,
-         @JsonProperty("color") final String color) {
-      this.code = code;
-      this.name = name;
-      this.icon = icon;
-      this.color = color;
-      this.permissions = new JsonPermissions();
+         @JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(PERMISSIONS) final JsonPermissions permissions) {
+      super(code, name, icon, color, permissions);
    }
 
    public JsonOrganization(Organization organization) {
-      this.code = organization.getCode();
-      this.name = organization.getName();
-      this.icon = organization.getIcon();
-      this.color = organization.getColor();
-      this.permissions = new JsonPermissions(organization.getPermissions());
-   }
-
-   @Override
-   public String getId() {
-      return null;
-   }
-
-   @Override
-   public String getCode() {
-      return code;
-   }
-
-   @Override
-   public String getName() {
-      return name;
-   }
-
-   @Override
-   public String getIcon() {
-      return icon;
-   }
-
-   @Override
-   public String getColor() {
-      return color;
-   }
-
-   @Override
-   public JsonPermissions getPermissions() {
-      return permissions;
+      super(organization);
    }
 
    @Override
    public String toString() {
       return "JsonOrganization{" +
-            "code='" + code + '\'' +
+            "id='" + id + '\'' +
+            ", code='" + code + '\'' +
             ", name='" + name + '\'' +
             ", icon='" + icon + '\'' +
             ", color='" + color + '\'' +
@@ -94,22 +59,13 @@ public class JsonOrganization implements Organization {
             '}';
    }
 
-   @Override
-   public boolean equals(final Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof Organization)) {
-         return false;
-      }
-
-      final Organization that = (Organization) o;
-
-      return getCode().equals(that.getCode());
+   public static JsonOrganization convert(Organization organization) {
+      return organization instanceof JsonOrganization ? (JsonOrganization) organization : new JsonOrganization(organization);
    }
 
-   @Override
-   public int hashCode() {
-      return getCode().hashCode();
+   public static List<JsonOrganization> convert(List<Organization> organizations) {
+      return organizations.stream()
+                          .map(JsonOrganization::convert)
+                          .collect(Collectors.toList());
    }
 }

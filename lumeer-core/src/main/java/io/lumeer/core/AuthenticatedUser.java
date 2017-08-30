@@ -19,6 +19,9 @@
  */
 package io.lumeer.core;
 
+import io.lumeer.api.model.User;
+import io.lumeer.core.cache.UserCache;
+
 import org.keycloak.KeycloakPrincipal;
 
 import java.util.Collections;
@@ -37,12 +40,24 @@ public class AuthenticatedUser {
    @Inject
    private HttpServletRequest request;
 
+   @Inject
+   private UserCache userCache;
+
+   public User getCurrentUser() {
+      String username = getUserEmail();
+      return userCache.getUser(username);
+   }
+
+   public String getCurrentUsername() {
+      return getCurrentUser().getUsername();
+   }
+
    /**
     * Gets the name of currently logged in user.
     *
     * @return The name of currently logged in user.
     */
-   public String getUserName() {
+   private String getUserName() {
       final Optional<KeycloakPrincipal> principal = getPrincipal();
       return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getName() : DEFAULT_USERNAME;
    }
@@ -62,7 +77,7 @@ public class AuthenticatedUser {
     *
     * @return The user roles of currently logged in user.
     */
-   public Set<String> getUserRoles() {
+   private Set<String> getUserRoles() {
       final Optional<KeycloakPrincipal> principal = getPrincipal();
       return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getRealmAccess().getRoles() : Collections.emptySet();
    }

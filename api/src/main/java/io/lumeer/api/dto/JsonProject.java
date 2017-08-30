@@ -19,68 +19,32 @@
  */
 package io.lumeer.api.dto;
 
+import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Project;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JsonProject implements Project {
+import java.util.List;
+import java.util.stream.Collectors;
 
-   private final String code;
-   private final String name;
-   private final String icon;
-   private final String color;
-   private final JsonPermissions permissions;
+public class JsonProject extends JsonResource implements Project {
+
+   public JsonProject() {
+   }
 
    @JsonCreator
    public JsonProject(
-         @JsonProperty("code") final String code,
-         @JsonProperty("name") final String name,
-         @JsonProperty("icon") final String icon,
-         @JsonProperty("color") final String color) {
-      this.code = code;
-      this.name = name;
-      this.icon = icon;
-      this.color = color;
-      this.permissions = new JsonPermissions();
+         @JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(PERMISSIONS) final JsonPermissions permissions) {
+      super(code, name, icon, color, permissions);
    }
 
    public JsonProject(Project project) {
-      this.code = project.getCode();
-      this.name = project.getName();
-      this.icon = project.getIcon();
-      this.color = project.getColor();
-      this.permissions = new JsonPermissions(project.getPermissions());
-   }
-
-   @Override
-   public String getId() {
-      return null;
-   }
-
-   @Override
-   public String getCode() {
-      return code;
-   }
-
-   @Override
-   public String getName() {
-      return name;
-   }
-
-   @Override
-   public String getIcon() {
-      return icon;
-   }
-
-   @Override
-   public String getColor() {
-      return color;
-   }
-
-   @Override
-   public JsonPermissions getPermissions() {
-      return permissions;
+      super(project);
    }
 
    @Override
@@ -92,5 +56,15 @@ public class JsonProject implements Project {
             ", color='" + color + '\'' +
             ", permissions=" + permissions +
             '}';
+   }
+
+   public static JsonProject convert(Project project) {
+      return project instanceof JsonProject ? (JsonProject) project : new JsonProject(project);
+   }
+
+   public static List<JsonProject> convert(List<Project> projects) {
+      return projects.stream()
+                     .map(JsonProject::convert)
+                     .collect(Collectors.toList());
    }
 }

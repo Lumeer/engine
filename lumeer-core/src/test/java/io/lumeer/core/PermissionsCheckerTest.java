@@ -55,6 +55,7 @@ public class PermissionsCheckerTest {
       Mockito.when(userCache.getUser(USER)).thenReturn(user);
 
       AuthenticatedUser authenticatedUser = Mockito.mock(AuthenticatedUser.class);
+      Mockito.when(authenticatedUser.getCurrentUsername()).thenReturn(USER);
       Mockito.when(authenticatedUser.getUserEmail()).thenReturn(USER);
 
       permissionsChecker = new PermissionsChecker(userCache, authenticatedUser);
@@ -75,7 +76,7 @@ public class PermissionsCheckerTest {
 
       Resource resource = Mockito.mock(Resource.class);
       Mockito.when(resource.getPermissions()).thenReturn(permissions);
-      Mockito.when(resource.getType()).thenReturn(ResourceType.ORGANIZATION);
+      Mockito.when(resource.getType()).thenReturn(ResourceType.PROJECT);
       return resource;
    }
 

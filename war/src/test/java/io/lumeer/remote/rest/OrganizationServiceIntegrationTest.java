@@ -35,13 +35,10 @@ import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.mongodb.model.MongoUser;
 
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -85,17 +82,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
    private OrganizationFacade organizationFacade;
 
    @Inject
-   private UserDao userDao;
-
-   @Inject
    private OrganizationDao organizationDao;
-
-   @Before
-   public void init() {
-      MongoUser user = new MongoUser();
-      user.setUsername(USER);
-      userDao.createUser(user);
-   }
 
    @Test
    public void testGetOrganizations() {
@@ -108,7 +95,8 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonOrganization> organizations = response.readEntity(new GenericType<List<JsonOrganization>>() {});
+      List<JsonOrganization> organizations = response.readEntity(new GenericType<List<JsonOrganization>>() {
+      });
       assertThat(organizations).extracting(Resource::getCode).containsOnly(CODE1, CODE2);
 
       Permissions permissions1 = organizations.get(0).getPermissions();
@@ -123,13 +111,13 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
    }
 
    private void createOrganization(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR);
+      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null);
 
       organizationFacade.createOrganization(organization);
    }
 
    private void createOrganizationWithSpecificPermissions(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR);
+      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null);
       organization.getPermissions().updateUserPermissions(USER_PERMISSION);
       organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       organizationDao.createOrganization(organization);
@@ -173,7 +161,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR);
+      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR, null);
       Entity entity = Entity.json(organization);
 
       Response response = client.target(ORGANIZATION_URL)
@@ -200,7 +188,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
    public void testUpdateOrganization() {
       createOrganization(CODE1);
 
-      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR);
+      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR, null);
       Entity entity = Entity.json(updatedOrganization);
 
       Response response = client.target(ORGANIZATION_URL).path(CODE1)
@@ -260,7 +248,8 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {});
+      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission);
 
@@ -299,7 +288,8 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {});
+      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission);
 

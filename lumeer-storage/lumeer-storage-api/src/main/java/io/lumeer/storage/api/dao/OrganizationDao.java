@@ -20,7 +20,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Organization;
-import io.lumeer.storage.api.DatabaseQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
 

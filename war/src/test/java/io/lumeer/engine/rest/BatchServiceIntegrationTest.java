@@ -36,6 +36,7 @@ import io.lumeer.engine.controller.UserFacade;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,6 +54,7 @@ import javax.ws.rs.core.Response;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
+@Ignore
 @RunWith(Arquillian.class)
 public class BatchServiceIntegrationTest extends IntegrationTestBase {
 

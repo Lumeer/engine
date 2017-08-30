@@ -23,12 +23,11 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
-import io.lumeer.core.AuthenticatedUser;
-import io.lumeer.core.PermissionsChecker;
-import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
-import io.lumeer.storage.api.DatabaseQuery;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
 import java.util.Set;
@@ -40,56 +39,25 @@ import javax.inject.Inject;
 public class OrganizationFacade extends AbstractFacade {
 
    @Inject
-   private AuthenticatedUser authenticatedUser;
-
-   @Inject
-   private PermissionsChecker permissionsChecker;
-
-   @Inject
-   private UserCache userCache;
-
-   @Inject
    private OrganizationDao organizationDao;
 
-   public OrganizationFacade() {
-   }
+   @Inject
+   private ProjectDao projectDao;
 
-   OrganizationFacade(AuthenticatedUser authenticatedUser, PermissionsChecker permissionsChecker, OrganizationDao organizationDao) {
-      this.authenticatedUser = authenticatedUser;
-      this.permissionsChecker = permissionsChecker;
-      this.organizationDao = organizationDao;
-   }
-
-   public List<Organization> getOrganizations() {
-      String userEmail = authenticatedUser.getUserEmail();
-      DatabaseQuery query = new DatabaseQuery.Builder(userEmail)
-            .groups(userCache.getUser(userEmail).getGroups())
-            .build();
-
-      return organizationDao.getOrganizations(query).stream()
-            .map(resource -> keepOnlyActualUserRoles(resource))
-            .collect(Collectors.toList());
-   }
+   @Inject
+   private UserDao userDao;
 
    public Organization createOrganization(final Organization organization) {
+      // TODO check system role for creating organizations
+
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getUserEmail(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
 
-      return organizationDao.createOrganization(organization);
-   }
+      Organization storedOrganization = organizationDao.createOrganization(organization);
 
-   public Organization getOrganization(final String organizationCode) {
-      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
-      permissionsChecker.checkRole(organization, Role.READ);
+      createOrganizationScopedRepositories(storedOrganization);
 
-      return keepOnlyActualUserRoles(organization);
-   }
-
-   public void deleteOrganization(final String organizationCode) {
-      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
-      permissionsChecker.checkRole(organization, Role.MANAGE);
-
-      organizationDao.deleteOrganization(organization.getId());
+      return storedOrganization;
    }
 
    public Organization updateOrganization(final String organizationCode, final Organization organization) {
@@ -100,6 +68,32 @@ public class OrganizationFacade extends AbstractFacade {
       Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization);
 
       return keepOnlyActualUserRoles(updatedOrganization);
+   }
+
+   public void deleteOrganization(final String organizationCode) {
+      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
+      permissionsChecker.checkRole(organization, Role.MANAGE);
+
+      deleteOrganizationScopedRepositories(organization);
+
+      organizationDao.deleteOrganization(organization.getId());
+   }
+
+   public Organization getOrganization(final String organizationCode) {
+      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
+      permissionsChecker.checkRole(organization, Role.READ);
+
+      return keepOnlyActualUserRoles(organization);
+   }
+
+   public List<Organization> getOrganizations() {
+      String userEmail = authenticatedUser.getUserEmail();
+      DatabaseQuery query = DatabaseQuery.createBuilder(userEmail)
+                                         .build();
+
+      return organizationDao.getOrganizations(query).stream()
+                            .map(this::keepOnlyActualUserRoles)
+                            .collect(Collectors.toList());
    }
 
    private Organization checkRoleAndGetOrganization(final String organizationCode, final Role role) {
@@ -145,5 +139,21 @@ public class OrganizationFacade extends AbstractFacade {
 
       organization.getPermissions().removeGroupPermission(group);
       organizationDao.updateOrganization(organization.getId(), organization);
+   }
+
+   private void createOrganizationScopedRepositories(Organization organization) {
+      projectDao.setOrganization(organization);
+      projectDao.createProjectsRepository(organization);
+
+      userDao.setOrganization(organization);
+      userDao.createUsersRepository(organization);
+   }
+
+   private void deleteOrganizationScopedRepositories(Organization organization) {
+      projectDao.setOrganization(organization);
+      projectDao.deleteProjectsRepository(organization);
+
+      userDao.setOrganization(organization);
+      userDao.deleteUsersRepository(organization);
    }
 }

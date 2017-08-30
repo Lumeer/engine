@@ -29,7 +29,11 @@ public interface Resource {
    @JsonIgnore
    String getId();
 
+   void setId(String id);
+
    String getCode();
+
+   void setCode(String code);
 
    String getName();
 
@@ -38,5 +42,7 @@ public interface Resource {
    String getColor();
 
    Permissions getPermissions();
+
+   void setPermissions(Permissions permissions);
 
 }

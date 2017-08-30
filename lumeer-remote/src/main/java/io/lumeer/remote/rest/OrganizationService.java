@@ -23,13 +23,13 @@ import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.OrganizationFacade;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -52,18 +52,20 @@ public class OrganizationService extends AbstractService {
    @Inject
    private OrganizationFacade organizationFacade;
 
-   @GET
-   public List<JsonOrganization> getOrganizations() {
-      return organizationFacade.getOrganizations().stream()
-            .map(JsonOrganization::new)
-            .collect(Collectors.toList());
+   @POST
+   public Response createOrganization(JsonOrganization organization) {
+      Organization storedOrganization = organizationFacade.createOrganization(organization);
+
+      URI resourceUri = getResourceUri(storedOrganization.getCode());
+      return Response.created(resourceUri).build();
    }
 
-   @GET
+   @PUT
    @Path("{organizationCode}")
-   public JsonOrganization getOrganization(@PathParam("organizationCode") String organizationCode) {
-      Organization organization = organizationFacade.getOrganization(organizationCode);
-      return new JsonOrganization(organization);
+   public Response updateOrganization(@PathParam("organizationCode") String organizationCode, JsonOrganization organization) {
+      Organization storedOrganization = organizationFacade.updateOrganization(organizationCode, organization);
+
+      return Response.ok(JsonOrganization.convert(storedOrganization)).build();
    }
 
    @DELETE
@@ -74,36 +76,31 @@ public class OrganizationService extends AbstractService {
       return Response.ok().link(getParentUri(organizationCode), "parent").build();
    }
 
-   @POST
-   public Response createOrganization(JsonOrganization organization) {
-      Organization storedOrganization = organizationFacade.createOrganization(organization);
-
-      URI resourceUri = getResourceUri(storedOrganization);
-      return Response.created(resourceUri).build();
+   @GET
+   @Path("{organizationCode}")
+   public JsonOrganization getOrganization(@PathParam("organizationCode") String organizationCode) {
+      Organization organization = organizationFacade.getOrganization(organizationCode);
+      return JsonOrganization.convert(organization);
    }
 
-   @PUT
-   @Path("{organizationCode}")
-   public Response updateOrganization(@PathParam("organizationCode") String organizationCode, JsonOrganization organization) {
-      Organization storedOrganization = organizationFacade.updateOrganization(organizationCode, organization);
-
-      JsonOrganization jsonOrganization = new JsonOrganization(storedOrganization);
-      return Response.ok(jsonOrganization).build();
+   @GET
+   public List<JsonOrganization> getOrganizations() {
+      List<Organization> organizations = organizationFacade.getOrganizations();
+      return JsonOrganization.convert(organizations);
    }
 
    @GET
    @Path("{organizationCode}/permissions")
    public JsonPermissions getOrganizationPermissions(@PathParam("organizationCode") String organizationCode) {
       Permissions permissions = organizationFacade.getOrganizationPermissions(organizationCode);
-      return new JsonPermissions(permissions);
+      return JsonPermissions.convert(permissions);
    }
 
    @PUT
    @Path("{organizationCode}/permissions/users")
    public Set<JsonPermission> updateUserPermission(@PathParam("organizationCode") String organizationCode, JsonPermission userPermission) {
-      return organizationFacade.updateUserPermissions(organizationCode, userPermission).stream()
-                       .map(JsonPermission::new)
-                       .collect(Collectors.toSet());
+      Set<Permission> storedUserPermissions = organizationFacade.updateUserPermissions(organizationCode, userPermission);
+      return JsonPermission.convert(storedUserPermissions);
    }
 
    @DELETE
@@ -117,9 +114,8 @@ public class OrganizationService extends AbstractService {
    @PUT
    @Path("{organizationCode}/permissions/groups")
    public Set<JsonPermission> updateGroupPermission(@PathParam("organizationCode") String organizationCode, JsonPermission groupPermission) {
-      return organizationFacade.updateGroupPermissions(organizationCode, groupPermission).stream()
-                       .map(JsonPermission::new)
-                       .collect(Collectors.toSet());
+      Set<Permission> storedGroupPermissions = organizationFacade.updateGroupPermissions(organizationCode, groupPermission);
+      return JsonPermission.convert(storedGroupPermissions);
    }
 
    @DELETE

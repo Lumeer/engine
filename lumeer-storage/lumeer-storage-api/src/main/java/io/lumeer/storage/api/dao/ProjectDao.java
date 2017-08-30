@@ -21,11 +21,17 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.DatabaseQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
 
 public interface ProjectDao {
+
+   void createProjectsRepository(Organization organization);
+
+   void deleteProjectsRepository(Organization organization);
+
+   void setOrganization(Organization organization);
 
    Project createProject(Project project);
 
@@ -36,7 +42,5 @@ public interface ProjectDao {
    void deleteProject(String projectId);
 
    Project updateProject(String projectId, Project project);
-
-   void setOrganization(final Organization organization);
 
 }

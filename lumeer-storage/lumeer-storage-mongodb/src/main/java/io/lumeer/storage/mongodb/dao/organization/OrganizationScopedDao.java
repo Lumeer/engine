@@ -19,9 +19,11 @@
  */
 package io.lumeer.storage.mongodb.dao.organization;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.storage.mongodb.dao.MongoDao;
 
 import com.mongodb.client.MongoDatabase;
 import org.mongodb.morphia.AdvancedDatastore;
@@ -30,12 +32,12 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-public abstract class OrganizationScopedDao {
-
-   protected MongoDatabase database;
-   protected AdvancedDatastore datastore;
+public abstract class OrganizationScopedDao extends MongoDao {
 
    private Organization organization;
+
+   @Inject
+   private SelectedWorkspace selectedWorkspace;
 
    @Inject
    @UserDataStorage
@@ -45,14 +47,10 @@ public abstract class OrganizationScopedDao {
    public void init() {
       this.database = (MongoDatabase) dataStorage.getDatabase();
       this.datastore = (AdvancedDatastore) dataStorage.getDataStore();
-   }
 
-   public void setDatabase(final MongoDatabase database) {
-      this.database = database;
-   }
-
-   public void setDatastore(final AdvancedDatastore datastore) {
-      this.datastore = datastore;
+      if (selectedWorkspace.getOrganization().isPresent()) {
+         this.organization = selectedWorkspace.getOrganization().get();
+      }
    }
 
    public Optional<Organization> getOrganization() {

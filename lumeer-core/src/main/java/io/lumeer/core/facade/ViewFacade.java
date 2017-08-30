@@ -19,22 +19,18 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
-import io.lumeer.core.AuthenticatedUser;
-import io.lumeer.core.PermissionsChecker;
-import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
-import io.lumeer.storage.api.DatabaseQuery;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -42,37 +38,14 @@ import javax.inject.Inject;
 public class ViewFacade extends AbstractFacade {
 
    @Inject
-   private UserCache userCache;
-
-   @Inject
    private ViewDao viewDao;
-
-   @Inject
-   private WorkspaceKeeper workspaceKeeper;
-
-   public ViewFacade() {
-   }
-
-   ViewFacade(AuthenticatedUser authenticatedUser, PermissionsChecker permissionsChecker, ViewDao viewDao, WorkspaceKeeper workspaceKeeper) {
-      this.authenticatedUser = authenticatedUser;
-      this.permissionsChecker = permissionsChecker;
-      this.viewDao = viewDao;
-      this.workspaceKeeper = workspaceKeeper;
-   }
-
-   @PostConstruct
-   public void initViewDao() {
-      if (workspaceKeeper.getProject().isPresent()) {
-         viewDao.setProject(workspaceKeeper.getProject().get());
-      }
-   }
 
    public View createView(View view) {
       // TODO check collection permissions
 
       // TODO generate view code if not provided
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getUserEmail(), View.ROLES);
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
 
       return viewDao.createView(view);
@@ -102,14 +75,11 @@ public class ViewFacade extends AbstractFacade {
       return keepOnlyActualUserRoles(view);
    }
 
-   public List<View> getAllViews() {
-      String user = authenticatedUser.getUserEmail();
-      DatabaseQuery query = new DatabaseQuery.Builder(user)
-            .groups(userCache.getUser(user).getGroups())
-            .build();
+   public List<View> getViews(Pagination pagination) {
+      SearchQuery searchQuery = createPaginationQuery(pagination);
 
-      return viewDao.getViews(query).stream()
-                    .map(resource -> keepOnlyActualUserRoles(resource))
+      return viewDao.getViews(searchQuery).stream()
+                    .map(this::keepOnlyActualUserRoles)
                     .collect(Collectors.toList());
    }
 

@@ -19,6 +19,7 @@
  */
 package io.lumeer.api.model;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,4 +32,21 @@ public interface Collection extends Resource {
    default ResourceType getType() {
       return ResourceType.COLLECTION;
    }
+
+   Set<Attribute> getAttributes();
+
+   void setAttributes(Set<Attribute> attributes);
+
+   void updateAttribute(String attributeFullName, Attribute attribute);
+
+   void deleteAttribute(String attributeFullName);
+
+   Integer getDocumentsCount();
+
+   void setDocumentsCount(Integer documentsCount);
+
+   LocalDateTime getLastTimeUsed();
+
+   void setLastTimeUsed(LocalDateTime lastTimeUsed);
+
 }

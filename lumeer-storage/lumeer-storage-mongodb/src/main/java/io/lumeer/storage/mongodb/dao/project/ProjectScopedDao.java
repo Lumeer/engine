@@ -19,14 +19,29 @@
  */
 package io.lumeer.storage.mongodb.dao.project;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.mongodb.dao.organization.OrganizationScopedDao;
 
 import java.util.Optional;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
 public abstract class ProjectScopedDao extends OrganizationScopedDao {
 
+   @Inject
+   private SelectedWorkspace selectedWorkspace;
+
    private Project project;
+
+   @PostConstruct
+   public void init() {
+      super.init();
+
+      if (selectedWorkspace.getProject().isPresent()) {
+         this.project = selectedWorkspace.getProject().get();
+      }
+   }
 
    public Optional<Project> getProject() {
       return Optional.ofNullable(project);

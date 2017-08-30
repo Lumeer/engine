@@ -19,12 +19,19 @@
  */
 package io.lumeer.storage.api.dao;
 
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.User;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface UserDao {
+
+   void createUsersRepository(Organization organization);
+
+   void deleteUsersRepository(Organization organization);
+
+   void setOrganization(Organization organization);
 
    User createUser(User user);
 

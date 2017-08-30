@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.dao.system;
 
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.storage.mongodb.dao.MongoDao;
 
 import com.mongodb.client.MongoDatabase;
 import org.mongodb.morphia.AdvancedDatastore;
@@ -28,10 +29,7 @@ import org.mongodb.morphia.AdvancedDatastore;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-public abstract class SystemScopedDao {
-
-   protected MongoDatabase database;
-   protected AdvancedDatastore datastore;
+public abstract class SystemScopedDao extends MongoDao {
 
    @Inject
    @SystemDataStorage
@@ -41,14 +39,6 @@ public abstract class SystemScopedDao {
    public void init() {
       this.database = (MongoDatabase) dataStorage.getDatabase();
       this.datastore = (AdvancedDatastore) dataStorage.getDataStore();
-   }
-
-   void setDatabase(final MongoDatabase database) {
-      this.database = database;
-   }
-
-   void setDatastore(final AdvancedDatastore datastore) {
-      this.datastore = datastore;
    }
 
 }
