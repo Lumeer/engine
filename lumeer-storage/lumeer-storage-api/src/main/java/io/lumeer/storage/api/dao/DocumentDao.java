@@ -32,6 +32,8 @@ public interface DocumentDao {
 
    Document createDocument(Document document);
 
+   List<Document> createDocuments(List<Document> documents);
+
    Document updateDocument(String id, Document document);
 
    void deleteDocument(String id);

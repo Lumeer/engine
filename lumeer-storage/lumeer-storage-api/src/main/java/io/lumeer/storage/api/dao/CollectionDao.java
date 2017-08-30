@@ -43,6 +43,8 @@ public interface CollectionDao {
 
    Collection getCollectionByCode(String code);
 
+   List<Collection> getAllCollections();
+
    List<Collection> getCollections(SearchQuery query);
 
    List<Collection> getCollections(SuggestionQuery query);

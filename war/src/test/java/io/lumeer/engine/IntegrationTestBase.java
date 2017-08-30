@@ -59,14 +59,14 @@ public abstract class IntegrationTestBase {
    @Deployment
    public static Archive<?> createTestArchive() {
       return ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME)
-                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb", "io.netty", "de.flapdoodle")
+                       .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb", "io.netty", "de.flapdoodle", "com.univocity")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
                        .addAsResource("defaults-dev.properties")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")
-                                            .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo", "org.mongodb.morphia:morphia", "org.mockito:mockito-core")
+                                            .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo", "org.mongodb.morphia:morphia", "org.mockito:mockito-core", "com.univocity:univocity-parsers")
                                             .withTransitivity()
                                             .asFile()
                        );

@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.model;
 
 import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.model.common.MorphiaEntity;
 
 import org.mongodb.morphia.annotations.Entity;
@@ -31,6 +32,8 @@ import org.mongodb.morphia.annotations.Property;
 import org.mongodb.morphia.annotations.Transient;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 @Entity
 @Indexes({
@@ -197,5 +200,22 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
             ", dataVersion=" + dataVersion +
             ", data=" + data +
             '}';
+   }
+
+   public org.bson.Document toBsonDocument() {
+      DataDocument dataDocument = new DataDocument(COLLECTION_ID, collectionId)
+            .append(CREATED_BY, createdBy)
+            .append(CREATION_DATE, convertLocalDateTimeToDate(creationDate))
+            .append(UPDATED_BY, updatedBy)
+            .append(UPDATE_DATE, convertLocalDateTimeToDate(updateDate))
+            .append(DATA_VERSION, dataVersion);
+      return MongoUtils.dataDocumentToDocument(dataDocument);
+   }
+
+   private Date convertLocalDateTimeToDate(LocalDateTime dateTime) {
+      if (dateTime == null) {
+         return null;
+      }
+      return Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
    }
 }

@@ -19,6 +19,8 @@
  */
 package io.lumeer.storage.mongodb.dao.project;
 
+import static io.lumeer.storage.mongodb.model.common.MorphiaEntity.ID;
+
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -34,6 +36,7 @@ import org.mongodb.morphia.query.Query;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -62,6 +65,17 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
    }
 
    @Override
+   public List<Document> createDocuments(final List<Document> documents) {
+      List<org.bson.Document> bsonDocuments = documents.stream().map(doc -> new MorphiaDocument(doc).toBsonDocument()).collect(Collectors.toList());
+      database.getCollection(databaseCollection()).insertMany(bsonDocuments);
+
+      for (int i = 0; i < documents.size(); i++) {
+         documents.get(i).setId(bsonDocuments.get(i).getObjectId(ID).toHexString());
+      }
+      return documents;
+   }
+
+   @Override
    public Document updateDocument(final String id, final Document document) {
       MorphiaDocument morphiaDocument = new MorphiaDocument(document);
       morphiaDocument.setId(id);
@@ -87,7 +101,7 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
    @Override
    public Document getDocumentById(final String id) {
       Document document = datastore.createQuery(databaseCollection(), MorphiaDocument.class)
-                                   .field(MorphiaDocument.ID).equal(new ObjectId(id))
+                                   .field(ID).equal(new ObjectId(id))
                                    .get();
       if (document == null) {
          throw new ResourceNotFoundException(ResourceType.DOCUMENT);
@@ -99,7 +113,7 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
    public List<Document> getDocumentsByIds(final String... ids) {
       List<ObjectId> objectIds = Arrays.stream(ids).map(ObjectId::new).collect(Collectors.toList());
       List<MorphiaDocument> documents = datastore.createQuery(databaseCollection(), MorphiaDocument.class)
-                                                 .field(MorphiaDocument.ID).in(objectIds)
+                                                 .field(ID).in(objectIds)
                                                  .asList();
       return new ArrayList<>(documents);
    }
