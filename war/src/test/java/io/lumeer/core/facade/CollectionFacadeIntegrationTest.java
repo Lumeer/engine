@@ -23,11 +23,13 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
@@ -57,6 +59,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -75,6 +78,13 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    private static final Permission USER_PERMISSION = new SimplePermission(USER, View.ROLES);
    private static final Permission GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+
+   private static final String ATTRIBUTE_NAME = "name";
+   private static final String ATTRIBUTE_FULLNAME = "fullname";
+   private static final Set<String> ATTRIBUTE_CONSTRAINTS = Collections.emptySet();
+   private static final Integer ATTRIBUTE_COUNT = 0;
+
+   private static final String ATTRIBUTE_FULLNAME2 = "fullname2";
 
    private static final String CODE2 = "TCOLL2";
 
@@ -133,8 +143,16 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       return collectionDao.createCollection(collection);
    }
 
+   private Collection createCollection(String code, Attribute attribute) {
+      Collection collection = prepareCollection(code);
+      collection.getPermissions().updateUserPermissions(USER_PERMISSION);
+      collection.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      collection.updateAttribute(attribute.getFullName(), attribute);
+      return collectionDao.createCollection(collection);
+   }
+
    @Test
-   public void createCollection() {
+   public void testCreateCollection() {
       Collection collection = prepareCollection(CODE);
 
       Collection returnedCollection = collectionFacade.createCollection(collection);
@@ -155,7 +173,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void updateCollection() {
+   public void testUpdateCollection() {
       createCollection(CODE);
 
       Collection updatedCollection = prepareCollection(CODE2);
@@ -170,7 +188,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void deleteCollection() {
+   public void testDeleteCollection() {
       createCollection(CODE);
 
       collectionFacade.deleteCollection(CODE);
@@ -180,7 +198,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void getCollection() {
+   public void testGetCollection() {
       createCollection(CODE);
 
       Collection storedCollection = collectionFacade.getCollection(CODE);
@@ -198,12 +216,68 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void getCollections() {
+   public void testGetCollections() {
       createCollection(CODE);
       createCollection(CODE2);
 
       assertThat(collectionFacade.getCollections(new Pagination(null, null)))
             .extracting(Resource::getCode).containsOnly(CODE, CODE2);
+   }
+
+   @Test
+   public void testUpdateCollectionAttributeAdd() {
+      Collection collection = createCollection(CODE);
+      assertThat(collection.getAttributes()).isEmpty();
+
+      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      collectionFacade.updateCollectionAttribute(CODE, ATTRIBUTE_FULLNAME, attribute);
+
+      collection = collectionDao.getCollectionByCode(CODE);
+      assertThat(collection).isNotNull();
+      assertThat(collection.getAttributes()).hasSize(1);
+
+      Attribute storedAttribute = collection.getAttributes().iterator().next();
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
+      assertions.assertThat(storedAttribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME);
+      assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
+      assertions.assertAll();
+   }
+
+   @Test
+   public void testUpdateCollectionAttributeUpdate() {
+      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Collection collection = createCollection(CODE, attribute);
+      assertThat(collection.getAttributes()).isNotEmpty();
+
+      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      collectionFacade.updateCollectionAttribute(CODE, ATTRIBUTE_FULLNAME, updatedAttribute);
+
+      collection = collectionDao.getCollectionByCode(CODE);
+      assertThat(collection).isNotNull();
+      assertThat(collection.getAttributes()).hasSize(1);
+
+      Attribute storedAttribute = collection.getAttributes().iterator().next();
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
+      assertions.assertThat(storedAttribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME2);
+      assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
+      assertions.assertAll();
+   }
+
+   @Test
+   public void testDeleteCollectionAttribute() {
+      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Collection collection = createCollection(CODE, attribute);
+      assertThat(collection.getAttributes()).isNotEmpty();
+
+      collectionFacade.deleteCollectionAttribute(CODE, ATTRIBUTE_FULLNAME);
+
+      collection = collectionDao.getCollectionByCode(CODE);
+      assertThat(collection).isNotNull();
+      assertThat(collection.getAttributes()).isEmpty();
    }
 
    @Test

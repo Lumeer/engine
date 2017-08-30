@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -118,9 +117,9 @@ public class JsonAttribute implements Attribute {
       return attribute instanceof JsonAttribute ? (JsonAttribute) attribute : new JsonAttribute(attribute);
    }
 
-   public static List<JsonAttribute> convert(List<Attribute> attributes) {
+   public static Set<JsonAttribute> convert(Set<Attribute> attributes) {
       return attributes.stream()
                        .map(JsonAttribute::new)
-                       .collect(Collectors.toList());
+                       .collect(Collectors.toSet());
    }
 }

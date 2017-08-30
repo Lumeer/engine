@@ -36,6 +36,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -100,19 +101,39 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   @Deprecated
-   @Path("{collectionCode}/attributes")
-   public List<JsonAttribute> getCollectionAttributes(@PathParam("collectionCode") String collectionCode) {
-      List<Attribute> attributes = getCollection(collectionCode).getAttributes();
-      return JsonAttribute.convert(attributes);
-   }
-
-   @GET
    public List<JsonCollection> getCollections(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
       Pagination pagination = new Pagination(page, pageSize);
 
       List<Collection> collections = collectionFacade.getCollections(pagination);
       return JsonCollection.convert(collections);
+   }
+
+   @GET
+   @Deprecated
+   @Path("{collectionCode}/attributes")
+   public Set<JsonAttribute> getCollectionAttributes(@PathParam("collectionCode") String collectionCode) {
+      Set<Attribute> attributes = getCollection(collectionCode).getAttributes();
+      return JsonAttribute.convert(attributes);
+   }
+
+   @PUT
+   @Path("{collectionCode}/attributes/{attributeFullName}")
+   public JsonAttribute updateCollectionAttribute(@PathParam("collectionCode") String collectionCode, @PathParam("attributeFullName") String attributeFullName, JsonAttribute attribute) {
+      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionCode, attributeFullName, attribute);
+
+      return JsonAttribute.convert(storedAttribute);
+   }
+
+   @DELETE
+   @Path("{collectionCode}/attributes/{attributeFullName}")
+   public Response deleteCollectionAttribute(@PathParam("collectionCode") String collectionCode, @PathParam("attributeFullName") String attributeFullName) {
+      if (attributeFullName == null) {
+         throw new BadRequestException("attributeFullName");
+      }
+
+      collectionFacade.deleteCollectionAttribute(collectionCode, attributeFullName);
+
+      return Response.ok().link(getParentUri(attributeFullName), "parent").build();
    }
 
    @GET

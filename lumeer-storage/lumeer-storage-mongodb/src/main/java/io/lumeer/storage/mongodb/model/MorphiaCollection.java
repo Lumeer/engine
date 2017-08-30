@@ -36,6 +36,7 @@ import org.mongodb.morphia.utils.IndexType;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Indexes({
@@ -55,7 +56,7 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    public static final String LAST_TIME_USED = "lastTimeUsed";
 
    @Embedded(ATTRIBUTES)
-   private List<MorphiaAttribute> attributes;
+   private Set<MorphiaAttribute> attributes;
 
    @Property(DOCUMENTS_COUNT)
    private Integer documentsCount;
@@ -75,8 +76,19 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    }
 
    @Override
-   public List<Attribute> getAttributes() {
-      return Collections.unmodifiableList(attributes);
+   public Set<Attribute> getAttributes() {
+      return Collections.unmodifiableSet(attributes);
+   }
+
+   @Override
+   public void updateAttribute(final String attributeFullName, final Attribute attribute) {
+      deleteAttribute(attributeFullName);
+      attributes.add(MorphiaAttribute.convert(attribute));
+   }
+
+   @Override
+   public void deleteAttribute(final String attributeFullName) {
+      attributes.removeIf(a -> a.getFullName().equals(attributeFullName));
    }
 
    @Override
@@ -89,7 +101,7 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
       return lastTimeUsed;
    }
 
-   public void setAttributes(final List<Attribute> attributes) {
+   public void setAttributes(final Set<Attribute> attributes) {
       this.attributes = MorphiaAttribute.convert(attributes);
    }
 

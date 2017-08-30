@@ -19,6 +19,8 @@
  */
 package io.lumeer.api.dto;
 
+import static io.lumeer.engine.api.LumeerConst.Collection.ATTRIBUTES;
+
 import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -28,14 +30,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JsonCollection extends JsonResource implements Collection {
 
-   private List<JsonAttribute> attributes;
+   private Set<JsonAttribute> attributes;
    private Integer documentsCount;
    private LocalDateTime lastTimeUsed;
+
+   public JsonCollection(final String code, final String name, final String icon, final String color, final JsonPermissions permissions) {
+      this(code, name, icon, color, permissions, new LinkedHashSet<>());
+   }
 
    @JsonCreator
    public JsonCollection(
@@ -43,10 +51,11 @@ public class JsonCollection extends JsonResource implements Collection {
          @JsonProperty(NAME) final String name,
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
-         @JsonProperty(PERMISSIONS) final JsonPermissions permissions) {
+         @JsonProperty(PERMISSIONS) final JsonPermissions permissions,
+         @JsonProperty(ATTRIBUTES) final Set<JsonAttribute> attributes) {
       super(code, name, icon, color, permissions);
 
-      this.attributes = Collections.emptyList();
+      this.attributes = attributes;
    }
 
    public JsonCollection(Collection collection) {
@@ -58,13 +67,24 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
-   public List<Attribute> getAttributes() {
-      return Collections.unmodifiableList(attributes);
+   public Set<Attribute> getAttributes() {
+      return Collections.unmodifiableSet(attributes);
    }
 
    @Override
-   public void setAttributes(final List<Attribute> attributes) {
+   public void setAttributes(final Set<Attribute> attributes) {
       this.attributes = JsonAttribute.convert(attributes);
+   }
+
+   @Override
+   public void updateAttribute(final String attributeFullName, final Attribute attribute) {
+      deleteAttribute(attributeFullName);
+      attributes.add(JsonAttribute.convert(attribute));
+   }
+
+   @Override
+   public void deleteAttribute(final String attributeFullName) {
+      attributes.removeIf(a -> a.getFullName().equals(attributeFullName));
    }
 
    @Override

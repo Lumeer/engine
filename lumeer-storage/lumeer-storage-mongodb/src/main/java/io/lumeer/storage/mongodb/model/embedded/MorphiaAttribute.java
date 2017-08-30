@@ -20,13 +20,11 @@
 package io.lumeer.storage.mongodb.model.embedded;
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.engine.api.LumeerConst;
 
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Property;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -118,9 +116,9 @@ public class MorphiaAttribute implements Attribute {
       return attribute instanceof MorphiaAttribute ? (MorphiaAttribute) attribute : new MorphiaAttribute(attribute);
    }
 
-   public static List<MorphiaAttribute> convert(List<Attribute> attributes) {
+   public static Set<MorphiaAttribute> convert(Set<Attribute> attributes) {
       return attributes.stream()
                        .map(MorphiaAttribute::convert)
-                       .collect(Collectors.toList());
+                       .collect(Collectors.toSet());
    }
 }

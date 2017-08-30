@@ -51,6 +51,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MorphiaCollectionDaoTest extends MongoDbTestBase {
@@ -66,7 +67,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    private static final String NAME = "Test collection";
    private static final String COLOR = "#0000ff";
    private static final String ICON = "fa-eye";
-   private static final List<Attribute> ATTRIBUTES;
+   private static final Set<Attribute> ATTRIBUTES;
    private static final Integer DOCUMENTS_COUNT = 0;
    private static final LocalDateTime LAST_TIME_USED = LocalDateTime.now();
 
@@ -84,7 +85,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    private static final String NAME_FULLTEXT = "Fulltext name";
    private static final String NAME_SUGGESTION = "TESTING suggestions";
 
-   private static final List<Attribute> ATTRIBUTES_FULLTEXT;
+   private static final Set<Attribute> ATTRIBUTES_FULLTEXT;
 
    private static final String ATTRIBUTE1_NAME = "suggestion";
    private static final String ATTRIBUTE2_NAME = "fulltext";
@@ -92,7 +93,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    static {
       Attribute attribute = new MorphiaAttribute();
       attribute.setName(ATTRIBUTE1_NAME);
-      ATTRIBUTES = Collections.singletonList(attribute);
+      ATTRIBUTES = Collections.singleton(attribute);
 
       USER_PERMISSION = new MorphiaPermission(USER, View.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
@@ -104,7 +105,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
       attribute1.setName(ATTRIBUTE1_NAME);
       Attribute attribute2 = new MorphiaAttribute();
       attribute2.setName(ATTRIBUTE2_NAME);
-      ATTRIBUTES_FULLTEXT = Arrays.asList(attribute1, attribute2);
+      ATTRIBUTES_FULLTEXT = new HashSet<>(Arrays.asList(attribute1, attribute2));
    }
 
    private MorphiaCollectionDao collectionDao;
@@ -141,7 +142,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
       return collection;
    }
 
-   private MorphiaCollection createCollection(String code, String name, List<Attribute> attributes) {
+   private MorphiaCollection createCollection(String code, String name, Set<Attribute> attributes) {
       MorphiaCollection collection = prepareCollection(code);
       collection.setName(name);
       collection.setAttributes(attributes);
@@ -397,7 +398,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsByAttributesSuggestions() {
-      createCollection(CODE, NAME, Collections.emptyList());
+      createCollection(CODE, NAME, Collections.emptySet());
       createCollection(CODE2, NAME, ATTRIBUTES);
       createCollection(CODE3, NAME, ATTRIBUTES_FULLTEXT);
 
@@ -410,7 +411,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsByAttributesSuggestionsDifferentUser() {
-      createCollection(CODE, NAME, Collections.emptyList());
+      createCollection(CODE, NAME, Collections.emptySet());
       createCollection(CODE2, NAME, ATTRIBUTES);
       createCollection(CODE3, NAME, ATTRIBUTES_FULLTEXT);
 

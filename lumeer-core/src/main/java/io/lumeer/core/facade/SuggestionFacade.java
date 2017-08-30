@@ -83,9 +83,9 @@ public class SuggestionFacade extends AbstractFacade {
 
    private static List<Collection> keepOnlyMatchingAttributes(List<Collection> collections, String text) {
       for (Collection collection : collections) {
-         List<Attribute> attributes = collection.getAttributes().stream()
+         Set<Attribute> attributes = collection.getAttributes().stream()
                                                 .filter(a -> a.getName().startsWith(text))
-                                                .collect(Collectors.toList());
+                                                .collect(Collectors.toSet());
          collection.setAttributes(attributes);
       }
       return collections;
@@ -95,7 +95,7 @@ public class SuggestionFacade extends AbstractFacade {
       SuggestionQuery suggestionQuery = createSuggestionQuery(text, limit);
       List<Collection> collections = collectionDao.getCollections(suggestionQuery);
 
-      collections.forEach(c -> c.setAttributes(Collections.emptyList()));
+      collections.forEach(c -> c.setAttributes(Collections.emptySet()));
       return collections;
    }
 

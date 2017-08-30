@@ -22,7 +22,6 @@ package io.lumeer.api.model;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public interface Collection extends Resource {
@@ -34,9 +33,13 @@ public interface Collection extends Resource {
       return ResourceType.COLLECTION;
    }
 
-   List<Attribute> getAttributes();
+   Set<Attribute> getAttributes();
 
-   void setAttributes(List<Attribute> attributes);
+   void setAttributes(Set<Attribute> attributes);
+
+   void updateAttribute(String attributeFullName, Attribute attribute);
+
+   void deleteAttribute(String attributeFullName);
 
    Integer getDocumentsCount();
 

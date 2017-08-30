@@ -19,6 +19,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
@@ -92,6 +93,24 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getCollections(searchQuery).stream()
                           .map(this::keepOnlyActualUserRoles)
                           .collect(Collectors.toList());
+   }
+
+   public Attribute updateCollectionAttribute(String collectionCode, String attributeFullName, Attribute attribute) {
+      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+      permissionsChecker.checkRole(collection, Role.MANAGE);
+
+      collection.updateAttribute(attributeFullName, attribute);
+      collectionDao.updateCollection(collection.getId(), collection);
+
+      return attribute;
+   }
+
+   public void deleteCollectionAttribute(String collectionCode, String attributeFullName) {
+      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+      permissionsChecker.checkRole(collection, Role.MANAGE);
+
+      collection.deleteAttribute(attributeFullName);
+      collectionDao.updateCollection(collection.getId(), collection);
    }
 
    public Permissions getCollectionPermissions(final String code) {

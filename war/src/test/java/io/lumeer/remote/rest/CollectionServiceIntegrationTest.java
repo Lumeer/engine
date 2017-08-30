@@ -23,12 +23,13 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
-import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -87,6 +88,15 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    private static final String CODE2 = "TCOLL2";
 
+   private static final String ATTRIBUTE_NAME = "name";
+   private static final String ATTRIBUTE_FULLNAME = "fullname";
+   private static final Set<String> ATTRIBUTE_CONSTRAINTS = Collections.emptySet();
+   private static final Integer ATTRIBUTE_COUNT = 0;
+
+   private static final String ATTRIBUTE_FULLNAME2 = "fullname";
+
+   private static final JsonAttribute ATTRIBUTE = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String COLLECTIONS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
    private static final String COLLECTIONS_URL = SERVER_URL + COLLECTIONS_PATH;
@@ -137,6 +147,7 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
       Collection collection = prepareCollection(code);
       collection.getPermissions().updateUserPermissions(USER_PERMISSION);
       collection.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      collection.updateAttribute(ATTRIBUTE_FULLNAME, ATTRIBUTE);
       return collectionDao.createCollection(collection);
    }
 
@@ -261,6 +272,83 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
       assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+   }
+
+   @Test
+   public void testGetCollectionAttributes() {
+      Collection collection = createCollection(CODE);
+      assertThat(collection.getAttributes()).hasSize(1);
+
+      Response response = client.target(COLLECTIONS_URL).path(CODE).path("attributes")
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildGet().invoke();
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      List<JsonAttribute> attributes = response.readEntity(new GenericType<List<JsonAttribute>>() {
+      });
+      assertThat(attributes).hasSize(1);
+
+      JsonAttribute attribute = attributes.get(0);
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME);
+      assertions.assertThat(attribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME);
+      assertions.assertThat(attribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
+      assertions.assertAll();
+   }
+
+   @Test
+   public void testUpdateCollectionAttribute() {
+      Collection collection = createCollection(CODE);
+      assertThat(collection.getAttributes()).hasSize(1);
+
+      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Entity entity = Entity.json(updatedAttribute);
+
+      Response response = client.target(COLLECTIONS_URL).path(CODE).path("attributes").path(ATTRIBUTE_FULLNAME)
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildPut(entity).invoke();
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      JsonAttribute attribute = response.readEntity(new GenericType<JsonAttribute>() {
+      });
+
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME);
+      assertions.assertThat(attribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME2);
+      assertions.assertThat(attribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
+      assertions.assertAll();
+
+      Collection storedCollection = collectionDao.getCollectionByCode(CODE);
+      Set<Attribute> storedAttributes = storedCollection.getAttributes();
+      assertThat(storedAttributes).hasSize(1);
+
+      Attribute storedAttribute = storedAttributes.iterator().next();
+      assertions = new SoftAssertions();
+      assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
+      assertions.assertThat(storedAttribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME2);
+      assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
+      assertions.assertAll();
+   }
+
+   @Test
+   public void testDeleteCollectionAttribute() {
+      Collection collection = createCollection(CODE);
+      assertThat(collection.getAttributes()).hasSize(1);
+
+      Response response = client.target(COLLECTIONS_URL).path(CODE).path("attributes").path(ATTRIBUTE_FULLNAME)
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildDelete().invoke();
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      Collection storedCollection = collectionDao.getCollectionByCode(CODE);
+      Set<Attribute> storedAttributes = storedCollection.getAttributes();
+      assertThat(storedAttributes).isEmpty();
    }
 
    @Test
