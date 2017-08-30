@@ -55,7 +55,7 @@ public class JsonCollection extends JsonResource implements Collection {
          @JsonProperty(ATTRIBUTES) final Set<JsonAttribute> attributes) {
       super(code, name, icon, color, permissions);
 
-      this.attributes = attributes;
+      this.attributes = attributes != null ? attributes : new LinkedHashSet<>();
    }
 
    public JsonCollection(Collection collection) {
