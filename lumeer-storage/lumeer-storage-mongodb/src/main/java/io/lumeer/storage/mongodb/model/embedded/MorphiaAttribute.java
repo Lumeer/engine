@@ -84,6 +84,11 @@ public class MorphiaAttribute implements Attribute {
    }
 
    @Override
+   public void setUsageCount(final Integer usageCount) {
+      this.usageCount = usageCount;
+   }
+
+   @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;

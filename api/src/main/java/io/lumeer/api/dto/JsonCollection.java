@@ -56,6 +56,7 @@ public class JsonCollection extends JsonResource implements Collection {
       super(code, name, icon, color, permissions);
 
       this.attributes = attributes != null ? attributes : new LinkedHashSet<>();
+      this.documentsCount = 0;
    }
 
    public JsonCollection(Collection collection) {
@@ -93,8 +94,18 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
+   public void setDocumentsCount(final Integer documentsCount) {
+      this.documentsCount = documentsCount;
+   }
+
+   @Override
    public LocalDateTime getLastTimeUsed() {
       return lastTimeUsed;
+   }
+
+   @Override
+   public void setLastTimeUsed(final LocalDateTime lastTimeUsed) {
+      this.lastTimeUsed = lastTimeUsed;
    }
 
    @Override

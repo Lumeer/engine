@@ -66,9 +66,17 @@ public class CollectionFacade extends AbstractFacade {
       Collection storedCollection = collectionDao.getCollectionByCode(collectionCode);
       permissionsChecker.checkRole(storedCollection, Role.MANAGE);
 
-      keepStoredPermissions(collection, storedCollection.getPermissions());
+      keepUnmodifiableFields(collection, storedCollection);
       Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection);
       return keepOnlyActualUserRoles(updatedCollection);
+   }
+
+   private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
+      keepStoredPermissions(collection, storedCollection.getPermissions());
+
+      collection.setAttributes(storedCollection.getAttributes());
+      collection.setDocumentsCount(storedCollection.getDocumentsCount());
+      collection.setLastTimeUsed(storedCollection.getLastTimeUsed());
    }
 
    public void deleteCollection(String collectionCode) {

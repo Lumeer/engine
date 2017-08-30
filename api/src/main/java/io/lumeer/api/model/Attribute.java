@@ -33,4 +33,6 @@ public interface Attribute {
 
    Integer getUsageCount();
 
+   void setUsageCount(Integer usageCount);
+
 }

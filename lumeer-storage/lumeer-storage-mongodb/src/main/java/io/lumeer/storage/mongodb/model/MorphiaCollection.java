@@ -79,6 +79,10 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
       return Collections.unmodifiableSet(attributes);
    }
 
+   public void setAttributes(final Set<Attribute> attributes) {
+      this.attributes = MorphiaAttribute.convert(attributes);
+   }
+
    @Override
    public void updateAttribute(final String attributeFullName, final Attribute attribute) {
       deleteAttribute(attributeFullName);
@@ -95,19 +99,16 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
       return documentsCount;
    }
 
+   public void setDocumentsCount(final Integer documentsCount) {
+      this.documentsCount = documentsCount;
+   }
+
    @Override
    public LocalDateTime getLastTimeUsed() {
       return lastTimeUsed;
    }
 
-   public void setAttributes(final Set<Attribute> attributes) {
-      this.attributes = MorphiaAttribute.convert(attributes);
-   }
-
-   public void setDocumentsCount(final Integer documentsCount) {
-      this.documentsCount = documentsCount;
-   }
-
+   @Override
    public void setLastTimeUsed(final LocalDateTime lastTimeUsed) {
       this.lastTimeUsed = lastTimeUsed;
    }

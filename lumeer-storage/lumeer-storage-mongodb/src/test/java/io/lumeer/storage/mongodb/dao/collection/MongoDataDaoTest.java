@@ -82,7 +82,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
                                             .append(KEY2, VALUE2);
       DataDocument storedData = dataDao.createData(COLLECTION_ID, DOCUMENT_ID, data);
       assertThat(storedData).isNotNull();
-      assertThat(storedData.getId()).isNotNull().isEqualTo(DOCUMENT_ID);
+      assertThat(storedData.getId()).isNull();
 
       MongoCursor<Document> mongoCursor = dataCollection().find().iterator();
       assertThat(mongoCursor.hasNext()).isTrue();

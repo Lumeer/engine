@@ -19,10 +19,13 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.dto.JsonAttribute;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Role;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -30,8 +33,11 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -55,10 +61,14 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionByCode(collectionCode);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
+      DataDocument data = DocumentUtils.checkDocumentKeysValidity(document.getData());
+
       Document storedDocument = createDocument(collection, document);
 
-      DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), document.getData());
+      DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), data);
       storedDocument.setData(storedData);
+
+      updateCollectionMetadataOnCreation(collection, data);
 
       return storedDocument;
    }
@@ -69,6 +79,29 @@ public class DocumentFacade extends AbstractFacade {
       document.setCreationDate(LocalDateTime.now());
       document.setDataVersion(INITIAL_VERSION);
       return documentDao.createDocument(document);
+   }
+
+   private void updateCollectionMetadataOnCreation(Collection collection, DataDocument data) {
+      Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
+                                                       .collect(Collectors.toMap(Attribute::getFullName, Function.identity()));
+      Set<Attribute> newAttributes = new LinkedHashSet<>();
+
+      Set<String> attributeNames = DocumentUtils.getDocumentAttributes(data);
+      attributeNames.forEach(attributeName -> {
+         if (oldAttributes.containsKey(attributeName)) {
+            Attribute attribute = oldAttributes.get(attributeName);
+            attribute.setUsageCount(attribute.getUsageCount() + 1);
+         } else {
+            Attribute attribute = new JsonAttribute(attributeName, attributeName, Collections.emptySet(), 0);
+            newAttributes.add(attribute);
+         }
+      });
+
+      newAttributes.addAll(oldAttributes.values());
+      collection.setAttributes(newAttributes);
+      collection.setDocumentsCount(collection.getDocumentsCount() + 1);
+      collection.setLastTimeUsed(LocalDateTime.now());
+      collectionDao.updateCollection(collection.getId(), collection);
    }
 
    public Document updateDocumentData(String collectionCode, String documentId, DataDocument data) {

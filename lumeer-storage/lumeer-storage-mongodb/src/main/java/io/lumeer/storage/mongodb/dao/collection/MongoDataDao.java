@@ -69,7 +69,6 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    public DataDocument createData(final String collectionId, final String documentId, final DataDocument data) {
       Document document = new Document(data).append(ID, new ObjectId(documentId));
       dataCollection(collectionId).insertOne(document);
-      data.setId(documentId);
       return data;
    }
 

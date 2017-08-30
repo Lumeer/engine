@@ -43,6 +43,10 @@ public interface Collection extends Resource {
 
    Integer getDocumentsCount();
 
+   void setDocumentsCount(Integer documentsCount);
+
    LocalDateTime getLastTimeUsed();
+
+   void setLastTimeUsed(LocalDateTime lastTimeUsed);
 
 }
