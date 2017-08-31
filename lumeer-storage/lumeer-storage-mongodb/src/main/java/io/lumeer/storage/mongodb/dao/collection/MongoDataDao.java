@@ -42,6 +42,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -69,6 +70,19 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    public DataDocument createData(final String collectionId, final String documentId, final DataDocument data) {
       Document document = new Document(data).append(ID, new ObjectId(documentId));
       dataCollection(collectionId).insertOne(document);
+      return data;
+   }
+
+   @Override
+   public List<DataDocument> createData(final String collectionId, final List<DataDocument> data) {
+      List<Document> documents = data.stream().map(dataDocument -> new Document(dataDocument).append(ID, new ObjectId(dataDocument.getId()))).collect(Collectors.toList());
+      dataCollection(collectionId).insertMany(documents);
+
+      for (int i = 0; i < documents.size(); i++) {
+         Object idObj = documents.get(i).get(ID);
+         String id = idObj instanceof String ? (String) idObj : ((ObjectId) idObj).toHexString();
+         data.get(i).setId(id);
+      }
       return data;
    }
 

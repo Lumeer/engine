@@ -32,6 +32,8 @@ public interface DataDao {
 
    DataDocument createData(String collectionId, String documentId, DataDocument data);
 
+   List<DataDocument> createData(String collectionId, List<DataDocument> data);
+
    DataDocument updateData(String collectionId, String documentId, DataDocument data);
 
    DataDocument patchData(String collectionId, String documentId, DataDocument data);
