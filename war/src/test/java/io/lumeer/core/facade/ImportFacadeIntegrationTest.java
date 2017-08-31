@@ -107,7 +107,7 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportEmptyCSV() throws Exception {
       final String emptyCSV = "";
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, emptyCSV);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, null, emptyCSV);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -119,7 +119,7 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       final String noHeaderCsv = "\n"
             + "a;b;c;d\n"
             + "a;b;c;d\n";
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, noHeaderCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, null, noHeaderCsv);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -134,7 +134,7 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportNoLinesCSV() throws Exception {
       final String noLinesCsv = "h1;h2;h3;h4\n";
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, noLinesCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, null, noLinesCsv);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -148,7 +148,7 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + ";;c;d\n"
             + "a;b;;d\n"
             + "a;b;;\n";
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, correctCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, null, correctCsv);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -183,7 +183,7 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + "\n\n\n\n\n"
             + "a;b;c\n";
 
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, diffRowsLengthCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, null, diffRowsLengthCsv);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -214,7 +214,7 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + ",,,\n"
             + "a,b,c,d\n";
 
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, commaSeparatedCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, null, commaSeparatedCsv);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());

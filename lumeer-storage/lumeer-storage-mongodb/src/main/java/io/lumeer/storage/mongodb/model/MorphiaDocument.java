@@ -209,7 +209,7 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
             .append(UPDATED_BY, updatedBy)
             .append(UPDATE_DATE, convertLocalDateTimeToDate(updateDate))
             .append(DATA_VERSION, dataVersion);
-      return MongoUtils.dataDocumentToDocument(dataDocument);
+      return new org.bson.Document(dataDocument);
    }
 
    private Date convertLocalDateTimeToDate(LocalDateTime dateTime) {

@@ -75,7 +75,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    @Override
    public List<DataDocument> createData(final String collectionId, final List<DataDocument> data) {
-      List<Document> documents = data.stream().map(Document::new).collect(Collectors.toList());
+      List<Document> documents = data.stream().map(dataDocument -> new Document(dataDocument).append(ID, new ObjectId(dataDocument.getId()))).collect(Collectors.toList());
       dataCollection(collectionId).insertMany(documents);
 
       for (int i = 0; i < documents.size(); i++) {

@@ -55,8 +55,8 @@ public class ImportService extends AbstractService {
 
    @POST
    @Consumes(MediaType.TEXT_PLAIN)
-   public JsonCollection importDocuments(@QueryParam("format") String format, String data) {
-      Collection collection = importFacade.importDocuments(format, data);
+   public JsonCollection importDocuments(@QueryParam("format") String format, @QueryParam("name") String name, String data) {
+      Collection collection = importFacade.importDocuments(format, name,  data);
       return JsonCollection.convert(collection);
    }
 }
