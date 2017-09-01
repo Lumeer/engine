@@ -134,7 +134,7 @@ public class MongoDbStorage implements DataStorage {
 
       this.mongoClient = new MongoClient(addresses, credentials, optionsBuilder.codecRegistry(registry).build());
       this.database = mongoClient.getDatabase(database);
-      this.datastore = (AdvancedDatastore) morphia.createDatastore(new MongoClient(), database);
+      this.datastore = (AdvancedDatastore) morphia.createDatastore(this.mongoClient, database);
    }
 
    @Override
