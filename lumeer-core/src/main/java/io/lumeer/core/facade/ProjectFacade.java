@@ -19,9 +19,11 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.model.SimplePermission;
@@ -29,6 +31,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
@@ -53,6 +56,7 @@ public class ProjectFacade extends AbstractFacade {
    private ViewDao viewDao;
 
    public Project createProject(Project project) {
+      checkOrganizationWriteRole();
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
 
@@ -153,5 +157,14 @@ public class ProjectFacade extends AbstractFacade {
       collectionDao.deleteCollectionsRepository(project);
       documentDao.deleteDocumentsRepository(project);
       viewDao.deleteViewsRepository(project);
+   }
+
+   private void checkOrganizationWriteRole() {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+
+      Organization organization = workspaceKeeper.getOrganization().get();
+      permissionsChecker.checkRole(organization, Role.WRITE);
    }
 }
