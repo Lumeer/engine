@@ -40,6 +40,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.model.MorphiaOrganization;
 import io.lumeer.storage.mongodb.model.MorphiaUser;
+import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;
@@ -100,6 +101,7 @@ public class ProjectServiceIntegrationTest extends ServiceIntegrationTestBase {
       MorphiaOrganization organization = new MorphiaOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
+      organization.getPermissions().updateUserPermissions(new MorphiaPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -189,6 +191,7 @@ public class ProjectServiceIntegrationTest extends ServiceIntegrationTestBase {
 
    @Test
    public void testCreateProject() {
+
       Project project = new JsonProject(CODE1, NAME, ICON, COLOR, null);
       Entity entity = Entity.json(project);
 
