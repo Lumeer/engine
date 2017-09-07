@@ -31,13 +31,11 @@ import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
-import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.remote.rest.ServiceIntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.test.util.LumeerAssertions;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,15 +44,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.*;
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
-public class OrganizationServicePermissionsIntegrationTest extends IntegrationTestBase {
+public class OrganizationServicePermissionsIntegrationTest extends ServiceIntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
    private static String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/";
@@ -68,9 +64,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
    @Inject
    private ProjectFacade projectFacade;
 
-   @Inject
-   private ProjectDao projectDao;
-
    private String userEmail = AuthenticatedUser.DEFAULT_EMAIL;
 
    @Test
@@ -81,11 +74,9 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userEmail);
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + code).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
-      client.close();
    }
 
    @Test
@@ -99,11 +90,9 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       Set<Permission> perm = organizationDao.getOrganizationByCode(code).getPermissions().getUserPermissions();
       LumeerAssertions.assertPermissions(perm, newPermission);
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + code).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      client.close();
    }
 
    @Test
@@ -115,7 +104,8 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       String name3 = "testGetOrganizationsSomeReadRoles3";
       String name4 = "testGetOrganizationsSomeReadRoles4";
       String code3 = "testGetOrganizationsSomeReadRoles3_code";
-      String code4 = "testGetOrganizationsSomeReadRoles4_code";;
+      String code4 = "testGetOrganizationsSomeReadRoles4_code";
+
       List<String> names = Arrays.asList(name1, name2, name3, name4);
       List<String> codes = Arrays.asList(code1, code2, code3, code4);
 
@@ -124,11 +114,10 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
          if (i % 2 == 0) {
             organizationFacade.removeUserPermission(codes.get(i), userEmail);
          } else {
-            organizationFacade.updateUserPermissions(codes.get(i), new JsonPermission(userEmail,Role.toStringRoles(Collections.singleton(Role.READ))));
+            organizationFacade.updateUserPermissions(codes.get(i), new JsonPermission(userEmail, Role.toStringRoles(Collections.singleton(Role.READ))));
          }
       }
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI).path(PATH_PREFIX).request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
@@ -136,7 +125,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       });
       assertThat(organizations).extracting("code").containsOnly(code2, code4);
       assertThat(organizations).extracting("name").containsOnly(name2, name4);
-      client.close();
    }
 
    @Test
@@ -147,8 +135,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       Organization organization = new JsonOrganization(code, name, "a", "b", null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userEmail);
-
-      final Client client = ClientBuilder.newBuilder().build();
       Organization newOrganization = new JsonOrganization(code, newName, "c", "d", null);
 
       Response response = client.target(TARGET_URI)
@@ -157,7 +143,7 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
                                 .buildPut(Entity.json(newOrganization))
                                 .invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
-      client.close();
+
    }
 
    @Test
@@ -167,9 +153,8 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       String newName = "NewTestUpdateOrganizationManageRole";
       Organization organization = new JsonOrganization(code, name, "a", "b", null);
       organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(code, new JsonPermission(userEmail,Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      organizationFacade.updateUserPermissions(code, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code)
                                 .request(MediaType.APPLICATION_JSON)
@@ -179,7 +164,7 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       Organization org = response.readEntity(JsonOrganization.class);
       assertThat(org.getName()).isEqualTo(newName);
       assertThat(org.getCode()).isEqualTo(code);
-      client.close();
+
    }
 
    @Test
@@ -190,7 +175,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userEmail);
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions")
                                 .request(MediaType.APPLICATION_JSON)
@@ -207,7 +191,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(code, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions")
                                 .request(MediaType.APPLICATION_JSON)
@@ -225,7 +208,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.removeUserPermission(code, userEmail);
       Permission newPermission = new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users")
                                 .request(MediaType.APPLICATION_JSON)
@@ -243,7 +225,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.updateUserPermissions(code, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       Permission newPermission = new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users")
                                 .request(MediaType.APPLICATION_JSON)
@@ -260,7 +241,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userEmail);
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users/" + userEmail)
                                 .request(MediaType.APPLICATION_JSON)
@@ -277,7 +257,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(code, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users/" + userEmail)
                                 .request(MediaType.APPLICATION_JSON)
@@ -296,7 +275,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       String group = "testGroup1";
       Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups")
                                 .request(MediaType.APPLICATION_JSON)
@@ -315,7 +293,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       String group = "testGroup2";
       Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups")
                                 .request(MediaType.APPLICATION_JSON)
@@ -333,7 +310,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.removeUserPermission(code, userEmail);
       String group = "testGroup3";
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups/" + group)
                                 .request(MediaType.APPLICATION_JSON)
@@ -351,7 +327,6 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       organizationFacade.updateUserPermissions(code, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String group = "testGroup3";
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups/" + group)
                                 .request(MediaType.APPLICATION_JSON)
@@ -360,40 +335,35 @@ public class OrganizationServicePermissionsIntegrationTest extends IntegrationTe
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 
-
    @Test
-   public void testCreateProjectInOrganizationNoRole(){
+   public void testCreateProjectInOrganizationNoRole() {
       String name = "testRemoveGroupPermissionNoRole";
       String code = "testRemoveGroupPermissionNoRole_code";
       Organization organization = new JsonOrganization(code, name, "a", "b", null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userEmail);
-      projectDao.setOrganization(organization);
+      String projectCode = "proj1";
+      String projectName = "proj1_code";
+      Project project = new JsonProject(projectCode, projectName, "a", "b", null);
 
-      String projectCode ="proj1";
-      String projectName ="proj1_code";
-      Project project = new JsonProject(projectCode, projectName,"a","b", null);
-
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/projects")
                                 .request(MediaType.APPLICATION_JSON)
-                                .buildPost(Entity.json( project ))
+                                .buildPost(Entity.json(project))
                                 .invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
    }
 
    @Test
-   public void testCreateProjectInOrganizationManageRole(){
+   public void testCreateProjectInOrganizationManageRole() {
       String name = "testCreateProjectInOrganizationManageRole";
       String code = "testCreateProjectInOrganizationManageRole_code";
       Organization organization = new JsonOrganization(code, name, "a", "b", null);
       organizationFacade.createOrganization(organization);
-      String projectCode ="proj2";
-      String projectName ="proj2_code";
-      Project project = new JsonProject(projectCode, projectName,"a","b", null);
+      String projectCode = "proj2";
+      String projectName = "proj2_code";
+      Project project = new JsonProject(projectCode, projectName, "a", "b", null);
 
-      final Client client = ClientBuilder.newBuilder().build();
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/projects")
                                 .request(MediaType.APPLICATION_JSON)
