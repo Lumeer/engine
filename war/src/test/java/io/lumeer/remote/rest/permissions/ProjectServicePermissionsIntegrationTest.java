@@ -27,10 +27,12 @@ import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
@@ -58,15 +60,19 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
    private String organizationCode = "OrganizationServicePermissionsIntegrationTest_id";
    private String organizationName = "OrganizationServicePermissionsIntegrationTest";
    private final String TARGET_URI = "http://localhost:8080";
    private String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/";
    private String userEmail = AuthenticatedUser.DEFAULT_EMAIL;
+   Organization organization = new JsonOrganization(organizationCode, organizationName, "icon", "colour", null);
 
    @Before
    public void createOrganization() {
-      organizationFacade.createOrganization(new JsonOrganization(organizationCode, organizationName, "icon", "colour", null));
+      organizationFacade.createOrganization(organization);
+      workspaceKeeper.setOrganization(organizationCode);
    }
 
    @Test
