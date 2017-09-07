@@ -33,10 +33,9 @@ import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
-import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.remote.rest.ServiceIntegrationTestBase;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,15 +44,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
-public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBase {
+public class ProjectServicePermissionsIntegrationTest extends ServiceIntegrationTestBase {
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -61,7 +58,6 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
    @Inject
    private ProjectFacade projectFacade;
 
-   private Client client;
    private String organizationCode = "OrganizationServicePermissionsIntegrationTest_id";
    private String organizationName = "OrganizationServicePermissionsIntegrationTest";
    private final String TARGET_URI = "http://localhost:8080";
@@ -71,16 +67,6 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
    @Before
    public void createOrganization() {
       organizationFacade.createOrganization(new JsonOrganization(organizationCode, organizationName, "icon", "colour", null));
-   }
-
-   @Before
-   public void createClient() {
-      client = ClientBuilder.newBuilder().build();
-   }
-
-   @After
-   public void closeClient() {
-      client.close();
    }
 
    @Test
@@ -94,8 +80,6 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
-      client.close();
-      createClient();
    }
 
    @Test
@@ -292,7 +276,6 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users/" + userEmail).
             request(MediaType.APPLICATION_JSON).buildDelete().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
-
    }
 
    @Test
@@ -319,7 +302,6 @@ public class ProjectServicePermissionsIntegrationTest extends IntegrationTestBas
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
-
    }
 
    @Test
