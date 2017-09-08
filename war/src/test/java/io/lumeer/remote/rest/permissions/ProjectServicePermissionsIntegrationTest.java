@@ -32,10 +32,16 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUser;
-import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
+import io.lumeer.core.model.SimplePermission;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
+import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.mongodb.model.MorphiaOrganization;
+import io.lumeer.storage.mongodb.model.MorphiaUser;
+import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
+import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -55,32 +61,51 @@ import javax.ws.rs.core.Response;
 public class ProjectServicePermissionsIntegrationTest extends ServiceIntegrationTestBase {
 
    @Inject
-   private OrganizationFacade organizationFacade;
-
-   @Inject
    private ProjectFacade projectFacade;
 
    @Inject
-   private WorkspaceKeeper workspaceKeeper;
+   private OrganizationDao organizationDao;
+
+   @Inject
+   private UserDao userDao;
+
+   @Inject
+   private ProjectDao projectDao;
+
    private String organizationCode = "OrganizationServicePermissionsIntegrationTest_id";
    private String organizationName = "OrganizationServicePermissionsIntegrationTest";
    private final String TARGET_URI = "http://localhost:8080";
    private String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/";
    private String userEmail = AuthenticatedUser.DEFAULT_EMAIL;
-   Organization organization = new JsonOrganization(organizationCode, organizationName, "icon", "colour", null);
 
    @Before
-   public void createOrganization() {
-      organizationFacade.createOrganization(organization);
-      workspaceKeeper.setOrganization(organizationCode);
+   public void configureProject() {
+      MorphiaOrganization organization = new MorphiaOrganization();
+      organization.setCode(organizationCode);
+      organization.setName(organizationName);
+      organization.setPermissions(new MorphiaPermissions());
+      organization.getPermissions().updateUserPermissions(new MorphiaPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      Organization storedOrganization = organizationDao.createOrganization(organization);
+
+      projectDao.setOrganization(storedOrganization);
+      userDao.setOrganization(storedOrganization);
+
+      MorphiaUser user = new MorphiaUser();
+      user.setUsername(userEmail);
+      userDao.createUser(user);
+   }
+
+   private Project createProject(String code, String name) {
+      Project project = new JsonProject(code, name, "a", "b", null);
+      project.getPermissions().updateUserPermissions(new SimplePermission(userEmail, Project.ROLES));
+      return projectDao.createProject(project);
    }
 
    @Test
    public void testGetProjectNoRole() {
       String projectCode = "testGetProjectNoRole_code";
       String projectName = "testGetProjectNoRole";
-      Project project = new JsonProject(projectCode, projectName, "a", "b", null);
-      projectFacade.createProject(project);
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
@@ -92,8 +117,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testGetProjectReadRole() {
       String projectCode = "testGetProjectReadRole_code";
       String projectName = "testGetProjectReadRole";
-      Project project = new JsonProject(projectCode, projectName, "a", "b", null);
-      projectFacade.createProject(project);
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ)))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
@@ -108,7 +132,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testUpdateProjectNoRole() {
       String projectCode = "testUpdateProjectNoRole_id";
       String projectName = "testUpdateProjectNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
       String newProjectName = "NewName2";
       Project newProject = new JsonProject(projectCode, newProjectName, "a", "b", null);
@@ -122,7 +146,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testUpdateProjectManageRole() {
       String projectCode = "testUpdateProjectManageRole_code";
       String projectName = "testUpdateProjectManageRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String newProjectName = "NewName";
       Project newProject = new JsonProject(projectCode, newProjectName, "a", "b", null);
@@ -149,8 +173,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
       List<String> projectNames = Arrays.asList(projectName1, projectName2, projectName3, projectName4);
 
       for (int i = 0; i < projectCodes.size(); i++) {
-         projectFacade.createProject(new JsonProject(projectCodes.get(i), projectNames.get(i), "a", "b", null));
-
+         createProject(projectCodes.get(i), projectNames.get(i));
          if (i % 2 == 0) {
             projectFacade.removeUserPermission(projectCodes.get(i), userEmail);
          } else {
@@ -172,7 +195,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testDeleteProjectInOrganizationNoRole() {
       String projectCode = "ProjectServiceTestProject_code1";
       String projectName = "ProjectServiceTestProject1";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
@@ -184,7 +207,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testDeleteProjectInOrganizationManageRole() {
       String projectCode = "ProjectServiceTestProject_code1";
       String projectName = "ProjectServiceTestProject1";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
@@ -196,7 +219,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testCreateCollectionInProjectNoRole() {
       String projectCode = "testCreateCollectionInProjectNoRole_code1";
       String projectName = "estCreateCollectionInProjectNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
       String collectionName = "CollectionName";
       String collectionCode = "ColCode";
@@ -209,14 +232,14 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
 
    @Test
    public void testCreateCollectionInProjectWriteRole() {
-      String projectCode1 = "testCreateCollectionInProjectWriteRole_code1";
-      String projectName1 = "testCreateCollectionInProjectWriteRole";
-      projectFacade.createProject(new JsonProject(projectCode1, projectName1, "a", "b", null));
+      String projectCode = "testCreateCollectionInProjectWriteRole_code1";
+      String projectName = "testCreateCollectionInProjectWriteRole";
+      createProject(projectCode, projectName);
       String collectionName = "CollectionName";
       String collectionCode = "ColCode2";
       Collection collection = new JsonCollection(collectionCode, collectionName, "a", "b", null);
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode1 + "/collections").
+      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/collections").
             request(MediaType.APPLICATION_JSON).buildPost(Entity.json(collection)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
    }
@@ -225,7 +248,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testGetProjectPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions").
@@ -237,7 +260,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testGetProjectPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsManageRole_code1";
       String projectName = "testGetProjectPermissionsManageRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions").
@@ -250,7 +273,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testUpdateUserPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
 
       Permission newPermission = new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
@@ -263,7 +286,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testUpdateUserPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
       Permission newPermission = new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
@@ -276,7 +299,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void tesRemoveUserPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users/" + userEmail).
@@ -288,7 +311,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void tesRemoveUserPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users/" + userEmail).
@@ -300,7 +323,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testUpdateGroupPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
       String group = "testGroup4";
       Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
@@ -314,7 +337,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testUpdateGroupPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String group = "testGroup5";
       Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
@@ -328,7 +351,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testRemoveGroupPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, userEmail);
       String group = "testGroup6";
 
@@ -341,7 +364,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    public void testRemoveGroupPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      projectFacade.createProject(new JsonProject(projectCode, projectName, "a", "b", null));
+      createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(userEmail, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String group = "testGroup7";
 
