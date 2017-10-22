@@ -42,6 +42,14 @@
          <name>Matej Perejda</name>
          <email>mat.per.vt@gmail.com</email>
       </contributor>
+      <contributor>
+         <name>Mária Babčanská</name>
+         <email>m.babcanska@gmail.com</email>
+      </contributor>
+      <contributor>
+         <name>Šimon Kocúrek</name>
+         <email>simon.kocurek@gmail.com</email>
+      </contributor>
    </contributors>
    <issueManagement>
       <system>GitHub</system>
@@ -49,10 +57,9 @@
    </issueManagement>
    <licenses>
       <license>
-         <name>The Apache Software License, Version 2.0</name>
-         <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+         <name>GNU General Public License (GPL)</name>
+         <url>http://www.gnu.org/licenses/gpl.txt</url>
          <distribution>repo</distribution>
-         <comments>A business-friendly OSS license</comments>
       </license>
    </licenses>
    <distributionManagement>
