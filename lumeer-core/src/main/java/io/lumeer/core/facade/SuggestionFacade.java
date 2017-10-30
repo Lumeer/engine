@@ -83,7 +83,7 @@ public class SuggestionFacade extends AbstractFacade {
    private static List<Collection> keepOnlyMatchingAttributes(List<Collection> collections, String text) {
       for (Collection collection : collections) {
          Set<Attribute> attributes = collection.getAttributes().stream()
-                                                .filter(a -> a.getName().startsWith(text))
+                                                .filter(a -> a.getName().toLowerCase().startsWith(text))
                                                 .collect(Collectors.toSet());
          collection.setAttributes(attributes);
       }
