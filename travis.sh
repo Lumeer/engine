@@ -40,6 +40,7 @@ export PING_LOOP_PID=$!
 # My build is using maven, but you could build anything with this, E.g.
 # your_build_command_1
 # your_build_command_2
+export _JAVA_OPTIONS=-Djava.net.preferIPv4Stack=true
 export LUMEER_HOME=$(pwd)/war
 export LUMEER_DEFAULTS=defaults-ci.properties
 mvn -Ptests install
