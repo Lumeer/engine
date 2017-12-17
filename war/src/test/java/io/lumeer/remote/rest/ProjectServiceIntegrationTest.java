@@ -197,12 +197,13 @@ public class ProjectServiceIntegrationTest extends ServiceIntegrationTestBase {
       Response response = client.target(PROJECT_URL)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).isEqualTo(PROJECT_PATH + "/" + CODE1);
 
       Project storedProject = projectDao.getProjectByCode(CODE1);
       assertThat(storedProject).isNotNull();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
+      assertThat(response.getLocation().getPath()).isEqualTo(PROJECT_PATH + "/" + storedProject.getId());
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedProject.getCode()).isEqualTo(CODE1);

@@ -55,7 +55,7 @@ public class OrganizationService extends AbstractService {
    public Response createOrganization(JsonOrganization organization) {
       Organization storedOrganization = organizationFacade.createOrganization(organization);
 
-      URI resourceUri = getResourceUri(storedOrganization.getCode());
+      URI resourceUri = getResourceUri(storedOrganization.getId());
       return Response.created(resourceUri).build();
    }
 
