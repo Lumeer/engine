@@ -52,19 +52,18 @@ public class OrganizationService extends AbstractService {
    private OrganizationFacade organizationFacade;
 
    @POST
-   public Response createOrganization(JsonOrganization organization) {
+   public JsonOrganization createOrganization(JsonOrganization organization) {
       Organization storedOrganization = organizationFacade.createOrganization(organization);
 
-      URI resourceUri = getResourceUri(storedOrganization.getId());
-      return Response.created(resourceUri).build();
+      return JsonOrganization.convert(storedOrganization);
    }
 
    @PUT
    @Path("{organizationCode}")
-   public Response updateOrganization(@PathParam("organizationCode") String organizationCode, JsonOrganization organization) {
+   public JsonOrganization updateOrganization(@PathParam("organizationCode") String organizationCode, JsonOrganization organization) {
       Organization storedOrganization = organizationFacade.updateOrganization(organizationCode, organization);
 
-      return Response.ok(JsonOrganization.convert(storedOrganization)).build();
+      return JsonOrganization.convert(storedOrganization);
    }
 
    @DELETE

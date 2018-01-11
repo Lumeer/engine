@@ -65,19 +65,18 @@ public class ProjectService extends AbstractService {
    }
 
    @POST
-   public Response createProject(JsonProject project) {
+   public JsonProject createProject(JsonProject project) {
       Project storedProject = projectFacade.createProject(project);
 
-      URI resourceUri = getResourceUri(storedProject.getId());
-      return Response.created(resourceUri).build();
+      return JsonProject.convert(storedProject);
    }
 
    @PUT
    @Path("{projectCode}")
-   public Response updateProject(@PathParam("projectCode") String projectCode, JsonProject project) {
+   public JsonProject updateProject(@PathParam("projectCode") String projectCode, JsonProject project) {
       Project storedProject = projectFacade.updateProject(projectCode, project);
 
-      return Response.ok(JsonProject.convert(storedProject)).build();
+      return JsonProject.convert(storedProject);
    }
 
    @DELETE

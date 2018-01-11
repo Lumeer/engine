@@ -167,20 +167,18 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
 
-      Organization storedOrganization = organizationFacade.getOrganization(CODE1);
-      assertThat(storedOrganization).isNotNull();
-
       assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).isEqualTo(ORGANIZATION_PATH + "/" + storedOrganization.getId());
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      Organization returnedOrganization = response.readEntity(JsonOrganization.class);
 
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(storedOrganization.getCode()).isEqualTo(CODE1);
-      assertions.assertThat(storedOrganization.getName()).isEqualTo(NAME);
-      assertions.assertThat(storedOrganization.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedOrganization.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedOrganization.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(storedOrganization.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedOrganization.getCode()).isEqualTo(CODE1);
+      assertions.assertThat(returnedOrganization.getName()).isEqualTo(NAME);
+      assertions.assertThat(returnedOrganization.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(returnedOrganization.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(returnedOrganization.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedOrganization.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
 
