@@ -25,7 +25,6 @@ public interface Resource {
    @JsonIgnore
    ResourceType getType();
 
-   @JsonIgnore
    String getId();
 
    void setId(String id);

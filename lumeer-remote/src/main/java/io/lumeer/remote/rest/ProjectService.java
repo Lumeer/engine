@@ -68,7 +68,7 @@ public class ProjectService extends AbstractService {
    public Response createProject(JsonProject project) {
       Project storedProject = projectFacade.createProject(project);
 
-      URI resourceUri = getResourceUri(storedProject.getCode());
+      URI resourceUri = getResourceUri(storedProject.getId());
       return Response.created(resourceUri).build();
    }
 

@@ -166,12 +166,13 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       Response response = client.target(ORGANIZATION_URL)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).isEqualTo(ORGANIZATION_PATH + "/" + CODE1);
 
       Organization storedOrganization = organizationFacade.getOrganization(CODE1);
       assertThat(storedOrganization).isNotNull();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
+      assertThat(response.getLocation().getPath()).isEqualTo(ORGANIZATION_PATH + "/" + storedOrganization.getId());
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedOrganization.getCode()).isEqualTo(CODE1);

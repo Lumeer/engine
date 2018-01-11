@@ -32,7 +32,6 @@ public abstract class JsonResource implements Resource {
    public static final String COLOR = "color";
    public static final String PERMISSIONS = "permissions";
 
-   @JsonIgnore
    protected String id;
 
    protected String code;
