@@ -368,6 +368,6 @@ public class OrganizationServicePermissionsIntegrationTest extends ServiceIntegr
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(Entity.json(project))
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 }

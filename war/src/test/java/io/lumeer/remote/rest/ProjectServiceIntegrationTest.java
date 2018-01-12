@@ -198,20 +198,18 @@ public class ProjectServiceIntegrationTest extends ServiceIntegrationTestBase {
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
 
-      Project storedProject = projectDao.getProjectByCode(CODE1);
-      assertThat(storedProject).isNotNull();
-
       assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).isEqualTo(PROJECT_PATH + "/" + storedProject.getId());
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      Project returnedProject = response.readEntity(JsonProject.class);
 
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(storedProject.getCode()).isEqualTo(CODE1);
-      assertions.assertThat(storedProject.getName()).isEqualTo(NAME);
-      assertions.assertThat(storedProject.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedProject.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedProject.getCode()).isEqualTo(CODE1);
+      assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
+      assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
 
