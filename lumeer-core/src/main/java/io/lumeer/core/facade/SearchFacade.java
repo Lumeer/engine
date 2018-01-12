@@ -167,6 +167,8 @@ public class SearchFacade extends AbstractFacade {
       return SearchQuery.createBuilder(user).groups(groups)
                         .collectionCodes(query.getCollectionCodes())
                         .fulltext(query.getFulltext()) // TODO add filters
+                        .page(query.getPage())
+                        .pageSize(query.getPageSize())
                         .build();
    }
 
