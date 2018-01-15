@@ -24,6 +24,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ViewDao {
 
@@ -44,5 +45,7 @@ public interface ViewDao {
    List<View> getViews(SuggestionQuery query);
 
    void setProject(final Project project);
+
+   Set<String> getAllViewCodes();
 
 }

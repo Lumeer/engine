@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.mongodb.model;
 
-import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.mongodb.model.common.MorphiaResource;
@@ -36,7 +35,7 @@ import org.mongodb.morphia.utils.IndexType;
 @Entity
 @Indexes({
       @Index(fields = { @Field(MorphiaView.CODE) }, options = @IndexOptions(unique = true)),
-      @Index(fields = { @Field(MorphiaView.NAME) }),
+      @Index(fields = { @Field(MorphiaView.NAME) }, options = @IndexOptions(unique = true)),
       @Index(fields = {
             @Field(value = MorphiaView.CODE, type = IndexType.TEXT),
             @Field(value = MorphiaView.NAME, type = IndexType.TEXT)
@@ -46,12 +45,16 @@ public class MorphiaView extends MorphiaResource implements View {
 
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
+   public static final String CONFIG = "config";
 
    @Embedded(QUERY)
    private MorphiaQuery query;
 
    @Property(PERSPECTIVE)
    private String perspective;
+
+   @Property(CONFIG)
+   private Object config;
 
    public MorphiaView() {
    }
@@ -60,7 +63,8 @@ public class MorphiaView extends MorphiaResource implements View {
       super(view);
 
       this.query = new MorphiaQuery(view.getQuery());
-      this.perspective = view.getPerspective().toString();
+      this.perspective = view.getPerspective();
+      this.config = view.getConfig();
    }
 
    @Override
@@ -69,8 +73,17 @@ public class MorphiaView extends MorphiaResource implements View {
    }
 
    @Override
-   public Perspective getPerspective() {
-      return Perspective.fromString(perspective);
+   public String getPerspective() {
+      return perspective;
+   }
+
+   @Override
+   public Object getConfig() {
+      return config;
+   }
+
+   public void setConfig(final Object config) {
+      this.config = config;
    }
 
    public void setQuery(final MorphiaQuery query) {

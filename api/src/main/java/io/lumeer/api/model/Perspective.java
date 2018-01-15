@@ -20,18 +20,18 @@ package io.lumeer.api.model;
 
 public enum Perspective {
 
-   COLLECTION_POSTIT,
-
-   DOCUMENT_POSTIT,
-   DOCUMENT_TABLE;
+   POSTIT,
+   SEARCH,
+   SMARTDOC,
+   TABLE;
 
    @Override
    public String toString() {
-      return name().replace('_', ':').toLowerCase();
+      return name().toLowerCase();
    }
 
    public static Perspective fromString(String perspective) {
-      return Perspective.valueOf(perspective.replace(':', '_').toUpperCase());
+      return Perspective.valueOf(perspective.toUpperCase());
    }
 
 }

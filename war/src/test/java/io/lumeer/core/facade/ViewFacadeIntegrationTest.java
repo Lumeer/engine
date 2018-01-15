@@ -27,7 +27,6 @@ import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
@@ -70,7 +69,8 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
    private static final JsonQuery QUERY;
-   private static final Perspective PERSPECTIVE = Perspective.COLLECTION_POSTIT;
+   private static final String PERSPECTIVE = "postit";
+   private static final Object CONFIG = "configuration object";
 
    private static final Permission USER_PERMISSION;
    private static final Permission GROUP_PERMISSION;
@@ -129,7 +129,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private View prepareView(String code) {
-      return new JsonView(code, NAME, ICON, COLOR, null, QUERY, PERSPECTIVE.toString());
+      return new JsonView(code, NAME, ICON, COLOR, null, QUERY, PERSPECTIVE.toString(), CONFIG);
    }
 
    private View createView(String code) {
@@ -157,6 +157,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
+      assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
       assertions.assertThat(storedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
@@ -201,6 +202,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
+      assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(storedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 

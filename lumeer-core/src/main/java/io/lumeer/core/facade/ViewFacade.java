@@ -24,6 +24,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.core.model.SimplePermission;
+import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
@@ -42,7 +43,9 @@ public class ViewFacade extends AbstractFacade {
    public View createView(View view) {
       // TODO check collection permissions
 
-      // TODO generate view code if not provided
+      if (view.getCode() == null || view.getCode().isEmpty()) {
+         view.setCode(this.generateViewCode(view.getName()));
+      }
 
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
@@ -124,4 +127,10 @@ public class ViewFacade extends AbstractFacade {
       view.getPermissions().removeGroupPermission(group);
       viewDao.updateView(view.getId(), view);
    }
+
+   private String generateViewCode(String viewName) {
+      Set<String> existingCodes = viewDao.getAllViewCodes();
+      return CodeGenerator.generate(existingCodes, viewName);
+   }
+
 }

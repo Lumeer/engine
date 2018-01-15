@@ -27,7 +27,6 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.View;
 import io.lumeer.core.facade.ViewFacade;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -69,8 +68,8 @@ public class ViewService extends AbstractService {
    public Response createView(JsonView view) {
       View storedView = viewFacade.createView(view);
 
-      URI resourceUri = getResourceUri(storedView.getCode());
-      return Response.created(resourceUri).build();
+      JsonView jsonView = new JsonView(storedView);
+      return Response.ok(jsonView).build();
    }
 
    @PUT

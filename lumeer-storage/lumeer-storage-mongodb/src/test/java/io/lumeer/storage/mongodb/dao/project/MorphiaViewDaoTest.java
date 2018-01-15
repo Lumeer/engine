@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
@@ -59,7 +58,8 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
    private static final String COLOR = "#000000";
    private static final String ICON = "fa-eye";
    private static final MorphiaQuery QUERY = new MorphiaQuery();
-   private static final Perspective PERSPECTIVE = Perspective.DOCUMENT_POSTIT;
+   private static final String PERSPECTIVE = "postit";
+   private static final Object CONFIG = "configuration object";
 
    private static final MorphiaPermissions PERMISSIONS = new MorphiaPermissions();
    private static final MorphiaPermission USER_PERMISSION;
@@ -111,7 +111,8 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
       view.setIcon(ICON);
       view.setPermissions(new MorphiaPermissions(PERMISSIONS));
       view.setQuery(QUERY);
-      view.setPerspective(PERSPECTIVE.toString());
+      view.setPerspective(PERSPECTIVE);
+      view.setConfig(CONFIG);
       return view;
    }
 
@@ -147,6 +148,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
       assertThat(storedView.getPermissions()).isEqualTo(PERMISSIONS);
       assertThat(storedView.getQuery()).isEqualTo(QUERY);
       assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
+      assertThat(storedView.getConfig()).isEqualTo(CONFIG);
    }
 
    @Test
@@ -154,7 +156,19 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
       MorphiaView view = prepareView();
       datastore.save(viewDao.databaseCollection(), view);
 
-      View view2 = prepareView();
+      MorphiaView view2 = prepareView();
+      view2.setName(NAME2);
+      assertThatThrownBy(() -> viewDao.createView(view2))
+            .isInstanceOf(DuplicateKeyException.class);
+   }
+
+   @Test
+   public void testCreateViewExistingName() {
+      MorphiaView view = prepareView();
+      datastore.save(viewDao.databaseCollection(), view);
+
+      MorphiaView view2 = prepareView();
+      view2.setCode(CODE2);
       assertThatThrownBy(() -> viewDao.createView(view2))
             .isInstanceOf(DuplicateKeyException.class);
    }
@@ -196,9 +210,25 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
       MorphiaView view2 = prepareView();
       view2.setCode(CODE2);
+      view2.setName(NAME2);
       datastore.save(viewDao.databaseCollection(), view2);
 
       view2.setCode(CODE);
+      assertThatThrownBy(() -> viewDao.updateView(view2.getId(), view2))
+            .isInstanceOf(DuplicateKeyException.class);
+   }
+
+   @Test
+   public void testUpdateViewExistingName() {
+      MorphiaView view = prepareView();
+      datastore.save(viewDao.databaseCollection(), view);
+
+      MorphiaView view2 = prepareView();
+      view2.setCode(CODE2);
+      view2.setName(NAME2);
+      datastore.save(viewDao.databaseCollection(), view2);
+
+      view2.setName(NAME);
       assertThatThrownBy(() -> viewDao.updateView(view2.getId(), view2))
             .isInstanceOf(DuplicateKeyException.class);
    }
@@ -250,6 +280,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
       MorphiaView view2 = prepareView();
       view2.setCode(CODE2);
+      view2.setName(NAME2);
       datastore.save(viewDao.databaseCollection(), view2);
 
       SearchQuery query = SearchQuery.createBuilder(USER).build();
@@ -266,6 +297,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
       MorphiaView view2 = prepareView();
       view2.setCode(CODE2);
+      view2.setName(NAME2);
       Permission groupPermission = new MorphiaPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       view2.getPermissions().updateGroupPermissions(groupPermission);
       datastore.save(viewDao.databaseCollection(), view2);
@@ -282,6 +314,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
       MorphiaView view2 = prepareView();
       view2.setCode(CODE2);
+      view2.setName(NAME2);
       datastore.save(viewDao.databaseCollection(), view2);
 
       SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
@@ -296,6 +329,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
       MorphiaView view2 = prepareView();
       view2.setCode(CODE2);
+      view2.setName(NAME2);
       datastore.save(viewDao.databaseCollection(), view2);
 
       SearchQuery query = SearchQuery.createBuilder(USER).page(1).pageSize(1).build();
@@ -356,6 +390,17 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
       SuggestionQuery query = SuggestionQuery.createBuilder(USER2).text("test").build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).isEmpty();
+   }
+
+   @Test
+   public void testGetAllCollectionsCodes() {
+      assertThat(viewDao.getAllViewCodes()).isEmpty();
+
+      createView(CODE, NAME);
+      createView(CODE2, NAME2);
+      createView(CODE3, NAME3);
+
+      assertThat(viewDao.getAllViewCodes()).contains(CODE, CODE2, CODE3);
    }
 
 }

@@ -29,7 +29,6 @@ import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
@@ -79,7 +78,8 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
    private static final JsonQuery QUERY;
-   private static final Perspective PERSPECTIVE = Perspective.COLLECTION_POSTIT;
+   private static final String PERSPECTIVE = "postit";
+   private static final Object CONFIG = "configuration object";
 
    private static final Set<Role> USER_ROLES = View.ROLES;
    private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
@@ -132,7 +132,7 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
    }
 
    private View prepareView(String code) {
-      return new JsonView(code, NAME, ICON, COLOR, null, QUERY, PERSPECTIVE.toString());
+      return new JsonView(code, NAME, ICON, COLOR, null, QUERY, PERSPECTIVE.toString(), CONFIG);
    }
 
    private View createView(String code) {
@@ -151,21 +151,21 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).isEqualTo(VIEWS_PATH + "/" + CODE);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      View storedView = viewDao.getViewByCode(CODE);
-      assertThat(storedView).isNotNull();
+      View returnedView = response.readEntity(JsonView.class);
+      assertThat(returnedView).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(storedView.getCode()).isEqualTo(CODE);
-      assertions.assertThat(storedView.getName()).isEqualTo(NAME);
-      assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedView.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
-      assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
-      assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(storedView.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedView.getCode()).isEqualTo(CODE);
+      assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
+      assertions.assertThat(returnedView.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
+      assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
+      assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
+      assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
 
@@ -190,6 +190,7 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
       assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
+      assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
@@ -204,6 +205,7 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertions.assertThat(storedView.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
+      assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
       assertions.assertThat(storedView.getPermissions().getGroupPermissions()).containsOnly(GROUP_PERMISSION);
       assertions.assertAll();
@@ -242,6 +244,7 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
       assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
+      assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
@@ -301,7 +304,8 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {});
+      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission);
 
@@ -340,7 +344,8 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {});
+      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission);
 
