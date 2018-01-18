@@ -32,7 +32,7 @@ import org.mongodb.morphia.annotations.Indexes;
 import org.mongodb.morphia.annotations.Property;
 import org.mongodb.morphia.utils.IndexType;
 
-@Entity
+@Entity(noClassnameStored = true)
 @Indexes({
       @Index(fields = { @Field(MorphiaView.CODE) }, options = @IndexOptions(unique = true)),
       @Index(fields = { @Field(MorphiaView.NAME) }, options = @IndexOptions(unique = true)),

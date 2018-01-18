@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
-@Entity
+@Entity(noClassnameStored = true)
 @Indexes({
       @Index(fields = @Field(MorphiaDocument.COLLECTION_ID))
 })

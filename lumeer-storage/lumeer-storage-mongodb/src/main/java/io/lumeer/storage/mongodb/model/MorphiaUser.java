@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity(MorphiaUser.COLLECTION_NAME)
+@Entity(value = MorphiaUser.COLLECTION_NAME, noClassnameStored = true)
 public class MorphiaUser extends MorphiaEntity implements User {
 
    public static final String COLLECTION_NAME = "users";
