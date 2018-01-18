@@ -106,6 +106,18 @@ public abstract class JsonResource implements Resource {
       this.permissions = JsonPermissions.convert(permissions);
    }
 
+   public void setName(final String name) {
+      this.name = name;
+   }
+
+   public void setIcon(final String icon) {
+      this.icon = icon;
+   }
+
+   public void setColor(final String color) {
+      this.color = color;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {

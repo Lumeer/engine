@@ -36,6 +36,11 @@ import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.mongodb.codecs.BigDecimalCodec;
+import io.lumeer.storage.mongodb.codecs.RoleCodec;
+import io.lumeer.storage.mongodb.codecs.providers.PermissionCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.PermissionsCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.QueryCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.ViewCodecProvider;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.ErrorCategory;
@@ -129,7 +134,11 @@ public class MongoDbStorage implements DataStorage {
       }
 
       final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
-      final CodecRegistry registry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new BigDecimalCodec()), defaultRegistry);
+      final CodecRegistry codecRegistry = CodecRegistries.fromCodecs(new BigDecimalCodec(), new RoleCodec());
+      final CodecRegistry providersRegistry = CodecRegistries.fromProviders(
+            new PermissionsCodecProvider(), new PermissionCodecProvider(), new QueryCodecProvider(), new ViewCodecProvider()
+      );
+      final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 
       this.mongoClient = new MongoClient(addresses, credentials, optionsBuilder.codecRegistry(registry).build());
       this.database = mongoClient.getDatabase(database);

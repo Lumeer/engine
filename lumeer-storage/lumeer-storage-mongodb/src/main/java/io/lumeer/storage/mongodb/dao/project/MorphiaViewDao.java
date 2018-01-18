@@ -38,7 +38,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.inject.Alternative;
 
+@Alternative
 @RequestScoped
 public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
 

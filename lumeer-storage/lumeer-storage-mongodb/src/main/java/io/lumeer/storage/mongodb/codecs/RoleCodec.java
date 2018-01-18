@@ -16,18 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.exception;
 
-import io.lumeer.api.exception.LumeerException;
+package io.lumeer.storage.mongodb.codecs;
 
-public class StorageException extends LumeerException {
+import io.lumeer.api.model.Role;
 
-   public StorageException(final String message) {
-      super(message);
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
+
+public class RoleCodec implements Codec<Role> {
+
+   @Override
+   public Role decode(final BsonReader reader, final DecoderContext decoderContext) {
+      return Role.fromString(reader.readString());
    }
 
-   public StorageException(final String message, final Throwable cause) {
-      super(message, cause);
+   @Override
+   public void encode(final BsonWriter writer, final Role value, final EncoderContext encoderContext) {
+      writer.writeString(value.toString());
+   }
+
+   @Override
+   public Class<Role> getEncoderClass() {
+      return Role.class;
    }
 
 }

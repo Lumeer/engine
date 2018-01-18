@@ -38,6 +38,9 @@ public class JsonView extends JsonResource implements View {
    private String perspective;
    private Object config;
 
+   public JsonView() {
+   }
+
    @JsonCreator
    public JsonView(@JsonProperty(CODE) final String code,
          @JsonProperty(NAME) final String name,
@@ -75,6 +78,18 @@ public class JsonView extends JsonResource implements View {
    @Override
    public Object getConfig() {
       return config;
+   }
+
+   public void setQuery(final JsonQuery query) {
+      this.query = query;
+   }
+
+   public void setPerspective(final String perspective) {
+      this.perspective = perspective;
+   }
+
+   public void setConfig(final Object config) {
+      this.config = config;
    }
 
    @Override
