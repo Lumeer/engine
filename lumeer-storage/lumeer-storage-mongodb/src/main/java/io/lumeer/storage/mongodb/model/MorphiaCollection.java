@@ -36,7 +36,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Set;
 
-@Entity
+@Entity(noClassnameStored = true)
 @Indexes({
       @Index(fields = { @Field(MorphiaCollection.CODE) }, options = @IndexOptions(unique = true)),
       @Index(fields = { @Field(MorphiaCollection.NAME) }, options = @IndexOptions(unique = true)),

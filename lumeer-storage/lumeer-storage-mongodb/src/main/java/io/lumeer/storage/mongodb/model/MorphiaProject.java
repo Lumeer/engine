@@ -27,7 +27,7 @@ import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.IndexOptions;
 import org.mongodb.morphia.annotations.Indexes;
 
-@Entity
+@Entity(noClassnameStored = true)
 @Indexes({
       @Index(fields = { @Field(value = MorphiaProject.CODE) }, options = @IndexOptions(unique = true))
 })
