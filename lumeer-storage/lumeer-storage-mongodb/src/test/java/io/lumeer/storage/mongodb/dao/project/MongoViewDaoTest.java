@@ -21,19 +21,22 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
-import io.lumeer.storage.mongodb.model.MorphiaView;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaQuery;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.DuplicateKeyException;
 import org.bson.types.ObjectId;
@@ -46,7 +49,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MorphiaViewDaoTest extends MongoDbTestBase {
+public class MongoViewDaoTest extends MongoDbTestBase {
 
    private static final String PROJECT_ID = "596e3b86d412bc5a3caaa22a";
 
@@ -57,7 +60,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
    private static final String NAME = "Test view";
    private static final String COLOR = "#000000";
    private static final String ICON = "fa-eye";
-   private static final MorphiaQuery QUERY = new MorphiaQuery();
+   private static final JsonQuery QUERY = new JsonQuery();
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
@@ -71,7 +74,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
    private static final String GROUP2 = "testGroup2";
 
    private static final String CODE3 = "FULLTEXT";
-   private static final String NAME3 = "Just test view";
+   private static final String NAME3 = "Just FULLTEXT view";
 
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
@@ -81,11 +84,9 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
       GROUP_PERMISSION = new MorphiaPermission(GROUP, Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
-
-      QUERY.setPage(0);
    }
 
-   private MorphiaViewDao viewDao;
+   private MongoViewDao viewDao;
 
    private Project project;
 
@@ -94,17 +95,17 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
       project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);
 
-      viewDao = new MorphiaViewDao();
+      viewDao = new MongoViewDao();
       viewDao.setDatabase(database);
       viewDao.setDatastore(datastore);
 
       viewDao.setProject(project);
       viewDao.createViewsRepository(project);
-      assertThat(database.listCollectionNames()).contains(viewDao.databaseCollection());
+      assertThat(database.listCollectionNames()).contains(viewDao.databaseCollectionName());
    }
 
-   private MorphiaView prepareView() {
-      MorphiaView view = new MorphiaView();
+   private JsonView prepareView() {
+      JsonView view = new JsonView();
       view.setCode(CODE);
       view.setName(NAME);
       view.setColor(COLOR);
@@ -116,30 +117,30 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
       return view;
    }
 
-   private MorphiaView createView(String code, String name) {
-      MorphiaView morphiaView = prepareView();
-      morphiaView.setCode(code);
-      morphiaView.setName(name);
+   private JsonView createView(String code, String name) {
+      JsonView JsonView = prepareView();
+      JsonView.setCode(code);
+      JsonView.setName(name);
 
-      datastore.insert(viewDao.databaseCollection(), morphiaView);
-      return morphiaView;
+      viewDao.databaseCollection().insertOne(JsonView);
+      return JsonView;
    }
 
    @Test
    public void testDeleteViewsRepository() {
       viewDao.deleteViewsRepository(project);
-      assertThat(database.listCollectionNames()).doesNotContain(viewDao.databaseCollection());
+      assertThat(database.listCollectionNames()).doesNotContain(viewDao.databaseCollectionName());
    }
 
    @Test
    public void testCreateView() {
-      MorphiaView view = prepareView();
+      JsonView view = prepareView();
 
       String id = viewDao.createView(view).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      MorphiaView storedView = datastore.get(viewDao.databaseCollection(), MorphiaView.class, new ObjectId(id));
+      View storedView = viewDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedView).isNotNull();
       assertThat(storedView.getCode()).isEqualTo(CODE);
       assertThat(storedView.getName()).isEqualTo(NAME);
@@ -153,51 +154,53 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateViewExistingCode() {
-      MorphiaView view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setName(NAME2);
       assertThatThrownBy(() -> viewDao.createView(view2))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testCreateViewExistingName() {
-      MorphiaView view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setCode(CODE2);
       assertThatThrownBy(() -> viewDao.createView(view2))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testUpdateViewCode() {
-      MorphiaView view = prepareView();
-      String id = datastore.save(viewDao.databaseCollection(), view).getId().toString();
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
+      String id = view.getId();
       assertThat(id).isNotNull().isNotEmpty();
 
       view.setCode(CODE2);
       viewDao.updateView(id, view);
 
-      MorphiaView storedView = datastore.get(viewDao.databaseCollection(), MorphiaView.class, new ObjectId(id));
+      View storedView = viewDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedView).isNotNull();
       assertThat(storedView.getCode()).isEqualTo(CODE2);
    }
 
    @Test
    public void testUpdateViewPermissions() {
-      MorphiaView view = prepareView();
-      String id = datastore.save(viewDao.databaseCollection(), view).getId().toString();
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
+      String id = view.getId();
       assertThat(id).isNotNull().isNotEmpty();
 
       view.getPermissions().removeUserPermission(USER);
       view.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       viewDao.updateView(id, view);
 
-      MorphiaView storedView = datastore.get(viewDao.databaseCollection(), MorphiaView.class, new ObjectId(id));
+      View storedView = viewDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedView).isNotNull();
       assertThat(storedView.getPermissions().getUserPermissions()).isEmpty();
       assertThat(storedView.getPermissions().getGroupPermissions()).containsExactly(GROUP_PERMISSION);
@@ -205,32 +208,32 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateViewExistingCode() {
-      MorphiaView view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      datastore.save(viewDao.databaseCollection(), view2);
+      viewDao.databaseCollection().insertOne(view2);
 
       view2.setCode(CODE);
       assertThatThrownBy(() -> viewDao.updateView(view2.getId(), view2))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testUpdateViewExistingName() {
-      MorphiaView view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      datastore.save(viewDao.databaseCollection(), view2);
+      viewDao.databaseCollection().insertOne(view2);
 
       view2.setName(NAME);
       assertThatThrownBy(() -> viewDao.updateView(view2.getId(), view2))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
@@ -241,26 +244,26 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteView() {
-      View view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
       assertThat(view.getId()).isNotNull();
 
       viewDao.deleteView(view.getId());
 
-      View storedView = datastore.get(viewDao.databaseCollection(), MorphiaView.class, new ObjectId(view.getId()));
+      View storedView = viewDao.databaseCollection().find(MongoFilters.idFilter(view.getId())).first();
       assertThat(storedView).isNull();
    }
 
    @Test
    public void testDeleteViewNotExisting() {
       assertThatThrownBy(() -> viewDao.deleteView(NOT_EXISTING_ID))
-            .isInstanceOf(WriteFailedException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testGetViewByCode() {
-      View view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
       View storedView = viewDao.getViewByCode(CODE);
       assertThat(storedView).isNotNull();
@@ -275,13 +278,13 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViews() {
-      MorphiaView view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      datastore.save(viewDao.databaseCollection(), view2);
+      viewDao.databaseCollection().insertOne(view2);
 
       SearchQuery query = SearchQuery.createBuilder(USER).build();
       List<View> views = viewDao.getViews(query);
@@ -290,17 +293,17 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViewsNoReadRole() {
-      MorphiaView view = prepareView();
+      JsonView view = prepareView();
       Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.CLONE.toString()));
       view.getPermissions().updateUserPermissions(userPermission);
-      datastore.save(viewDao.databaseCollection(), view);
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
       Permission groupPermission = new MorphiaPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       view2.getPermissions().updateGroupPermissions(groupPermission);
-      datastore.save(viewDao.databaseCollection(), view2);
+      viewDao.databaseCollection().insertOne(view2);
 
       SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP2)).build();
       List<View> views = viewDao.getViews(query);
@@ -309,13 +312,13 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViewsGroupRole() {
-      MorphiaView view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      datastore.save(viewDao.databaseCollection(), view2);
+      viewDao.databaseCollection().insertOne(view2);
 
       SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
       List<View> views = viewDao.getViews(query);
@@ -324,13 +327,13 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViewsPagination() {
-      MorphiaView view = prepareView();
-      datastore.save(viewDao.databaseCollection(), view);
+      JsonView view = prepareView();
+      viewDao.databaseCollection().insertOne(view);
 
-      MorphiaView view2 = prepareView();
+      JsonView view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      datastore.save(viewDao.databaseCollection(), view2);
+      viewDao.databaseCollection().insertOne(view2);
 
       SearchQuery query = SearchQuery.createBuilder(USER).page(1).pageSize(1).build();
       List<View> views = viewDao.getViews(query);

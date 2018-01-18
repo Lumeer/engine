@@ -35,8 +35,12 @@ import org.mongodb.morphia.query.Query;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.inject.Alternative;
 
+@Alternative
 @RequestScoped
 public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
 
@@ -96,6 +100,15 @@ public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
       FindOptions findOptions = createFindOptions(query);
 
       return new ArrayList<>(viewQuery.asList(findOptions));
+   }
+
+   @Override
+   public Set<String> getAllViewCodes() {
+      return datastore.createQuery(databaseCollection(), MorphiaView.class)
+                      .project(MorphiaView.CODE, true)
+                      .asList().stream()
+                      .map(MorphiaView::getCode)
+                      .collect(Collectors.toSet());
    }
 
    private Query<MorphiaView> createViewSearchQuery(SearchQuery query) {

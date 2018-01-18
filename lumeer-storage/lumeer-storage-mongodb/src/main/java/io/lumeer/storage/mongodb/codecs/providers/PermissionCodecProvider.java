@@ -16,22 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
 
-public enum Perspective {
+package io.lumeer.storage.mongodb.codecs.providers;
 
-   POSTIT,
-   SEARCH,
-   SMARTDOC,
-   TABLE;
+import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.storage.mongodb.codecs.PermissionCodec;
+
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+
+public class PermissionCodecProvider implements CodecProvider {
 
    @Override
-   public String toString() {
-      return name().toLowerCase();
-   }
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == JsonPermission.class) {
+         return (Codec<T>) new PermissionCodec(registry);
+      }
 
-   public static Perspective fromString(String perspective) {
-      return Perspective.valueOf(perspective.toUpperCase());
+      return null;
    }
 
 }

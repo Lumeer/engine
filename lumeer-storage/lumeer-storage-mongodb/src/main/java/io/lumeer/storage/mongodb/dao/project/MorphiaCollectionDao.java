@@ -28,7 +28,6 @@ import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.MorphiaCollection;
-import io.lumeer.storage.mongodb.model.MorphiaView;
 import io.lumeer.storage.mongodb.model.common.MorphiaResource;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaAttribute;
 
@@ -51,7 +50,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    @Override
    public void createCollectionsRepository(Project project) {
       database.createCollection(databaseCollection(project));
-      datastore.ensureIndexes(databaseCollection(project), MorphiaView.class);
+      datastore.ensureIndexes(databaseCollection(project), MorphiaCollection.class);
    }
 
    @Override

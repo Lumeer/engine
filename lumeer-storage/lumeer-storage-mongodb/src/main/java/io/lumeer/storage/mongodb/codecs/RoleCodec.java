@@ -16,22 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
 
-public enum Perspective {
+package io.lumeer.storage.mongodb.codecs;
 
-   POSTIT,
-   SEARCH,
-   SMARTDOC,
-   TABLE;
+import io.lumeer.api.model.Role;
+
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
+
+public class RoleCodec implements Codec<Role> {
 
    @Override
-   public String toString() {
-      return name().toLowerCase();
+   public Role decode(final BsonReader reader, final DecoderContext decoderContext) {
+      return Role.fromString(reader.readString());
    }
 
-   public static Perspective fromString(String perspective) {
-      return Perspective.valueOf(perspective.toUpperCase());
+   @Override
+   public void encode(final BsonWriter writer, final Role value, final EncoderContext encoderContext) {
+      writer.writeString(value.toString());
+   }
+
+   @Override
+   public Class<Role> getEncoderClass() {
+      return Role.class;
    }
 
 }

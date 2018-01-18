@@ -33,6 +33,8 @@ public interface View extends Resource {
 
    Query getQuery();
 
-   Perspective getPerspective();
+   String getPerspective();
+
+   Object getConfig();
 
 }

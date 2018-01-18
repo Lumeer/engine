@@ -19,7 +19,6 @@
 package io.lumeer.api.dto;
 
 import io.lumeer.api.dto.common.JsonResource;
-import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.View;
 
@@ -33,9 +32,14 @@ public class JsonView extends JsonResource implements View {
 
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
+   public static final String CONFIG = "config";
 
    private JsonQuery query;
    private String perspective;
+   private Object config;
+
+   public JsonView() {
+   }
 
    @JsonCreator
    public JsonView(@JsonProperty(CODE) final String code,
@@ -44,18 +48,21 @@ public class JsonView extends JsonResource implements View {
          @JsonProperty(COLOR) final String color,
          @JsonProperty(PERMISSIONS) final JsonPermissions permissions,
          @JsonProperty(QUERY) final JsonQuery query,
-         @JsonProperty(PERSPECTIVE) final String perspective) {
+         @JsonProperty(PERSPECTIVE) final String perspective,
+         @JsonProperty(CONFIG) final Object config) {
       super(code, name, icon, color, permissions);
 
       this.query = query;
       this.perspective = perspective;
+      this.config = config;
    }
 
    public JsonView(View view) {
       super(view);
 
       this.query = new JsonQuery(view.getQuery());
-      this.perspective = view.getPerspective().toString();
+      this.perspective = view.getPerspective();
+      this.config = view.getConfig();
    }
 
    @Override
@@ -64,8 +71,25 @@ public class JsonView extends JsonResource implements View {
    }
 
    @Override
-   public Perspective getPerspective() {
-      return Perspective.fromString(perspective);
+   public String getPerspective() {
+      return perspective;
+   }
+
+   @Override
+   public Object getConfig() {
+      return config;
+   }
+
+   public void setQuery(final JsonQuery query) {
+      this.query = query;
+   }
+
+   public void setPerspective(final String perspective) {
+      this.perspective = perspective;
+   }
+
+   public void setConfig(final Object config) {
+      this.config = config;
    }
 
    @Override

@@ -25,4 +25,9 @@ public class StorageException extends LumeerException {
    public StorageException(final String message) {
       super(message);
    }
+
+   public StorageException(final String message, final Throwable cause) {
+      super(message, cause);
+   }
+
 }

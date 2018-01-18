@@ -104,4 +104,8 @@ public class DatabaseQuery {
 
    }
 
+   public boolean hasPagination() {
+      return page != null && pageSize != null;
+   }
+
 }

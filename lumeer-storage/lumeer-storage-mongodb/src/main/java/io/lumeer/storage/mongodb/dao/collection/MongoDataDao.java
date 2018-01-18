@@ -18,6 +18,8 @@
  */
 package io.lumeer.storage.mongodb.dao.collection;
 
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.DataDao;
@@ -26,7 +28,6 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
@@ -147,7 +148,4 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
       return PREFIX + collectionId;
    }
 
-   private static Bson idFilter(String id) {
-      return Filters.eq(ID, new ObjectId(id));
-   }
 }
