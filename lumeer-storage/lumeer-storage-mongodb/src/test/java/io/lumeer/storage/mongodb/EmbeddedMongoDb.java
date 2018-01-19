@@ -56,7 +56,7 @@ public class EmbeddedMongoDb {
    private static IMongodConfig createMongoConfig() {
       try {
          return new MongodConfigBuilder()
-               .version(Version.Main.V3_4)
+               .version(Version.Main.V3_4) // TODO change to V3_6 once the library bug is fixed
                .net(new Net(HOST, PORT, Network.localhostIsIPv6()))
                .build();
       } catch (IOException ex) {
