@@ -28,12 +28,16 @@ public class SearchQuery extends DatabaseQuery {
 
    private final String fulltext;
    private final Set<String> collectionCodes;
+   private final Set<String> linkTypeIds;
+   private final Set<String> documentIds;
 
    private SearchQuery(Builder builder) {
       super(builder);
 
       this.fulltext = builder.fulltext;
       this.collectionCodes = builder.collectionCodes;
+      this.linkTypeIds = builder.linkTypeIds;
+      this.documentIds = builder.documentIds;
    }
 
    public String getFulltext() {
@@ -44,6 +48,14 @@ public class SearchQuery extends DatabaseQuery {
       return Collections.unmodifiableSet(collectionCodes);
    }
 
+   public Set<String> getLinkTypeIds() {
+      return Collections.unmodifiableSet(linkTypeIds);
+   }
+
+   public Set<String> getDocumentIds() {
+      return Collections.unmodifiableSet(documentIds);
+   }
+
    public boolean isFulltextQuery() {
       return fulltext != null && !fulltext.isEmpty();
    }
@@ -52,8 +64,16 @@ public class SearchQuery extends DatabaseQuery {
       return collectionCodes != null && !collectionCodes.isEmpty();
    }
 
+   public boolean isLinkTypeIdsQuery() {
+      return linkTypeIds != null && !linkTypeIds.isEmpty();
+   }
+
+   public boolean isDocumentIdsQuery() {
+      return documentIds != null && !documentIds.isEmpty();
+   }
+
    public boolean isBasicQuery() {
-      return !isFulltextQuery() && !isCollectionCodesQuery();
+      return !isFulltextQuery() && !isCollectionCodesQuery() && !isLinkTypeIdsQuery() && !isDocumentIdsQuery();
    }
 
    public static Builder createBuilder(String user) {
@@ -64,6 +84,8 @@ public class SearchQuery extends DatabaseQuery {
 
       private String fulltext;
       private Set<String> collectionCodes = new HashSet<>();
+      private Set<String> linkTypeIds;
+      private Set<String> documentIds;
 
       private Builder(final String user) {
          super(user);
@@ -76,6 +98,16 @@ public class SearchQuery extends DatabaseQuery {
 
       public Builder collectionCodes(Set<String> collectionCodes) {
          this.collectionCodes = collectionCodes;
+         return this;
+      }
+
+      public Builder linkTypeIds(Set<String> linkTypeIds){
+         this.linkTypeIds = linkTypeIds;
+         return this;
+      }
+
+      public Builder documentIds(Set<String> documentIds){
+         this.documentIds = documentIds;
          return this;
       }
 

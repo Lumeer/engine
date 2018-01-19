@@ -23,6 +23,7 @@ import io.lumeer.api.model.Attribute;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,6 +39,13 @@ public class JsonAttribute implements Attribute {
    private String fullName;
    private Set<String> constraints;
    private Integer usageCount;
+
+   public JsonAttribute(final String name){
+      this.name = name;
+      this.fullName = name;
+      this.constraints = Collections.emptySet();
+      this.usageCount = 0;
+   }
 
    public JsonAttribute(Attribute attribute) {
       this.name = attribute.getName();
