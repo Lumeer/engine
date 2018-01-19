@@ -31,7 +31,7 @@ import de.flapdoodle.embed.process.runtime.Network;
 
 public class EmbeddedMongoDb {
 
-   public static final String HOST = System.getProperty("lumeer.db.host", "localhost");
+   public static final String HOST = System.getProperty("lumeer.db.host", "127.0.0.1");
    public static final String NAME = System.getProperty("lumeer.db.name", "lumeer-test");
    public static final int PORT = Integer.getInteger("lumeer.db.port", 27017);
    public static final String USER = System.getProperty("lumeer.db.user", "");
@@ -45,7 +45,7 @@ public class EmbeddedMongoDb {
    private MongodProcess mongodProcess;
 
    public EmbeddedMongoDb() {
-      if (!"localhost".equals(HOST)) {
+      if (!"localhost".equals(HOST) && !"127.0.0.1".equals(HOST)) {
          // do not start embedded MongoDB when remote database is used
          return;
       }
@@ -56,7 +56,7 @@ public class EmbeddedMongoDb {
    private static IMongodConfig createMongoConfig() {
       try {
          return new MongodConfigBuilder()
-               .version(Version.Main.V3_4) // TODO change to V3_6 once the library bug is fixed
+               .version(Version.Main.V3_6)
                .net(new Net(HOST, PORT, Network.localhostIsIPv6()))
                .build();
       } catch (IOException ex) {
