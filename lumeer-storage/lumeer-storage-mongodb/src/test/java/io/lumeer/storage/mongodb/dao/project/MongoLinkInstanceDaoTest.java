@@ -21,9 +21,7 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -85,7 +83,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testDeleteLinkTypeRepository() {
+   public void testDeleteLinkInstanceRepository() {
       linkInstanceDao.deleteLinkInstanceRepository(project);
       assertThat(database.listCollectionNames()).doesNotContain(linkInstanceDao.databaseCollectionName());
    }
@@ -98,7 +96,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      LinkInstance storedLinkInstance = linkInstanceDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(LINK_TYPE_ID1);
       assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(DOCUMENT_ID1, DOCUMENT_ID2));
@@ -123,11 +121,26 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
       linkInstanceDao.updateLinkInstance(id, updateLinkedInstance);
 
-      LinkInstance storedLinkInstance = linkInstanceDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(LINK_TYPE_ID2);
       assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(DOCUMENT_ID3, DOCUMENT_ID4));
       assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
+   }
+
+   @Test
+   public void testGetLinkType() {
+      String id = linkInstanceDao.createLinkInstance(prepareLinkInstance()).getId();
+
+      LinkInstance linkInstance = linkInstanceDao.getLinkInstance(id);
+      assertThat(linkInstance).isNotNull();
+      assertThat(linkInstance.getId()).isEqualTo(id);
+   }
+
+   @Test
+   public void testGetLinkInstanceNotExisting() {
+      assertThatThrownBy(() -> linkInstanceDao.getLinkInstance(NOT_EXISTING_ID))
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
@@ -137,7 +150,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
       linkInstanceDao.deleteLinkInstance(created.getId());
 
-      LinkInstance stored = linkInstanceDao.databaseCollection().find(MongoFilters.idFilter(created.getId())).first();
+      LinkInstance stored = linkInstanceDao.getLinkInstance(created.getId());
       assertThat(stored).isNull();
    }
 

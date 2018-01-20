@@ -82,6 +82,16 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
       databaseCollection().deleteMany(linkInstancesFilter(query));
    }
 
+
+   @Override
+   public LinkInstance getLinkInstance(final String id) {
+      LinkInstance linkInstance = databaseCollection().find(idFilter(id)).first();
+      if (linkInstance == null) {
+         throw new StorageException("Cannot find link instance: " + id);
+      }
+      return linkInstance;
+   }
+
    @Override
    public List<LinkInstance> getLinkInstances(final SearchQuery query) {
       return databaseCollection().find(Filters.and(linkInstancesFilter(query))).into(new ArrayList<>());

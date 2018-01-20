@@ -40,11 +40,6 @@ import java.util.stream.Collectors;
 
 public class LinkTypeCodec implements CollectibleCodec<LinkType> {
 
-   public static final String ID = "_id";
-   public static final String NAME = "name";
-   public static final String COLLECTION_CODES = "collectionCodes";
-   public static final String ATTRIBUTES = "attributes";
-
    private final Codec<Document> documentCodec;
 
    public LinkTypeCodec(final CodecRegistry registry) {
@@ -55,10 +50,10 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
    public LinkType decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
-      String id = bson.getObjectId(ID).toHexString();
-      String name = bson.getString(NAME);
-      List<String> collectionCodes = bson.get(COLLECTION_CODES, List.class);
-      List<JsonAttribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
+      String id = bson.getObjectId(LinkType.ID).toHexString();
+      String name = bson.getString(LinkType.NAME);
+      List<String> collectionCodes = bson.get(LinkType.COLLECTION_IDS, List.class);
+      List<JsonAttribute> attributes = new ArrayList<Document>(bson.get(LinkType.ATTRIBUTES, List.class)).stream()
                                                                                                 .map(AttributeCodec::convertFromDocument)
                                                                                                 .collect(Collectors.toList());
 
@@ -69,10 +64,10 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
 
    @Override
    public void encode(final BsonWriter writer, final LinkType value, final EncoderContext encoderContext) {
-      Document bson = value.getId() != null ? new Document(ID, new ObjectId(value.getId())) : new Document();
-      bson.append(NAME, value.getName())
-          .append(COLLECTION_CODES, value.getCollectionCodes())
-          .append(ATTRIBUTES, value.getAttributes());
+      Document bson = value.getId() != null ? new Document(LinkType.ID, new ObjectId(value.getId())) : new Document();
+      bson.append(LinkType.NAME, value.getName())
+          .append(LinkType.COLLECTION_IDS, value.getCollectionIds())
+          .append(LinkType.ATTRIBUTES, value.getAttributes());
 
       documentCodec.encode(writer, bson, encoderContext);
    }

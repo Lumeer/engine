@@ -39,6 +39,8 @@ public interface LinkTypeDao {
 
    void deleteLinkTypes(SearchQuery query);
 
+   LinkType getLinkType(String id);
+
    List<LinkType> getLinkTypes(SearchQuery query);
 
 }

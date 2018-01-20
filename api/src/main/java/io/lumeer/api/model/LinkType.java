@@ -31,20 +31,20 @@ public class LinkType {
 
    public static final String ID = "_id";
    public static final String NAME = "name";
-   public static final String COLLECTION_CODES = "collectionCodes";
+   public static final String COLLECTION_IDS = "collectionIds";
    public static final String ATTRIBUTES = "attributes";
 
    private String id;
    private String name;
-   private List<String> collectionCodes;
+   private List<String> collectionIds;
    private List<JsonAttribute> attributes;
 
    @JsonCreator
    public LinkType(@JsonProperty(NAME) final String name,
-         @JsonProperty(COLLECTION_CODES) final List<String> collectionCodes,
+         @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
          @JsonProperty(ATTRIBUTES) final List<JsonAttribute> attributes) {
       this.name = name;
-      this.collectionCodes = collectionCodes;
+      this.collectionIds = collectionIds;
       this.attributes = attributes;
    }
 
@@ -64,12 +64,12 @@ public class LinkType {
       this.name = name;
    }
 
-   public List<String> getCollectionCodes() {
-      return Collections.unmodifiableList(collectionCodes);
+   public List<String> getCollectionIds() {
+      return Collections.unmodifiableList(collectionIds);
    }
 
-   public void setCollectionCodes(List<String> collectionCodes) {
-      this.collectionCodes = collectionCodes;
+   public void setCollectionIds(List<String> collectionIds) {
+      this.collectionIds = collectionIds;
    }
 
    public List<JsonAttribute> getAttributes() {
@@ -104,7 +104,7 @@ public class LinkType {
       return "LinkType{" +
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
-            ", collectionCodes=" + collectionCodes +
+            ", collectionIds=" + collectionIds +
             ", attributes=" + attributes +
             '}';
    }

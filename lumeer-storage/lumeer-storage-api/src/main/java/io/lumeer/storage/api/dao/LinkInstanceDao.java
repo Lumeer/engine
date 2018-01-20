@@ -35,9 +35,11 @@ public interface LinkInstanceDao {
 
    LinkInstance updateLinkInstance(String id, LinkInstance linkInstance);
 
-   void deleteLinkInstance(String linkInstanceId);
+   void deleteLinkInstance(String id);
 
    void deleteLinkInstances(SearchQuery query);
+
+   LinkInstance getLinkInstance(String id);
 
    List<LinkInstance> getLinkInstances(SearchQuery query);
 

@@ -19,27 +19,63 @@
 
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Role;
+import io.lumeer.core.PermissionsChecker;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
 
 public class LinkTypeFacade {
 
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private CollectionDao collectionDao;
+
+   @Inject
+   protected PermissionsChecker permissionsChecker;
+
    public LinkType createLinkType(LinkType linkType) {
-      throw new UnsupportedOperationException();
+      checkLinkTypePermission(new HashSet<>(linkType.getCollectionIds()));
+
+      return linkTypeDao.createLinkType(linkType);
    }
 
    public LinkType updateLinkType(String id, LinkType linkType) {
-      throw new UnsupportedOperationException();
+      Set<String> collectionIds = new HashSet<>(linkType.getCollectionIds());
+      collectionIds.addAll(linkTypeDao.getLinkType(id).getCollectionIds());
+
+      checkLinkTypePermission(collectionIds);
+
+      return linkTypeDao.updateLinkType(id, linkType);
    }
 
    public void deleteLinkType(String id) {
-      throw new UnsupportedOperationException();
+      LinkType linkType = linkTypeDao.getLinkType(id);
+      checkLinkTypePermission(new HashSet<>(linkType.getCollectionIds()));
+
+      linkTypeDao.deleteLinkType(id);
    }
 
    public List<LinkType> getLinkTypes(SearchQuery query) {
-      throw new UnsupportedOperationException();
+      return linkTypeDao.getLinkTypes(query);
    }
+
+   private void checkLinkTypePermission(Set<String> collectionIds) {
+      List<Collection> collections = collectionDao.getCollectionByIds(new ArrayList<>(collectionIds));
+      for (Collection collection : collections) {
+         permissionsChecker.checkRole(collection, Role.WRITE);
+      }
+   }
+
 
 }

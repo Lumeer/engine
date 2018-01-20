@@ -19,27 +19,71 @@
 
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Role;
+import io.lumeer.core.PermissionsChecker;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
 
 public class LinkInstanceFacade {
 
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private CollectionDao collectionDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   protected PermissionsChecker permissionsChecker;
+
    public LinkInstance createLinkInstance(LinkInstance linkInstance) {
-      throw new UnsupportedOperationException();
+      LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
+      checkLinkInstancePermission(new HashSet<>(linkType.getCollectionIds()));
+
+      return linkInstanceDao.createLinkInstance(linkInstance);
    }
 
    public LinkInstance updateLinkInstance(String id, LinkInstance linkInstance) {
-      throw new UnsupportedOperationException();
+      LinkInstance stored = linkInstanceDao.getLinkInstance(id);
+      Set<String> collectionIds = new HashSet<>(linkTypeDao.getLinkType(stored.getLinkTypeId()).getCollectionIds());
+      collectionIds.addAll(linkTypeDao.getLinkType(linkInstance.getLinkTypeId()).getCollectionIds());
+      checkLinkInstancePermission(collectionIds);
+
+      return linkInstanceDao.updateLinkInstance(id, linkInstance);
    }
 
    public void deleteLinkInstance(String id) {
-      throw new UnsupportedOperationException();
+      LinkInstance linkInstance = linkInstanceDao.getLinkInstance(id);
+      LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
+      checkLinkInstancePermission(new HashSet<>(linkType.getCollectionIds()));
+
+      linkInstanceDao.deleteLinkInstance(id);
    }
 
    public List<LinkInstance> getLinkInstances(SearchQuery query) {
-      throw new UnsupportedOperationException();
+      return linkInstanceDao.getLinkInstances(query);
    }
+
+   private void checkLinkInstancePermission(Set<String> collectionIds) {
+      List<Collection> collections = collectionDao.getCollectionByIds(new ArrayList<>(collectionIds));
+      for (Collection collection : collections) {
+         permissionsChecker.checkRole(collection, Role.WRITE);
+      }
+   }
+
+
 
 }

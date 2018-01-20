@@ -45,8 +45,8 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    private static final String PROJECT_ID = "596e3b86d412bc5a3caaa28a";
 
    private static final String NAME = "Connection";
-   private static final String COLLECTION_CODE1 = "Cars";
-   private static final String COLLECTION_CODE2 = "Engine";
+   private static final String COLLECTION_ID1 = "Cars";
+   private static final String COLLECTION_ID2 = "Engine";
    private static final String ATTRIBUTE1_NAME = "Maxi";
    private static final String ATTRIBUTE2_NAME = "Light";
    private static final List<JsonAttribute> ATTRIBUTES;
@@ -54,8 +54,8 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    private static final String NAME2 = "Linking";
    private static final String NAME3 = "Spoiler";
    private static final String NAME4 = "Lego";
-   private static final String COLLECTION_CODE3 = "Services";
-   private static final String COLLECTION_CODE4 = "Tires";
+   private static final String COLLECTION_ID3 = "Services";
+   private static final String COLLECTION_ID4 = "Tires";
 
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
    private static final String USER = "lumeer@lumeer.io";
@@ -71,7 +71,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    private Project project;
 
    @Before
-   public void initViewDao() {
+   public void initLinkTypeDao() {
       project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);
 
@@ -98,11 +98,11 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      LinkType storedLinkType = linkTypeDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME);
       assertThat(storedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(storedLinkType.getCollectionCodes()).containsOnlyElementsOf(Arrays.asList(COLLECTION_CODE1, COLLECTION_CODE2));
+      assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(COLLECTION_ID1, COLLECTION_ID2));
    }
 
    @Test
@@ -119,15 +119,15 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
 
       LinkType updateLinkedType = prepareLinkType();
       updateLinkedType.setName(NAME2);
-      updateLinkedType.setCollectionCodes(Arrays.asList(COLLECTION_CODE3, COLLECTION_CODE4));
+      updateLinkedType.setCollectionIds(Arrays.asList(COLLECTION_ID3, COLLECTION_ID4));
 
       linkTypeDao.updateLinkType(id, updateLinkedType);
 
-      LinkType storedLinkType = linkTypeDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME2);
       assertThat(storedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(storedLinkType.getCollectionCodes()).containsOnlyElementsOf(Arrays.asList(COLLECTION_CODE3, COLLECTION_CODE4));
+      assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(COLLECTION_ID3, COLLECTION_ID4));
    }
 
    @Test
@@ -145,13 +145,28 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    }
 
    @Test
+   public void testGetLinkType() {
+      String id = linkTypeDao.createLinkType(prepareLinkType()).getId();
+
+      LinkType linkType = linkTypeDao.getLinkType(id);
+      assertThat(linkType).isNotNull();
+      assertThat(linkType.getId()).isEqualTo(id);
+   }
+
+   @Test
+   public void testGetLinkTypeNotExisting() {
+      assertThatThrownBy(() -> linkTypeDao.getLinkType(NOT_EXISTING_ID))
+            .isInstanceOf(StorageException.class);
+   }
+
+   @Test
    public void testDeleteLinkType() {
       LinkType created = linkTypeDao.createLinkType(prepareLinkType());
       assertThat(created.getId()).isNotNull();
 
       linkTypeDao.deleteLinkType(created.getId());
 
-      LinkType stored = linkTypeDao.databaseCollection().find(MongoFilters.idFilter(created.getId())).first();
+      LinkType stored = linkTypeDao.getLinkType(created.getId());
       assertThat(stored).isNull();
    }
 
@@ -166,24 +181,24 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       linkTypeDao.createLinkType(prepareLinkType());
 
       LinkType linkType2 = prepareLinkType();
-      linkType2.setCollectionCodes(Arrays.asList(COLLECTION_CODE2, COLLECTION_CODE3));
+      linkType2.setCollectionIds(Arrays.asList(COLLECTION_ID2, COLLECTION_ID3));
       linkTypeDao.createLinkType(linkType2);
 
       LinkType linkType3 = prepareLinkType();
-      linkType3.setCollectionCodes(Arrays.asList(COLLECTION_CODE2, COLLECTION_CODE4));
+      linkType3.setCollectionIds(Arrays.asList(COLLECTION_ID2, COLLECTION_ID4));
       linkTypeDao.createLinkType(linkType3);
 
       LinkType linkType4 = prepareLinkType();
-      linkType4.setCollectionCodes(Arrays.asList(COLLECTION_CODE3, COLLECTION_CODE4));
+      linkType4.setCollectionIds(Arrays.asList(COLLECTION_ID3, COLLECTION_ID4));
       linkTypeDao.createLinkType(linkType4);
 
       assertThat(linkTypeDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(4);
 
-      SearchQuery query1 = SearchQuery.createBuilder(USER).collectionCodes(Collections.singleton(COLLECTION_CODE2)).build();
+      SearchQuery query1 = SearchQuery.createBuilder(USER).collectionCodes(Collections.singleton(COLLECTION_ID2)).build();
       linkTypeDao.deleteLinkTypes(query1);
       assertThat(linkTypeDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(1);
 
-      SearchQuery query2 = SearchQuery.createBuilder(USER).collectionCodes(Collections.singleton(COLLECTION_CODE3)).build();
+      SearchQuery query2 = SearchQuery.createBuilder(USER).collectionCodes(Collections.singleton(COLLECTION_ID3)).build();
       linkTypeDao.deleteLinkTypes(query2);
       assertThat(linkTypeDao.databaseCollection().find().into(new ArrayList<>())).isEmpty();
 
@@ -218,22 +233,22 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       String id1 = linkTypeDao.createLinkType(prepareLinkType()).getId();
 
       LinkType linkType2 = prepareLinkType();
-      linkType2.setCollectionCodes(Arrays.asList(COLLECTION_CODE3, COLLECTION_CODE4));
+      linkType2.setCollectionIds(Arrays.asList(COLLECTION_ID3, COLLECTION_ID4));
       String id2 = linkTypeDao.createLinkType(linkType2).getId();
 
       LinkType linkType3 = prepareLinkType();
-      linkType3.setCollectionCodes(Arrays.asList(COLLECTION_CODE1, COLLECTION_CODE4));
+      linkType3.setCollectionIds(Arrays.asList(COLLECTION_ID1, COLLECTION_ID4));
       String id3 = linkTypeDao.createLinkType(linkType3).getId();
 
       LinkType linkType4 = prepareLinkType();
-      linkType4.setCollectionCodes(Arrays.asList(COLLECTION_CODE2, COLLECTION_CODE3));
+      linkType4.setCollectionIds(Arrays.asList(COLLECTION_ID2, COLLECTION_ID3));
       String id4 = linkTypeDao.createLinkType(linkType4).getId();
 
-      SearchQuery query1 = SearchQuery.createBuilder(USER).collectionCodes(new HashSet<>(Arrays.asList(COLLECTION_CODE1, COLLECTION_CODE2))).build();
+      SearchQuery query1 = SearchQuery.createBuilder(USER).collectionCodes(new HashSet<>(Arrays.asList(COLLECTION_ID1, COLLECTION_ID2))).build();
       List<LinkType> linkTypes = linkTypeDao.getLinkTypes(query1);
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3, id4));
 
-      SearchQuery query2 = SearchQuery.createBuilder(USER).collectionCodes(new HashSet<>(Collections.singletonList(COLLECTION_CODE3))).build();
+      SearchQuery query2 = SearchQuery.createBuilder(USER).collectionCodes(new HashSet<>(Collections.singletonList(COLLECTION_ID3))).build();
       linkTypes = linkTypeDao.getLinkTypes(query2);
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id2, id4));
 
@@ -266,6 +281,6 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(COLLECTION_CODE1, COLLECTION_CODE2), ATTRIBUTES);
+      return new LinkType(NAME, Arrays.asList(COLLECTION_ID1, COLLECTION_ID2), ATTRIBUTES);
    }
 }

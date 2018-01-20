@@ -67,7 +67,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    private static final String ICON = "fa-eye";
    private static final Set<Attribute> ATTRIBUTES;
    private static final Integer DOCUMENTS_COUNT = 0;
-   private static final LocalDateTime LAST_TIME_USED = LocalDateTime.now().withNano(0);
+   private static final LocalDateTime LAST_TIME_USED = LocalDateTime.now();
 
    private static final MorphiaPermissions PERMISSIONS = new MorphiaPermissions();
    private static final MorphiaPermission USER_PERMISSION;
@@ -253,6 +253,27 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
       SearchQuery query = SearchQuery.createBuilder(USER).build();
       List<Collection> views = collectionDao.getCollections(query);
       assertThat(views).extracting(Collection::getCode).containsOnly(CODE, CODE2);
+   }
+
+   @Test
+   public void testGetCollectionsByIds() {
+      MorphiaCollection collection = prepareCollection(CODE, NAME);
+      String id = collectionDao.createCollection(collection).getId();
+
+      MorphiaCollection collection2 = prepareCollection(CODE2, NAME2);
+      String id2 = collectionDao.createCollection(collection2).getId();
+
+      MorphiaCollection collection3 = prepareCollection(CODE3, NAME3);
+      String id3 = collectionDao.createCollection(collection3).getId();
+
+      MorphiaCollection collection4 = prepareCollection(CODE4, NAME4);
+      String id4 = collectionDao.createCollection(collection4).getId();
+
+      List<Collection> collections = collectionDao.getCollectionByIds(Arrays.asList(id, id3));
+      assertThat(collections).hasSize(2).extracting("id").containsOnlyElementsOf(Arrays.asList(id, id3));
+
+      collections = collectionDao.getCollectionByIds(Arrays.asList(id, id2, id4));
+      assertThat(collections).hasSize(3).extracting("id").containsOnlyElementsOf(Arrays.asList(id, id2, id4));
    }
 
    @Test

@@ -84,6 +84,15 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
+   public LinkType getLinkType(final String id) {
+      LinkType linkType = databaseCollection().find(idFilter(id)).first();
+      if (linkType == null) {
+         throw new StorageException("Cannot find link type: " + id);
+      }
+      return linkType;
+   }
+
+   @Override
    public List<LinkType> getLinkTypes(final SearchQuery query) {
       return databaseCollection().find(linkTypesFilter(query)).into(new ArrayList<>());
    }
@@ -97,7 +106,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
          }
       }
       if (query.isCollectionCodesQuery()) {
-         filters.add(Filters.in(LinkType.COLLECTION_CODES, query.getCollectionCodes()));
+         filters.add(Filters.in(LinkType.COLLECTION_IDS, query.getCollectionCodes()));
       }
       return filters.size() > 0 ? Filters.and(filters) : new Document();
    }
