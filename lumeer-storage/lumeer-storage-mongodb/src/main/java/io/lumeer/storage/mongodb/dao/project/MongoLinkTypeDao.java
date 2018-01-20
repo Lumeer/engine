@@ -4,11 +4,11 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -79,7 +79,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public void deleteLinkTypes(final SearchQuery query) {
+   public void deleteLinkTypes(final Query query) {
       databaseCollection().deleteMany(linkTypesFilter(query));
    }
 
@@ -93,20 +93,20 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public List<LinkType> getLinkTypes(final SearchQuery query) {
+   public List<LinkType> getLinkTypes(final Query query) {
       return databaseCollection().find(linkTypesFilter(query)).into(new ArrayList<>());
    }
 
-   private Bson linkTypesFilter(final SearchQuery query) {
+   private Bson linkTypesFilter(final Query query) {
       List<Bson> filters = new ArrayList<>();
-      if (query.isLinkTypeIdsQuery()) {
+      if (query.getLinkTypeIds() != null && !query.getLinkTypeIds().isEmpty()) {
          List<ObjectId> ids = query.getLinkTypeIds().stream().filter(ObjectId::isValid).map(ObjectId::new).collect(Collectors.toList());
          if (!ids.isEmpty()) {
             filters.add(Filters.in(LinkType.ID, ids));
          }
       }
-      if (query.isCollectionCodesQuery()) {
-         filters.add(Filters.in(LinkType.COLLECTION_IDS, query.getCollectionCodes()));
+      if (query.getCollectionIds() != null && !query.getCollectionIds().isEmpty()) {
+         filters.add(Filters.in(LinkType.COLLECTION_IDS, query.getCollectionIds()));
       }
       return filters.size() > 0 ? Filters.and(filters) : new Document();
    }

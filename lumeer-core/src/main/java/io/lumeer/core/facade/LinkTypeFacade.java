@@ -21,11 +21,11 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.PermissionsChecker;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
-import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,7 +66,7 @@ public class LinkTypeFacade {
       linkTypeDao.deleteLinkType(id);
    }
 
-   public List<LinkType> getLinkTypes(SearchQuery query) {
+   public List<LinkType> getLinkTypes(Query query) {
       return linkTypeDao.getLinkTypes(query);
    }
 
@@ -76,6 +76,5 @@ public class LinkTypeFacade {
          permissionsChecker.checkRole(collection, Role.WRITE);
       }
    }
-
 
 }

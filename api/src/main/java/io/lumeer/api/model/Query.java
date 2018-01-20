@@ -26,6 +26,12 @@ public interface Query {
 
    Set<String> getFilters();
 
+   Set<String> getCollectionIds();
+
+   Set<String> getDocumentIds();
+
+   Set<String> getLinkTypeIds();
+
    String getFulltext();
 
    Integer getPage();

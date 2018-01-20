@@ -19,29 +19,67 @@
 
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.core.facade.LinkInstanceFacade;
 
 import java.util.List;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-//@Path("organizations/{organizationCode}/projects/{projectCode}/link-instances")
+@RequestScoped
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Path("organizations/{organizationCode}/projects/{projectCode}/link-instances")
 public class LinkInstanceService extends AbstractService {
 
+   @PathParam("organizationCode")
+   private String organizationCode;
+
+   @PathParam("projectCode")
+   private String projectCode;
+
+   @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
+   @PostConstruct
+   public void init() {
+      workspaceKeeper.setWorkspace(organizationCode, projectCode);
+   }
+
+   @POST
    public LinkInstance createLinkInstance(LinkInstance linkInstance) {
-      throw new UnsupportedOperationException();
+      return linkInstanceFacade.createLinkInstance(linkInstance);
    }
 
-   public LinkInstance updateLinkInstance(String id, LinkInstance linkInstance) {
-      throw new UnsupportedOperationException();
+   @PUT
+   @Path("{linkIstanceId}")
+   public LinkInstance updateLinkInstance(@PathParam("linkIstanceId") String id, LinkInstance linkInstance) {
+      return linkInstanceFacade.updateLinkInstance(id, linkInstance);
    }
 
-   public void deleteLinkInstance(String id) {
-      throw new UnsupportedOperationException();
+   @DELETE
+   @Path("{linkIstanceId}")
+   public Response deleteLinkInstance(@PathParam("linkIstanceId") String id) {
+      linkInstanceFacade.deleteLinkInstance(id);
+
+      return Response.ok().link(getParentUri(id), "parent").build();
    }
 
-   public List<LinkInstance> getLinkInstances(SearchQuery query) {
-      throw new UnsupportedOperationException();
+   @POST
+   @Path("search")
+   public List<LinkInstance> getLinkInstances(JsonQuery query) {
+      return linkInstanceFacade.getLinkInstances(query);
    }
 
 }

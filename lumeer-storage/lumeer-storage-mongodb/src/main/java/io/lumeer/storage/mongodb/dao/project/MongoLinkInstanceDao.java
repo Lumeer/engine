@@ -4,11 +4,11 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -20,11 +20,9 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.result.DeleteResult;
 
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -78,7 +76,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public void deleteLinkInstances(final SearchQuery query) {
+   public void deleteLinkInstances(final Query query) {
       databaseCollection().deleteMany(linkInstancesFilter(query));
    }
 
@@ -93,16 +91,16 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public List<LinkInstance> getLinkInstances(final SearchQuery query) {
+   public List<LinkInstance> getLinkInstances(final Query query) {
       return databaseCollection().find(Filters.and(linkInstancesFilter(query))).into(new ArrayList<>());
    }
 
-   private Bson linkInstancesFilter(final SearchQuery query){
+   private Bson linkInstancesFilter(final Query query){
       List<Bson> filters = new ArrayList<>();
-      if (query.isLinkTypeIdsQuery()) {
+      if (query.getLinkTypeIds() != null && !query.getLinkTypeIds().isEmpty()) {
          filters.add(Filters.in(LinkInstance.LINK_TYPE_ID, query.getLinkTypeIds()));
       }
-      if (query.isDocumentIdsQuery()) {
+      if (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()) {
          filters.add(Filters.in(LinkInstance.DOCUMENTS_IDS, query.getDocumentIds()));
       }
       return Filters.and(filters);

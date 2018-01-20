@@ -21,7 +21,7 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.api.model.Query;
 
 import java.util.List;
 
@@ -31,16 +31,18 @@ public interface LinkTypeDao {
 
    void deleteLinkTypeRepository(Project project);
 
+   void setProject(Project project);
+
    LinkType createLinkType(LinkType linkType);
 
    LinkType updateLinkType(String id, LinkType linkType);
 
    void deleteLinkType(String id);
 
-   void deleteLinkTypes(SearchQuery query);
+   void deleteLinkTypes(Query query);
 
    LinkType getLinkType(String id);
 
-   List<LinkType> getLinkTypes(SearchQuery query);
+   List<LinkType> getLinkTypes(Query query);
 
 }

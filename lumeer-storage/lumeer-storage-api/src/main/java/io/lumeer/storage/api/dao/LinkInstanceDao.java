@@ -21,7 +21,7 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.api.model.Query;
 
 import java.util.List;
 
@@ -31,16 +31,18 @@ public interface LinkInstanceDao {
 
    void deleteLinkInstanceRepository(Project project);
 
+   void setProject(Project project);
+
    LinkInstance createLinkInstance(LinkInstance linkInstance);
 
    LinkInstance updateLinkInstance(String id, LinkInstance linkInstance);
 
    void deleteLinkInstance(String id);
 
-   void deleteLinkInstances(SearchQuery query);
+   void deleteLinkInstances(Query query);
 
    LinkInstance getLinkInstance(String id);
 
-   List<LinkInstance> getLinkInstances(SearchQuery query);
+   List<LinkInstance> getLinkInstances(Query query);
 
 }
