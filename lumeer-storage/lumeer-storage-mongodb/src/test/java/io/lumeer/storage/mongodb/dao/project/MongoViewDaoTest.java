@@ -32,13 +32,10 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaQuery;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
-import com.mongodb.DuplicateKeyException;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -359,7 +356,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
       SearchQuery query = SearchQuery.createBuilder(USER).fulltext("fulltext").page(1).pageSize(1).build();
       List<View> views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).containsOnly(CODE3);
+      assertThat(views).extracting(View::getCode).containsOnly(CODE2);
    }
 
    @Test

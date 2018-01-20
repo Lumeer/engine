@@ -356,7 +356,7 @@ public class MorphiaViewDaoTest extends MongoDbTestBase {
 
       SearchQuery query = SearchQuery.createBuilder(USER).fulltext("fulltext").page(1).pageSize(1).build();
       List<View> views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).containsOnly(CODE3);
+      assertThat(views).extracting(View::getCode).containsOnly(CODE2);
    }
 
    @Test
