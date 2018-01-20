@@ -80,7 +80,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "TORG";
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testCollection"), Collections.singleton("testAttribute=42"),null, null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new JsonQuery(Collections.singleton("testCollection"), Collections.singleton("testAttribute=42"), null, null, null, "test", 0, Integer.MAX_VALUE);
 
       USER_PERMISSION = new SimplePermission(USER, View.ROLES);
       GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
