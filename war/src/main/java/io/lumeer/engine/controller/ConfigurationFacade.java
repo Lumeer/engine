@@ -27,6 +27,8 @@ import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.util.Resources;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -70,12 +72,12 @@ public class ConfigurationFacade implements Serializable {
     *
     * @return Pre-configured data storage.
     */
-   public StorageConnection getDataStorage() {
-      return new StorageConnection(
-            getConfigurationString(LumeerConst.DB_HOST_PROPERTY).orElse("localhost"),
-            getConfigurationInteger(LumeerConst.DB_PORT_PROPERTY).orElse(27017),
-            getConfigurationString(LumeerConst.DB_USER_PROPERTY).orElse("pepa"),
-            getConfigurationString(LumeerConst.DB_PASSWORD_PROPERTY).orElse(""));
+   public List<StorageConnection> getDataStorage() {
+      final String hosts = getConfigurationString(LumeerConst.DB_HOSTS_PROPERTY).orElse("localhost:27017");
+      final String db = getConfigurationString(LumeerConst.DB_USER_PROPERTY).orElse("pepa");
+      final String pwd = getConfigurationString(LumeerConst.DB_PASSWORD_PROPERTY).orElse("");
+
+      return getStorageConnections(hosts, db, pwd);
    }
 
    public String getDataStorageDatabase() {
@@ -91,12 +93,31 @@ public class ConfigurationFacade implements Serializable {
     *
     * @return Pre-configured system data storage.
     */
-   public StorageConnection getSystemDataStorage() {
-      return new StorageConnection(
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_HOST_PROPERTY),
-            Integer.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PORT_PROPERTY)),
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USER_PROPERTY),
-            defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY));
+   public List<StorageConnection> getSystemDataStorage() {
+      final String hosts = defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_HOSTS_PROPERTY);
+      final String db = defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USER_PROPERTY);
+      final String pwd = defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY);
+
+      return getStorageConnections(hosts, db, pwd);
+   }
+
+   private static List<StorageConnection> getStorageConnections(final String hosts, final String db, final String pwd) {
+      final List<StorageConnection> result = new ArrayList<>();
+      Arrays.asList(hosts.split(",")).forEach(host -> {
+         String[] hostParts = host.split(":", 2);
+         String hostName = hostParts[0];
+         int port = 27017;
+         if (hostParts.length > 1) {
+            try {
+               port = Integer.valueOf(hostParts[1]);
+            } catch (NumberFormatException nfe) {
+               // just keep original port no
+            }
+         }
+         result.add(new StorageConnection(hostName, port, db, pwd));
+      });
+
+      return result;
    }
 
    public String getSystemDataStorageDatabase() {
