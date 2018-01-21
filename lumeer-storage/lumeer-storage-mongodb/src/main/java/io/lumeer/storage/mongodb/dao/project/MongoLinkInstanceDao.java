@@ -20,6 +20,7 @@ import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.result.DeleteResult;
 
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    public void createLinkInstanceRepository(Project project) {
       database.createCollection(databaseCollectionName(project));
 
-      MongoCollection<LinkInstance> projectCollection = databaseCollection();
+      MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
       projectCollection.createIndex(Indexes.ascending(LinkInstanceCodec.LINK_TYPE_ID), new IndexOptions().unique(false));
    }
 

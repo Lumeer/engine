@@ -38,7 +38,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    public void createLinkTypeRepository(Project project) {
       database.createCollection(databaseCollectionName(project));
 
-      MongoCollection<LinkType> projectCollection = databaseCollection();
+      MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
       projectCollection.createIndex(Indexes.ascending(LinkTypeCodec.NAME), new IndexOptions().unique(false));
    }
 
