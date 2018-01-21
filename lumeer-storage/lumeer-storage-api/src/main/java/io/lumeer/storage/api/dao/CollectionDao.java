@@ -42,7 +42,7 @@ public interface CollectionDao {
 
    Collection getCollectionByCode(String code);
 
-   List<Collection> getCollectionByIds(List<String> ids);
+   List<Collection> getCollectionsByIds(java.util.Collection<String> ids);
 
    List<Collection> getCollections(SearchQuery query);
 

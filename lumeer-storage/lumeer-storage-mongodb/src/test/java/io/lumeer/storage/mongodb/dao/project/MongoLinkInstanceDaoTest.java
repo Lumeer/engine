@@ -25,6 +25,7 @@ import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
 import org.bson.types.ObjectId;
@@ -60,6 +61,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
    }
 
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
+   private static final String USER = "user";
 
    private MongoLinkInstanceDao linkInstanceDao;
 
@@ -175,12 +177,12 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
       assertThat(linkInstanceDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(4);
 
-      JsonQuery jsonQuery1 = new JsonQuery(null, null, Collections.singleton(DOCUMENT_ID1));
-      linkInstanceDao.deleteLinkInstances(jsonQuery1);
+      SearchQuery query1 = SearchQuery.createBuilder(USER).documentIds(Collections.singleton(DOCUMENT_ID1)).build();
+      linkInstanceDao.deleteLinkInstances(query1);
       assertThat(linkInstanceDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(2);
 
-      JsonQuery jsonQuery2 = new JsonQuery(null, null, Collections.singleton(DOCUMENT_ID2));
-      linkInstanceDao.deleteLinkInstances(jsonQuery2);
+      SearchQuery query2 = SearchQuery.createBuilder(USER).documentIds(Collections.singleton(DOCUMENT_ID2)).build();
+      linkInstanceDao.deleteLinkInstances(query2);
       assertThat(linkInstanceDao.databaseCollection().find().into(new ArrayList<>())).isEmpty();
    }
 
@@ -202,8 +204,8 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
       assertThat(linkInstanceDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(4);
 
-      JsonQuery query = new JsonQuery(null, new HashSet<>(Arrays.asList(LINK_TYPE_ID1, LINK_TYPE_ID2)), null);
-      linkInstanceDao.deleteLinkInstances(query);
+      SearchQuery query1 = SearchQuery.createBuilder(USER).linkTypeIds(new HashSet<>(Arrays.asList(LINK_TYPE_ID1, LINK_TYPE_ID2))).build();
+      linkInstanceDao.deleteLinkInstances(query1);
       List<LinkInstance> linkInstances = linkInstanceDao.databaseCollection().find().into(new ArrayList<>());
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id4));
    }
@@ -224,12 +226,12 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(DOCUMENT_ID2, DOCUMENT_ID4));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      JsonQuery jsonQuery1 = new JsonQuery(null, null, Collections.singleton(DOCUMENT_ID1));
-      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(jsonQuery1);
+      SearchQuery query1 = SearchQuery.createBuilder(USER).documentIds(Collections.singleton(DOCUMENT_ID1)).build();
+      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(query1);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
 
-      JsonQuery jsonQuery2 = new JsonQuery(null, null, Collections.singleton(DOCUMENT_ID2));
-      linkInstances = linkInstanceDao.getLinkInstances(jsonQuery2);
+      SearchQuery query2 = SearchQuery.createBuilder(USER).documentIds(Collections.singleton(DOCUMENT_ID2)).build();
+      linkInstances = linkInstanceDao.getLinkInstances(query2);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
    }
 
@@ -249,16 +251,16 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       linkInstance4.setLinkTypeId(LINK_TYPE_ID3);
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      JsonQuery jsonQuery1 = new JsonQuery(null, new HashSet<>(Arrays.asList(LINK_TYPE_ID1, LINK_TYPE_ID2)), null);
-      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(jsonQuery1);
+      SearchQuery query1 = SearchQuery.createBuilder(USER).linkTypeIds(new HashSet<>(Arrays.asList(LINK_TYPE_ID1, LINK_TYPE_ID2))).build();
+      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(query1);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
 
-      JsonQuery jsonQuery2 = new JsonQuery(null, Collections.singleton(LINK_TYPE_ID3), null);
-      linkInstances = linkInstanceDao.getLinkInstances(jsonQuery2);
+      SearchQuery query2 = SearchQuery.createBuilder(USER).linkTypeIds(Collections.singleton(LINK_TYPE_ID3)).build();
+      linkInstances = linkInstanceDao.getLinkInstances(query2);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id4));
    }
 
    private LinkInstance prepareLinkInstance() {
-      return new LinkInstance(LINK_TYPE_ID1, Arrays.asList(DOCUMENT_ID1, DOCUMENT_ID2), DATA);
+      return new LinkInstance(null, LINK_TYPE_ID1, Arrays.asList(DOCUMENT_ID1, DOCUMENT_ID2), DATA);
    }
 }

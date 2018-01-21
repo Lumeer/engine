@@ -63,14 +63,14 @@ public class LinkInstanceService extends AbstractService {
    }
 
    @PUT
-   @Path("{linkIstanceId}")
-   public LinkInstance updateLinkInstance(@PathParam("linkIstanceId") String id, LinkInstance linkInstance) {
+   @Path("{linkInstanceId}")
+   public LinkInstance updateLinkInstance(@PathParam("linkInstanceId") String id, LinkInstance linkInstance) {
       return linkInstanceFacade.updateLinkInstance(id, linkInstance);
    }
 
    @DELETE
-   @Path("{linkIstanceId}")
-   public Response deleteLinkInstance(@PathParam("linkIstanceId") String id) {
+   @Path("{linkInstanceId}")
+   public Response deleteLinkInstance(@PathParam("linkInstanceId") String id) {
       linkInstanceFacade.deleteLinkInstance(id);
 
       return Response.ok().link(getParentUri(id), "parent").build();

@@ -269,10 +269,10 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
       MorphiaCollection collection4 = prepareCollection(CODE4, NAME4);
       String id4 = collectionDao.createCollection(collection4).getId();
 
-      List<Collection> collections = collectionDao.getCollectionByIds(Arrays.asList(id, id3));
+      List<Collection> collections = collectionDao.getCollectionsByIds(Arrays.asList(id, id3));
       assertThat(collections).hasSize(2).extracting("id").containsOnlyElementsOf(Arrays.asList(id, id3));
 
-      collections = collectionDao.getCollectionByIds(Arrays.asList(id, id2, id4));
+      collections = collectionDao.getCollectionsByIds(Arrays.asList(id, id2, id4));
       assertThat(collections).hasSize(3).extracting("id").containsOnlyElementsOf(Arrays.asList(id, id2, id4));
    }
 

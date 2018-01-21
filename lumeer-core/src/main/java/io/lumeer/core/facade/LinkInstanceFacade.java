@@ -24,18 +24,19 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
-import io.lumeer.core.PermissionsChecker;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.query.SearchQuery;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
-public class LinkInstanceFacade {
+@RequestScoped
+public class LinkInstanceFacade  extends AbstractFacade{
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -46,12 +47,9 @@ public class LinkInstanceFacade {
    @Inject
    private LinkInstanceDao linkInstanceDao;
 
-   @Inject
-   protected PermissionsChecker permissionsChecker;
-
    public LinkInstance createLinkInstance(LinkInstance linkInstance) {
       LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
-      checkLinkInstancePermission(new HashSet<>(linkType.getCollectionIds()));
+      checkLinkInstancePermission(linkType.getCollectionIds());
 
       return linkInstanceDao.createLinkInstance(linkInstance);
    }
@@ -68,22 +66,30 @@ public class LinkInstanceFacade {
    public void deleteLinkInstance(String id) {
       LinkInstance linkInstance = linkInstanceDao.getLinkInstance(id);
       LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
-      checkLinkInstancePermission(new HashSet<>(linkType.getCollectionIds()));
+      checkLinkInstancePermission(linkType.getCollectionIds());
 
       linkInstanceDao.deleteLinkInstance(id);
    }
 
    public List<LinkInstance> getLinkInstances(Query query) {
-      return linkInstanceDao.getLinkInstances(query);
+      return linkInstanceDao.getLinkInstances(createSearchQuery(query));
    }
 
-   private void checkLinkInstancePermission(Set<String> collectionIds) {
-      List<Collection> collections = collectionDao.getCollectionByIds(new ArrayList<>(collectionIds));
+   private void checkLinkInstancePermission(java.util.Collection<String> collectionIds) {
+      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       for (Collection collection : collections) {
          permissionsChecker.checkRole(collection, Role.WRITE);
       }
    }
 
+   private SearchQuery createSearchQuery(Query query) {
+      String user = authenticatedUser.getCurrentUsername();
+      Set<String> groups = userCache.getUser(user).getGroups();
 
+      return SearchQuery.createBuilder(user).groups(groups)
+                        .documentIds(query.getDocumentIds())
+                        .linkTypeIds(query.getLinkTypeIds())
+                        .build();
+   }
 
 }

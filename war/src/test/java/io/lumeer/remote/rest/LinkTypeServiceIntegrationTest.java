@@ -268,6 +268,6 @@ public class LinkTypeServiceIntegrationTest extends ServiceIntegrationTestBase {
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), ATTRIBUTES);
+      return new LinkType(null, NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), ATTRIBUTES);
    }
 }

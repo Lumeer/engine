@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class LinkInstance {
 
-   public static final String ID = "_ID";
+   public static final String ID = "id";
    public static final String LINK_TYPE_ID = "linkTypeId";
    public static final String DOCUMENTS_IDS = "documentIds";
    public static final String DATA = "data";
@@ -39,7 +39,8 @@ public class LinkInstance {
    private Map<String, Object> data;
 
    @JsonCreator
-   public LinkInstance(@JsonProperty(LINK_TYPE_ID) final String linkTypeId,
+   public LinkInstance(@JsonProperty(ID) final String id,
+         @JsonProperty(LINK_TYPE_ID) final String linkTypeId,
          @JsonProperty(DOCUMENTS_IDS) final List<String> documentIds,
          @JsonProperty(DATA) final Map<String, Object> data) {
       this.id = id;

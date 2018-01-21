@@ -93,7 +93,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    }
 
    @Override
-   public List<Collection> getCollectionByIds(final List<String> ids) {
+   public List<Collection> getCollectionsByIds(final java.util.Collection<String> ids) {
       List<ObjectId> objectIds = ids.stream().map(ObjectId::new).collect(Collectors.toList());
       return new ArrayList<>(datastore.createQuery(databaseCollection(), MorphiaCollection.class)
             .field(MorphiaCollection.ID).in(objectIds).asList());

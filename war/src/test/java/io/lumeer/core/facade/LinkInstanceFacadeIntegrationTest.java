@@ -161,9 +161,9 @@ public class LinkInstanceFacadeIntegrationTest extends IntegrationTestBase {
       jsonCollection.setDocumentsCount(0);
       String collection2 = collectionDao.createCollection(jsonCollection2).getId();
 
-      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1, collection2), ATTRIBUTES);
+      LinkType linkType = new LinkType(null, NAME, Arrays.asList(collection1, collection2), ATTRIBUTES);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1, collection2), ATTRIBUTES);
+      LinkType linkType2 = new LinkType(null, NAME2, Arrays.asList(collection1, collection2), ATTRIBUTES);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();
@@ -259,7 +259,7 @@ public class LinkInstanceFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private LinkInstance prepareLinkInstance() {
-      return new LinkInstance(linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)), DATA);
+      return new LinkInstance(null, linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)), DATA);
    }
 
    private Document prepareDocument() {

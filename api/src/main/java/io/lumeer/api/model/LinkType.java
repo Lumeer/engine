@@ -29,7 +29,7 @@ import java.util.List;
 
 public class LinkType {
 
-   public static final String ID = "_id";
+   public static final String ID = "id";
    public static final String NAME = "name";
    public static final String COLLECTION_IDS = "collectionIds";
    public static final String ATTRIBUTES = "attributes";
@@ -40,9 +40,11 @@ public class LinkType {
    private List<JsonAttribute> attributes;
 
    @JsonCreator
-   public LinkType(@JsonProperty(NAME) final String name,
+   public LinkType(@JsonProperty(ID) final String id,
+         @JsonProperty(NAME) final String name,
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
          @JsonProperty(ATTRIBUTES) final List<JsonAttribute> attributes) {
+      this.id = id;
       this.name = name;
       this.collectionIds = collectionIds;
       this.attributes = attributes;

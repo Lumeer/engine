@@ -158,34 +158,34 @@ public class JsonQuery implements Query {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof JsonQuery)) {
+      if (!(o instanceof Query)) {
          return false;
       }
 
-      final JsonQuery jsonQuery = (JsonQuery) o;
+      final Query query = (Query) o;
 
-      if (getCollectionCodes() != null ? !getCollectionCodes().equals(jsonQuery.getCollectionCodes()) : jsonQuery.getCollectionCodes() != null) {
+      if (getCollectionCodes() != null ? !getCollectionCodes().equals(query.getCollectionCodes()) : query.getCollectionCodes() != null) {
          return false;
       }
-      if (getFilters() != null ? !getFilters().equals(jsonQuery.getFilters()) : jsonQuery.getFilters() != null) {
+      if (getFilters() != null ? !getFilters().equals(query.getFilters()) : query.getFilters() != null) {
          return false;
       }
-      if (getCollectionIds() != null ? !getCollectionIds().equals(jsonQuery.getCollectionIds()) : jsonQuery.getCollectionIds() != null) {
+      if (getCollectionIds() != null ? !getCollectionIds().equals(query.getCollectionIds()) : query.getCollectionIds() != null) {
          return false;
       }
-      if (getDocumentIds() != null ? !getDocumentIds().equals(jsonQuery.getDocumentIds()) : jsonQuery.getDocumentIds() != null) {
+      if (getDocumentIds() != null ? !getDocumentIds().equals(query.getDocumentIds()) : query.getDocumentIds() != null) {
          return false;
       }
-      if (getLinkTypeIds() != null ? !getLinkTypeIds().equals(jsonQuery.getLinkTypeIds()) : jsonQuery.getLinkTypeIds() != null) {
+      if (getLinkTypeIds() != null ? !getLinkTypeIds().equals(query.getLinkTypeIds()) : query.getLinkTypeIds() != null) {
          return false;
       }
-      if (getFulltext() != null ? !getFulltext().equals(jsonQuery.getFulltext()) : jsonQuery.getFulltext() != null) {
+      if (getFulltext() != null ? !getFulltext().equals(query.getFulltext()) : query.getFulltext() != null) {
          return false;
       }
-      if (getPage() != null ? !getPage().equals(jsonQuery.getPage()) : jsonQuery.getPage() != null) {
+      if (getPage() != null ? !getPage().equals(query.getPage()) : query.getPage() != null) {
          return false;
       }
-      return getPageSize() != null ? getPageSize().equals(jsonQuery.getPageSize()) : jsonQuery.getPageSize() == null;
+      return getPageSize() != null ? getPageSize().equals(query.getPageSize()) : query.getPageSize() == null;
    }
 
    @Override

@@ -23,17 +23,18 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
-import io.lumeer.core.PermissionsChecker;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.query.SearchQuery;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
-public class LinkTypeFacade {
+@RequestScoped
+public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -41,11 +42,8 @@ public class LinkTypeFacade {
    @Inject
    private CollectionDao collectionDao;
 
-   @Inject
-   protected PermissionsChecker permissionsChecker;
-
    public LinkType createLinkType(LinkType linkType) {
-      checkLinkTypePermission(new HashSet<>(linkType.getCollectionIds()));
+      checkLinkTypePermission(linkType.getCollectionIds());
 
       return linkTypeDao.createLinkType(linkType);
    }
@@ -61,20 +59,30 @@ public class LinkTypeFacade {
 
    public void deleteLinkType(String id) {
       LinkType linkType = linkTypeDao.getLinkType(id);
-      checkLinkTypePermission(new HashSet<>(linkType.getCollectionIds()));
+      checkLinkTypePermission(linkType.getCollectionIds());
 
       linkTypeDao.deleteLinkType(id);
    }
 
    public List<LinkType> getLinkTypes(Query query) {
-      return linkTypeDao.getLinkTypes(query);
+      return linkTypeDao.getLinkTypes(createSearchQuery(query));
    }
 
-   private void checkLinkTypePermission(Set<String> collectionIds) {
-      List<Collection> collections = collectionDao.getCollectionByIds(new ArrayList<>(collectionIds));
+   private void checkLinkTypePermission(java.util.Collection<String> collectionIds) {
+      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       for (Collection collection : collections) {
          permissionsChecker.checkRole(collection, Role.WRITE);
       }
+   }
+
+   private SearchQuery createSearchQuery(Query query) {
+      String user = authenticatedUser.getCurrentUsername();
+      Set<String> groups = userCache.getUser(user).getGroups();
+
+      return SearchQuery.createBuilder(user).groups(groups)
+                        .collectionIds(query.getCollectionIds())
+                        .linkTypeIds(query.getLinkTypeIds())
+                        .build();
    }
 
 }
