@@ -29,6 +29,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.time.LocalDateTime;
@@ -55,6 +56,10 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private DocumentDao documentDao;
+
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
 
    public Document createDocument(String collectionCode, Document document) {
       Collection collection = collectionDao.getCollectionByCode(collectionCode);
@@ -147,6 +152,8 @@ public class DocumentFacade extends AbstractFacade {
       documentDao.deleteDocument(documentId);
 
       dataDao.deleteData(collection.getId(), documentId);
+
+      linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(documentId));
    }
 
    public Document getDocument(String collectionCode, String documentId) {
@@ -185,5 +192,14 @@ public class DocumentFacade extends AbstractFacade {
          document.setData(dataDocuments.get(document.getId()));
       });
       return documents;
+   }
+
+   private SearchQuery createQueryForLinkInstances(String documentId) {
+      String user = authenticatedUser.getCurrentUsername();
+      Set<String> groups = userCache.getUser(user).getGroups();
+
+      return SearchQuery.createBuilder(user).groups(groups)
+                        .documentIds(Collections.singleton(documentId))
+                        .build();
    }
 }
