@@ -19,24 +19,96 @@
 
 package io.lumeer.api.model;
 
+import io.lumeer.api.dto.JsonAttribute;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Collections;
 import java.util.List;
 
-public interface LinkType {
+public class LinkType {
 
-   String getId();
+   public static final String ID = "id";
+   public static final String NAME = "name";
+   public static final String COLLECTION_IDS = "collectionIds";
+   public static final String ATTRIBUTES = "attributes";
 
-   void setId(String id);
+   private String id;
+   private String name;
+   private List<String> collectionIds;
+   private List<JsonAttribute> attributes;
 
-   String getName();
+   @JsonCreator
+   public LinkType(@JsonProperty(ID) final String id,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
+         @JsonProperty(ATTRIBUTES) final List<JsonAttribute> attributes) {
+      this.id = id;
+      this.name = name;
+      this.collectionIds = collectionIds;
+      this.attributes = attributes;
+   }
 
-   void setName(String name);
+   public String getId() {
+      return id;
+   }
 
-   List<String> getCollectionCodes();
+   public void setId(String id) {
+      this.id = id;
+   }
 
-   void setCollectionCodes(List<String> collectionCodes);
+   public String getName() {
+      return name;
+   }
 
-   List<Attribute> getAttributes();
+   public void setName(String name) {
+      this.name = name;
+   }
 
-   void setAttributes(List<Attribute> attributes);
+   public List<String> getCollectionIds() {
+      return Collections.unmodifiableList(collectionIds);
+   }
+
+   public void setCollectionIds(List<String> collectionIds) {
+      this.collectionIds = collectionIds;
+   }
+
+   public List<JsonAttribute> getAttributes() {
+      return Collections.unmodifiableList(attributes);
+   }
+
+   public void setAttributes(List<JsonAttribute> attributes) {
+      this.attributes = attributes;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof LinkType)) {
+         return false;
+      }
+
+      final LinkType linkType = (LinkType) o;
+
+      return id != null ? id.equals(linkType.id) : linkType.id == null;
+   }
+
+   @Override
+   public int hashCode() {
+      return id != null ? id.hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "LinkType{" +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            ", collectionIds=" + collectionIds +
+            ", attributes=" + attributes +
+            '}';
+   }
 
 }

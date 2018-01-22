@@ -19,29 +19,67 @@
 
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.core.facade.LinkTypeFacade;
 
 import java.util.List;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-//@Path("organizations/{organizationCode}/projects/{projectCode}/link-types")
+@RequestScoped
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Path("organizations/{organizationCode}/projects/{projectCode}/link-types")
 public class LinkTypeService extends AbstractService {
 
+   @PathParam("organizationCode")
+   private String organizationCode;
+
+   @PathParam("projectCode")
+   private String projectCode;
+
+   @Inject
+   private LinkTypeFacade linkTypeFacade;
+
+   @PostConstruct
+   public void init() {
+      workspaceKeeper.setWorkspace(organizationCode, projectCode);
+   }
+
+   @POST
    public LinkType createLinkType(LinkType linkType) {
-      throw new UnsupportedOperationException();
+      return linkTypeFacade.createLinkType(linkType);
    }
 
-   public LinkType updateLinkType(String id, LinkType linkType) {
-      throw new UnsupportedOperationException();
+   @PUT
+   @Path("{linkTypeId}")
+   public LinkType updateLinkType(@PathParam("linkTypeId") String id, LinkType linkType) {
+      return linkTypeFacade.updateLinkType(id, linkType);
    }
 
-   public void deleteLinkType(String id) {
-      throw new UnsupportedOperationException();
+   @DELETE
+   @Path("{linkTypeId}")
+   public Response deleteLinkType(@PathParam("linkTypeId") String id) {
+      linkTypeFacade.deleteLinkType(id);
+
+      return Response.ok().link(getParentUri(id), "parent").build();
    }
 
-   public List<LinkType> getLinkTypes(SearchQuery query) {
-      throw new UnsupportedOperationException();
+   @POST
+   @Path("search")
+   public List<LinkType> getLinkTypes(JsonQuery query) {
+      return linkTypeFacade.getLinkTypes(query);
    }
 
 }

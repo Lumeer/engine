@@ -38,6 +38,9 @@ public class QueryCodec implements Codec<JsonQuery> {
 
    public static final String COLLECTION_CODES = "collections";
    public static final String FILTERS = "filters";
+   public static final String COLLECTION_IDS = "collection_ids";
+   public static final String DOCUMENT_IDS = "document_ids";
+   public static final String LINK_TYPE_IDS = "link_type_ids";
    public static final String FULLTEXT = "fulltext";
    public static final String PAGE = "page";
    public static final String PAGE_SIZE = "pageSize";
@@ -62,11 +65,14 @@ public class QueryCodec implements Codec<JsonQuery> {
 
       Set<String> collectionCodes = new HashSet<String>(bson.get(COLLECTION_CODES, List.class));
       Set<String> filters = new HashSet<String>(bson.get(FILTERS, List.class));
+      Set<String> collectionIds = new HashSet<String>(bson.get(COLLECTION_IDS, List.class));
+      Set<String> linkTypeIds = new HashSet<String>(bson.get(LINK_TYPE_IDS, List.class));
+      Set<String> documentIds = new HashSet<String>(bson.get(DOCUMENT_IDS, List.class));
       String fulltext = bson.getString(FULLTEXT);
       Integer page = bson.getInteger(PAGE);
       Integer pageSize = bson.getInteger(PAGE_SIZE);
 
-      return new JsonQuery(collectionCodes, filters, fulltext, page, pageSize);
+      return new JsonQuery(collectionCodes, filters, collectionIds, linkTypeIds, documentIds, fulltext, page, pageSize);
    }
 
    @Override
@@ -74,6 +80,9 @@ public class QueryCodec implements Codec<JsonQuery> {
       Document document = new Document()
             .append(COLLECTION_CODES, new ArrayList<>(value.getCollectionCodes()))
             .append(FILTERS, new ArrayList<>(value.getFilters()))
+            .append(COLLECTION_IDS, new ArrayList<>(value.getCollectionIds()))
+            .append(LINK_TYPE_IDS, new ArrayList<>(value.getLinkTypeIds()))
+            .append(DOCUMENT_IDS, new ArrayList<>(value.getDocumentIds()))
             .append(FULLTEXT, value.getFulltext())
             .append(PAGE, value.getPage())
             .append(PAGE_SIZE, value.getPageSize());

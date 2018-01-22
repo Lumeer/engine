@@ -19,27 +19,70 @@
 
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Role;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 
-public class LinkTypeFacade {
+@RequestScoped
+public class LinkTypeFacade extends AbstractFacade {
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private CollectionDao collectionDao;
 
    public LinkType createLinkType(LinkType linkType) {
-      throw new UnsupportedOperationException();
+      checkLinkTypePermission(linkType.getCollectionIds());
+
+      return linkTypeDao.createLinkType(linkType);
    }
 
    public LinkType updateLinkType(String id, LinkType linkType) {
-      throw new UnsupportedOperationException();
+      Set<String> collectionIds = new HashSet<>(linkType.getCollectionIds());
+      collectionIds.addAll(linkTypeDao.getLinkType(id).getCollectionIds());
+
+      checkLinkTypePermission(collectionIds);
+
+      return linkTypeDao.updateLinkType(id, linkType);
    }
 
    public void deleteLinkType(String id) {
-      throw new UnsupportedOperationException();
+      LinkType linkType = linkTypeDao.getLinkType(id);
+      checkLinkTypePermission(linkType.getCollectionIds());
+
+      linkTypeDao.deleteLinkType(id);
    }
 
-   public List<LinkType> getLinkTypes(SearchQuery query) {
-      throw new UnsupportedOperationException();
+   public List<LinkType> getLinkTypes(Query query) {
+      return linkTypeDao.getLinkTypes(createSearchQuery(query));
+   }
+
+   private void checkLinkTypePermission(java.util.Collection<String> collectionIds) {
+      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
+      for (Collection collection : collections) {
+         permissionsChecker.checkRole(collection, Role.WRITE);
+      }
+   }
+
+   private SearchQuery createSearchQuery(Query query) {
+      String user = authenticatedUser.getCurrentUsername();
+      Set<String> groups = userCache.getUser(user).getGroups();
+
+      return SearchQuery.createBuilder(user).groups(groups)
+                        .collectionIds(query.getCollectionIds())
+                        .linkTypeIds(query.getLinkTypeIds())
+                        .build();
    }
 
 }

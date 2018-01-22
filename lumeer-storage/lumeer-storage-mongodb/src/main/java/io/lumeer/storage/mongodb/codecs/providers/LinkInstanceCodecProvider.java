@@ -17,32 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.lumeer.storage.api.dao;
+package io.lumeer.storage.mongodb.codecs.providers;
 
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.mongodb.codecs.LinkInstanceCodec;
 
-import java.util.List;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-public interface LinkInstanceDao {
+public class LinkInstanceCodecProvider implements CodecProvider {
 
-   void createLinkInstanceRepository(Project project);
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == LinkInstance.class) {
+         return (Codec<T>) new LinkInstanceCodec(registry);
+      }
 
-   void deleteLinkInstanceRepository(Project project);
-
-   void setProject(Project project);
-
-   LinkInstance createLinkInstance(LinkInstance linkInstance);
-
-   LinkInstance updateLinkInstance(String id, LinkInstance linkInstance);
-
-   void deleteLinkInstance(String id);
-
-   void deleteLinkInstances(SearchQuery query);
-
-   LinkInstance getLinkInstance(String id);
-
-   List<LinkInstance> getLinkInstances(SearchQuery query);
+      return null;
+   }
 
 }

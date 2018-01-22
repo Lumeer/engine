@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -31,9 +32,12 @@ import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,6 +55,12 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private DocumentDao documentDao;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
 
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
@@ -86,6 +96,13 @@ public class CollectionFacade extends AbstractFacade {
       collectionDao.deleteCollection(collectionId);
       documentDao.deleteDocuments(collectionId);
       dataDao.deleteDataRepository(collectionId);
+
+      SearchQuery queryLinkTypes = createQueryForLinkTypes(collectionId);
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypes(queryLinkTypes);
+      if (!linkTypes.isEmpty()) {
+         linkTypeDao.deleteLinkTypes(queryLinkTypes);
+         linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(linkTypes));
+      }
    }
 
    public Collection getCollection(String collectionCode) {
@@ -186,6 +203,24 @@ public class CollectionFacade extends AbstractFacade {
    private String generateCollectionCode(String collectionName) {
       Set<String> existingCodes = collectionDao.getAllCollectionCodes();
       return CodeGenerator.generate(existingCodes, collectionName);
+   }
+
+   private SearchQuery createQueryForLinkTypes(String collectionId) {
+      String user = authenticatedUser.getCurrentUsername();
+      Set<String> groups = userCache.getUser(user).getGroups();
+
+      return SearchQuery.createBuilder(user).groups(groups)
+                        .collectionIds(Collections.singleton(collectionId))
+                        .build();
+   }
+
+   private SearchQuery createQueryForLinkInstances(List<LinkType> linkTypes) {
+      String user = authenticatedUser.getCurrentUsername();
+      Set<String> groups = userCache.getUser(user).getGroups();
+
+      return SearchQuery.createBuilder(user).groups(groups)
+                        .linkTypeIds(linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet()))
+                        .build();
    }
 
 }

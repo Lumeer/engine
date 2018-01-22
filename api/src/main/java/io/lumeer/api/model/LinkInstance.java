@@ -19,25 +19,95 @@
 
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public interface LinkInstance {
+public class LinkInstance {
 
-   String getId();
+   public static final String ID = "id";
+   public static final String LINK_TYPE_ID = "linkTypeId";
+   public static final String DOCUMENTS_IDS = "documentIds";
+   public static final String DATA = "data";
 
-   void setId(String id);
+   private String id;
+   private String linkTypeId;
+   private List<String> documentIds;
+   private Map<String, Object> data;
 
-   String getLinkTypeId();
+   @JsonCreator
+   public LinkInstance(@JsonProperty(ID) final String id,
+         @JsonProperty(LINK_TYPE_ID) final String linkTypeId,
+         @JsonProperty(DOCUMENTS_IDS) final List<String> documentIds,
+         @JsonProperty(DATA) final Map<String, Object> data) {
+      this.id = id;
+      this.linkTypeId = linkTypeId;
+      this.documentIds = documentIds;
+      this.data = data;
+   }
 
-   void setLinkTypeId(String linkTypeId);
+   public String getId() {
+      return id;
+   }
 
-   List<String> getDocumentIds();
+   public void setId(final String id) {
+      this.id = id;
+   }
 
-   void setDocumentIds(List<String> documentIds);
+   public String getLinkTypeId() {
+      return linkTypeId;
+   }
 
-   Map<String, Object> getData();
+   public void setLinkTypeId(final String linkTypeId) {
+      this.linkTypeId = linkTypeId;
+   }
 
-   void setData(Map<String, Object> data);
+   public List<String> getDocumentIds() {
+      return Collections.unmodifiableList(documentIds);
+   }
+
+   public void setDocumentIds(final List<String> documentIds) {
+      this.documentIds = documentIds;
+   }
+
+   public Map<String, Object> getData() {
+      return Collections.unmodifiableMap(data);
+   }
+
+   public void setData(final Map<String, Object> data) {
+      this.data = data;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof LinkInstance)) {
+         return false;
+      }
+
+      final LinkInstance that = (LinkInstance) o;
+
+      return id != null ? id.equals(that.id) : that.id == null;
+   }
+
+   @Override
+   public int hashCode() {
+      return id != null ? id.hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "LinkInstance{" +
+            "id='" + id + '\'' +
+            ", linkTypeId='" + linkTypeId + '\'' +
+            ", documentIds=" + documentIds +
+            ", data=" + data +
+            '}';
+   }
 
 }

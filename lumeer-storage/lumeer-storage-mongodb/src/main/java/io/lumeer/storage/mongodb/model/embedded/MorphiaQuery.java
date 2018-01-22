@@ -14,6 +14,9 @@ public class MorphiaQuery implements Query {
 
    public static final String COLLECTION_CODES = "collections";
    public static final String FILTERS = "filters";
+   public static final String COLLECTION_IDS = "collection_ids";
+   public static final String DOCUMENT_IDS = "document_ids";
+   public static final String LINK_TYPE_IDS = "link_type_ids";
    public static final String FULLTEXT = "fulltext";
    public static final String PAGE = "page";
    public static final String PAGE_SIZE = "pageSize";
@@ -23,6 +26,15 @@ public class MorphiaQuery implements Query {
 
    @Property(FILTERS)
    private Set<String> filters = Collections.emptySet();
+
+   @Property(COLLECTION_IDS)
+   private Set<String> collectionIds = Collections.emptySet();
+
+   @Property(DOCUMENT_IDS)
+   private Set<String> documentIds = Collections.emptySet();
+
+   @Property(LINK_TYPE_IDS)
+   private Set<String> linkTypeIds = Collections.emptySet();
 
    @Property(FULLTEXT)
    private String fulltext;
@@ -39,6 +51,9 @@ public class MorphiaQuery implements Query {
    public MorphiaQuery(Query query) {
       collectionCodes = new HashSet<>(query.getCollectionCodes());
       filters = new HashSet<>(query.getFilters());
+      collectionIds = new HashSet<>(query.getCollectionIds());
+      documentIds = new HashSet<>(query.getDocumentIds());
+      linkTypeIds = new HashSet<>(query.getLinkTypeIds());
       fulltext = query.getFulltext();
       page = query.getPage();
       pageSize = query.getPageSize();
@@ -52,6 +67,21 @@ public class MorphiaQuery implements Query {
    @Override
    public Set<String> getFilters() {
       return filters;
+   }
+
+   @Override
+   public Set<String> getCollectionIds() {
+      return collectionIds;
+   }
+
+   @Override
+   public Set<String> getLinkTypeIds() {
+      return linkTypeIds;
+   }
+
+   @Override
+   public Set<String> getDocumentIds() {
+      return documentIds;
    }
 
    @Override
@@ -77,6 +107,18 @@ public class MorphiaQuery implements Query {
       this.filters = filters;
    }
 
+   public void setLinkTypeIds(final Set<String> linkTypeIds) {
+      this.linkTypeIds = linkTypeIds;
+   }
+
+   public void setDocumentIds(final Set<String> documentIds) {
+      this.documentIds = documentIds;
+   }
+
+   public void setCollectionIds(final Set<String> collectionIds) {
+      this.collectionIds = collectionIds;
+   }
+
    public void setFulltext(final String fulltext) {
       this.fulltext = fulltext;
    }
@@ -94,16 +136,25 @@ public class MorphiaQuery implements Query {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof Query)) {
+      if (!(o instanceof MorphiaQuery)) {
          return false;
       }
 
-      final Query that = (Query) o;
+      final MorphiaQuery that = (MorphiaQuery) o;
 
       if (getCollectionCodes() != null ? !getCollectionCodes().equals(that.getCollectionCodes()) : that.getCollectionCodes() != null) {
          return false;
       }
       if (getFilters() != null ? !getFilters().equals(that.getFilters()) : that.getFilters() != null) {
+         return false;
+      }
+      if (getCollectionIds() != null ? !getCollectionIds().equals(that.getCollectionIds()) : that.getCollectionIds() != null) {
+         return false;
+      }
+      if (getDocumentIds() != null ? !getDocumentIds().equals(that.getDocumentIds()) : that.getDocumentIds() != null) {
+         return false;
+      }
+      if (getLinkTypeIds() != null ? !getLinkTypeIds().equals(that.getLinkTypeIds()) : that.getLinkTypeIds() != null) {
          return false;
       }
       if (getFulltext() != null ? !getFulltext().equals(that.getFulltext()) : that.getFulltext() != null) {
@@ -119,6 +170,9 @@ public class MorphiaQuery implements Query {
    public int hashCode() {
       int result = getCollectionCodes() != null ? getCollectionCodes().hashCode() : 0;
       result = 31 * result + (getFilters() != null ? getFilters().hashCode() : 0);
+      result = 31 * result + (getCollectionIds() != null ? getCollectionIds().hashCode() : 0);
+      result = 31 * result + (getDocumentIds() != null ? getDocumentIds().hashCode() : 0);
+      result = 31 * result + (getLinkTypeIds() != null ? getLinkTypeIds().hashCode() : 0);
       result = 31 * result + (getFulltext() != null ? getFulltext().hashCode() : 0);
       result = 31 * result + (getPage() != null ? getPage().hashCode() : 0);
       result = 31 * result + (getPageSize() != null ? getPageSize().hashCode() : 0);
@@ -127,9 +181,12 @@ public class MorphiaQuery implements Query {
 
    @Override
    public String toString() {
-      return "MongoQuery{" +
+      return "MorphiaQuery{" +
             "collectionCodes=" + collectionCodes +
             ", filters=" + filters +
+            ", collectionIds=" + collectionIds +
+            ", documentIds=" + documentIds +
+            ", linkTypeIds=" + linkTypeIds +
             ", fulltext='" + fulltext + '\'' +
             ", page=" + page +
             ", pageSize=" + pageSize +

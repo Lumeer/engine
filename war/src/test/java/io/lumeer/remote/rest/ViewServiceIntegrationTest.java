@@ -94,7 +94,7 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
    private static final String PERMISSIONS_URL = VIEWS_URL + "/" + CODE + "/permissions";
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testCollection"), Collections.singleton("testAttribute=42"), "test", 0, Integer.MAX_VALUE);
+      QUERY = new JsonQuery(Collections.singleton("testCollection"), Collections.singleton("testAttribute=42"), null, null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject

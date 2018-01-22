@@ -256,6 +256,27 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    }
 
    @Test
+   public void testGetCollectionsByIds() {
+      MorphiaCollection collection = prepareCollection(CODE, NAME);
+      String id = collectionDao.createCollection(collection).getId();
+
+      MorphiaCollection collection2 = prepareCollection(CODE2, NAME2);
+      String id2 = collectionDao.createCollection(collection2).getId();
+
+      MorphiaCollection collection3 = prepareCollection(CODE3, NAME3);
+      String id3 = collectionDao.createCollection(collection3).getId();
+
+      MorphiaCollection collection4 = prepareCollection(CODE4, NAME4);
+      String id4 = collectionDao.createCollection(collection4).getId();
+
+      List<Collection> collections = collectionDao.getCollectionsByIds(Arrays.asList(id, id3));
+      assertThat(collections).hasSize(2).extracting("id").containsOnlyElementsOf(Arrays.asList(id, id3));
+
+      collections = collectionDao.getCollectionsByIds(Arrays.asList(id, id2, id4));
+      assertThat(collections).hasSize(3).extracting("id").containsOnlyElementsOf(Arrays.asList(id, id2, id4));
+   }
+
+   @Test
    public void testGetCollectionsNoReadRole() {
       MorphiaCollection collection = prepareCollection(CODE, NAME);
       Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.CLONE.toString()));

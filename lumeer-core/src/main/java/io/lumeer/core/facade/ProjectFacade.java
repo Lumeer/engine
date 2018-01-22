@@ -28,6 +28,8 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -53,6 +55,12 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private ViewDao viewDao;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
 
    public Project createProject(Project project) {
       checkOrganizationWriteRole();
@@ -150,12 +158,16 @@ public class ProjectFacade extends AbstractFacade {
       collectionDao.createCollectionsRepository(project);
       documentDao.createDocumentsRepository(project);
       viewDao.createViewsRepository(project);
+      linkInstanceDao.createLinkInstanceRepository(project);
+      linkTypeDao.createLinkTypeRepository(project);
    }
 
    private void deleleProjectScopedRepositories(Project project) {
       collectionDao.deleteCollectionsRepository(project);
       documentDao.deleteDocumentsRepository(project);
       viewDao.deleteViewsRepository(project);
+      linkTypeDao.deleteLinkTypeRepository(project);
+      linkInstanceDao.deleteLinkInstanceRepository(project);
    }
 
    private void checkOrganizationWriteRole() {
