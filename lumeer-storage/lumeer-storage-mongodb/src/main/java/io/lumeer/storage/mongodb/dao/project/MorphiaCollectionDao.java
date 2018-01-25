@@ -143,6 +143,9 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
       if (searchQuery.isCollectionCodesQuery()) {
          mongoQuery.field(MorphiaCollection.CODE).in(searchQuery.getCollectionCodes());
       }
+      if(searchQuery.isCollectionIdsQuery()) {
+         mongoQuery.field(MorphiaCollection.ID).in(searchQuery.getCollectionIds().stream().map(ObjectId::new).collect(Collectors.toSet()));
+      }
       return mongoQuery;
    }
 

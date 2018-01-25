@@ -70,7 +70,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<Document> searchDocuments(Query query) {
-      Map<String, Collection> collections = getCollections(query.getCollectionCodes());
+      Map<String, Collection> collections = getCollections(query);
       Map<String, DataDocument> dataDocuments = getDataDocuments(collections.values(), query);
 
       return getDocuments(collections, dataDocuments);
@@ -96,7 +96,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<Collection> getCollectionsByDocumentSearch(Query query) {
-      java.util.Collection<Collection> searchedCollections = getCollections(query.getCollectionCodes()).values();
+      java.util.Collection<Collection> searchedCollections = getCollections(query).values();
       List<Collection> matchedCollections = new ArrayList<>();
 
       for (Collection collection : searchedCollections) {
@@ -120,19 +120,20 @@ public class SearchFacade extends AbstractFacade {
                     .collect(Collectors.toList());
    }
 
-   private Map<String, Collection> getCollections(Set<String> collectionCodes) {
-      SearchQuery collectionQuery = createCollectionQuery(collectionCodes);
+   private Map<String, Collection> getCollections(Query query) {
+      SearchQuery collectionQuery = createCollectionQuery(query);
       return collectionDao.getCollections(collectionQuery).stream()
                           .collect(Collectors.toMap(Resource::getId, Function.identity()));
    }
 
-   private SearchQuery createCollectionQuery(Set<String> collectionCodes) {
+   private SearchQuery createCollectionQuery(Query query) {
       String user = authenticatedUser.getCurrentUsername();
       Set<String> groups = userCache.getUser(user).getGroups();
 
       return SearchQuery.createBuilder(user)
                         .groups(groups)
-                        .collectionCodes(collectionCodes)
+                        .collectionCodes(query.getCollectionCodes())
+                        .collectionIds(query.getCollectionIds())
                         .build();
    }
 
@@ -166,6 +167,7 @@ public class SearchFacade extends AbstractFacade {
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .collectionCodes(query.getCollectionCodes())
+                        .collectionIds(query.getCollectionIds())
                         .fulltext(query.getFulltext()) // TODO add filters
                         .build();
    }
