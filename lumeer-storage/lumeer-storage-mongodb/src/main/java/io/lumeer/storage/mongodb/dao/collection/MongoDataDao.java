@@ -36,11 +36,11 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -137,7 +137,17 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    }
 
    private Bson createFilter(SearchQuery query) {
-      return query.isFulltextQuery() ? Filters.text(query.getFulltext()) : new BsonDocument();
+      List<Bson> filters = new ArrayList<>();
+      if(query.isFulltextQuery()){
+         filters.add(Filters.text(query.getFulltext()));
+      }
+      if (query.isDocumentIdsQuery()) {
+         List<ObjectId> ids = query.getDocumentIds().stream().filter(ObjectId::isValid).map(ObjectId::new).collect(Collectors.toList());
+         if (!ids.isEmpty()) {
+            filters.add(Filters.in(ID, ids));
+         }
+      }
+      return filters.size() > 0 ? Filters.and(filters) : new Document();
    }
 
    MongoCollection<Document> dataCollection(String collectionId) {

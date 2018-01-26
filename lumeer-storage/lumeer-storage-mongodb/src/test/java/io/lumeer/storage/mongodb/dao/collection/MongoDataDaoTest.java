@@ -33,6 +33,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 public class MongoDataDaoTest extends MongoDbTestBase {
@@ -188,6 +191,41 @@ public class MongoDataDaoTest extends MongoDbTestBase {
                                            .build();
       List<DataDocument> data = dataDao.getData(COLLECTION_ID, searchQuery);
       assertThat(data).extracting(DataDocument::getId).containsOnly(id2, id3);
+   }
+
+   @Test
+   public void testGetDataByDocumenstIds() {
+      String id1 = createDocument(KEY1, VALUE1);
+      String id2 = createDocument(KEY1, VALUE2);
+      String id3 = createDocument(KEY1, VALUE1);
+      String id4 = createDocument(KEY1, VALUE2);
+
+      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
+                                           .documentIds(Collections.singleton(id2))
+                                           .build();
+      List<DataDocument> data = dataDao.getData(COLLECTION_ID, searchQuery);
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id2);
+
+      searchQuery = SearchQuery.createBuilder(USER)
+                               .documentIds(new HashSet<>(Arrays.asList(id1, id3, id4)))
+                               .build();
+      data = dataDao.getData(COLLECTION_ID, searchQuery);
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id1, id3, id4);
+   }
+
+   @Test
+   public void testGetDataByFulltextAttributeValueAndDocumentsIds() {
+      String id1 = createDocument(KEY1, VALUE1);
+      String id2 = createDocument(KEY1, "fulltext");
+      String id3 = createDocument(KEY1, "something fulltext");
+      String id4 = createDocument(KEY1, VALUE1);
+
+      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
+                                           .fulltext("fulltext")
+                                           .documentIds(new HashSet<>(Arrays.asList(id1, id2)))
+                                           .build();
+      List<DataDocument> data = dataDao.getData(COLLECTION_ID, searchQuery);
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id2);
    }
 
    @Test
