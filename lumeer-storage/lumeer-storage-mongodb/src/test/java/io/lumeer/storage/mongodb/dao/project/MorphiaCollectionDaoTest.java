@@ -67,7 +67,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    private static final String ICON = "fa-eye";
    private static final Set<Attribute> ATTRIBUTES;
    private static final Integer DOCUMENTS_COUNT = 0;
-   private static final LocalDateTime LAST_TIME_USED = LocalDateTime.now();
+   private static final LocalDateTime LAST_TIME_USED = LocalDateTime.now().withNano(0);
 
    private static final MorphiaPermissions PERMISSIONS = new MorphiaPermissions();
    private static final MorphiaPermission USER_PERMISSION;
