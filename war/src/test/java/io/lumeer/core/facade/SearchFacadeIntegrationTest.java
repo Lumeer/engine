@@ -205,7 +205,7 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(1));
 
       collections = searchFacade.searchCollections(new JsonQuery(null, null, null, null, new HashSet<>(Arrays.asList(id2, id5)), "fulltext", null, null));
-      assertThat(collections).extracting(Collection::getId).containsOnlyElementsOf(collectionIds);
+      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(2));
    }
 
    @Test
@@ -273,18 +273,18 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testSearchDocumentsByCombination() {
-      String id1 = createDocument(collectionIds.get(0), "word").getId();
-      createDocument(collectionIds.get(0), "fulltext").getId();
+      createDocument(collectionIds.get(0), "word").getId();
+      String id2 = createDocument(collectionIds.get(0), "fulltext").getId();
       String id3 = createDocument(collectionIds.get(1), "something fulltext").getId();
       String id4 = createDocument(collectionIds.get(1), "some other word anything").getId();
-      String id5 = createDocument(collectionIds.get(2), "full word").getId();
+      createDocument(collectionIds.get(2), "full word").getId();
       createDocument(collectionIds.get(2), "anything").getId();
 
       List<Document> documents = searchFacade.searchDocuments(new JsonQuery(null, null, Collections.singleton(collectionIds.get(0)), null, null, "anything", null, null));
       assertThat(documents).extracting(Document::getId).isEmpty();
 
-      documents = searchFacade.searchDocuments(new JsonQuery(Collections.singleton(COLLECTION_CODES.get(1)), null, null, null, new HashSet<>(Arrays.asList(id1, id5)), null, null, null));
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id4, id5);
+      documents = searchFacade.searchDocuments(new JsonQuery(Collections.singleton(COLLECTION_CODES.get(1)), null, null, null, null, "fulltext", null, null));
+      assertThat(documents).extracting(Document::getId).containsOnly(id3);
 
    }
 

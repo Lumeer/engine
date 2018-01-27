@@ -61,18 +61,45 @@ public class SearchFacade extends AbstractFacade {
       Set<Collection> collections = new HashSet<>();
 
       if (query.getFulltext() != null && !query.getFulltext().isEmpty()) {
-         collections.addAll(getCollectionsByDocumentFulltext(query));
+         collections.addAll(getCollectionsByDocumentsSearch(query));
       }
 
-      if(query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()){
+      if (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()) {
          collections.addAll(getCollectionsByDocumentsIds(query.getDocumentIds()));
       }
 
-      if(isOnlyCollectionQuery(query) || collectionQueryIsNotEmpty(query)) {
+      if (isOnlyCollectionQuery(query) || collectionQueryIsNotEmpty(query)) {
          collections.addAll(getCollectionsByCollectionSearch(query));
       }
 
       return new ArrayList<>(collections);
+   }
+
+   public List<Document> searchDocuments(Query query) {
+      Set<Document> documents = new HashSet<>();
+
+      if (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()) {
+         documents.addAll(getDocumentsByIds(query.getDocumentIds()));
+      }
+
+      if (!isOnlyDocumentsIdsQuery(query) || isEmptyQuery(query)) {
+         documents.addAll(searchDocumentsByFullText(query));
+      }
+
+      return new ArrayList<>(documents);
+   }
+
+   private boolean isEmptyQuery(final Query query) {
+      return isEmptyQueryExceptDocumentIds(query) && (query.getDocumentIds() == null || query.getDocumentIds().isEmpty());
+   }
+
+   private boolean isEmptyQueryExceptDocumentIds(final Query query) {
+      return (query.getFilters() == null || query.getFilters().isEmpty()) && (query.getFulltext() == null || query.getFulltext().isEmpty()) &&
+            (query.getCollectionCodes() == null || query.getCollectionCodes().isEmpty()) || (query.getCollectionIds() == null || query.getCollectionIds().isEmpty());
+   }
+
+   private boolean isOnlyDocumentsIdsQuery(final Query query) {
+      return isEmptyQueryExceptDocumentIds(query) && (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty());
    }
 
    private java.util.Collection<Collection> getCollectionsByDocumentsIds(final Set<String> documentIds) {
@@ -82,26 +109,12 @@ public class SearchFacade extends AbstractFacade {
       return collectionDao.getCollectionsByIds(collectionIds);
    }
 
-   public List<Document> searchDocuments(Query query) {
-      List<Document> documents = new ArrayList<>();
-
-      if (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()) {
-         documents.addAll(getDocumentsByIds(query.getDocumentIds()));
-      }
-
-      if(isOnlyCollectionQuery(query) || collectionQueryIsNotEmpty(query)) {
-         documents.addAll(searchDocumentsByFullText(query));
-      }
-
-      return documents;
-   }
-
-   private boolean isOnlyCollectionQuery(Query query){
+   private boolean isOnlyCollectionQuery(Query query) {
       return (query.getDocumentIds() == null || query.getDocumentIds().isEmpty()) && (query.getFilters() == null || query.getFilters().isEmpty()) &&
-            (query.getFilters() == null || query.getFilters().isEmpty());
+            (query.getFulltext() == null || query.getFulltext().isEmpty());
    }
 
-   private boolean collectionQueryIsNotEmpty(Query query){
+   private boolean collectionQueryIsNotEmpty(Query query) {
       return (query.getCollectionCodes() != null && !query.getCollectionCodes().isEmpty()) || (query.getCollectionIds() != null && !query.getCollectionIds().isEmpty());
    }
 
@@ -141,7 +154,7 @@ public class SearchFacade extends AbstractFacade {
                           .collect(Collectors.toList());
    }
 
-   private List<Collection> getCollectionsByDocumentFulltext(Query query) {
+   private List<Collection> getCollectionsByDocumentsSearch(Query query) {
       java.util.Collection<Collection> searchedCollections = getCollections(query).values();
       List<Collection> matchedCollections = new ArrayList<>();
 
@@ -214,6 +227,7 @@ public class SearchFacade extends AbstractFacade {
       return SearchQuery.createBuilder(user).groups(groups)
                         .collectionCodes(query.getCollectionCodes())
                         .collectionIds(query.getCollectionIds())
+                        .documentIds(query.getDocumentIds())
                         .fulltext(query.getFulltext()) // TODO add filters
                         .build();
    }
