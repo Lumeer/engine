@@ -68,7 +68,7 @@ public class SearchFacade extends AbstractFacade {
          collections.addAll(getCollectionsByDocumentsIds(query.getDocumentIds()));
       }
 
-      if (isOnlyCollectionQuery(query) || collectionQueryIsNotEmpty(query)) {
+      if (collectionQueryIsNotEmpty(query) || isEmptyQuery(query)) {
          collections.addAll(getCollectionsByCollectionSearch(query));
       }
 
@@ -107,11 +107,6 @@ public class SearchFacade extends AbstractFacade {
       Set<String> collectionIds = documents.stream().map(Document::getCollectionId).collect(Collectors.toSet());
 
       return collectionDao.getCollectionsByIds(collectionIds);
-   }
-
-   private boolean isOnlyCollectionQuery(Query query) {
-      return (query.getDocumentIds() == null || query.getDocumentIds().isEmpty()) && (query.getFilters() == null || query.getFilters().isEmpty()) &&
-            (query.getFulltext() == null || query.getFulltext().isEmpty());
    }
 
    private boolean collectionQueryIsNotEmpty(Query query) {
