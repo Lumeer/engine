@@ -35,7 +35,6 @@ public class JsonDocument implements Document {
 
    private String id;
 
-   @JsonIgnore
    private String collectionId;
 
    private String collectionCode;

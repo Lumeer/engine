@@ -94,7 +94,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
 
    @Override
    public List<LinkInstance> getLinkInstances(final SearchQuery query) {
-      return databaseCollection().find(Filters.and(linkInstancesFilter(query))).into(new ArrayList<>());
+      return databaseCollection().find(linkInstancesFilter(query)).into(new ArrayList<>());
    }
 
    private Bson linkInstancesFilter(final SearchQuery query){
@@ -105,7 +105,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
       if (query.isDocumentIdsQuery()) {
          filters.add(Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, query.getDocumentIds()));
       }
-      return Filters.and(filters);
+      return filters.size() > 0 ? Filters.and(filters) : new Document();
    }
 
    private String databaseCollectionName(Project project) {
