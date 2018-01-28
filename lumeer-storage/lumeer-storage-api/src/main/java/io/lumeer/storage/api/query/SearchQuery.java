@@ -47,19 +47,19 @@ public class SearchQuery extends DatabaseQuery {
    }
 
    public Set<String> getCollectionCodes() {
-      return Collections.unmodifiableSet(collectionCodes);
+      return collectionCodes != null ? Collections.unmodifiableSet(collectionCodes) : Collections.emptySet();
    }
 
    public Set<String> getLinkTypeIds() {
-      return Collections.unmodifiableSet(linkTypeIds);
+      return linkTypeIds != null ? Collections.unmodifiableSet(linkTypeIds) : Collections.emptySet();
    }
 
    public Set<String> getDocumentIds() {
-      return Collections.unmodifiableSet(documentIds);
+      return documentIds != null ? Collections.unmodifiableSet(documentIds) : Collections.emptySet();
    }
 
    public Set<String> getCollectionIds() {
-      return Collections.unmodifiableSet(collectionIds);
+      return collectionIds != null ? Collections.unmodifiableSet(collectionIds) : Collections.emptySet();
    }
 
    public boolean isFulltextQuery() {
@@ -112,18 +112,17 @@ public class SearchQuery extends DatabaseQuery {
          return this;
       }
 
-
-      public Builder collectionIds(Set<String> collectionIds){
+      public Builder collectionIds(Set<String> collectionIds) {
          this.collectionIds = collectionIds;
          return this;
       }
 
-      public Builder linkTypeIds(Set<String> linkTypeIds){
+      public Builder linkTypeIds(Set<String> linkTypeIds) {
          this.linkTypeIds = linkTypeIds;
          return this;
       }
 
-      public Builder documentIds(Set<String> documentIds){
+      public Builder documentIds(Set<String> documentIds) {
          this.documentIds = documentIds;
          return this;
       }

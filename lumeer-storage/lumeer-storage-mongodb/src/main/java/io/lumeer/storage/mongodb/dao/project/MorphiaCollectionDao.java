@@ -37,6 +37,7 @@ import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -96,7 +97,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    public List<Collection> getCollectionsByIds(final java.util.Collection<String> ids) {
       List<ObjectId> objectIds = ids.stream().map(ObjectId::new).collect(Collectors.toList());
       return new ArrayList<>(datastore.createQuery(databaseCollection(), MorphiaCollection.class)
-            .field(MorphiaCollection.ID).in(objectIds).asList());
+                                      .field(MorphiaCollection.ID).in(objectIds).asList());
    }
 
    @Override
@@ -140,11 +141,18 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
       if (searchQuery.isFulltextQuery()) {
          mongoQuery.search(searchQuery.getFulltext());
       }
+      Set<ObjectId> collectionIds = searchQuery.getCollectionIds() != null ? searchQuery.getCollectionIds().stream().map(ObjectId::new).collect(Collectors.toSet()) : Collections.emptySet();
       if (searchQuery.isCollectionCodesQuery()) {
-         mongoQuery.field(MorphiaCollection.CODE).in(searchQuery.getCollectionCodes());
-      }
-      if(searchQuery.isCollectionIdsQuery()) {
-         mongoQuery.field(MorphiaCollection.ID).in(searchQuery.getCollectionIds().stream().map(ObjectId::new).collect(Collectors.toSet()));
+         if (!collectionIds.isEmpty()) {
+            mongoQuery.or(
+                  mongoQuery.criteria(MorphiaCollection.CODE).in(searchQuery.getCollectionCodes()),
+                  mongoQuery.criteria(MorphiaCollection.ID).in(collectionIds)
+            );
+         } else {
+            mongoQuery.field(MorphiaCollection.CODE).in(searchQuery.getCollectionCodes());
+         }
+      } else if (!collectionIds.isEmpty()) {
+         mongoQuery.field(MorphiaCollection.ID).in(collectionIds);
       }
       return mongoQuery;
    }

@@ -48,20 +48,24 @@ public class JsonQuery implements Query {
       this.pageSize = null;
    }
 
-   public JsonQuery(Integer page, Integer pageSize) {
-      this.page = page;
-      this.pageSize = pageSize;
+   public JsonQuery(String fulltext){
+      this.fulltext = fulltext;
 
       this.collectionIds = Collections.emptySet();
+      this.collectionCodes = Collections.emptySet();
       this.documentIds = Collections.emptySet();
       this.linkTypeIds = Collections.emptySet();
-      this.collectionCodes = Collections.emptySet();
       this.filters = Collections.emptySet();
-      this.fulltext = "";
+      this.page = 0;
+      this.pageSize = 0;
+   }
+
+   public JsonQuery(Integer page, Integer pageSize) {
+      this(null, page, pageSize);
    }
 
    public JsonQuery(String collectionCode, Integer page, Integer pageSize) {
-      this.collectionCodes = Collections.singleton(collectionCode);
+      this.collectionCodes = collectionCode != null ?  Collections.singleton(collectionCode) : Collections.emptySet();
       this.page = page;
       this.pageSize = pageSize;
 
@@ -76,6 +80,7 @@ public class JsonQuery implements Query {
       this.collectionIds = collectionIds != null ? collectionIds : Collections.emptySet();
       this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptySet();
       this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
+
       this.filters = Collections.emptySet();
       this.collectionCodes = Collections.emptySet();
       this.page = 0;
