@@ -30,6 +30,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,16 +64,20 @@ public class QueryCodec implements Codec<JsonQuery> {
          return new JsonQuery();
       }
 
-      Set<String> collectionCodes = new HashSet<String>(bson.get(COLLECTION_CODES, List.class));
-      Set<String> filters = new HashSet<String>(bson.get(FILTERS, List.class));
-      Set<String> collectionIds = new HashSet<String>(bson.get(COLLECTION_IDS, List.class));
-      Set<String> linkTypeIds = new HashSet<String>(bson.get(LINK_TYPE_IDS, List.class));
-      Set<String> documentIds = new HashSet<String>(bson.get(DOCUMENT_IDS, List.class));
+      Set<String> collectionCodes = convertToSet(bson.get(COLLECTION_CODES, List.class));
+      Set<String> filters = convertToSet(bson.get(FILTERS, List.class));
+      Set<String> collectionIds = convertToSet(bson.get(COLLECTION_IDS, List.class));
+      Set<String> linkTypeIds = convertToSet(bson.get(LINK_TYPE_IDS, List.class));
+      Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
       String fulltext = bson.getString(FULLTEXT);
       Integer page = bson.getInteger(PAGE);
       Integer pageSize = bson.getInteger(PAGE_SIZE);
 
       return new JsonQuery(collectionCodes, filters, collectionIds, linkTypeIds, documentIds, fulltext, page, pageSize);
+   }
+
+   private static Set<String> convertToSet(List list) {
+      return list != null ? new HashSet<>(list) : Collections.emptySet();
    }
 
    @Override
