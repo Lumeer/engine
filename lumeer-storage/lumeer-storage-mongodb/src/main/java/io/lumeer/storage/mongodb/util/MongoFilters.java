@@ -25,6 +25,7 @@ import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -83,6 +84,16 @@ public class MongoFilters {
             Filters.text(query.getText()),
             MongoFilters.permissionsFilter(query)
       );
+   }
+
+   public static <T> void addPaginationToSuggestionQuery(FindIterable<T> findIterable, SuggestionQuery query) {
+      Integer page = query.getPage();
+      Integer pageSize = query.getPageSize();
+
+      if (page != null && pageSize != null) {
+         findIterable.skip(page * pageSize)
+                     .limit(pageSize);
+      }
    }
 
 }

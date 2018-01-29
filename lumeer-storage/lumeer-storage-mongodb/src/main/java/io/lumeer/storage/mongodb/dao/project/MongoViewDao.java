@@ -52,6 +52,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
@@ -126,7 +127,14 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public List<View> getViews(final SuggestionQuery query) {
-      return databaseCollection().find(MongoFilters.suggestionsFilter(query)).into(new ArrayList<>());
+      FindIterable<JsonView> findIterable  = databaseCollection().find(suggestionsFilter(query));
+      MongoFilters.addPaginationToSuggestionQuery(findIterable, query);
+      return findIterable.into(new ArrayList<>());
+   }
+
+   private Bson suggestionsFilter(final SuggestionQuery query) {
+      Bson regex = Filters.regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
+      return Filters.and(regex, MongoFilters.permissionsFilter(query));
    }
 
    @Override

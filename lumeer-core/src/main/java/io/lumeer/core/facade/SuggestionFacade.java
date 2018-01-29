@@ -21,10 +21,13 @@ package io.lumeer.core.facade;
 import io.lumeer.api.dto.JsonSuggestions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 
 import java.util.Collections;
@@ -46,6 +49,9 @@ public class SuggestionFacade extends AbstractFacade {
    @Inject
    private ViewDao viewDao;
 
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
    public JsonSuggestions suggest(String text, SuggestionType type) {
       switch (type) {
          case ALL:
@@ -57,7 +63,8 @@ public class SuggestionFacade extends AbstractFacade {
             List<Collection> collections = suggestCollections(text, SUGGESTIONS_LIMIT);
             return JsonSuggestions.collectionSuggestions(collections);
          case LINK:
-            return JsonSuggestions.emptySuggestions(); // TODO implement links search
+            List<LinkType> linkTypes = suggestLinkTypes(text, SUGGESTIONS_LIMIT);
+            return JsonSuggestions.linkSuggestions(linkTypes);
          case VIEW:
             List<View> views = suggestViews(text, SUGGESTIONS_LIMIT);
             return JsonSuggestions.viewSuggestions(views);
@@ -70,8 +77,9 @@ public class SuggestionFacade extends AbstractFacade {
       List<Collection> attributes = suggestAttributes(text, limit / TYPES_COUNT);
       List<Collection> collections = suggestCollections(text, limit / TYPES_COUNT);
       List<View> views = suggestViews(text, limit / TYPES_COUNT);
+      List<LinkType> linkTypes = suggestLinkTypes(text, limit / TYPES_COUNT);
 
-      return new JsonSuggestions(attributes, collections, views);
+      return new JsonSuggestions(attributes, collections, views, linkTypes);
    }
 
    private List<Collection> suggestAttributes(String text, int limit) {
@@ -83,8 +91,8 @@ public class SuggestionFacade extends AbstractFacade {
    private static List<Collection> keepOnlyMatchingAttributes(List<Collection> collections, String text) {
       for (Collection collection : collections) {
          Set<Attribute> attributes = collection.getAttributes().stream()
-                                                .filter(a -> a.getName().toLowerCase().startsWith(text))
-                                                .collect(Collectors.toSet());
+                                               .filter(a -> a.getName().toLowerCase().contains(text))
+                                               .collect(Collectors.toSet());
          collection.setAttributes(attributes);
       }
       return collections;
@@ -98,18 +106,50 @@ public class SuggestionFacade extends AbstractFacade {
       return collections;
    }
 
+   private List<LinkType> suggestLinkTypes(String text, int limit) {
+      List<Collection> collections = collectionDao.getCollections(createSimpleSearchQuery());
+      if (collections.isEmpty()) {
+         return Collections.emptyList();
+      }
+
+      List<String> collectionIds = collections.stream().map(Collection::getId).collect(Collectors.toList());
+      SuggestionQuery suggestionQuery = createSuggestionQueryWithIds(text, limit, collectionIds);
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypes(suggestionQuery);
+      return linkTypes.stream()
+                      .filter(linkType -> collectionIds.containsAll(linkType.getCollectionIds()))
+                      .collect(Collectors.toList());
+   }
+
    private List<View> suggestViews(String text, int limit) {
       SuggestionQuery suggestionQuery = createSuggestionQuery(text, limit);
       return viewDao.getViews(suggestionQuery);
    }
 
    private SuggestionQuery createSuggestionQuery(String text, int limit) {
+      return createBuilderForSuggestionQuery(text, limit)
+            .build();
+   }
+
+   private SuggestionQuery createSuggestionQueryWithIds(String text, int limit, List<String> collectionIds) {
+      return createBuilderForSuggestionQuery(text, limit)
+            .collectionIds(collectionIds)
+            .build();
+   }
+
+   private SuggestionQuery.Builder createBuilderForSuggestionQuery(String text, int limit) {
       String user = authenticatedUser.getCurrentUsername();
       Set<String> groups = authenticatedUser.getCurrentUser().getGroups();
 
       return SuggestionQuery.createBuilder(user).groups(groups)
                             .text(text)
-                            .page(0).pageSize(limit)
-                            .build();
+                            .page(0).pageSize(limit);
+   }
+
+   private SearchQuery createSimpleSearchQuery() {
+      String user = authenticatedUser.getCurrentUsername();
+      Set<String> groups = authenticatedUser.getCurrentUser().getGroups();
+
+      return SearchQuery.createBuilder(user).groups(groups)
+                        .build();
    }
 }
