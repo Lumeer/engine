@@ -107,16 +107,16 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private List<LinkType> suggestLinkTypes(String text, int limit) {
-      List<Collection> collections = collectionDao.getCollections(createSimpleSearchQuery());
-      if (collections.isEmpty()) {
+      List<Collection> allowedCollections = collectionDao.getCollections(createSimpleSearchQuery());
+      if (allowedCollections.isEmpty()) {
          return Collections.emptyList();
       }
 
-      List<String> collectionIds = collections.stream().map(Collection::getId).collect(Collectors.toList());
-      SuggestionQuery suggestionQuery = createSuggestionQueryWithIds(text, limit, collectionIds);
+      List<String> allowedCollectionIds = allowedCollections.stream().map(Collection::getId).collect(Collectors.toList());
+      SuggestionQuery suggestionQuery = createSuggestionQueryWithIds(text, limit, allowedCollectionIds);
       List<LinkType> linkTypes = linkTypeDao.getLinkTypes(suggestionQuery);
       return linkTypes.stream()
-                      .filter(linkType -> collectionIds.containsAll(linkType.getCollectionIds()))
+                      .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
                       .collect(Collectors.toList());
    }
 
