@@ -128,7 +128,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    @Override
    public List<View> getViews(final SuggestionQuery query) {
       FindIterable<JsonView> findIterable  = databaseCollection().find(suggestionsFilter(query));
-      MongoFilters.addPaginationToSuggestionQuery(findIterable, query);
+      addPaginationToSuggestionQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
 

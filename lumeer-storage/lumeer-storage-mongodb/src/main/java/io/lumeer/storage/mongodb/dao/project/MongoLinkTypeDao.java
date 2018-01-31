@@ -105,7 +105,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    @Override
    public List<LinkType> getLinkTypes(final SuggestionQuery query) {
       FindIterable<LinkType> findIterable = databaseCollection().find(linkTypesSuggestionFilter(query));
-      MongoFilters.addPaginationToSuggestionQuery(findIterable, query);
+      addPaginationToSuggestionQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
 

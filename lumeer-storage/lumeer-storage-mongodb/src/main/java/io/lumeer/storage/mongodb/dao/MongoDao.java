@@ -20,10 +20,12 @@ package io.lumeer.storage.mongodb.dao;
 
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.query.DatabaseQuery;
+import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.model.MorphiaView;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import org.mongodb.morphia.AdvancedDatastore;
 import org.mongodb.morphia.query.Criteria;
@@ -68,6 +70,16 @@ public abstract class MongoDao {
       return datastore.createQuery(MorphiaPermission.class)
                       .filter(MorphiaPermission.NAME, name)
                       .field(MorphiaPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
+   }
+
+   public <T> void addPaginationToSuggestionQuery(FindIterable<T> findIterable, SuggestionQuery query) {
+      Integer page = query.getPage();
+      Integer pageSize = query.getPageSize();
+
+      if (page != null && pageSize != null) {
+         findIterable.skip(page * pageSize)
+                     .limit(pageSize);
+      }
    }
 
    protected static FindOptions createFindOptions(DatabaseQuery query) {

@@ -86,14 +86,4 @@ public class MongoFilters {
       );
    }
 
-   public static <T> void addPaginationToSuggestionQuery(FindIterable<T> findIterable, SuggestionQuery query) {
-      Integer page = query.getPage();
-      Integer pageSize = query.getPageSize();
-
-      if (page != null && pageSize != null) {
-         findIterable.skip(page * pageSize)
-                     .limit(pageSize);
-      }
-   }
-
 }
