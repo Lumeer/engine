@@ -25,7 +25,6 @@ import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
