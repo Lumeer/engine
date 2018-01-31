@@ -9,9 +9,12 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
@@ -26,6 +29,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
@@ -96,6 +100,17 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    @Override
    public List<LinkType> getLinkTypes(final SearchQuery query) {
       return databaseCollection().find(linkTypesFilter(query)).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkType> getLinkTypes(final SuggestionQuery query) {
+      FindIterable<LinkType> findIterable = databaseCollection().find(linkTypesSuggestionFilter(query));
+      addPaginationToSuggestionQuery(findIterable, query);
+      return findIterable.into(new ArrayList<>());
+   }
+
+   private Bson linkTypesSuggestionFilter(SuggestionQuery query) {
+      return Filters.regex(LinkTypeCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
    }
 
    private Bson linkTypesFilter(final SearchQuery query) {

@@ -18,21 +18,28 @@
  */
 package io.lumeer.storage.api.query;
 
+import java.util.List;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public class SuggestionQuery extends DatabaseQuery {
 
    private final String text;
+   private final List<String> collectionIds;
 
    private SuggestionQuery(final Builder builder) {
       super(builder);
 
       this.text = builder.text;
+      this.collectionIds = builder.collectionIds;
    }
 
    public String getText() {
       return text;
+   }
+
+   public List<String> getCollectionIds() {
+      return collectionIds;
    }
 
    public static Builder createBuilder(String user) {
@@ -42,6 +49,7 @@ public class SuggestionQuery extends DatabaseQuery {
    public static class Builder extends DatabaseQuery.Builder<SuggestionQuery.Builder> {
 
       private String text;
+      private List<String> collectionIds;
 
       private Builder(final String user) {
          super(user);
@@ -49,6 +57,11 @@ public class SuggestionQuery extends DatabaseQuery {
 
       public Builder text(String text) {
          this.text = text;
+         return this;
+      }
+
+      public Builder collectionIds(List<String> collectionIds) {
+         this.collectionIds = collectionIds;
          return this;
       }
 

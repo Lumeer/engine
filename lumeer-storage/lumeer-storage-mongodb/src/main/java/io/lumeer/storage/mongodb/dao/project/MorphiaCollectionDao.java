@@ -161,7 +161,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
       Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class);
 
       mongoQuery.or(createPermissionsCriteria(mongoQuery, suggestionQuery));
-      mongoQuery.field(MorphiaCollection.NAME).startsWithIgnoreCase(suggestionQuery.getText());
+      mongoQuery.field(MorphiaCollection.NAME).containsIgnoreCase(suggestionQuery.getText());
 
       return mongoQuery;
    }
@@ -170,7 +170,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
       Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class);
 
       mongoQuery.or(createPermissionsCriteria(mongoQuery, suggestionQuery));
-      mongoQuery.field(MorphiaCollection.ATTRIBUTES + "." + MorphiaAttribute.NAME).startsWithIgnoreCase(suggestionQuery.getText());
+      mongoQuery.field(MorphiaCollection.ATTRIBUTES + "." + MorphiaAttribute.NAME).containsIgnoreCase(suggestionQuery.getText());
 
       return mongoQuery;
    }

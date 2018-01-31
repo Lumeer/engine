@@ -19,6 +19,7 @@
 package io.lumeer.api.dto;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.View;
 
 import java.util.Collections;
@@ -29,11 +30,13 @@ public class JsonSuggestions {
    private final List<JsonCollection> attributes;
    private final List<JsonCollection> collections;
    private final List<JsonView> views;
+   private final List<LinkType> linkTypes;
 
-   public JsonSuggestions(final List<Collection> attributes, final List<Collection> collections, final List<View> views) {
+   public JsonSuggestions(final List<Collection> attributes, final List<Collection> collections, final List<View> views, final List<LinkType> linkTypes) {
       this.attributes = JsonCollection.convert(attributes);
       this.collections = JsonCollection.convert(collections);
       this.views = JsonView.convert(views);
+      this.linkTypes = linkTypes;
    }
 
    public List<JsonCollection> getAttributes() {
@@ -48,19 +51,27 @@ public class JsonSuggestions {
       return Collections.unmodifiableList(views);
    }
 
+   public List<LinkType> getLinkTypes() {
+      return linkTypes;
+   }
+
    public static JsonSuggestions emptySuggestions() {
-      return new JsonSuggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      return new JsonSuggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
    }
 
    public static JsonSuggestions attributeSuggestions(List<Collection> attributes) {
-      return new JsonSuggestions(attributes, Collections.emptyList(), Collections.emptyList());
+      return new JsonSuggestions(attributes, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
    }
 
    public static JsonSuggestions collectionSuggestions(List<Collection> collections) {
-      return new JsonSuggestions(Collections.emptyList(), collections, Collections.emptyList());
+      return new JsonSuggestions(Collections.emptyList(), collections, Collections.emptyList(), Collections.emptyList());
    }
 
    public static JsonSuggestions viewSuggestions(List<View> views) {
-      return new JsonSuggestions(Collections.emptyList(), Collections.emptyList(), views);
+      return new JsonSuggestions(Collections.emptyList(), Collections.emptyList(), views, Collections.emptyList());
+   }
+
+   public static JsonSuggestions linkSuggestions(List<LinkType> linkTypes)  {
+      return new JsonSuggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), linkTypes);
    }
 }
