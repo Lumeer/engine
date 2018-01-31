@@ -16,20 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Group;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import java.util.List;
+import io.lumeer.storage.mongodb.codecs.GroupCodec;
+import io.lumeer.storage.mongodb.model.MongoGroup;
 
-public interface GroupDao {
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-   Group createGroup(String organizationId, Group group);
+public class GroupCodecProvider implements CodecProvider {
 
-   Group updateGroup(String id, Group group);
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == MongoGroup.class) {
+         return (Codec<T>) new GroupCodec(registry);
+      }
 
-   void deleteGroup(String id);
-
-   List<Group> getAllGroups(String organizationId);
+      return null;
+   }
 
 }

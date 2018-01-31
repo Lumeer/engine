@@ -31,6 +31,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -38,7 +39,6 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.model.MorphiaOrganization;
-import io.lumeer.storage.mongodb.model.MorphiaUser;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
@@ -104,11 +104,9 @@ public class ProjectServiceIntegrationTest extends ServiceIntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      userDao.setOrganization(storedOrganization);
 
-      MorphiaUser user = new MorphiaUser();
-      user.setUsername(USER);
-      userDao.createUser(user);
+      User user = new User(USER);
+      userDao.createUser(storedOrganization.getId(), null, user);
    }
 
    private Project createProject(String code) {

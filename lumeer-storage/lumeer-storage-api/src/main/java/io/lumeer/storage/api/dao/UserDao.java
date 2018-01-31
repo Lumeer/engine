@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.User;
 
 import java.util.List;
@@ -26,20 +25,16 @@ import java.util.Optional;
 
 public interface UserDao {
 
-   void createUsersRepository(Organization organization);
+   User createUser(String organizationId, String keycloakId, User user);
 
-   void deleteUsersRepository(Organization organization);
+   User updateUser(String organizationId, String userId, User user);
 
-   void setOrganization(Organization organization);
+   void deleteUser(String organizationId, String userId);
 
-   User createUser(User user);
+   void deleteGroup(String organizationId, String group);
 
-   void updateUser(String id, User user);
+   Optional<User> getUserByEmail(String organizationId, String email);
 
-   void deleteUser(String id);
-
-   Optional<User> getUserByUsername(String username);
-
-   List<User> getAllUsers();
+   List<User> getAllUsers(String organizationId);
 
 }

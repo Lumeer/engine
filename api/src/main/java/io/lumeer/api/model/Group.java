@@ -18,12 +18,65 @@
  */
 package io.lumeer.api.model;
 
-public interface Group {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-   String getId();
+import java.util.Objects;
 
-   String getName();
+public class Group {
 
-   String getDescription();
+   public static final String ID = "id";
+   public static final String NAME = "name";
 
+   private String id;
+   private String name;
+
+   @JsonCreator
+   public Group(@JsonProperty(ID) final String id,
+         @JsonProperty(NAME) final String name) {
+      this.id = id;
+      this.name = name;
+   }
+
+   public String getId() {
+      return id;
+   }
+
+   public void setId(final String id) {
+      this.id = id;
+   }
+
+   public String getName() {
+      return name;
+   }
+
+   public void setName(final String name) {
+      this.name = name;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof Group)) {
+         return false;
+      }
+      final Group group = (Group) o;
+      return Objects.equals(getId(), group.getId()) &&
+            Objects.equals(getName(), group.getName());
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(getId(), getName());
+   }
+
+   @Override
+   public String toString() {
+      return "Group{" +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            '}';
+   }
 }

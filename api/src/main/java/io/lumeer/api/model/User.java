@@ -18,14 +18,98 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 import java.util.Set;
 
-public interface User {
+public class User {
 
-   String getId();
+   public static final String ID = "id";
+   public static final String NAME = "name";
+   public static final String EMAIL = "email";
+   public static final String GROUPS = "groups";
 
-   String getUsername();
+   private String id;
+   private String name;
+   private String email;
+   private Set<String> groups;
 
-   Set<String> getGroups();
+   public User(final String email) {
+      this.email = email;
+   }
 
+   @JsonCreator
+   public User(@JsonProperty(ID) final String id,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(EMAIL) final String email,
+         @JsonProperty(GROUPS) final Set<String> groups) {
+      this.id = id;
+      this.name = name;
+      this.email = email;
+      this.groups = groups;
+   }
+
+   public String getId() {
+      return id;
+   }
+
+   public void setId(final String id) {
+      this.id = id;
+   }
+
+   public String getName() {
+      return name;
+   }
+
+   public void setName(final String name) {
+      this.name = name;
+   }
+
+   public String getEmail() {
+      return email;
+   }
+
+   public void setEmail(final String email) {
+      this.email = email;
+   }
+
+   public Set<String> getGroups() {
+      return groups;
+   }
+
+   public void setGroups(final Set<String> groups) {
+      this.groups = groups;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof User)) {
+         return false;
+      }
+      final User user = (User) o;
+      return Objects.equals(getId(), user.getId()) &&
+            Objects.equals(getName(), user.getName()) &&
+            Objects.equals(getEmail(), user.getEmail()) &&
+            Objects.equals(getGroups(), user.getGroups());
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(getId(), getName(), getEmail(), getGroups());
+   }
+
+   @Override
+   public String toString() {
+      return "User{" +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            ", email='" + email + '\'' +
+            ", groups=" + groups +
+            '}';
+   }
 }

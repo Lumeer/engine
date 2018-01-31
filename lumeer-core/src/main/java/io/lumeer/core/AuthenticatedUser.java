@@ -43,12 +43,12 @@ public class AuthenticatedUser {
    private UserCache userCache;
 
    public User getCurrentUser() {
-      String username = getUserEmail();
-      return userCache.getUser(username);
+      String userEmail = getUserEmail();
+      return userCache.getUser(userEmail);
    }
 
    public String getCurrentUsername() {
-      return getCurrentUser().getUsername();
+      return getCurrentUser().getEmail();
    }
 
    /**

@@ -102,7 +102,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public List<Project> getProjects() {
       User user = authenticatedUser.getCurrentUser();
-      DatabaseQuery query = DatabaseQuery.createBuilder(user.getUsername())
+      DatabaseQuery query = DatabaseQuery.createBuilder(user.getEmail())
                                          .groups(user.getGroups())
                                          .build();
 

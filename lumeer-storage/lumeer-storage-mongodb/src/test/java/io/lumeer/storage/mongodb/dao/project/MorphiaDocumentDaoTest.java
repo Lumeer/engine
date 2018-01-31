@@ -53,7 +53,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
    private static final String USER2 = "testUser2";
 
    private static final String COLLECTION_ID = "59a51b83d412bc2da88b010f";
-   private static final LocalDateTime CREATION_DATE = LocalDateTime.now();
+   private static final LocalDateTime CREATION_DATE = LocalDateTime.now().withNano(0);
    private static final String CREATED_BY = USER;
    private static final int DATA_VERSION = 1;
 
@@ -141,7 +141,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
       MorphiaDocument document = createDocument();
       String id = document.getId();
 
-      LocalDateTime updateDate = LocalDateTime.now();
+      LocalDateTime updateDate = LocalDateTime.now().withNano(0);
       document.setDataVersion(DATA_VERSION2);
       document.setUpdatedBy(UPDATED_BY);
       document.setUpdateDate(updateDate);

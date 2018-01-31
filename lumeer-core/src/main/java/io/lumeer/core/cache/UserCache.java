@@ -19,7 +19,7 @@
 package io.lumeer.core.cache;
 
 import io.lumeer.api.model.User;
-import io.lumeer.core.model.SimpleUser;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.storage.api.dao.UserDao;
@@ -38,6 +38,9 @@ public class UserCache {
    @Inject
    private UserDao userDao;
 
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
+
    private Cache<User> userCache;
 
    @PostConstruct
@@ -45,18 +48,19 @@ public class UserCache {
       userCache = cacheFactory.getCache();
    }
 
-   public User getUser(String username) {
-      return userCache.computeIfAbsent(username, this::getOrCreateUser);
+   public User getUser(String email) {
+      return userCache.computeIfAbsent(email, this::getOrCreateUser);
    }
 
-   private User getOrCreateUser(String username) {
-      Optional<User> userOptional = userDao.getUserByUsername(username);
+   private User getOrCreateUser(String email) {
+      String organizationId = workspaceKeeper.getOrganization().get().getId(); // TODO how to be sure, that organization is set?
+      Optional<User> userOptional = userDao.getUserByEmail(organizationId, email);
       if (userOptional.isPresent()) {
          return userOptional.get();
       }
 
-      User user = new SimpleUser(username);
-      return userDao.createUser(user); // TODO remove this for production
+      User user = new User(email);
+      return userDao.createUser(organizationId, null, user); // TODO remove this for production
    }
 
    public void updateUser(String username, User user) {

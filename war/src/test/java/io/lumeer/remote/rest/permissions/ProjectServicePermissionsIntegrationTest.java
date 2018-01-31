@@ -30,6 +30,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.model.SimplePermission;
@@ -38,7 +39,6 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.mongodb.model.MorphiaOrganization;
-import io.lumeer.storage.mongodb.model.MorphiaUser;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
@@ -87,11 +87,9 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      userDao.setOrganization(storedOrganization);
 
-      MorphiaUser user = new MorphiaUser();
-      user.setUsername(userEmail);
-      userDao.createUser(user);
+      User user = new User(userEmail);
+      userDao.createUser(storedOrganization.getId(), null, user);
    }
 
    private Project createProject(String code, String name) {

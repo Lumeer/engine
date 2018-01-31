@@ -24,12 +24,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
@@ -42,7 +44,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.model.MorphiaOrganization;
 import io.lumeer.storage.mongodb.model.MorphiaProject;
-import io.lumeer.storage.mongodb.model.MorphiaUser;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;
@@ -109,14 +110,12 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       MorphiaOrganization organization = new MorphiaOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
-      organizationDao.createOrganization(organization);
+      Organization storedOrganization = organizationDao.createOrganization(organization);
 
-      projectDao.setOrganization(organization);
-      userDao.setOrganization(organization);
+      projectDao.setOrganization(storedOrganization);
 
-      MorphiaUser user = new MorphiaUser();
-      user.setUsername(USER);
-      userDao.createUser(user);
+      User user = new User(USER);
+      userDao.createUser(storedOrganization.getId(), null, user);
 
       MorphiaProject project = new MorphiaProject();
       project.setCode(PROJECT_CODE);

@@ -32,9 +32,9 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimpleUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -106,10 +106,9 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
       Organization storedOrganization =organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      userDao.setOrganization(storedOrganization);
 
-      SimpleUser user = new SimpleUser(USER);
-      userDao.createUser(user);
+      User user = new User(USER);
+      userDao.createUser(storedOrganization.getId(), null, user);
 
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());

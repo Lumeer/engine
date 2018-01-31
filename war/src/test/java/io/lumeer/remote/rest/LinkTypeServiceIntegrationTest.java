@@ -32,8 +32,8 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
-import io.lumeer.core.model.SimpleUser;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -113,10 +113,9 @@ public class LinkTypeServiceIntegrationTest extends ServiceIntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      userDao.setOrganization(storedOrganization);
 
-      SimpleUser user = new SimpleUser(USER);
-      userDao.createUser(user);
+      User user = new User(USER);
+      userDao.createUser(storedOrganization.getId(), null, user);
 
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());
@@ -138,7 +137,7 @@ public class LinkTypeServiceIntegrationTest extends ServiceIntegrationTestBase {
    }
 
    @Test
-   public void testCreateLinkType() throws InterruptedException {
+   public void testCreateLinkType() {
       LinkType linkType = prepareLinkType();
 
       Entity entity = Entity.json(linkType);

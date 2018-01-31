@@ -1,0 +1,180 @@
+/*
+ * Lumeer: Modern Data Definition and Processing Platform
+ *
+ * Copyright (C) since 2017 Answer Institute, s.r.o. and/or its affiliates.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package io.lumeer.storage.mongodb.dao.system;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import io.lumeer.api.model.Group;
+import io.lumeer.api.model.Organization;
+import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.mongodb.MongoDbTestBase;
+import io.lumeer.storage.mongodb.model.MongoGroup;
+import io.lumeer.storage.mongodb.util.MongoFilters;
+
+import org.bson.types.ObjectId;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.util.List;
+
+public class MongoGroupDaoTest extends MongoDbTestBase {
+
+   private static final String ORGANIZATION_ID = "596e3b86d412bc5a3caaa22a";
+   private static final String ORGANIZATION_ID2 = "596e3b86d412bc5a3caaa22b";
+
+   private static final String GROUP = "testGroup";
+   private static final String GROUP2 = "testGroup2";
+   private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
+
+   private MongoGroupDao mongoGroupDao;
+
+   private Organization organization;
+   private Organization organization2;
+
+   @Before
+   public void initGroupDao() {
+      organization = Mockito.mock(Organization.class);
+      Mockito.when(organization.getId()).thenReturn(ORGANIZATION_ID);
+
+      organization2 = Mockito.mock(Organization.class);
+      Mockito.when(organization2.getId()).thenReturn(ORGANIZATION_ID2);
+
+      mongoGroupDao = new MongoGroupDao();
+      mongoGroupDao.setDatabase(database);
+
+      mongoGroupDao.createGroupsRepository();
+      assertThat(database.listCollectionNames()).contains(mongoGroupDao.databaseCollectionName());
+   }
+
+   @Test
+   public void testDeleteRepository() {
+      mongoGroupDao.deleteGroupsRepository();
+      assertThat(database.listCollectionNames()).doesNotContain(mongoGroupDao.databaseCollectionName());
+   }
+
+   @Test
+   public void testCreateGroup() {
+      Group group = prepareGroup();
+      String id = mongoGroupDao.createGroup(organization.getId(), group).getId();
+      assertThat(id).isNotNull().isNotEmpty();
+      assertThat(ObjectId.isValid(id)).isTrue();
+
+      MongoGroup storedGroup = mongoGroupDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      assertThat(storedGroup).isNotNull();
+      assertThat(storedGroup.getId()).isEqualTo(id);
+      assertThat(storedGroup.getName()).isEqualTo(GROUP);
+      assertThat(storedGroup.getOrganizationId()).isEqualTo(organization.getId());
+   }
+
+   @Test
+   public void testCreateExistingGroup() {
+      Group group = prepareGroup();
+      mongoGroupDao.createGroup(organization.getId(), group);
+      assertThatThrownBy(() -> mongoGroupDao.createGroup(organization.getId(), group))
+            .isInstanceOf(StorageException.class);
+   }
+
+   @Test
+   public void testCreateGroupAnotherOrganization() {
+      Group group = prepareGroup();
+      Group group1 = mongoGroupDao.createGroup(organization.getId(), group);
+      Group group2 = mongoGroupDao.createGroup(organization2.getId(), group);
+      assertThat(group1).isNotNull();
+      assertThat(group2).isNotNull();
+      assertThat(group1.getId()).isNotEqualTo(group2.getId());
+   }
+
+   @Test
+   public void testUpdateGroup() {
+      Group group = prepareGroup();
+      String id = mongoGroupDao.createGroup(organization.getId(), group).getId();
+
+      group.setName(GROUP2);
+      mongoGroupDao.updateGroup(id, group);
+
+      MongoGroup storedGroup = mongoGroupDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      assertThat(storedGroup).isNotNull();
+      assertThat(storedGroup.getId()).isEqualTo(id);
+      assertThat(storedGroup.getName()).isEqualTo(GROUP2);
+   }
+
+   @Test
+   public void testUpdateExistingGroup() {
+      Group group = prepareGroup();
+      mongoGroupDao.createGroup(organization.getId(), group);
+
+      Group group2 = prepareGroup();
+      group2.setName(GROUP2);
+      String id = mongoGroupDao.createGroup(organization.getId(), group2).getId();
+
+      group2.setName(GROUP);
+
+      assertThatThrownBy(() -> mongoGroupDao.updateGroup(id, group2))
+            .isInstanceOf(StorageException.class);
+   }
+
+   @Test
+   public void testDeleteGroup() {
+      Group group = prepareGroup();
+      String id = mongoGroupDao.createGroup(organization.getId(), group).getId();
+
+      MongoGroup storedGroup = mongoGroupDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      assertThat(storedGroup).isNotNull();
+
+      mongoGroupDao.deleteGroup(id);
+      storedGroup = mongoGroupDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      assertThat(storedGroup).isNull();
+   }
+
+   @Test
+   public void testDeleteGroupNotExisting() {
+      assertThatThrownBy(() -> mongoGroupDao.deleteGroup(NOT_EXISTING_ID))
+            .isInstanceOf(StorageException.class);
+   }
+
+   @Test
+   public void testGetGroups() {
+      mongoGroupDao.createGroup(organization.getId(), prepareGroup());
+
+      Group group = prepareGroup();
+      group.setName(GROUP2);
+      mongoGroupDao.createGroup(organization.getId(), group);
+
+      mongoGroupDao.createGroup(organization2.getId(), prepareGroup());
+
+      List<Group> groupList = mongoGroupDao.getAllGroups(organization.getId());
+      assertThat(groupList).extracting(Group::getName).containsOnly(GROUP, GROUP2);
+
+      groupList = mongoGroupDao.getAllGroups(organization2.getId());
+      assertThat(groupList).extracting(Group::getName).containsOnly(GROUP);
+   }
+
+   @Test
+   public void testGetGroupsEmpty() {
+      List<Group> groupList = mongoGroupDao.getAllGroups(organization.getId());
+      assertThat(groupList).isEmpty();
+   }
+
+   private Group prepareGroup() {
+      return new Group(null, GROUP);
+   }
+
+}
