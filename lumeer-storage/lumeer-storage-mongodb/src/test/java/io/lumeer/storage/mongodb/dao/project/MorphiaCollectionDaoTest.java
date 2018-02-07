@@ -459,4 +459,15 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
       assertThat(collectionDao.getAllCollectionCodes()).contains(CODE, CODE2, CODE3);
    }
 
+   @Test
+   public void testGetAllCollectionsNames() {
+      assertThat(collectionDao.getAllCollectionCodes()).isEmpty();
+
+      createCollection(CODE, NAME);
+      createCollection(CODE2, NAME2);
+      createCollection(CODE3, NAME3);
+
+      assertThat(collectionDao.getAllCollectionNames()).contains(NAME, NAME2, NAME3);
+   }
+
 }
