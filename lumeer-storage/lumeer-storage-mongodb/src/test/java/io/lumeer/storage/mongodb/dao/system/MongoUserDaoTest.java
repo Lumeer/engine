@@ -43,7 +43,6 @@ public class MongoUserDaoTest extends MongoDbTestBase {
 
    private static final String ORGANIZATION_ID = "596e3b86d412bc5a3caaa22a";
    private static final String ORGANIZATION_ID2 = "596e3b86d412bc5a3caaa22b";
-   private static final String KEYCLOAK_ID = "596e3b86d412bc5a3caaa22c";
 
    private static final String USERNAME = "testUser";
    private static final String USERNAME2 = "testUser2";
@@ -86,7 +85,7 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    public void testCreateUser() {
       User user = prepareUser();
 
-      String id = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user).getId();
+      String id = mongoUserDao.createUser(organization.getId(), user).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
@@ -101,8 +100,8 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    @Test
    public void testCreateUserAnotherOrganization() {
       User user = prepareUser();
-      String id1 = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user).getId();
-      String id2 = mongoUserDao.createUser(organization2.getId(), KEYCLOAK_ID, user).getId();
+      String id1 = mongoUserDao.createUser(organization.getId(), user).getId();
+      String id2 = mongoUserDao.createUser(organization2.getId(), user).getId();
       assertThat(id1).isEqualTo(id2);
 
       MongoUser storedUser = mongoUserDao.databaseCollection().find(MongoFilters.idFilter(id1)).first();
@@ -116,15 +115,16 @@ public class MongoUserDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateUserExistingOrganization() {
-      mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, prepareUser());
-      assertThatThrownBy(() -> mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, prepareUser()))
-            .isInstanceOf(StorageException.class);
+      User u1 = mongoUserDao.createUser(organization.getId(),  prepareUser());
+      User u2 = mongoUserDao.createUser(organization.getId(),  prepareUser());
+
+      assertThat(u1.getId()).isEqualTo(u2.getId());
    }
 
    @Test
    public void testUpdateNameAndEmail() {
       User user = prepareUser();
-      String id = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user).getId();
+      String id = mongoUserDao.createUser(organization.getId(), user).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
       String anotherMail = "someother@email.com";
@@ -144,7 +144,7 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    @Test
    public void testUpdateGroups() {
       User user = prepareUser();
-      String id = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user).getId();
+      String id = mongoUserDao.createUser(organization.getId(), user).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
       Set<String> newGroups = new HashSet<>(Arrays.asList("groupU1", "groupU2"));
@@ -167,11 +167,11 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    @Test
    public void testUpdateUserExistingUsername() {
       User user = prepareUser();
-      mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user);
+      mongoUserDao.createUser(organization.getId(), user);
 
       User user2 = new User("someother@email.com");
       user2.setName(USERNAME2);
-      User returned = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user2);
+      User returned = mongoUserDao.createUser(organization.getId(), user2);
 
       returned.setEmail(EMAIL);
       assertThatThrownBy(() -> mongoUserDao.updateUser(organization.getId(), returned.getId(), returned))
@@ -181,8 +181,8 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    @Test
    public void testDeleteUser() {
       User user = prepareUser();
-      User stored = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user);
-      mongoUserDao.createUser(organization2.getId(), KEYCLOAK_ID, user);
+      User stored = mongoUserDao.createUser(organization.getId(), user);
+      mongoUserDao.createUser(organization2.getId(), user);
 
       MongoUser storedUser = mongoUserDao.databaseCollection().find(MongoFilters.idFilter(stored.getId())).first();
       assertThat(storedUser.getGroups()).containsKeys(organization.getId(), organization2.getId());
@@ -204,7 +204,7 @@ public class MongoUserDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetUserByEmail() {
-      User user = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, prepareUser());
+      User user = mongoUserDao.createUser(organization.getId(), prepareUser());
 
       Optional<User> storedUser = mongoUserDao.getUserByEmail(organization.getId(), EMAIL);
       assertThat(storedUser).isNotEmpty().hasValue(user);
@@ -219,15 +219,15 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    @Test
    public void testGetAllUsers() {
       User user = prepareUser();
-      user = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user);
+      user = mongoUserDao.createUser(organization.getId(), user);
 
       User user2 = new User("someother@email.com");
       user2.setName(USERNAME2);
-      user2 = mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user2);
+      user2 = mongoUserDao.createUser(organization.getId(), user2);
 
       User user3 = new User("someother@email.com");
       user3.setName(USERNAME2);
-      mongoUserDao.createUser(organization2.getId(), KEYCLOAK_ID, user2);
+      mongoUserDao.createUser(organization2.getId(), user2);
 
       List<User> users = mongoUserDao.getAllUsers(organization.getId());
       assertThat(users).isNotNull()
@@ -244,27 +244,27 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    public void testRemoveGroup() {
       User user = prepareUser();
       user.setGroups(new HashSet<>(Arrays.asList("g1", "g2", "g3")));
-      mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user);
+      mongoUserDao.createUser(organization.getId(), user);
 
       user = prepareUser();
       user.setEmail("lala@email.com");
       user.setGroups(new HashSet<>(Arrays.asList("g1", "g3", "g4")));
-      mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user);
+      mongoUserDao.createUser(organization.getId(), user);
 
       user = prepareUser();
       user.setEmail("lolo@email.com");
       user.setGroups(new HashSet<>(Arrays.asList("g2", "g5")));
-      mongoUserDao.createUser(organization.getId(), KEYCLOAK_ID, user);
+      mongoUserDao.createUser(organization.getId(), user);
 
-      mongoUserDao.deleteGroup(organization.getId(), "g1");
+      mongoUserDao.deleteGroupFromUsers(organization.getId(), "g1");
       List<User> users = mongoUserDao.getAllUsers(organization.getId());
       users.forEach(u -> assertThat(u.getGroups()).doesNotContain("g1"));
 
-      mongoUserDao.deleteGroup(organization.getId(), "g2");
+      mongoUserDao.deleteGroupFromUsers(organization.getId(), "g2");
       users = mongoUserDao.getAllUsers(organization.getId());
       users.forEach(u -> assertThat(u.getGroups()).doesNotContain("g1"));
 
-      mongoUserDao.deleteGroup(organization.getId(), "g3");
+      mongoUserDao.deleteGroupFromUsers(organization.getId(), "g3");
       users = mongoUserDao.getAllUsers(organization.getId());
       users.forEach(u -> assertThat(u.getGroups()).doesNotContain("g1"));
    }

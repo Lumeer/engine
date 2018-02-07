@@ -72,7 +72,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateGroup() {
-      Group group = prepareGroup();
+      Group group = new Group(GROUP);
       String id = mongoGroupDao.createGroup(organization.getId(), group).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
@@ -86,7 +86,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateExistingGroup() {
-      Group group = prepareGroup();
+      Group group = new Group(GROUP);
       mongoGroupDao.createGroup(organization.getId(), group);
       assertThatThrownBy(() -> mongoGroupDao.createGroup(organization.getId(), group))
             .isInstanceOf(StorageException.class);
@@ -94,7 +94,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateGroupAnotherOrganization() {
-      Group group = prepareGroup();
+      Group group = new Group(GROUP);
       Group group1 = mongoGroupDao.createGroup(organization.getId(), group);
       Group group2 = mongoGroupDao.createGroup(organization2.getId(), group);
       assertThat(group1).isNotNull();
@@ -104,7 +104,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateGroup() {
-      Group group = prepareGroup();
+      Group group = new Group(GROUP);
       String id = mongoGroupDao.createGroup(organization.getId(), group).getId();
 
       group.setName(GROUP2);
@@ -118,11 +118,10 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateExistingGroup() {
-      Group group = prepareGroup();
+      Group group = new Group(GROUP);
       mongoGroupDao.createGroup(organization.getId(), group);
 
-      Group group2 = prepareGroup();
-      group2.setName(GROUP2);
+      Group group2 = new Group(GROUP2);
       String id = mongoGroupDao.createGroup(organization.getId(), group2).getId();
 
       group2.setName(GROUP);
@@ -133,7 +132,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteGroup() {
-      Group group = prepareGroup();
+      Group group = new Group(GROUP);
       String id = mongoGroupDao.createGroup(organization.getId(), group).getId();
 
       MongoGroup storedGroup = mongoGroupDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
@@ -152,13 +151,12 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetGroups() {
-      mongoGroupDao.createGroup(organization.getId(), prepareGroup());
+      mongoGroupDao.createGroup(organization.getId(), new Group(GROUP));
 
-      Group group = prepareGroup();
-      group.setName(GROUP2);
+      Group group = new Group(GROUP2);
       mongoGroupDao.createGroup(organization.getId(), group);
 
-      mongoGroupDao.createGroup(organization2.getId(), prepareGroup());
+      mongoGroupDao.createGroup(organization2.getId(), new Group(GROUP));
 
       List<Group> groupList = mongoGroupDao.getAllGroups(organization.getId());
       assertThat(groupList).extracting(Group::getName).containsOnly(GROUP, GROUP2);
@@ -173,8 +171,5 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
       assertThat(groupList).isEmpty();
    }
 
-   private Group prepareGroup() {
-      return new Group(null, GROUP);
-   }
 
 }

@@ -84,6 +84,17 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
    }
 
    @Override
+   public Organization getOrganizationById(final String organizationId) {
+      Organization organization = datastore.createQuery(MorphiaOrganization.class)
+                                           .field(MorphiaOrganization.ID).equal(new ObjectId(organizationId))
+                                           .get();
+      if (organization == null) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      return organization;
+   }
+
+   @Override
    public List<Organization> getOrganizations(final DatabaseQuery query) {
       Query<MorphiaOrganization> organizationQuery = createOrganizationQuery(query);
       FindOptions findOptions = createFindOptions(query);

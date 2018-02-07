@@ -25,13 +25,13 @@ import java.util.Optional;
 
 public interface UserDao {
 
-   User createUser(String organizationId, String keycloakId, User user);
+   User createUser(String organizationId, User user);
 
    User updateUser(String organizationId, String userId, User user);
 
    void deleteUser(String organizationId, String userId);
 
-   void deleteGroup(String organizationId, String group);
+   void deleteGroupFromUsers(String organizationId, String group);
 
    Optional<User> getUserByEmail(String organizationId, String email);
 

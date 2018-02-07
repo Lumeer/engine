@@ -106,7 +106,7 @@ public class ProjectServiceIntegrationTest extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), null, user);
+      userDao.createUser(storedOrganization.getId(), user);
    }
 
    private Project createProject(String code) {

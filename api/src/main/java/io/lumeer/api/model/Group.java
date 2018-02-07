@@ -31,6 +31,10 @@ public class Group {
    private String id;
    private String name;
 
+   public Group(String name){
+      this.name = name;
+   }
+
    @JsonCreator
    public Group(@JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name) {

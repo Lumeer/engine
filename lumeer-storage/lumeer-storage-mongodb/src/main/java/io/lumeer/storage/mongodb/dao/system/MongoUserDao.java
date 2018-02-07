@@ -25,7 +25,6 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.UserCodec;
-import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
 import io.lumeer.storage.mongodb.model.MongoUser;
 
 import com.mongodb.MongoException;
@@ -74,7 +73,31 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
       database.getCollection(databaseCollectionName()).drop();
    }
 
-   private User addUserGroupsForOrganization(final String organizationId, final String userId, final User user) {
+   @Override
+   public User createUser(final String organizationId, final User user) {
+      MongoUser existingUser = databaseCollection().find(Filters.eq(UserCodec.EMAIL, user.getEmail())).first();
+      if (existingUser != null) {
+         return upsertUserGroupsForOrganization(organizationId, existingUser.getId(), user);
+      }
+      return createNewUser(organizationId, user);
+   }
+
+   private User createNewUser(final String organizationId, final User user) {
+      try {
+         MongoUser mongoUser = new MongoUser(user, organizationId, null);
+         databaseCollection().insertOne(mongoUser);
+         return mongoUser.toUser(organizationId);
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot create user " + user, ex);
+      }
+   }
+
+   @Override
+   public User updateUser(final String organizationId, final String userId, final User user) {
+      return setUserGroupsForOrganization(organizationId, userId, user);
+   }
+
+   private User upsertUserGroupsForOrganization(final String organizationId, final String userId, final User user) {
       Bson setName = Updates.set(UserCodec.NAME, user.getName());
       Bson setEmail = Updates.set(UserCodec.EMAIL, user.getEmail());
       Document groupDocument = new Document(UserCodec.ORGANIZATION_ID, organizationId)
@@ -87,33 +110,9 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
       try {
          MongoUser returnedUser = databaseCollection().findOneAndUpdate(filter, update, options);
          if (returnedUser == null) {
-            throw new StorageException("User '" + userId + "' has not been created.");
+            return setUserGroupsForOrganization(organizationId, userId, user);
          }
          return returnedUser.toUser(organizationId);
-      } catch (MongoException ex) {
-         throw new StorageException("Cannot create user " + user, ex);
-      }
-   }
-
-   @Override
-   public User updateUser(final String organizationId, final String userId, final User user) {
-      return setUserGroupsForOrganization(organizationId, userId, user);
-   }
-
-   @Override
-   public User createUser(final String organizationId, final String keycloakId, final User user) {
-      MongoUser existingUser = databaseCollection().find(Filters.eq(UserCodec.EMAIL, user.getEmail())).first();
-      if (existingUser != null) {
-         return addUserGroupsForOrganization(organizationId, existingUser.getId(), user);
-      }
-      return createNewUser(organizationId, keycloakId, user);
-   }
-
-   private User createNewUser(final String organizationId, final String keycloakId, final User user) {
-      try {
-         MongoUser mongoUser = new MongoUser(user, organizationId, keycloakId);
-         databaseCollection().insertOne(mongoUser);
-         return mongoUser.toUser(organizationId);
       } catch (MongoException ex) {
          throw new StorageException("Cannot create user " + user, ex);
       }
@@ -153,7 +152,7 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
    }
 
    @Override
-   public void deleteGroup(final String organizationId, final String group) {
+   public void deleteGroupFromUsers(final String organizationId, final String group) {
       String key = MongoUtils.concatParams(UserCodec.ALL_GROUPS, "$[" + ELEMENT_NAME + "]", UserCodec.GROUPS);
       Bson pullGroups = Updates.pull(key, group);
       UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters(organizationId));

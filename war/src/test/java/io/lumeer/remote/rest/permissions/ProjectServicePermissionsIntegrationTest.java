@@ -89,7 +89,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(userEmail);
-      userDao.createUser(storedOrganization.getId(), null, user);
+      userDao.createUser(storedOrganization.getId(), user);
    }
 
    private Project createProject(String code, String name) {

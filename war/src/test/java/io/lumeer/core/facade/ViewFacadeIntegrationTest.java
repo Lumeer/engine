@@ -115,7 +115,7 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), null, user);
+      userDao.createUser(storedOrganization.getId(), user);
 
       MorphiaProject project = new MorphiaProject();
       project.setCode(PROJECT_CODE);

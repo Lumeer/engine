@@ -109,12 +109,12 @@ public class LinkTypeFacadeIntegrationTest extends IntegrationTestBase {
       JsonOrganization organization = new JsonOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new JsonPermissions());
-      Organization storedOrganization =organizationDao.createOrganization(organization);
+      Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), null, user);
+      userDao.createUser(storedOrganization.getId(), user);
 
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());
@@ -181,7 +181,7 @@ public class LinkTypeFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetLinkTypes(){
+   public void testGetLinkTypes() {
       String id1 = linkTypeFacade.createLinkType(prepareLinkType()).getId();
 
       LinkType linkType2 = prepareLinkType();

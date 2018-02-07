@@ -110,7 +110,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), null, user);
+      userDao.createUser(storedOrganization.getId(), user);
 
       workspaceKeeper.setOrganization(ORGANIZATION_CODE);
    }

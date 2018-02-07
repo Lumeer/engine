@@ -60,7 +60,7 @@ public class UserCache {
       }
 
       User user = new User(email);
-      return userDao.createUser(organizationId, null, user); // TODO remove this for production
+      return userDao.createUser(organizationId, user); // TODO remove this for production
    }
 
    public void updateUser(String username, User user) {

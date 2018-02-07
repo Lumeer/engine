@@ -110,7 +110,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), null, user);
+      userDao.createUser(storedOrganization.getId(), user);
 
       JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);

@@ -29,6 +29,8 @@ public interface OrganizationDao {
 
    Organization getOrganizationByCode(String organizationCode);
 
+   Organization getOrganizationById(String organizationId);
+
    List<Organization> getOrganizations(DatabaseQuery query);
 
    void deleteOrganization(String organizationId);
