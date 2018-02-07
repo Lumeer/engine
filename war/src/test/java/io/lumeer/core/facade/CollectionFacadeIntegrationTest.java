@@ -86,6 +86,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    private static final String ATTRIBUTE_FULLNAME2 = "fullname2";
 
    private static final String CODE2 = "TCOLL2";
+   private static final String NAME2 = "Test collection 2";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -132,11 +133,19 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private Collection prepareCollection(String code) {
-      return new JsonCollection(code, NAME, ICON, COLOR, null);
+      return prepareCollection(code, NAME);
+   }
+
+   private Collection prepareCollection(String code, String name) {
+      return new JsonCollection(code, name, ICON, COLOR, null);
    }
 
    private Collection createCollection(String code) {
-      Collection collection = prepareCollection(code);
+      return createCollection(code, NAME);
+   }
+
+   private Collection createCollection(String code, String name) {
+      Collection collection = prepareCollection(code, name);
       collection.getPermissions().updateUserPermissions(USER_PERMISSION);
       collection.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       return collectionDao.createCollection(collection);
@@ -221,6 +230,14 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
       assertThat(collectionFacade.getCollections(new Pagination(null, null)))
             .extracting(Resource::getCode).containsOnly(CODE, CODE2);
+   }
+
+   @Test
+   public void testGetCollectionNames() {
+      createCollection(CODE, NAME);
+      createCollection(CODE2, NAME2);
+
+      assertThat(collectionFacade.getCollectionNames()).containsOnly(NAME, NAME2);
    }
 
    @Test

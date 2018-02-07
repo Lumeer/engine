@@ -52,4 +52,5 @@ public interface CollectionDao {
 
    Set<String> getAllCollectionCodes();
 
+   Set<String> getAllCollectionNames();
 }

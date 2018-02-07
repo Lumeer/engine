@@ -86,6 +86,7 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
    private static final Permission GROUP_PERMISSION = new SimplePermission(GROUP, GROUP_ROLES);
 
    private static final String CODE2 = "TCOLL2";
+   private static final String NAME2 = "Test collection 2";
 
    private static final String ATTRIBUTE_NAME = "name";
    private static final String ATTRIBUTE_FULLNAME = "fullname";
@@ -139,11 +140,19 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
    }
 
    private Collection prepareCollection(String code) {
-      return new JsonCollection(code, NAME, ICON, COLOR, null);
+      return prepareCollection(code, NAME);
+   }
+
+   private Collection prepareCollection(String code, String name) {
+      return new JsonCollection(code, name, ICON, COLOR, null);
    }
 
    private Collection createCollection(String code) {
-      Collection collection = prepareCollection(code);
+      return createCollection(code, NAME);
+   }
+
+   private Collection createCollection(String code, String name) {
+      Collection collection = prepareCollection(code, name);
       collection.getPermissions().updateUserPermissions(USER_PERMISSION);
       collection.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       collection.updateAttribute(ATTRIBUTE_FULLNAME, ATTRIBUTE);
@@ -271,6 +280,22 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
       assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+   }
+
+   @Test
+   public void testGetAllCollectionNames() {
+      createCollection(CODE, NAME);
+      createCollection(CODE2, NAME2);
+
+      Response response = client.target(COLLECTIONS_URL).path("names")
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildGet().invoke();
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      List<String> collections = response.readEntity(new GenericType<List<String>>() {
+      });
+      assertThat(collections).containsOnly(NAME, NAME2);
    }
 
    @Test

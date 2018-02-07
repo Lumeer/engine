@@ -119,6 +119,10 @@ public class CollectionFacade extends AbstractFacade {
                           .collect(Collectors.toList());
    }
 
+   public Set<String> getCollectionNames() {
+      return collectionDao.getAllCollectionNames();
+   }
+
    public Attribute updateCollectionAttribute(String collectionCode, String attributeFullName, Attribute attribute) {
       Collection collection = collectionDao.getCollectionByCode(collectionCode);
       permissionsChecker.checkRole(collection, Role.MANAGE);
