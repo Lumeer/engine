@@ -32,6 +32,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
@@ -71,6 +72,9 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    @Inject
    private ProjectDao projectDao;
 
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
+
    private String organizationCode = "OrganizationServicePermissionsIntegrationTest_id";
    private String organizationName = "OrganizationServicePermissionsIntegrationTest";
    private final String TARGET_URI = "http://localhost:8080";
@@ -87,6 +91,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
+      workspaceKeeper.setOrganization(organizationCode);
 
       User user = new User(userEmail);
       userDao.createUser(storedOrganization.getId(), user);
