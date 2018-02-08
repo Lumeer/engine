@@ -53,11 +53,7 @@ public class UserFacadeIntegrationTest extends IntegrationTestBase {
    private static final String USER2 = "user2@gmail.com";
    private static final String USER3 = "user3@gmail.com";
 
-   private static final Set<String> GROUPS;
-
-   static {
-      GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
-   }
+   private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
    private String organizationId1;
    private String organizationId2;

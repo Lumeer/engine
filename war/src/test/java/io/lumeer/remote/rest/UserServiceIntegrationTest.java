@@ -36,11 +36,7 @@ public class UserServiceIntegrationTest extends ServiceIntegrationTestBase {
    private static final String USER2 = "user2@gmail.com";
    private static final String USER3 = "user3@gmail.com";
 
-   private static final Set<String> GROUPS;
-
-   static {
-      GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
-   }
+   private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
    private static final String URL_PREFIX = "http://localhost:8080/" + PATH_CONTEXT + "/rest/organizations/";
 
