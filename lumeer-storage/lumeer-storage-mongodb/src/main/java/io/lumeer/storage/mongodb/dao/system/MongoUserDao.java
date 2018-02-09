@@ -30,7 +30,6 @@ import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
-import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
@@ -46,13 +45,10 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.ApplicationScoped;
 
-@RequestScoped
+@ApplicationScoped
 public class MongoUserDao extends SystemScopedDao implements UserDao {
 
    private static final String COLLECTION_NAME = "users";
