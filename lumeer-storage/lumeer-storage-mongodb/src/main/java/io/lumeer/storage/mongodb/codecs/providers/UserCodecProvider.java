@@ -19,8 +19,8 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
+import io.lumeer.api.model.User;
 import io.lumeer.storage.mongodb.codecs.UserCodec;
-import io.lumeer.storage.mongodb.model.MongoUser;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
@@ -30,7 +30,7 @@ public class UserCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == MongoUser.class) {
+      if (clazz == User.class) {
          return (Codec<T>) new UserCodec(registry);
       }
 

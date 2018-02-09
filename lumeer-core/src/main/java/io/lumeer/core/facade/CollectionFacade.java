@@ -211,7 +211,7 @@ public class CollectionFacade extends AbstractFacade {
 
    private SearchQuery createQueryForLinkTypes(String collectionId) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .collectionIds(Collections.singleton(collectionId))
@@ -220,7 +220,7 @@ public class CollectionFacade extends AbstractFacade {
 
    private SearchQuery createQueryForLinkInstances(List<LinkType> linkTypes) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .linkTypeIds(linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet()))

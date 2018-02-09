@@ -16,29 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.core.exception;
 
-import io.lumeer.api.model.User;
+import io.lumeer.api.exception.LumeerException;
 
-import java.util.List;
-import java.util.Optional;
+public class BadFormatException extends LumeerException {
 
-public interface UserDao {
+   public BadFormatException(final String message) {
+      super(message);
+   }
 
-   User createUser(User user);
-
-   User updateUser(String userId, User user);
-
-   void deleteUser(String userId);
-
-   void deleteUserGroups(String organizationId, String userId);
-
-   void deleteGroupFromUsers(String organizationId, String group);
-
-   User getUserByEmail(String email);
-
-   User getUserById(String id);
-
-   List<User> getAllUsers(String organizationId);
+   public BadFormatException(final String message, final Throwable cause) {
+      super(message, cause);
+   }
 
 }

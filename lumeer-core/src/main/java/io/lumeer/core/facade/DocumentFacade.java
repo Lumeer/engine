@@ -196,7 +196,7 @@ public class DocumentFacade extends AbstractFacade {
 
    private SearchQuery createQueryForLinkInstances(String documentId) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .documentIds(Collections.singleton(documentId))

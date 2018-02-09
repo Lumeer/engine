@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.storage.mongodb.model.MongoGroup;
+import io.lumeer.api.model.Group;
 
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
@@ -33,11 +33,10 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
-public class GroupCodec implements CollectibleCodec<MongoGroup> {
+public class GroupCodec implements CollectibleCodec<Group> {
 
    public static final String ID = "_id";
    public static final String NAME = "name";
-   public static final String ORGANIZATION_ID = "organizationId";
 
    private final Codec<Document> documentCodec;
 
@@ -46,7 +45,7 @@ public class GroupCodec implements CollectibleCodec<MongoGroup> {
    }
 
    @Override
-   public MongoGroup generateIdIfAbsentFromDocument(final MongoGroup group) {
+   public Group generateIdIfAbsentFromDocument(final Group group) {
       if (!documentHasId(group)) {
          group.setId(new ObjectId().toHexString());
       }
@@ -54,12 +53,12 @@ public class GroupCodec implements CollectibleCodec<MongoGroup> {
    }
 
    @Override
-   public boolean documentHasId(final MongoGroup group) {
+   public boolean documentHasId(final Group group) {
       return group.getId() != null;
    }
 
    @Override
-   public BsonValue getDocumentId(final MongoGroup group) {
+   public BsonValue getDocumentId(final Group group) {
       if (!documentHasId(group)) {
          throw new IllegalStateException("The document does not contain an id");
       }
@@ -68,28 +67,26 @@ public class GroupCodec implements CollectibleCodec<MongoGroup> {
    }
 
    @Override
-   public MongoGroup decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
+   public Group decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(bsonReader, decoderContext);
 
       String id = bson.getObjectId(ID).toHexString();
       String name = bson.getString(NAME);
-      String organizationId = bson.getString(ORGANIZATION_ID);
 
-      return new MongoGroup(id, name, organizationId);
+      return new Group(id, name);
    }
 
    @Override
-   public void encode(final BsonWriter bsonWriter, final MongoGroup group, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter bsonWriter, final Group group, final EncoderContext encoderContext) {
       Document bson = group.getId() != null ? new Document(ID, new ObjectId(group.getId())) : new Document();
-      bson.append(NAME, group.getName())
-          .append(ORGANIZATION_ID, group.getOrganizationId());
+      bson.append(NAME, group.getName());
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }
 
    @Override
-   public Class<MongoGroup> getEncoderClass() {
-      return MongoGroup.class;
+   public Class<Group> getEncoderClass() {
+      return Group.class;
    }
 
 }

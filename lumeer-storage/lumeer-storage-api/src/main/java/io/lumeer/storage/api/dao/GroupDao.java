@@ -19,17 +19,24 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Group;
+import io.lumeer.api.model.Organization;
 
 import java.util.List;
 
 public interface GroupDao {
 
-   Group createGroup(String organizationId, Group group);
+   void createGroupsRepository(Organization organization);
+
+   void deleteGroupsRepository(Organization organization);
+
+   void setOrganization(Organization organization);
+
+   Group createGroup(Group group);
 
    Group updateGroup(String id, Group group);
 
    void deleteGroup(String id);
 
-   List<Group> getAllGroups(String organizationId);
+   List<Group> getAllGroups();
 
 }

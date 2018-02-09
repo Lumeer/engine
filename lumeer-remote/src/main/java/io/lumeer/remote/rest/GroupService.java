@@ -22,6 +22,7 @@ import io.lumeer.api.model.Group;
 import io.lumeer.core.facade.GroupFacade;
 
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -38,35 +39,40 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("/organizations/{organizationId}/groups")
+@Path("/organizations/{organizationCode}/groups")
 public class GroupService extends AbstractService {
 
-   @PathParam("organizationId")
-   private String organizationId;
+   @PathParam("organizationCode")
+   private String organizationCode;
+
+   @PostConstruct
+   public void init() {
+      workspaceKeeper.setOrganization(organizationCode);
+   }
 
    @Inject
    private GroupFacade groupFacade;
 
    @GET
    public List<Group> getGroups() {
-      return groupFacade.getGroups(organizationId);
+      return groupFacade.getGroups();
    }
 
    @POST
    public Group createGroup(Group group) {
-      return groupFacade.createGroup(organizationId, group);
+      return groupFacade.createGroup(group);
    }
 
    @PUT
    @Path("{groupId}")
    public Group updateGroup(@PathParam("groupId") String groupId, Group group) {
-      return groupFacade.updateGroup(organizationId, groupId, group);
+      return groupFacade.updateGroup(groupId, group);
    }
 
    @DELETE
    @Path("{groupId}")
    public Response deleteGroup(@PathParam("groupId") String groupId) {
-      groupFacade.deleteGroup(organizationId, groupId);
+      groupFacade.deleteGroup(groupId);
 
       return Response.ok().link(getParentUri(groupId), "parent").build();
    }

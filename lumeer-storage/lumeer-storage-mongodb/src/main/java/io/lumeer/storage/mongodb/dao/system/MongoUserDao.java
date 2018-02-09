@@ -25,17 +25,18 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.UserCodec;
-import io.lumeer.storage.mongodb.model.MongoUser;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
 import org.bson.BsonDocument;
@@ -45,7 +46,9 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 
@@ -74,72 +77,39 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
    }
 
    @Override
-   public User createUser(final String organizationId, final User user) {
-      MongoUser existingUser = databaseCollection().find(Filters.eq(UserCodec.EMAIL, user.getEmail())).first();
-      if (existingUser != null) {
-         return upsertUserGroupsForOrganization(organizationId, existingUser.getId(), user);
-      }
-      return createNewUser(organizationId, user);
-   }
-
-   private User createNewUser(final String organizationId, final User user) {
+   public User createUser(final User user) {
       try {
-         MongoUser mongoUser = new MongoUser(user, organizationId, null);
-         databaseCollection().insertOne(mongoUser);
-         return mongoUser.toUser(organizationId);
+         databaseCollection().insertOne(user);
+         return user;
       } catch (MongoException ex) {
-         throw new StorageException("Cannot create user " + user, ex);
+         throw new StorageException("Cannot create User " + user, ex);
       }
    }
 
    @Override
-   public User updateUser(final String organizationId, final String userId, final User user) {
-      return setUserGroupsForOrganization(organizationId, userId, user);
-   }
-
-   private User upsertUserGroupsForOrganization(final String organizationId, final String userId, final User user) {
-      Bson setName = Updates.set(UserCodec.NAME, user.getName());
-      Bson setEmail = Updates.set(UserCodec.EMAIL, user.getEmail());
-      Document groupDocument = new Document(UserCodec.ORGANIZATION_ID, organizationId)
-            .append(UserCodec.GROUPS, user.getGroups());
-      Bson pushGroup = Updates.push(UserCodec.ALL_GROUPS, groupDocument);
-      Bson update = Updates.combine(setName, setEmail, pushGroup);
-
-      Bson filter = Filters.and(idFilter(userId), Filters.ne(MongoUtils.concatParams(UserCodec.ALL_GROUPS, UserCodec.ORGANIZATION_ID), organizationId));
-      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+   public User updateUser(final String id, final User user) {
+      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
-         MongoUser returnedUser = databaseCollection().findOneAndUpdate(filter, update, options);
-         if (returnedUser == null) {
-            return setUserGroupsForOrganization(organizationId, userId, user);
+         User returnedGroup = databaseCollection().findOneAndReplace(idFilter(id), user, options);
+         if (returnedGroup == null) {
+            throw new StorageException("User '" + id + "' has not been updated.");
          }
-         return returnedUser.toUser(organizationId);
-      } catch (MongoException ex) {
-         throw new StorageException("Cannot create user " + user, ex);
-      }
-   }
-
-   private User setUserGroupsForOrganization(final String organizationId, final String userId, final User user) {
-      Bson setName = Updates.set(UserCodec.NAME, user.getName());
-      Bson setEmail = Updates.set(UserCodec.EMAIL, user.getEmail());
-      Bson setGroups = Updates.set(MongoUtils.concatParams(UserCodec.ALL_GROUPS, "$", UserCodec.GROUPS), user.getGroups());
-      Bson update = Updates.combine(setName, setEmail, setGroups);
-
-      Bson filter = Filters.and(idFilter(userId), Filters.eq(MongoUtils.concatParams(UserCodec.ALL_GROUPS, UserCodec.ORGANIZATION_ID), organizationId));
-      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
-      try {
-         MongoUser returnedUser = databaseCollection().findOneAndUpdate(filter, update, options);
-         if (returnedUser == null) {
-            throw new StorageException("User '" + userId + "' has not been updated.");
-         }
-         return returnedUser.toUser(organizationId);
+         return returnedGroup;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update user " + user, ex);
       }
-
    }
 
    @Override
-   public void deleteUser(final String organizationId, final String userId) {
+   public void deleteUser(final String id) {
+      DeleteResult result = databaseCollection().deleteOne(idFilter(id));
+      if (result.getDeletedCount() != 1) {
+         throw new StorageException("User '" + id + "' has not been deleted.");
+      }
+   }
+
+   @Override
+   public void deleteUserGroups(final String organizationId, final String userId) {
       Bson pullUser = Updates.pull(UserCodec.ALL_GROUPS, Filters.eq(UserCodec.ORGANIZATION_ID, organizationId));
       try {
          UpdateResult result = databaseCollection().updateOne(idFilter(userId), pullUser);
@@ -160,25 +130,26 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
       databaseCollection().updateMany(new BsonDocument(), pullGroups, options);
    }
 
-   @Override
-   public Optional<User> getUserByEmail(final String organizationId, final String email) {
-      MongoUser mongoUser = databaseCollection().find(emailFilter(organizationId, email)).first();
-      return mongoUser != null ? Optional.of(mongoUser.toUser(organizationId)) : Optional.empty();
-   }
-
-   private Bson emailFilter(final String organizationId, final String email) {
-      Bson emailFilter = Filters.eq(UserCodec.EMAIL, email);
-      return Filters.and(emailFilter, organizationIdFilter(organizationId));
-   }
-
    private List<Bson> arrayFilters(final String organizationId) {
       Bson filter = Filters.eq(MongoUtils.concatParams(ELEMENT_NAME, UserCodec.ORGANIZATION_ID), organizationId);
       return Collections.singletonList(filter);
    }
 
    @Override
+   public User getUserByEmail(final String email) {
+      Bson emailFilter = Filters.eq(UserCodec.EMAIL, email);
+
+      return databaseCollection().find(emailFilter).first();
+   }
+
+   @Override
+   public User getUserById(final String id) {
+      return databaseCollection().find(idFilter(id)).first();
+   }
+
+   @Override
    public List<User> getAllUsers(final String organizationId) {
-      return databaseCollection().find(organizationIdFilter(organizationId)).map(mongoUser -> mongoUser.toUser(organizationId)).into(new ArrayList<>());
+      return databaseCollection().find(organizationIdFilter(organizationId)).into(new ArrayList<>());
    }
 
    private Bson organizationIdFilter(final String organizationId) {
@@ -189,7 +160,7 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
       return COLLECTION_NAME;
    }
 
-   MongoCollection<MongoUser> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), MongoUser.class);
+   MongoCollection<User> databaseCollection() {
+      return database.getCollection(databaseCollectionName(), User.class);
    }
 }

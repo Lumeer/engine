@@ -38,9 +38,6 @@ public class UserCache {
    @Inject
    private UserDao userDao;
 
-   @Inject
-   private WorkspaceKeeper workspaceKeeper;
-
    private Cache<User> userCache;
 
    @PostConstruct
@@ -53,14 +50,13 @@ public class UserCache {
    }
 
    private User getOrCreateUser(String email) {
-      String organizationId = workspaceKeeper.getOrganization().get().getId(); // TODO how to be sure, that organization is set?
-      Optional<User> userOptional = userDao.getUserByEmail(organizationId, email);
-      if (userOptional.isPresent()) {
-         return userOptional.get();
+      User userByEmail = userDao.getUserByEmail(email);
+      if (userByEmail != null){
+         return userByEmail;
       }
 
       User user = new User(email);
-      return userDao.createUser(organizationId, user); // TODO remove this for production
+      return userDao.createUser(user); // TODO remove this for production
    }
 
    public void updateUser(String username, User user) {

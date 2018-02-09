@@ -94,7 +94,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
       workspaceKeeper.setOrganization(organizationCode);
 
       User user = new User(userEmail);
-      userDao.createUser(storedOrganization.getId(), user);
+      userDao.createUser(user);
    }
 
    private Project createProject(String code, String name) {

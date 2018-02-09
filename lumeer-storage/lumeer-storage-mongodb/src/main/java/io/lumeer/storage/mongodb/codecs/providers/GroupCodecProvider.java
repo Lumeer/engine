@@ -19,8 +19,8 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
+import io.lumeer.api.model.Group;
 import io.lumeer.storage.mongodb.codecs.GroupCodec;
-import io.lumeer.storage.mongodb.model.MongoGroup;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
@@ -30,7 +30,7 @@ public class GroupCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == MongoGroup.class) {
+      if (clazz == Group.class) {
          return (Codec<T>) new GroupCodec(registry);
       }
 

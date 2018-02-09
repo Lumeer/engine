@@ -21,6 +21,7 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -34,7 +35,7 @@ public class User {
    private String id;
    private String name;
    private String email;
-   private Set<String> groups;
+   private Map<String, Set<String>> groups;
 
    public User(final String email) {
       this.email = email;
@@ -44,7 +45,7 @@ public class User {
    public User(@JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
          @JsonProperty(EMAIL) final String email,
-         @JsonProperty(GROUPS) final Set<String> groups) {
+         @JsonProperty(GROUPS) final Map<String, Set<String>>  groups) {
       this.id = id;
       this.name = name;
       this.email = email;
@@ -75,11 +76,11 @@ public class User {
       this.email = email;
    }
 
-   public Set<String> getGroups() {
+   public Map<String, Set<String>> getGroups() {
       return groups;
    }
 
-   public void setGroups(final Set<String> groups) {
+   public void setGroups(final Map<String, Set<String>> groups) {
       this.groups = groups;
    }
 

@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.storage.mongodb.model.MongoUser;
+import io.lumeer.api.model.User;
 
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
@@ -34,18 +34,18 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class UserCodec implements CollectibleCodec<MongoUser> {
+public class UserCodec implements CollectibleCodec<User> {
 
    public static final String ID = "_id";
    public static final String NAME = "name";
    public static final String EMAIL = "email";
-   public static final String KEYCLOCK_ID = "keycloakId";
    public static final String ALL_GROUPS = "allGroups";
    public static final String ORGANIZATION_ID = "organizationId";
    public static final String GROUPS = "groups";
@@ -57,7 +57,7 @@ public class UserCodec implements CollectibleCodec<MongoUser> {
    }
 
    @Override
-   public MongoUser generateIdIfAbsentFromDocument(final MongoUser user) {
+   public User generateIdIfAbsentFromDocument(final User user) {
       if (!documentHasId(user)) {
          user.setId(new ObjectId().toHexString());
       }
@@ -65,12 +65,12 @@ public class UserCodec implements CollectibleCodec<MongoUser> {
    }
 
    @Override
-   public boolean documentHasId(final MongoUser user) {
+   public boolean documentHasId(final User user) {
       return user.getId() != null;
    }
 
    @Override
-   public BsonValue getDocumentId(final MongoUser user) {
+   public BsonValue getDocumentId(final User user) {
       if (!documentHasId(user)) {
          throw new IllegalStateException("The document does not contain an id");
       }
@@ -79,26 +79,24 @@ public class UserCodec implements CollectibleCodec<MongoUser> {
    }
 
    @Override
-   public MongoUser decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
+   public User decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(bsonReader, decoderContext);
 
       String id = bson.getObjectId(ID).toHexString();
       String name = bson.getString(NAME);
       String email = bson.getString(EMAIL);
-      String keycloakId = bson.getString(KEYCLOCK_ID);
 
       List<Document> documentList = bson.get(ALL_GROUPS, List.class);
       Map<String, Set<String>> allGroups = convertGroupsListToMap(documentList);
 
-      return new MongoUser(id, name, email, keycloakId, allGroups);
+      return new User(id, name, email, allGroups);
    }
 
    @Override
-   public void encode(final BsonWriter bsonWriter, final MongoUser user, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter bsonWriter, final User user, final EncoderContext encoderContext) {
       Document bson = user.getId() != null ? new Document(ID, new ObjectId(user.getId())) : new Document();
       bson.append(NAME, user.getName())
-          .append(EMAIL, user.getEmail())
-          .append(KEYCLOCK_ID, user.getKeycloakId());
+          .append(EMAIL, user.getEmail());
 
       if (user.getGroups() != null) {
          List<Document> groupsArray = user.getGroups().entrySet().stream().map(entry -> new Document(ORGANIZATION_ID, entry.getKey())
@@ -111,13 +109,13 @@ public class UserCodec implements CollectibleCodec<MongoUser> {
    }
 
    @Override
-   public Class<MongoUser> getEncoderClass() {
-      return MongoUser.class;
+   public Class<User> getEncoderClass() {
+      return User.class;
    }
 
    private Map<String, Set<String>> convertGroupsListToMap(List<Document> documentList) {
       if (documentList == null) {
-         return Collections.emptyMap();
+         return new HashMap<>();
       }
 
       return documentList.stream()
@@ -127,7 +125,7 @@ public class UserCodec implements CollectibleCodec<MongoUser> {
    private Set<String> convertGroupsListToSet(Document document) {
       List<String> groups = document.get(GROUPS, List.class);
       if (groups == null) {
-         return Collections.emptySet();
+         return new HashSet<>();
       }
       return new HashSet<>(groups);
    }

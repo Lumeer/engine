@@ -87,7 +87,7 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), user);
+      userDao.createUser(user);
 
       JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);

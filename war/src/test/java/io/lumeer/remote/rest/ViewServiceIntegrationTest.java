@@ -119,7 +119,7 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), user);
+      userDao.createUser(user);
 
       MorphiaProject project = new MorphiaProject();
       project.setCode(PROJECT_CODE);

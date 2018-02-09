@@ -21,58 +21,51 @@ package io.lumeer.storage.mongodb.dao.system;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.Group;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.GroupCodec;
-import io.lumeer.storage.mongodb.model.MongoGroup;
+import io.lumeer.storage.mongodb.dao.organization.OrganizationScopedDao;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
-public class MongoGroupDao extends SystemScopedDao implements GroupDao {
+public class MongoGroupDao extends OrganizationScopedDao implements GroupDao {
 
-   private static final String COLLECTION_NAME = "groups";
+   private static final String PREFIX = "groups_o-";
 
-   @PostConstruct
-   public void checkRepository() {
-      if (database.getCollection(COLLECTION_NAME) == null) {
-         createGroupsRepository();
-      }
-   }
+   @Override
+   public void createGroupsRepository(Organization organization) {
+      database.createCollection(databaseCollectionName(organization));
 
-   public void createGroupsRepository() {
-      database.createCollection(databaseCollectionName());
-
-      MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName());
-      groupCollection.createIndex(Indexes.ascending(GroupCodec.ORGANIZATION_ID, GroupCodec.NAME), new IndexOptions().unique(true));
-   }
-
-   public void deleteGroupsRepository() {
-      database.getCollection(databaseCollectionName()).drop();
+      MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
+      groupCollection.createIndex(Indexes.ascending(GroupCodec.NAME), new IndexOptions().unique(true));
    }
 
    @Override
-   public Group createGroup(final String organizationId, final Group group) {
-      MongoGroup mongoGroup = new MongoGroup(group, organizationId);
+   public void deleteGroupsRepository(Organization organization) {
+      database.getCollection(databaseCollectionName(organization)).drop();
+   }
+
+   @Override
+   public Group createGroup( final Group group) {
       try {
-         databaseCollection().insertOne(mongoGroup);
-         return mongoGroup.toGroup();
+         databaseCollection().insertOne(group);
+         return group;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create group " + group, ex);
       }
@@ -80,14 +73,13 @@ public class MongoGroupDao extends SystemScopedDao implements GroupDao {
 
    @Override
    public Group updateGroup(final String id, final Group group) {
-      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
-      Bson update = Updates.set(GroupCodec.NAME, group.getName());
+      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
-         MongoGroup returnedGroup = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
+         Group returnedGroup = databaseCollection().findOneAndReplace(idFilter(id), group, options);
          if (returnedGroup == null) {
             throw new StorageException("Group '" + id + "' has not been updated.");
          }
-         return returnedGroup.toGroup();
+         return returnedGroup;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update group " + group, ex);
       }
@@ -102,16 +94,22 @@ public class MongoGroupDao extends SystemScopedDao implements GroupDao {
    }
 
    @Override
-   public List<Group> getAllGroups(final String organizationId) {
-      Bson filter = Filters.eq(GroupCodec.ORGANIZATION_ID, organizationId);
-      return databaseCollection().find(filter).map(MongoGroup::toGroup).into(new ArrayList<>());
+   public List<Group> getAllGroups() {
+      return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   MongoCollection<Group> databaseCollection() {
+      return database.getCollection(databaseCollectionName(), Group.class);
    }
 
    String databaseCollectionName() {
-      return COLLECTION_NAME;
+      if (!getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      return databaseCollectionName(getOrganization().get());
    }
 
-   MongoCollection<MongoGroup> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), MongoGroup.class);
+   private String databaseCollectionName(Organization organization) {
+      return PREFIX + organization.getId();
    }
 }

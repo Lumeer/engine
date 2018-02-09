@@ -87,7 +87,7 @@ public class PermissionsChecker {
       if (resource instanceof Organization) {
          return Collections.emptySet();
       }
-      return userCache.getUser(user).getGroups();
+      return authenticatedUser.getCurrentUserGroups();
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String user) {

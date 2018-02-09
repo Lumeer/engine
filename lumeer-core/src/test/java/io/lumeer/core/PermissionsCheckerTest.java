@@ -48,7 +48,7 @@ public class PermissionsCheckerTest {
    @Before
    public void preparePermissionsChecker() {
       User user = Mockito.mock(User.class);
-      Mockito.when(user.getGroups()).thenReturn(Collections.singleton(GROUP));
+      Mockito.when(user.getGroups()).thenReturn(Collections.singletonMap("LMR", Collections.singleton(GROUP)));
 
       UserCache userCache = Mockito.mock(UserCache.class);
       Mockito.when(userCache.getUser(USER)).thenReturn(user);

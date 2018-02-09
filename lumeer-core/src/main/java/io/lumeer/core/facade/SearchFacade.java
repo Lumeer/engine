@@ -182,7 +182,7 @@ public class SearchFacade extends AbstractFacade {
 
    private SearchQuery createCollectionQuery(Query query) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user)
                         .groups(groups)
@@ -217,7 +217,7 @@ public class SearchFacade extends AbstractFacade {
 
    private SearchQuery createSearchQuery(Query query) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .collectionCodes(query.getCollectionCodes())
@@ -229,7 +229,7 @@ public class SearchFacade extends AbstractFacade {
 
    private SearchQuery createDocumentIdsQuery(Set<String> documentIds) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .documentIds(documentIds)

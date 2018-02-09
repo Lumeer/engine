@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +67,7 @@ public class UserServiceIntegrationTest extends ServiceIntegrationTestBase {
 
    @Test
    public void testCreateUser() {
-      User user = prepareUser(USER1);
+      User user = prepareUser(organizationId1, USER1);
 
       Entity entity = Entity.json(user);
       Response response = client.target(getPath(organizationId1))
@@ -84,7 +85,7 @@ public class UserServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertThat(storedUser.getId()).isEqualTo(returnedUser.getId());
       assertThat(storedUser.getName()).isEqualTo(USER1);
       assertThat(storedUser.getEmail()).isEqualTo(USER1);
-      assertThat(storedUser.getGroups()).isEqualTo(GROUPS);
+      assertThat(storedUser.getGroups().get(organizationId1)).isEqualTo(GROUPS);
 
    }
 
@@ -94,7 +95,7 @@ public class UserServiceIntegrationTest extends ServiceIntegrationTestBase {
       User storedUser = getUser(organizationId1, USER1);
       assertThat(storedUser).isNotNull();
 
-      User updateUser = prepareUser(USER2);
+      User updateUser = prepareUser(organizationId1, USER2);
       Entity entity = Entity.json(updateUser);
       Response response = client.target(getPath(organizationId1)).path(storedUser.getId())
                                 .request(MediaType.APPLICATION_JSON)
@@ -149,7 +150,7 @@ public class UserServiceIntegrationTest extends ServiceIntegrationTestBase {
    }
 
    private User createUser(String organizationId, String user) {
-      return userDao.createUser(organizationId, prepareUser(user));
+      return userDao.createUser(prepareUser( organizationId, user));
    }
 
    private User getUser(String organizationId, String user) {
@@ -157,10 +158,10 @@ public class UserServiceIntegrationTest extends ServiceIntegrationTestBase {
       return userOptional.orElse(null);
    }
 
-   private User prepareUser(String user) {
+   private User prepareUser(String organizationId, String user) {
       User u = new User(user);
       u.setName(user);
-      u.setGroups(GROUPS);
+      u.setGroups(Collections.singletonMap(organizationId,GROUPS));
       return u;
    }
 

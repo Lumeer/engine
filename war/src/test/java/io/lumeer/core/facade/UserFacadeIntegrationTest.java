@@ -27,6 +27,7 @@ import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -38,6 +39,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -90,22 +92,22 @@ public class UserFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateUser() {
-      userFacade.createUser(organizationId1, prepareUser(USER1));
+      userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
 
       User stored = getUser(organizationId1, USER1);
 
       assertThat(stored).isNotNull();
       assertThat(stored.getName()).isEqualTo(USER1);
       assertThat(stored.getEmail()).isEqualTo(USER1);
-      assertThat(stored.getGroups()).isEqualTo(GROUPS);
+      assertThat(stored.getGroups().get(organizationId1)).isEqualTo(GROUPS);
    }
 
    @Test
    public void testCreateUserMultipleOrganizations() {
-      User user11 = userFacade.createUser(organizationId1, prepareUser(USER1));
-      User user21 = userFacade.createUser(organizationId1, prepareUser(USER2));
-      User user12 = userFacade.createUser(organizationId2, prepareUser(USER1));
-      User user32 = userFacade.createUser(organizationId2, prepareUser(USER3));
+      User user11 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
+      User user21 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER2));
+      User user12 = userFacade.createUser(organizationId2, prepareUser(organizationId2, USER1));
+      User user32 = userFacade.createUser(organizationId2, prepareUser(organizationId2, USER3));
 
       assertThat(user11.getId()).isEqualTo(user12.getId());
       assertThat(user21.getId()).isNotEqualTo(user32.getId());
@@ -114,24 +116,30 @@ public class UserFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateUserExistingOrganization() {
-      User user1 = userFacade.createUser(organizationId1, prepareUser(USER1));
-      User user2 = userFacade.createUser(organizationId1, prepareUser(USER1));
-      User user3 = userFacade.createUser(organizationId1, prepareUser(USER1));
+      User user1 = userFacade.createUser(organizationId1, prepareUser(organizationId1,USER1));
+      User user2 = userFacade.createUser(organizationId1, prepareUser(organizationId1,USER1));
+      User user3 = userFacade.createUser(organizationId1, prepareUser(organizationId1,USER1));
 
       assertThat(user1.getId()).isEqualTo(user2.getId()).isEqualTo(user3.getId());
    }
 
    @Test
    public void testCreateUserNotPermission() {
-      assertThatThrownBy(() -> userFacade.createUser(organizationIdNotPermission, prepareUser(USER1)))
+      assertThatThrownBy(() -> userFacade.createUser(organizationIdNotPermission, prepareUser(organizationIdNotPermission, USER1)))
             .isInstanceOf(NoPermissionException.class);
+   }
+
+   @Test
+   public void testCreateUserBadFormat(){
+      assertThatThrownBy(() -> userFacade.createUser(organizationId1, prepareUser(organizationId2, USER1)))
+            .isInstanceOf(BadFormatException.class);
    }
 
    @Test
    public void testUpdateNameAndEmail() {
       String userId = createUser(organizationId1, USER1).getId();
 
-      User toUpdate = prepareUser(USER1);
+      User toUpdate = prepareUser(organizationId1, USER1);
       toUpdate.setEmail(USER3);
       toUpdate.setName("newName");
       userFacade.updateUser(organizationId1, userId, toUpdate);
@@ -149,47 +157,52 @@ public class UserFacadeIntegrationTest extends IntegrationTestBase {
       String userId = createUser(organizationId1, USER1).getId();
 
       Set<String> newGroups = new HashSet<>(Arrays.asList("g1", "g2"));
-      User toUpdate = prepareUser(USER1);
-      toUpdate.setGroups(newGroups);
+      User toUpdate = prepareUser(organizationId1, USER1);
+      toUpdate.setGroups(Collections.singletonMap(organizationId1, newGroups));
 
       userFacade.updateUser(organizationId1, userId, toUpdate);
 
       User stored = getUser(organizationId1, USER1);
       assertThat(stored).isNotNull();
       assertThat(stored.getName()).isEqualTo(USER1);
-      assertThat(stored.getGroups()).isEqualTo(newGroups);
+      assertThat(stored.getGroups().get(organizationId1)).isEqualTo(newGroups);
    }
 
    @Test
    public void testUpdateUserNotPermission() {
       String userId = createUser(organizationId1, USER1).getId();
 
-      assertThatThrownBy(() -> userFacade.updateUser(organizationIdNotPermission,userId, prepareUser(USER3)))
+      assertThatThrownBy(() -> userFacade.updateUser(organizationIdNotPermission, userId, prepareUser(organizationIdNotPermission, USER3)))
             .isInstanceOf(NoPermissionException.class);
    }
 
    @Test
-   public void testDeleteUser() {
-      String id = userFacade.createUser(organizationId1, prepareUser(USER1)).getId();
-      userFacade.createUser(organizationId1, prepareUser(USER2));
-      userFacade.createUser(organizationId2, prepareUser(USER1));
-      userFacade.createUser(organizationId2, prepareUser(USER3));
+   public void testUpdateUserBadFormat() {
+      String userId = createUser(organizationId1, USER1).getId();
 
-      assertThat( userDao.getUserByEmail(organizationId1, USER1)).isPresent();
-      assertThat( userDao.getUserByEmail(organizationId2, USER1)).isPresent();
+      assertThatThrownBy(() -> userFacade.updateUser(organizationId2, userId, prepareUser(organizationId1, USER3)))
+            .isInstanceOf(BadFormatException.class);
+   }
+
+   @Test
+   public void testDeleteUserGroups() {
+      String id = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1)).getId();
+      userFacade.createUser(organizationId1, prepareUser(organizationId1, USER2));
+      userFacade.createUser(organizationId2, prepareUser(organizationId2, USER1));
+      userFacade.createUser(organizationId2, prepareUser(organizationId2, USER3));
+
+      assertThat(userDao.getUserByEmail(USER1).getGroups()).containsOnlyKeys(organizationId1, organizationId2);
 
       userFacade.deleteUser(organizationId1, id);
-      assertThat( userDao.getUserByEmail(organizationId1, USER1)).isNotPresent();
-      assertThat( userDao.getUserByEmail(organizationId2, USER1)).isPresent();
+      assertThat(userDao.getUserByEmail(USER1).getGroups()).containsOnlyKeys(organizationId2);
 
       userFacade.deleteUser(organizationId2, id);
-      assertThat( userDao.getUserByEmail(organizationId1, USER1)).isNotPresent();
-      assertThat( userDao.getUserByEmail(organizationId2, USER1)).isNotPresent();
+      assertThat(userDao.getUserByEmail(USER1).getGroups()).isEmpty();
    }
 
    @Test
    public void testDeleteUserNoPermission() {
-      String id = userFacade.createUser(organizationId1, prepareUser(USER1)).getId();
+      String id = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1)).getId();
 
       assertThatThrownBy(() -> userFacade.deleteUser(organizationIdNotPermission, id))
             .isInstanceOf(NoPermissionException.class);
@@ -197,10 +210,10 @@ public class UserFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testGetAllUsers() {
-      String id = userFacade.createUser(organizationId1, prepareUser(USER1)).getId();
-      String id2 = userFacade.createUser(organizationId1, prepareUser(USER2)).getId();
-      userFacade.createUser(organizationId2, prepareUser(USER1));
-      String id3 = userFacade.createUser(organizationId2, prepareUser(USER3)).getId();
+      String id = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1)).getId();
+      String id2 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER2)).getId();
+      userFacade.createUser(organizationId2, prepareUser(organizationId2, USER1));
+      String id3 = userFacade.createUser(organizationId2, prepareUser(organizationId2, USER3)).getId();
 
       List<User> users = userFacade.getUsers(organizationId1);
       assertThat(users).extracting(User::getId).containsOnly(id, id2);
@@ -215,19 +228,19 @@ public class UserFacadeIntegrationTest extends IntegrationTestBase {
             .isInstanceOf(NoPermissionException.class);
    }
 
-   private User createUser(String organizationId, String user){
-      return userDao.createUser(organizationId, prepareUser(user));
+   private User createUser(String organizationId, String user) {
+      return userDao.createUser(prepareUser(organizationId, user));
    }
 
-   private User getUser(String organizationId, String user){
+   private User getUser(String organizationId, String user) {
       Optional<User> userOptional = userDao.getAllUsers(organizationId).stream().filter(u -> u.getEmail().equals(user)).findFirst();
       return userOptional.orElse(null);
    }
 
-   private User prepareUser(String user) {
+   private User prepareUser(String organizationId, String user) {
       User u = new User(user);
       u.setName(user);
-      u.setGroups(GROUPS);
+      u.setGroups(Collections.singletonMap(organizationId, GROUPS));
       return u;
    }
 }

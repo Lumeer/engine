@@ -20,10 +20,12 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
@@ -41,33 +43,46 @@ public class GroupFacade extends AbstractFacade {
    @Inject
    private OrganizationDao organizationDao;
 
-   public Group createGroup(String organizationId, Group group){
-      checkPermissions(organizationId);
+   public Group createGroup(Group group){
+      checkPermissions();
 
-      return groupDao.createGroup(organizationId, group);
+      return groupDao.createGroup(group);
    }
 
-   public Group updateGroup(String organizationId, String groupId, Group group){
-      checkPermissions(organizationId);
+   public Group updateGroup(String groupId, Group group){
+      checkPermissions();
 
       return groupDao.updateGroup(groupId, group);
    }
 
-   public void deleteGroup(String organizationId, String groupId){
-      checkPermissions(organizationId);
+   public void deleteGroup( String groupId){
+      checkPermissions();
 
-      userDao.deleteGroupFromUsers(organizationId, groupId);
       groupDao.deleteGroup(groupId);
+      deleteInfoAboutGroup(groupId);
    }
 
-   public List<Group> getGroups(String organizationId){
-      checkPermissions(organizationId);
+   public List<Group> getGroups(){
+      checkPermissions();
 
-      return groupDao.getAllGroups(organizationId);
+      return groupDao.getAllGroups();
    }
 
-   private void checkPermissions(String organizationId) {
-      Organization organization = organizationDao.getOrganizationById(organizationId);
+   private void deleteInfoAboutGroup(String groupId) {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+
+      Organization organization = workspaceKeeper.getOrganization().get();
+      userDao.deleteGroupFromUsers(organization.getId(), groupId);
+   }
+
+   private void checkPermissions() {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+
+      Organization organization = workspaceKeeper.getOrganization().get();
       permissionsChecker.checkRole(organization, Role.MANAGE);
    }
 

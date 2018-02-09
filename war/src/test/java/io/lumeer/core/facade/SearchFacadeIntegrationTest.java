@@ -108,7 +108,7 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(storedOrganization.getId(), user);
+      userDao.createUser(user);
 
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());
