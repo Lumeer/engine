@@ -56,6 +56,7 @@ public class PermissionsCheckerTest {
       AuthenticatedUser authenticatedUser = Mockito.mock(AuthenticatedUser.class);
       Mockito.when(authenticatedUser.getCurrentUsername()).thenReturn(USER);
       Mockito.when(authenticatedUser.getUserEmail()).thenReturn(USER);
+      Mockito.when(authenticatedUser.getCurrentUserGroups()).thenReturn(Collections.singleton(GROUP));
 
       permissionsChecker = new PermissionsChecker(userCache, authenticatedUser);
    }
