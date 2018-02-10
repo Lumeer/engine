@@ -69,11 +69,10 @@ public class CollectionService extends AbstractService {
    }
 
    @POST
-   public Response createCollection(JsonCollection collection) {
+   public Collection createCollection(JsonCollection collection) {
       Collection storedCollection = collectionFacade.createCollection(collection);
 
-      URI resourceUri = getResourceUri(storedCollection.getCode());
-      return Response.created(resourceUri).build();
+      return JsonCollection.convert(storedCollection);
    }
 
    @PUT

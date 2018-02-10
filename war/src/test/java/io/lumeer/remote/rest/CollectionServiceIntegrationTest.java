@@ -168,11 +168,15 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).isEqualTo(COLLECTIONS_PATH + "/" + CODE);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      JsonCollection returnedCollection = response.readEntity(JsonCollection.class);
+      assertThat(returnedCollection).isNotNull();
+      assertThat(returnedCollection.getId()).isNotNull();
 
       Collection storedCollection = collectionDao.getCollectionByCode(CODE);
       assertThat(storedCollection).isNotNull();
+      assertThat(returnedCollection.getId()).isEqualTo(storedCollection.getId());
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedCollection.getCode()).isEqualTo(CODE);
