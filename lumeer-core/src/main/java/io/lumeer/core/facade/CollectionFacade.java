@@ -68,7 +68,7 @@ public class CollectionFacade extends AbstractFacade {
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
 
-      return storedCollection;
+      return keepOnlyActualUserRoles(storedCollection);
    }
 
    public Collection updateCollection(String collectionCode, Collection collection) {

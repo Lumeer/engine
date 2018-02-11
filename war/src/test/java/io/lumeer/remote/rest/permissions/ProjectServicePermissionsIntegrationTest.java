@@ -240,7 +240,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/collections").
             request(MediaType.APPLICATION_JSON).buildPost(Entity.json(collection)).invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 
    @Test
