@@ -86,11 +86,11 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
    public User updateUser(final String id, final User user) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
-         User returnedGroup = databaseCollection().findOneAndReplace(idFilter(id), user, options);
-         if (returnedGroup == null) {
+         User returnedUser = databaseCollection().findOneAndReplace(idFilter(id), user, options);
+         if (returnedUser == null) {
             throw new StorageException("User '" + id + "' has not been updated.");
          }
-         return returnedGroup;
+         return returnedUser;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update user " + user, ex);
       }

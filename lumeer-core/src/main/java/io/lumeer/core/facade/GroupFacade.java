@@ -59,7 +59,7 @@ public class GroupFacade extends AbstractFacade {
       checkPermissions();
 
       groupDao.deleteGroup(groupId);
-      deleteInfoAboutGroup(groupId);
+      deleteGroupFromUsers(groupId);
    }
 
    public List<Group> getGroups(){
@@ -68,7 +68,7 @@ public class GroupFacade extends AbstractFacade {
       return groupDao.getAllGroups();
    }
 
-   private void deleteInfoAboutGroup(String groupId) {
+   private void deleteGroupFromUsers(String groupId) {
       if (!workspaceKeeper.getOrganization().isPresent()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
