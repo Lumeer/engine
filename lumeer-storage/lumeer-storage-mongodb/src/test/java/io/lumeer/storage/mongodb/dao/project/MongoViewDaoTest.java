@@ -366,12 +366,12 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE3);
 
-       query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c2", "c4"))).build();
-       views = viewDao.getViews(query);
+      query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c2", "c4"))).build();
+      views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
 
-       query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c4", "c5", "c6"))).build();
-       views = viewDao.getViews(query);
+      query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c4", "c5", "c6"))).build();
+      views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE2);
    }
 
