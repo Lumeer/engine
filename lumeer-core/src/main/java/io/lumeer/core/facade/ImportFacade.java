@@ -18,15 +18,15 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonDocument;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Import;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -62,18 +62,18 @@ public class ImportFacade extends AbstractFacade {
    @Inject
    private DataDao dataDao;
 
-   public Collection importDocuments(final String format, final String name, final String data) {
+   public Collection importDocuments(Import importObj) {
       List<Document> documents;
 
-      switch (format.toLowerCase()) {
+      switch (importObj.getFormat().toLowerCase()) {
          case FORMAT_CSV:
-            documents = parseCSVFile(data);
+            documents = parseCSVFile(importObj.getData());
             break;
          default:
             documents = Collections.emptyList();
       }
 
-      Collection collection = createImportCollection(name);
+      Collection collection = createImportCollection(importObj.getCollection());
       if (documents.isEmpty()) {
          return collection;
       }
@@ -100,16 +100,18 @@ public class ImportFacade extends AbstractFacade {
       document.setDataVersion(DocumentFacade.INITIAL_VERSION);
    }
 
-   private Collection createImportCollection(String name) {
+   private Collection createImportCollection(Collection collection) {
       checkProjectWriteRole();
-      Set<String> codes = collectionDao.getAllCollectionCodes();
 
-      String collectionName = name != null && !name.isEmpty() ? name : "Import";
+      String collectionName = collection.getName() != null && !collection.getName().isEmpty() ? collection.getName() : "Import";
+      collection.setName(collectionName);
 
-      String code = generateCollectionCode(collectionName, codes);
-      JsonPermissions collectionPermissions = new JsonPermissions();
-      collectionPermissions.updateUserPermissions(new JsonPermission(authenticatedUser.getCurrentUsername(), Role.toStringRoles(Collection.ROLES)));
-      JsonCollection collection = new JsonCollection(code, collectionName, null, null, collectionPermissions);
+      if (collection.getCode() == null || collection.getCode().isEmpty()) {
+         collection.setCode(generateCollectionCode(collection.getName()));
+      }
+
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), Collection.ROLES);
+      collection.getPermissions().updateUserPermissions(defaultUserPermission);
 
       Collection storedCollection = collectionDao.createCollection(collection);
       dataDao.createDataRepository(storedCollection.getId());
@@ -117,7 +119,8 @@ public class ImportFacade extends AbstractFacade {
       return storedCollection;
    }
 
-   private String generateCollectionCode(String collectionName, Set<String> existingCodes) {
+   private String generateCollectionCode(String collectionName) {
+      Set<String> existingCodes = collectionDao.getAllCollectionCodes();
       return CodeGenerator.generate(existingCodes, collectionName);
    }
 

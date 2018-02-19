@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Import;
 import io.lumeer.core.facade.ImportFacade;
 
 import javax.annotation.PostConstruct;
@@ -30,7 +31,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @RequestScoped
@@ -53,9 +53,9 @@ public class ImportService extends AbstractService {
    }
 
    @POST
-   @Consumes(MediaType.TEXT_PLAIN)
-   public JsonCollection importDocuments(@QueryParam("format") String format, @QueryParam("name") String name, String data) {
-      Collection collection = importFacade.importDocuments(format, name,  data);
+   @Consumes(MediaType.APPLICATION_JSON)
+   public JsonCollection importDocuments(Import importObj) {
+      Collection collection = importFacade.importDocuments(importObj);
       return JsonCollection.convert(collection);
    }
 }

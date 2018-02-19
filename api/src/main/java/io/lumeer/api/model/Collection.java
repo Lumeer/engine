@@ -36,6 +36,8 @@ public interface Collection extends Resource {
 
    void setAttributes(Set<Attribute> attributes);
 
+   void setName(String name);
+
    void updateAttribute(String attributeFullName, Attribute attribute);
 
    void deleteAttribute(String attributeFullName);
