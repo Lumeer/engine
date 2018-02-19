@@ -16,25 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.storage.api.query.DatabaseQuery;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import java.util.List;
+import io.lumeer.api.model.User;
+import io.lumeer.storage.mongodb.codecs.UserCodec;
 
-public interface OrganizationDao {
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-   Organization createOrganization(Organization organization);
+public class UserCodecProvider implements CodecProvider {
 
-   Organization getOrganizationByCode(String organizationCode);
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == User.class) {
+         return (Codec<T>) new UserCodec(registry);
+      }
 
-   Organization getOrganizationById(String organizationId);
-
-   List<Organization> getOrganizations(DatabaseQuery query);
-
-   void deleteOrganization(String organizationId);
-
-   Organization updateOrganization(String organizationId, Organization organization);
+      return null;
+   }
 
 }

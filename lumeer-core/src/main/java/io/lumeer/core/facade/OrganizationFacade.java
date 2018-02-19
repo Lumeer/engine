@@ -23,6 +23,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.model.SimplePermission;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -44,7 +45,7 @@ public class OrganizationFacade extends AbstractFacade {
    private ProjectDao projectDao;
 
    @Inject
-   private UserDao userDao;
+   private GroupDao groupDao;
 
    public Organization createOrganization(final Organization organization) {
       // TODO check system role for creating organizations
@@ -143,16 +144,12 @@ public class OrganizationFacade extends AbstractFacade {
    private void createOrganizationScopedRepositories(Organization organization) {
       projectDao.setOrganization(organization);
       projectDao.createProjectsRepository(organization);
-
-      userDao.setOrganization(organization);
-      userDao.createUsersRepository(organization);
+      groupDao.createGroupsRepository(organization);
    }
 
    private void deleteOrganizationScopedRepositories(Organization organization) {
       projectDao.setOrganization(organization);
       projectDao.deleteProjectsRepository(organization);
-
-      userDao.setOrganization(organization);
-      userDao.deleteUsersRepository(organization);
+      groupDao.deleteGroupsRepository(organization);
    }
 }

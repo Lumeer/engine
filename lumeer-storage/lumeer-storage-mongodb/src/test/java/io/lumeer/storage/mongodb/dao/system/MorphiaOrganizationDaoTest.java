@@ -141,6 +141,18 @@ public class MorphiaOrganizationDaoTest extends MongoDbTestBase {
    }
 
    @Test
+   public void testGetOrganizationById() {
+      Organization organization = prepareOrganization(CODE1);
+      Organization createdOrganization = organizationDao.createOrganization(organization);
+
+      Organization storedOrganization = organizationDao.getOrganizationById(createdOrganization.getId());
+      assertThat(storedOrganization).isNotNull();
+      assertThat(storedOrganization.getId()).isNotNull().isNotEmpty();
+      assertThat(storedOrganization.getCode()).isEqualTo(CODE1);
+      assertThat(storedOrganization.getName()).isEqualTo(NAME);
+   }
+
+   @Test
    public void testGetOrganizationByCodeNotExisting() {
       assertThatThrownBy(() -> organizationDao.getOrganizationByCode(NOT_EXISTING_CODE))
             .isInstanceOf(ResourceNotFoundException.class)

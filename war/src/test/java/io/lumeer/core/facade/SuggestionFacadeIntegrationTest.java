@@ -33,11 +33,11 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.SuggestionType;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.model.SimplePermission;
-import io.lumeer.core.model.SimpleUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -124,9 +124,8 @@ public class SuggestionFacadeIntegrationTest extends IntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      userDao.setOrganization(storedOrganization);
 
-      SimpleUser user = new SimpleUser(USER);
+      User user = new User(USER);
       userDao.createUser(user);
 
       JsonProject project = new JsonProject();

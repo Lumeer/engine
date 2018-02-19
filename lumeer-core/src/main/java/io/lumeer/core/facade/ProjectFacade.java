@@ -102,8 +102,10 @@ public class ProjectFacade extends AbstractFacade {
 
    public List<Project> getProjects() {
       User user = authenticatedUser.getCurrentUser();
-      DatabaseQuery query = DatabaseQuery.createBuilder(user.getUsername())
-                                         .groups(user.getGroups())
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
+
+      DatabaseQuery query = DatabaseQuery.createBuilder(user.getEmail())
+                                         .groups(groups)
                                          .build();
 
       return projectDao.getProjects(query).stream()

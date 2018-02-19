@@ -18,12 +18,16 @@
  */
 package io.lumeer.core;
 
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.UserCache;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.keycloak.KeycloakPrincipal;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.enterprise.context.RequestScoped;
@@ -42,13 +46,26 @@ public class AuthenticatedUser {
    @Inject
    private UserCache userCache;
 
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
+
    public User getCurrentUser() {
-      String username = getUserEmail();
-      return userCache.getUser(username);
+      String userEmail = getUserEmail();
+      return userCache.getUser(userEmail);
+   }
+
+   public Set<String> getCurrentUserGroups(){
+      Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
+      if (!organizationOptional.isPresent()){
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      Organization organization = organizationOptional.get();
+      Map<String,Set<String>> userGroups = userCache.getUser(getCurrentUsername()).getGroups();
+      return userGroups != null && userGroups.containsKey(organization.getId()) ? userGroups.get(organization.getId()) : Collections.emptySet();
    }
 
    public String getCurrentUsername() {
-      return getCurrentUser().getUsername();
+      return getCurrentUser().getEmail();
    }
 
    /**

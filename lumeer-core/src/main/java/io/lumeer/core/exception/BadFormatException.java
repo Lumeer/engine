@@ -16,25 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.core.exception;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.storage.api.query.DatabaseQuery;
+import io.lumeer.api.exception.LumeerException;
 
-import java.util.List;
+public class BadFormatException extends LumeerException {
 
-public interface OrganizationDao {
+   public BadFormatException(final String message) {
+      super(message);
+   }
 
-   Organization createOrganization(Organization organization);
-
-   Organization getOrganizationByCode(String organizationCode);
-
-   Organization getOrganizationById(String organizationId);
-
-   List<Organization> getOrganizations(DatabaseQuery query);
-
-   void deleteOrganization(String organizationId);
-
-   Organization updateOrganization(String organizationId, Organization organization);
+   public BadFormatException(final String message, final Throwable cause) {
+      super(message, cause);
+   }
 
 }

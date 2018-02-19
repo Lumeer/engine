@@ -29,12 +29,13 @@ import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimpleUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -104,12 +105,11 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       JsonOrganization organization = new JsonOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new JsonPermissions());
-      organizationDao.createOrganization(organization);
+      Organization storedOrganization = organizationDao.createOrganization(organization);
 
-      projectDao.setOrganization(organization);
-      userDao.setOrganization(organization);
+      projectDao.setOrganization(storedOrganization);
 
-      SimpleUser user = new SimpleUser(USER);
+      User user = new User(USER);
       userDao.createUser(user);
 
       JsonProject project = new JsonProject();

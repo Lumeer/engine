@@ -18,6 +18,7 @@
  */
 package io.lumeer.engine.util;
 
+import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
@@ -69,7 +70,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
             e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException ||
             e instanceof NullParameterException || e instanceof LinkAlreadyExistsException ||
             e instanceof ViewAlreadyExistsException || e instanceof InvalidCollectionAttributeTypeException ||
-            e instanceof InvalidValueException) {
+            e instanceof InvalidValueException || e instanceof BadFormatException) {
          return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 

@@ -36,14 +36,15 @@ import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.mongodb.codecs.BigDecimalCodec;
-import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
 import io.lumeer.storage.mongodb.codecs.RoleCodec;
 import io.lumeer.storage.mongodb.codecs.providers.AttributeCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.GroupCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkInstanceCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkTypeCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.PermissionCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.PermissionsCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.QueryCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.UserCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ViewCodecProvider;
 
 import com.mongodb.BasicDBObject;
@@ -141,7 +142,8 @@ public class MongoDbStorage implements DataStorage {
       final CodecRegistry codecRegistry = CodecRegistries.fromCodecs(new BigDecimalCodec(), new RoleCodec());
       final CodecRegistry providersRegistry = CodecRegistries.fromProviders(
             new PermissionsCodecProvider(), new PermissionCodecProvider(), new QueryCodecProvider(), new ViewCodecProvider(),
-            new AttributeCodecProvider(), new LinkInstanceCodecProvider(), new LinkTypeCodecProvider()
+            new AttributeCodecProvider(), new LinkInstanceCodecProvider(), new LinkTypeCodecProvider(), new UserCodecProvider(),
+            new GroupCodecProvider()
       );
       final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 

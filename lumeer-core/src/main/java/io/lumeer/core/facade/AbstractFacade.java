@@ -21,7 +21,6 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUser;
@@ -68,7 +67,7 @@ abstract class AbstractFacade {
 
    protected SearchQuery createPaginationQuery(Pagination pagination) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = userCache.getUser(user).getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user)
                         .groups(groups)

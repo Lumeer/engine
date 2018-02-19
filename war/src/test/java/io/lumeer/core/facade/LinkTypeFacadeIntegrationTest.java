@@ -32,9 +32,9 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimpleUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -109,12 +109,11 @@ public class LinkTypeFacadeIntegrationTest extends IntegrationTestBase {
       JsonOrganization organization = new JsonOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new JsonPermissions());
-      Organization storedOrganization =organizationDao.createOrganization(organization);
+      Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      userDao.setOrganization(storedOrganization);
 
-      SimpleUser user = new SimpleUser(USER);
+      User user = new User(USER);
       userDao.createUser(user);
 
       JsonProject project = new JsonProject();
@@ -182,7 +181,7 @@ public class LinkTypeFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetLinkTypes(){
+   public void testGetLinkTypes() {
       String id1 = linkTypeFacade.createLinkType(prepareLinkType()).getId();
 
       LinkType linkType2 = prepareLinkType();

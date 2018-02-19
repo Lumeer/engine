@@ -76,18 +76,18 @@ public class PermissionsChecker {
     */
    public Set<Role> getActualRoles(Resource resource) {
       String user = authenticatedUser.getUserEmail();
-      Set<String> groups = getUserGroups(user, resource);
+      Set<String> groups = getUserGroups(resource);
 
       Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), user);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
       return actualRoles;
    }
 
-   private Set<String> getUserGroups(String user, Resource resource) {
+   private Set<String> getUserGroups(Resource resource) {
       if (resource instanceof Organization) {
          return Collections.emptySet();
       }
-      return userCache.getUser(user).getGroups();
+      return authenticatedUser.getCurrentUserGroups();
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String user) {

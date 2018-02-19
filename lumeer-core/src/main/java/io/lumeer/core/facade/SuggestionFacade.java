@@ -138,7 +138,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private SuggestionQuery.Builder createBuilderForSuggestionQuery(String text, int limit) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUser().getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SuggestionQuery.createBuilder(user).groups(groups)
                             .text(text)
@@ -147,7 +147,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private SearchQuery createSimpleSearchQuery() {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUser().getGroups();
+      Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .build();

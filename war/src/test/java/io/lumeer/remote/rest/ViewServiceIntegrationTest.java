@@ -32,6 +32,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.model.SimplePermission;
@@ -42,7 +43,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.model.MorphiaOrganization;
 import io.lumeer.storage.mongodb.model.MorphiaProject;
-import io.lumeer.storage.mongodb.model.MorphiaUser;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;
@@ -117,10 +117,8 @@ public class ViewServiceIntegrationTest extends ServiceIntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      userDao.setOrganization(storedOrganization);
 
-      MorphiaUser user = new MorphiaUser();
-      user.setUsername(USER);
+      User user = new User(USER);
       userDao.createUser(user);
 
       MorphiaProject project = new MorphiaProject();
