@@ -31,6 +31,7 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.QueryCodec;
 import io.lumeer.storage.mongodb.codecs.ViewCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
@@ -76,6 +77,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       database.getCollection(databaseCollectionName(project)).drop();
    }
 
+   @Override
    public View createView(final View view) {
       try {
          JsonView jsonView = new JsonView(view);
@@ -86,6 +88,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       }
    }
 
+   @Override
    public View updateView(final String id, final View view) {
       JsonView jsonView = new JsonView(view);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
@@ -101,6 +104,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       }
    }
 
+   @Override
    public void deleteView(final String id) {
       DeleteResult result = databaseCollection().deleteOne(idFilter(id));
       if (result.getDeletedCount() != 1) {
@@ -108,6 +112,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       }
    }
 
+   @Override
    public View getViewByCode(final String code) {
       MongoCursor<JsonView> mongoCursor = databaseCollection().find(codeFilter(code)).iterator();
       if (!mongoCursor.hasNext()) {
@@ -116,6 +121,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       return mongoCursor.next();
    }
 
+   @Override
    public List<View> getViews(SearchQuery query) {
       FindIterable<JsonView> findIterable = databaseCollection().find(MongoViewDao.viewSearchFilter(query));
       if (query.hasPagination()) {
@@ -127,7 +133,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public List<View> getViews(final SuggestionQuery query) {
-      FindIterable<JsonView> findIterable  = databaseCollection().find(suggestionsFilter(query));
+      FindIterable<JsonView> findIterable = databaseCollection().find(suggestionsFilter(query));
       addPaginationToSuggestionQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
@@ -146,11 +152,15 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    private static Bson viewSearchFilter(SearchQuery query) {
-      List<Bson> filters = query.getCollectionCodes().stream()
-                                .map(MongoViewDao::collectionFilter)
-                                .collect(Collectors.toList());
-      if (query.getFulltext() != null && !query.getFulltext().isEmpty()) {
-         filters.add(Filters.text(query.getFulltext()));
+      List<Bson> filters = new ArrayList<>();
+      if (query.isCollectionCodesQuery()) {
+         filters.add(Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.COLLECTION_CODES), query.getCollectionCodes()));
+      }
+      if (query.isCollectionIdsQuery()) {
+         filters.add(Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.COLLECTION_IDS), query.getCollectionIds()));
+      }
+      if (query.isFulltextQuery()) {
+         filters.add(Filters.regex(ViewCodec.NAME, Pattern.compile(query.getFulltext(), Pattern.CASE_INSENSITIVE)));
       }
       filters.add(MongoFilters.permissionsFilter(query));
 

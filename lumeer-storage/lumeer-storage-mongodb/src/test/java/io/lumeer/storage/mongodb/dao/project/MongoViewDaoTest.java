@@ -42,8 +42,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MongoViewDaoTest extends MongoDbTestBase {
@@ -115,12 +118,17 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    }
 
    private JsonView createView(String code, String name) {
-      JsonView JsonView = prepareView();
-      JsonView.setCode(code);
-      JsonView.setName(name);
+      return createView(code, name, null);
+   }
 
-      viewDao.databaseCollection().insertOne(JsonView);
-      return JsonView;
+   private JsonView createView(String code, String name, Set<String> collections) {
+      JsonView jsonView = prepareView();
+      jsonView.setCode(code);
+      jsonView.setName(name);
+      jsonView.setQuery(new JsonQuery(collections, null, null));
+
+      viewDao.databaseCollection().insertOne(jsonView);
+      return jsonView;
    }
 
    @Test
@@ -343,9 +351,28 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE2, NAME2);
       createView(CODE3, NAME3);
 
-      SearchQuery query = SearchQuery.createBuilder(USER).fulltext("fulltext").build();
+      SearchQuery query = SearchQuery.createBuilder(USER).fulltext("text").build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE2, CODE3);
+   }
+
+   @Test
+   public void testGetViewsByCollections() {
+      createView(CODE, NAME, new HashSet<>(Arrays.asList("c1", "c2", "c3")));
+      createView(CODE2, NAME2, new HashSet<>(Arrays.asList("c2", "c3", "c4")));
+      createView(CODE3, NAME3, new HashSet<>(Arrays.asList("c1", "c3")));
+
+      SearchQuery query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c1", "c5"))).build();
+      List<View> views = viewDao.getViews(query);
+      assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE3);
+
+      query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c2", "c4"))).build();
+      views = viewDao.getViews(query);
+      assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
+
+      query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c4", "c5", "c6"))).build();
+      views = viewDao.getViews(query);
+      assertThat(views).extracting(View::getCode).containsOnly(CODE2);
    }
 
    @Test
@@ -354,7 +381,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE2, NAME2);
       createView(CODE3, NAME3);
 
-      SearchQuery query = SearchQuery.createBuilder(USER).fulltext("fulltext").page(1).pageSize(1).build();
+      SearchQuery query = SearchQuery.createBuilder(USER).fulltext("text").page(1).pageSize(1).build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE2);
    }
@@ -365,7 +392,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE2, NAME2);
       createView(CODE3, NAME3);
 
-      SearchQuery query = SearchQuery.createBuilder(USER2).fulltext("fulltext").build();
+      SearchQuery query = SearchQuery.createBuilder(USER2).fulltext("text").build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).isEmpty();
    }

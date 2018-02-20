@@ -135,10 +135,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<View> searchViews(Query query) {
-      if (isValidViewSearch(query)) {
-         return getViewsByFulltext(query);
-      }
-      return Collections.emptyList();
+      return getViewsByFulltext(query);
    }
 
    private List<Collection> getCollectionsByCollectionSearch(Query query) {
@@ -161,10 +158,6 @@ public class SearchFacade extends AbstractFacade {
       }
 
       return matchedCollections;
-   }
-
-   private static boolean isValidViewSearch(Query query) {
-      return query.getCollectionCodes().isEmpty() && query.getFilters().isEmpty();
    }
 
    private List<View> getViewsByFulltext(Query query) {
