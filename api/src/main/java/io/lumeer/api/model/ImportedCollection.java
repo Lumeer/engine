@@ -23,22 +23,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class Import {
+public class ImportedCollection {
 
    public static final String COLLECTION = "collection";
-   public static final String FORMAT = "format";
    public static final String DATA = "data";
 
    private Collection collection;
-   private String format;
    private String data;
 
    @JsonCreator
-   public Import(@JsonProperty(COLLECTION) final Collection collection,
-         @JsonProperty(FORMAT) final String format,
+   public ImportedCollection(@JsonProperty(COLLECTION) final Collection collection,
          @JsonProperty(DATA) final String data) {
       this.collection = collection;
-      this.format = format;
       this.data = data;
    }
 
@@ -48,14 +44,6 @@ public class Import {
 
    public void setCollection(final Collection collection) {
       this.collection = collection;
-   }
-
-   public String getFormat() {
-      return format;
-   }
-
-   public void setFormat(final String format) {
-      this.format = format;
    }
 
    public String getData() {
@@ -71,25 +59,23 @@ public class Import {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof Import)) {
+      if (!(o instanceof ImportedCollection)) {
          return false;
       }
-      final Import anImport = (Import) o;
-      return Objects.equals(getCollection(), anImport.getCollection()) &&
-            Objects.equals(getFormat(), anImport.getFormat()) &&
-            Objects.equals(getData(), anImport.getData());
+      final ImportedCollection importedCollection = (ImportedCollection) o;
+      return Objects.equals(getCollection(), importedCollection.getCollection()) &&
+            Objects.equals(getData(), importedCollection.getData());
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(getCollection(), getFormat(), getData());
+      return Objects.hash(getCollection(), getData());
    }
 
    @Override
    public String toString() {
-      return "Import{" +
+      return "ImportedCollection{" +
             "collection=" + collection +
-            ", format='" + format + '\'' +
             ", data='" + data + '\'' +
             '}';
    }

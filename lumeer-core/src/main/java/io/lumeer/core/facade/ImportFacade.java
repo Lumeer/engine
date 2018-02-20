@@ -21,7 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Import;
+import io.lumeer.api.model.ImportedCollection;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -62,18 +62,18 @@ public class ImportFacade extends AbstractFacade {
    @Inject
    private DataDao dataDao;
 
-   public Collection importDocuments(Import importObj) {
+   public Collection importDocuments(String format, ImportedCollection importedCollection) {
       List<Document> documents;
 
-      switch (importObj.getFormat().toLowerCase()) {
+      switch (format.toLowerCase()) {
          case FORMAT_CSV:
-            documents = parseCSVFile(importObj.getData());
+            documents = parseCSVFile(importedCollection.getData());
             break;
          default:
             documents = Collections.emptyList();
       }
 
-      Collection collection = createImportCollection(importObj.getCollection());
+      Collection collection = createImportCollection(importedCollection.getCollection());
       if (documents.isEmpty()) {
          return collection;
       }
@@ -103,7 +103,7 @@ public class ImportFacade extends AbstractFacade {
    private Collection createImportCollection(Collection collection) {
       checkProjectWriteRole();
 
-      String collectionName = collection.getName() != null && !collection.getName().isEmpty() ? collection.getName() : "Import";
+      String collectionName = collection.getName() != null && !collection.getName().isEmpty() ? collection.getName() : "ImportedCollection";
       collection.setName(collectionName);
 
       if (collection.getCode() == null || collection.getCode().isEmpty()) {

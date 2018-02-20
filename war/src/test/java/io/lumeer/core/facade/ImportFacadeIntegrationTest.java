@@ -26,7 +26,7 @@ import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Import;
+import io.lumeer.api.model.ImportedCollection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
@@ -111,8 +111,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportEmptyCSV() {
       final String emptyCSV = "";
-      Import importObj = createImportObject(ImportFacade.FORMAT_CSV, emptyCSV);
-      Collection collection = importFacade.importDocuments(importObj);
+      ImportedCollection importedCollection = createImportObject( emptyCSV);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -122,8 +122,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportCollectionInfo() {
       final String emptyCSV = "";
-      Import importObj = createImportObject(ImportFacade.FORMAT_CSV, emptyCSV);
-      Collection collection = importFacade.importDocuments(importObj);
+      ImportedCollection importedCollection = createImportObject( emptyCSV);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
       assertThat(collection).isNotNull();
       assertThat(collection.getName()).isEqualTo(COLLECTION_NAME);
       assertThat(collection.getCode()).isEqualTo(COLLECTION_CODE);
@@ -131,14 +131,13 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(collection.getColor()).isEqualTo(COLLECTION_COLOR);
    }
 
-
    @Test
    public void testImportEmptyHeaderCSV() {
       final String noHeaderCsv = "\n"
             + "a;b;c;d\n"
             + "a;b;c;d\n";
-      Import importObj = createImportObject(ImportFacade.FORMAT_CSV, noHeaderCsv);
-      Collection collection = importFacade.importDocuments(importObj);
+      ImportedCollection importedCollection = createImportObject( noHeaderCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -153,8 +152,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportNoLinesCSV() {
       final String noLinesCsv = "h1;h2;h3;h4\n";
-      Import importObj = createImportObject(ImportFacade.FORMAT_CSV, noLinesCsv);
-      Collection collection = importFacade.importDocuments(importObj);
+      ImportedCollection importedCollection = createImportObject( noLinesCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -168,8 +167,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + ";;c;d\n"
             + "a;b;;d\n"
             + "a;b;;\n";
-      Import importObj = createImportObject(ImportFacade.FORMAT_CSV, correctCsv);
-      Collection collection = importFacade.importDocuments(importObj);
+      ImportedCollection importedCollection = createImportObject( correctCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -204,8 +203,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + "\n\n\n\n\n"
             + "a;b;c\n";
 
-      Import importObj = createImportObject(ImportFacade.FORMAT_CSV, diffRowsLengthCsv);
-      Collection collection = importFacade.importDocuments(importObj);
+      ImportedCollection importedCollection = createImportObject( diffRowsLengthCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -235,8 +234,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + "a,,c,d\n"
             + ",,,\n"
             + "a,b,c,d\n";
-      Import importObj = createImportObject(ImportFacade.FORMAT_CSV, commaSeparatedCsv);
-      Collection collection = importFacade.importDocuments(importObj);
+      ImportedCollection importedCollection = createImportObject(commaSeparatedCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -263,8 +262,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       return SearchQuery.createBuilder(USER).build();
    }
 
-   private Import createImportObject(String format, String data) {
-      return new Import(new JsonCollection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, new JsonPermissions()), format, data);
+   private ImportedCollection createImportObject(String data) {
+      return new ImportedCollection(new JsonCollection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, new JsonPermissions()), data);
    }
 
 }
