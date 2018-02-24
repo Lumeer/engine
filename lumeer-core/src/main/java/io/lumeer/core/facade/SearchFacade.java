@@ -23,11 +23,13 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.View;
+import io.lumeer.core.util.FilterParser;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.ArrayList;
@@ -60,7 +62,7 @@ public class SearchFacade extends AbstractFacade {
    public List<Collection> searchCollections(Query query) {
       Set<Collection> collections = new HashSet<>();
 
-      if (query.getFulltext() != null && !query.getFulltext().isEmpty()) {
+      if ((query.getFulltext() != null && !query.getFulltext().isEmpty()) || (query.getFilters() != null && !query.getFilters().isEmpty())) {
          collections.addAll(getCollectionsByDocumentsSearch(query));
       }
 
@@ -83,7 +85,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       if (!isOnlyDocumentsIdsQuery(query) || isEmptyQuery(query)) {
-         documents.addAll(searchDocumentsByFullText(query));
+         documents.addAll(searchDocumentsByQuery(query));
       }
 
       return new ArrayList<>(documents);
@@ -95,7 +97,7 @@ public class SearchFacade extends AbstractFacade {
 
    private boolean isEmptyQueryExceptDocumentIds(final Query query) {
       return (query.getFilters() == null || query.getFilters().isEmpty()) && (query.getFulltext() == null || query.getFulltext().isEmpty()) &&
-            (query.getCollectionCodes() == null || query.getCollectionCodes().isEmpty()) || (query.getCollectionIds() == null || query.getCollectionIds().isEmpty());
+            (query.getCollectionCodes() == null || query.getCollectionCodes().isEmpty()) && (query.getCollectionIds() == null || query.getCollectionIds().isEmpty());
    }
 
    private boolean isOnlyDocumentsIdsQuery(final Query query) {
@@ -127,11 +129,27 @@ public class SearchFacade extends AbstractFacade {
       return new ArrayList<>(documentsMap.values());
    }
 
-   private List<Document> searchDocumentsByFullText(Query query) {
-      Map<String, Collection> collections = getCollections(query);
-      Map<String, DataDocument> dataDocuments = getDataDocuments(collections.values(), query);
+   private List<Document> searchDocumentsByQuery(Query query) {
+      Set<String> collectionIdsFromFilters = collectionIdsFromFilters(parseAttributeFilters(query.getFilters()));
+      SearchQuery collectionQuery = createCollectionQuery(query, collectionIdsFromFilters);
+      Map<String, Collection> collections = getCollections(collectionQuery);
+
+      Map<String, DataDocument> dataDocuments = new HashMap<>();
+
+      SearchQuery searchQueryWithFilters = createSearchQuery(query);
+      SearchQuery searchQueryWithoutFilters = createSearchQueryWithoutFilters(query);
+
+      for (Collection collection : collections.values()) {
+         SearchQuery usedSearchQuery = collectionIdsFromFilters.contains(collection.getId()) ? searchQueryWithFilters : searchQueryWithoutFilters;
+         dataDocuments.putAll(getDataDocuments(collection.getId(), usedSearchQuery));
+      }
 
       return getDocuments(collections, dataDocuments);
+   }
+
+   private Map<String, DataDocument> getDataDocuments(String collectionId, SearchQuery query) {
+      return dataDao.getData(collectionId, query).stream()
+                    .collect(Collectors.toMap(DataDocument::getId, Function.identity()));
    }
 
    public List<View> searchViews(Query query) {
@@ -169,33 +187,12 @@ public class SearchFacade extends AbstractFacade {
 
    private Map<String, Collection> getCollections(Query query) {
       SearchQuery collectionQuery = createCollectionQuery(query);
-      return collectionDao.getCollections(collectionQuery).stream()
+      return getCollections(collectionQuery);
+   }
+
+   private Map<String, Collection> getCollections(SearchQuery query) {
+      return collectionDao.getCollections(query).stream()
                           .collect(Collectors.toMap(Resource::getId, Function.identity()));
-   }
-
-   private SearchQuery createCollectionQuery(Query query) {
-      String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUserGroups();
-
-      return SearchQuery.createBuilder(user)
-                        .groups(groups)
-                        .collectionCodes(query.getCollectionCodes())
-                        .collectionIds(query.getCollectionIds())
-                        .build();
-   }
-
-   private Map<String, DataDocument> getDataDocuments(Iterable<Collection> collections, Query query) {
-      Map<String, DataDocument> dataDocuments = new HashMap<>();
-      for (Collection collection : collections) {
-         dataDocuments.putAll(getDataDocuments(collection.getId(), query));
-      }
-      return dataDocuments;
-   }
-
-   private Map<String, DataDocument> getDataDocuments(String collectionId, Query query) {
-      SearchQuery documentQuery = createSearchQuery(query);
-      return dataDao.getData(collectionId, documentQuery).stream()
-                    .collect(Collectors.toMap(DataDocument::getId, Function.identity()));
    }
 
    private List<Document> getDocuments(Map<String, Collection> collections, Map<String, DataDocument> dataDocuments) {
@@ -208,16 +205,47 @@ public class SearchFacade extends AbstractFacade {
       return documents;
    }
 
+   private SearchQuery createCollectionQuery(Query query) {
+      Set<AttributeFilter> filters = parseAttributeFilters(query.getFilters());
+      Set<String> collectionIdsFromFilters = collectionIdsFromFilters(filters);
+
+      return createCollectionQuery(query, collectionIdsFromFilters);
+   }
+
+   private SearchQuery createCollectionQuery(Query query, Set<String> additionalCollectionIds) {
+      return createCollectionSearchQueryBuilder(query, additionalCollectionIds)
+            .build();
+   }
+
    private SearchQuery createSearchQuery(Query query) {
+      Set<AttributeFilter> filters = parseAttributeFilters(query.getFilters());
+      Set<String> collectionIdsFromFilters = collectionIdsFromFilters(filters);
+
+      return createSearchQueryBuilder(query, collectionIdsFromFilters)
+            .filters(filters)
+            .build();
+   }
+
+   private SearchQuery createSearchQueryWithoutFilters(Query query) {
+      return createSearchQueryBuilder(query, new HashSet<>()).build();
+   }
+
+   private SearchQuery.Builder createSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
+      return createCollectionSearchQueryBuilder(query, additionalCollectionIds)
+            .documentIds(query.getDocumentIds())
+            .fulltext(query.getFulltext());
+   }
+
+   private SearchQuery.Builder createCollectionSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
       String user = authenticatedUser.getCurrentUsername();
       Set<String> groups = authenticatedUser.getCurrentUserGroups();
 
+      Set<String> collectionIds = query.getCollectionIds() != null ? new HashSet<>(query.getCollectionIds()) : new HashSet<>();
+      collectionIds.addAll(additionalCollectionIds);
+
       return SearchQuery.createBuilder(user).groups(groups)
                         .collectionCodes(query.getCollectionCodes())
-                        .collectionIds(query.getCollectionIds())
-                        .documentIds(query.getDocumentIds())
-                        .fulltext(query.getFulltext()) // TODO add filters
-                        .build();
+                        .collectionIds(collectionIds);
    }
 
    private SearchQuery createDocumentIdsQuery(Set<String> documentIds) {
@@ -227,6 +255,20 @@ public class SearchFacade extends AbstractFacade {
       return SearchQuery.createBuilder(user).groups(groups)
                         .documentIds(documentIds)
                         .build();
+   }
+
+   private Set<AttributeFilter> parseAttributeFilters(Set<String> filters) {
+      return filters != null ? filters.stream()
+                                      .map(FilterParser::parse)
+                                      .collect(Collectors.toSet())
+            : Collections.emptySet();
+   }
+
+   private Set<String> collectionIdsFromFilters(Set<AttributeFilter> filters) {
+      return filters != null ? filters.stream()
+                                      .map(AttributeFilter::getCollectionId)
+                                      .collect(Collectors.toSet())
+            : Collections.emptySet();
    }
 
 }
