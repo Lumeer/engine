@@ -18,6 +18,8 @@
  */
 package io.lumeer.storage.api.query;
 
+import io.lumeer.storage.api.filter.AttributeFilter;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,6 +33,7 @@ public class SearchQuery extends DatabaseQuery {
    private final Set<String> collectionIds;
    private final Set<String> linkTypeIds;
    private final Set<String> documentIds;
+   private final Set<AttributeFilter> filters;
 
    private SearchQuery(Builder builder) {
       super(builder);
@@ -40,6 +43,7 @@ public class SearchQuery extends DatabaseQuery {
       this.collectionIds = builder.collectionIds;
       this.linkTypeIds = builder.linkTypeIds;
       this.documentIds = builder.documentIds;
+      this.filters = builder.filters;
    }
 
    public String getFulltext() {
@@ -62,6 +66,10 @@ public class SearchQuery extends DatabaseQuery {
       return collectionIds != null ? Collections.unmodifiableSet(collectionIds) : Collections.emptySet();
    }
 
+   public Set<AttributeFilter> getFilters() {
+      return filters != null ? Collections.unmodifiableSet(filters) : Collections.emptySet();
+   }
+
    public boolean isFulltextQuery() {
       return fulltext != null && !fulltext.isEmpty();
    }
@@ -82,6 +90,10 @@ public class SearchQuery extends DatabaseQuery {
       return documentIds != null && !documentIds.isEmpty();
    }
 
+   public boolean isFiltersQuery() {
+      return filters != null && !filters.isEmpty();
+   }
+
    public boolean isBasicQuery() {
       return !isFulltextQuery() && !isCollectionCodesQuery() && !isLinkTypeIdsQuery() && !isDocumentIdsQuery() && !isCollectionIdsQuery();
    }
@@ -97,6 +109,7 @@ public class SearchQuery extends DatabaseQuery {
       private Set<String> collectionIds;
       private Set<String> linkTypeIds;
       private Set<String> documentIds;
+      private Set<AttributeFilter> filters;
 
       private Builder(final String user) {
          super(user);
@@ -124,6 +137,11 @@ public class SearchQuery extends DatabaseQuery {
 
       public Builder documentIds(Set<String> documentIds) {
          this.documentIds = documentIds;
+         return this;
+      }
+
+      public Builder filters(Set<AttributeFilter> attributeFilters) {
+         this.filters = attributeFilters;
          return this;
       }
 

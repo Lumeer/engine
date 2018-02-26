@@ -25,6 +25,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 
@@ -42,6 +43,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
@@ -138,7 +140,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    private Bson createFilter(SearchQuery query) {
       List<Bson> filters = new ArrayList<>();
-      if(query.isFulltextQuery()){
+      if (query.isFulltextQuery()) {
          filters.add(Filters.text(query.getFulltext()));
       }
       if (query.isDocumentIdsQuery()) {
@@ -147,7 +149,33 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
             filters.add(Filters.in(ID, ids));
          }
       }
+      if (query.isFiltersQuery()) {
+         List<Bson> attributeFilters = query.getFilters().stream()
+                                            .map(this::attributeFilter)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList());
+         filters.addAll(attributeFilters);
+      }
+
       return filters.size() > 0 ? Filters.and(filters) : new Document();
+   }
+
+   private Bson attributeFilter(AttributeFilter filter) {
+      switch (filter.getConditionType()) {
+         case EQUALS:
+            return Filters.eq(filter.getAttributeName(), filter.getValue());
+         case NOT_EQUALS:
+            return Filters.ne(filter.getAttributeName(), filter.getValue());
+         case LOWER_THAN:
+            return Filters.lt(filter.getAttributeName(), filter.getValue());
+         case LOWER_THAN_EQUALS:
+            return Filters.lte(filter.getAttributeName(), filter.getValue());
+         case GREATER_THAN:
+            return Filters.gt(filter.getAttributeName(), filter.getValue());
+         case GREATER_THAN_EQUALS:
+            return Filters.gte(filter.getAttributeName(), filter.getValue());
+      }
+      return null;
    }
 
    MongoCollection<Document> dataCollection(String collectionId) {
