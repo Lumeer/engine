@@ -168,7 +168,6 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCollectionCode()).isNull();
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(USER);
       assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(LocalDateTime.now());
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
@@ -198,7 +197,6 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCollectionCode()).isNull();
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(USER);
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(USER);
@@ -228,7 +226,6 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCollectionCode()).isNull();
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(USER);
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(USER);
@@ -265,7 +262,6 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(document.getId()).isEqualTo(id);
       assertions.assertThat(document.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(document.getCollectionCode()).isNull();
       assertions.assertThat(document.getCreatedBy()).isEqualTo(USER);
       assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(LocalDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();

@@ -32,10 +32,6 @@ public interface Document {
 
    void setCollectionId(String collectionId);
 
-   String getCollectionCode();
-
-   void setCollectionCode(String collectionCode);
-
    LocalDateTime getCreationDate();
 
    void setCreationDate(LocalDateTime creationDate);

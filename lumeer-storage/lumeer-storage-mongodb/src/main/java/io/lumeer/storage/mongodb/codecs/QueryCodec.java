@@ -37,7 +37,6 @@ import java.util.Set;
 
 public class QueryCodec implements Codec<JsonQuery> {
 
-   public static final String COLLECTION_CODES = "collections";
    public static final String FILTERS = "filters";
    public static final String COLLECTION_IDS = "collection_ids";
    public static final String DOCUMENT_IDS = "document_ids";
@@ -64,7 +63,6 @@ public class QueryCodec implements Codec<JsonQuery> {
          return new JsonQuery();
       }
 
-      Set<String> collectionCodes = convertToSet(bson.get(COLLECTION_CODES, List.class));
       Set<String> filters = convertToSet(bson.get(FILTERS, List.class));
       Set<String> collectionIds = convertToSet(bson.get(COLLECTION_IDS, List.class));
       Set<String> linkTypeIds = convertToSet(bson.get(LINK_TYPE_IDS, List.class));
@@ -73,7 +71,7 @@ public class QueryCodec implements Codec<JsonQuery> {
       Integer page = bson.getInteger(PAGE);
       Integer pageSize = bson.getInteger(PAGE_SIZE);
 
-      return new JsonQuery(collectionCodes, filters, collectionIds, linkTypeIds, documentIds, fulltext, page, pageSize);
+      return new JsonQuery(filters, collectionIds, linkTypeIds, documentIds, fulltext, page, pageSize);
    }
 
    private static Set<String> convertToSet(List list) {
@@ -83,7 +81,6 @@ public class QueryCodec implements Codec<JsonQuery> {
    @Override
    public void encode(final BsonWriter writer, final JsonQuery value, final EncoderContext encoderContext) {
       Document document = new Document()
-            .append(COLLECTION_CODES, new ArrayList<>(value.getCollectionCodes()))
             .append(FILTERS, new ArrayList<>(value.getFilters()))
             .append(COLLECTION_IDS, new ArrayList<>(value.getCollectionIds()))
             .append(LINK_TYPE_IDS, new ArrayList<>(value.getLinkTypeIds()))

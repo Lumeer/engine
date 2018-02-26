@@ -100,7 +100,6 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String COLLECTIONS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
    private static final String COLLECTIONS_URL = SERVER_URL + COLLECTIONS_PATH;
-   private static final String PERMISSIONS_URL = COLLECTIONS_URL + "/" + CODE + "/permissions";
 
    @Inject
    private OrganizationDao organizationDao;
@@ -189,12 +188,12 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    @Test
    public void testUpdateCollection() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
       Collection updatedCollection = prepareCollection(CODE2);
       Entity entity = Entity.json(updatedCollection);
 
-      Response response = client.target(COLLECTIONS_URL).path(CODE)
+      Response response = client.target(COLLECTIONS_URL).path(collectionId)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -225,9 +224,9 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    @Test
    public void testDeleteCollection() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(COLLECTIONS_URL).path(CODE)
+      Response response = client.target(COLLECTIONS_URL).path(collectionId)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
@@ -239,10 +238,10 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
    }
 
    @Test
-   public void testGetCollectionByCode() {
-      createCollection(CODE);
+   public void testGetCollection() {
+      String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(COLLECTIONS_URL).path(CODE)
+      Response response = client.target(COLLECTIONS_URL).path(collectionId)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -306,7 +305,7 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      Response response = client.target(COLLECTIONS_URL).path(CODE).path("attributes")
+      Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -333,7 +332,7 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
       JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       Entity entity = Entity.json(updatedAttribute);
 
-      Response response = client.target(COLLECTIONS_URL).path(CODE).path("attributes").path(ATTRIBUTE_FULLNAME)
+      Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_FULLNAME)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -367,7 +366,7 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      Response response = client.target(COLLECTIONS_URL).path(CODE).path("attributes").path(ATTRIBUTE_FULLNAME)
+      Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_FULLNAME)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
@@ -380,9 +379,9 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    @Test
    public void testGetCollectionPermissions() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(PERMISSIONS_URL)
+      Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -395,12 +394,12 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    @Test
    public void testUpdateUserPermissions() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
       SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       Entity entity = Entity.json(userPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("users")
+      Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("users")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -419,14 +418,13 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    @Test
    public void testRemoveUserPermission() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(PERMISSIONS_URL).path("users").path(USER)
+      Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("users").path(USER)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
@@ -435,12 +433,12 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    @Test
    public void testUpdateGroupPermissions() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
       SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
       Entity entity = Entity.json(groupPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("groups")
+      Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("groups")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -459,14 +457,13 @@ public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase
 
    @Test
    public void testRemoveGroupPermission() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(PERMISSIONS_URL).path("groups").path(GROUP)
+      Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("groups").path(GROUP)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);

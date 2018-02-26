@@ -71,8 +71,8 @@ public class CollectionFacade extends AbstractFacade {
       return keepOnlyActualUserRoles(storedCollection);
    }
 
-   public Collection updateCollection(String collectionCode, Collection collection) {
-      Collection storedCollection = collectionDao.getCollectionByCode(collectionCode);
+   public Collection updateCollection(String collectionId, Collection collection) {
+      Collection storedCollection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(storedCollection, Role.MANAGE);
 
       keepUnmodifiableFields(collection, storedCollection);
@@ -88,11 +88,10 @@ public class CollectionFacade extends AbstractFacade {
       collection.setLastTimeUsed(storedCollection.getLastTimeUsed());
    }
 
-   public void deleteCollection(String collectionCode) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public void deleteCollection(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      String collectionId = collection.getId();
       collectionDao.deleteCollection(collectionId);
       documentDao.deleteDocuments(collectionId);
       dataDao.deleteDataRepository(collectionId);
@@ -105,8 +104,8 @@ public class CollectionFacade extends AbstractFacade {
       }
    }
 
-   public Collection getCollection(String collectionCode) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public Collection getCollection(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
       return keepOnlyActualUserRoles(collection);
@@ -123,8 +122,8 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getAllCollectionNames();
    }
 
-   public Attribute updateCollectionAttribute(String collectionCode, String attributeFullName, Attribute attribute) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public Attribute updateCollectionAttribute(String collectionId, String attributeFullName, Attribute attribute) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.updateAttribute(attributeFullName, attribute);
@@ -133,23 +132,23 @@ public class CollectionFacade extends AbstractFacade {
       return attribute;
    }
 
-   public void deleteCollectionAttribute(String collectionCode, String attributeFullName) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public void deleteCollectionAttribute(String collectionId, String attributeFullName) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.deleteAttribute(attributeFullName);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 
-   public Permissions getCollectionPermissions(final String code) {
-      Collection collection = collectionDao.getCollectionByCode(code);
+   public Permissions getCollectionPermissions(final String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       return collection.getPermissions();
    }
 
-   public Set<Permission> updateUserPermissions(final String code, final Permission... userPermissions) {
-      Collection collection = collectionDao.getCollectionByCode(code);
+   public Set<Permission> updateUserPermissions(final String collectionId, final Permission... userPermissions) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.getPermissions().updateUserPermissions(userPermissions);
@@ -158,16 +157,16 @@ public class CollectionFacade extends AbstractFacade {
       return updatedCollection.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String code, final String user) {
-      Collection collection = collectionDao.getCollectionByCode(code);
+   public void removeUserPermission(final String collectionId, final String user) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.getPermissions().removeUserPermission(user);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 
-   public Set<Permission> updateGroupPermissions(final String code, final Permission... groupPermissions) {
-      Collection collection = collectionDao.getCollectionByCode(code);
+   public Set<Permission> updateGroupPermissions(final String collectionId, final Permission... groupPermissions) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.getPermissions().updateGroupPermissions(groupPermissions);
@@ -176,8 +175,8 @@ public class CollectionFacade extends AbstractFacade {
       return updatedCollection.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String code, final String group) {
-      Collection collection = collectionDao.getCollectionByCode(code);
+   public void removeGroupPermission(final String collectionId, final String group) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.getPermissions().removeGroupPermission(group);

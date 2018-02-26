@@ -22,7 +22,6 @@ import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -37,7 +36,6 @@ public class JsonDocument implements Document {
 
    private String collectionId;
 
-   private String collectionCode;
    private LocalDateTime creationDate;
    private LocalDateTime updateDate;
    private String createdBy;
@@ -53,7 +51,6 @@ public class JsonDocument implements Document {
    public JsonDocument(final Document document) {
       this.id = document.getId();
       this.collectionId = document.getCollectionId();
-      this.collectionCode = document.getCollectionCode();
       this.creationDate = document.getCreationDate();
       this.updateDate = document.getUpdateDate();
       this.createdBy = document.getCreatedBy();
@@ -80,16 +77,6 @@ public class JsonDocument implements Document {
    @Override
    public void setCollectionId(final String collectionId) {
       this.collectionId = collectionId;
-   }
-
-   @Override
-   public String getCollectionCode() {
-      return collectionCode;
-   }
-
-   @Override
-   public void setCollectionCode(final String collectionCode) {
-      this.collectionCode = collectionCode;
    }
 
    @Override

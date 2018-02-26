@@ -153,9 +153,6 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    private static Bson viewSearchFilter(SearchQuery query) {
       List<Bson> filters = new ArrayList<>();
-      if (query.isCollectionCodesQuery()) {
-         filters.add(Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.COLLECTION_CODES), query.getCollectionCodes()));
-      }
       if (query.isCollectionIdsQuery()) {
          filters.add(Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.COLLECTION_IDS), query.getCollectionIds()));
       }
@@ -165,10 +162,6 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       filters.add(MongoFilters.permissionsFilter(query));
 
       return Filters.and(filters);
-   }
-
-   private static Bson collectionFilter(String collectionCode) {
-      return Filters.eq(ViewCodec.QUERY + "." + QueryCodec.COLLECTION_CODES, collectionCode);
    }
 
    private String databaseCollectionName(Project project) {

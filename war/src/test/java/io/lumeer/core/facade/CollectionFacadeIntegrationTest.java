@@ -181,12 +181,12 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testUpdateCollection() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
       Collection updatedCollection = prepareCollection(CODE2);
       updatedCollection.getPermissions().removeUserPermission(USER);
 
-      collectionFacade.updateCollection(CODE, updatedCollection);
+      collectionFacade.updateCollection(collectionId, updatedCollection);
 
       Collection storedCollection = collectionDao.getCollectionByCode(CODE2);
       assertThat(storedCollection).isNotNull();
@@ -196,9 +196,9 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testDeleteCollection() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      collectionFacade.deleteCollection(CODE);
+      collectionFacade.deleteCollection(collectionId);
 
       assertThatThrownBy(() -> collectionDao.getCollectionByCode(CODE))
             .isInstanceOf(ResourceNotFoundException.class);
@@ -206,9 +206,9 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testGetCollection() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      Collection storedCollection = collectionFacade.getCollection(CODE);
+      Collection storedCollection = collectionFacade.getCollection(collectionId);
       assertThat(storedCollection).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -245,7 +245,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(collection.getAttributes()).isEmpty();
 
       JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
-      collectionFacade.updateCollectionAttribute(CODE, ATTRIBUTE_FULLNAME, attribute);
+      collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_FULLNAME, attribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
@@ -267,7 +267,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(collection.getAttributes()).isNotEmpty();
 
       JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
-      collectionFacade.updateCollectionAttribute(CODE, ATTRIBUTE_FULLNAME, updatedAttribute);
+      collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_FULLNAME, updatedAttribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
@@ -288,7 +288,7 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
-      collectionFacade.deleteCollectionAttribute(CODE, ATTRIBUTE_FULLNAME);
+      collectionFacade.deleteCollectionAttribute(collection.getId(), ATTRIBUTE_FULLNAME);
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
@@ -297,9 +297,9 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testGetCollectionPermissions() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      Permissions permissions = collectionFacade.getCollectionPermissions(CODE);
+      Permissions permissions = collectionFacade.getCollectionPermissions(collectionId);
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
       assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
@@ -307,10 +307,10 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissions() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
       SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
-      collectionFacade.updateUserPermissions(CODE, userPermission);
+      collectionFacade.updateUserPermissions(collectionId, userPermission);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -320,9 +320,9 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testRemoveUserPermission() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      collectionFacade.removeUserPermission(CODE, USER);
+      collectionFacade.removeUserPermission(collectionId, USER);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -332,10 +332,10 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissions() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
       SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
-      collectionFacade.updateGroupPermissions(CODE, groupPermission);
+      collectionFacade.updateGroupPermissions(collectionId, groupPermission);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -345,9 +345,9 @@ public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      createCollection(CODE);
+      String collectionId = createCollection(CODE).getId();
 
-      collectionFacade.removeGroupPermission(CODE, GROUP);
+      collectionFacade.removeGroupPermission(collectionId, GROUP);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();

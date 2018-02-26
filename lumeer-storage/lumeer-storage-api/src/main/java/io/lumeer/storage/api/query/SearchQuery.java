@@ -29,7 +29,6 @@ import javax.annotation.concurrent.Immutable;
 public class SearchQuery extends DatabaseQuery {
 
    private final String fulltext;
-   private final Set<String> collectionCodes;
    private final Set<String> collectionIds;
    private final Set<String> linkTypeIds;
    private final Set<String> documentIds;
@@ -39,7 +38,6 @@ public class SearchQuery extends DatabaseQuery {
       super(builder);
 
       this.fulltext = builder.fulltext;
-      this.collectionCodes = builder.collectionCodes;
       this.collectionIds = builder.collectionIds;
       this.linkTypeIds = builder.linkTypeIds;
       this.documentIds = builder.documentIds;
@@ -48,10 +46,6 @@ public class SearchQuery extends DatabaseQuery {
 
    public String getFulltext() {
       return fulltext;
-   }
-
-   public Set<String> getCollectionCodes() {
-      return collectionCodes != null ? Collections.unmodifiableSet(collectionCodes) : Collections.emptySet();
    }
 
    public Set<String> getLinkTypeIds() {
@@ -74,10 +68,6 @@ public class SearchQuery extends DatabaseQuery {
       return fulltext != null && !fulltext.isEmpty();
    }
 
-   public boolean isCollectionCodesQuery() {
-      return collectionCodes != null && !collectionCodes.isEmpty();
-   }
-
    public boolean isCollectionIdsQuery() {
       return collectionIds != null && !collectionIds.isEmpty();
    }
@@ -95,7 +85,7 @@ public class SearchQuery extends DatabaseQuery {
    }
 
    public boolean isBasicQuery() {
-      return !isFulltextQuery() && !isCollectionCodesQuery() && !isLinkTypeIdsQuery() && !isDocumentIdsQuery() && !isCollectionIdsQuery();
+      return !isFulltextQuery()  && !isLinkTypeIdsQuery() && !isDocumentIdsQuery() && !isCollectionIdsQuery();
    }
 
    public static Builder createBuilder(String user) {
@@ -105,7 +95,6 @@ public class SearchQuery extends DatabaseQuery {
    public static class Builder extends DatabaseQuery.Builder<Builder> {
 
       private String fulltext;
-      private Set<String> collectionCodes = new HashSet<>();
       private Set<String> collectionIds;
       private Set<String> linkTypeIds;
       private Set<String> documentIds;
@@ -117,11 +106,6 @@ public class SearchQuery extends DatabaseQuery {
 
       public Builder fulltext(String fulltext) {
          this.fulltext = fulltext;
-         return this;
-      }
-
-      public Builder collectionCodes(Set<String> collectionCodes) {
-         this.collectionCodes = collectionCodes;
          return this;
       }
 

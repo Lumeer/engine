@@ -28,7 +28,6 @@ import java.util.Set;
 
 public class JsonQuery implements Query {
 
-   private final Set<String> collectionCodes;
    private final Set<String> filters;
    private final Set<String> collectionIds;
    private final Set<String> documentIds;
@@ -38,7 +37,6 @@ public class JsonQuery implements Query {
    private final Integer pageSize;
 
    public JsonQuery() {
-      this.collectionCodes = Collections.emptySet();
       this.filters = Collections.emptySet();
       this.collectionIds = Collections.emptySet();
       this.documentIds = Collections.emptySet();
@@ -52,7 +50,6 @@ public class JsonQuery implements Query {
       this.fulltext = fulltext;
 
       this.collectionIds = Collections.emptySet();
-      this.collectionCodes = Collections.emptySet();
       this.documentIds = Collections.emptySet();
       this.linkTypeIds = Collections.emptySet();
       this.filters = Collections.emptySet();
@@ -61,11 +58,6 @@ public class JsonQuery implements Query {
    }
 
    public JsonQuery(Integer page, Integer pageSize) {
-      this(null, page, pageSize);
-   }
-
-   public JsonQuery(String collectionCode, Integer page, Integer pageSize) {
-      this.collectionCodes = collectionCode != null ?  Collections.singleton(collectionCode) : Collections.emptySet();
       this.page = page;
       this.pageSize = pageSize;
 
@@ -82,14 +74,12 @@ public class JsonQuery implements Query {
       this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
 
       this.filters = Collections.emptySet();
-      this.collectionCodes = Collections.emptySet();
       this.page = 0;
       this.pageSize = 0;
       this.fulltext = "";
    }
 
    public JsonQuery(Query query) {
-      this.collectionCodes = query.getCollectionCodes();
       this.filters = query.getFilters();
       this.fulltext = query.getFulltext();
       this.collectionIds = query.getCollectionIds();
@@ -100,15 +90,13 @@ public class JsonQuery implements Query {
    }
 
    @JsonCreator
-   public JsonQuery(@JsonProperty("collections") final Set<String> collectionCodes,
-         @JsonProperty("filters") final Set<String> filters,
+   public JsonQuery(@JsonProperty("filters") final Set<String> filters,
          @JsonProperty("collectionIds") final Set<String> collectionIds,
          @JsonProperty("linkTypeIds") final Set<String> linkTypeIds,
          @JsonProperty("documentIds") final Set<String> documentIds,
          @JsonProperty("fulltext") final String fulltext,
          @JsonProperty("page") final Integer page,
          @JsonProperty("pageSize") final Integer pageSize) {
-      this.collectionCodes = collectionCodes != null ? collectionCodes : Collections.emptySet();
       this.filters = filters != null ? filters : Collections.emptySet();
       this.collectionIds = collectionIds != null ? collectionIds : Collections.emptySet();
       this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptySet();
@@ -116,11 +104,6 @@ public class JsonQuery implements Query {
       this.fulltext = fulltext;
       this.page = page;
       this.pageSize = pageSize;
-   }
-
-   @Override
-   public Set<String> getCollectionCodes() {
-      return collectionCodes;
    }
 
    @Override
@@ -169,9 +152,6 @@ public class JsonQuery implements Query {
 
       final Query query = (Query) o;
 
-      if (getCollectionCodes() != null ? !getCollectionCodes().equals(query.getCollectionCodes()) : query.getCollectionCodes() != null) {
-         return false;
-      }
       if (getFilters() != null ? !getFilters().equals(query.getFilters()) : query.getFilters() != null) {
          return false;
       }
@@ -195,8 +175,7 @@ public class JsonQuery implements Query {
 
    @Override
    public int hashCode() {
-      int result = getCollectionCodes() != null ? getCollectionCodes().hashCode() : 0;
-      result = 31 * result + (getFilters() != null ? getFilters().hashCode() : 0);
+      int result = getFilters() != null ? getFilters().hashCode() : 0;
       result = 31 * result + (getCollectionIds() != null ? getCollectionIds().hashCode() : 0);
       result = 31 * result + (getDocumentIds() != null ? getDocumentIds().hashCode() : 0);
       result = 31 * result + (getLinkTypeIds() != null ? getLinkTypeIds().hashCode() : 0);
@@ -209,7 +188,6 @@ public class JsonQuery implements Query {
    @Override
    public String toString() {
       return "JsonQuery{" +
-            "collectionCodes=" + collectionCodes +
             ", filters=" + filters +
             ", collectionIds=" + collectionIds +
             ", documentIds=" + documentIds +

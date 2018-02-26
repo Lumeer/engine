@@ -86,7 +86,7 @@ public class SuggestionFacadeIntegrationTest extends IntegrationTestBase {
 
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testCollection"), Collections.singleton("testAttribute=42"), null, null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
 
       USER_PERMISSION = new SimplePermission(USER, View.ROLES);
       GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
@@ -168,8 +168,8 @@ public class SuggestionFacadeIntegrationTest extends IntegrationTestBase {
       String lId3 = linkTypeDao.createLinkType(prepareLinkType("other", collectionIds.get(0), collectionIds.get(2))).getId();
       String lId4 = linkTypeDao.createLinkType(prepareLinkType("other Link", collectionIds.get(0), collectionIds.get(0))).getId();
       String lId5 = linkTypeDao.createLinkType(prepareLinkType("linkkkkkk", collectionIds.get(2), collectionIds.get(1))).getId();
-      linkTypeDao.createLinkType(prepareLinkType("nothing", collectionIds.get(1), collectionIds.get(1))).getId();
-      linkTypeDao.createLinkType(prepareLinkType("blabla", collectionIds.get(1), collectionIds.get(2))).getId();
+      linkTypeDao.createLinkType(prepareLinkType("nothing", collectionIds.get(1), collectionIds.get(1)));
+      linkTypeDao.createLinkType(prepareLinkType("blabla", collectionIds.get(1), collectionIds.get(2)));
 
       List<LinkType> linkTypes = suggestionFacade.suggest("link", SuggestionType.LINK).getLinkTypes();
       assertThat(linkTypes).extracting(LinkType::getId).containsOnly(lId1, lId2, lId4, lId5);
@@ -264,7 +264,7 @@ public class SuggestionFacadeIntegrationTest extends IntegrationTestBase {
 
 
    private View prepareView(String name) {
-      return new JsonView(name, name, null, null, null, QUERY, PERSPECTIVE.toString(), CONFIG);
+      return new JsonView(name, name, null, null, null, QUERY, PERSPECTIVE, CONFIG);
    }
 
    private View createView(String name) {
