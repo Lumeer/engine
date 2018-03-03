@@ -159,7 +159,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       Document document = prepareDocument();
 
       LocalDateTime beforeTime = LocalDateTime.now();
-      String id = documentFacade.createDocument(collection.getCode(), document).getId();
+      String id = documentFacade.createDocument(collection.getId(), document).getId();
       assertThat(id).isNotNull();
 
       Document storedDocument = documentDao.getDocumentById(id);
@@ -190,7 +190,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
       LocalDateTime beforeUpdateTime = LocalDateTime.now();
-      Document updatedDocument = documentFacade.updateDocumentData(collection.getCode(), id, data);
+      Document updatedDocument = documentFacade.updateDocumentData(collection.getId(), id, data);
       assertThat(updatedDocument).isNotNull();
 
       Document storedDocument = documentDao.getDocumentById(id);
@@ -219,7 +219,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
       LocalDateTime beforeUpdateTime = LocalDateTime.now();
-      Document updatedDocument = documentFacade.patchDocumentData(collection.getCode(), id, data);
+      Document updatedDocument = documentFacade.patchDocumentData(collection.getId(), id, data);
       assertThat(updatedDocument).isNotNull();
 
       Document storedDocument = documentDao.getDocumentById(id);
@@ -244,7 +244,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
    public void testDeleteDocument() {
       String id = createDocument().getId();
 
-      documentFacade.deleteDocument(collection.getCode(), id);
+      documentFacade.deleteDocument(collection.getId(), id);
 
       assertThatThrownBy(() -> documentDao.getDocumentById(id))
             .isInstanceOf(ResourceNotFoundException.class);
@@ -256,7 +256,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
    public void testGetDocument() {
       String id = createDocument().getId();
 
-      Document document = documentFacade.getDocument(collection.getCode(), id);
+      Document document = documentFacade.getDocument(collection.getId(), id);
       assertThat(document).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -281,7 +281,7 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       String id2 = createDocument().getId();
 
       Pagination pagination= new Pagination(null, null);
-      List<Document> documents = documentFacade.getDocuments(collection.getCode(), pagination);
+      List<Document> documents = documentFacade.getDocuments(collection.getId(), pagination);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
    }
 }
