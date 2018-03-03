@@ -82,8 +82,8 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
    private static final String VALUE2 = "secondValue";
 
    private static final String SERVER_URL = "http://localhost:8080";
-   private static final String DOCUMENTS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections/" + COLLECTION_CODE + "/documents";
-   private static final String DOCUMENTS_URL = SERVER_URL + DOCUMENTS_PATH;
+   private static final String DOCUMENTS_PATH_PREFIX = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
+   private static final String DOCUMENTS_URL_PREFIX = SERVER_URL + DOCUMENTS_PATH_PREFIX;
 
    @Inject
    private CollectionDao collectionDao;
@@ -165,12 +165,12 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
 
       LocalDateTime beforeTime = LocalDateTime.now();
 
-      Response response = client.target(DOCUMENTS_URL)
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).startsWith(DOCUMENTS_PATH);
+      assertThat(response.getLocation().getPath()).startsWith(DOCUMENTS_PATH_PREFIX);
 
       String[] path = response.getLocation().getPath().split("/");
       String id = path[path.length - 1];
@@ -204,7 +204,7 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(data);
 
       LocalDateTime beforeUpdateTime = LocalDateTime.now();
-      Response response = client.target(DOCUMENTS_URL).path(id).path("data")
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -236,7 +236,7 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(data);
 
       LocalDateTime beforeUpdateTime = LocalDateTime.now();
-      Response response = client.target(DOCUMENTS_URL).path(id).path("data")
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .build("PATCH", entity).invoke();
       assertThat(response).isNotNull();
@@ -264,12 +264,11 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
    public void testDeleteDocument() {
       String id = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL).path(id)
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(DOCUMENTS_URL).build());
 
       assertThatThrownBy(() -> documentDao.getDocumentById(id))
             .isInstanceOf(ResourceNotFoundException.class);
@@ -282,7 +281,7 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
    public void testGetDocument() {
       String id = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL).path(id)
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -308,11 +307,11 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
 
    @Test
    @Ignore("Works manually but there is unexpected exception in tests")
-   public void testGetAllCollections() {
+   public void testGetAllDocuments() {
       String id1 = createDocument().getId();
       String id2 = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL)
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
