@@ -320,7 +320,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testGetCollectionsByCollectionCodes() {
+   public void testGetCollectionsByCollectionIds() {
       MorphiaCollection collection = prepareCollection(CODE, NAME);
       collection.getPermissions().removeUserPermission(USER);
       Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.READ.toString()));
@@ -334,10 +334,10 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
       datastore.save(collectionDao.databaseCollection(), collection3);
 
       SearchQuery query = SearchQuery.createBuilder(USER)
-                                     .collectionCodes(new HashSet<>(Arrays.asList(CODE, CODE3)))
+                                     .collectionIds(new HashSet<>(Arrays.asList(collection.getId(), collection3.getId())))
                                      .build();
       List<Collection> views = collectionDao.getCollections(query);
-      assertThat(views).extracting(Collection::getCode).containsOnly(CODE3);
+      assertThat(views).extracting(Collection::getId).containsOnly(collection3.getId());
    }
 
    @Test
@@ -369,18 +369,18 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testGetCollectionsByFulltextAndCollectionCodes() {
-      createCollection(CODE, NAME, ATTRIBUTES);
-      createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES);
-      createCollection(CODE3, NAME3, ATTRIBUTES);
+   public void testGetCollectionsByFulltextAndCollectionIds() {
+      String id1 = createCollection(CODE, NAME, ATTRIBUTES).getId();
+      String id2 = createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES).getId();
+      String id3 = createCollection(CODE3, NAME3, ATTRIBUTES).getId();
       createCollection(CODE4, NAME_FULLTEXT2, ATTRIBUTES);
 
       SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .collectionCodes(new HashSet<>(Arrays.asList(CODE, CODE2, CODE3)))
+                                           .collectionIds(new HashSet<>(Arrays.asList(id1, id2, id3)))
                                            .fulltext("fulltext")
                                            .build();
       List<Collection> collections = collectionDao.getCollections(searchQuery);
-      assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2, CODE3);
+      assertThat(collections).extracting(Resource::getId).containsOnly(id2, id3);
    }
 
    @Test

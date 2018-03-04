@@ -50,9 +50,6 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    @Property(COLLECTION_ID)
    private String collectionId;
 
-   @Transient
-   private String collectionCode;
-
    @Property(CREATION_DATE)
    private LocalDateTime creationDate;
 
@@ -78,7 +75,6 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
       super(document.getId());
 
       this.collectionId = document.getCollectionId();
-      this.collectionCode = document.getCollectionCode();
       this.creationDate = document.getCreationDate();
       this.updateDate = document.getUpdateDate();
       this.createdBy = document.getCreatedBy();
@@ -95,16 +91,6 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    @Override
    public void setCollectionId(final String collectionId) {
       this.collectionId = collectionId;
-   }
-
-   @Override
-   public String getCollectionCode() {
-      return collectionCode;
-   }
-
-   @Override
-   public void setCollectionCode(final String collectionCode) {
-      this.collectionCode = collectionCode;
    }
 
    @Override
@@ -191,7 +177,6 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
       return "MorphiaDocument{" +
             "id=" + id +
             ", collectionId='" + collectionId + '\'' +
-            ", collectionCode='" + collectionCode + '\'' +
             ", creationDate=" + creationDate +
             ", updateDate=" + updateDate +
             ", createdBy='" + createdBy + '\'' +

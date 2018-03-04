@@ -26,7 +26,6 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
-import io.lumeer.storage.mongodb.model.MorphiaCollection;
 import io.lumeer.storage.mongodb.model.MorphiaDocument;
 
 import com.mongodb.WriteResult;
@@ -35,7 +34,6 @@ import org.mongodb.morphia.query.Query;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;

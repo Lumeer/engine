@@ -12,7 +12,6 @@ import java.util.Set;
 @Embedded
 public class MorphiaQuery implements Query {
 
-   public static final String COLLECTION_CODES = "collections";
    public static final String FILTERS = "filters";
    public static final String COLLECTION_IDS = "collection_ids";
    public static final String DOCUMENT_IDS = "document_ids";
@@ -20,9 +19,6 @@ public class MorphiaQuery implements Query {
    public static final String FULLTEXT = "fulltext";
    public static final String PAGE = "page";
    public static final String PAGE_SIZE = "pageSize";
-
-   @Property(COLLECTION_CODES)
-   private Set<String> collectionCodes = Collections.emptySet();
 
    @Property(FILTERS)
    private Set<String> filters = Collections.emptySet();
@@ -49,7 +45,6 @@ public class MorphiaQuery implements Query {
    }
 
    public MorphiaQuery(Query query) {
-      collectionCodes = new HashSet<>(query.getCollectionCodes());
       filters = new HashSet<>(query.getFilters());
       collectionIds = new HashSet<>(query.getCollectionIds());
       documentIds = new HashSet<>(query.getDocumentIds());
@@ -57,11 +52,6 @@ public class MorphiaQuery implements Query {
       fulltext = query.getFulltext();
       page = query.getPage();
       pageSize = query.getPageSize();
-   }
-
-   @Override
-   public Set<String> getCollectionCodes() {
-      return collectionCodes;
    }
 
    @Override
@@ -97,10 +87,6 @@ public class MorphiaQuery implements Query {
    @Override
    public Integer getPageSize() {
       return pageSize;
-   }
-
-   public void setCollectionCodes(final Set<String> collectionCodes) {
-      this.collectionCodes = collectionCodes;
    }
 
    public void setFilters(final Set<String> filters) {
@@ -142,9 +128,6 @@ public class MorphiaQuery implements Query {
 
       final MorphiaQuery that = (MorphiaQuery) o;
 
-      if (getCollectionCodes() != null ? !getCollectionCodes().equals(that.getCollectionCodes()) : that.getCollectionCodes() != null) {
-         return false;
-      }
       if (getFilters() != null ? !getFilters().equals(that.getFilters()) : that.getFilters() != null) {
          return false;
       }
@@ -168,8 +151,7 @@ public class MorphiaQuery implements Query {
 
    @Override
    public int hashCode() {
-      int result = getCollectionCodes() != null ? getCollectionCodes().hashCode() : 0;
-      result = 31 * result + (getFilters() != null ? getFilters().hashCode() : 0);
+      int result = getFilters() != null ? getFilters().hashCode() : 0;
       result = 31 * result + (getCollectionIds() != null ? getCollectionIds().hashCode() : 0);
       result = 31 * result + (getDocumentIds() != null ? getDocumentIds().hashCode() : 0);
       result = 31 * result + (getLinkTypeIds() != null ? getLinkTypeIds().hashCode() : 0);
@@ -182,7 +164,6 @@ public class MorphiaQuery implements Query {
    @Override
    public String toString() {
       return "MorphiaQuery{" +
-            "collectionCodes=" + collectionCodes +
             ", filters=" + filters +
             ", collectionIds=" + collectionIds +
             ", documentIds=" + documentIds +

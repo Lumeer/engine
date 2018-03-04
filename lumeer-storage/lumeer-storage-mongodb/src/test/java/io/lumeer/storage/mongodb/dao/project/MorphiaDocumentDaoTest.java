@@ -104,7 +104,6 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(COLLECTION_ID);
-      assertions.assertThat(storedDocument.getCollectionCode()).isNull();
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(CREATED_BY);
       assertions.assertThat(storedDocument.getCreationDate()).isEqualTo(CREATION_DATE);
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
@@ -154,7 +153,6 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(COLLECTION_ID);
-      assertions.assertThat(storedDocument.getCollectionCode()).isNull();
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(CREATED_BY);
       assertions.assertThat(storedDocument.getCreationDate()).isEqualTo(CREATION_DATE);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(UPDATED_BY);
@@ -219,7 +217,6 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(document.getId()).isEqualTo(id);
       assertions.assertThat(document.getCollectionId()).isEqualTo(COLLECTION_ID);
-      assertions.assertThat(document.getCollectionCode()).isNull();
       assertions.assertThat(document.getCreatedBy()).isEqualTo(CREATED_BY);
       assertions.assertThat(document.getCreationDate()).isEqualTo(CREATION_DATE);
       assertions.assertThat(document.getUpdatedBy()).isNull();
@@ -237,7 +234,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetDocumentsByIds() {
-      String id = createDocument().getId();
+      createDocument();
       String id2 = createDocument().getId();
       String id3 = createDocument().getId();
 

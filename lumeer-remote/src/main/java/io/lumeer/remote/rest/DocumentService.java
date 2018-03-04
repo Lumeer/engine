@@ -45,7 +45,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationCode}/projects/{projectCode}/collections/{collectionCode}/documents")
+@Path("organizations/{organizationCode}/projects/{projectCode}/collections/{collectionId}/documents")
 public class DocumentService extends AbstractService {
 
    @PathParam("organizationCode")
@@ -54,8 +54,8 @@ public class DocumentService extends AbstractService {
    @PathParam("projectCode")
    private String projectCode;
 
-   @PathParam("collectionCode")
-   private String collectionCode;
+   @PathParam("collectionId")
+   private String collectionId;
 
    @Inject
    private DocumentFacade documentFacade;
@@ -67,7 +67,7 @@ public class DocumentService extends AbstractService {
 
    @POST
    public Response createDocument(JsonDocument document) {
-      Document storedDocument = documentFacade.createDocument(collectionCode, document);
+      Document storedDocument = documentFacade.createDocument(collectionId, document);
 
       URI resourceUri = getResourceUri(storedDocument.getId());
       return Response.created(resourceUri).build();
@@ -76,7 +76,7 @@ public class DocumentService extends AbstractService {
    @PUT
    @Path("{documentId}/data")
    public Response updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
-      Document storedDocument = documentFacade.updateDocumentData(collectionCode, documentId, data);
+      Document storedDocument = documentFacade.updateDocumentData(collectionId, documentId, data);
 
       return Response.ok(JsonDocument.convert(storedDocument)).build();
    }
@@ -84,7 +84,7 @@ public class DocumentService extends AbstractService {
    @PATCH
    @Path("{documentId}/data")
    public Response patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
-      Document storedDocument = documentFacade.patchDocumentData(collectionCode, documentId, data);
+      Document storedDocument = documentFacade.patchDocumentData(collectionId, documentId, data);
 
       return Response.ok(JsonDocument.convert(storedDocument)).build();
    }
@@ -92,7 +92,7 @@ public class DocumentService extends AbstractService {
    @DELETE
    @Path("{documentId}")
    public Response deleteDocument(@PathParam("documentId") String documentId) {
-      documentFacade.deleteDocument(collectionCode, documentId);
+      documentFacade.deleteDocument(collectionId, documentId);
 
       return Response.ok().link(getParentUri(documentId), "parent").build();
    }
@@ -100,7 +100,7 @@ public class DocumentService extends AbstractService {
    @GET
    @Path("{documentId}")
    public JsonDocument getDocument(@PathParam("documentId") String documentId) {
-      Document document = documentFacade.getDocument(collectionCode, documentId);
+      Document document = documentFacade.getDocument(collectionId, documentId);
       return JsonDocument.convert(document);
    }
 
@@ -108,7 +108,7 @@ public class DocumentService extends AbstractService {
    public List<JsonDocument> getDocuments(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
       Pagination pagination = new Pagination(page, pageSize);
 
-      List<Document> documents = documentFacade.getDocuments(collectionCode, pagination);
+      List<Document> documents = documentFacade.getDocuments(collectionId, pagination);
       return JsonDocument.convert(documents);
    }
 

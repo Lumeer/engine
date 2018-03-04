@@ -94,6 +94,17 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    }
 
    @Override
+   public Collection getCollectionById(final String id) {
+      Collection collection = datastore.createQuery(databaseCollection(), MorphiaCollection.class)
+                                       .field(MorphiaCollection.ID).equal(new ObjectId(id))
+                                       .get();
+      if (collection == null) {
+         throw new ResourceNotFoundException(ResourceType.COLLECTION);
+      }
+      return collection;
+   }
+
+   @Override
    public List<Collection> getCollectionsByIds(final java.util.Collection<String> ids) {
       List<ObjectId> objectIds = ids.stream().map(ObjectId::new).collect(Collectors.toList());
       return new ArrayList<>(datastore.createQuery(databaseCollection(), MorphiaCollection.class)
@@ -150,18 +161,14 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
       if (searchQuery.isFulltextQuery()) {
          mongoQuery.search(searchQuery.getFulltext());
       }
-      Set<ObjectId> collectionIds = searchQuery.getCollectionIds() != null ? searchQuery.getCollectionIds().stream().map(ObjectId::new).collect(Collectors.toSet()) : Collections.emptySet();
-      if (searchQuery.isCollectionCodesQuery()) {
+      if (searchQuery.isCollectionIdsQuery()) {
+         Set<ObjectId> collectionIds = searchQuery.getCollectionIds() != null ? searchQuery.getCollectionIds().stream()
+                                                                                           .filter(ObjectId::isValid)
+                                                                                           .map(ObjectId::new)
+                                                                                           .collect(Collectors.toSet()) : Collections.emptySet();
          if (!collectionIds.isEmpty()) {
-            mongoQuery.or(
-                  mongoQuery.criteria(MorphiaCollection.CODE).in(searchQuery.getCollectionCodes()),
-                  mongoQuery.criteria(MorphiaCollection.ID).in(collectionIds)
-            );
-         } else {
-            mongoQuery.field(MorphiaCollection.CODE).in(searchQuery.getCollectionCodes());
+            mongoQuery.field(MorphiaCollection.ID).in(collectionIds);
          }
-      } else if (!collectionIds.isEmpty()) {
-         mongoQuery.field(MorphiaCollection.ID).in(collectionIds);
       }
       return mongoQuery;
    }

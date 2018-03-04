@@ -29,7 +29,6 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -76,24 +75,24 @@ public class CollectionService extends AbstractService {
    }
 
    @PUT
-   @Path("{collectionCode}")
-   public Response updateCollection(@PathParam("collectionCode") String collectionCode, JsonCollection collection) {
-      Collection storedCollection = collectionFacade.updateCollection(collectionCode, collection);
+   @Path("{collectionId}")
+   public Response updateCollection(@PathParam("collectionId") String collectionId, JsonCollection collection) {
+      Collection storedCollection = collectionFacade.updateCollection(collectionId, collection);
 
       return Response.ok(JsonCollection.convert(storedCollection)).build();
    }
 
    @DELETE
-   @Path("{collectionCode}")
-   public Response deleteCollection(@PathParam("collectionCode") String collectionCode) {
-      collectionFacade.deleteCollection(collectionCode);
+   @Path("{collectionId}")
+   public Response deleteCollection(@PathParam("collectionId") String collectionId) {
+      collectionFacade.deleteCollection(collectionId);
 
-      return Response.ok().link(getParentUri(collectionCode), "parent").build();
+      return Response.ok().link(getParentUri(collectionId), "parent").build();
    }
 
    @GET
-   @Path("{collectionCode}")
-   public JsonCollection getCollection(@PathParam("collectionCode") String collectionCode) {
+   @Path("{collectionId}")
+   public JsonCollection getCollection(@PathParam("collectionId") String collectionCode) {
       Collection collection = collectionFacade.getCollection(collectionCode);
       return JsonCollection.convert(collection);
    }
@@ -114,65 +113,65 @@ public class CollectionService extends AbstractService {
 
    @GET
    @Deprecated
-   @Path("{collectionCode}/attributes")
-   public Set<JsonAttribute> getCollectionAttributes(@PathParam("collectionCode") String collectionCode) {
-      Set<Attribute> attributes = getCollection(collectionCode).getAttributes();
+   @Path("{collectionId}/attributes")
+   public Set<JsonAttribute> getCollectionAttributes(@PathParam("collectionId") String collectionId) {
+      Set<Attribute> attributes = getCollection(collectionId).getAttributes();
       return JsonAttribute.convert(attributes);
    }
 
    @PUT
-   @Path("{collectionCode}/attributes/{attributeFullName}")
-   public JsonAttribute updateCollectionAttribute(@PathParam("collectionCode") String collectionCode, @PathParam("attributeFullName") String attributeFullName, JsonAttribute attribute) {
-      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionCode, attributeFullName, attribute);
+   @Path("{collectionId}/attributes/{attributeFullName}")
+   public JsonAttribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeFullName") String attributeFullName, JsonAttribute attribute) {
+      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionId, attributeFullName, attribute);
 
       return JsonAttribute.convert(storedAttribute);
    }
 
    @DELETE
-   @Path("{collectionCode}/attributes/{attributeFullName}")
-   public Response deleteCollectionAttribute(@PathParam("collectionCode") String collectionCode, @PathParam("attributeFullName") String attributeFullName) {
+   @Path("{collectionId}/attributes/{attributeFullName}")
+   public Response deleteCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeFullName") String attributeFullName) {
       if (attributeFullName == null) {
          throw new BadRequestException("attributeFullName");
       }
 
-      collectionFacade.deleteCollectionAttribute(collectionCode, attributeFullName);
+      collectionFacade.deleteCollectionAttribute(collectionId, attributeFullName);
 
       return Response.ok().link(getParentUri(attributeFullName), "parent").build();
    }
 
    @GET
-   @Path("{collectionCode}/permissions")
-   public JsonPermissions getCollectionPermissions(@PathParam("collectionCode") String code) {
-      Permissions permissions = collectionFacade.getCollectionPermissions(code);
+   @Path("{collectionId}/permissions")
+   public JsonPermissions getCollectionPermissions(@PathParam("collectionId") String collectionId) {
+      Permissions permissions = collectionFacade.getCollectionPermissions(collectionId);
       return JsonPermissions.convert(permissions);
    }
 
    @PUT
-   @Path("{collectionCode}/permissions/users")
-   public Set<JsonPermission> updateUserPermission(@PathParam("collectionCode") String code, JsonPermission userPermission) {
-      Set<Permission> storedUserPermissions = collectionFacade.updateUserPermissions(code, userPermission);
+   @Path("{collectionId}/permissions/users")
+   public Set<JsonPermission> updateUserPermission(@PathParam("collectionId") String collectionId, JsonPermission userPermission) {
+      Set<Permission> storedUserPermissions = collectionFacade.updateUserPermissions(collectionId, userPermission);
       return JsonPermission.convert(storedUserPermissions);
    }
 
    @DELETE
-   @Path("{collectionCode}/permissions/users/{user}")
-   public Response removeUserPermission(@PathParam("collectionCode") String code, @PathParam("user") String user) {
-      collectionFacade.removeUserPermission(code, user);
+   @Path("{collectionId}/permissions/users/{user}")
+   public Response removeUserPermission(@PathParam("collectionId") String collectionId, @PathParam("user") String user) {
+      collectionFacade.removeUserPermission(collectionId, user);
 
       return Response.ok().link(getParentUri("users", user), "parent").build();
    }
 
    @PUT
-   @Path("{collectionCode}/permissions/groups")
-   public Set<JsonPermission> updateGroupPermission(@PathParam("collectionCode") String code, JsonPermission groupPermission) {
-      Set<Permission> storedGroupPermissions = collectionFacade.updateGroupPermissions(code, groupPermission);
+   @Path("{collectionId}/permissions/groups")
+   public Set<JsonPermission> updateGroupPermission(@PathParam("collectionId") String collectionId, JsonPermission groupPermission) {
+      Set<Permission> storedGroupPermissions = collectionFacade.updateGroupPermissions(collectionId, groupPermission);
       return JsonPermission.convert(storedGroupPermissions);
    }
 
    @DELETE
-   @Path("{collectionCode}/permissions/groups/{group}")
-   public Response removeGroupPermission(@PathParam("collectionCode") String code, @PathParam("group") String group) {
-      collectionFacade.removeGroupPermission(code, group);
+   @Path("{collectionId}/permissions/groups/{group}")
+   public Response removeGroupPermission(@PathParam("collectionId") String collectionId, @PathParam("group") String group) {
+      collectionFacade.removeGroupPermission(collectionId, group);
 
       return Response.ok().link(getParentUri("groups", group), "parent").build();
    }

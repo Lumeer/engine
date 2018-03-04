@@ -61,8 +61,8 @@ public class DocumentFacade extends AbstractFacade {
    @Inject
    private LinkInstanceDao linkInstanceDao;
 
-   public Document createDocument(String collectionCode, Document document) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public Document createDocument(String collectionId, Document document) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
       DataDocument data = DocumentUtils.checkDocumentKeysValidity(document.getData());
@@ -108,8 +108,8 @@ public class DocumentFacade extends AbstractFacade {
       collectionDao.updateCollection(collection.getId(), collection);
    }
 
-   public Document updateDocumentData(String collectionCode, String documentId, DataDocument data) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public Document updateDocumentData(String collectionId, String documentId, DataDocument data) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
       // TODO archive the old document
@@ -121,8 +121,8 @@ public class DocumentFacade extends AbstractFacade {
       return updatedDocument;
    }
 
-   public Document patchDocumentData(String collectionCode, String documentId, DataDocument data) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
       // TODO archive the old document
@@ -145,8 +145,8 @@ public class DocumentFacade extends AbstractFacade {
       return documentDao.updateDocument(document.getId(), document);
    }
 
-   public void deleteDocument(String collectionCode, String documentId) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public void deleteDocument(String collectionId, String documentId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
       documentDao.deleteDocument(documentId);
@@ -156,12 +156,11 @@ public class DocumentFacade extends AbstractFacade {
       linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(documentId));
    }
 
-   public Document getDocument(String collectionCode, String documentId) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public Document getDocument(String collectionId, String documentId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
       Document document = documentDao.getDocumentById(documentId);
-      document.setCollectionCode(collectionCode);
 
       DataDocument data = dataDao.getData(collection.getId(), documentId);
       document.setData(data);
@@ -169,13 +168,13 @@ public class DocumentFacade extends AbstractFacade {
       return document;
    }
 
-   public List<Document> getDocuments(String collectionCode, Pagination pagination) {
-      Collection collection = collectionDao.getCollectionByCode(collectionCode);
+   public List<Document> getDocuments(String collectionId, Pagination pagination) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
       Map<String, DataDocument> dataDocuments = getDataDocuments(collection.getId(), pagination);
 
-      return getDocuments(collectionCode, dataDocuments);
+      return getDocuments(dataDocuments);
    }
 
    private Map<String, DataDocument> getDataDocuments(String collectionId, Pagination pagination) {
@@ -184,11 +183,10 @@ public class DocumentFacade extends AbstractFacade {
                     .collect(Collectors.toMap(DataDocument::getId, Function.identity()));
    }
 
-   private List<Document> getDocuments(String collectionCode, Map<String, DataDocument> dataDocuments) {
+   private List<Document> getDocuments(Map<String, DataDocument> dataDocuments) {
       String[] documentIds = dataDocuments.keySet().toArray(new String[] {});
       List<Document> documents = documentDao.getDocumentsByIds(documentIds);
       documents.forEach(document -> {
-         document.setCollectionCode(collectionCode);
          document.setData(dataDocuments.get(document.getId()));
       });
       return documents;

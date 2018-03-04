@@ -175,15 +175,6 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testSearchCollectionsByCollectionCodes() {
-      List<Collection> collections = searchFacade.searchCollections(new JsonQuery(new HashSet<>(Arrays.asList(COLLECTION_CODES.get(0), COLLECTION_CODES.get(1))), null, null, null, null, null, null, null));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(1));
-
-      collections = searchFacade.searchCollections(new JsonQuery(Collections.singleton(COLLECTION_CODES.get(2)), null, null, null, null, null, null, null));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(2));
-   }
-
-   @Test
    public void testSearchCollectionsByCollectionIds() {
       List<Collection> collections = searchFacade.searchCollections(new JsonQuery(new HashSet<>(Arrays.asList(collectionIds.get(0), collectionIds.get(2))), null, null));
       assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(2));
@@ -202,9 +193,6 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
 
       List<Collection> collections = searchFacade.searchCollections(new JsonQuery(Collections.singleton(collectionIds.get(0)), null, Collections.singleton(id3)));
       assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(1));
-
-      collections = searchFacade.searchCollections(new JsonQuery(null, null, null, null, new HashSet<>(Arrays.asList(id2, id5)), "fulltext", null, null));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(2));
    }
 
    @Test
@@ -252,39 +240,29 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    @Test
-   public void testSearchDocumentsByCollections() {
+   public void testSearchDocumentsByCollectionIds() {
       String id1 = createDocument(collectionIds.get(0), "doc1").getId();
       String id2 = createDocument(collectionIds.get(0), "doc2").getId();
-      String id3 = createDocument(collectionIds.get(1), "doc3").getId();
-      String id4 = createDocument(collectionIds.get(1), "doc4").getId();
+      createDocument(collectionIds.get(1), "doc3");
+      createDocument(collectionIds.get(1), "doc4");
       String id5 = createDocument(collectionIds.get(2), "doc5").getId();
       String id6 = createDocument(collectionIds.get(2), "doc6").getId();
 
       List<Document> documents = searchFacade.searchDocuments(new JsonQuery(new HashSet<>(Arrays.asList(collectionIds.get(0), collectionIds.get(2))), null, null));
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id5, id6);
-
-      documents = searchFacade.searchDocuments(new JsonQuery(new HashSet<>(Arrays.asList(COLLECTION_CODES.get(0), COLLECTION_CODES.get(1))), null, null, null, null, null, null, null));
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4);
-
-      documents = searchFacade.searchDocuments(new JsonQuery(Collections.singleton(COLLECTION_CODES.get(1)), null, new HashSet<>(Arrays.asList(collectionIds.get(0), collectionIds.get(1))), null, null, null, null, null));
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4);
    }
 
    @Test
    public void testSearchDocumentsByCombination() {
-      createDocument(collectionIds.get(0), "word").getId();
-      createDocument(collectionIds.get(0), "fulltext").getId();
-      String id3 = createDocument(collectionIds.get(1), "something fulltext").getId();
-      createDocument(collectionIds.get(1), "some other word anything").getId();
-      createDocument(collectionIds.get(2), "full word").getId();
-      createDocument(collectionIds.get(2), "anything").getId();
+      createDocument(collectionIds.get(0), "word");
+      createDocument(collectionIds.get(0), "fulltext");
+      createDocument(collectionIds.get(1), "something fulltext");
+      createDocument(collectionIds.get(1), "some other word anything");
+      createDocument(collectionIds.get(2), "full word");
+      createDocument(collectionIds.get(2), "anything");
 
-      List<Document> documents = searchFacade.searchDocuments(new JsonQuery(null, null, Collections.singleton(collectionIds.get(0)), null, null, "anything", null, null));
+      List<Document> documents = searchFacade.searchDocuments(new JsonQuery(null, Collections.singleton(collectionIds.get(0)), null, null, "anything", null, null));
       assertThat(documents).extracting(Document::getId).isEmpty();
-
-      documents = searchFacade.searchDocuments(new JsonQuery(Collections.singleton(COLLECTION_CODES.get(1)), null, null, null, null, "fulltext", null, null));
-      assertThat(documents).extracting(Document::getId).containsOnly(id3);
-
    }
 
    @Test
@@ -317,7 +295,7 @@ public class SearchFacadeIntegrationTest extends IntegrationTestBase {
 
    private JsonQuery attributeFilterQuery(String collectionId, String operator, String value) {
       String filter = collectionId + ":" + DOCUMENT_KEY + ":" + operator + " " + value;
-      return new JsonQuery(null, Collections.singleton(filter), null, null, null, null, null, null);
+      return new JsonQuery(Collections.singleton(filter), null, null, null, null, null, null);
    }
 
    private Document createDocument(String collectionId, Object value) {

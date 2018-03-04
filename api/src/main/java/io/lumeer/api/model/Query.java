@@ -22,8 +22,6 @@ import java.util.Set;
 
 public interface Query {
 
-   Set<String> getCollectionCodes();
-
    Set<String> getFilters();
 
    Set<String> getCollectionIds();
