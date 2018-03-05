@@ -42,6 +42,7 @@ public class ViewCodec implements CollectibleCodec<JsonView> {
    public static final String NAME = "name";
    public static final String ICON = "icon";
    public static final String COLOR = "color";
+   public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
@@ -62,12 +63,13 @@ public class ViewCodec implements CollectibleCodec<JsonView> {
       String name = bson.getString(NAME);
       String icon = bson.getString(ICON);
       String color = bson.getString(COLOR);
+      String description = bson.getString(DESCRIPTION);
       JsonPermissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class)); // TODO try to use better approach
       JsonQuery query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
       String perspective = bson.getString(PERSPECTIVE);
       Object config = bson.get(CONFIG);
 
-      JsonView view = new JsonView(code, name, icon, color, permissions, query, perspective, config);
+      JsonView view = new JsonView(code, name, icon, color, description, permissions, query, perspective, config);
       view.setId(id);
       return view;
    }
@@ -79,6 +81,7 @@ public class ViewCodec implements CollectibleCodec<JsonView> {
           .append(NAME, value.getName())
           .append(ICON, value.getIcon())
           .append(COLOR, value.getColor())
+          .append(DESCRIPTION, value.getDescription())
           .append(PERMISSIONS, value.getPermissions())
           .append(QUERY, value.getQuery())
           .append(PERSPECTIVE, value.getPerspective())

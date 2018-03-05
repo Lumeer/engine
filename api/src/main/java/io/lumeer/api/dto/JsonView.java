@@ -46,11 +46,12 @@ public class JsonView extends JsonResource implements View {
          @JsonProperty(NAME) final String name,
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(PERMISSIONS) final JsonPermissions permissions,
          @JsonProperty(QUERY) final JsonQuery query,
          @JsonProperty(PERSPECTIVE) final String perspective,
          @JsonProperty(CONFIG) final Object config) {
-      super(code, name, icon, color, permissions);
+      super(code, name, icon, color, description, permissions);
 
       this.query = query;
       this.perspective = perspective;

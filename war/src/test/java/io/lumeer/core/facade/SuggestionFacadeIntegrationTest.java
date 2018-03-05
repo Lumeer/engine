@@ -264,7 +264,7 @@ public class SuggestionFacadeIntegrationTest extends IntegrationTestBase {
 
 
    private View prepareView(String name) {
-      return new JsonView(name, name, null, null, null, QUERY, PERSPECTIVE, CONFIG);
+      return new JsonView(name, name, null, null, null,null,  QUERY, PERSPECTIVE, CONFIG);
    }
 
    private View createView(String name) {

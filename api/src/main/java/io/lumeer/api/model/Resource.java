@@ -33,6 +33,8 @@ public interface Resource {
 
    void setCode(String code);
 
+   String getDescription();
+
    String getName();
 
    String getIcon();

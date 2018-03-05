@@ -25,6 +25,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCollection extends JsonResource implements Collection {
 
    private Set<JsonAttribute> attributes;
@@ -41,7 +43,7 @@ public class JsonCollection extends JsonResource implements Collection {
    private LocalDateTime lastTimeUsed;
 
    public JsonCollection(final String code, final String name, final String icon, final String color, final JsonPermissions permissions) {
-      this(code, name, icon, color, permissions, new LinkedHashSet<>());
+      this(code, name, icon, color, "", permissions, new LinkedHashSet<>());
    }
 
    @JsonCreator
@@ -50,9 +52,10 @@ public class JsonCollection extends JsonResource implements Collection {
          @JsonProperty(NAME) final String name,
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(PERMISSIONS) final JsonPermissions permissions,
          @JsonProperty(ATTRIBUTES) final Set<JsonAttribute> attributes) {
-      super(code, name, icon, color, permissions);
+      super(code, name, icon, color, description, permissions);
 
       this.attributes = attributes != null ? attributes : new LinkedHashSet<>();
       this.documentsCount = 0;

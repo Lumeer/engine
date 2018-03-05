@@ -38,8 +38,9 @@ public class JsonOrganization extends JsonResource implements Organization {
          @JsonProperty(NAME) final String name,
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(PERMISSIONS) final JsonPermissions permissions) {
-      super(code, name, icon, color, permissions);
+      super(code, name, icon, color, description, permissions);
    }
 
    public JsonOrganization(Organization organization) {
