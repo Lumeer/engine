@@ -81,7 +81,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private String createOrganization(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null);
+      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(USER_PERMISSION);
       organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       return organizationDao.createOrganization(organization).getId();
@@ -122,7 +122,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR, null);
+      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR, null, null);
 
       Organization createdOrganization = organizationFacade.createOrganization(organization);
       assertThat(createdOrganization).isNotNull();
@@ -145,7 +145,7 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    public void testUpdateOrganization() {
       String id = createOrganization(CODE1);
 
-      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR, null);
+      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR, null, null);
 
       organizationFacade.updateOrganization(CODE1, updatedOrganization);
 

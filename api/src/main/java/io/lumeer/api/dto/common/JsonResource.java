@@ -30,6 +30,7 @@ public abstract class JsonResource implements Resource {
    public static final String NAME = "name";
    public static final String ICON = "icon";
    public static final String COLOR = "color";
+   public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
 
    protected String id;
@@ -38,17 +39,19 @@ public abstract class JsonResource implements Resource {
    protected String name;
    protected String icon;
    protected String color;
+   protected String description;
 
    protected JsonPermissions permissions;
 
    protected JsonResource() {
    }
 
-   protected JsonResource(final String code, final String name, final String icon, final String color, final JsonPermissions permissions) {
+   protected JsonResource(final String code, final String name, final String icon, final String color,  String description, final JsonPermissions permissions) {
       this.code = code;
       this.name = name;
       this.icon = icon;
       this.color = color;
+      this.description = description;
       this.permissions = permissions != null ? permissions : new JsonPermissions();
    }
 
@@ -58,6 +61,7 @@ public abstract class JsonResource implements Resource {
       this.name = resource.getName();
       this.icon = resource.getIcon();
       this.color = resource.getColor();
+      this.description =  resource.getDescription();
       this.permissions = new JsonPermissions(resource.getPermissions());
    }
 
@@ -92,6 +96,11 @@ public abstract class JsonResource implements Resource {
    }
 
    @Override
+   public String getDescription() {
+      return description;
+   }
+
+   @Override
    public String getColor() {
       return color;
    }
@@ -116,6 +125,10 @@ public abstract class JsonResource implements Resource {
 
    public void setColor(final String color) {
       this.color = color;
+   }
+
+   public void setDescription(final String description) {
+      this.description = description;
    }
 
    @Override

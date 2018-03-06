@@ -93,7 +93,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private Project createProject(String code) {
-      Project project = new JsonProject(code, NAME, ICON, COLOR, null);
+      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(USER_PERMISSION);
       project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       return projectDao.createProject(project);
@@ -154,7 +154,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
 
    @Test
    public void testCreateProject() {
-      Project project = new JsonProject(CODE1, NAME, ICON, COLOR, null);
+      Project project = new JsonProject(CODE1, NAME, ICON, COLOR, null, null);
 
       Project returnedProject = projectFacade.createProject(project);
       assertThat(returnedProject).isNotNull();
@@ -177,7 +177,7 @@ public class ProjectFacadeIntegrationTest extends IntegrationTestBase {
    public void testUpdateProject() {
       String id = createProject(CODE1).getId();
 
-      Project updatedProject = new JsonProject(CODE2, NAME, ICON, COLOR, null);
+      Project updatedProject = new JsonProject(CODE2, NAME, ICON, COLOR, null, null);
       updatedProject.getPermissions().removeUserPermission(USER);
 
       projectFacade.updateProject(CODE1, updatedProject);

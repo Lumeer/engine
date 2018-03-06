@@ -103,8 +103,7 @@ public class ImportFacade extends AbstractFacade {
    private Collection createImportCollection(Collection collection) {
       checkProjectWriteRole();
 
-      String collectionName = collection.getName() != null && !collection.getName().isEmpty() ? collection.getName() : "ImportedCollection";
-      collection.setName(collectionName);
+      collection.setName(generateCollectionName(collection.getName()));
 
       if (collection.getCode() == null || collection.getCode().isEmpty()) {
          collection.setCode(generateCollectionCode(collection.getName()));
@@ -117,6 +116,22 @@ public class ImportFacade extends AbstractFacade {
       dataDao.createDataRepository(storedCollection.getId());
 
       return storedCollection;
+   }
+
+   private String generateCollectionName(String collectionName) {
+      String name = collectionName != null && !collectionName.isEmpty() ? collectionName : "ImportedCollection";
+      Set<String> collectionNames = collectionDao.getAllCollectionNames();
+      if (!collectionNames.contains(name)) {
+         return name;
+      }
+
+      int num = 2;
+      String nameWithSuffix = name;
+      while (collectionNames.contains(nameWithSuffix)) {
+         nameWithSuffix = name + "(" + num + ")";
+         num++;
+      }
+      return nameWithSuffix;
    }
 
    private String generateCollectionCode(String collectionName) {

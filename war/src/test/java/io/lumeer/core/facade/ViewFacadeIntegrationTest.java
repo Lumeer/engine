@@ -123,13 +123,11 @@ public class ViewFacadeIntegrationTest extends IntegrationTestBase {
       project.setPermissions(new MorphiaPermissions());
       Project storedProject = projectDao.createProject(project);
 
-
-
       viewDao.setProject(storedProject);
    }
 
    private View prepareView(String code) {
-      return new JsonView(code, NAME, ICON, COLOR, null, QUERY, PERSPECTIVE.toString(), CONFIG);
+      return new JsonView(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE.toString(), CONFIG);
    }
 
    private View createView(String code) {

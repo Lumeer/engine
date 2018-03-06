@@ -31,6 +31,7 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
    public static final String NAME = "name";
    public static final String ICON = "icon";
    public static final String COLOR = "color";
+   public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
 
    @Property(CODE)
@@ -45,6 +46,9 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
    @Property(COLOR)
    protected String color;
 
+   @Property(DESCRIPTION)
+   protected String description;
+
    @Embedded(PERMISSIONS)
    protected MorphiaPermissions permissions;
 
@@ -58,6 +62,7 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
       this.name = resource.getName();
       this.icon = resource.getIcon();
       this.color = resource.getColor();
+      this.description = resource.getDescription();
       this.permissions = new MorphiaPermissions(resource.getPermissions());
    }
 
@@ -91,6 +96,14 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
 
    public void setColor(final String color) {
       this.color = color;
+   }
+
+   public String getDescription() {
+      return description;
+   }
+
+   public void setDescription(final String description) {
+      this.description = description;
    }
 
    public Permissions getPermissions() {
