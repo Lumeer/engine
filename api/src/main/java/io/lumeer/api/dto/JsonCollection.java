@@ -23,6 +23,7 @@ import static io.lumeer.engine.api.LumeerConst.Collection.ATTRIBUTES;
 import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.util.AttributeUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -83,6 +84,10 @@ public class JsonCollection extends JsonResource implements Collection {
    public void updateAttribute(final String attributeFullName, final Attribute attribute) {
       attributes.removeIf(a -> a.getFullName().equals(attributeFullName));
       attributes.add(JsonAttribute.convert(attribute));
+
+      if (!attribute.getFullName().equals(attributeFullName)) {
+         AttributeUtil.renameChildAttributes(attributes, attributeFullName, attribute.getFullName());
+      }
    }
 
    @Override

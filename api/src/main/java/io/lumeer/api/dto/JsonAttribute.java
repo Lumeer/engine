@@ -82,6 +82,11 @@ public class JsonAttribute implements Attribute {
    }
 
    @Override
+   public void setFullName(final String fullName) {
+      this.fullName = fullName;
+   }
+
+   @Override
    public Set<String> getConstraints() {
       return constraints;
    }

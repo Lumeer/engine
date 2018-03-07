@@ -28,6 +28,8 @@ public interface Attribute {
 
    String getFullName();
 
+   void setFullName(String fullName);
+
    Set<String> getConstraints();
 
    Integer getUsageCount();
