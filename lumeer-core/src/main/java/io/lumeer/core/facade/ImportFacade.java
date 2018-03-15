@@ -173,21 +173,17 @@ public class ImportFacade extends AbstractFacade {
    }
 
    private List<Document> createDocumentsFromHeaderAndRows(String[] headers, List<String[]> rows) {
-      List<DataDocument> dataDocuments = new LinkedList<>();
-      for (int i = 0; i < rows.size(); i++) {
-         dataDocuments.add(new DataDocument());
-      }
+      List<Document> dataDocuments = new LinkedList<>();
+      rows.forEach(r -> {
+         final DataDocument d = new DataDocument();
 
-      for (int i = 0; i < headers.length; i++) {
-         String header = headers[i];
-         for (int j = 0; j < rows.size(); j++) {
-            String[] row = rows.get(j);
-            if (row.length > i) {
-               dataDocuments.get(j).append(header, row[i]);
-            }
+         for (int i = 0; i < headers.length; i++) {
+            d.append(headers[i], r[i]);
          }
-      }
 
-      return dataDocuments.stream().map(JsonDocument::new).collect(Collectors.toList());
+         dataDocuments.add(new JsonDocument(d));
+      });
+
+      return dataDocuments;
    }
 }
