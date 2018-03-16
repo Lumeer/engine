@@ -29,6 +29,7 @@ import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
@@ -129,7 +130,8 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    @Override
    public List<DataDocument> getData(final String collectionId, final SearchQuery query) {
-      MongoIterable<Document> mongoIterable = dataCollection(collectionId).find(createFilter(query));
+      FindIterable<Document> mongoIterable = dataCollection(collectionId).find(createFilter(query));
+      addPaginationToSuggestionQuery(mongoIterable, query);
       return MongoUtils.convertIterableToList(mongoIterable);
    }
 

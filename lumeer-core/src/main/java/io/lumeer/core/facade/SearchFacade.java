@@ -135,11 +135,8 @@ public class SearchFacade extends AbstractFacade {
 
       Map<String, DataDocument> dataDocuments = new HashMap<>();
 
-      SearchQuery searchQueryWithFilters = createSearchQuery(query);
-      SearchQuery searchQueryWithoutFilters = createSearchQueryWithoutFilters(query);
-
       for (Collection collection : collections.values()) {
-         SearchQuery usedSearchQuery = collectionIdsFromFilters.contains(collection.getId()) ? searchQueryWithFilters : searchQueryWithoutFilters;
+         SearchQuery usedSearchQuery = collectionIdsFromFilters.contains(collection.getId()) ? createSearchQuery(query) : createSearchQueryWithoutFilters(query);
          dataDocuments.putAll(getDataDocuments(collection.getId(), usedSearchQuery));
       }
 
@@ -231,7 +228,9 @@ public class SearchFacade extends AbstractFacade {
    private SearchQuery.Builder createSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
       return createCollectionSearchQueryBuilder(query, additionalCollectionIds)
             .documentIds(query.getDocumentIds())
-            .fulltext(query.getFulltext());
+            .fulltext(query.getFulltext())
+            .page(query.getPage())
+            .pageSize(query.getPageSize());
    }
 
    private SearchQuery.Builder createCollectionSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
