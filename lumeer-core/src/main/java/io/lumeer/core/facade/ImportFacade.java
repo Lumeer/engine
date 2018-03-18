@@ -24,19 +24,11 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.ImportedCollection;
-import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
-import io.lumeer.core.model.SimplePermission;
-import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import com.univocity.parsers.common.processor.RowListProcessor;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
@@ -58,6 +50,11 @@ public class ImportFacade extends AbstractFacade {
 
    public static final String FORMAT_CSV = "csv";
 
+   private static final int MAX_PARSED_DOCUMENTS = 1000;
+
+   @Inject
+   private CollectionFacade collectionFacade;
+
    @Inject
    private CollectionDao collectionDao;
 
@@ -68,7 +65,9 @@ public class ImportFacade extends AbstractFacade {
    private DataDao dataDao;
 
    public Collection importDocuments(String format, ImportedCollection importedCollection) {
-      Collection collection = createImportCollection(importedCollection.getCollection());
+      Collection collectionToCreate = importedCollection.getCollection();
+      collectionToCreate.setName(generateCollectionName(collectionToCreate.getName()));
+      Collection collection = collectionFacade.createCollection(collectionToCreate);
 
       switch (format.toLowerCase()) {
          case FORMAT_CSV:
@@ -77,24 +76,6 @@ public class ImportFacade extends AbstractFacade {
       }
 
       return collection;
-   }
-
-   private Collection createImportCollection(Collection collection) {
-      checkProjectWriteRole();
-
-      collection.setName(generateCollectionName(collection.getName()));
-
-      if (collection.getCode() == null || collection.getCode().isEmpty()) {
-         collection.setCode(generateCollectionCode(collection.getName()));
-      }
-
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), Collection.ROLES);
-      collection.getPermissions().updateUserPermissions(defaultUserPermission);
-
-      Collection storedCollection = collectionDao.createCollection(collection);
-      dataDao.createDataRepository(storedCollection.getId());
-
-      return storedCollection;
    }
 
    private String generateCollectionName(String collectionName) {
@@ -111,20 +92,6 @@ public class ImportFacade extends AbstractFacade {
          num++;
       }
       return nameWithSuffix;
-   }
-
-   private String generateCollectionCode(String collectionName) {
-      Set<String> existingCodes = collectionDao.getAllCollectionCodes();
-      return CodeGenerator.generate(existingCodes, collectionName);
-   }
-
-   private void checkProjectWriteRole() {
-      if (!workspaceKeeper.getProject().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-
-      Project project = workspaceKeeper.getProject().get();
-      permissionsChecker.checkRole(project, Role.WRITE);
    }
 
    private void parseCSVFile(Collection collection, String data) {
@@ -156,12 +123,16 @@ public class ImportFacade extends AbstractFacade {
 
          documents.add(d);
 
-         if (documents.size() >= 1000) {
+         if (documents.size() >= MAX_PARSED_DOCUMENTS) {
             addDocumentsToDb(collection.getId(), documents);
             documents.clear();
          }
 
          documentsCount++;
+      }
+
+      if (!documents.isEmpty()) {
+         addDocumentsToDb(collection.getId(), documents);
       }
 
       parser.stopParsing();
