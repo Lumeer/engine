@@ -111,8 +111,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportEmptyCSV() {
       final String emptyCSV = "";
-      ImportedCollection importedCollection = createImportObject( emptyCSV);
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
+      ImportedCollection importedCollection = createImportObject(emptyCSV);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -122,8 +122,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportCollectionInfo() {
       final String emptyCSV = "";
-      ImportedCollection importedCollection = createImportObject( emptyCSV);
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
+      ImportedCollection importedCollection = createImportObject(emptyCSV);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
       assertThat(collection.getName()).isEqualTo(COLLECTION_NAME);
       assertThat(collection.getCode()).isEqualTo(COLLECTION_CODE);
@@ -136,8 +136,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       final String noHeaderCsv = "\n"
             + "a;b;c;d\n"
             + "a;b;c;d\n";
-      ImportedCollection importedCollection = createImportObject( noHeaderCsv);
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
+      ImportedCollection importedCollection = createImportObject(noHeaderCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -152,8 +152,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testImportNoLinesCSV() {
       final String noLinesCsv = "h1;h2;h3;h4\n";
-      ImportedCollection importedCollection = createImportObject( noLinesCsv);
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
+      ImportedCollection importedCollection = createImportObject(noLinesCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -167,8 +167,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + ";;c;d\n"
             + "a;b;;d\n"
             + "a;b;;\n";
-      ImportedCollection importedCollection = createImportObject( correctCsv);
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
+      ImportedCollection importedCollection = createImportObject(correctCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -202,8 +202,8 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
             + "\n\n\n\n\n"
             + "a;b;c\n";
 
-      ImportedCollection importedCollection = createImportObject( diffRowsLengthCsv);
-      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV,importedCollection);
+      ImportedCollection importedCollection = createImportObject(diffRowsLengthCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
@@ -223,7 +223,6 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(h1Num).isEqualTo(3);
       assertThat(h2Num).isEqualTo(3);
       assertThat(h3Num).isEqualTo(3);
-
    }
 
    @Test
