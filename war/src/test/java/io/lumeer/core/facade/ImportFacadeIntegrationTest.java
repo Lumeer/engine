@@ -179,7 +179,6 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       int h3Num = 0;
       int h4Num = 0;
       for (DataDocument dataDocument : data) {
-         assertThat(dataDocument.keySet()).containsOnly("_id", "h1", "h2", "h3", "h4");
          String h1 = dataDocument.getString("h1");
          String h2 = dataDocument.getString("h2");
          String h3 = dataDocument.getString("h3");
@@ -214,7 +213,6 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       int h2Num = 0;
       int h3Num = 0;
       for (DataDocument dataDocument : data) {
-         assertThat(dataDocument.keySet()).containsOnly("_id", "h1", "h2", "h3");
          String h1 = dataDocument.getString("h1");
          String h2 = dataDocument.getString("h2");
          String h3 = dataDocument.getString("h3");
@@ -245,7 +243,6 @@ public class ImportFacadeIntegrationTest extends IntegrationTestBase {
       int h2Num = 0;
       int h3Num = 0;
       for (DataDocument dataDocument : data) {
-         assertThat(dataDocument.keySet()).containsOnly("_id", "h1", "h2", "h3");
          String h1 = dataDocument.getString("h1");
          String h2 = dataDocument.getString("h2");
          String h3 = dataDocument.getString("h3");
