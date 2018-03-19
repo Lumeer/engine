@@ -72,7 +72,7 @@ public abstract class MongoDao {
                       .field(MorphiaPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
    }
 
-   public <T> void addPaginationToSuggestionQuery(FindIterable<T> findIterable, SuggestionQuery query) {
+   public <T> void addPaginationToSuggestionQuery(FindIterable<T> findIterable, DatabaseQuery query) {
       Integer page = query.getPage();
       Integer pageSize = query.getPageSize();
 
