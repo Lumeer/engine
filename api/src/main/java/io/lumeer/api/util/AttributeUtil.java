@@ -25,6 +25,10 @@ import java.util.Set;
 
 public class AttributeUtil {
 
+   public static boolean isEqualOrChild(Attribute attribute, String attributeFullName) {
+      return attribute.getFullName().equals(attributeFullName) || attribute.getFullName().startsWith(attributeFullName + '.');
+   }
+
    public static void renameChildAttributes(Set<? extends Attribute> attributes, String oldParentFullName, String newParentFullName) {
       String prefix = oldParentFullName + '.';
       attributes.forEach(attribute -> {

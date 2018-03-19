@@ -92,7 +92,7 @@ public class JsonCollection extends JsonResource implements Collection {
 
    @Override
    public void deleteAttribute(final String attributeFullName) {
-      attributes.removeIf(a -> a.getFullName().startsWith(attributeFullName));
+      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeFullName));
    }
 
    @Override
