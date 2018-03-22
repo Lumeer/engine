@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.mongodb;
 
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.mongodb.MongoClient;
@@ -35,6 +34,8 @@ import java.util.List;
  * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
  */
 public class MongoUtils {
+
+   private static final String DOCUMENT_ID = "_id";
 
    private MongoUtils() {
 
@@ -101,16 +102,16 @@ public class MongoUtils {
    }
 
    public static void replaceId(final Document document) {
-      Object docId = document.get(LumeerConst.Document.ID);
+      Object docId = document.get(DOCUMENT_ID);
       if (docId instanceof ObjectId) { // classic document
-         document.replace(LumeerConst.Document.ID, docId.toString());
+         document.replace(DOCUMENT_ID, docId.toString());
       } else if (docId instanceof Document) { // shadow document
          Document d = (Document) docId;
-         if (d.containsKey(LumeerConst.Document.ID)) {
-            d.replace(LumeerConst.Document.ID, d.getObjectId(LumeerConst.Document.ID).toString());
+         if (d.containsKey(DOCUMENT_ID)) {
+            d.replace(DOCUMENT_ID, d.getObjectId(DOCUMENT_ID).toString());
          }
          DataDocument doc = new DataDocument(d);
-         document.replace(LumeerConst.Document.ID, doc);
+         document.replace(DOCUMENT_ID, doc);
       }
    }
 

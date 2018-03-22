@@ -16,15 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.controller;
+package io.lumeer.core.facade;
 
-import io.lumeer.engine.api.LumeerConst;
+import io.lumeer.api.dto.Config;
+import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.facade.configuration.ConfigurationManipulator;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.Resources;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.StorageConnection;
-import io.lumeer.engine.api.dto.Config;
-import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
-import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
-import io.lumeer.engine.util.Resources;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -42,6 +43,18 @@ import javax.inject.Inject;
 @SessionScoped
 public class ConfigurationFacade implements Serializable {
 
+   private static final String DB_HOSTS_PROPERTY = "db_hosts";
+   private static final String DB_NAME_PROPERTY = "db_name";
+   private static final String DB_USER_PROPERTY = "db_user";
+   private static final String DB_PASSWORD_PROPERTY = "db_passwd";
+   private static final String DB_USE_SSL = "db_ssl";
+
+   private static final String SYSTEM_DB_HOSTS_PROPERTY = "sys_db_hosts";
+   private static final String SYSTEM_DB_NAME_PROPERTY = "sys_db_name";
+   private static final String SYSTEM_DB_USER_PROPERTY = "sys_db_user";
+   private static final String SYSTEM_DB_PASSWORD_PROPERTY = "sys_db_passwd";
+   private static final String SYSTEM_DB_USE_SSL = "sys_db_ssl";
+
    public enum ConfigurationLevel {
       USER_GLOBAL, USER_PROJECT, USER_ORGANIZATION, PROJECT, ORGANIZATION
    }
@@ -53,7 +66,7 @@ public class ConfigurationFacade implements Serializable {
    protected static final String ORGANIZATION_CONFIG_COLLECTION = "_config_organization";
 
    @Inject
-   private UserFacade userFacade;
+   private AuthenticatedUser authenticatedUser;
 
    @Inject
    private ConfigurationManipulator configurationManipulator;
@@ -62,10 +75,7 @@ public class ConfigurationFacade implements Serializable {
    private DefaultConfigurationProducer defaultConfigurationProducer;
 
    @Inject
-   private ProjectFacade projectFacade;
-
-   @Inject
-   private OrganizationFacade organizationFacade;
+   private WorkspaceKeeper workspaceKeeper;
 
    /**
     * Never ever replace the way of getting data storage here. Data storage configuration depends on this bean and this bean cannot inject it directly.
@@ -73,19 +83,19 @@ public class ConfigurationFacade implements Serializable {
     * @return Pre-configured data storage.
     */
    public List<StorageConnection> getDataStorage() {
-      final String hosts = getConfigurationString(LumeerConst.DB_HOSTS_PROPERTY).orElse("localhost:27017");
-      final String db = getConfigurationString(LumeerConst.DB_USER_PROPERTY).orElse("pepa");
-      final String pwd = getConfigurationString(LumeerConst.DB_PASSWORD_PROPERTY).orElse("");
+      final String hosts = getConfigurationString(DB_HOSTS_PROPERTY).orElse("localhost:27017");
+      final String db = getConfigurationString(DB_USER_PROPERTY).orElse("pepa");
+      final String pwd = getConfigurationString(DB_PASSWORD_PROPERTY).orElse("");
 
       return getStorageConnections(hosts, db, pwd);
    }
 
    public String getDataStorageDatabase() {
-      return getConfigurationString(LumeerConst.DB_NAME_PROPERTY).orElse("lumeer");
+      return getConfigurationString(DB_NAME_PROPERTY).orElse("lumeer");
    }
 
    public Boolean getDataStorageUseSsl() {
-      return Boolean.valueOf(getConfigurationString(LumeerConst.DB_USE_SSL).orElse("false"));
+      return Boolean.valueOf(getConfigurationString(DB_USE_SSL).orElse("false"));
    }
 
    /**
@@ -94,9 +104,9 @@ public class ConfigurationFacade implements Serializable {
     * @return Pre-configured system data storage.
     */
    public List<StorageConnection> getSystemDataStorage() {
-      final String hosts = defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_HOSTS_PROPERTY);
-      final String db = defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USER_PROPERTY);
-      final String pwd = defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_PASSWORD_PROPERTY);
+      final String hosts = defaultConfigurationProducer.get(SYSTEM_DB_HOSTS_PROPERTY);
+      final String db = defaultConfigurationProducer.get(SYSTEM_DB_USER_PROPERTY);
+      final String pwd = defaultConfigurationProducer.get(SYSTEM_DB_PASSWORD_PROPERTY);
 
       return getStorageConnections(hosts, db, pwd);
    }
@@ -121,11 +131,11 @@ public class ConfigurationFacade implements Serializable {
    }
 
    public String getSystemDataStorageDatabase() {
-      return defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_NAME_PROPERTY);
+      return defaultConfigurationProducer.get(SYSTEM_DB_NAME_PROPERTY);
    }
 
    public Boolean getSystemDataStorageUseSsl() {
-      return Boolean.valueOf(defaultConfigurationProducer.get(LumeerConst.SYSTEM_DB_USE_SSL));
+      return Boolean.valueOf(defaultConfigurationProducer.get(SYSTEM_DB_USE_SSL));
    }
 
    /**
@@ -276,7 +286,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Config value of the given key
     */
    public Config getUserConfiguration(final ConfigurationLevel levelIn, final String key) {
-      String configName = userConfigName(levelIn, organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId(), userFacade.getUserEmail());
+      String configName = userConfigName(levelIn, getOrganizationId(), getProjectId(), getUserEmail());
       return configurationManipulator.getConfiguration(USER_CONFIG_COLLECTION, configName, key);
    }
 
@@ -288,7 +298,7 @@ public class ConfigurationFacade implements Serializable {
     * @return List of configurations
     */
    public List<Config> getUserConfigurations(final ConfigurationLevel levelIn) {
-      String configName = userConfigName(levelIn, organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId(), userFacade.getUserEmail());
+      String configName = userConfigName(levelIn, getOrganizationId(), getProjectId(), getUserEmail());
       return configurationManipulator.getConfigurations(USER_CONFIG_COLLECTION, configName);
    }
 
@@ -300,7 +310,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Config value of the given key
     */
    public Config getProjectConfiguration(final String key) {
-      String configName = createConfigName(organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId());
+      String configName = createConfigName(getOrganizationId(), getProjectId());
       return configurationManipulator.getConfiguration(PROJECT_CONFIG_COLLECTION, configName, key);
    }
 
@@ -310,7 +320,7 @@ public class ConfigurationFacade implements Serializable {
     * @return List of configurations
     */
    public List<Config> getProjectConfigurations() {
-      String configName = createConfigName(organizationFacade.getOrganizationId(), projectFacade.getCurrentProjectId());
+      String configName = createConfigName(getOrganizationId(), getProjectId());
       return configurationManipulator.getConfigurations(PROJECT_CONFIG_COLLECTION, configName);
    }
 
@@ -322,7 +332,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Object value of the given key
     */
    public Config getOrganizationConfiguration(final String key) {
-      return configurationManipulator.getConfiguration(ORGANIZATION_CONFIG_COLLECTION, organizationFacade.getOrganizationId(), key);
+      return configurationManipulator.getConfiguration(ORGANIZATION_CONFIG_COLLECTION, getOrganizationId(), key);
    }
 
    /**
@@ -331,7 +341,7 @@ public class ConfigurationFacade implements Serializable {
     * @return List of configurations
     */
    public List<Config> getOrganizationConfigurations() {
-      return configurationManipulator.getConfigurations(ORGANIZATION_CONFIG_COLLECTION, organizationFacade.getOrganizationId());
+      return configurationManipulator.getConfigurations(ORGANIZATION_CONFIG_COLLECTION, getOrganizationId());
    }
 
    /**
@@ -467,9 +477,9 @@ public class ConfigurationFacade implements Serializable {
     *       configuration level
     */
    private void resetConfiguration(final ConfigurationLevel level) {
-      final String user = userFacade.getUserEmail();
-      final String organization = organizationFacade.getOrganizationId();
-      final String project = projectFacade.getCurrentProjectId();
+      final String user = getUserEmail();
+      final String organization = getOrganizationId();
+      final String project = getProjectId();
 
       switch (level) {
          case USER_GLOBAL:
@@ -502,9 +512,9 @@ public class ConfigurationFacade implements Serializable {
     *       configuration attribute name
     */
    private void resetConfigurationAttribute(final ConfigurationLevel level, final String attributeName) {
-      final String user = userFacade.getUserEmail();
-      final String organization = organizationFacade.getOrganizationId();
-      final String project = projectFacade.getCurrentProjectId();
+      final String user = getUserEmail();
+      final String organization = getOrganizationId();
+      final String project = getProjectId();
 
       switch (level) {
          case USER_GLOBAL:
@@ -577,9 +587,9 @@ public class ConfigurationFacade implements Serializable {
     *       configuration object
     */
    private void setConfiguration(final ConfigurationLevel level, final Config config) {
-      final String user = userFacade.getUserEmail();
-      final String organization = organizationFacade.getOrganizationId();
-      final String project = projectFacade.getCurrentProjectId();
+      final String user = getUserEmail();
+      final String organization = getOrganizationId();
+      final String project = getProjectId();
 
       switch (level) {
          case USER_GLOBAL:
@@ -605,9 +615,9 @@ public class ConfigurationFacade implements Serializable {
    }
 
    private void setConfigurations(final ConfigurationLevel level, final List<Config> configs, final boolean reset) {
-      final String user = userFacade.getUserEmail();
-      final String organization = organizationFacade.getOrganizationId();
-      final String project = projectFacade.getCurrentProjectId();
+      final String user = getUserEmail();
+      final String organization = getOrganizationId();
+      final String project = getProjectId();
 
       switch (level) {
          case USER_GLOBAL:
@@ -677,6 +687,18 @@ public class ConfigurationFacade implements Serializable {
          log.log(Level.FINEST, "Cannot get integer configuration value", ex);
          return Optional.empty();
       }
+   }
+
+   private String getUserEmail(){
+      return authenticatedUser.getUserEmail();
+   }
+
+   private String getOrganizationId(){
+      return workspaceKeeper.getOrganization().isPresent() ? workspaceKeeper.getOrganization().get().getId() : null;
+   }
+
+   private String getProjectId(){
+      return workspaceKeeper.getProject().isPresent() ? workspaceKeeper.getProject().get().getId() : null;
    }
 
 }

@@ -16,18 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.controller;
+package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lumeer.api.dto.Config;
+import io.lumeer.api.dto.JsonOrganization;
+import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
+import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.DataStorageDialect;
-import io.lumeer.engine.api.dto.Config;
-import io.lumeer.engine.api.dto.Organization;
-import io.lumeer.engine.api.dto.Project;
-import io.lumeer.engine.controller.configuration.ConfigurationManipulator;
+import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.UserDao;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -36,6 +45,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -43,41 +53,51 @@ public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
 
    private final String DBHOST_KEY = "db_host_test";
 
+   private static final String ORGANIZATION_CODE = "TORG";
+   private static final String PROJECT_CODE = "TPROJ";
+
+   private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
+
    @Inject
    @SystemDataStorage
    private DataStorage systemDataStorage;
 
    @Inject
-   private DataStorageDialect dataStorageDialect;
-
-   @Inject
    private ConfigurationFacade configurationFacade;
 
    @Inject
-   private ConfigurationManipulator configurationManipulator;
+   private OrganizationDao organizationDao;
 
    @Inject
-   private UserFacade userFacade;
+   private ProjectDao projectDao;
 
    @Inject
-   private OrganizationFacade organizationFacade;
+   private UserDao userDao;
 
    @Inject
-   private ProjectFacade projectFacade;
+   private WorkspaceKeeper workspaceKeeper;
 
    @Before
-   public void setUp() throws Exception {
-      projectFacade.dropProject("CFSProject");
-      organizationFacade.dropOrganization("CFSOrganization");
-      organizationFacade.createOrganization(new Organization("CFSOrganization", "Configuration"));
-      organizationFacade.setOrganizationCode("CFSOrganization");
+   public void setUp() {
+      JsonOrganization organization = new JsonOrganization();
+      organization.setCode(ORGANIZATION_CODE);
+      organization.setPermissions(new JsonPermissions());
+      Organization storedOrganization = organizationDao.createOrganization(organization);
 
-      projectFacade.createProject(new Project("CFSProject", "Configuration"));
-      projectFacade.setCurrentProjectCode("CFSProject");
+      projectDao.setOrganization(storedOrganization);
 
-      systemDataStorage.dropManyDocuments(ConfigurationFacade.USER_CONFIG_COLLECTION, dataStorageDialect.documentFilter("{}"));
-      systemDataStorage.dropManyDocuments(ConfigurationFacade.PROJECT_CONFIG_COLLECTION, dataStorageDialect.documentFilter("{}"));
-      systemDataStorage.dropManyDocuments(ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION, dataStorageDialect.documentFilter("{}"));
+      User user = new User(USER);
+      userDao.createUser(user);
+
+      JsonProject project = new JsonProject();
+      project.setCode(PROJECT_CODE);
+
+      JsonPermissions projectPermissions = new JsonPermissions();
+      projectPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      project.setPermissions(projectPermissions);
+      projectDao.createProject(project);
+
+      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
    }
 
    @Test

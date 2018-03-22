@@ -27,32 +27,13 @@ import java.util.Map;
  */
 public interface DataStorageDialect extends Serializable {
 
-   // CollectionMetadataFacade
-   DataDocument renameAttributeQuery(final String metadataCollection, final String collection, final String oldName, final String newName);
-
-   DataDocument addRecentlyUsedDocumentQuery(final String metadataCollection, final String collection, final String id, final int listSize);
-
-   DataDocument[] usersOfGroupAggregate(final String organization, final String group);
-
    DataFilter fieldValueFilter(final String fieldName, final Object value);
-
-   DataFilter fieldValueWildcardFilter(final String fieldName, final Object valuePart);
-
-   DataFilter fieldValueWildcardFilterOneSided(final String fieldName, final Object valuePart);
-
-   DataFilter documentFilter(final String documentFilter);
-
-   DataFilter documentNestedIdFilter(final String documentId);
-
-   DataFilter documentNestedIdFilterWithVersion(final String documentId, final int version);
 
    DataFilter documentIdFilter(final String documentId);
 
    DataFilter multipleFieldsValueFilter(final Map<String, Object> fields);
 
    DataFilter combineFilters(DataFilter... filters);
-
-   DataFilter collectionPermissionsRoleFilter(final String role, final String user, final List<String> groups);
 
    DataSort documentSort(final String documentSort);
 

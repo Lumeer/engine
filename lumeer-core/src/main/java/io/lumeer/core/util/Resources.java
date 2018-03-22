@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.util;
+package io.lumeer.core.util;
 
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
-import io.lumeer.engine.controller.configuration.DefaultConfigurationProducer;
-import io.lumeer.engine.provider.DataStorageProvider;
 
 import java.util.logging.Logger;
 import javax.annotation.Resource;
@@ -38,7 +38,6 @@ import javax.inject.Inject;
 /**
  * This class uses CDI to alias Java EE resources, such as the persistence context, to CDI beans
  *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class Resources {
 

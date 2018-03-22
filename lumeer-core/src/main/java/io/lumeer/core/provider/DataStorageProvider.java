@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.provider;
+package io.lumeer.core.provider;
 
+import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.engine.api.cache.CacheManager;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
-import io.lumeer.engine.controller.ConfigurationFacade;
-import io.lumeer.engine.controller.OrganizationFacade;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,9 +30,6 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
 public class DataStorageProvider {
 
@@ -47,13 +44,14 @@ public class DataStorageProvider {
    private ConfigurationFacade configurationFacade;
 
    @Inject
-   private OrganizationFacade organizationFacade;
+   private WorkspaceKeeper workspaceKeeper;
 
    @Inject
    private CacheManager cacheManager;
 
    public DataStorage getUserStorage() {
-      return connections.computeIfAbsent(organizationFacade.getOrganizationCode(),
+      String code = workspaceKeeper.getOrganization().isPresent() ? workspaceKeeper.getOrganization().get().getCode() : "Default";
+      return connections.computeIfAbsent(code,
             k -> dataStorageFactory.getStorage(cacheManager.getCacheProvider("userDataStorage"), configurationFacade.getDataStorage(), configurationFacade.getDataStorageDatabase(), configurationFacade.getDataStorageUseSsl()));
    }
 

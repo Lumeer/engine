@@ -18,8 +18,6 @@
  */
 package io.lumeer.engine.api.data;
 
-import io.lumeer.engine.api.LumeerConst;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -36,6 +34,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
    /**
     * Name of the document attribute that carries its id.
     */
+   private static final String ID = "_id";
    private static final String KEY_SEPARATOR = ".";
 
    public DataDocument() {
@@ -71,7 +70,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     * @return The document id.
     */
    public String getId() {
-      return getString(LumeerConst.Document.ID);
+      return getString(ID);
    }
 
    /**
@@ -81,7 +80,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     *       The document id.
     */
    public void setId(final String id) {
-      put(LumeerConst.Document.ID, id);
+      put(ID, id);
    }
 
    /**

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.controller.configuration;
+package io.lumeer.core.facade.configuration;
 
 import java.io.IOException;
 import java.io.InputStream;

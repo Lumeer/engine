@@ -16,23 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.rest;
+package io.lumeer.core.provider;
 
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import io.lumeer.engine.api.cache.Cache;
+import io.lumeer.engine.api.cache.CacheManager;
+import io.lumeer.engine.api.cache.CacheProvider;
 
-/**
- * A class extending {@link Application} and annotated with @ApplicationPath is the Java EE 6
- * "no XML" approach to activating JAX-RS.
- * 
- * <p>
- * Resources are served relative to the servlet path specified in the {@link ApplicationPath}
- * annotation.
- * </p>
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-@ApplicationPath("/rest")
-public class JaxRsActivator extends Application {
-   /* class body intentionally left blank */
+import java.io.Serializable;
+
+public class DefaultCacheProvider implements CacheProvider, Serializable {
+
+   private String namespace;
+
+   private CacheManager cacheManager;
+
+   public void init(final String namespace, final CacheManager cacheManager) {
+      this.namespace = namespace;
+      this.cacheManager = cacheManager;
+   }
+
+   @Override
+   public <T> Cache<T> getCache(final String cacheName) {
+      return cacheManager.getCache(namespace + "/" + cacheName);
+   }
 }

@@ -24,7 +24,6 @@ import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Sorts.descending;
 import static com.mongodb.client.model.Updates.*;
 
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.data.DataDocument;
@@ -93,6 +92,8 @@ public class MongoDbStorage implements DataStorage {
    private static final String CURSOR_KEY = "cursor";
    private static final String FIRST_BATCH_KEY = "firstBatch";
    private static final String COLLECTION_CACHE = "collections";
+
+   private static final String DOCUMENT_ID = "_id";
 
    private MongoDatabase database;
    private MongoClient mongoClient = null;
@@ -278,7 +279,7 @@ public class MongoDbStorage implements DataStorage {
       } else {
          database.getCollection(collectionName).insertOne(doc);
       }
-      return doc.containsKey(LumeerConst.Document.ID) ? doc.getObjectId(LumeerConst.Document.ID).toString() : null;
+      return doc.containsKey(DOCUMENT_ID) ? doc.getObjectId(DOCUMENT_ID).toString() : null;
    }
 
    @Override
@@ -307,15 +308,15 @@ public class MongoDbStorage implements DataStorage {
       }
 
       return documents.stream()
-                      .filter(d -> d.containsKey(LumeerConst.Document.ID))
-                      .map(d -> d.getObjectId(LumeerConst.Document.ID).toString())
+                      .filter(d -> d.containsKey(DOCUMENT_ID))
+                      .map(d -> d.getObjectId(DOCUMENT_ID).toString())
                       .collect(Collectors.toList());
    }
 
    @Override
    public void createOldDocument(final String collectionName, final DataDocument dataDocument, final String documentId, final int version) throws UnsuccessfulOperationException {
       Document doc = new Document(dataDocument);
-      doc.put(LumeerConst.Document.ID, new BasicDBObject(LumeerConst.Document.ID, new ObjectId(documentId)).append(LumeerConst.Document.METADATA_VERSION_KEY, version));
+      doc.put(DOCUMENT_ID, new BasicDBObject(DOCUMENT_ID, new ObjectId(documentId)));
       try {
          database.getCollection(collectionName).insertOne(doc);
       } catch (MongoWriteException e) {
@@ -343,8 +344,8 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void updateDocument(final String collectionName, final DataDocument updatedDocument, final DataFilter filter) {
       DataDocument toUpdate = new DataDocument(updatedDocument);
-      if (toUpdate.containsKey(LumeerConst.Document.ID)) {
-         toUpdate.remove(LumeerConst.Document.ID);
+      if (toUpdate.containsKey(DOCUMENT_ID)) {
+         toUpdate.remove(DOCUMENT_ID);
       }
       BasicDBObject updateBson = new BasicDBObject("$set", new BasicDBObject(toUpdate));
       database.getCollection(collectionName).updateOne(filter.<Bson>get(), updateBson, new UpdateOptions().upsert(true));
@@ -353,8 +354,8 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void replaceDocument(final String collectionName, final DataDocument replaceDocument, final DataFilter filter) {
       DataDocument toReplace = new DataDocument(replaceDocument);
-      if (toReplace.containsKey(LumeerConst.Document.ID)) {
-         toReplace.remove(LumeerConst.Document.ID);
+      if (toReplace.containsKey(DOCUMENT_ID)) {
+         toReplace.remove(DOCUMENT_ID);
       }
       Document replaceDoc = new Document(toReplace);
       database.getCollection(collectionName).replaceOne(filter.<Bson>get(), replaceDoc, new UpdateOptions().upsert(true));
@@ -438,11 +439,11 @@ public class MongoDbStorage implements DataStorage {
       // define grouping by out attributeName
       Bson group = group("$" + attributeName, Collections.emptyList());
       // sorting by id, descending, from the newest entry to oldest one
-      Bson sort = sort(descending(LumeerConst.Document.ID));
+      Bson sort = sort(descending(DOCUMENT_ID));
       // limit...
       Bson limit = limit(100);
       // this projection adds attribute with desired name, and hides _id attribute
-      Bson project = project(new Document(attributeName, "$_id").append(LumeerConst.Document.ID, 0));
+      Bson project = project(new Document(attributeName, "$_id").append(DOCUMENT_ID, 0));
 
       AggregateIterable<Document> aggregate = database.getCollection(collectionName).aggregate(Arrays.asList(match, group, sort, limit, project));
       Set<String> attributeValues = new HashSet<>();

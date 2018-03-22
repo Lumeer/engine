@@ -16,14 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.provider;
+package io.lumeer.core.provider;
 
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.engine.api.cache.CacheManager;
 import io.lumeer.engine.api.cache.CacheProvider;
-import io.lumeer.engine.controller.OrganizationFacade;
-import io.lumeer.engine.controller.ProjectFacade;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -31,9 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
 public class CdiCacheManager implements CacheManager, Serializable {
 
@@ -43,10 +39,7 @@ public class CdiCacheManager implements CacheManager, Serializable {
    private Map<String, Map<String, Cache>> caches = new ConcurrentHashMap<>();
 
    @Inject
-   private OrganizationFacade organizationFacade;
-
-   @Inject
-   private ProjectFacade projectFacade;
+   private WorkspaceKeeper workspaceKeeper;
 
    @Override
    public CacheProvider getCacheProvider(final String namespace) {
@@ -56,12 +49,24 @@ public class CdiCacheManager implements CacheManager, Serializable {
       return provider;
    }
 
-   public <T> Cache<T> getCache(final String name) {
-      final String key = organizationFacade.getOrganizationCode() + "/" + projectFacade.getCurrentProjectCode();
+   public <T> Cache<T> getCache(final String cacheName) {
+      final String key = getKey();
       final Map<String, Cache> localCaches = caches.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
-      final Cache<T> cache = localCaches.computeIfAbsent(name, k -> cacheFactory.getCache());
+      final Cache<T> cache = localCaches.computeIfAbsent(cacheName, k -> cacheFactory.getCache());
 
       return cache;
    }
 
+   public String getKey() {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         return "system";
+      }
+      String key = workspaceKeeper.getOrganization().get().getId();
+
+      if (!workspaceKeeper.getProject().isPresent()) {
+         return key;
+      }
+
+      return key + "/" + workspaceKeeper.getProject().get().getId();
+   }
 }
