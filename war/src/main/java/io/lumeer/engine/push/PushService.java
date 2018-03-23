@@ -18,9 +18,9 @@
  */
 package io.lumeer.engine.push;
 
+import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.push.PushMessage;
-import io.lumeer.engine.controller.UserFacade;
 
 import java.io.IOException;
 import java.util.Map;
@@ -55,7 +55,7 @@ public class PushService {
    private Logger log;
 
    @Inject
-   private UserFacade userFacade;
+   private AuthenticatedUser authenticatedUser;
 
    /**
     * Currently opened sessions with clients.
@@ -164,7 +164,7 @@ public class PushService {
     *       The message to be sent.
     */
    public void publishMessageToCurrentUser(final String channel, final PushMessage message) {
-      publishMessage(userFacade.getUserSessionId(), channel, message);
+      publishMessage(authenticatedUser.getUserSessionId(), channel, message);
    }
 
    /**

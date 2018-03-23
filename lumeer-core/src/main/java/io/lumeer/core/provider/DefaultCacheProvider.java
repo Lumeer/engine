@@ -16,28 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.data;
+package io.lumeer.core.provider;
+
+import io.lumeer.engine.api.cache.Cache;
+import io.lumeer.engine.api.cache.CacheManager;
+import io.lumeer.engine.api.cache.CacheProvider;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public interface DataStorageDialect extends Serializable {
+public class DefaultCacheProvider implements CacheProvider, Serializable {
 
-   DataFilter fieldValueFilter(final String fieldName, final Object value);
+   private String namespace;
 
-   DataFilter documentIdFilter(final String documentId);
+   private CacheManager cacheManager;
 
-   DataFilter multipleFieldsValueFilter(final Map<String, Object> fields);
+   public void init(final String namespace, final CacheManager cacheManager) {
+      this.namespace = namespace;
+      this.cacheManager = cacheManager;
+   }
 
-   DataFilter combineFilters(DataFilter... filters);
-
-   DataSort documentSort(final String documentSort);
-
-   DataSort documentFieldSort(final String fieldName, final int sortOrder);
-
-   String concatFields(String... fields);
+   @Override
+   public <T> Cache<T> getCache(final String cacheName) {
+      return cacheManager.getCache(namespace + "/" + cacheName);
+   }
 }

@@ -16,28 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.data;
+package io.lumeer.remote.rest;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 
 /**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ * A class extending {@link Application} and annotated with @ApplicationPath is the Java EE 6
+ * "no XML" approach to activating JAX-RS.
+ *
+ * <p>
+ * Resources are served relative to the servlet path specified in the {@link ApplicationPath}
+ * annotation.
+ * </p>
+ *
  */
-public interface DataStorageDialect extends Serializable {
-
-   DataFilter fieldValueFilter(final String fieldName, final Object value);
-
-   DataFilter documentIdFilter(final String documentId);
-
-   DataFilter multipleFieldsValueFilter(final Map<String, Object> fields);
-
-   DataFilter combineFilters(DataFilter... filters);
-
-   DataSort documentSort(final String documentSort);
-
-   DataSort documentFieldSort(final String fieldName, final int sortOrder);
-
-   String concatFields(String... fields);
+@ApplicationPath("/rest")
+public class JaxRsActivator extends Application {
+   /* class body intentionally left blank */
 }

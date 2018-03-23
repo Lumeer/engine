@@ -21,4 +21,11 @@
          <property name="javaVmArguments">-Xmx256m -Xms256m</property>
       </configuration>
    </container>
+
+   <container qualifier="debug">
+      <configuration>
+         <property name="jbossHome">${project.build.directory}/wildfly-10.1.0.Final</property>
+         <property name="javaVmArguments">-Xmx1024m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5105</property>
+      </configuration>
+   </container>
 </arquillian>

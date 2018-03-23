@@ -18,8 +18,6 @@
  */
 package io.lumeer.api.dto;
 
-import static io.lumeer.engine.api.LumeerConst.Collection.ATTRIBUTES;
-
 import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -38,6 +36,8 @@ import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCollection extends JsonResource implements Collection {
+
+   private static final String ATTRIBUTES = "attributes";
 
    private Set<JsonAttribute> attributes;
    private Integer documentsCount;

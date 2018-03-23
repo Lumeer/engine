@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.util;
 
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 
@@ -91,7 +90,7 @@ public class DocumentUtils {
    }
 
    public static boolean isAttributeNameValid(String attributeName) {
-      return attributeName.equals(LumeerConst.Document.ID) || !(attributeName.startsWith("$") || attributeName.startsWith("_") || attributeName.contains("."));
+      return attributeName.equals("_id") || !(attributeName.startsWith("$") || attributeName.startsWith("_") || attributeName.contains("."));
    }
 
    public static Set<String> getDocumentAttributes(DataDocument dataDocument) {

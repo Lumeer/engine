@@ -21,7 +21,6 @@ package io.lumeer.storage.mongodb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.engine.api.LumeerConst;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataStorageStats;
@@ -217,45 +216,6 @@ public class MongoDbStorageTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testCreateAndReadOldDocument() throws Exception {
-      mongoDbStorage.createCollection(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT);
-
-      String dummyKey = "507f191e810c19729de860ea";
-
-      DataDocument insertedDocument = createDummyDocument();
-      mongoDbStorage.createOldDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, insertedDocument, dummyKey, 1);
-      DataDocument readDocument = mongoDbStorage.readDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, mongoDbStorageDialect.documentNestedIdFilterWithVersion(dummyKey, 1));
-      assertThat(readDocument).isNotNull();
-
-      mongoDbStorage.dropDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, mongoDbStorageDialect.documentNestedIdFilterWithVersion(dummyKey, 1));
-      readDocument = mongoDbStorage.readDocument(COLLECTION_CREATE_AND_READ_OLD_DOCUMENT, mongoDbStorageDialect.documentNestedIdFilterWithVersion(dummyKey, 1));
-      assertThat(readDocument).isNull();
-   }
-
-   @Test
-   public void testUpdateDocument() throws Exception {
-      mongoDbStorage.createCollection(COLLECTION_UPDATE_DOCUMENT);
-
-      DataDocument insertedDocument = createDummyDocument();
-      String documentId = mongoDbStorage.createDocument(COLLECTION_UPDATE_DOCUMENT, insertedDocument);
-
-      DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_UPDATE_DOCUMENT, mongoDbStorageDialect.documentIdFilter(documentId));
-      changeDummyDocumentValues(readedDocument);
-      readedDocument.put(LumeerConst.Document.METADATA_VERSION_KEY, 1);
-
-      mongoDbStorage.updateDocument(COLLECTION_UPDATE_DOCUMENT, readedDocument, mongoDbStorageDialect.documentIdFilter(documentId));
-      DataDocument readedAfterInsDocument = mongoDbStorage.readDocument(COLLECTION_UPDATE_DOCUMENT, mongoDbStorageDialect.documentIdFilter(documentId));
-
-      SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY1)).isNotEqualTo(DUMMY_VALUE1);
-      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY2)).isNotEqualTo(DUMMY_VALUE2);
-      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY1)).isEqualTo(DUMMY_CHANGED_VALUE1);
-      assertions.assertThat(readedAfterInsDocument.getString(DUMMY_KEY2)).isEqualTo(DUMMY_CHANGED_VALUE2);
-      assertions.assertThat(readedAfterInsDocument.getInteger(LumeerConst.Document.METADATA_VERSION_KEY)).isEqualTo(1);
-      assertions.assertAll();
-   }
-
-   @Test
    public void testReplaceDocument() throws Exception {
       mongoDbStorage.createCollection(COLLECTION_REPLACE_DOCUMENT);
 
@@ -324,14 +284,14 @@ public class MongoDbStorageTest extends MongoDbTestBase {
       DataDocument insertedDocument = createDummyDocument();
       String documentId = mongoDbStorage.createDocument(COLLECTION_DROP_ATTRIBUTE, insertedDocument);
       DataDocument readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_ATTRIBUTE, mongoDbStorageDialect.documentIdFilter(documentId));
-      assertThat(readedDocument).hasSize(4);
+      assertThat(readedDocument).hasSize(3);
 
       final DataFilter documentIdFilter = mongoDbStorageDialect.documentIdFilter(documentId);
 
       mongoDbStorage.dropAttribute(COLLECTION_DROP_ATTRIBUTE, documentIdFilter, DUMMY_KEY1);
 
       readedDocument = mongoDbStorage.readDocument(COLLECTION_DROP_ATTRIBUTE, documentIdFilter);
-      assertThat(readedDocument).hasSize(3);
+      assertThat(readedDocument).hasSize(2);
    }
 
    @Test
@@ -683,7 +643,7 @@ public class MongoDbStorageTest extends MongoDbTestBase {
    public void dataStatsTest() {
       mongoDbStorage.createCollection(COLLECTION_STATS);
       mongoDbStorage.createDocument(COLLECTION_STATS, new DataDocument("stats", 4));
-      mongoDbStorage.createIndex(COLLECTION_STATS, new DataDocument("stats", LumeerConst.Index.ASCENDING), false);
+      mongoDbStorage.createIndex(COLLECTION_STATS, new DataDocument("stats", 1), false);
 
       final DataStorageStats dss = mongoDbStorage.getDbStats();
 
@@ -702,7 +662,7 @@ public class MongoDbStorageTest extends MongoDbTestBase {
    public void collectionStatsTest() {
       mongoDbStorage.createCollection(COLLECTION_CSTATS);
       mongoDbStorage.createDocument(COLLECTION_CSTATS, new DataDocument("stats", 4));
-      mongoDbStorage.createIndex(COLLECTION_CSTATS, new DataDocument("stats", LumeerConst.Index.ASCENDING), false);
+      mongoDbStorage.createIndex(COLLECTION_CSTATS, new DataDocument("stats", 1), false);
 
       final DataStorageStats dss = mongoDbStorage.getCollectionStats(COLLECTION_CSTATS);
 
@@ -721,7 +681,6 @@ public class MongoDbStorageTest extends MongoDbTestBase {
       DataDocument dataDocument = new DataDocument();
       dataDocument.put(DUMMY_KEY1, DUMMY_VALUE1);
       dataDocument.put(DUMMY_KEY2, DUMMY_VALUE2);
-      dataDocument.put(LumeerConst.Document.METADATA_VERSION_KEY, 0);
       return dataDocument;
    }
 
