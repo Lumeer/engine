@@ -179,6 +179,9 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private String extractAttributeName(String attributeName) {
+      if (!attributeName.contains(".")) {
+         return attributeName;
+      }
       String[] parts = attributeName.split(".");
       return parts[parts.length - 1];
    }
