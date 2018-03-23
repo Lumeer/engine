@@ -27,6 +27,7 @@ import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
@@ -54,6 +55,7 @@ import org.junit.runner.RunWith;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -141,21 +143,16 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
    }
 
    private Document createDocument() {
-      Document document = prepareDocument();
-      document.setCollectionId(collection.getId());
-      document.setCreatedBy(USER);
-      document.setCreationDate(LocalDateTime.now());
-      document.setDataVersion(DocumentFacade.INITIAL_VERSION);
-      Document storedDocument = documentDao.createDocument(document);
-
-      DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), document.getData());
-
-      storedDocument.setData(storedData);
-      return storedDocument;
+      return documentFacade.createDocument(collection.getId(), prepareDocument());
    }
 
    @Test
    public void testCreateDocument() {
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).isEmpty();
+
       Document document = prepareDocument();
 
       LocalDateTime beforeTime = LocalDateTime.now();
@@ -180,12 +177,26 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(storedData).isNotNull();
       assertThat(storedData).containsEntry(KEY1, VALUE1);
       assertThat(storedData).containsEntry(KEY2, VALUE2);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
    public void testUpdateDocumentData() {
       Document document = createDocument();
       String id = document.getId();
+
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
@@ -209,12 +220,26 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(storedData).isNotNull();
       assertThat(storedData).containsEntry(KEY1, VALUE2);
       assertThat(storedData).doesNotContainKey(KEY2);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
    public void testPatchDocumentData() {
       Document document = createDocument();
       String id = document.getId();
+
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
@@ -238,11 +263,25 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       assertThat(storedData).isNotNull();
       assertThat(storedData).containsEntry(KEY1, VALUE2);
       assertThat(storedData).containsEntry(KEY2, VALUE2);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
    public void testDeleteDocument() {
       String id = createDocument().getId();
+
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       documentFacade.deleteDocument(collection.getId(), id);
 
@@ -250,6 +289,13 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
             .isInstanceOf(ResourceNotFoundException.class);
       assertThatThrownBy(() -> dataDao.getData(collection.getId(), id))
             .isInstanceOf(ResourceNotFoundException.class);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(0);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
@@ -280,8 +326,14 @@ public class DocumentFacadeIntegrationTest extends IntegrationTestBase {
       String id1 = createDocument().getId();
       String id2 = createDocument().getId();
 
-      Pagination pagination= new Pagination(null, null);
+      Pagination pagination = new Pagination(null, null);
       List<Document> documents = documentFacade.getDocuments(collection.getId(), pagination);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
+   }
+
+   private Attribute findCollectionAttribute(Collection collection, String attributeName) {
+      return collection.getAttributes().stream()
+                       .filter(attribute -> attribute.getFullName().equals(attributeName))
+                       .findFirst().orElse(null);
    }
 }

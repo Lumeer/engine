@@ -34,6 +34,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,6 @@ public class DocumentFacade extends AbstractFacade {
    @Inject
    private DocumentDao documentDao;
 
-
    @Inject
    private LinkInstanceDao linkInstanceDao;
 
@@ -72,7 +72,7 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), data);
       storedDocument.setData(storedData);
 
-      updateCollectionMetadataOnCreation(collection, data);
+      updateCollectionMetadata(collection, data.keySet(), Collections.emptySet(), 1);
 
       return storedDocument;
    }
@@ -85,32 +85,18 @@ public class DocumentFacade extends AbstractFacade {
       return documentDao.createDocument(document);
    }
 
-   private void updateCollectionMetadataOnCreation(Collection collection, DataDocument data) {
-      Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
-                                                       .collect(Collectors.toMap(Attribute::getFullName, Function.identity()));
-      Set<Attribute> newAttributes = new LinkedHashSet<>();
-
-      Set<String> attributeNames = DocumentUtils.getDocumentAttributes(data);
-      attributeNames.forEach(attributeName -> {
-         if (oldAttributes.containsKey(attributeName)) {
-            Attribute attribute = oldAttributes.get(attributeName);
-            attribute.setUsageCount(attribute.getUsageCount() + 1);
-         } else {
-            Attribute attribute = new JsonAttribute(attributeName, attributeName, Collections.emptySet(), 1);
-            newAttributes.add(attribute);
-         }
-      });
-
-      newAttributes.addAll(oldAttributes.values());
-      collection.setAttributes(newAttributes);
-      collection.setDocumentsCount(collection.getDocumentsCount() + 1);
-      collection.setLastTimeUsed(LocalDateTime.now());
-      collectionDao.updateCollection(collection.getId(), collection);
-   }
-
    public Document updateDocumentData(String collectionId, String documentId, DataDocument data) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
+
+      DataDocument oldData = dataDao.getData(collectionId, documentId);
+      Set<String> attributesToAdd = new HashSet<>(data.keySet());
+      attributesToAdd.removeAll(oldData.keySet());
+
+      Set<String> attributesToDec = new HashSet<>(oldData.keySet());
+      attributesToDec.removeAll(data.keySet());
+
+      updateCollectionMetadata(collection, attributesToAdd, attributesToDec, 0);
 
       // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
@@ -124,6 +110,13 @@ public class DocumentFacade extends AbstractFacade {
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
+
+      DataDocument oldData = dataDao.getData(collectionId, documentId);
+
+      Set<String> attributesToAdd = new HashSet<>(data.keySet());
+      attributesToAdd.removeAll(oldData.keySet());
+
+      updateCollectionMetadata(collection, attributesToAdd, Collections.emptySet(), 0);
 
       // TODO archive the old document
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
@@ -149,11 +142,48 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
+      DataDocument data = dataDao.getData(collectionId, documentId);
+      updateCollectionMetadata(collection, Collections.emptySet(), data.keySet(), -1);
+
       documentDao.deleteDocument(documentId);
-
       dataDao.deleteData(collection.getId(), documentId);
-
       linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(documentId));
+   }
+
+   private void updateCollectionMetadata(Collection collection, Set<String> attributesToInc, Set<String> attributesToDec, int documentCountDiff) {
+      Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
+                                                       .collect(Collectors.toMap(Attribute::getFullName, Function.identity()));
+
+      oldAttributes.keySet().forEach(attributeName -> {
+         if (attributesToInc.contains(attributeName)) {
+            Attribute attribute = oldAttributes.get(attributeName);
+            attribute.setUsageCount(attribute.getUsageCount() + 1);
+            attributesToInc.remove(attributeName);
+         } else if (attributesToDec.contains(attributeName)) {
+            Attribute attribute = oldAttributes.get(attributeName);
+            attribute.setUsageCount(Math.max(attribute.getUsageCount() - 1, 0));
+         }
+
+      });
+
+      Set<Attribute> newAttributes = attributesToInc.stream()
+                                                    .map(attributeName -> new JsonAttribute(extractAttributeName(attributeName), attributeName, Collections.emptySet(), 1))
+                                                    .collect(Collectors.toSet());
+
+      newAttributes.addAll(oldAttributes.values());
+
+      collection.setAttributes(newAttributes);
+      collection.setLastTimeUsed(LocalDateTime.now());
+      collection.setDocumentsCount(collection.getDocumentsCount() + documentCountDiff);
+      collectionDao.updateCollection(collection.getId(), collection);
+   }
+
+   private String extractAttributeName(String attributeName) {
+      if (!attributeName.contains(".")) {
+         return attributeName;
+      }
+      String[] parts = attributeName.split(".");
+      return parts[parts.length - 1];
    }
 
    public Document getDocument(String collectionId, String documentId) {
@@ -186,9 +216,7 @@ public class DocumentFacade extends AbstractFacade {
    private List<Document> getDocuments(Map<String, DataDocument> dataDocuments) {
       String[] documentIds = dataDocuments.keySet().toArray(new String[] {});
       List<Document> documents = documentDao.getDocumentsByIds(documentIds);
-      documents.forEach(document -> {
-         document.setData(dataDocuments.get(document.getId()));
-      });
+      documents.forEach(document -> document.setData(dataDocuments.get(document.getId())));
       return documents;
    }
 
