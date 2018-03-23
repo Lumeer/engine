@@ -94,19 +94,6 @@ public class DocumentUtils {
       return attributeName.equals(LumeerConst.Document.ID) || !(attributeName.startsWith("$") || attributeName.startsWith("_") || attributeName.contains("."));
    }
 
-   public static Set<String> getDocumentAttributes(DataDocument dataDocument) {
-      Set<String> attrs = new HashSet<>();
-      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
-         String attributeName = entry.getKey().trim();
-         attrs.add(attributeName);
-         if (isDataDocument(entry.getValue())) {
-            // starts recursion
-            attrs.addAll(getDocumentAttributes((DataDocument) entry.getValue(), attributeName + "."));
-         }
-      }
-      return attrs;
-   }
-
    private static Set<String> getDocumentAttributes(DataDocument dataDocument, String prefix) {
       Set<String> attrs = new HashSet<>();
       for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
