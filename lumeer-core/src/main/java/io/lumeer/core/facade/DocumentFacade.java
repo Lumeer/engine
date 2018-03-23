@@ -167,7 +167,7 @@ public class DocumentFacade extends AbstractFacade {
       });
 
       Set<Attribute> newAttributes = attributesToInc.stream()
-                                                    .map(attributeName -> new JsonAttribute(attributeName, attributeName, Collections.emptySet(), 1))
+                                                    .map(attributeName -> new JsonAttribute(extractAttributeName(attributeName), attributeName, Collections.emptySet(), 1))
                                                     .collect(Collectors.toSet());
 
       newAttributes.addAll(oldAttributes.values());
@@ -176,6 +176,11 @@ public class DocumentFacade extends AbstractFacade {
       collection.setLastTimeUsed(LocalDateTime.now());
       collection.setDocumentsCount(collection.getDocumentsCount() + documentCountDiff);
       collectionDao.updateCollection(collection.getId(), collection);
+   }
+
+   private String extractAttributeName(String attributeName) {
+      String[] parts = attributeName.split(".");
+      return parts[parts.length - 1];
    }
 
    public Document getDocument(String collectionId, String documentId) {
