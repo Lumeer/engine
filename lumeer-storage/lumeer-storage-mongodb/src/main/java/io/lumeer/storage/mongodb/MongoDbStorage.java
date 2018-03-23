@@ -117,15 +117,19 @@ public class MongoDbStorage implements DataStorage {
    }
 
    private List<String> getCollectionCache() {
-      Cache<List<String>> cache = collectionCacheRef.get();
-      if (cache == null) {
-         cache = cacheProvider.getCache(COLLECTION_CACHE);         // create and initialize actual instance
-         if (collectionCacheRef.compareAndSet(null, cache)) // CAS succeeded
+      if (cacheProvider != null) {
+         Cache<List<String>> cache = collectionCacheRef.get();
+         if (cache == null) {
+            cache = cacheProvider.getCache(COLLECTION_CACHE);         // create and initialize actual instance
+            if (collectionCacheRef.compareAndSet(null, cache)) // CAS succeeded
+               return cache.get();
+            else                                                      // CAS failed: other thread set an object
+               return collectionCacheRef.get().get();
+         } else {
             return cache.get();
-         else                                                      // CAS failed: other thread set an object
-            return collectionCacheRef.get().get();
+         }
       } else {
-         return cache.get();
+         return null;
       }
    }
 
