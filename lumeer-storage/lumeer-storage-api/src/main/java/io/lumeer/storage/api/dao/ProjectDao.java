@@ -23,6 +23,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ProjectDao {
 
@@ -31,6 +32,8 @@ public interface ProjectDao {
    void deleteProjectsRepository(Organization organization);
 
    void setOrganization(Organization organization);
+
+   Set<String> getProjectsCodes();
 
    Project createProject(Project project);
 

@@ -26,7 +26,6 @@ import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
-import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
@@ -94,6 +93,10 @@ public class OrganizationFacade extends AbstractFacade {
       return organizationDao.getOrganizations(query).stream()
                             .map(this::keepOnlyActualUserRoles)
                             .collect(Collectors.toList());
+   }
+
+   public Set<String> getOrganizationsCodes(){
+      return organizationDao.getOrganizationsCodes();
    }
 
    private Organization checkRoleAndGetOrganization(final String organizationCode, final Role role) {

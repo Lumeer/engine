@@ -22,6 +22,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
+import java.util.Set;
 
 public interface OrganizationDao {
 
@@ -30,6 +31,8 @@ public interface OrganizationDao {
    Organization getOrganizationByCode(String organizationCode);
 
    Organization getOrganizationById(String organizationId);
+
+   Set<String> getOrganizationsCodes();
 
    List<Organization> getOrganizations(DatabaseQuery query);
 

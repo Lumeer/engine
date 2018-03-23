@@ -34,6 +34,8 @@ import org.mongodb.morphia.query.Query;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -53,6 +55,14 @@ public class MorphiaProjectDao extends OrganizationScopedDao implements ProjectD
    @Override
    public void deleteProjectsRepository(Organization organization) {
       // TODO change the way user data storage is used
+   }
+
+   @Override
+   public Set<String> getProjectsCodes() {
+      return datastore.createQuery(databaseCollection(), MorphiaProject.class)
+                      .asList().stream()
+                      .map(MorphiaProject::getCode)
+                      .collect(Collectors.toSet());
    }
 
    @Override

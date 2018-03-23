@@ -27,7 +27,6 @@ import io.lumeer.api.model.Project;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ProjectFacade;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -98,6 +97,12 @@ public class ProjectService extends AbstractService {
    public List<JsonProject> getProjects() {
       List<Project> projects = projectFacade.getProjects();
       return JsonProject.convert(projects);
+   }
+
+   @GET
+   @Path("info/codes")
+   public Set<String> getProjectsCodes() {
+      return projectFacade.getProjectsCodes();
    }
 
    @GET
