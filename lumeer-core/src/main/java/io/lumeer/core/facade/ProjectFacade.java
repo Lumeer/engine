@@ -113,6 +113,10 @@ public class ProjectFacade extends AbstractFacade {
                        .collect(Collectors.toList());
    }
 
+   public Set<String> getProjectsCodes() {
+      return projectDao.getProjectsCodes();
+   }
+
    public Permissions getProjectPermissions(final String projectCode) {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);

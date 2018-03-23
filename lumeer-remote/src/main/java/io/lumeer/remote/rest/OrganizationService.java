@@ -26,7 +26,6 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.OrganizationFacade;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import javax.enterprise.context.RequestScoped;
@@ -85,6 +84,12 @@ public class OrganizationService extends AbstractService {
    public List<JsonOrganization> getOrganizations() {
       List<Organization> organizations = organizationFacade.getOrganizations();
       return JsonOrganization.convert(organizations);
+   }
+
+   @GET
+   @Path("info/codes")
+   public Set<String> getOrganizationsCodes() {
+      return organizationFacade.getOrganizationsCodes();
    }
 
    @GET

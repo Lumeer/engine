@@ -38,6 +38,8 @@ import org.mongodb.morphia.query.Query;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
@@ -92,6 +94,14 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       return organization;
+   }
+
+   @Override
+   public Set<String> getOrganizationsCodes() {
+      return datastore.createQuery(MorphiaOrganization.class)
+                      .asList().stream()
+                      .map(MorphiaOrganization::getCode)
+                      .collect(Collectors.toSet());
    }
 
    @Override
