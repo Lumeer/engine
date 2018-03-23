@@ -83,19 +83,19 @@ public class ConfigurationFacade implements Serializable {
     * @return Pre-configured data storage.
     */
    public List<StorageConnection> getDataStorage() {
-      final String hosts = getConfigurationString(DB_HOSTS_PROPERTY).orElse("localhost:27017");
-      final String db = getConfigurationString(DB_USER_PROPERTY).orElse("pepa");
-      final String pwd = getConfigurationString(DB_PASSWORD_PROPERTY).orElse("");
+      final String hosts = getSystemConfigurationString(DB_HOSTS_PROPERTY).orElse("localhost:27017");
+      final String db = getSystemConfigurationString(DB_USER_PROPERTY).orElse("pepa");
+      final String pwd = getSystemConfigurationString(DB_PASSWORD_PROPERTY).orElse("");
 
       return getStorageConnections(hosts, db, pwd);
    }
 
    public String getDataStorageDatabase() {
-      return getConfigurationString(DB_NAME_PROPERTY).orElse("lumeer");
+      return getSystemConfigurationString(DB_NAME_PROPERTY).orElse("lumeer");
    }
 
    public Boolean getDataStorageUseSsl() {
-      return Boolean.valueOf(getConfigurationString(DB_USE_SSL).orElse("false"));
+      return Boolean.valueOf(getSystemConfigurationString(DB_USE_SSL).orElse("false"));
    }
 
    /**
@@ -479,7 +479,7 @@ public class ConfigurationFacade implements Serializable {
    private void resetConfiguration(final ConfigurationLevel level) {
       final String user = getUserEmail();
       final String organization = getOrganizationId();
-      final String project = getProjectId();
+      final String project;
 
       switch (level) {
          case USER_GLOBAL:
@@ -490,10 +490,12 @@ public class ConfigurationFacade implements Serializable {
             configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userOrgConfigName);
             break;
          case USER_PROJECT:
+            project = getProjectId();
             String userProjConfigName = createConfigName(organization, project, user);
             configurationManipulator.resetConfiguration(USER_CONFIG_COLLECTION, userProjConfigName);
             break;
          case PROJECT:
+            project = getProjectId();
             String projectConfigName = createConfigName(organization, project);
             configurationManipulator.resetConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName);
             break;
@@ -514,7 +516,7 @@ public class ConfigurationFacade implements Serializable {
    private void resetConfigurationAttribute(final ConfigurationLevel level, final String attributeName) {
       final String user = getUserEmail();
       final String organization = getOrganizationId();
-      final String project = getProjectId();
+      final String project;
 
       switch (level) {
          case USER_GLOBAL:
@@ -525,10 +527,12 @@ public class ConfigurationFacade implements Serializable {
             configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userOrgConfigName, attributeName);
             break;
          case USER_PROJECT:
+            project = getProjectId();
             String userProjConfigName = createConfigName(organization, project, user);
             configurationManipulator.resetConfigurationAttribute(USER_CONFIG_COLLECTION, userProjConfigName, attributeName);
             break;
          case PROJECT:
+            project = getProjectId();
             String projectConfigName = createConfigName(organization, project);
             configurationManipulator.resetConfigurationAttribute(PROJECT_CONFIG_COLLECTION, projectConfigName, attributeName);
             break;
@@ -579,6 +583,21 @@ public class ConfigurationFacade implements Serializable {
    }
 
    /**
+    * Gets configuration value either from organization and when there is none present, it backs up to property files.
+    * @param key Property to obtain.
+    * @return Configuration value.
+    */
+   private Optional<String> getSystemConfigurationString(final String key) {
+      final Config organizationConfig = getOrganizationConfiguration(key);
+
+      if (organizationConfig != null) {
+         return createOptionalString(organizationConfig);
+      } else {
+         return createOptionalString(new Config(key, defaultConfigurationProducer.get(key)));
+      }
+   }
+
+   /**
     * Sets a new key-Object value to the specified configuration entry. If the given key exists, the value of specified field will be updated.
     *
     * @param level
@@ -589,7 +608,7 @@ public class ConfigurationFacade implements Serializable {
    private void setConfiguration(final ConfigurationLevel level, final Config config) {
       final String user = getUserEmail();
       final String organization = getOrganizationId();
-      final String project = getProjectId();
+      final String project;
 
       switch (level) {
          case USER_GLOBAL:
@@ -600,10 +619,12 @@ public class ConfigurationFacade implements Serializable {
             configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userOrgConfigName, config);
             break;
          case USER_PROJECT:
+            project = getProjectId();
             String userProjConfigName = createConfigName(organization, project, user);
             configurationManipulator.setConfiguration(USER_CONFIG_COLLECTION, userProjConfigName, config);
             break;
          case PROJECT:
+            project = getProjectId();
             String projectConfigName = createConfigName(organization, project);
             configurationManipulator.setConfiguration(PROJECT_CONFIG_COLLECTION, projectConfigName, config);
             break;
@@ -617,7 +638,7 @@ public class ConfigurationFacade implements Serializable {
    private void setConfigurations(final ConfigurationLevel level, final List<Config> configs, final boolean reset) {
       final String user = getUserEmail();
       final String organization = getOrganizationId();
-      final String project = getProjectId();
+      final String project;
 
       switch (level) {
          case USER_GLOBAL:
@@ -628,10 +649,12 @@ public class ConfigurationFacade implements Serializable {
             configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, userOrgConfigName, configs, reset);
             break;
          case USER_PROJECT:
+            project = getProjectId();
             String userProjConfigName = createConfigName(organization, project, user);
             configurationManipulator.setConfigurations(USER_CONFIG_COLLECTION, userProjConfigName, configs, reset);
             break;
          case PROJECT:
+            project = getProjectId();
             String projectConfigName = createConfigName(organization, project);
             configurationManipulator.setConfigurations(PROJECT_CONFIG_COLLECTION, projectConfigName, configs, reset);
             break;
