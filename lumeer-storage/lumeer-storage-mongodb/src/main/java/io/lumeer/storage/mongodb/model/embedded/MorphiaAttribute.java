@@ -84,7 +84,7 @@ public class MorphiaAttribute implements Attribute {
 
    @Override
    public Integer getUsageCount() {
-      return usageCount;
+      return usageCount != null ? usageCount : 0;
    }
 
    @Override
