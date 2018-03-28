@@ -31,7 +31,10 @@ import io.lumeer.storage.api.exception.StorageException;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +94,19 @@ public class MongoPaymentDao extends OrganizationScopedDao implements PaymentDao
    @Override
    public Payment getPayment(final String paymentId) {
       return databaseCollection().find(paymentIdFiler(paymentId)).first();
+   }
+
+   @Override
+   public void createPaymentRepository(final Organization organization) {
+      database.createCollection(databaseCollectionName(organization));
+
+      MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
+      groupCollection.createIndex(Indexes.ascending(Payment.PAYMENT_ID), new IndexOptions().unique(true));
+   }
+
+   @Override
+   public void deletePaymentRepository(final Organization organization) {
+      database.getCollection(databaseCollectionName(organization)).drop();
    }
 
    MongoCollection<Payment> databaseCollection() {

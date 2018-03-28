@@ -16,32 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Payment;
+import io.lumeer.api.dto.JsonPayment;
+import io.lumeer.storage.mongodb.codecs.PaymentCodec;
 
-import java.util.List;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public interface PaymentDao {
+public class PaymentCodecProvider implements CodecProvider {
 
-   Payment createPayment(final Payment payment);
+   @Override
+   public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
+      if (aClass == JsonPayment.class) {
+         return (Codec<T>) new PaymentCodec(codecRegistry);
+      }
 
-   List<Payment> getPayments();
-
-   /* Uses database id */
-   Payment updatePayment(final String id, final Payment payment);
-
-   /* Uses payment id */
-   Payment updatePayment(final Payment payment);
-
-   Payment getPayment(final String paymentId);
-
-   void createPaymentRepository(final Organization organization);
-
-   void deletePaymentRepository(final Organization organization);
-
+      return null;
+   }
 }
