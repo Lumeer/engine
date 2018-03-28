@@ -19,7 +19,9 @@
 package io.lumeer.core.cache;
 
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Project;
+import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -43,6 +45,7 @@ public class WorkspaceCache {
 
    private Cache<Organization> organizationCache;
    private Cache<Project> projectCache;
+   private Cache<Payment.ServiceLevel> serviceLevelCache;
 
    @PostConstruct
    public void initCaches() {
@@ -72,6 +75,18 @@ public class WorkspaceCache {
 
    public void removeProject(String projectCode) {
       projectCache.remove(projectCode);
+   }
+
+   public void setServiceLevel(final String organizationCode, final Payment.ServiceLevel serviceLevel) {
+      serviceLevelCache.set(organizationCode, serviceLevel);
+   }
+
+   public Payment.ServiceLevel getServiceLevel(final String organizationCode) {
+      return serviceLevelCache.get(organizationCode);
+   }
+
+   public void removeServiceLevel(final String organizationCode) {
+      serviceLevelCache.remove(organizationCode);
    }
 
    public void clear() {

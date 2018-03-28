@@ -16,18 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api;
+package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
-import io.lumeer.api.model.Project;
 
-import java.util.Optional;
+import java.util.List;
 
-public interface SelectedWorkspace {
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public interface PaymentDao {
 
-   Optional<Organization> getOrganization();
+   Payment createPayment(final Payment payment);
 
-   Optional<Project> getProject();
+   List<Payment> getPayments();
+
+   /* Uses database id */
+   Payment updatePayment(final String id, final Payment payment);
+
+   /* Uses payment id */
+   Payment updatePayment(final Payment payment);
+
+   Payment getPayment(final String paymentId);
 
 }

@@ -19,6 +19,7 @@
 
 package io.lumeer.storage.mongodb.util;
 
+import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
@@ -40,6 +41,10 @@ public class MongoFilters {
 
    public static Bson idFilter(String id) {
       return Filters.eq(ID, new ObjectId(id));
+   }
+
+   public static Bson paymentIdFiler(final String paymentId) {
+      return Filters.eq(Payment.PAYMENT_ID, paymentId);
    }
 
    public static Bson codeFilter(String code) {

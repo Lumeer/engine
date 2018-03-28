@@ -33,13 +33,6 @@ import io.lumeer.api.model.Payment;
  */
 public class JsonPayment implements Payment {
 
-   public static final String DATE = "date";
-   public static final String AMOUNT = "amount";
-   public static final String PAYMENT_ID = "paymentId";
-   public static final String VALID_UNTIL = "validUntil";
-   public static final String STATE = "state";
-   public static final String SERVICE_LEVEL = "serviceLevel";
-
    private LocalDateTime date;
    private long amount;
    private String paymentId;

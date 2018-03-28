@@ -25,12 +25,19 @@ import java.time.LocalDateTime;
  */
 public interface Payment {
 
+   public static final String DATE = "date";
+   public static final String AMOUNT = "amount";
+   public static final String PAYMENT_ID = "paymentId";
+   public static final String VALID_UNTIL = "validUntil";
+   public static final String STATE = "state";
+   public static final String SERVICE_LEVEL = "serviceLevel";
+
    enum PaymentState {
       CREATED, PAYMENT_METHOD_CHOSEN, AUTHORIZED, PAID, CANCELED, TIMEOUTED, REFUNDED;
    }
 
    enum ServiceLevel {
-      BASIC, CORPORATE;
+      FREE, BASIC, CORPORATE;
    }
 
    LocalDateTime getDate();
