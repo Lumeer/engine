@@ -58,8 +58,9 @@ public class PaymentCodec implements Codec<Payment> {
       Date validUntil = bson.getDate(Payment.VALID_UNTIL);
       Payment.PaymentState state = Payment.PaymentState.fromInt(bson.getInteger(Payment.STATE));
       Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.fromInt(bson.getInteger(Payment.SERVICE_LEVEL));
+      int users = bson.getInteger(Payment.USERS);
 
-      return new Payment(date, amount, paymentId, start, validUntil, state, serviceLevel);
+      return new Payment(date, amount, paymentId, start, validUntil, state, serviceLevel, users);
    }
 
    @Override
@@ -70,7 +71,8 @@ public class PaymentCodec implements Codec<Payment> {
             .append(Payment.START, payment.getStart())
             .append(Payment.VALID_UNTIL, payment.getValidUntil())
             .append(Payment.STATE, payment.getState().ordinal())
-            .append(Payment.SERVICE_LEVEL, payment.getServiceLevel().ordinal());
+            .append(Payment.SERVICE_LEVEL, payment.getServiceLevel().ordinal())
+            .append(Payment.USERS, payment.getUsers());
 
       documentCodec.encode(bsonWriter, document, encoderContext);
    }

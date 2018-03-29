@@ -60,6 +60,17 @@
          <groupId>com.univocity</groupId>
          <artifactId>univocity-parsers</artifactId>
       </dependency>
+      <dependency>
+         <groupId>cz.gopay</groupId>
+         <artifactId>gp-java-api-v3-common</artifactId>
+         <version>3.4.4</version>
+      </dependency>
+      <dependency>
+         <groupId>cz.gopay</groupId>
+         <artifactId>gp-java-api-v3-resteasy</artifactId>
+         <version>3.4.4</version>
+      </dependency>
+
    </dependencies>
 
 </project>

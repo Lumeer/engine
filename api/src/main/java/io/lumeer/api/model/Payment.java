@@ -37,6 +37,7 @@ public class Payment {
    public static final String VALID_UNTIL = "validUntil";
    public static final String STATE = "state";
    public static final String SERVICE_LEVEL = "serviceLevel";
+   public static final String USERS = "users";
 
    public enum PaymentState {
       CREATED, PAYMENT_METHOD_CHOSEN, AUTHORIZED, PAID, CANCELED, TIMEOUTED, REFUNDED;
@@ -69,11 +70,12 @@ public class Payment {
    private Date validUntil;
    private PaymentState state;
    private ServiceLevel serviceLevel;
+   private int users;
 
    @JsonCreator
    public Payment(@JsonProperty(DATE) Date date, @JsonProperty(AMOUNT) long amount, @JsonProperty(PAYMENT_ID) String paymentId,
          @JsonProperty(START) Date start, @JsonProperty(VALID_UNTIL) Date validUntil, @JsonProperty(STATE) PaymentState state,
-         @JsonProperty(SERVICE_LEVEL) ServiceLevel serviceLevel) {
+         @JsonProperty(SERVICE_LEVEL) ServiceLevel serviceLevel, @JsonProperty(USERS) int users) {
       this.date = date;
       this.amount = amount;
       this.paymentId = paymentId;
@@ -81,6 +83,7 @@ public class Payment {
       this.validUntil = validUntil;
       this.state = state;
       this.serviceLevel = serviceLevel;
+      this.users = users;
    }
 
    public Date getDate() {
@@ -139,6 +142,14 @@ public class Payment {
       this.serviceLevel = serviceLevel;
    }
 
+   public int getUsers() {
+      return users;
+   }
+
+   public void setUsers(final int users) {
+      this.users = users;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -153,13 +164,14 @@ public class Payment {
             Objects.equals(paymentId, that.paymentId) &&
             Objects.equals(start, that.start) &&
             Objects.equals(validUntil, that.validUntil) &&
+            Objects.equals(users, that.users) &&
             state == that.state &&
             serviceLevel == that.serviceLevel;
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(date, amount, paymentId, start, validUntil, state, serviceLevel);
+      return Objects.hash(date, amount, paymentId, start, validUntil, state, serviceLevel, users);
    }
 
    @Override
@@ -172,6 +184,7 @@ public class Payment {
             ", validUntil=" + validUntil +
             ", state=" + state +
             ", serviceLevel=" + serviceLevel +
+            ", users=" + users +
             '}';
    }
 
