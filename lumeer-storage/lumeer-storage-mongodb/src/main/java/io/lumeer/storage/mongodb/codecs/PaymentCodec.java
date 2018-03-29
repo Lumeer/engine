@@ -51,11 +51,11 @@ public class PaymentCodec implements Codec<Payment> {
    }
 
    public static Payment convertFromDocument(Document bson) {
-      LocalDateTime date = LocalDateTime.ofInstant(bson.getDate(Payment.DATE).toInstant(), ZoneId.systemDefault());
+      Date date = bson.getDate(Payment.DATE);
       long amount = bson.getLong(Payment.AMOUNT);
       String paymentId = bson.getString(Payment.PAYMENT_ID);
-      LocalDateTime start = LocalDateTime.ofInstant(bson.getDate(Payment.START).toInstant(), ZoneId.systemDefault());
-      LocalDateTime validUntil = LocalDateTime.ofInstant(bson.getDate(Payment.VALID_UNTIL).toInstant(), ZoneId.systemDefault());
+      Date start = bson.getDate(Payment.START);
+      Date validUntil = bson.getDate(Payment.VALID_UNTIL);
       Payment.PaymentState state = Payment.PaymentState.fromInt(bson.getInteger(Payment.STATE));
       Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.fromInt(bson.getInteger(Payment.SERVICE_LEVEL));
 
@@ -64,11 +64,11 @@ public class PaymentCodec implements Codec<Payment> {
 
    @Override
    public void encode(final BsonWriter bsonWriter, final Payment payment, final EncoderContext encoderContext) {
-      Document document = new Document(Payment.DATE, Date.from(payment.getDate().atZone(ZoneId.systemDefault()).toInstant()))
+      Document document = new Document(Payment.DATE, payment.getDate())
             .append(Payment.AMOUNT, payment.getAmount())
             .append(Payment.PAYMENT_ID, payment.getPaymentId())
             .append(Payment.START, payment.getStart())
-            .append(Payment.VALID_UNTIL, Date.from(payment.getValidUntil().atZone(ZoneId.systemDefault()).toInstant()))
+            .append(Payment.VALID_UNTIL, payment.getValidUntil())
             .append(Payment.STATE, payment.getState().ordinal())
             .append(Payment.SERVICE_LEVEL, payment.getServiceLevel().ordinal());
 

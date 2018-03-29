@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -61,17 +62,17 @@ public class Payment {
       }
    }
 
-   private LocalDateTime date;
+   private Date date;
    private long amount;
    private String paymentId;
-   private LocalDateTime start;
-   private LocalDateTime validUntil;
+   private Date start;
+   private Date validUntil;
    private PaymentState state;
    private ServiceLevel serviceLevel;
 
    @JsonCreator
-   public Payment(@JsonProperty(DATE) LocalDateTime date, @JsonProperty(AMOUNT) long amount, @JsonProperty(PAYMENT_ID) String paymentId,
-         @JsonProperty(START) LocalDateTime start, @JsonProperty(VALID_UNTIL) LocalDateTime validUntil, @JsonProperty(STATE) PaymentState state,
+   public Payment(@JsonProperty(DATE) Date date, @JsonProperty(AMOUNT) long amount, @JsonProperty(PAYMENT_ID) String paymentId,
+         @JsonProperty(START) Date start, @JsonProperty(VALID_UNTIL) Date validUntil, @JsonProperty(STATE) PaymentState state,
          @JsonProperty(SERVICE_LEVEL) ServiceLevel serviceLevel) {
       this.date = date;
       this.amount = amount;
@@ -82,11 +83,11 @@ public class Payment {
       this.serviceLevel = serviceLevel;
    }
 
-   public LocalDateTime getDate() {
+   public Date getDate() {
       return date;
    }
 
-   public void setDate(final LocalDateTime date) {
+   public void setDate(final Date date) {
       this.date = date;
    }
 
@@ -106,19 +107,19 @@ public class Payment {
       this.paymentId = paymentId;
    }
 
-   public LocalDateTime getStart() {
+   public Date getStart() {
       return start;
    }
 
-   public void setStart(final LocalDateTime start) {
+   public void setStart(final Date start) {
       this.start = start;
    }
 
-   public LocalDateTime getValidUntil() {
+   public Date getValidUntil() {
       return validUntil;
    }
 
-   public void setValidUntil(final LocalDateTime validUntil) {
+   public void setValidUntil(final Date validUntil) {
       this.validUntil = validUntil;
    }
 

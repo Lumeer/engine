@@ -65,7 +65,8 @@ public abstract class IntegrationTestBase {
                        .addAsResource("defaults-dev.properties")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")
-                                            .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo", "org.mongodb.morphia:morphia", "org.mockito:mockito-core", "com.univocity:univocity-parsers")
+                                            .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
+                                                  "org.mongodb.morphia:morphia", "org.mockito:mockito-core", "com.univocity:univocity-parsers")
                                             .withTransitivity()
                                             .asFile()
                        );

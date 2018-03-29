@@ -20,6 +20,7 @@ package io.lumeer.storage.mongodb.dao.organization;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.paymentIdFiler;
+import static io.lumeer.storage.mongodb.util.MongoFilters.paymentStateFilter;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
@@ -100,7 +101,8 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
 
    @Override
    public Payment getLatestPayment(final Organization organization) {
-      return databaseCollection(organization).find().sort(Sorts.descending(Payment.VALID_UNTIL)).limit(1).first();
+      return databaseCollection(organization).find(paymentStateFilter(Payment.PaymentState.PAID.ordinal()))
+                                             .sort(Sorts.descending(Payment.VALID_UNTIL)).limit(1).first();
    }
 
    @Override

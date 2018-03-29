@@ -47,6 +47,10 @@ public class MongoFilters {
       return Filters.eq(Payment.PAYMENT_ID, paymentId);
    }
 
+   public static Bson paymentStateFilter(final int stateId) {
+      return Filters.eq(Payment.STATE, stateId);
+   }
+
    public static Bson codeFilter(String code) {
       return Filters.eq(CODE, code);
    }

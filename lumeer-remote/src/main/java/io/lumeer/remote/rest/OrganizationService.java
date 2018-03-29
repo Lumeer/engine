@@ -151,8 +151,8 @@ public class OrganizationService extends AbstractService {
    /* Gets the current service level the organization has prepaid. */
    @GET
    @Path("{organizationCode}/serviceLevel")
-   public Payment.ServiceLevel getServiceLevel(@PathParam("organizationCode") final String organizationCode) {
-      return paymentFacade.getCurrentServiceLevel(organizationFacade.getOrganization(organizationCode));
+   public int getServiceLevel(@PathParam("organizationCode") final String organizationCode) {
+      return paymentFacade.getCurrentServiceLevel(organizationFacade.getOrganization(organizationCode)).ordinal();
    }
 
    /* Gets the current service level the organization has prepaid. */

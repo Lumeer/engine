@@ -51,6 +51,7 @@ public class WorkspaceCache {
    public void initCaches() {
       organizationCache = cacheFactory.getCache();
       projectCache = cacheFactory.getCache();
+      serviceLevelCache = cacheFactory.getCache();
    }
 
    public Organization getOrganization(String organizationCode) {

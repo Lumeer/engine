@@ -25,7 +25,11 @@ import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.Date;
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -59,7 +63,8 @@ public class PaymentFacade extends AbstractFacade {
          final Payment latestPayment = paymentDao.getLatestPayment(organization);
 
          // is the payment active? be tolerant to dates/time around the interval border
-         if (latestPayment != null && now.isBefore(latestPayment.getValidUntil().plusDays(1)) && now.isAfter(latestPayment.getStart().minusDays(1))) {
+         if (latestPayment != null && now.isBefore(LocalDateTime.from(latestPayment.getValidUntil().toInstant().plus(Duration.ofDays(1))))
+               && now.isAfter(LocalDateTime.from(latestPayment.getStart().toInstant().minus(Duration.ofDays(1))))) {
             serviceLevel = latestPayment.getServiceLevel();
          }
 

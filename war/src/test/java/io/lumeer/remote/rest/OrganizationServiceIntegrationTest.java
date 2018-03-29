@@ -26,6 +26,7 @@ import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Resource;
@@ -41,8 +42,12 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -311,5 +316,40 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
       assertThat(permissions.getGroupPermissions()).isEmpty();
+   }
+
+   @Test
+   public void testPaymentsAssessments() {
+      createOrganization(CODE1);
+      createOrganization(CODE2);
+
+      Payment payment = new Payment(new Date(), 1770, "1234",
+            Date.from(ZonedDateTime.ofLocal(
+                  LocalDateTime.of(2018, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
+            Date.from(ZonedDateTime.ofLocal(
+               LocalDateTime.of(2019, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()), Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC);
+
+      payment = createPayment(CODE1, payment);
+      System.out.println(getServiceLevel(CODE1));
+   }
+
+   private Payment createPayment(final String organization, final Payment payment) {
+      Entity entity = Entity.json(payment);
+
+      Response response = client.target(ORGANIZATION_URL).path(organization).path("payments")
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildPost(entity).invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      return response.readEntity(Payment.class);
+   }
+
+   private Payment.ServiceLevel getServiceLevel(final String organization) {
+      Response response = client.target(ORGANIZATION_URL).path(organization).path("serviceLevel")
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildGet().invoke();
+
+      return Payment.ServiceLevel.fromInt(response.readEntity(Integer.class));
    }
 }
