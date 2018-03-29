@@ -27,6 +27,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -34,6 +35,7 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 
 import java.util.ArrayList;
@@ -44,14 +46,14 @@ import javax.enterprise.context.RequestScoped;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RequestScoped
-public class MongoPaymentDao extends OrganizationScopedDao implements PaymentDao {
+public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
 
    private static final String PREFIX = "payments_o-";
 
    @Override
-   public Payment createPayment(final Payment payment) {
+   public Payment createPayment(final Organization organization, final Payment payment) {
       try {
-         databaseCollection().insertOne(payment);
+         databaseCollection(organization).insertOne(payment);
          return payment;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create payment " + payment, ex);
@@ -59,15 +61,15 @@ public class MongoPaymentDao extends OrganizationScopedDao implements PaymentDao
    }
 
    @Override
-   public List<Payment> getPayments() {
-      return databaseCollection().find().into(new ArrayList<>());
+   public List<Payment> getPayments(final Organization organization) {
+      return databaseCollection(organization).find().sort(Sorts.descending(Payment.DATE)).into(new ArrayList<>());
    }
 
    @Override
-   public Payment updatePayment(final String id, final Payment payment) {
+   public Payment updatePayment(final Organization organization, final String id, final Payment payment) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
-         final Payment returnedPayment = databaseCollection().findOneAndReplace(idFilter(id), payment, options);
+         final Payment returnedPayment = databaseCollection(organization).findOneAndReplace(idFilter(id), payment, options);
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + id + "' has not been updated.");
          }
@@ -78,10 +80,10 @@ public class MongoPaymentDao extends OrganizationScopedDao implements PaymentDao
    }
 
    @Override
-   public Payment updatePayment(final Payment payment) {
+   public Payment updatePayment(final Organization organization, final Payment payment) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
-         final Payment returnedPayment = databaseCollection().findOneAndReplace(paymentIdFiler(payment.getPaymentId()), payment, options);
+         final Payment returnedPayment = databaseCollection(organization).findOneAndReplace(paymentIdFiler(payment.getPaymentId()), payment, options);
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + payment.getPaymentId() + "' has not been updated.");
          }
@@ -92,8 +94,13 @@ public class MongoPaymentDao extends OrganizationScopedDao implements PaymentDao
    }
 
    @Override
-   public Payment getPayment(final String paymentId) {
-      return databaseCollection().find(paymentIdFiler(paymentId)).first();
+   public Payment getPayment(final Organization organization, final String paymentId) {
+      return databaseCollection(organization).find(paymentIdFiler(paymentId)).first();
+   }
+
+   @Override
+   public Payment getLatestPayment(final Organization organization) {
+      return databaseCollection(organization).find().sort(Sorts.descending(Payment.VALID_UNTIL)).limit(1).first();
    }
 
    @Override
@@ -102,6 +109,9 @@ public class MongoPaymentDao extends OrganizationScopedDao implements PaymentDao
 
       MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
       groupCollection.createIndex(Indexes.ascending(Payment.PAYMENT_ID), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.descending(Payment.DATE), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.descending(Payment.START), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.descending(Payment.VALID_UNTIL), new IndexOptions().unique(true));
    }
 
    @Override
@@ -109,19 +119,14 @@ public class MongoPaymentDao extends OrganizationScopedDao implements PaymentDao
       database.getCollection(databaseCollectionName(organization)).drop();
    }
 
-   MongoCollection<Payment> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), Payment.class);
+   private MongoCollection<Payment> databaseCollection(final Organization organization) {
+      return database.getCollection(databaseCollectionName(organization), Payment.class);
    }
 
-   String databaseCollectionName() {
-      if (!getOrganization().isPresent()) {
+   private String databaseCollectionName(final Organization organization) {
+      if (organization == null) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
-      return databaseCollectionName(getOrganization().get());
-   }
-
-   private String databaseCollectionName(Organization organization) {
       return PREFIX + organization.getId();
    }
-
 }

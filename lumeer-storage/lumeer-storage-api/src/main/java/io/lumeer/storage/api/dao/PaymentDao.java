@@ -28,20 +28,21 @@ import java.util.List;
  */
 public interface PaymentDao {
 
-   Payment createPayment(final Payment payment);
+   Payment createPayment(final Organization organization, final Payment payment);
 
-   List<Payment> getPayments();
+   List<Payment> getPayments(final Organization organization);
 
    /* Uses database id */
-   Payment updatePayment(final String id, final Payment payment);
+   Payment updatePayment(final Organization organization, final String id, final Payment payment);
 
    /* Uses payment id */
-   Payment updatePayment(final Payment payment);
+   Payment updatePayment(final Organization organization, final Payment payment);
 
-   Payment getPayment(final String paymentId);
+   Payment getPayment(final Organization organization, final String paymentId);
+
+   Payment getLatestPayment(final Organization organization);
 
    void createPaymentRepository(final Organization organization);
 
    void deletePaymentRepository(final Organization organization);
-
 }

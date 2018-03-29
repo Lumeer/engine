@@ -66,9 +66,9 @@ public class WorkspaceKeeper implements SelectedWorkspace {
       setProject(projectCode);
    }
 
-   public void setServiceLevel(final Payment.ServiceLevel serviceLevel) {
-      if (organizationCode != null) {
-         workspaceCache.setServiceLevel(organizationCode, serviceLevel);
+   public void setServiceLevel(final Organization organization, final Payment.ServiceLevel serviceLevel) {
+      if (organization != null) {
+         workspaceCache.setServiceLevel(organization.getCode(), serviceLevel);
       }
    }
 
@@ -80,9 +80,18 @@ public class WorkspaceKeeper implements SelectedWorkspace {
       return Payment.ServiceLevel.FREE;
    }
 
-   public void clearServiceLevel() {
-      if (organizationCode != null) {
-         workspaceCache.removeServiceLevel(organizationCode);
+
+   public Payment.ServiceLevel getServiceLevel(final Organization organization) {
+      if (organization != null) {
+         return Optional.ofNullable(workspaceCache.getServiceLevel(organization.getCode())).orElse(Payment.ServiceLevel.FREE);
+      }
+
+      return Payment.ServiceLevel.FREE;
+   }
+
+   public void clearServiceLevel(final Organization organization) {
+      if (organization != null) {
+         workspaceCache.removeServiceLevel(organization.getCode());
       }
    }
 }

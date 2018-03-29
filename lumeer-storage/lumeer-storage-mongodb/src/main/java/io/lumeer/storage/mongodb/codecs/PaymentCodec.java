@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonPayment;
 import io.lumeer.api.model.Payment;
 
 import org.bson.BsonReader;
@@ -36,7 +35,7 @@ import java.util.Date;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class PaymentCodec implements Codec<JsonPayment> {
+public class PaymentCodec implements Codec<Payment> {
 
    private final Codec<Document> documentCodec;
 
@@ -45,28 +44,30 @@ public class PaymentCodec implements Codec<JsonPayment> {
    }
 
    @Override
-   public JsonPayment decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
+   public Payment decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document document = documentCodec.decode(bsonReader, decoderContext);
 
       return PaymentCodec.convertFromDocument(document);
    }
 
-   public static JsonPayment convertFromDocument(Document bson) {
+   public static Payment convertFromDocument(Document bson) {
       LocalDateTime date = LocalDateTime.ofInstant(bson.getDate(Payment.DATE).toInstant(), ZoneId.systemDefault());
       long amount = bson.getLong(Payment.AMOUNT);
       String paymentId = bson.getString(Payment.PAYMENT_ID);
+      LocalDateTime start = LocalDateTime.ofInstant(bson.getDate(Payment.START).toInstant(), ZoneId.systemDefault());
       LocalDateTime validUntil = LocalDateTime.ofInstant(bson.getDate(Payment.VALID_UNTIL).toInstant(), ZoneId.systemDefault());
-      Payment.PaymentState state = Payment.PaymentState.values()[bson.getInteger(Payment.STATE)];
-      Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.values()[bson.getInteger(Payment.SERVICE_LEVEL)];
+      Payment.PaymentState state = Payment.PaymentState.fromInt(bson.getInteger(Payment.STATE));
+      Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.fromInt(bson.getInteger(Payment.SERVICE_LEVEL));
 
-      return new JsonPayment(date, amount, paymentId, validUntil, state, serviceLevel);
+      return new Payment(date, amount, paymentId, start, validUntil, state, serviceLevel);
    }
 
    @Override
-   public void encode(final BsonWriter bsonWriter, final JsonPayment payment, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter bsonWriter, final Payment payment, final EncoderContext encoderContext) {
       Document document = new Document(Payment.DATE, Date.from(payment.getDate().atZone(ZoneId.systemDefault()).toInstant()))
             .append(Payment.AMOUNT, payment.getAmount())
             .append(Payment.PAYMENT_ID, payment.getPaymentId())
+            .append(Payment.START, payment.getStart())
             .append(Payment.VALID_UNTIL, Date.from(payment.getValidUntil().atZone(ZoneId.systemDefault()).toInstant()))
             .append(Payment.STATE, payment.getState().ordinal())
             .append(Payment.SERVICE_LEVEL, payment.getServiceLevel().ordinal());
@@ -75,7 +76,7 @@ public class PaymentCodec implements Codec<JsonPayment> {
    }
 
    @Override
-   public Class<JsonPayment> getEncoderClass() {
-      return JsonPayment.class;
+   public Class<Payment> getEncoderClass() {
+      return Payment.class;
    }
 }

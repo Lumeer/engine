@@ -18,7 +18,7 @@
  */
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.dto.JsonPayment;
+import io.lumeer.api.model.Payment;
 import io.lumeer.storage.mongodb.codecs.PaymentCodec;
 
 import org.bson.codecs.Codec;
@@ -31,8 +31,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 public class PaymentCodecProvider implements CodecProvider {
 
    @Override
+   @SuppressWarnings("unchecked")
    public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
-      if (aClass == JsonPayment.class) {
+      if (aClass == Payment.class) {
          return (Codec<T>) new PaymentCodec(codecRegistry);
       }
 
