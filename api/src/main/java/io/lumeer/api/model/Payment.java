@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
+import java.util.Currency;
 import java.util.Date;
 import java.util.Objects;
 
@@ -38,6 +39,8 @@ public class Payment {
    public static final String STATE = "state";
    public static final String SERVICE_LEVEL = "serviceLevel";
    public static final String USERS = "users";
+   public static final String LANGUAGE = "language";
+   public static final String CURRENCY = "currency";
 
    public enum PaymentState {
       CREATED, PAYMENT_METHOD_CHOSEN, AUTHORIZED, PAID, CANCELED, TIMEOUTED, REFUNDED;
@@ -71,11 +74,14 @@ public class Payment {
    private PaymentState state;
    private ServiceLevel serviceLevel;
    private int users;
+   private String language;
+   private String currency;
 
    @JsonCreator
    public Payment(@JsonProperty(DATE) Date date, @JsonProperty(AMOUNT) long amount, @JsonProperty(PAYMENT_ID) String paymentId,
          @JsonProperty(START) Date start, @JsonProperty(VALID_UNTIL) Date validUntil, @JsonProperty(STATE) PaymentState state,
-         @JsonProperty(SERVICE_LEVEL) ServiceLevel serviceLevel, @JsonProperty(USERS) int users) {
+         @JsonProperty(SERVICE_LEVEL) ServiceLevel serviceLevel, @JsonProperty(USERS) int users,
+         @JsonProperty(LANGUAGE) final String language, @JsonProperty(CURRENCY) final String currency) {
       this.date = date;
       this.amount = amount;
       this.paymentId = paymentId;
@@ -84,6 +90,8 @@ public class Payment {
       this.state = state;
       this.serviceLevel = serviceLevel;
       this.users = users;
+      this.language = language;
+      this.currency = currency;
    }
 
    public Date getDate() {
@@ -150,28 +158,20 @@ public class Payment {
       this.users = users;
    }
 
-   @Override
-   public boolean equals(final Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-         return false;
-      }
-      final Payment that = (Payment) o;
-      return amount == that.amount &&
-            Objects.equals(date, that.date) &&
-            Objects.equals(paymentId, that.paymentId) &&
-            Objects.equals(start, that.start) &&
-            Objects.equals(validUntil, that.validUntil) &&
-            Objects.equals(users, that.users) &&
-            state == that.state &&
-            serviceLevel == that.serviceLevel;
+   public String getLanguage() {
+      return language;
    }
 
-   @Override
-   public int hashCode() {
-      return Objects.hash(date, amount, paymentId, start, validUntil, state, serviceLevel, users);
+   public void setLanguage(final String language) {
+      this.language = language;
+   }
+
+   public String getCurrency() {
+      return currency;
+   }
+
+   public void setCurrency(final String currency) {
+      this.currency = currency;
    }
 
    @Override
@@ -185,7 +185,35 @@ public class Payment {
             ", state=" + state +
             ", serviceLevel=" + serviceLevel +
             ", users=" + users +
+            ", language='" + language + '\'' +
+            ", currency='" + currency + '\'' +
             '}';
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+      final Payment payment = (Payment) o;
+      return amount == payment.amount &&
+            users == payment.users &&
+            Objects.equals(date, payment.date) &&
+            Objects.equals(paymentId, payment.paymentId) &&
+            Objects.equals(start, payment.start) &&
+            Objects.equals(validUntil, payment.validUntil) &&
+            state == payment.state &&
+            serviceLevel == payment.serviceLevel &&
+            Objects.equals(language, payment.language) &&
+            Objects.equals(currency, payment.currency);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency);
    }
 
 }

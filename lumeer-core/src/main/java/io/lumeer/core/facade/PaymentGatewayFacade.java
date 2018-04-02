@@ -19,14 +19,28 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Payment;
+import io.lumeer.core.exception.PaymentGatewayException;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import javax.enterprise.context.ApplicationScoped;
 
 import cz.gopay.api.v3.GPClientException;
 import cz.gopay.api.v3.IGPConnector;
 import cz.gopay.api.v3.impl.resteasy.ResteasyGPConnector;
 import cz.gopay.api.v3.model.access.AccessToken;
 import cz.gopay.api.v3.model.access.OAuth;
-
-import javax.enterprise.context.ApplicationScoped;
+import cz.gopay.api.v3.model.common.Currency;
+import cz.gopay.api.v3.model.payment.BasePayment;
+import cz.gopay.api.v3.model.payment.Lang;
+import cz.gopay.api.v3.model.payment.PaymentFactory;
+import cz.gopay.api.v3.model.payment.support.PayerBuilder;
+import cz.gopay.api.v3.model.payment.support.PaymentInstrument;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -34,9 +48,30 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class PaymentGatewayFacade {
 
-   private static final String API_URL = "";
+   private static final String GOPAY_API = "xxxhttps://gw.sandbox.gopay.com/axis/EPaymentServiceV2?wsdl";
+
    private static final String CLIENT_ID = "";
    private static final String CLIENT_CREDENTIALS = "";
+   private static final long GOPAY_ID = 1234567890L;
+   private static final String[] SWIFTS = { "GIBACZPX", "KOMBCZPP", "RZBCCZPP", "BREXCZPP",
+      "FIOBCZPP", "CEKOCZPP", "CEKOCZPP-ERA", "BACXCZPP", "SUBASKBX", "TATRSKBX",
+      "UNCRSKBX", "GIBASKBX", "POBNSKBA", "CEKOSKBX", "BREXPLPW", "CITIPLPX",
+      "BPKOPLPW-IKO", "BPKOPLPW-INTELIGO", "IVSEPLPP", "BPHKPLPK", "OTHERS",
+      "TOBAPLPW", "VOWAPLP1", "GBWCPLPP", "POCZPLP4", "GOPZPLPW", "IEEAPLPA",
+      "POLUPLPR", "GBGCPLPK-GIO", "GBGCPLPK-BLIK", "GBGCPLPK-NOB", "BREXPLPW-OMB",
+      "WBKPPLPP", "RCBWPLPW", "BPKOPLPW", "ALBPPLPW", "INGBPLPW", "PKOPPLPW",
+      "GBGCPLPK", "BIGBPLPW", "EBOSPLPW", "PPABPLPK", "AGRIPLPR", "DEUTPLPX",
+      "DNBANOKK", "NBPLPLPW", "SOGEPLPW", "PBPBPLPW" };
+
+   private static final Map<String, String> ORDER_FORMAT;
+
+   static {
+      ORDER_FORMAT = new HashMap<>();
+      ORDER_FORMAT.put("cz", "Služba Lumeer %s pro %d uživatelů od %s do %s.");
+      ORDER_FORMAT.put("en", "Lumeer %s service for %d users since %s until %s.");
+   }
+
+   private boolean dryRun = false;
 
    private long expiration;
 
@@ -46,47 +81,103 @@ public class PaymentGatewayFacade {
 
    private boolean tokenAllType;
 
-   public Payment createPayment(final Payment payment) {
+   public Payment createPayment(final Payment payment, final String returnUrl, final String notifyUrl) {
+      if (dryRun) {
+         payment.setState(Payment.PaymentState.CREATED);
+         payment.setPaymentId("1234567890");
+         return payment;
+      }
+
       ensureToken(false);
 
-      /*
-      BasePayment payment = PaymentFactory.createBasePaymentBuilder()
-    .order(<ORDER_NUMBER>, <AMOUNT>, Currency.EUR, <DESCRIPTION>)
-    .addItem(<ITEM_NAME>, <AMOUNT>, <FEE>, <COUNT>)
-    .addAdditionalParameter(<Key>, <VALUE>)
-    .withCallback(<RETURN_URL>, <NOTIFY_URL>)
-    .payer(<Payer>)
-    .inLang(Lang.EN)
-    .toEshop(<GO_ID>)
-    .build();
-try {
-    Payment result = connector.createPayment(payment);
-} catch (GPClientException e) {
+      final LocalDateTime tm = LocalDateTime.now();
+      final String description = getPaymentDescription(payment);
+      final PayerBuilder payerBuilder = new PayerBuilder()
+            .addAllowedPaymentMethod(PaymentInstrument.BANK_ACCOUNT)
+            .addAllowedPaymentMethod(PaymentInstrument.PAYMENT_CARD)
+            .addAllowedPaymentMethod(PaymentInstrument.MPAYMENT)
+            .addAllowedPaymentMethod(PaymentInstrument.GOPAY)
+            .addAllowedPaymentMethod(PaymentInstrument.PAYPAL)
+            .withDefaultPaymentInstrument(PaymentInstrument.PAYMENT_CARD);
+      Arrays.asList(SWIFTS).forEach(swift -> payerBuilder.addAllowedSwift(swift));
+      final BasePayment basePayment = PaymentFactory.createBasePaymentBuilder()
+            .order(String.format("%d%3d%2d%2d%2d%3d", tm.getYear(), tm.getDayOfYear(), tm.getHour(),
+                  tm.getMinute(), tm.getSecond(), tm.getNano() / 1_000_000L), payment.getAmount(),
+                  Currency.getByCode(payment.getCurrency()), description)
+            .addItem(description, payment.getAmount(), 1L)
+            .withCallback(returnUrl, notifyUrl)
+            .inLang("cz".equals(payment.getLanguage()) ? Lang.CS : Lang.EN)
+            .toEshop(GOPAY_ID)
+            .payer(payerBuilder.build())
+            .build();
 
-}
-
-try {
-    Payment payment = connector.paymentStatus(<PAYMENT_ID>);
-} catch (GPClientException e) {
-     //
-}
-
-
-catch (GPClientException e) {
-    for (ErrorElement err : e.getError().getErrorMessages()) {
-        int code = err.getErrorCode();
-        String message = err.getMessage();
-        String field = err.getField();
-
-    }
-       */
+      try {
+         cz.gopay.api.v3.model.payment.Payment createdPayment = connector.createPayment(basePayment);
+         payment.setState(convertState(createdPayment.getState()));
+         payment.setPaymentId(String.valueOf(createdPayment.getId()));
+      } catch (GPClientException e) {
+         throw new PaymentGatewayException(e);
+      }
 
       return payment;
    }
 
+   private String getPaymentDescription(final Payment payment) {
+      final DateFormat df;
+      if ("cz".equals(payment.getLanguage())) {
+         df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.forLanguageTag("cs_CZ"));
+      } else {
+         df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.ENGLISH);
+      }
+
+      return String.format(ORDER_FORMAT.get(payment.getLanguage()), payment.getServiceLevel().toString(), payment.getUsers(),
+            df.format(payment.getStart()), df.format(payment.getValidUntil()));
+   }
+
+   public Payment.PaymentState getPaymentStatus(final String paymentId) {
+      if (dryRun) {
+         return Payment.PaymentState.PAID;
+      }
+
+      ensureToken(true);
+
+      try {
+         return convertState(connector.paymentStatus(new Long(paymentId)).getState());
+      } catch (GPClientException e) {
+         throw new PaymentGatewayException(e);
+      }
+   }
+
+   private Payment.PaymentState convertState(final cz.gopay.api.v3.model.payment.Payment.SessionState state) {
+      switch (state) {
+         case CREATED:
+            return Payment.PaymentState.CREATED;
+         case PAID:
+            return Payment.PaymentState.PAID;
+         case CANCELED:
+            return Payment.PaymentState.CANCELED;
+         case PAYMENT_METHOD_CHOSEN:
+            return Payment.PaymentState.PAYMENT_METHOD_CHOSEN;
+         case AUTHORIZED:
+            return Payment.PaymentState.AUTHORIZED;
+         case REFUNDED:
+            return Payment.PaymentState.REFUNDED;
+         case TIMEOUTED:
+            return Payment.PaymentState.TIMEOUTED;
+         case PARTIALLY_REFUNDED:
+            return Payment.PaymentState.REFUNDED;
+         default:
+            return Payment.PaymentState.TIMEOUTED;
+      }
+   }
+
    public void ensureToken(boolean allType) {
+      if (dryRun) {
+         return;
+      }
+
       if ((allType && !tokenAllType) || token == null || expiration < System.currentTimeMillis()) {
-         connector = ResteasyGPConnector.build(API_URL);
+         connector = ResteasyGPConnector.build(GOPAY_API);
          try {
             connector.getAppToken(CLIENT_ID, CLIENT_CREDENTIALS, allType ? OAuth.SCOPE_PAYMENT_ALL : OAuth.SCOPE_PAYMENT_CREATE);
             token = connector.getAccessToken();
@@ -95,8 +186,13 @@ catch (GPClientException e) {
          } catch (GPClientException e) {
             token = null;
             expiration = -1;
+            throw new PaymentGatewayException(e);
          }
       }
+   }
+
+   public void setDryRun(final boolean dryRun) {
+      this.dryRun = dryRun;
    }
 
 }

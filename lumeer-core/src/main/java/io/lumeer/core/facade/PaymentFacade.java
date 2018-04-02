@@ -22,15 +22,14 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAmount;
-import java.util.Date;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -43,59 +42,96 @@ public class PaymentFacade extends AbstractFacade {
    @Inject
    private PaymentDao paymentDao;
 
-   public Payment createPayment(final Organization organization, final Payment payment) {
-      checkPermissions(organization);
+   @Inject
+   private PaymentGatewayFacade paymentGateway;
 
-      return paymentDao.createPayment(organization, payment);
+   private Payment currentPayment = null;
+
+   public Payment createPayment(final Organization organization, final Payment payment, final String notifyUrl, final String returnUrl) {
+      checkManagePermissions(organization);
+
+      final Payment establishedPayment = paymentGateway.createPayment(payment, returnUrl, notifyUrl);
+
+      return paymentDao.createPayment(organization, establishedPayment);
    }
 
    public List<Payment> getPayments(final Organization organization) {
-      checkPermissions(organization);
+      checkManagePermissions(organization);
 
       return paymentDao.getPayments(organization);
    }
 
-   public Payment.ServiceLevel getCurrentServiceLevel(final Organization organization) {
-      Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.FREE;
-
-      if (workspaceKeeper.getServiceLevel(organization) == null) {
+   private Payment getCurrentPayment(final Organization organization) {
+      if (currentPayment == null) {
          final LocalDateTime now = LocalDateTime.now();
          final Payment latestPayment = paymentDao.getLatestPayment(organization);
 
          // is the payment active? be tolerant to dates/time around the interval border
          if (latestPayment != null && now.isBefore(LocalDateTime.from(latestPayment.getValidUntil().toInstant().plus(Duration.ofDays(1))))
                && now.isAfter(LocalDateTime.from(latestPayment.getStart().toInstant().minus(Duration.ofDays(1))))) {
-            serviceLevel = latestPayment.getServiceLevel();
+            currentPayment = latestPayment;
+         }
+      }
+
+      return currentPayment;
+   }
+
+   public Payment.ServiceLevel getCurrentServiceLevel(final Organization organization) {
+      checkReadPermissions(organization);
+
+      Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.FREE;
+
+      if (workspaceKeeper.getServiceLevel(organization) == null) {
+         final Payment payment = getCurrentPayment(organization);
+         if (payment != null) {
+            serviceLevel = payment.getServiceLevel();
          }
 
          workspaceKeeper.setServiceLevel(organization, serviceLevel);
+      } else {
+         serviceLevel = workspaceKeeper.getServiceLevel(organization);
       }
 
       return serviceLevel;
    }
 
-   public String getAuthToken() {
-      return "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+   public ServiceLimits getCurrentServiceLimits(final Organization organization) {
+      checkReadPermissions(organization);
+
+      final Payment payment = getCurrentPayment(organization);
+
+      if (payment != null) {
+         workspaceKeeper.setServiceLevel(organization, payment.getServiceLevel());
+
+         if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
+            return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
+                  ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
+                  ServiceLimits.BASIC_LIMITS.getDbSizeMb());
+         }
+      }
+
+      return ServiceLimits.FREE_LIMITS;
    }
 
-   public Payment updatePayment(final Organization organization, final String paymentId, final Payment.PaymentState paymentState) {
-      checkPermissions(organization);
+   public Payment updatePayment(final Organization organization, final String paymentId) {
+      checkManagePermissions(organization);
 
+      currentPayment = null;
       workspaceKeeper.clearServiceLevel(organization);
 
       final Payment payment = paymentDao.getPayment(organization, paymentId);
-      payment.setState(paymentState);
+      payment.setState(paymentGateway.getPaymentStatus(paymentId));
 
       return paymentDao.updatePayment(organization, payment);
    }
 
    public Payment getPayment(final Organization organization, final String paymentId) {
-      checkPermissions(organization);
+      checkManagePermissions(organization);
 
       return paymentDao.getPayment(organization, paymentId);
    }
 
-   private void checkPermissions(final Organization organization) {
+   private void checkManagePermissions(final Organization organization) {
       if (organization == null) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
@@ -103,4 +139,11 @@ public class PaymentFacade extends AbstractFacade {
       permissionsChecker.checkRole(organization, Role.MANAGE);
    }
 
+   private void checkReadPermissions(final Organization organization) {
+      if (organization == null) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+
+      permissionsChecker.checkRole(organization, Role.READ);
+   }
 }

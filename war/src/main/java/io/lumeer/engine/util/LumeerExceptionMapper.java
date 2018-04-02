@@ -20,6 +20,7 @@ package io.lumeer.engine.util;
 
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.PaymentGatewayException;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
@@ -61,7 +62,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
 
    @Override
    public Response toResponse(final LumeerException e) {
-      log.log(Level.INFO, "Exception while serving request: ", e);
+      log.log(Level.SEVERE, "Exception while serving request: ", e);
 
       // 400 - BAD REQUEST
       if (e instanceof UserCollectionAlreadyExistsException || e instanceof CollectionAlreadyExistsException ||
@@ -89,6 +90,10 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
       // 500 - INTERNAL SERVER ERROR
       if (e instanceof VersionUpdateConflictException) {
          return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
+      }
+
+      if (e instanceof PaymentGatewayException) {
+         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error while communicating with the payment gateway.").type(MediaType.TEXT_PLAIN).build();
       }
 
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
