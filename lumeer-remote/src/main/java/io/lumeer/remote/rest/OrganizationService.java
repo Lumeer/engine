@@ -28,6 +28,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
+import io.lumeer.core.facade.PaymentGatewayFacade;
 
 import java.util.List;
 import java.util.Set;
@@ -45,6 +46,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -57,6 +59,9 @@ public class OrganizationService extends AbstractService {
 
    @Inject
    private PaymentFacade paymentFacade;
+
+   @Inject
+   private PaymentGatewayFacade paymentGatewayFacade;
 
    @POST
    public JsonOrganization createOrganization(JsonOrganization organization) {
@@ -162,12 +167,13 @@ public class OrganizationService extends AbstractService {
       Must pass RETURN_URL header for the successful redirect. */
    @POST
    @Path("{organizationCode}/payments")
-   public Payment createPayment(@PathParam("organizationCode") final String organizationCode, final Payment payment/*, @Context final HttpServletRequest servletContext*/) {
-      System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@ we are here ");// + servletContext);
-      final String notifyUrl = "aaa";//servletContext.getContextPath().replace("payments", "paymentNotify");
-      final String returnUrl = "bbb";//servletContext.getHeader("RETURN_URL");
-      System.out.println("notify " + notifyUrl);
-      System.out.println("ret    " + returnUrl);
+   public Payment createPayment(@PathParam("organizationCode") final String organizationCode, final Payment payment,
+         @Context final HttpServletRequest servletContext) {
+      paymentGatewayFacade.setDryRun(true);
+
+      final String notifyUrl = servletContext.getRequestURL().toString().replace("payments", "paymentNotify");
+      final String returnUrl = servletContext.getHeader("RETURN_URL");
+
       return paymentFacade.createPayment(organizationFacade.getOrganization(organizationCode), payment, notifyUrl, returnUrl);
    }
 

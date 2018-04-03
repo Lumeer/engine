@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import javax.enterprise.context.ApplicationScoped;
 
 import cz.gopay.api.v3.GPClientException;
@@ -84,7 +85,7 @@ public class PaymentGatewayFacade {
    public Payment createPayment(final Payment payment, final String returnUrl, final String notifyUrl) {
       if (dryRun) {
          payment.setState(Payment.PaymentState.CREATED);
-         payment.setPaymentId("1234567890");
+         payment.setPaymentId(String.valueOf(new Random().nextLong()));
          return payment;
       }
 
