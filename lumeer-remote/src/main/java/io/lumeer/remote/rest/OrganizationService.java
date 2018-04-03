@@ -162,9 +162,12 @@ public class OrganizationService extends AbstractService {
       Must pass RETURN_URL header for the successful redirect. */
    @POST
    @Path("{organizationCode}/payments")
-   public Payment createPayment(@PathParam("organizationCode") final String organizationCode, @Context final HttpServletRequest servletContext, final Payment payment) {
-      final String notifyUrl = servletContext.getContextPath().replace("payments", "paymentNotify");
-      final String returnUrl = servletContext.getHeader("RETURN_URL");
+   public Payment createPayment(@PathParam("organizationCode") final String organizationCode, final Payment payment/*, @Context final HttpServletRequest servletContext*/) {
+      System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@ we are here ");// + servletContext);
+      final String notifyUrl = "aaa";//servletContext.getContextPath().replace("payments", "paymentNotify");
+      final String returnUrl = "bbb";//servletContext.getHeader("RETURN_URL");
+      System.out.println("notify " + notifyUrl);
+      System.out.println("ret    " + returnUrl);
       return paymentFacade.createPayment(organizationFacade.getOrganization(organizationCode), payment, notifyUrl, returnUrl);
    }
 

@@ -125,7 +125,7 @@
       <version.arquillian-jacoco>1.0.0.Alpha8</version.arquillian-jacoco>
       <version.mockito>2.8.47</version.mockito>
       <version.junit>4.12</version.junit>
-      <version.embedded.mongodb>2.0.1</version.embedded.mongodb>
+      <version.embedded.mongodb>2.0.3</version.embedded.mongodb>
 
       <java.level>1.8</java.level>
    </properties>

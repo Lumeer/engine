@@ -28,7 +28,9 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -63,12 +65,13 @@ public class PaymentFacade extends AbstractFacade {
 
    private Payment getCurrentPayment(final Organization organization) {
       if (currentPayment == null) {
-         final LocalDateTime now = LocalDateTime.now();
+         final Date now = new Date();
          final Payment latestPayment = paymentDao.getLatestPayment(organization);
 
          // is the payment active? be tolerant to dates/time around the interval border
-         if (latestPayment != null && now.isBefore(LocalDateTime.from(latestPayment.getValidUntil().toInstant().plus(Duration.ofDays(1))))
-               && now.isAfter(LocalDateTime.from(latestPayment.getStart().toInstant().minus(Duration.ofDays(1))))) {
+         if (latestPayment != null
+               && now.before(new Date(latestPayment.getValidUntil().getTime() + TimeUnit.DAYS.toMillis(1)))
+               && now.after(new Date(latestPayment.getStart().getTime() - TimeUnit.DAYS.toMillis(1)))) {
             currentPayment = latestPayment;
          }
       }

@@ -31,8 +31,10 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
+import io.lumeer.core.facade.PaymentGatewayFacade;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -60,7 +62,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
-public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBase {
+public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String GROUP = "testGroup";
@@ -87,6 +89,9 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private PaymentGatewayFacade paymentGatewayFacade;
 
    @Test
    public void testGetOrganizations() {
@@ -320,6 +325,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
 
    @Test
    public void testPaymentsAssessments() {
+      paymentGatewayFacade.setDryRun(true);
       createOrganization(CODE1);
       createOrganization(CODE2);
 
@@ -327,10 +333,11 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
             Date.from(ZonedDateTime.ofLocal(
                   LocalDateTime.of(2018, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
             Date.from(ZonedDateTime.ofLocal(
-               LocalDateTime.of(2019, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()), Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC);
+               LocalDateTime.of(2019, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
+            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK");
 
       payment = createPayment(CODE1, payment);
-      System.out.println(getServiceLevel(CODE1));
+      System.out.println(getServiceLimits(CODE1));
    }
 
    private Payment createPayment(final String organization, final Payment payment) {
@@ -338,6 +345,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
 
       Response response = client.target(ORGANIZATION_URL).path(organization).path("payments")
                                 .request(MediaType.APPLICATION_JSON)
+                                .header("RETURN_URL", "https://app.lumeer.io/ui/ORG/payment")
                                 .buildPost(entity).invoke();
 
       assertThat(response).isNotNull();
@@ -345,11 +353,11 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       return response.readEntity(Payment.class);
    }
 
-   private Payment.ServiceLevel getServiceLevel(final String organization) {
-      Response response = client.target(ORGANIZATION_URL).path(organization).path("serviceLevel")
+   private ServiceLimits getServiceLimits(final String organization) {
+      Response response = client.target(ORGANIZATION_URL).path(organization).path("serviceLimits")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
 
-      return Payment.ServiceLevel.fromInt(response.readEntity(Integer.class));
+      return response.readEntity(ServiceLimits.class);
    }
 }
