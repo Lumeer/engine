@@ -66,17 +66,28 @@ public class PaymentFacade extends AbstractFacade {
    private Payment getCurrentPayment(final Organization organization) {
       if (currentPayment == null) {
          final Date now = new Date();
-         final Payment latestPayment = paymentDao.getLatestPayment(organization);
+         final Payment latestPayment = getPaymentAt(organization, now);
 
          // is the payment active? be tolerant to dates/time around the interval border
-         if (latestPayment != null
-               && now.before(new Date(latestPayment.getValidUntil().getTime() + TimeUnit.DAYS.toMillis(1)))
-               && now.after(new Date(latestPayment.getStart().getTime() - TimeUnit.DAYS.toMillis(1)))) {
+         if (latestPayment != null) {
             currentPayment = latestPayment;
          }
       }
 
       return currentPayment;
+   }
+
+   private Payment getPaymentAt(final Organization organization, final Date date) {
+      final Payment payment = paymentDao.getLatestPayment(organization);
+
+      // is the payment active? be tolerant to dates/time around the interval border
+      if (payment != null
+            && date.before(new Date(payment.getValidUntil().getTime() + TimeUnit.DAYS.toMillis(1)))
+            && date.after(new Date(payment.getStart().getTime() - TimeUnit.DAYS.toMillis(1)))) {
+         return payment;
+      }
+
+      return null;
    }
 
    public Payment.ServiceLevel getCurrentServiceLevel(final Organization organization) {
@@ -109,7 +120,23 @@ public class PaymentFacade extends AbstractFacade {
          if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
             return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
-                  ServiceLimits.BASIC_LIMITS.getDbSizeMb());
+                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), payment.getValidUntil());
+         }
+      }
+
+      return ServiceLimits.FREE_LIMITS;
+   }
+
+   public ServiceLimits getServiceLimitsAt(final Organization organization, final Date date) {
+      checkManagePermissions(organization);
+
+      final Payment payment = getPaymentAt(organization, date);
+
+      if (payment != null) {
+         if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
+            return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
+                  ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
+                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), payment.getValidUntil());
          }
       }
 

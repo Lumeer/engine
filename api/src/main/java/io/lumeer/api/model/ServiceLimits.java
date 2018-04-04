@@ -21,6 +21,7 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -34,9 +35,10 @@ public class ServiceLimits {
    public static final String FILES = "files";
    public static final String DOCUMENTS = "documents";
    public static final String DB_SIZE_MB = "dbSizeMb";
+   public static final String VALID_UNTIL = "validUntil";
 
-   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 1, 10, -1, -1);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC,99, 99, -1, -1, -1);
+   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 1, 10, -1, -1, null);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC,99, 99, -1, -1, -1, new Date(0));
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
@@ -44,17 +46,20 @@ public class ServiceLimits {
    private int files;
    private int documents;
    private int dbSizeMb;
+   private Date validUntil;
 
    @JsonCreator
    public ServiceLimits(@JsonProperty(SERVICE_LEVEL) final Payment.ServiceLevel serviceLevel, @JsonProperty(USERS) final int users,
          @JsonProperty(PROJECTS) final int projects, @JsonProperty(FILES) final int files,
-         @JsonProperty(DOCUMENTS) final int documents, @JsonProperty(DB_SIZE_MB) final int dbSizeMb) {
+         @JsonProperty(DOCUMENTS) final int documents, @JsonProperty(DB_SIZE_MB) final int dbSizeMb,
+         @JsonProperty(VALID_UNTIL) final Date validUntil) {
       this.serviceLevel = serviceLevel;
       this.users = users;
       this.projects = projects;
       this.files = files;
       this.documents = documents;
       this.dbSizeMb = dbSizeMb;
+      this.validUntil = validUntil;
    }
 
    public Payment.ServiceLevel getServiceLevel() {
@@ -81,16 +86,8 @@ public class ServiceLimits {
       return dbSizeMb;
    }
 
-   @Override
-   public String toString() {
-      return "ServiceLimits{" +
-            "serviceLevel=" + serviceLevel +
-            ", users=" + users +
-            ", projects=" + projects +
-            ", files=" + files +
-            ", documents=" + documents +
-            ", dbSizeMb=" + dbSizeMb +
-            '}';
+   public Date getValidUntil() {
+      return validUntil;
    }
 
    @Override
@@ -107,13 +104,25 @@ public class ServiceLimits {
             files == that.files &&
             documents == that.documents &&
             dbSizeMb == that.dbSizeMb &&
-            serviceLevel == that.serviceLevel;
+            serviceLevel == that.serviceLevel &&
+            Objects.equals(validUntil, that.validUntil);
    }
 
    @Override
    public int hashCode() {
-
-      return Objects.hash(serviceLevel, users, projects, files, documents, dbSizeMb);
+      return Objects.hash(serviceLevel, users, projects, files, documents, dbSizeMb, validUntil);
    }
 
+   @Override
+   public String toString() {
+      return "ServiceLimits{" +
+            "serviceLevel=" + serviceLevel +
+            ", users=" + users +
+            ", projects=" + projects +
+            ", files=" + files +
+            ", documents=" + documents +
+            ", dbSizeMb=" + dbSizeMb +
+            ", validUntil=" + validUntil +
+            '}';
+   }
 }
