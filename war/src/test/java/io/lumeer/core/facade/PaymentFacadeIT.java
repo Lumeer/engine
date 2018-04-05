@@ -18,9 +18,12 @@
  */
 package io.lumeer.core.facade;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.engine.IntegrationTestBase;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -47,7 +50,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    private static final String NAME = "Organization 1";
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#ff7700";
-   private static final String PID1 = "700000001";
+   private static final String PID = "70000000";
    private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
    private Organization organization = null;
@@ -63,6 +66,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    @BeforeClass
    public void beforeClass() {
+      paymentGatewayFacade.setDryRun(true);
       organization = createOrganization();
    }
 
@@ -73,15 +77,11 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testServiceLevels() {
-      paymentGatewayFacade.setDryRun(true);
+      int counter = 1;
+      createPayment(PID + (counter++), "2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false);
+      final ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
 
-      Payment payment = new Payment(new Date(), 1770, PID1,
-            getDate("2018-04-01T12:00:00.000+0100"),
-            getDate("2019-04-01T12:00:00.000+0100"),
-            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK");
-
-      paymentFacade.createPayment(organization, payment, "", "");
-      paymentFacade.updatePayment(organization, PID1);
+      assertThat(limits.getServiceLevel()).isEqualTo(Payment.ServiceLevel.FREE);
    }
 
    private Date getDate(final String date) {
@@ -91,6 +91,18 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    private Organization createOrganization() {
       Organization organization = new JsonOrganization(CODE, NAME, ICON, COLOR, null, null);
       return organizationFacade.createOrganization(organization);
+   }
+
+   private void createPayment(final String paymentId, final String from, final String until, final boolean paid) {
+      Payment payment = new Payment(new Date(), 1770, paymentId,
+            getDate(from),
+            getDate(until),
+            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK");
+      paymentFacade.createPayment(organization, payment, "", "");
+
+      if (paid) {
+         paymentFacade.updatePayment(organization, paymentId); //this switches it to PAID in dry run mode
+      }
    }
 
    private void dropOrganization() {
