@@ -18,9 +18,7 @@
  */
 package io.lumeer.storage.mongodb.dao.organization;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.paymentIdFiler;
-import static io.lumeer.storage.mongodb.util.MongoFilters.paymentStateFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
@@ -32,6 +30,7 @@ import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -40,6 +39,7 @@ import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
 
@@ -103,6 +103,14 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
    public Payment getLatestPayment(final Organization organization) {
       return databaseCollection(organization).find(paymentStateFilter(Payment.PaymentState.PAID.ordinal()))
                                              .sort(Sorts.descending(Payment.VALID_UNTIL)).limit(1).first();
+   }
+
+   @Override
+   public Payment getPaymentAt(final Organization organization, final Date date) {
+      return databaseCollection(organization)
+            .find(Filters.and(paymentStateFilter(Payment.PaymentState.PAID.ordinal()),
+                  paymentValidUntilFilter(date), paymentStartFilter(date)))
+            .sort(Sorts.descending(Payment.VALID_UNTIL)).limit(1).first();
    }
 
    @Override

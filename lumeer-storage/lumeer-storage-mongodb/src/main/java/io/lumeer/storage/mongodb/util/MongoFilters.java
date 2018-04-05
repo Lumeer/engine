@@ -30,6 +30,7 @@ import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,14 @@ public class MongoFilters {
 
    public static Bson paymentStateFilter(final int stateId) {
       return Filters.eq(Payment.STATE, stateId);
+   }
+
+   public static Bson paymentValidUntilFilter(final Date date) {
+      return Filters.gte(Payment.VALID_UNTIL, date);
+   }
+
+   public static Bson paymentStartFilter(final Date date) {
+      return Filters.lte(Payment.START, date);
    }
 
    public static Bson codeFilter(String code) {

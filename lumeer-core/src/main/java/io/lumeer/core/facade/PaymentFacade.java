@@ -78,12 +78,12 @@ public class PaymentFacade extends AbstractFacade {
    }
 
    private Payment getPaymentAt(final Organization organization, final Date date) {
-      final Payment payment = paymentDao.getLatestPayment(organization);
+      final Payment payment = paymentDao.getPaymentAt(organization, date);
 
       // is the payment active? be tolerant to dates/time around the interval border
       if (payment != null
-            && date.before(new Date(payment.getValidUntil().getTime() + TimeUnit.DAYS.toMillis(1)))
-            && date.after(new Date(payment.getStart().getTime() - TimeUnit.DAYS.toMillis(1)))) {
+            && date.before(new Date(payment.getValidUntil().getTime() + TimeUnit.SECONDS.toMillis(1)))
+            && date.after(new Date(payment.getStart().getTime() - TimeUnit.SECONDS.toMillis(1)))) {
          return payment;
       }
 

@@ -58,10 +58,10 @@ public class EmbeddedMongoDb {
          return new MongodConfigBuilder()
                .version(Version.Main.V3_6)
                .net(new Net(HOST, PORT, Network.localhostIsIPv6()))
+               .withLaunchArgument("--storageEngine", "mmapv1")
                .build();
       } catch (IOException ex) {
          throw new RuntimeException(ex);
-
       }
    }
 

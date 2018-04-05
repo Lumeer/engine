@@ -21,6 +21,7 @@ package io.lumeer.storage.api.dao;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,6 +40,8 @@ public interface PaymentDao {
    Payment updatePayment(final Organization organization, final Payment payment);
 
    Payment getPayment(final Organization organization, final String paymentId);
+
+   Payment getPaymentAt(final Organization organization, final Date date);
 
    Payment getLatestPayment(final Organization organization);
 
