@@ -63,7 +63,13 @@ public class PermissionsChecker {
       }
    }
 
-   private boolean hasRole(Resource resource, Role role) {
+   /**
+    * Checks whether the current user has the given role on the resource.
+    * @param resource The resource to be checked.
+    * @param role The required role.
+    * @return True if and only if the user has the given role ont he resource.
+    */
+   public boolean hasRole(Resource resource, Role role) {
       return getActualRoles(resource).contains(role);
    }
 
