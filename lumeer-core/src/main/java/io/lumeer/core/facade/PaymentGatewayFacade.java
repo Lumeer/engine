@@ -49,11 +49,11 @@ import cz.gopay.api.v3.model.payment.support.PaymentInstrument;
 @ApplicationScoped
 public class PaymentGatewayFacade {
 
-   private static final String GOPAY_API = "xxxhttps://gw.sandbox.gopay.com/axis/EPaymentServiceV2?wsdl";
+   private static final String GOPAY_API = "https://gw.sandbox.gopay.com/axis/EPaymentServiceV2?wsdl";
 
-   private static final String CLIENT_ID = "";
+   private static final String CLIENT_ID = "1754050331";
    private static final String CLIENT_CREDENTIALS = "";
-   private static final long GOPAY_ID = 1234567890L;
+   private static final long GOPAY_ID = 8121729000L;
    private static final String[] SWIFTS = { "GIBACZPX", "KOMBCZPP", "RZBCCZPP", "BREXCZPP",
       "FIOBCZPP", "CEKOCZPP", "CEKOCZPP-ERA", "BACXCZPP", "SUBASKBX", "TATRSKBX",
       "UNCRSKBX", "GIBASKBX", "POBNSKBA", "CEKOSKBX", "BREXPLPW", "CITIPLPX",

@@ -169,8 +169,6 @@ public class OrganizationService extends AbstractService {
    @Path("{organizationCode}/payments")
    public Payment createPayment(@PathParam("organizationCode") final String organizationCode, final Payment payment,
          @Context final HttpServletRequest servletContext) {
-      paymentGatewayFacade.setDryRun(true);
-
       final String notifyUrl = servletContext.getRequestURL().toString().replace("payments", "paymentNotify");
       final String returnUrl = servletContext.getHeader("RETURN_URL");
 

@@ -337,7 +337,10 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
             Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK");
 
       payment = createPayment(CODE1, payment);
-      System.out.println(getServiceLimits(CODE1));
+      ServiceLimits serviceLimits = getServiceLimits(CODE1);
+      assertThat(serviceLimits.getServiceLevel()).isEqualTo(Payment.ServiceLevel.FREE);
+
+      // todo call updateService once we know the message format
    }
 
    private Payment createPayment(final String organization, final Payment payment) {

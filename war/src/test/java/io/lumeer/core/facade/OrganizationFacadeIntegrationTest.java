@@ -201,8 +201,6 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       permissions = organizationFacade.getOrganizationPermissions(CODE3);
       assertThat(permissions).isNotNull();
       assertThat(permissions.getUserPermissions()).hasSize(2).contains(USER_PERMISSION, STRANGER_PERMISSION);
-
-      assertPermissions(permissions.getUserPermissions(), USER_READONLY_PERMISSION);
    }
 
    @Test
