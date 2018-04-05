@@ -74,7 +74,7 @@ public class LinkInstance {
    }
 
    public Map<String, Object> getData() {
-      return Collections.unmodifiableMap(data);
+      return data != null ? Collections.unmodifiableMap(data) : Collections.emptyMap();
    }
 
    public void setData(final Map<String, Object> data) {
