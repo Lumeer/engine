@@ -45,7 +45,7 @@ import java.util.HashSet;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
+public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Inject
    private OrganizationDao organizationDao;

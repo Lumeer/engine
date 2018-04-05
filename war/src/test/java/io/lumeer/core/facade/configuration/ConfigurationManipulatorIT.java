@@ -34,7 +34,7 @@ import java.util.Collections;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class ConfigurationManipulatorIntegrationTest extends IntegrationTestBase {
+public class ConfigurationManipulatorIT extends IntegrationTestBase {
 
    @Inject
    @SystemDataStorage

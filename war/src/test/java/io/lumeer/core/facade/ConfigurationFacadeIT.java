@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class ConfigurationFacadeIntegrationTest extends IntegrationTestBase {
+public class ConfigurationFacadeIT extends IntegrationTestBase {
 
    private final String DBHOST_KEY = "db_host_test";
 

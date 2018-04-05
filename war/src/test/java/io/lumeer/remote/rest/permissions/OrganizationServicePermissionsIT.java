@@ -49,7 +49,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
-public class OrganizationServicePermissionsIntegrationTest extends ServiceIntegrationTestBase {
+public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase {
 
    private final String TARGET_URI = "http://localhost:8080";
    private static String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/";

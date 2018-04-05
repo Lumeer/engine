@@ -121,7 +121,7 @@ public class MongoDbStorageTest extends MongoDbTestBase {
       int numCollections = mongoDbStorage.getAllCollections().size();
       mongoDbStorage.createCollection(COLLECTION_CREATE_AND_DROP_I);
       mongoDbStorage.createCollection(COLLECTION_CREATE_AND_DROP_II);
-      assertThat(mongoDbStorage.getAllCollections()).hasSize(numCollections + 2);
+      assertThat(mongoDbStorage.getAllCollections().stream().filter(s -> !"system.indexes".equals(s))).hasSize(numCollections + 2);
 
       numCollections = mongoDbStorage.getAllCollections().size();
       mongoDbStorage.dropCollection(COLLECTION_CREATE_AND_DROP_I);
@@ -145,8 +145,7 @@ public class MongoDbStorageTest extends MongoDbTestBase {
       int numCollections = mongoDbStorage.getAllCollections().size();
       mongoDbStorage.createCollection(COLLECTION_GET_ALL_COLLECTIONS_I);
       mongoDbStorage.createCollection(COLLECTION_GET_ALL__COLLECTIONS_II);
-
-      assertThat(mongoDbStorage.getAllCollections()).hasSize(numCollections + 2);
+      assertThat(mongoDbStorage.getAllCollections().stream().filter(s -> !"system.indexes".equals(s))).hasSize(numCollections + 2);
    }
 
    @Test

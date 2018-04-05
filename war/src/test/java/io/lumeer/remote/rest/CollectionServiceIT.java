@@ -67,7 +67,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
-public class CollectionServiceIntegrationTest extends ServiceIntegrationTestBase {
+public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String GROUP = "testGroup";

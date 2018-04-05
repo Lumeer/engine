@@ -62,7 +62,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class CollectionFacadeIntegrationTest extends IntegrationTestBase {
+public class CollectionFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
    private static final String PROJECT_CODE = "TPROJ";

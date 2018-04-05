@@ -29,7 +29,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
-public class UserServiceIntegrationTest extends ServiceIntegrationTestBase {
+public class UserServiceIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
 

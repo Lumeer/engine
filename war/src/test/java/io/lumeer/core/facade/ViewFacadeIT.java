@@ -58,7 +58,7 @@ import java.util.HashSet;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class ViewFacadeIntegrationTest extends IntegrationTestBase {
+public class ViewFacadeIT extends IntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String GROUP = "testGroup";

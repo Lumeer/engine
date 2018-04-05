@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.remote.rest;
+package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,14 +27,17 @@ import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
-import io.lumeer.core.facade.DocumentFacade;
+import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -45,30 +48,22 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
-import org.bson.types.ObjectId;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
-public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
+public class DocumentFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
    private static final String PROJECT_CODE = "TPROJ";
-   private static final String COLLECTION_CODE = "TCOLL";
 
    private static final String COLLECTION_NAME = "Testing collection";
    private static final String COLLECTION_ICON = "fa-eye";
@@ -81,15 +76,14 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
    private static final String VALUE1 = "firstValue";
    private static final String VALUE2 = "secondValue";
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String DOCUMENTS_PATH_PREFIX = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
-   private static final String DOCUMENTS_URL_PREFIX = SERVER_URL + DOCUMENTS_PATH_PREFIX;
-
    @Inject
-   private CollectionDao collectionDao;
+   private DocumentFacade documentFacade;
 
    @Inject
    private DataDao dataDao;
+
+   @Inject
+   private CollectionDao collectionDao;
 
    @Inject
    private DocumentDao documentDao;
@@ -102,6 +96,9 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
 
    private Collection collection;
 
@@ -125,15 +122,16 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
+      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
+
       collectionDao.setProject(storedProject);
       collectionDao.createCollectionsRepository(storedProject);
 
       JsonPermissions collectionPermissions = new JsonPermissions();
       collectionPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-      JsonCollection jsonCollection = new JsonCollection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+      JsonCollection jsonCollection = new JsonCollection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+      jsonCollection.setDocumentsCount(0);
       collection = collectionDao.createCollection(jsonCollection);
-
-      documentDao.setProject(storedProject);
    }
 
    private Document prepareDocument() {
@@ -145,36 +143,21 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
    }
 
    private Document createDocument() {
-      Document document = prepareDocument();
-      document.setCollectionId(collection.getId());
-      document.setCreatedBy(USER);
-      document.setCreationDate(LocalDateTime.now());
-      document.setDataVersion(DocumentFacade.INITIAL_VERSION);
-      Document storedDocument = documentDao.createDocument(document);
-
-      DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), document.getData());
-
-      storedDocument.setData(storedData);
-      return storedDocument;
+      return documentFacade.createDocument(collection.getId(), prepareDocument());
    }
 
    @Test
    public void testCreateDocument() {
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).isEmpty();
+
       Document document = prepareDocument();
-      Entity entity = Entity.json(document);
 
       LocalDateTime beforeTime = LocalDateTime.now();
-
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).startsWith(DOCUMENTS_PATH_PREFIX);
-
-      String[] path = response.getLocation().getPath().split("/");
-      String id = path[path.length - 1];
-      assertThat(ObjectId.isValid(id)).isTrue();
+      String id = documentFacade.createDocument(collection.getId(), document).getId();
+      assertThat(id).isNotNull();
 
       Document storedDocument = documentDao.getDocumentById(id);
       assertThat(storedDocument).isNotNull();
@@ -194,21 +177,32 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertThat(storedData).isNotNull();
       assertThat(storedData).containsEntry(KEY1, VALUE1);
       assertThat(storedData).containsEntry(KEY2, VALUE2);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
-   public void testUpdateDocument() {
-      String id = createDocument().getId();
+   public void testUpdateDocumentData() {
+      Document document = createDocument();
+      String id = document.getId();
+
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
-      Entity entity = Entity.json(data);
 
       LocalDateTime beforeUpdateTime = LocalDateTime.now();
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPut(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      Document updatedDocument = documentFacade.updateDocumentData(collection.getId(), id, data);
+      assertThat(updatedDocument).isNotNull();
 
       Document storedDocument = documentDao.getDocumentById(id);
       SoftAssertions assertions = new SoftAssertions();
@@ -226,21 +220,32 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertThat(storedData).isNotNull();
       assertThat(storedData).containsEntry(KEY1, VALUE2);
       assertThat(storedData).doesNotContainKey(KEY2);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
-   public void testPatchDocument() {
-      String id = createDocument().getId();
+   public void testPatchDocumentData() {
+      Document document = createDocument();
+      String id = document.getId();
+
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
-      Entity entity = Entity.json(data);
 
       LocalDateTime beforeUpdateTime = LocalDateTime.now();
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
-                                .request(MediaType.APPLICATION_JSON)
-                                .build("PATCH", entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      Document updatedDocument = documentFacade.patchDocumentData(collection.getId(), id, data);
+      assertThat(updatedDocument).isNotNull();
 
       Document storedDocument = documentDao.getDocumentById(id);
       SoftAssertions assertions = new SoftAssertions();
@@ -258,40 +263,51 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
       assertThat(storedData).isNotNull();
       assertThat(storedData).containsEntry(KEY1, VALUE2);
       assertThat(storedData).containsEntry(KEY2, VALUE2);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
    public void testDeleteDocument() {
       String id = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id)
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildDelete().invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
+
+      documentFacade.deleteDocument(collection.getId(), id);
 
       assertThatThrownBy(() -> documentDao.getDocumentById(id))
             .isInstanceOf(ResourceNotFoundException.class);
       assertThatThrownBy(() -> dataDao.getData(collection.getId(), id))
             .isInstanceOf(ResourceNotFoundException.class);
+
+      storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
+      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(0);
+      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
-   @Ignore("Works manually but there is unexpected exception in tests")
    public void testGetDocument() {
       String id = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id)
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      JsonDocument document = response.readEntity(JsonDocument.class);
+      Document document = documentFacade.getDocument(collection.getId(), id);
+      assertThat(document).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(document.getId()).isEqualTo(id);
-      assertions.assertThat(document.getCollectionId()).isNull();
+      assertions.assertThat(document.getCollectionId()).isEqualTo(collection.getId());
       assertions.assertThat(document.getCreatedBy()).isEqualTo(USER);
       assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(LocalDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();
@@ -306,19 +322,18 @@ public class DocumentServiceIntegrationTest extends ServiceIntegrationTestBase {
    }
 
    @Test
-   @Ignore("Works manually but there is unexpected exception in tests")
-   public void testGetAllDocuments() {
+   public void testGetDocuments() {
       String id1 = createDocument().getId();
       String id2 = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      List<JsonDocument> documents = response.readEntity(new GenericType<List<JsonDocument>>() {
-      });
+      Pagination pagination = new Pagination(null, null);
+      List<Document> documents = documentFacade.getDocuments(collection.getId(), pagination);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
+   }
+
+   private Attribute findCollectionAttribute(Collection collection, String attributeName) {
+      return collection.getAttributes().stream()
+                       .filter(attribute -> attribute.getFullName().equals(attributeName))
+                       .findFirst().orElse(null);
    }
 }
