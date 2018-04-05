@@ -22,6 +22,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -107,9 +108,15 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public Permissions getOrganizationPermissions(final String organizationCode) {
-      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
 
-      return organization.getPermissions();
+      if (permissionsChecker.hasRole(organization, Role.MANAGE)) {
+         return organization.getPermissions();
+      } else if (permissionsChecker.hasRole(organization, Role.READ)) { // return only user's own permissions
+         return  keepOnlyActualUserRoles(organization).getPermissions();
+      }
+
+      throw new NoPermissionException(organization);
    }
 
    public Set<Permission> updateUserPermissions(final String organizationCode, final Permission... userPermissions) {
