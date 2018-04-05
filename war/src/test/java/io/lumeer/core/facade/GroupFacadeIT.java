@@ -50,7 +50,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class GroupFacadeIntegrationTest extends IntegrationTestBase {
+public class GroupFacadeIT extends IntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
 

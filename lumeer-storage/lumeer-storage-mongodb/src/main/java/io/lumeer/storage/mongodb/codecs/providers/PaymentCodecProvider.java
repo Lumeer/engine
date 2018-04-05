@@ -16,18 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
-import io.lumeer.api.model.Project;
+import io.lumeer.storage.mongodb.codecs.PaymentCodec;
 
-import java.util.Optional;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-public interface SelectedWorkspace {
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public class PaymentCodecProvider implements CodecProvider {
 
-   Optional<Organization> getOrganization();
+   @Override
+   @SuppressWarnings("unchecked")
+   public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
+      if (aClass == Payment.class) {
+         return (Codec<T>) new PaymentCodec(codecRegistry);
+      }
 
-   Optional<Project> getProject();
-
+      return null;
+   }
 }

@@ -16,18 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api;
+package io.lumeer.core.exception;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Payment;
-import io.lumeer.api.model.Project;
+import io.lumeer.api.exception.LumeerException;
 
-import java.util.Optional;
+import cz.gopay.api.v3.GPClientException;
 
-public interface SelectedWorkspace {
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public class PaymentGatewayException extends LumeerException {
 
-   Optional<Organization> getOrganization();
-
-   Optional<Project> getProject();
-
+   public PaymentGatewayException(final GPClientException exception) {
+      super(exception.extractMessage());
+   }
 }

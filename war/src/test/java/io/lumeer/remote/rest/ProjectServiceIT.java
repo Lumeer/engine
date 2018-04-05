@@ -22,22 +22,29 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
-import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+import io.lumeer.storage.mongodb.model.MorphiaOrganization;
+import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
+import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,172 +62,194 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
-public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBase {
+public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String GROUP = "testGroup";
 
-   private static final String CODE1 = "TORG";
-   private static final String CODE2 = "TORG2";
-   private static final String NAME = "Testing organization";
+   private static final String ORGANIZATION_CODE = "TORG";
+
+   private static final String CODE1 = "TPROJ1";
+   private static final String CODE2 = "TPROJ2";
+
+   private static final String NAME = "Testing project";
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
 
-   private static final Set<Role> USER_ROLES = Organization.ROLES;
+   private static final Set<Role> USER_ROLES = Project.ROLES;
    private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
-
    private static final Permission USER_PERMISSION = new SimplePermission(USER, USER_ROLES);
    private static final Permission GROUP_PERMISSION = new SimplePermission(GROUP, GROUP_ROLES);
 
    private static final String SERVER_URL = "http://localhost:8080";
-   private static final String ORGANIZATION_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations";
-   private static final String ORGANIZATION_URL = SERVER_URL + ORGANIZATION_PATH;
-   private static final String PERMISSIONS_URL = ORGANIZATION_URL + "/" + CODE1 + "/permissions";
+   private static final String PROJECT_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects";
+   private static final String PROJECT_URL = SERVER_URL + PROJECT_PATH;
+   private static final String PERMISSIONS_URL = PROJECT_URL + "/" + CODE1 + "/permissions";
 
    @Inject
-   private OrganizationFacade organizationFacade;
+   private ProjectDao projectDao;
+
+   @Inject
+   private UserDao userDao;
 
    @Inject
    private OrganizationDao organizationDao;
 
-   @Test
-   public void testGetOrganizations() {
-      createOrganization(CODE1);
-      createOrganization(CODE2);
+   @Before
+   public void configureProject() {
+      MorphiaOrganization organization = new MorphiaOrganization();
+      organization.setCode(ORGANIZATION_CODE);
+      organization.setPermissions(new MorphiaPermissions());
+      organization.getPermissions().updateUserPermissions(new MorphiaPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      Organization storedOrganization = organizationDao.createOrganization(organization);
 
-      Response response = client.target(ORGANIZATION_URL)
+      projectDao.setOrganization(storedOrganization);
+
+      User user = new User(USER);
+      userDao.createUser(user);
+   }
+
+   private Project createProject(String code) {
+      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      project.getPermissions().updateUserPermissions(USER_PERMISSION);
+      project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      return projectDao.createProject(project);
+   }
+
+   @Test
+   public void testGetProjects() {
+      createProject(CODE1);
+      createProject(CODE2);
+
+      Response response = client.target(PROJECT_URL)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonOrganization> organizations = response.readEntity(new GenericType<List<JsonOrganization>>() {
+      List<JsonProject> projects = response.readEntity(new GenericType<List<JsonProject>>() {
       });
-      assertThat(organizations).extracting(Resource::getCode).containsOnly(CODE1, CODE2);
+      assertThat(projects).extracting(Resource::getCode).containsOnly(CODE1, CODE2);
 
-      Permissions permissions1 = organizations.get(0).getPermissions();
+      Project project1 = projects.get(0);
+      assertThat(project1.getName()).isEqualTo(NAME);
+      assertThat(project1.getIcon()).isEqualTo(ICON);
+      assertThat(project1.getColor()).isEqualTo(COLOR);
+      Permissions permissions1 = project1.getPermissions();
       assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
 
-      Permissions permissions2 = organizations.get(1).getPermissions();
+      Project project2 = projects.get(1);
+      assertThat(project2.getName()).isEqualTo(NAME);
+      assertThat(project2.getIcon()).isEqualTo(ICON);
+      assertThat(project2.getColor()).isEqualTo(COLOR);
+      Permissions permissions2 = project2.getPermissions();
       assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
    }
 
-   private void createOrganization(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
-
-      organizationFacade.createOrganization(organization);
-   }
-
-   private void createOrganizationWithSpecificPermissions(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
-      organization.getPermissions().updateUserPermissions(USER_PERMISSION);
-      organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
-      organizationDao.createOrganization(organization);
-   }
-
    @Test
-   public void testGetOrganization() {
-      createOrganization(CODE1);
+   public void testGetProject() {
+      createProject(CODE1);
 
-      Response response = client.target(ORGANIZATION_URL).path(CODE1)
+      Response response = client.target(PROJECT_URL).path(CODE1)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Organization returnedOrganization = response.readEntity(JsonOrganization.class);
+      Project returnedProject = response.readEntity(JsonProject.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedOrganization.getCode()).isEqualTo(CODE1);
-      assertions.assertThat(returnedOrganization.getName()).isEqualTo(NAME);
-      assertions.assertThat(returnedOrganization.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(returnedOrganization.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedOrganization.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(returnedOrganization.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedProject.getCode()).isEqualTo(CODE1);
+      assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
+      assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
 
    @Test
-   public void testDeleteOrganization() {
-      createOrganization(CODE1);
+   public void testDeleteProject() {
+      createProject(CODE1);
 
-      Response response = client.target(ORGANIZATION_URL).path(CODE1)
+      Response response = client.target(PROJECT_URL).path(CODE1)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(ORGANIZATION_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PROJECT_URL).build());
 
-      assertThatThrownBy(() -> organizationFacade.getOrganization(CODE1))
+      assertThatThrownBy(() -> projectDao.getProjectByCode(CODE1))
             .isInstanceOf(ResourceNotFoundException.class);
    }
 
    @Test
-   public void testCreateOrganization() {
-      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR, null, null);
-      Entity entity = Entity.json(organization);
+   public void testCreateProject() {
 
-      Response response = client.target(ORGANIZATION_URL)
+      Project project = new JsonProject(CODE1, NAME, ICON, COLOR, null, null);
+      Entity entity = Entity.json(project);
+
+      Response response = client.target(PROJECT_URL)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Organization returnedOrganization = response.readEntity(JsonOrganization.class);
+      Project returnedProject = response.readEntity(JsonProject.class);
 
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedOrganization.getCode()).isEqualTo(CODE1);
-      assertions.assertThat(returnedOrganization.getName()).isEqualTo(NAME);
-      assertions.assertThat(returnedOrganization.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(returnedOrganization.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedOrganization.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(returnedOrganization.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedProject.getCode()).isEqualTo(CODE1);
+      assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
+      assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
 
    @Test
-   public void testUpdateOrganization() {
-      createOrganization(CODE1);
+   public void testUpdateProject() {
+      createProject(CODE1);
 
-      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR, null, null);
-      Entity entity = Entity.json(updatedOrganization);
+      Project updatedProject = new JsonProject(CODE2, NAME, ICON, COLOR, null, null);
+      Entity entity = Entity.json(updatedProject);
 
-      Response response = client.target(ORGANIZATION_URL).path(CODE1)
+      Response response = client.target(PROJECT_URL).path(CODE1)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Organization returnedOrganization = response.readEntity(JsonOrganization.class);
+      Project returnedProject = response.readEntity(JsonProject.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedOrganization.getCode()).isEqualTo(CODE2);
-      assertions.assertThat(returnedOrganization.getName()).isEqualTo(NAME);
-      assertions.assertThat(returnedOrganization.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(returnedOrganization.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedOrganization.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(returnedOrganization.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedProject.getCode()).isEqualTo(CODE2);
+      assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
+      assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
-      Organization storedOrganization = organizationFacade.getOrganization(CODE2);
-      assertThat(storedOrganization).isNotNull();
+      Project storedProject = projectDao.getProjectByCode(CODE2);
+      assertThat(storedProject).isNotNull();
 
       assertions = new SoftAssertions();
-      assertions.assertThat(storedOrganization.getCode()).isEqualTo(CODE2);
-      assertions.assertThat(storedOrganization.getName()).isEqualTo(NAME);
-      assertions.assertThat(storedOrganization.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedOrganization.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedOrganization.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(returnedOrganization.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(storedProject.getCode()).isEqualTo(CODE2);
+      assertions.assertThat(storedProject.getName()).isEqualTo(NAME);
+      assertions.assertThat(storedProject.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(storedProject.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).containsOnly(GROUP_PERMISSION);
       assertions.assertAll();
    }
 
    @Test
-   public void testGetOrganizationPermissions() {
-      createOrganizationWithSpecificPermissions(CODE1);
+   public void testGetProjectPermissions() {
+      createProject(CODE1);
 
       Response response = client.target(PERMISSIONS_URL)
                                 .request(MediaType.APPLICATION_JSON)
@@ -235,7 +264,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
 
    @Test
    public void testUpdateUserPermissions() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      createProject(CODE1);
 
       SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       Entity entity = Entity.json(userPermission);
@@ -251,7 +280,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission);
 
-      Permissions storedPermissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      Permissions storedPermissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), userPermission);
       assertPermissions(storedPermissions.getGroupPermissions(), GROUP_PERMISSION);
@@ -259,7 +288,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
 
    @Test
    public void testRemoveUserPermission() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      createProject(CODE1);
 
       Response response = client.target(PERMISSIONS_URL).path("users").path(USER)
                                 .request(MediaType.APPLICATION_JSON)
@@ -268,14 +297,14 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
 
-      Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
       assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
    }
 
    @Test
    public void testUpdateGroupPermissions() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      createProject(CODE1);
 
       SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
       Entity entity = Entity.json(groupPermission);
@@ -291,7 +320,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission);
 
-      Permissions storedPermissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      Permissions storedPermissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), USER_PERMISSION);
       assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
@@ -299,7 +328,7 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
 
    @Test
    public void testRemoveGroupPermission() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      createProject(CODE1);
 
       Response response = client.target(PERMISSIONS_URL).path("groups").path(GROUP)
                                 .request(MediaType.APPLICATION_JSON)
@@ -308,8 +337,9 @@ public class OrganizationServiceIntegrationTest extends ServiceIntegrationTestBa
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
 
-      Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
       assertThat(permissions.getGroupPermissions()).isEmpty();
    }
+
 }

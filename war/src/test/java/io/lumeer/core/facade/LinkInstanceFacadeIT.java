@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.remote.rest;
+package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,7 +37,8 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
-import io.lumeer.core.facade.DocumentFacade;
+import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -49,6 +50,7 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
 
+import org.bson.types.ObjectId;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,15 +65,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
-public class LinkInstanceServiceIntegrationTest extends ServiceIntegrationTestBase {
+public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
    private static final String PROJECT_CODE = "TPROJ";
@@ -98,14 +94,13 @@ public class LinkInstanceServiceIntegrationTest extends ServiceIntegrationTestBa
       DATA = Collections.singletonMap("entry", "value");
    }
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String LINK_INSTANCES_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/link-instances";
-   private static final String LINK_INSTANCES_URL = SERVER_URL + LINK_INSTANCES_PATH;
-
    private List<String> documentIdsColl1 = new ArrayList<>();
    private List<String> documentIdsColl2 = new ArrayList<>();
    private String linkTypeId1;
    private String linkTypeId2;
+
+   @Inject
+   private LinkInstanceFacade linkInstanceFacade;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
@@ -131,6 +126,9 @@ public class LinkInstanceServiceIntegrationTest extends ServiceIntegrationTestBa
    @Inject
    private UserDao userDao;
 
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
+
    @Before
    public void configureLinkInstances() {
       JsonOrganization organization = new JsonOrganization();
@@ -148,10 +146,9 @@ public class LinkInstanceServiceIntegrationTest extends ServiceIntegrationTestBa
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
 
+      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
+
       collectionDao.setProject(storedProject);
-      linkTypeDao.setProject(storedProject);
-      linkInstanceDao.setProject(storedProject);
-      documentDao.setProject(storedProject);
 
       JsonPermissions collectionPermissions = new JsonPermissions();
       collectionPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
@@ -184,47 +181,30 @@ public class LinkInstanceServiceIntegrationTest extends ServiceIntegrationTestBa
    public void testCreateLinkInstance() {
       LinkInstance linkInstance = prepareLinkInstance();
 
-      Entity entity = Entity.json(linkInstance);
+      String id = linkInstanceFacade.createLinkInstance(linkInstance).getId();
+      assertThat(id).isNotNull().isNotEmpty();
+      assertThat(ObjectId.isValid(id)).isTrue();
 
-      Response response = client.target(LINK_INSTANCES_URL)
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      LinkInstance returnedLinkInstance = response.readEntity(LinkInstance.class);
-
-      assertThat(returnedLinkInstance).isNotNull();
-      assertThat(returnedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
-      assertThat(returnedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      assertThat(returnedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
+      LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
+      assertThat(storedLinkInstance).isNotNull();
+      assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
+      assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
+      assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
    }
 
    @Test
    public void testUpdateLinkInstance() {
       LinkInstance linkInstance = prepareLinkInstance();
-      String id = linkInstanceDao.createLinkInstance(linkInstance).getId();
+      String id = linkInstanceFacade.createLinkInstance(linkInstance).getId();
 
       LinkInstance updateLinkedInstance = prepareLinkInstance();
       updateLinkedInstance.setLinkTypeId(linkTypeId2);
       updateLinkedInstance.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
 
-      Entity entity = Entity.json(updateLinkedInstance);
-      Response response = client.target(LINK_INSTANCES_URL).path(id)
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPut(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      LinkInstance returnedLinkInstance = response.readEntity(LinkInstance.class);
-      assertThat(returnedLinkInstance).isNotNull();
-
-      assertThat(returnedLinkInstance).isNotNull();
-      assertThat(returnedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId2);
-      assertThat(returnedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      assertThat(returnedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
+      linkInstanceFacade.updateLinkInstance(id, updateLinkedInstance);
 
       LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
+      assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId2);
       assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
       assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
@@ -232,110 +212,48 @@ public class LinkInstanceServiceIntegrationTest extends ServiceIntegrationTestBa
 
    @Test
    public void testDeleteLinkInstance() {
-      LinkInstance created = linkInstanceDao.createLinkInstance(prepareLinkInstance());
+      LinkInstance created = linkInstanceFacade.createLinkInstance(prepareLinkInstance());
       assertThat(created.getId()).isNotNull();
 
-      Response response = client.target(LINK_INSTANCES_URL).path(created.getId())
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildDelete().invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(LINK_INSTANCES_URL).build());
+      linkInstanceFacade.deleteLinkInstance(created.getId());
 
       assertThatThrownBy(() -> linkInstanceDao.getLinkInstance(created.getId()))
             .isInstanceOf(StorageException.class);
    }
 
    @Test
-   public void testGetLinkInstancesByDocumentIds() {
-      String id1 = linkInstanceDao.createLinkInstance(prepareLinkInstance()).getId();
+   public void testGetLinkInstances() {
+      String id1 = linkInstanceFacade.createLinkInstance(prepareLinkInstance()).getId();
 
       LinkInstance linkInstance2 = prepareLinkInstance();
       linkInstance2.setLinkTypeId(linkTypeId1);
       linkInstance2.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(2)));
-      String id2 = linkInstanceDao.createLinkInstance(linkInstance2).getId();
+      String id2 = linkInstanceFacade.createLinkInstance(linkInstance2).getId();
 
       LinkInstance linkInstance3 = prepareLinkInstance();
       linkInstance3.setLinkTypeId(linkTypeId1);
       linkInstance3.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      String id3 = linkInstanceDao.createLinkInstance(linkInstance3).getId();
+      String id3 = linkInstanceFacade.createLinkInstance(linkInstance3).getId();
 
       LinkInstance linkInstance4 = prepareLinkInstance();
       linkInstance4.setLinkTypeId(linkTypeId2);
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
+      String id4 = linkInstanceFacade.createLinkInstance(linkInstance4).getId();
 
       JsonQuery jsonQuery1 = new JsonQuery(null, null, Collections.singleton(documentIdsColl1.get(0)));
-      Entity entity1 = Entity.json(jsonQuery1);
-      Response response = client.target(LINK_INSTANCES_URL).path("search")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity1).invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      List<LinkInstance> linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
-      });
+      List<LinkInstance> linkInstances = linkInstanceFacade.getLinkInstances(jsonQuery1);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
 
       JsonQuery jsonQuery2 = new JsonQuery(null, null, Collections.singleton(documentIdsColl2.get(1)));
-      Entity entity2 = Entity.json(jsonQuery2);
-      response = client.target(LINK_INSTANCES_URL).path("search")
-                       .request(MediaType.APPLICATION_JSON)
-                       .buildPost(entity2).invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
-      });
+      linkInstances = linkInstanceFacade.getLinkInstances(jsonQuery2);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id3));
-   }
 
-   @Test
-   public void testGetLinkInstancesByLinkTypeIds() {
-      String id1 = linkInstanceDao.createLinkInstance(prepareLinkInstance()).getId();
-
-      LinkInstance linkInstance2 = prepareLinkInstance();
-      linkInstance2.setLinkTypeId(linkTypeId1);
-      linkInstance2.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(2)));
-      String id2 = linkInstanceDao.createLinkInstance(linkInstance2).getId();
-
-      LinkInstance linkInstance3 = prepareLinkInstance();
-      linkInstance3.setLinkTypeId(linkTypeId1);
-      linkInstance3.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      String id3 = linkInstanceDao.createLinkInstance(linkInstance3).getId();
-
-      LinkInstance linkInstance4 = prepareLinkInstance();
-      linkInstance4.setLinkTypeId(linkTypeId2);
-      linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
-
-      JsonQuery jsonQuery1 = new JsonQuery(null, new HashSet<>(Arrays.asList(linkTypeId1, linkTypeId2)), null);
-      Entity entity1 = Entity.json(jsonQuery1);
-      Response response = client.target(LINK_INSTANCES_URL).path("search")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity1).invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      List<LinkInstance> linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
-      });
+      JsonQuery jsonQuery3 = new JsonQuery(null, new HashSet<>(Arrays.asList(linkTypeId1, linkTypeId2)), null);
+      linkInstances = linkInstanceFacade.getLinkInstances(jsonQuery3);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
 
-      JsonQuery jsonQuery2 = new JsonQuery(null, Collections.singleton(linkTypeId1), null);
-      Entity entity2 = Entity.json(jsonQuery2);
-      response = client.target(LINK_INSTANCES_URL).path("search")
-                       .request(MediaType.APPLICATION_JSON)
-                       .buildPost(entity2).invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
-      });
+      JsonQuery jsonQuery4 = new JsonQuery(null, Collections.singleton(linkTypeId1), null);
+      linkInstances = linkInstanceFacade.getLinkInstances(jsonQuery4);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
    }
 
@@ -364,5 +282,4 @@ public class LinkInstanceServiceIntegrationTest extends ServiceIntegrationTestBa
       storedDocument.setData(storedData);
       return storedDocument;
    }
-
 }

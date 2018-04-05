@@ -58,7 +58,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
-public class ProjectServicePermissionsIntegrationTest extends ServiceIntegrationTestBase {
+public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Inject
    private ProjectFacade projectFacade;
@@ -76,7 +76,7 @@ public class ProjectServicePermissionsIntegrationTest extends ServiceIntegration
    private WorkspaceKeeper workspaceKeeper;
 
    private String organizationCode = "OrganizationServicePermissionsIntegrationTest_id";
-   private String organizationName = "OrganizationServicePermissionsIntegrationTest";
+   private String organizationName = "OrganizationServicePermissionsIT";
    private final String TARGET_URI = "http://localhost:8080";
    private String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/";
    private String userEmail = AuthenticatedUser.DEFAULT_EMAIL;

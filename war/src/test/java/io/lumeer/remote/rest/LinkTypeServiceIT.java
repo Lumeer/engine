@@ -61,7 +61,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
-public class LinkTypeServiceIntegrationTest extends ServiceIntegrationTestBase {
+public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "LMR";
    private static final String PROJECT_CODE = "PROJ";

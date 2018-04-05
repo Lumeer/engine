@@ -55,13 +55,16 @@ public class EmbeddedMongoDb {
 
    private static IMongodConfig createMongoConfig() {
       try {
-         return new MongodConfigBuilder()
-               .version(Version.Main.V3_6)
-               .net(new Net(HOST, PORT, Network.localhostIsIPv6()))
-               .build();
+         final MongodConfigBuilder builder = new MongodConfigBuilder();
+         builder.version(Version.Main.V3_6).net(new Net(HOST, PORT, Network.localhostIsIPv6()));
+
+         if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
+            builder.withLaunchArgument("--storageEngine", "mmapv1");
+         }
+
+         return builder.build();
       } catch (IOException ex) {
          throw new RuntimeException(ex);
-
       }
    }
 

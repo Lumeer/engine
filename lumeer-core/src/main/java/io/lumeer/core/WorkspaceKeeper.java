@@ -20,6 +20,7 @@ package io.lumeer.core;
 
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Project;
 import io.lumeer.core.cache.WorkspaceCache;
 
@@ -63,5 +64,34 @@ public class WorkspaceKeeper implements SelectedWorkspace {
    public void setWorkspace(String organizationCode, String projectCode) {
       setOrganization(organizationCode);
       setProject(projectCode);
+   }
+
+   public void setServiceLevel(final Organization organization, final Payment.ServiceLevel serviceLevel) {
+      if (organization != null) {
+         workspaceCache.setServiceLevel(organization.getCode(), serviceLevel);
+      }
+   }
+
+   public Payment.ServiceLevel getServiceLevel() {
+      if (organizationCode != null) {
+         return Optional.ofNullable(workspaceCache.getServiceLevel(organizationCode)).orElse(Payment.ServiceLevel.FREE);
+      }
+
+      return Payment.ServiceLevel.FREE;
+   }
+
+
+   public Payment.ServiceLevel getServiceLevel(final Organization organization) {
+      if (organization != null) {
+         return Optional.ofNullable(workspaceCache.getServiceLevel(organization.getCode())).orElse(Payment.ServiceLevel.FREE);
+      }
+
+      return Payment.ServiceLevel.FREE;
+   }
+
+   public void clearServiceLevel(final Organization organization) {
+      if (organization != null) {
+         workspaceCache.removeServiceLevel(organization.getCode());
+      }
    }
 }

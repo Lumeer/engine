@@ -99,10 +99,10 @@
       <maven.wildfly.plugin.version>1.1.0.Alpha11</maven.wildfly.plugin.version>
       <maven.versioneye>3.10.2</maven.versioneye>
       <maven.failsafe.plugin.version>2.19.1</maven.failsafe.plugin.version>
-      <maven.cargo.plugin.version>1.6.2</maven.cargo.plugin.version>
+      <maven.cargo.plugin.version>1.6.3</maven.cargo.plugin.version>
 
-      <version.keycloak>2.4.0.Final</version.keycloak>
-      <version.wildfly>10.1.0.Final</version.wildfly>
+      <version.keycloak>3.4.3.Final</version.keycloak>
+      <version.wildfly>11.0.0.Final</version.wildfly>
       <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
    </properties>
    <modules>
@@ -159,9 +159,6 @@
                <version>${maven.surefire.plugin.version}</version>
                <configuration>
                   <argLine>-Xmx256m -Xms256m</argLine>
-                  <excludes>
-                     <exclude>*IntegrationTest.java</exclude>
-                  </excludes>
                </configuration>
             </plugin>
             <plugin>
@@ -170,9 +167,6 @@
                <version>${maven.failsafe.plugin.version}</version>
                <configuration>
                   <argLine>-Xmx256m -Xms256m</argLine>
-                  <includes>
-                     <include>*IntegrationTest.java</include>
-                  </includes>
                   <trimStackTrace>false</trimStackTrace>
                </configuration>
                <executions>
@@ -190,14 +184,14 @@
                <version>${maven.cargo.plugin.version}</version>
                <configuration>
                   <container>
-                     <containerId>wildfly10x</containerId>
+                     <containerId>wildfly11x</containerId>
                      <type>installed</type>
                      <home>${wildfly.dir}</home>
                   </container>
                   <deployer/>
                   <configuration>
                      <properties>
-                        <cargo.jvmargs>-Xmx256m -Xms256m</cargo.jvmargs>
+                        <cargo.jvmargs>-Xmx1g -Xms1g</cargo.jvmargs>
                         <cargo.wildfly.script.cli.embedded.adapter-install>${wildfly.dir}/bin/adapter-install.cli</cargo.wildfly.script.cli.embedded.adapter-install>
                      </properties>
                      <users>

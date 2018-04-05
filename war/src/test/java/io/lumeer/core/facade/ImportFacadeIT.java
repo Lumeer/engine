@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class ImportFacadeIntegrationTest extends IntegrationTestBase {
+public class ImportFacadeIT extends IntegrationTestBase {
 
    @Inject
    private ImportFacade importFacade;

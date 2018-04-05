@@ -15,6 +15,14 @@
 		</user-data-constraint-->
 	</security-constraint>
 
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>engine</web-resource-name>
+			<url-pattern>/rest/organizations/*/paymentNotify</url-pattern>
+			<http-method>GET</http-method>
+		</web-resource-collection>
+	</security-constraint>
+
 	<login-config>
 		<auth-method>KEYCLOAK</auth-method>
 		<realm-name>lumeer</realm-name>

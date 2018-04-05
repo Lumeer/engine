@@ -45,7 +45,7 @@ import java.util.HashSet;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
+public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Inject
    private OrganizationDao organizationDao;
@@ -54,20 +54,26 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    private OrganizationFacade organizationFacade;
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
+   private static final String STRANGER_USER = "stranger@nowhere.com";
    private static final String GROUP = "testGroup";
 
    private static final String CODE1 = "TORG";
    private static final String CODE2 = "TORG2";
+   private static final String CODE3 = "TORG3";
    private static final String NOT_EXISTING_CODE = "NOT_EXISTING_CODE";
    private static final String NAME = "Testing organization";
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
 
    private static final Permission USER_PERMISSION;
+   private static final Permission USER_READONLY_PERMISSION;
+   private static final Permission STRANGER_PERMISSION;
    private static final Permission GROUP_PERMISSION;
 
    static {
       USER_PERMISSION = new SimplePermission(USER, Organization.ROLES);
+      USER_READONLY_PERMISSION = new SimplePermission(USER_PERMISSION.getName(), Collections.singleton(Role.READ));
+      STRANGER_PERMISSION = new SimplePermission(STRANGER_USER, Collections.singleton(Role.MANAGE));
       GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
    }
 
@@ -85,6 +91,24 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
       organization.getPermissions().updateUserPermissions(USER_PERMISSION);
       organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       return organizationDao.createOrganization(organization).getId();
+   }
+
+   private void createOrganizationWithReadOnlyPermissions(final String code) {
+      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
+      organization.getPermissions().updateUserPermissions(
+            USER_READONLY_PERMISSION,
+            STRANGER_PERMISSION);
+      organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      organizationDao.createOrganization(organization);
+   }
+
+   private void createOrganizationWithStrangerPermissions(final String code) {
+      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
+      organization.getPermissions().updateUserPermissions(
+            USER_PERMISSION,
+            new SimplePermission(STRANGER_USER, Collections.singleton(Role.MANAGE)));
+      organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      organizationDao.createOrganization(organization);
    }
 
    @Test
@@ -162,11 +186,21 @@ public class OrganizationFacadeIntegrationTest extends IntegrationTestBase {
    @Test
    public void testGetOrganizationPermissions() {
       createOrganization(CODE1);
+      createOrganizationWithReadOnlyPermissions(CODE2);
+      createOrganizationWithStrangerPermissions(CODE3);
 
       Permissions permissions = organizationFacade.getOrganizationPermissions(CODE1);
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
       assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+
+      permissions = organizationFacade.getOrganizationPermissions(CODE2);
+      assertThat(permissions).isNotNull();
+      assertPermissions(permissions.getUserPermissions(), USER_READONLY_PERMISSION);
+
+      permissions = organizationFacade.getOrganizationPermissions(CODE3);
+      assertThat(permissions).isNotNull();
+      assertThat(permissions.getUserPermissions()).hasSize(2).contains(USER_PERMISSION, STRANGER_PERMISSION);
    }
 
    @Test

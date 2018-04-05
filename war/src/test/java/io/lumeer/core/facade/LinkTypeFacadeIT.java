@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class LinkTypeFacadeIntegrationTest extends IntegrationTestBase {
+public class LinkTypeFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "LMR";
    private static final String PROJECT_CODE = "PROJ";

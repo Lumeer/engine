@@ -47,7 +47,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class UserFacadeIntegrationTest extends IntegrationTestBase {
+public class UserFacadeIT extends IntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
 
