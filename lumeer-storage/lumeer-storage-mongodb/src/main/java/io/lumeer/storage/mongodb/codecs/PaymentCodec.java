@@ -20,22 +20,26 @@ package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Payment;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.codecs.Codec;
+import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.types.ObjectId;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class PaymentCodec implements Codec<Payment> {
+public class PaymentCodec implements CollectibleCodec<Payment> {
+
+   public static final String ID = "_id";
 
    private final Codec<Document> documentCodec;
 
@@ -51,6 +55,7 @@ public class PaymentCodec implements Codec<Payment> {
    }
 
    public static Payment convertFromDocument(Document bson) {
+      String id = bson.get(ID) != null ? bson.getObjectId(ID).toHexString() : null;
       Date date = bson.getDate(Payment.DATE);
       long amount = bson.getLong(Payment.AMOUNT);
       String paymentId = bson.getString(Payment.PAYMENT_ID);
@@ -61,13 +66,15 @@ public class PaymentCodec implements Codec<Payment> {
       int users = bson.getInteger(Payment.USERS);
       String language = bson.getString(Payment.LANGUAGE);
       String currency = bson.getString(Payment.CURRENCY);
+      String gwUrl = bson.getString(Payment.GW_URL);
 
-      return new Payment(date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency);
+      return new Payment(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl);
    }
 
    @Override
    public void encode(final BsonWriter bsonWriter, final Payment payment, final EncoderContext encoderContext) {
-      Document document = new Document(Payment.DATE, payment.getDate())
+      Document document = (documentHasId(payment) ? new Document(ID, getDocumentId(payment)) : new Document())
+            .append(Payment.DATE, payment.getDate())
             .append(Payment.AMOUNT, payment.getAmount())
             .append(Payment.PAYMENT_ID, payment.getPaymentId())
             .append(Payment.START, payment.getStart())
@@ -76,7 +83,8 @@ public class PaymentCodec implements Codec<Payment> {
             .append(Payment.SERVICE_LEVEL, payment.getServiceLevel().ordinal())
             .append(Payment.USERS, payment.getUsers())
             .append(Payment.LANGUAGE, payment.getLanguage())
-            .append(Payment.CURRENCY, payment.getCurrency());
+            .append(Payment.CURRENCY, payment.getCurrency())
+            .append(Payment.GW_URL, payment.getGwUrl());
 
       documentCodec.encode(bsonWriter, document, encoderContext);
    }
@@ -84,5 +92,27 @@ public class PaymentCodec implements Codec<Payment> {
    @Override
    public Class<Payment> getEncoderClass() {
       return Payment.class;
+   }
+
+   @Override
+   public Payment generateIdIfAbsentFromDocument(final Payment payment) {
+      if (!documentHasId(payment)) {
+         payment.setId(new ObjectId().toHexString());
+      }
+      return payment;
+   }
+
+   @Override
+   public boolean documentHasId(final Payment payment) {
+      return payment.getId() != null && !("".equals(payment.getId()));
+   }
+
+   @Override
+   public BsonValue getDocumentId(final Payment payment) {
+      if (!documentHasId(payment)) {
+         throw new IllegalStateException("The document does not contain an id");
+      }
+
+      return new BsonObjectId(new ObjectId(payment.getId()));
    }
 }

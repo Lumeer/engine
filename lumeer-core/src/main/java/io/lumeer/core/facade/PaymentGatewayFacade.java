@@ -116,6 +116,7 @@ public class PaymentGatewayFacade {
          cz.gopay.api.v3.model.payment.Payment createdPayment = connector.createPayment(basePayment);
          payment.setState(convertState(createdPayment.getState()));
          payment.setPaymentId(String.valueOf(createdPayment.getId()));
+         payment.setGwUrl(createdPayment.getGwUrl());
       } catch (GPClientException e) {
          throw new PaymentGatewayException(e);
       }

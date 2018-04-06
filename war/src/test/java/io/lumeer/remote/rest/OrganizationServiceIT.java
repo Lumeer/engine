@@ -329,12 +329,12 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       createOrganization(CODE1);
       createOrganization(CODE2);
 
-      Payment payment = new Payment(new Date(), 1770, "1234",
+      Payment payment = new Payment(null, new Date(), 1770, "1234",
             Date.from(ZonedDateTime.ofLocal(
                   LocalDateTime.of(2018, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
             Date.from(ZonedDateTime.ofLocal(
                LocalDateTime.of(2019, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
-            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK");
+            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", "");
 
       payment = createPayment(CODE1, payment);
       ServiceLimits serviceLimits = getServiceLimits(CODE1);
