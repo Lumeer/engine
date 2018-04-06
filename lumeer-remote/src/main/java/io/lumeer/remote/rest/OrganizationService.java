@@ -21,11 +21,13 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.core.facade.CompanyContactFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.PaymentGatewayFacade;
@@ -62,7 +64,7 @@ public class OrganizationService extends AbstractService {
    private PaymentFacade paymentFacade;
 
    @Inject
-   private PaymentGatewayFacade paymentGatewayFacade;
+   private CompanyContactFacade companyContactFacade;
 
    @POST
    public JsonOrganization createOrganization(JsonOrganization organization) {
@@ -175,4 +177,17 @@ public class OrganizationService extends AbstractService {
 
       return paymentFacade.createPayment(organizationFacade.getOrganization(organizationCode), payment, notifyUrl, returnUrl);
    }
+
+   @GET
+   @Path("{organizationCode}/contact")
+   public CompanyContact getCompanyContact(@PathParam("organizationCode")  final String organizationCode) {
+      return companyContactFacade.getCompanyContact(organizationFacade.getOrganization(organizationCode));
+   }
+
+   @PUT
+   @Path("{organizationCode}/contact")
+   public CompanyContact setCompanyContact(@PathParam("organizationCode")  final String organizationCode, final CompanyContact companyContact) {
+      return companyContactFacade.setCompanyContact(organizationFacade.getOrganization(organizationCode), companyContact);
+   }
+
 }

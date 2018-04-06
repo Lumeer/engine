@@ -19,6 +19,7 @@
 
 package io.lumeer.storage.mongodb.util;
 
+import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.query.DatabaseQuery;
@@ -58,6 +59,10 @@ public class MongoFilters {
 
    public static Bson paymentStartFilter(final Date date) {
       return Filters.lte(Payment.START, date);
+   }
+
+   public static Bson companyCodeFilter(final String code) {
+      return Filters.eq(CompanyContact.CODE, code);
    }
 
    public static Bson codeFilter(String code) {

@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
@@ -83,6 +84,10 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    private static final String ORGANIZATION_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations";
    private static final String ORGANIZATION_URL = SERVER_URL + ORGANIZATION_PATH;
    private static final String PERMISSIONS_URL = ORGANIZATION_URL + "/" + CODE1 + "/permissions";
+
+   private static final CompanyContact CONTACT = new CompanyContact(null, CODE1, "Acme s.r.o.",
+         "Ferda", "Buřišek", "Hornodolní 34", "", "Požíňky", "052 61","",
+         "Česká Republika", "ferda@acme.cz", "+420 601 789 432", "00123987", "CZ00123987");
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -357,10 +362,63 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    }
 
    private ServiceLimits getServiceLimits(final String organization) {
-      Response response = client.target(ORGANIZATION_URL).path(organization).path("serviceLimits")
+      return getEntity(organization, "serviceLimits", ServiceLimits.class);
+   }
+
+   @Test
+   public void testCompanyContact() {
+      createOrganization(CODE1);
+
+      CompanyContact contact = getCompanyContact(CODE1);
+      assertThat(contact.getCode()).isEqualTo(CODE1);
+      assertThat(contact.getCompany()).isEmpty();
+      assertThat(contact.getFirstName()).isEmpty();
+      assertThat(contact.getLastName()).isEmpty();
+      assertThat(contact.getAddress1()).isEmpty();
+      assertThat(contact.getAddress2()).isEmpty();
+      assertThat(contact.getState()).isEmpty();
+      assertThat(contact.getCity()).isEmpty();
+      assertThat(contact.getCountry()).isEmpty();
+      assertThat(contact.getIc()).isEmpty();
+      assertThat(contact.getDic()).isEmpty();
+      assertThat(contact.getEmail()).isEmpty();
+      assertThat(contact.getPhone()).isEmpty();
+
+      // set a new contact
+      contact = setCompanyContact(CODE1, CONTACT);
+
+      // we have an id from db, store it for later double check
+      assertThat(contact.getId()).isNotEmpty();
+      final String originalId = contact.getId();
+      contact.setId(CONTACT.getId()); // the id is dynamic
+      assertThat(contact).isEqualTo(CONTACT);
+
+      // verify that it has been set
+      contact = getCompanyContact(CODE1);
+      assertThat(contact.getId()).isEqualTo(originalId); // make sure the id matches
+      contact.setId(CONTACT.getId()); // and then delete it so that it equals with our template contact
+      assertThat(contact).isEqualTo(CONTACT);
+   }
+
+   private CompanyContact getCompanyContact(final String organization) {
+      return getEntity(organization, "contact", CompanyContact.class);
+   }
+
+   private CompanyContact setCompanyContact(final String organization, final CompanyContact contact) {
+      Entity entity = Entity.json(contact);
+
+      Response response = client.target(ORGANIZATION_URL).path(organization).path("contact")
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildPut(entity).invoke();
+
+      return response.readEntity(CompanyContact.class);
+   }
+
+   private <T> T getEntity(final String organization, final String path, final Class<T> clazz) {
+      Response response = client.target(ORGANIZATION_URL).path(organization).path(path)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
 
-      return response.readEntity(ServiceLimits.class);
+      return response.readEntity(clazz);
    }
 }
