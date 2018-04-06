@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
 	<security-constraint>
 		<web-resource-collection>
-			<web-resource-name>engine</web-resource-name>
+			<web-resource-name>Private</web-resource-name>
 			<url-pattern>/rest/*</url-pattern>
 		</web-resource-collection>
 		<auth-constraint>
@@ -17,8 +17,8 @@
 
 	<security-constraint>
 		<web-resource-collection>
-			<web-resource-name>engine</web-resource-name>
-			<url-pattern>/rest/organizations/*/paymentNotify</url-pattern>
+			<web-resource-name>Public</web-resource-name>
+			<url-pattern>/rest/paymentNotify/*</url-pattern>
 			<http-method>GET</http-method>
 		</web-resource-collection>
 	</security-constraint>

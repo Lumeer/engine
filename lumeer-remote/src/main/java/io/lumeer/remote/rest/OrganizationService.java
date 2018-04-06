@@ -32,6 +32,7 @@ import io.lumeer.core.facade.PaymentGatewayFacade;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -169,22 +170,9 @@ public class OrganizationService extends AbstractService {
    @Path("{organizationCode}/payments")
    public Payment createPayment(@PathParam("organizationCode") final String organizationCode, final Payment payment,
          @Context final HttpServletRequest servletContext) {
-      final String notifyUrl = servletContext.getRequestURL().toString().replace("payments", "paymentNotify");
+      final String notifyUrl = servletContext.getRequestURL().toString().replaceAll("/payments$", "").replaceFirst("organizations", "paymentNotify");
       final String returnUrl = servletContext.getHeader("RETURN_URL");
 
       return paymentFacade.createPayment(organizationFacade.getOrganization(organizationCode), payment, notifyUrl, returnUrl);
    }
-
-   /* Callback method for the payment gateway. */
-   @GET
-   @Path("{organizationCode}/paymentNotify")
-   public Response updatePaymentState(@PathParam("organizationCode") final String organizationCode, final String message) {
-      System.out.println("Update of payment id " + message);
-
-      // TODO: 1) ask gopay about the payment state
-      // TODO: 2) update the payment accordingly
-
-      return Response.ok().build();
-   }
-
 }
