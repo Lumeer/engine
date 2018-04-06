@@ -31,6 +31,7 @@ import java.util.Objects;
  */
 public class Payment {
 
+   public static final String ID = "id";
    public static final String DATE = "date";
    public static final String AMOUNT = "amount";
    public static final String PAYMENT_ID = "paymentId";
@@ -41,6 +42,7 @@ public class Payment {
    public static final String USERS = "users";
    public static final String LANGUAGE = "language";
    public static final String CURRENCY = "currency";
+   public static final String GW_URL = "gwUrl";
 
    public enum PaymentState {
       CREATED, PAYMENT_METHOD_CHOSEN, AUTHORIZED, PAID, CANCELED, TIMEOUTED, REFUNDED;
@@ -66,6 +68,7 @@ public class Payment {
       }
    }
 
+   private String id;
    private Date date;
    private long amount;
    private String paymentId;
@@ -76,12 +79,16 @@ public class Payment {
    private int users;
    private String language;
    private String currency;
+   private String gwUrl;
 
    @JsonCreator
-   public Payment(@JsonProperty(DATE) Date date, @JsonProperty(AMOUNT) long amount, @JsonProperty(PAYMENT_ID) String paymentId,
+   public Payment(@JsonProperty(ID) final String id,
+         @JsonProperty(DATE) Date date, @JsonProperty(AMOUNT) long amount, @JsonProperty(PAYMENT_ID) String paymentId,
          @JsonProperty(START) Date start, @JsonProperty(VALID_UNTIL) Date validUntil, @JsonProperty(STATE) PaymentState state,
          @JsonProperty(SERVICE_LEVEL) ServiceLevel serviceLevel, @JsonProperty(USERS) int users,
-         @JsonProperty(LANGUAGE) final String language, @JsonProperty(CURRENCY) final String currency) {
+         @JsonProperty(LANGUAGE) final String language, @JsonProperty(CURRENCY) final String currency,
+         @JsonProperty(GW_URL) final String gwUrl) {
+      this.id = id;
       this.date = date;
       this.amount = amount;
       this.paymentId = paymentId;
@@ -92,6 +99,15 @@ public class Payment {
       this.users = users;
       this.language = language;
       this.currency = currency;
+      this.gwUrl = gwUrl;
+   }
+
+   public String getId() {
+      return id;
+   }
+
+   public void setId(final String id) {
+      this.id = id;
    }
 
    public Date getDate() {
@@ -174,10 +190,19 @@ public class Payment {
       this.currency = currency;
    }
 
+   public String getGwUrl() {
+      return gwUrl;
+   }
+
+   public void setGwUrl(final String gwUrl) {
+      this.gwUrl = gwUrl;
+   }
+
    @Override
    public String toString() {
       return "Payment{" +
-            "date=" + date +
+            "id='" + id + '\'' +
+            ", date=" + date +
             ", amount=" + amount +
             ", paymentId='" + paymentId + '\'' +
             ", start=" + start +
@@ -187,6 +212,7 @@ public class Payment {
             ", users=" + users +
             ", language='" + language + '\'' +
             ", currency='" + currency + '\'' +
+            ", gwUrl='" + gwUrl + '\'' +
             '}';
    }
 
@@ -201,6 +227,7 @@ public class Payment {
       final Payment payment = (Payment) o;
       return amount == payment.amount &&
             users == payment.users &&
+            Objects.equals(id, payment.id) &&
             Objects.equals(date, payment.date) &&
             Objects.equals(paymentId, payment.paymentId) &&
             Objects.equals(start, payment.start) &&
@@ -208,12 +235,12 @@ public class Payment {
             state == payment.state &&
             serviceLevel == payment.serviceLevel &&
             Objects.equals(language, payment.language) &&
-            Objects.equals(currency, payment.currency);
+            Objects.equals(currency, payment.currency) &&
+            Objects.equals(gwUrl, payment.gwUrl);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency);
+      return Objects.hash(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl);
    }
-
 }

@@ -176,10 +176,10 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    }
 
    private String createPayment(final String from, final String until, final boolean paid) {
-      Payment payment = new Payment(new Date(), 1770, "",
+      Payment payment = new Payment(null, new Date(), 1770, "",
             getDate(from),
             getDate(until),
-            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK");
+            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", null);
       final String paymentId = paymentFacade.createPayment(organization, payment, "", "").getPaymentId();
 
       if (paid) {
