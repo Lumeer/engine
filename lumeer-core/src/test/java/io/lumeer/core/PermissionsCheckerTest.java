@@ -64,11 +64,11 @@ public class PermissionsCheckerTest {
 
    private Resource prepareResource(Set<Role> userRoles, Set<Role> groupRoles) {
       Permission userPermission = Mockito.mock(Permission.class);
-      Mockito.when(userPermission.getName()).thenReturn(USER);
+      Mockito.when(userPermission.getId()).thenReturn(USER);
       Mockito.when(userPermission.getRoles()).thenReturn(userRoles);
 
       Permission groupPermission = Mockito.mock(Permission.class);
-      Mockito.when(groupPermission.getName()).thenReturn(GROUP);
+      Mockito.when(groupPermission.getId()).thenReturn(GROUP);
       Mockito.when(groupPermission.getRoles()).thenReturn(groupRoles);
 
       Permissions permissions = Mockito.mock(Permissions.class);

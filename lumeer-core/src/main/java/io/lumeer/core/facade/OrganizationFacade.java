@@ -132,10 +132,10 @@ public class OrganizationFacade extends AbstractFacade {
       return organization.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String organizationCode, final String user) {
+   public void removeUserPermission(final String organizationCode, final String userId) {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
-      organization.getPermissions().removeUserPermission(user);
+      organization.getPermissions().removeUserPermission(userId);
       organizationDao.updateOrganization(organization.getId(), organization);
    }
 
@@ -148,10 +148,10 @@ public class OrganizationFacade extends AbstractFacade {
       return organization.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String organizationCode, final String group) {
+   public void removeGroupPermission(final String organizationCode, final String groupId) {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
-      organization.getPermissions().removeGroupPermission(group);
+      organization.getPermissions().removeGroupPermission(groupId);
       organizationDao.updateOrganization(organization.getId(), organization);
    }
 

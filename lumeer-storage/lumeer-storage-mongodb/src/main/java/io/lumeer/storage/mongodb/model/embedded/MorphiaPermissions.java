@@ -69,8 +69,8 @@ public class MorphiaPermissions implements Permissions {
    }
 
    @Override
-   public void removeUserPermission(final String user) {
-      userPermissions.removeIf(userRoles -> userRoles.getName().equals(user));
+   public void removeUserPermission(final String userId) {
+      userPermissions.removeIf(userRoles -> userRoles.getId().equals(userId));
    }
 
    @Override
@@ -89,8 +89,8 @@ public class MorphiaPermissions implements Permissions {
    }
 
    @Override
-   public void removeGroupPermission(final String group) {
-      groupPermissions.removeIf(groupRoles -> groupRoles.getName().equals(group));
+   public void removeGroupPermission(final String groupId) {
+      groupPermissions.removeIf(groupRoles -> groupRoles.getId().equals(groupId));
    }
 
    @Override

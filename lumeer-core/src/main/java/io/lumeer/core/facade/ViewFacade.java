@@ -102,11 +102,11 @@ public class ViewFacade extends AbstractFacade {
       return view.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String code, final String user) {
+   public void removeUserPermission(final String code, final String userId) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
 
-      view.getPermissions().removeUserPermission(user);
+      view.getPermissions().removeUserPermission(userId);
       viewDao.updateView(view.getId(), view);
    }
 
@@ -120,11 +120,11 @@ public class ViewFacade extends AbstractFacade {
       return view.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String code, final String group) {
+   public void removeGroupPermission(final String code, final String groupId) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
 
-      view.getPermissions().removeGroupPermission(group);
+      view.getPermissions().removeGroupPermission(groupId);
       viewDao.updateView(view.getId(), view);
    }
 

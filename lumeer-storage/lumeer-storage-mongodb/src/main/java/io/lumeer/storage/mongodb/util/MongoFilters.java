@@ -94,7 +94,7 @@ public class MongoFilters {
    }
 
    private static Bson entityNameFilter(String name) {
-      return Filters.eq(PermissionCodec.NAME, name);
+      return Filters.eq(PermissionCodec.ID, name);
    }
 
    private static Bson entityRolesFilter(Role role) {

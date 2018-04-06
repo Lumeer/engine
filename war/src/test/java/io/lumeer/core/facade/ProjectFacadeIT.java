@@ -123,16 +123,16 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
+      User user = new User(USER);
+      final User createdUser = userDao.createUser(user);
+
       MorphiaOrganization organization = new MorphiaOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
-      organization.getPermissions().updateUserPermissions(new MorphiaPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization.getPermissions().updateUserPermissions(new MorphiaPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-
-      User user = new User(USER);
-      userDao.createUser(user);
 
       workspaceKeeper.setOrganization(ORGANIZATION_CODE);
    }

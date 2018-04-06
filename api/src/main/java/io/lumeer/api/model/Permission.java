@@ -22,7 +22,7 @@ import java.util.Set;
 
 public interface Permission {
 
-   String getName();
+   String getId();
 
    Set<Role> getRoles();
 

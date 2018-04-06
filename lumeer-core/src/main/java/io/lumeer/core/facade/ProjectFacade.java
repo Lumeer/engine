@@ -144,11 +144,11 @@ public class ProjectFacade extends AbstractFacade {
       return project.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String projectCode, final String user) {
+   public void removeUserPermission(final String projectCode, final String userId) {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
-      project.getPermissions().removeUserPermission(user);
+      project.getPermissions().removeUserPermission(userId);
       projectDao.updateProject(project.getId(), project);
    }
 
@@ -162,11 +162,11 @@ public class ProjectFacade extends AbstractFacade {
       return project.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String projectCode, final String group) {
+   public void removeGroupPermission(final String projectCode, final String groupId) {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
-      project.getPermissions().removeGroupPermission(group);
+      project.getPermissions().removeGroupPermission(groupId);
       projectDao.updateProject(project.getId(), project);
    }
 

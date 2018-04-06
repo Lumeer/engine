@@ -161,11 +161,11 @@ public class CollectionFacade extends AbstractFacade {
       return updatedCollection.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String collectionId, final String user) {
+   public void removeUserPermission(final String collectionId, final String userId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.getPermissions().removeUserPermission(user);
+      collection.getPermissions().removeUserPermission(userId);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 
@@ -179,11 +179,11 @@ public class CollectionFacade extends AbstractFacade {
       return updatedCollection.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String collectionId, final String group) {
+   public void removeGroupPermission(final String collectionId, final String groupId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.getPermissions().removeGroupPermission(group);
+      collection.getPermissions().removeGroupPermission(groupId);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 

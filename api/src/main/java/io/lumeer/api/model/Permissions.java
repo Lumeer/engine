@@ -26,13 +26,13 @@ public interface Permissions {
 
    void updateUserPermissions(Permission... userPermissions);
 
-   void removeUserPermission(String user);
+   void removeUserPermission(String userId);
 
    Set<Permission> getGroupPermissions();
 
    void updateGroupPermissions(Permission... groupPermissions);
 
-   void removeGroupPermission(String group);
+   void removeGroupPermission(String groupId);
 
    void clear();
 

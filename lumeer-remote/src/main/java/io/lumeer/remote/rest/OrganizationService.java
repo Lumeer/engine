@@ -123,11 +123,11 @@ public class OrganizationService extends AbstractService {
    }
 
    @DELETE
-   @Path("{organizationCode}/permissions/users/{user}")
-   public Response removeUserPermission(@PathParam("organizationCode") String organizationCode, @PathParam("user") String user) {
-      organizationFacade.removeUserPermission(organizationCode, user);
+   @Path("{organizationCode}/permissions/users/{userId}")
+   public Response removeUserPermission(@PathParam("organizationCode") String organizationCode, @PathParam("userId") String userId) {
+      organizationFacade.removeUserPermission(organizationCode, userId);
 
-      return Response.ok().link(getParentUri("users", user), "parent").build();
+      return Response.ok().link(getParentUri("users", userId), "parent").build();
    }
 
    @PUT
@@ -138,11 +138,11 @@ public class OrganizationService extends AbstractService {
    }
 
    @DELETE
-   @Path("{organizationCode}/permissions/groups/{group}")
-   public Response removeGroupPermission(@PathParam("organizationCode") String organizationCode, @PathParam("group") String group) {
-      organizationFacade.removeGroupPermission(organizationCode, group);
+   @Path("{organizationCode}/permissions/groups/{groupId}")
+   public Response removeGroupPermission(@PathParam("organizationCode") String organizationCode, @PathParam("groupId") String groupId) {
+      organizationFacade.removeGroupPermission(organizationCode, groupId);
 
-      return Response.ok().link(getParentUri("groups", group), "parent").build();
+      return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }
 
    /* Gets a complete list of all payments sorted by valid until descending. */

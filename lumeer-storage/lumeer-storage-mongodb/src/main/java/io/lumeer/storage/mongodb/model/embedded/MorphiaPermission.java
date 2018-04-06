@@ -30,11 +30,11 @@ import java.util.Set;
 @Embedded
 public class MorphiaPermission implements Permission {
 
-   public static final String NAME = "name";
+   public static final String ID = "id";
    public static final String ROLES = "roles";
 
-   @Property(NAME)
-   private String name;
+   @Property(ID)
+   private String id;
 
    @Property(ROLES)
    private Set<String> roles;
@@ -42,19 +42,19 @@ public class MorphiaPermission implements Permission {
    public MorphiaPermission() {
    }
 
-   public MorphiaPermission(String name, Set<String> roles) {
-      this.name = name;
+   public MorphiaPermission(String id, Set<String> roles) {
+      this.id = id;
       this.roles = new HashSet<>(roles);
    }
 
    public MorphiaPermission(final Permission entity) {
-      this.name = entity.getName();
+      this.id = entity.getId();
       this.roles = Role.toStringRoles(entity.getRoles());
    }
 
    @Override
-   public String getName() {
-      return name;
+   public String getId() {
+      return id;
    }
 
    @Override
@@ -62,8 +62,8 @@ public class MorphiaPermission implements Permission {
       return Role.fromStringRoles(roles);
    }
 
-   public void setName(final String name) {
-      this.name = name;
+   public void setId(final String id) {
+      this.id = id;
    }
 
    public void setRoles(final Set<String> roles) {
@@ -81,18 +81,18 @@ public class MorphiaPermission implements Permission {
 
       final Permission that = (Permission) o;
 
-      return getName() != null ? getName().equals(that.getName()) : that.getName() == null;
+      return getId() != null ? getId().equals(that.getId()) : that.getId() == null;
    }
 
    @Override
    public int hashCode() {
-      return getName() != null ? getName().hashCode() : 0;
+      return getId() != null ? getId().hashCode() : 0;
    }
 
    @Override
    public String toString() {
       return "MongoPermission{" +
-            "name='" + name + '\'' +
+            "id='" + id + '\'' +
             ", roles=" + roles +
             '}';
    }

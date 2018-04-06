@@ -154,11 +154,11 @@ public class CollectionService extends AbstractService {
    }
 
    @DELETE
-   @Path("{collectionId}/permissions/users/{user}")
-   public Response removeUserPermission(@PathParam("collectionId") String collectionId, @PathParam("user") String user) {
-      collectionFacade.removeUserPermission(collectionId, user);
+   @Path("{collectionId}/permissions/users/{userId}")
+   public Response removeUserPermission(@PathParam("collectionId") String collectionId, @PathParam("userId") String userId) {
+      collectionFacade.removeUserPermission(collectionId, userId);
 
-      return Response.ok().link(getParentUri("users", user), "parent").build();
+      return Response.ok().link(getParentUri("users", userId), "parent").build();
    }
 
    @PUT
@@ -169,11 +169,11 @@ public class CollectionService extends AbstractService {
    }
 
    @DELETE
-   @Path("{collectionId}/permissions/groups/{group}")
-   public Response removeGroupPermission(@PathParam("collectionId") String collectionId, @PathParam("group") String group) {
-      collectionFacade.removeGroupPermission(collectionId, group);
+   @Path("{collectionId}/permissions/groups/{groupId}")
+   public Response removeGroupPermission(@PathParam("collectionId") String collectionId, @PathParam("groupId") String groupId) {
+      collectionFacade.removeGroupPermission(collectionId, groupId);
 
-      return Response.ok().link(getParentUri("groups", group), "parent").build();
+      return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }
 
 }
