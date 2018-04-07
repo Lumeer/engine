@@ -25,6 +25,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -119,9 +120,14 @@ public class ProjectFacade extends AbstractFacade {
 
    public Permissions getProjectPermissions(final String projectCode) {
       Project project = projectDao.getProjectByCode(projectCode);
-      permissionsChecker.checkRole(project, Role.MANAGE);
 
-      return project.getPermissions();
+      if (permissionsChecker.hasRole(project, Role.MANAGE)) {
+         return project.getPermissions();
+      } else if (permissionsChecker.hasRole(project, Role.READ)) {
+         return keepOnlyActualUserRoles(project).getPermissions();
+      }
+
+      throw new NoPermissionException(project);
    }
 
    public Set<Permission> updateUserPermissions(final String projectCode, final Permission... userPermissions) {
