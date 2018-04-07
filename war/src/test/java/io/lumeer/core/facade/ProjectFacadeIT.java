@@ -73,28 +73,50 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    private OrganizationDao organizationDao;
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
+   private static final String STRANGER_USER = "stranger@nowhere.com";
    private static final String GROUP = "testGroup";
 
    private static final String CODE1 = "TPROJ1";
    private static final String CODE2 = "TPROJ2";
+   private static final String CODE3 = "TPROJ3";
 
    private static final String NAME = "Testing project";
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
 
    private static final Permission USER_PERMISSION;
+   private static final Permission USER_READONLY_PERMISSION;
    private static final Permission GROUP_PERMISSION;
+   private static final Permission STRANGER_PERMISSION;
 
    private static final String ORGANIZATION_CODE = "TORG";
 
    static {
       USER_PERMISSION = new SimplePermission(USER, Project.ROLES);
+      USER_READONLY_PERMISSION = new SimplePermission(USER_PERMISSION.getName(), Collections.singleton(Role.READ));
+      STRANGER_PERMISSION = new SimplePermission(STRANGER_USER, Collections.singleton(Role.MANAGE));
       GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
    }
 
    private Project createProject(String code) {
       Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(USER_PERMISSION);
+      project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      return projectDao.createProject(project);
+   }
+
+   private Project createProjectWithReadOnlyPermissions(final String code) {
+      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      project.getPermissions().updateUserPermissions(USER_READONLY_PERMISSION, STRANGER_PERMISSION);
+      project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      return projectDao.createProject(project);
+   }
+
+   private Project createProjectWithStrangerPermissions(final String code) {
+      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      project.getPermissions().updateUserPermissions(
+            USER_PERMISSION,
+            new SimplePermission(STRANGER_USER, Collections.singleton(Role.MANAGE)));
       project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       return projectDao.createProject(project);
    }
@@ -194,11 +216,21 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    @Test
    public void testGetProjectPermissions() {
       createProject(CODE1);
+      createProjectWithReadOnlyPermissions(CODE2);
+      createProjectWithStrangerPermissions(CODE3);
 
       Permissions permissions = projectFacade.getProjectPermissions(CODE1);
-      Assertions.assertThat(permissions).isNotNull();
+      assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
       assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+
+      permissions = projectFacade.getProjectPermissions(CODE2);
+      assertThat(permissions).isNotNull();
+      assertPermissions(permissions.getUserPermissions(), USER_READONLY_PERMISSION);
+
+      permissions = projectFacade.getProjectPermissions(CODE3);
+      assertThat(permissions).isNotNull();
+      assertThat(permissions.getUserPermissions()).hasSize(2).contains(USER_PERMISSION, STRANGER_PERMISSION);
    }
 
    @Test
