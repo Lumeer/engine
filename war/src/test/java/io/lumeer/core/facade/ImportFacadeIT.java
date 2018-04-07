@@ -83,6 +83,8 @@ public class ImportFacadeIT extends IntegrationTestBase {
    private static final String COLLECTION_ICON = "fa-user";
    private static final String COLLECTION_COLOR = "#ababab";
 
+   private User user;
+
    @Before
    public void configureProject() {
       JsonOrganization organization = new JsonOrganization();
@@ -93,13 +95,13 @@ public class ImportFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      final User createdUser = userDao.createUser(user);
+      this.user = userDao.createUser(user);
 
       JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);
 
       JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -255,7 +257,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
    }
 
    private SearchQuery query() {
-      return SearchQuery.createBuilder(USER).build();
+      return SearchQuery.createBuilder(this.user.getId()).build();
    }
 
    private ImportedCollection createImportObject(String data) {

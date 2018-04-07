@@ -75,11 +75,19 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
+   private String userId;
+
    private String organizationCode = "OrganizationServicePermissionsIntegrationTest_id";
+
    private String organizationName = "OrganizationServicePermissionsIT";
    private final String TARGET_URI = "http://localhost:8080";
    private String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + organizationCode + "/projects/";
-   private String userId = AuthenticatedUser.DEFAULT_EMAIL;
+
+   @Before
+   public void prepare() {
+      User user = new User(AuthenticatedUser.DEFAULT_EMAIL);
+      userId = userDao.createUser(user).getId();
+   }
 
    @Before
    public void configureProject() {

@@ -238,7 +238,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private SearchQuery.Builder createCollectionSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       Set<String> collectionIds = query.getCollectionIds() != null ? new HashSet<>(query.getCollectionIds()) : new HashSet<>();
@@ -249,7 +249,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private SearchQuery createDocumentIdsQuery(Set<String> documentIds) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)

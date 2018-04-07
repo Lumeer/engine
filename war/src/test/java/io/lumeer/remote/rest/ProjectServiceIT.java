@@ -78,8 +78,10 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    private static final Set<Role> USER_ROLES = Project.ROLES;
    private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
-   private static final Permission USER_PERMISSION = new SimplePermission(USER, USER_ROLES);
-   private static final Permission GROUP_PERMISSION = new SimplePermission(GROUP, GROUP_ROLES);
+   private Permission userPermission;
+   private Permission groupPermission;
+
+   private User user;
 
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String PROJECT_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects";
@@ -97,22 +99,26 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Before
    public void configureProject() {
+      User user = new User(USER);
+      this.user = userDao.createUser(user);
+
+      userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
+      groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
+
       MorphiaOrganization organization = new MorphiaOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
-      organization.getPermissions().updateUserPermissions(new MorphiaPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization.getPermissions().updateUserPermissions(new MorphiaPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
 
-      User user = new User(USER);
-      userDao.createUser(user);
    }
 
    private Project createProject(String code) {
       Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
-      project.getPermissions().updateUserPermissions(USER_PERMISSION);
-      project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      project.getPermissions().updateUserPermissions(userPermission);
+      project.getPermissions().updateGroupPermissions(groupPermission);
       return projectDao.createProject(project);
    }
 
@@ -136,7 +142,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(project1.getIcon()).isEqualTo(ICON);
       assertThat(project1.getColor()).isEqualTo(COLOR);
       Permissions permissions1 = project1.getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
+      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
 
@@ -145,7 +151,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(project2.getIcon()).isEqualTo(ICON);
       assertThat(project2.getColor()).isEqualTo(COLOR);
       Permissions permissions2 = project2.getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
+      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
    }
@@ -166,7 +172,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -206,7 +212,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -230,7 +236,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
@@ -242,8 +248,8 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedProject.getName()).isEqualTo(NAME);
       assertions.assertThat(storedProject.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedProject.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).containsOnly(GROUP_PERMISSION);
+      assertions.assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(userPermission);
+      assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
    }
 
@@ -258,15 +264,15 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
       Permissions permissions = response.readEntity(JsonPermissions.class);
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testUpdateUserPermissions() {
       createProject(CODE1);
 
-      SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("users")
@@ -283,14 +289,14 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       Permissions storedPermissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), userPermission);
-      assertPermissions(storedPermissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testRemoveUserPermission() {
       createProject(CODE1);
 
-      Response response = client.target(PERMISSIONS_URL).path("users").path(USER)
+      Response response = client.target(PERMISSIONS_URL).path("users").path(this.user.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
@@ -299,7 +305,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
@@ -322,7 +328,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
       Permissions storedPermissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(storedPermissions).isNotNull();
-      assertPermissions(storedPermissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(storedPermissions.getUserPermissions(), userPermission);
       assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
    }
 
@@ -338,7 +344,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 

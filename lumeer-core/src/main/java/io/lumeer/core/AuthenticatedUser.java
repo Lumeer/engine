@@ -48,11 +48,11 @@ public class AuthenticatedUser implements Serializable {
       return userCache.getUser(userEmail);
    }
 
-   public String getUserId(){
+   public String getCurrentUserId(){
       return getCurrentUser().getId();
    }
 
-   public String getCurrentUsername() {
+   private String getCurrentUserEmail() {
       return getCurrentUser().getEmail();
    }
 

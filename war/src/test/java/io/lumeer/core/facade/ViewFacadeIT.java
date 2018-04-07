@@ -73,8 +73,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
-   private static final Permission USER_PERMISSION;
-   private static final Permission GROUP_PERMISSION;
+   private Permission userPermission;
+   private Permission groupPermission;
+   private User user;
 
    private static final String CODE2 = "TVIEW2";
 
@@ -82,9 +83,6 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    static {
       QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
-
-      USER_PERMISSION = new SimplePermission(USER, View.ROLES);
-      GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
    }
 
    @Inject
@@ -116,7 +114,10 @@ public class ViewFacadeIT extends IntegrationTestBase {
       workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
 
       User user = new User(USER);
-      userDao.createUser(user);
+      this.user = userDao.createUser(user);
+
+      userPermission = new SimplePermission(this.user.getId(), View.ROLES);
+      groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
 
       MorphiaProject project = new MorphiaProject();
       project.setCode(PROJECT_CODE);
@@ -132,8 +133,8 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    private View createView(String code) {
       View view = prepareView(code);
-      view.getPermissions().updateUserPermissions(USER_PERMISSION);
-      view.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      view.getPermissions().updateUserPermissions(userPermission);
+      view.getPermissions().updateGroupPermissions(groupPermission);
       return viewDao.createView(view);
    }
 
@@ -156,7 +157,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
-      assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(storedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -166,14 +167,14 @@ public class ViewFacadeIT extends IntegrationTestBase {
       createView(CODE);
 
       View updatedView = prepareView(CODE2);
-      updatedView.getPermissions().removeUserPermission(USER);
+      updatedView.getPermissions().removeUserPermission(this.user.getId());
 
       viewFacade.updateView(CODE, updatedView);
 
       View storedView = viewDao.getViewByCode(CODE2);
       assertThat(storedView).isNotNull();
       assertThat(storedView.getName()).isEqualTo(NAME);
-      assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
    }
 
    @Test
@@ -204,7 +205,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
-      assertPermissions(storedView.getPermissions().getUserPermissions(), USER_PERMISSION);
+      assertPermissions(storedView.getPermissions().getUserPermissions(), userPermission);
    }
 
    @Test
@@ -222,33 +223,33 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = viewFacade.getViewPermissions(CODE);
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testUpdateUserPermissions() {
       createView(CODE);
 
-      SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       viewFacade.updateUserPermissions(CODE, userPermission);
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testRemoveUserPermission() {
       createView(CODE);
 
-      viewFacade.removeUserPermission(CODE, USER);
+      viewFacade.removeUserPermission(CODE, this.user.getId());
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
       assertThat(permissions.getUserPermissions()).isEmpty();
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
@@ -260,7 +261,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
@@ -272,7 +273,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 }

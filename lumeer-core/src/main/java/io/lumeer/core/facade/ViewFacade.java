@@ -47,7 +47,7 @@ public class ViewFacade extends AbstractFacade {
          view.setCode(this.generateViewCode(view.getName()));
       }
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), View.ROLES);
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
 
       return viewDao.createView(view);

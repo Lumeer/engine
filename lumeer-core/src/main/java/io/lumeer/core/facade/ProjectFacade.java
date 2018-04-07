@@ -69,7 +69,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project createProject(Project project) {
       checkOrganizationWriteRole();
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), Project.ROLES);
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
 
       Project storedProject = projectDao.createProject(project);
@@ -106,10 +106,10 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public List<Project> getProjects() {
-      User user = authenticatedUser.getCurrentUser();
+      String userId = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
-      DatabaseQuery query = DatabaseQuery.createBuilder(user.getEmail())
+      DatabaseQuery query = DatabaseQuery.createBuilder(userId)
                                          .groups(groups)
                                          .build();
 

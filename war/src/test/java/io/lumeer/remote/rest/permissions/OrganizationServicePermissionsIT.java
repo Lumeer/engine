@@ -27,14 +27,17 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.test.util.LumeerAssertions;
 
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,9 +64,15 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    private OrganizationDao organizationDao;
 
    @Inject
-   private ProjectFacade projectFacade;
+   private UserDao userDao;
 
-   private String userId = AuthenticatedUser.DEFAULT_EMAIL;
+   private String userId;
+
+   @Before
+   public void prepare() {
+      User user = new User(AuthenticatedUser.DEFAULT_EMAIL);
+      userId = userDao.createUser(user).getId();
+   }
 
    @Test
    public void testGetOrganizationNoRole() {

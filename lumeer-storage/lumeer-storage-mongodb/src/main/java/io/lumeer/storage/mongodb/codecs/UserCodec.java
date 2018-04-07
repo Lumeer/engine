@@ -103,6 +103,8 @@ public class UserCodec implements CollectibleCodec<User> {
                .append(GROUPS, entry.getValue())
          ).collect(Collectors.toList());
          bson.append(ALL_GROUPS, groupsArray);
+      } else {
+         bson.append(ALL_GROUPS, Collections.emptyList());
       }
 
       documentCodec.encode(bsonWriter, bson, encoderContext);

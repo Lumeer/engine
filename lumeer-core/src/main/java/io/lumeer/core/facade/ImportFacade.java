@@ -166,7 +166,7 @@ public class ImportFacade extends AbstractFacade {
 
    private void addDocumentMetadata(Collection collection, Document document) {
       document.setCollectionId(collection.getId());
-      document.setCreatedBy(authenticatedUser.getCurrentUsername());
+      document.setCreatedBy(authenticatedUser.getCurrentUserId());
       document.setCreationDate(LocalDateTime.now());
       document.setDataVersion(DocumentFacade.INITIAL_VERSION);
    }

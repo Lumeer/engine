@@ -83,8 +83,10 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    private static final Set<Role> USER_ROLES = View.ROLES;
    private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
-   private static final Permission USER_PERMISSION = new SimplePermission(USER, USER_ROLES);
-   private static final Permission GROUP_PERMISSION = new SimplePermission(GROUP, GROUP_ROLES);
+   private Permission userPermission;
+   private Permission groupPermission;
+
+   private User user;
 
    private static final String CODE2 = "TVIEW2";
 
@@ -111,15 +113,18 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Before
    public void configureProject() {
+      User user = new User(USER);
+      this.user = userDao.createUser(user);
+
+      userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
+      groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
+
       MorphiaOrganization organization = new MorphiaOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-
-      User user = new User(USER);
-      userDao.createUser(user);
 
       MorphiaProject project = new MorphiaProject();
       project.setCode(PROJECT_CODE);
@@ -135,8 +140,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    private View createView(String code) {
       View view = prepareView(code);
-      view.getPermissions().updateUserPermissions(USER_PERMISSION);
-      view.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      view.getPermissions().updateUserPermissions(userPermission);
+      view.getPermissions().updateGroupPermissions(groupPermission);
       return viewDao.createView(view);
    }
 
@@ -162,7 +167,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
-      assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -189,7 +194,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
-      assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
@@ -204,8 +209,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
-      assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(storedView.getPermissions().getGroupPermissions()).containsOnly(GROUP_PERMISSION);
+      assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
+      assertions.assertThat(storedView.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
    }
 
@@ -243,7 +248,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
-      assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -264,12 +269,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(views).extracting(Resource::getCode).containsOnly(CODE, CODE2);
 
       Permissions permissions1 = views.get(0).getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
+      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
 
       Permissions permissions2 = views.get(1).getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
+      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
       assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
    }
@@ -285,15 +290,15 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
       Permissions permissions = response.readEntity(JsonPermissions.class);
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testUpdateUserPermissions() {
       createView(CODE);
 
-      SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("users")
@@ -310,14 +315,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       Permissions storedPermissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), userPermission);
-      assertPermissions(storedPermissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testRemoveUserPermission() {
       createView(CODE);
 
-      Response response = client.target(PERMISSIONS_URL).path("users").path(USER)
+      Response response = client.target(PERMISSIONS_URL).path("users").path(this.user.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
@@ -326,7 +331,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
@@ -349,7 +354,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       Permissions storedPermissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(storedPermissions).isNotNull();
-      assertPermissions(storedPermissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(storedPermissions.getUserPermissions(), userPermission);
       assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
    }
 
@@ -365,7 +370,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 

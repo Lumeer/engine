@@ -201,7 +201,7 @@ public class CollectionFacade extends AbstractFacade {
          collection.setCode(generateCollectionCode(collection.getName()));
       }
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), Collection.ROLES);
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
 
       return collectionDao.createCollection(collection);
@@ -213,7 +213,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private SearchQuery createQueryForLinkTypes(String collectionId) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
@@ -222,7 +222,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private SearchQuery createQueryForLinkInstances(List<LinkType> linkTypes) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)

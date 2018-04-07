@@ -232,7 +232,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedCollection.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
-      assertPermissions(storedCollection.getPermissions().getUserPermissions(), userPermission);
+      assertPermissions(storedCollection.getPermissions().getUserPermissions(), this.userPermission);
    }
 
    @Test
@@ -327,7 +327,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), this.userPermission);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
    }
 
@@ -353,7 +353,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), this.userPermission);
-      assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
