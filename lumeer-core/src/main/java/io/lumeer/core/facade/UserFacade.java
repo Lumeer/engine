@@ -50,10 +50,14 @@ public class UserFacade extends AbstractFacade {
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
       if (storedUser == null) {
-         return userDao.createUser(user);
+         User createdUser = userDao.createUser(user);
+         addDefaultPermissions(organizationId, createdUser.getId());
+         return createdUser;
       }
 
-      return updateStoredUserGroups(organizationId, storedUser, user);
+      User updatedUser = updateStoredUserGroups(organizationId, storedUser, user);
+      addDefaultPermissions(organizationId, updatedUser.getId());
+      return updatedUser;
    }
 
    public User updateUser(String organizationId, String userId, User user) {
@@ -65,7 +69,7 @@ public class UserFacade extends AbstractFacade {
       return updateStoredUserGroups(organizationId, storedUser, user);
    }
 
-   private User updateStoredUserGroups(String organizationId, User storedUser, User user){
+   private User updateStoredUserGroups(String organizationId, User storedUser, User user) {
       Map<String, Set<String>> groups = storedUser.getGroups();
       if (groups == null) {
          groups = user.getGroups();
@@ -115,6 +119,10 @@ public class UserFacade extends AbstractFacade {
       if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
          throw new BadFormatException("User " + user + " is in incorrect format");
       }
+   }
+
+   private void addDefaultPermissions(String organizationId, String userId) {
+      // TODO
    }
 
 }
