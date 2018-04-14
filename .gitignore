@@ -11,6 +11,7 @@
 *.jar
 *.war
 *.ear
+!code-style/lumeer-idea-settings.jar
 
 *.log
 *.log.*
