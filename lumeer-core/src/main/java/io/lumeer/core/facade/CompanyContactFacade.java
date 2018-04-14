@@ -43,7 +43,7 @@ public class CompanyContactFacade extends AbstractFacade {
       final CompanyContact companyContact = companyContactDao.getCompanyContact(organization);
 
       if (companyContact == null) {
-         return new CompanyContact(null, organization.getCode(), "", "", "", "",
+         return new CompanyContact(null, organization.getId(), "", "", "", "",
                "", "", "", "", "", "", "", "", "");
       }
 

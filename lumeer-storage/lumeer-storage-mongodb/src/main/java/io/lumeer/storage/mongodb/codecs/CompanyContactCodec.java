@@ -76,7 +76,7 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
 
    private static CompanyContact convertFromDocument(final Document bson) {
       String id = bson.get(ID) != null ? bson.getObjectId(ID).toHexString() : null;
-      String code = bson.getString(CompanyContact.CODE);
+      String organizationId = bson.getString(CompanyContact.ORGANIZATION_ID);
       String company = bson.getString(CompanyContact.COMPANY);
       String firstName = bson.getString(CompanyContact.FIRST_NAME);
       String surname = bson.getString(CompanyContact.LAST_NAME);
@@ -91,13 +91,13 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
       String ic = bson.getString(CompanyContact.IC);
       String dic = bson.getString(CompanyContact.DIC);
 
-      return new CompanyContact(id, code, company, firstName, surname, address1, address2, city, zip, state, country, email, phone, ic, dic);
+      return new CompanyContact(id, organizationId, company, firstName, surname, address1, address2, city, zip, state, country, email, phone, ic, dic);
    }
 
    @Override
    public void encode(final BsonWriter bsonWriter, final CompanyContact companyContact, final EncoderContext encoderContext) {
       Document document = (documentHasId(companyContact) ? new Document(ID, getDocumentId(companyContact)) : new Document())
-            .append(CompanyContact.CODE, companyContact.getCode())
+            .append(CompanyContact.ORGANIZATION_ID, companyContact.getOrganizationId())
             .append(CompanyContact.COMPANY, companyContact.getCompany())
             .append(CompanyContact.FIRST_NAME, companyContact.getFirstName())
             .append(CompanyContact.LAST_NAME, companyContact.getLastName())

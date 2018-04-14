@@ -61,8 +61,8 @@ public class MongoFilters {
       return Filters.lte(Payment.START, date);
    }
 
-   public static Bson companyCodeFilter(final String code) {
-      return Filters.eq(CompanyContact.CODE, code);
+   public static Bson companyOrganizationIdFilter(final String organizationId) {
+      return Filters.eq(CompanyContact.ORGANIZATION_ID, organizationId);
    }
 
    public static Bson codeFilter(String code) {
