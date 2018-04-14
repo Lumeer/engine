@@ -51,16 +51,17 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
 
    @Override
    public CompanyContact getCompanyContact(final Organization organization) {
-      return databaseCollection().find(MongoFilters.companyCodeFilter(organization.getCode())).first();
+      return databaseCollection().find(MongoFilters.companyOrganizationIdFilter(organization.getId())).first();
    }
 
    @Override
    public CompanyContact setCompanyContact(final Organization organization, final CompanyContact companyContact) {
       final FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.AFTER);
       try {
-         return databaseCollection().findOneAndReplace(MongoFilters.companyCodeFilter(organization.getCode()), companyContact, options);
+         companyContact.setOrganizationId(organization.getId());
+         return databaseCollection().findOneAndReplace(MongoFilters.companyOrganizationIdFilter(organization.getId()), companyContact, options);
       } catch (MongoException ex) {
-         throw new StorageException("Cannot update comapany contact " + companyContact, ex);
+         throw new StorageException("Cannot update company contact " + companyContact, ex);
       }
    }
 
@@ -73,7 +74,7 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
       database.createCollection(COMPANY_CONTACT_COLLECTION);
 
       MongoCollection<Document> companyContactCollection = database.getCollection(COMPANY_CONTACT_COLLECTION);
-      companyContactCollection.createIndex(Indexes.ascending(CompanyContact.CODE), new IndexOptions().unique(true));
+      companyContactCollection.createIndex(Indexes.ascending(CompanyContact.ORGANIZATION_ID), new IndexOptions().unique(true));
    }
 
 }

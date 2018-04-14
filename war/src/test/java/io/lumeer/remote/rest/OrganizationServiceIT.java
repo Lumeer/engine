@@ -124,10 +124,10 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
    }
 
-   private void createOrganization(final String code) {
+   private Organization createOrganization(final String code) {
       Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
 
-      organizationFacade.createOrganization(organization);
+      return organizationFacade.createOrganization(organization);
    }
 
    private void createOrganizationWithSpecificPermissions(final String code) {
@@ -367,10 +367,11 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testCompanyContact() {
-      createOrganization(CODE1);
+      final Organization org = createOrganization(CODE1);
+      CONTACT.setOrganizationId(org.getId());
 
       CompanyContact contact = getCompanyContact(CODE1);
-      assertThat(contact.getCode()).isEqualTo(CODE1);
+      assertThat(contact.getOrganizationId()).isEqualTo(org.getId());
       assertThat(contact.getCompany()).isEmpty();
       assertThat(contact.getFirstName()).isEmpty();
       assertThat(contact.getLastName()).isEmpty();

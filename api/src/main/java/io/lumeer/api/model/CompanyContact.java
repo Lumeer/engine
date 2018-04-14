@@ -29,7 +29,7 @@ import java.util.Objects;
 public class CompanyContact {
 
    public static final String ID = "id";
-   public static final String CODE = "code";
+   public static final String ORGANIZATION_ID = "organizationId";
    public static final String COMPANY = "company";
    public static final String FIRST_NAME = "firstName";
    public static final String LAST_NAME = "lastName";
@@ -45,7 +45,7 @@ public class CompanyContact {
    public static final String DIC = "dic";
 
    private String id;
-   private String code;
+   private String organizationId;
    private String company;
    private String firstName;
    private String lastName;
@@ -62,7 +62,7 @@ public class CompanyContact {
 
    @JsonCreator
    public CompanyContact(@JsonProperty(ID) final String id,
-         @JsonProperty(CODE) final String code, @JsonProperty(COMPANY) final String company,
+         @JsonProperty(ORGANIZATION_ID) final String organizationId, @JsonProperty(COMPANY) final String company,
          @JsonProperty(FIRST_NAME) final String firstName, @JsonProperty(LAST_NAME) final String lastName,
          @JsonProperty(ADDRESS1) final String address1, @JsonProperty(ADDRESS2) final String address2,
          @JsonProperty(CITY) final String city, @JsonProperty(ZIP) final String zip, @JsonProperty(STATE) final String state,
@@ -70,7 +70,7 @@ public class CompanyContact {
          @JsonProperty(PHONE) final String phone, @JsonProperty(IC) final String ic,
          @JsonProperty(DIC) final String dic) {
       this.id = id;
-      this.code = code;
+      this.organizationId = organizationId;
       this.company = company;
       this.firstName = firstName;
       this.lastName = lastName;
@@ -94,12 +94,12 @@ public class CompanyContact {
       this.id = id;
    }
 
-   public String getCode() {
-      return code;
+   public String getOrganizationId() {
+      return organizationId;
    }
 
-   public void setCode(final String code) {
-      this.code = code;
+   public void setOrganizationId(final String organizationId) {
+      this.organizationId = organizationId;
    }
 
    public String getCompany() {
@@ -210,7 +210,7 @@ public class CompanyContact {
    public String toString() {
       return "CompanyContact{" +
             "id='" + id + '\'' +
-            ", code='" + code + '\'' +
+            ", organizationId='" + organizationId + '\'' +
             ", company='" + company + '\'' +
             ", firstName='" + firstName + '\'' +
             ", lastName='" + lastName + '\'' +
@@ -237,7 +237,7 @@ public class CompanyContact {
       }
       final CompanyContact that = (CompanyContact) o;
       return Objects.equals(id, that.id) &&
-            Objects.equals(code, that.code) &&
+            Objects.equals(organizationId, that.organizationId) &&
             Objects.equals(company, that.company) &&
             Objects.equals(firstName, that.firstName) &&
             Objects.equals(lastName, that.lastName) &&
@@ -255,6 +255,6 @@ public class CompanyContact {
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, code, company, firstName, lastName, address1, address2, city, zip, state, country, email, phone, ic, dic);
+      return Objects.hash(id, organizationId, company, firstName, lastName, address1, address2, city, zip, state, country, email, phone, ic, dic);
    }
 }
