@@ -90,6 +90,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    private Permission groupPermissions;
 
    private User user;
+   private User stranger;
 
    private static final String ORGANIZATION_CODE = "TORG";
 
@@ -111,21 +112,19 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(
             userPermissions,
-            new SimplePermission(STRANGER_USER, Collections.singleton(Role.MANAGE)));
+            new SimplePermission(this.stranger.getId(), Collections.singleton(Role.MANAGE)));
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    @Before
    public void configureProject() {
-      User user = new User(USER);
-      this.user = userDao.createUser(user);
-
-      User stranger = userDao.createUser(new User(STRANGER_USER));
+      this.user = userDao.createUser(new User(USER));
+      this.stranger = userDao.createUser(new User(STRANGER_USER));
 
       userPermissions = new SimplePermission(this.user.getId(), Project.ROLES);
       userReadonlyPermissions = new SimplePermission(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermissions = new SimplePermission(stranger.getId(), Collections.singleton(Role.MANAGE));
+      userStrangerPermissions = new SimplePermission(this.stranger.getId(), Collections.singleton(Role.MANAGE));
       groupPermissions = new SimplePermission(GROUP, Collections.singleton(Role.READ));
 
       MorphiaOrganization organization = new MorphiaOrganization();
