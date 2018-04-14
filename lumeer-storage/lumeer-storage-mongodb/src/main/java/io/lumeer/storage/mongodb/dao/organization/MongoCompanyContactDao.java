@@ -71,10 +71,12 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
 
    @Override
    public void createCompanyContactRepository() {
-      database.createCollection(COMPANY_CONTACT_COLLECTION);
+      if (database.getCollection(COMPANY_CONTACT_COLLECTION) == null) {
+         database.createCollection(COMPANY_CONTACT_COLLECTION);
 
-      MongoCollection<Document> companyContactCollection = database.getCollection(COMPANY_CONTACT_COLLECTION);
-      companyContactCollection.createIndex(Indexes.ascending(CompanyContact.ORGANIZATION_ID), new IndexOptions().unique(true));
+         MongoCollection<Document> companyContactCollection = database.getCollection(COMPANY_CONTACT_COLLECTION);
+         companyContactCollection.createIndex(Indexes.ascending(CompanyContact.ORGANIZATION_ID), new IndexOptions().unique(true));
+      }
    }
 
 }
