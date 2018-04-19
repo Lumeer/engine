@@ -21,6 +21,7 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 
@@ -37,7 +38,7 @@ public class ServiceLimits {
    public static final String DB_SIZE_MB = "dbSizeMb";
    public static final String VALID_UNTIL = "validUntil";
 
-   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 1, 10, -1, -1, null);
+   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 1, 10, 200, -1, null);
    public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC,99, 99, -1, -1, -1, new Date(0));
 
    private Payment.ServiceLevel serviceLevel;
@@ -47,6 +48,12 @@ public class ServiceLimits {
    private int documents;
    private int dbSizeMb;
    private Date validUntil;
+
+   static {
+       final Calendar c = Calendar.getInstance();
+       c.add(Calendar.MONTH, 3);
+       FREE_LIMITS.validUntil = c.getTime();
+   }
 
    @JsonCreator
    public ServiceLimits(@JsonProperty(SERVICE_LEVEL) final Payment.ServiceLevel serviceLevel, @JsonProperty(USERS) final int users,
