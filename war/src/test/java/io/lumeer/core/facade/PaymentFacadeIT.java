@@ -18,7 +18,7 @@
  */
 package io.lumeer.core.facade;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.model.Organization;
@@ -27,17 +27,11 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.engine.IntegrationTestBase;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import javax.inject.Inject;
@@ -81,7 +75,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testServiceLevels() {
-      final String paymentId = createPayment("2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false);
+      final Payment payment = createPayment("2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false);
 
       ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
@@ -98,7 +92,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
             .as("With unpaid payment, we should still be on the FREE tier and also after the terms.")
             .isEqualTo(Payment.ServiceLevel.FREE);
 
-      paymentFacade.updatePayment(organization, paymentId); // now set it to paid
+      paymentFacade.updatePayment(organization, payment.getId()); // now set it to paid
 
       limits = paymentFacade.getServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
@@ -175,17 +169,17 @@ public class PaymentFacadeIT extends IntegrationTestBase {
       return organizationFacade.createOrganization(organization);
    }
 
-   private String createPayment(final String from, final String until, final boolean paid) {
+   private Payment createPayment(final String from, final String until, final boolean paid) {
       Payment payment = new Payment(null, new Date(), 1770, "",
             getDate(from),
             getDate(until),
             Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", null);
-      final String paymentId = paymentFacade.createPayment(organization, payment, "", "").getPaymentId();
+      final Payment storedPayment = paymentFacade.createPayment(organization, payment, "", "");
 
       if (paid) {
-         paymentFacade.updatePayment(organization, paymentId); //this switches it to PAID in dry run mode
+         paymentFacade.updatePayment(organization, storedPayment.getId()); //this switches it to PAID in dry run mode
       }
 
-      return paymentId;
+      return storedPayment;
    }
 }

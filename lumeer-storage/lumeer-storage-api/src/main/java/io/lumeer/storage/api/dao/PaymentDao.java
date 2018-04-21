@@ -41,6 +41,8 @@ public interface PaymentDao {
 
    Payment getPayment(final Organization organization, final String paymentId);
 
+   Payment getPaymentByDbId(final Organization organization, final String id);
+
    Payment getPaymentAt(final Organization organization, final Date date);
 
    Payment getLatestPayment(final Organization organization);

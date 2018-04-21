@@ -26,12 +26,9 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -51,10 +48,11 @@ public class PaymentFacade extends AbstractFacade {
 
    public Payment createPayment(final Organization organization, final Payment payment, final String notifyUrl, final String returnUrl) {
       checkManagePermissions(organization);
+      final Payment storedPayment = paymentDao.createPayment(organization, payment);
 
-      final Payment establishedPayment = paymentGateway.createPayment(payment, returnUrl, notifyUrl);
+      final Payment establishedPayment = paymentGateway.createPayment(storedPayment, returnUrl, notifyUrl + "/" + storedPayment.getId());
 
-      return paymentDao.createPayment(organization, establishedPayment);
+      return paymentDao.updatePayment(organization, storedPayment.getId(), establishedPayment);
    }
 
    public List<Payment> getPayments(final Organization organization) {
@@ -143,14 +141,14 @@ public class PaymentFacade extends AbstractFacade {
       return ServiceLimits.FREE_LIMITS;
    }
 
-   public Payment updatePayment(final Organization organization, final String paymentId) {
+   public Payment updatePayment(final Organization organization, final String id) {
       checkManagePermissions(organization);
 
       currentPayment = null;
       workspaceKeeper.clearServiceLevel(organization);
 
-      final Payment payment = paymentDao.getPayment(organization, paymentId);
-      payment.setState(paymentGateway.getPaymentStatus(paymentId));
+      final Payment payment = paymentDao.getPaymentByDbId(organization, id);
+      payment.setState(paymentGateway.getPaymentStatus(payment.getPaymentId()));
 
       return paymentDao.updatePayment(organization, payment);
    }

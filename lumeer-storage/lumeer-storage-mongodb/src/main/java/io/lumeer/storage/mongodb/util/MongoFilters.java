@@ -45,7 +45,7 @@ public class MongoFilters {
       return Filters.eq(ID, new ObjectId(id));
    }
 
-   public static Bson paymentIdFiler(final String paymentId) {
+   public static Bson paymentIdFilter(final String paymentId) {
       return Filters.eq(Payment.PAYMENT_ID, paymentId);
    }
 

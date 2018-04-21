@@ -18,7 +18,11 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.core.facade.OrganizationFacade;
+import io.lumeer.core.facade.PaymentFacade;
+
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,14 +45,17 @@ import javax.ws.rs.core.Response;
 @Path("paymentNotify")
 public class PaymentService extends AbstractService {
 
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private PaymentFacade paymentFacade;
+
    /* Callback method for the payment gateway. */
    @GET
-   @Path("{organizationCode}")
-   public Response updatePaymentState(@PathParam("organizationCode") final String organizationCode, final String message) {
-      System.out.println("Update of payment id " + message);
-
-      // TODO: 1) ask gopay about the payment state
-      // TODO: 2) update the payment accordingly
+   @Path("{organizationCode}/{id}")
+   public Response updatePaymentState(@PathParam("organizationCode") final String organizationCode, @PathParam("id") final String id) {
+      paymentFacade.updatePayment(organizationFacade.getOrganization(organizationCode), id);
 
       return Response.ok().build();
    }

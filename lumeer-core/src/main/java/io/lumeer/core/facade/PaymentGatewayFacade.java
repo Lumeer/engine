@@ -72,7 +72,7 @@ public class PaymentGatewayFacade {
       ORDER_FORMAT.put("en", "Lumeer %s service for %d users since %s until %s.");
    }
 
-   private boolean dryRun = false;
+   private boolean dryRun = true;
 
    private long expiration;
 
@@ -102,8 +102,7 @@ public class PaymentGatewayFacade {
             .withDefaultPaymentInstrument(PaymentInstrument.PAYMENT_CARD);
       Arrays.asList(SWIFTS).forEach(swift -> payerBuilder.addAllowedSwift(swift));
       final BasePayment basePayment = PaymentFactory.createBasePaymentBuilder()
-            .order(String.format("%d%3d%2d%2d%2d%3d", tm.getYear(), tm.getDayOfYear(), tm.getHour(),
-                  tm.getMinute(), tm.getSecond(), tm.getNano() / 1_000_000L), payment.getAmount(),
+            .order(payment.getId(), payment.getAmount(),
                   Currency.getByCode(payment.getCurrency()), description)
             .addItem(description, payment.getAmount(), 1L)
             .withCallback(returnUrl, notifyUrl)
