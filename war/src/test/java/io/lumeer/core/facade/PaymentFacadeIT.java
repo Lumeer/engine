@@ -177,7 +177,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
       final Payment storedPayment = paymentFacade.createPayment(organization, payment, "", "");
 
       if (paid) {
-         paymentFacade.updatePayment(organization, storedPayment.getPaymentId()); //this switches it to PAID in dry run mode
+         paymentFacade.updatePayment(organization, storedPayment.getId()); //this switches it to PAID in dry run mode
       }
 
       return storedPayment;
