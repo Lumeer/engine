@@ -84,7 +84,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
    public Payment updatePayment(final Organization organization, final Payment payment) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
-         final Payment returnedPayment = databaseCollection(organization).findOneAndReplace(paymentIdFiler(payment.getPaymentId()), payment, options);
+         final Payment returnedPayment = databaseCollection(organization).findOneAndReplace(paymentIdFilter(payment.getPaymentId()), payment, options);
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + payment.getPaymentId() + "' has not been updated.");
          }
@@ -96,7 +96,12 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
 
    @Override
    public Payment getPayment(final Organization organization, final String paymentId) {
-      return databaseCollection(organization).find(paymentIdFiler(paymentId)).first();
+      return databaseCollection(organization).find(paymentIdFilter(paymentId)).first();
+   }
+
+   @Override
+   public Payment getPaymentByDbId(final Organization organization, final String id) {
+      return databaseCollection(organization).find(idFilter(id)).first();
    }
 
    @Override
