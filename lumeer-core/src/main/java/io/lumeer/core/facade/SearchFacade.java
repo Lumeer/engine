@@ -23,6 +23,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.View;
+import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.util.FilterParser;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -58,6 +59,9 @@ public class SearchFacade extends AbstractFacade {
 
    @Inject
    private ViewDao viewDao;
+
+   @Inject
+   private AuthenticatedUserGroups authenticatedUserGroups;
 
    public List<Collection> searchCollections(Query query) {
       Set<Collection> collections = new HashSet<>();
@@ -235,7 +239,7 @@ public class SearchFacade extends AbstractFacade {
 
    private SearchQuery.Builder createCollectionSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUserGroups();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       Set<String> collectionIds = query.getCollectionIds() != null ? new HashSet<>(query.getCollectionIds()) : new HashSet<>();
       collectionIds.addAll(additionalCollectionIds);
@@ -246,7 +250,7 @@ public class SearchFacade extends AbstractFacade {
 
    private SearchQuery createDocumentIdsQuery(Set<String> documentIds) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUserGroups();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .documentIds(documentIds)

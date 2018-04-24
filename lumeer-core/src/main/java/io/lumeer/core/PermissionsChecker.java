@@ -40,12 +40,16 @@ public class PermissionsChecker {
    @Inject
    private AuthenticatedUser authenticatedUser;
 
+   @Inject
+   private AuthenticatedUserGroups authenticatedUserGroups;
+
    public PermissionsChecker() {
    }
 
-   PermissionsChecker(UserCache userCache, AuthenticatedUser authenticatedUser) {
+   PermissionsChecker(UserCache userCache, AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups) {
       this.userCache = userCache;
       this.authenticatedUser = authenticatedUser;
+      this.authenticatedUserGroups = authenticatedUserGroups;
    }
 
    /**
@@ -93,7 +97,7 @@ public class PermissionsChecker {
       if (resource instanceof Organization) {
          return Collections.emptySet();
       }
-      return authenticatedUser.getCurrentUserGroups();
+      return authenticatedUserGroups.getCurrentUserGroups();
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String user) {

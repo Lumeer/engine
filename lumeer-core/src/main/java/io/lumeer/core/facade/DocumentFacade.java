@@ -24,6 +24,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Role;
+import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -60,6 +61,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private AuthenticatedUserGroups authenticatedUserGroups;
 
    public Document createDocument(String collectionId, Document document) {
       Collection collection = collectionDao.getCollectionById(collectionId);
@@ -222,7 +226,7 @@ public class DocumentFacade extends AbstractFacade {
 
    private SearchQuery createQueryForLinkInstances(String documentId) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUserGroups();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .documentIds(Collections.singleton(documentId))
