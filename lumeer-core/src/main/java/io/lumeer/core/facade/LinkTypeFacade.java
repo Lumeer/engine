@@ -23,6 +23,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
+import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -41,6 +42,9 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private CollectionDao collectionDao;
+
+   @Inject
+   private AuthenticatedUserGroups authenticatedUserGroups;
 
    public LinkType createLinkType(LinkType linkType) {
       checkLinkTypePermission(linkType.getCollectionIds());
@@ -77,7 +81,7 @@ public class LinkTypeFacade extends AbstractFacade {
 
    private SearchQuery createSearchQuery(Query query) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUserGroups();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .collectionIds(query.getCollectionIds())

@@ -25,6 +25,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -62,6 +63,9 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private AuthenticatedUserGroups authenticatedUserGroups;
 
    public Project createProject(Project project) {
       checkOrganizationWriteRole();
@@ -103,7 +107,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public List<Project> getProjects() {
       User user = authenticatedUser.getCurrentUser();
-      Set<String> groups = authenticatedUser.getCurrentUserGroups();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       DatabaseQuery query = DatabaseQuery.createBuilder(user.getEmail())
                                          .groups(groups)

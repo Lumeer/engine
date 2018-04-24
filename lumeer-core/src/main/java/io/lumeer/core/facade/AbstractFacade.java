@@ -24,9 +24,9 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.query.SearchQuery;
 
@@ -42,7 +42,7 @@ abstract class AbstractFacade {
    protected PermissionsChecker permissionsChecker;
 
    @Inject
-   protected UserCache userCache;
+   private AuthenticatedUserGroups authenticatedUserGroups;
 
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
@@ -67,7 +67,7 @@ abstract class AbstractFacade {
 
    protected SearchQuery createPaginationQuery(Pagination pagination) {
       String user = authenticatedUser.getCurrentUsername();
-      Set<String> groups = authenticatedUser.getCurrentUserGroups();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user)
                         .groups(groups)
