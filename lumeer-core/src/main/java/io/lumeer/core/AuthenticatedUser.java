@@ -34,8 +34,8 @@ import javax.servlet.http.HttpServletRequest;
 @SessionScoped
 public class AuthenticatedUser implements Serializable {
 
-   private static final String DEFAULT_USERNAME = "aturing";
-   private static final String DEFAULT_EMAIL = "aturing@lumeer.io";
+   public static final String DEFAULT_USERNAME = "aturing";
+   public static final String DEFAULT_EMAIL = "aturing@lumeer.io";
 
    @Inject
    private HttpServletRequest request;
