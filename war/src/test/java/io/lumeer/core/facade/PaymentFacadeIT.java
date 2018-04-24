@@ -160,6 +160,24 @@ public class PaymentFacadeIT extends IntegrationTestBase {
             .isEqualTo(Payment.ServiceLevel.FREE);
    }
 
+   @Test
+   public void testSubsequentPayments() {
+      createPayment("2007-04-01T00:00:00.000-0500", "2007-04-30T23:59:59.999-0500", true);
+      ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
+      assertThat(limits.getServiceLevel())
+            .as("Normally, we are on the BASIC tier in a paid period.")
+            .isEqualTo(Payment.ServiceLevel.BASIC);
+      assertThat(limits.getValidUntil().getTime())
+            .as("There is no subsequent payments, so the subscription ends in April.")
+            .isEqualTo(getDate("2007-04-30T23:59:59.999-0500").getTime());
+
+      createPayment("2007-05-01T00:00:00.000-0500", "2007-05-31T23:59:59.999-0500", true);
+      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
+      assertThat(limits.getValidUntil().getTime())
+            .as("There is a subsequent payment, so the subscription should last longer.")
+            .isEqualTo(getDate("2007-05-31T23:59:59.999-0500").getTime());
+   }
+
    private Date getDate(final String date) {
       return Date.from(Instant.from(DTF.parse(date)));
    }

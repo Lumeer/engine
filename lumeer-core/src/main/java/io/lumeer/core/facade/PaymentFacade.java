@@ -26,8 +26,10 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -111,30 +113,51 @@ public class PaymentFacade extends AbstractFacade {
       checkReadPermissions(organization);
 
       final Payment payment = getCurrentPayment(organization);
+      final Optional<Date> validUntil = getValidUntil(getFutureContinuousPayments(organization, new Date()));
 
-      if (payment != null) {
+      if (payment != null && validUntil.isPresent()) {
          workspaceKeeper.setServiceLevel(organization, payment.getServiceLevel());
 
          if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
             return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
-                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), payment.getValidUntil());
+                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get());
          }
       }
 
       return ServiceLimits.FREE_LIMITS;
    }
 
+   private List<Payment> getFutureContinuousPayments(final Organization organization, final Date date) {
+      final List<Payment> result = new ArrayList<>();
+
+      Payment payment = getPaymentAt(organization, date);
+
+      while (payment != null) {
+         System.out.println("pajoment " + payment.toString());
+         result.add(payment);
+         payment = getPaymentAt(organization, new Date(payment.getValidUntil().getTime() + TimeUnit.MINUTES.toMillis(1)));
+      }
+
+      return result;
+   }
+
+   private Optional<Date> getValidUntil(final List<Payment> continuousPayments) {
+      long time = continuousPayments.stream().map(payment -> payment.getValidUntil().getTime()).max(Long::compareTo).orElse(-1L);
+      return Optional.ofNullable(time >= 0 ? new Date(time) : null);
+   }
+
    public ServiceLimits getServiceLimitsAt(final Organization organization, final Date date) {
       checkManagePermissions(organization);
 
       final Payment payment = getPaymentAt(organization, date);
+      final Optional<Date> validUntil = getValidUntil(getFutureContinuousPayments(organization, date));
 
-      if (payment != null) {
+      if (payment != null && validUntil.isPresent()) {
          if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
             return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
-                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), payment.getValidUntil());
+                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get());
          }
       }
 
