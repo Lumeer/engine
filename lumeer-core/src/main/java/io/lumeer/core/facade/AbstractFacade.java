@@ -57,6 +57,13 @@ abstract class AbstractFacade {
       return resource;
    }
 
+   protected <T extends Resource> T mapResource(final T resource) {
+      if (permissionsChecker.hasRole(resource, Role.MANAGE)) {
+         return resource;
+      }
+      return keepOnlyActualUserRoles(resource);
+   }
+
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
       Set<Permission> userPermissions = storedPermissions.getUserPermissions();
       resource.getPermissions().updateUserPermissions(userPermissions.toArray(new Permission[0]));

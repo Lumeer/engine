@@ -72,7 +72,7 @@ public class CollectionFacade extends AbstractFacade {
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
 
-      return keepOnlyActualUserRoles(storedCollection);
+      return storedCollection;
    }
 
    public Collection updateCollection(String collectionId, Collection collection) {
@@ -81,7 +81,7 @@ public class CollectionFacade extends AbstractFacade {
 
       keepUnmodifiableFields(collection, storedCollection);
       Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection);
-      return keepOnlyActualUserRoles(updatedCollection);
+      return mapResource(updatedCollection);
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
@@ -112,13 +112,14 @@ public class CollectionFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
-      return keepOnlyActualUserRoles(collection);
+      return mapResource(collection);
    }
 
    public List<Collection> getCollections(Pagination pagination) {
       SearchQuery searchQuery = createPaginationQuery(pagination);
+
       return collectionDao.getCollections(searchQuery).stream()
-                          .map(this::keepOnlyActualUserRoles)
+                          .map(this::mapResource)
                           .collect(Collectors.toList());
    }
 

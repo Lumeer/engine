@@ -86,7 +86,7 @@ public class ProjectFacade extends AbstractFacade {
       keepStoredPermissions(project, storedProject.getPermissions());
       Project updatedProject = projectDao.updateProject(storedProject.getId(), project);
 
-      return keepOnlyActualUserRoles(updatedProject);
+      return mapResource(updatedProject);
    }
 
    public void deleteProject(final String projectCode) {
@@ -102,7 +102,7 @@ public class ProjectFacade extends AbstractFacade {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.READ);
 
-      return keepOnlyActualUserRoles(project);
+      return mapResource(project);
    }
 
    public List<Project> getProjects() {
@@ -114,7 +114,7 @@ public class ProjectFacade extends AbstractFacade {
                                          .build();
 
       return projectDao.getProjects(query).stream()
-                       .map(this::keepOnlyActualUserRoles)
+                       .map(this::mapResource)
                        .collect(Collectors.toList());
    }
 

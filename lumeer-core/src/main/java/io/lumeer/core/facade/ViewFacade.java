@@ -60,7 +60,7 @@ public class ViewFacade extends AbstractFacade {
       keepStoredPermissions(view, storedView.getPermissions());
       View updatedView = viewDao.updateView(storedView.getId(), view);
 
-      return keepOnlyActualUserRoles(updatedView);
+      return mapResource(updatedView);
    }
 
    public void deleteView(final String code) {
@@ -74,14 +74,14 @@ public class ViewFacade extends AbstractFacade {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.READ);
 
-      return keepOnlyActualUserRoles(view);
+      return mapResource(view);
    }
 
    public List<View> getViews(Pagination pagination) {
       SearchQuery searchQuery = createPaginationQuery(pagination);
 
       return viewDao.getViews(searchQuery).stream()
-                    .map(this::keepOnlyActualUserRoles)
+                    .map(this::mapResource)
                     .collect(Collectors.toList());
    }
 

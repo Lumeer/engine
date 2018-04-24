@@ -51,7 +51,7 @@ public class AuthenticatedUserGroups {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       Organization organization = organizationOptional.get();
-      Map<String,Set<String>> userGroups = userCache.getUser(authenticatedUser.getCurrentUsername()).getGroups();
+      Map<String,Set<String>> userGroups = userCache.getUser(authenticatedUser.getUserEmail()).getGroups();
       return userGroups != null && userGroups.containsKey(organization.getId()) ? userGroups.get(organization.getId()) : Collections.emptySet();
    }
 

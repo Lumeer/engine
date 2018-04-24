@@ -80,7 +80,7 @@ public class OrganizationFacade extends AbstractFacade {
       keepStoredPermissions(organization, storedOrganization.getPermissions());
       Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization);
 
-      return keepOnlyActualUserRoles(updatedOrganization);
+      return mapResource(updatedOrganization);
    }
 
    public void deleteOrganization(final String organizationCode) {
@@ -96,7 +96,7 @@ public class OrganizationFacade extends AbstractFacade {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(organization, Role.READ);
 
-      return keepOnlyActualUserRoles(organization);
+      return mapResource(organization);
    }
 
    public List<Organization> getOrganizations() {
@@ -105,7 +105,7 @@ public class OrganizationFacade extends AbstractFacade {
                                          .build();
 
       return organizationDao.getOrganizations(query).stream()
-                            .map(this::keepOnlyActualUserRoles)
+                            .map(this::mapResource)
                             .collect(Collectors.toList());
    }
 
