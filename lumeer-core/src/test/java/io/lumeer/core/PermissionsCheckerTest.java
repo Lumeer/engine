@@ -40,8 +40,8 @@ import java.util.Set;
 
 public class PermissionsCheckerTest {
 
-   private static final String USER = "testUser";
-   private static final String GROUP = "testGroup";
+   public static final String USER = "testUser";
+   public static final String GROUP = "testGroup";
 
    private PermissionsChecker permissionsChecker;
 
