@@ -139,10 +139,10 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedOrganization.getName()).isEqualTo(NAME);
       assertions.assertThat(storedOrganization.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedOrganization.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedOrganization.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
       assertPermissions(storedOrganization.getPermissions().getUserPermissions(), userPermission);
+      assertPermissions(storedOrganization.getPermissions().getGroupPermissions(), this.groupPermission);
    }
 
    @Test

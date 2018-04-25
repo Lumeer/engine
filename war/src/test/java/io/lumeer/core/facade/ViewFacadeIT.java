@@ -202,10 +202,10 @@ public class ViewFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
-      assertions.assertThat(storedView.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
       assertPermissions(storedView.getPermissions().getUserPermissions(), userPermission);
+      assertPermissions(storedView.getPermissions().getGroupPermissions(), groupPermission);
    }
 
    @Test

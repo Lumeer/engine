@@ -210,7 +210,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedCollection.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedCollection.getColor()).isEqualTo(COLOR);
       assertions.assertThat(returnedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
-      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
 
       Collection storedCollection = collectionDao.getCollectionByCode(CODE2);
@@ -258,7 +258,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedCollection.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedCollection.getColor()).isEqualTo(COLOR);
       assertions.assertThat(returnedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
-      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
    }
 
@@ -280,12 +280,12 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Permissions permissions1 = collections.get(0).getPermissions();
       assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
 
       Permissions permissions2 = collections.get(1).getPermissions();
       assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
    }
 
    @Test

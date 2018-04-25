@@ -159,10 +159,10 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedProject.getName()).isEqualTo(NAME);
       assertions.assertThat(storedProject.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedProject.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
       assertPermissions(storedProject.getPermissions().getUserPermissions(), userPermissions);
+      assertPermissions(storedProject.getPermissions().getGroupPermissions(), groupPermissions);
    }
 
    @Test

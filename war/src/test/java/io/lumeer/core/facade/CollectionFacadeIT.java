@@ -229,10 +229,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedCollection.getName()).isEqualTo(NAME);
       assertions.assertThat(storedCollection.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedCollection.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedCollection.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
-      assertPermissions(storedCollection.getPermissions().getUserPermissions(), this.userPermission);
+      assertPermissions(storedCollection.getPermissions().getUserPermissions(), userPermission);
+      assertPermissions(storedCollection.getPermissions().getGroupPermissions(), groupPermission);
    }
 
    @Test

@@ -144,7 +144,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       Permissions permissions1 = project1.getPermissions();
       assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
 
       Project project2 = projects.get(1);
       assertThat(project2.getName()).isEqualTo(NAME);
@@ -153,7 +153,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       Permissions permissions2 = project2.getPermissions();
       assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
    }
 
    @Test
@@ -237,7 +237,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
       assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(userPermission);
-      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
 
       Project storedProject = projectDao.getProjectByCode(CODE2);

@@ -195,7 +195,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
-      assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
 
       View storedView = viewDao.getViewByCode(CODE2);
@@ -249,7 +249,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
-      assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
    }
 
@@ -269,14 +269,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(views).extracting(Resource::getCode).containsOnly(CODE, CODE2);
 
       Permissions permissions1 = views.get(0).getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
+      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(userPermission);
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(groupPermission);
 
       Permissions permissions2 = views.get(1).getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
+      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(userPermission);
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(groupPermission);
    }
 
    @Test
