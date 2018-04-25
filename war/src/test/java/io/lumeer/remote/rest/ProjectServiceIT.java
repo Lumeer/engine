@@ -173,7 +173,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedProject.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedProject.getColor()).isEqualTo(COLOR);
       assertions.assertThat(returnedProject.getPermissions().getUserPermissions()).containsOnly(userPermission);
-      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
    }
 

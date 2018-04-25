@@ -269,14 +269,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(views).extracting(Resource::getCode).containsOnly(CODE, CODE2);
 
       Permissions permissions1 = views.get(0).getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(userPermission);
+      assertThat(permissions1.getUserPermissions()).containsOnly(userPermission);
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(groupPermission);
+      assertThat(permissions1.getGroupPermissions()).containsOnly(groupPermission);
 
       Permissions permissions2 = views.get(1).getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(userPermission);
+      assertThat(permissions2.getUserPermissions()).containsOnly(userPermission);
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(groupPermission);
+      assertThat(permissions2.getGroupPermissions()).containsOnly(groupPermission);
    }
 
    @Test
