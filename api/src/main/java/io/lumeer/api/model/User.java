@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -43,6 +44,7 @@ public class User {
 
    public User(final String email) {
       this.email = email;
+      this.groups = new HashMap<>();
    }
 
    @JsonCreator

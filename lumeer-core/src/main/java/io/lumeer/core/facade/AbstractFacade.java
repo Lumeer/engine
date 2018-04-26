@@ -27,6 +27,7 @@ import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.query.SearchQuery;
 
@@ -40,6 +41,9 @@ abstract class AbstractFacade {
 
    @Inject
    protected PermissionsChecker permissionsChecker;
+
+   @Inject
+   protected UserCache userCache;
 
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;

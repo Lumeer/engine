@@ -186,5 +186,8 @@ public class OrganizationFacade extends AbstractFacade {
       projectDao.deleteProjectsRepository(organization);
       groupDao.deleteGroupsRepository(organization);
       paymentDao.deletePaymentRepository(organization);
+
+      userDao.deleteUsersGroups(organization.getId());
+      userCache.clear();
    }
 }
