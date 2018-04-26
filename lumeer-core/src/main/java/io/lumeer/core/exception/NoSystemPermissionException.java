@@ -19,7 +19,6 @@
 package io.lumeer.core.exception;
 
 import io.lumeer.api.exception.LumeerException;
-import io.lumeer.api.model.Resource;
 
 public class NoSystemPermissionException extends LumeerException {
 
