@@ -103,11 +103,8 @@ public class AuthenticatedUser implements Serializable {
 
    private void checkLocalUser(String email) {
       User userByEmail = userDao.getUserByEmail(email);
-      if (userByEmail != null) {
-         createDemoOrganizationIfNeeded(userByEmail, true);
-      } else {
-         User createdUser = createNewUser(email, null);
-         createDemoOrganizationIfNeeded(createdUser, true);
+      if (userByEmail == null) {
+         createNewUser(email, null);
       }
    }
 
