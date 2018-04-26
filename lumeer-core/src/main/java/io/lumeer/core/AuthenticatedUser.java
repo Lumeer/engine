@@ -153,7 +153,7 @@ public class AuthenticatedUser implements Serializable {
          code.append("LMR");
       }
 
-      String finalCode = code.substring(0, Math.min(5, code.length()));
+      String finalCode = code.substring(0, Math.min(5, code.length())).toUpperCase();
       Set<String> usedCodes = organizationDao.getOrganizationsCodes();
       if (!usedCodes.contains(finalCode)) {
          return finalCode;
