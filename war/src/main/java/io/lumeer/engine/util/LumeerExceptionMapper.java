@@ -20,6 +20,7 @@ package io.lumeer.engine.util;
 
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.exception.PaymentGatewayException;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
@@ -76,7 +77,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
       }
 
       // 401 - UNAUTHORIZED
-      if (e instanceof UnauthorizedAccessException || e instanceof NoPermissionException) {
+      if (e instanceof UnauthorizedAccessException || e instanceof NoPermissionException || e instanceof NoSystemPermissionException) {
          return Response.status(Response.Status.UNAUTHORIZED).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 

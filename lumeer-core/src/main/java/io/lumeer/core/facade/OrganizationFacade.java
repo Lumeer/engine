@@ -24,6 +24,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -32,6 +33,7 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,7 +62,7 @@ public class OrganizationFacade extends AbstractFacade {
    private PaymentDao paymentDao;
 
    public Organization createOrganization(final Organization organization) {
-      // TODO check system role for creating organizations
+      checkSystemPermission();
 
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
@@ -186,5 +188,13 @@ public class OrganizationFacade extends AbstractFacade {
       projectDao.deleteProjectsRepository(organization);
       groupDao.deleteGroupsRepository(organization);
       paymentDao.deletePaymentRepository(organization);
+   }
+
+   private void checkSystemPermission() {
+      String currentUserEmail = authenticatedUser.getUserEmail();
+      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "martin@vecerovi.com", "aturing@lumeer.io");
+      if (!allowedEmails.contains(currentUserEmail)) {
+         throw new NoSystemPermissionException();
+      }
    }
 }
