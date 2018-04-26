@@ -65,7 +65,7 @@ public class UserFacade extends AbstractFacade {
       return updateStoredUserGroups(organizationId, storedUser, user);
    }
 
-   private User updateStoredUserGroups(String organizationId, User storedUser, User user){
+   private User updateStoredUserGroups(String organizationId, User storedUser, User user) {
       Map<String, Set<String>> groups = storedUser.getGroups();
       if (groups == null) {
          groups = user.getGroups();

@@ -119,11 +119,11 @@ public class ViewService extends AbstractService {
    }
 
    @DELETE
-   @Path("{viewCode}/permissions/users/{user}")
-   public Response removeUserPermission(@PathParam("viewCode") String code, @PathParam("user") String user) {
-      viewFacade.removeUserPermission(code, user);
+   @Path("{viewCode}/permissions/users/{userId}")
+   public Response removeUserPermission(@PathParam("viewCode") String code, @PathParam("userId") String userId) {
+      viewFacade.removeUserPermission(code, userId);
 
-      return Response.ok().link(getParentUri("users", user), "parent").build();
+      return Response.ok().link(getParentUri("users", userId), "parent").build();
    }
 
    @PUT
@@ -134,10 +134,10 @@ public class ViewService extends AbstractService {
    }
 
    @DELETE
-   @Path("{viewCode}/permissions/groups/{group}")
-   public Response removeGroupPermission(@PathParam("viewCode") String code, @PathParam("group") String group) {
-      viewFacade.removeGroupPermission(code, group);
+   @Path("{viewCode}/permissions/groups/{groupId}")
+   public Response removeGroupPermission(@PathParam("viewCode") String code, @PathParam("groupId") String groupId) {
+      viewFacade.removeGroupPermission(code, groupId);
 
-      return Response.ok().link(getParentUri("groups", group), "parent").build();
+      return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }
 }

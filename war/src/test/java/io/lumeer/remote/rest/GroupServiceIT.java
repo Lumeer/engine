@@ -8,9 +8,11 @@ import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.UserDao;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -46,12 +48,18 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    @Inject
    private OrganizationDao organizationDao;
 
+   @Inject
+   private UserDao userDao;
+
    @Before
    public void configure() {
+      User user = new User(USER);
+      final User createdUser = userDao.createUser(user);
+
       JsonOrganization organization1 = new JsonOrganization();
       organization1.setCode("LMR");
       organization1.setPermissions(new JsonPermissions());
-      organization1.getPermissions().updateUserPermissions(new JsonPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organization = organizationDao.createOrganization(organization1);
 
       groupDao.createGroupsRepository(organization);

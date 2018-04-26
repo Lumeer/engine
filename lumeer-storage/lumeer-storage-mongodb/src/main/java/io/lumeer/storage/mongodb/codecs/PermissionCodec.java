@@ -35,7 +35,7 @@ import java.util.Set;
 
 public class PermissionCodec implements Codec<JsonPermission> {
 
-   public static final String NAME = "name";
+   public static final String ID = "id";
    public static final String ROLES = "roles";
 
    private final Codec<Document> documentCodec;
@@ -52,7 +52,7 @@ public class PermissionCodec implements Codec<JsonPermission> {
    }
 
    public static JsonPermission convertFromDocument(Document bson) {
-      String name = bson.getString(NAME);
+      String name = bson.getString(ID);
       Set<String> roles = new HashSet<String>(bson.get(ROLES, List.class));
 
       return new JsonPermission(name, roles);
@@ -60,7 +60,7 @@ public class PermissionCodec implements Codec<JsonPermission> {
 
    @Override
    public void encode(final BsonWriter writer, final JsonPermission value, final EncoderContext encoderContext) {
-      Document document = new Document(NAME, value.getName())
+      Document document = new Document(ID, value.getId())
             .append(ROLES, value.getRoles());
 
       documentCodec.encode(writer, document, encoderContext);

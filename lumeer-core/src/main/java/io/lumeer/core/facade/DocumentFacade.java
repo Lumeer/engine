@@ -83,7 +83,7 @@ public class DocumentFacade extends AbstractFacade {
 
    private Document createDocument(Collection collection, Document document) {
       document.setCollectionId(collection.getId());
-      document.setCreatedBy(authenticatedUser.getCurrentUsername());
+      document.setCreatedBy(authenticatedUser.getCurrentUserId());
       document.setCreationDate(LocalDateTime.now());
       document.setDataVersion(INITIAL_VERSION);
       return documentDao.createDocument(document);
@@ -135,7 +135,7 @@ public class DocumentFacade extends AbstractFacade {
       Document document = documentDao.getDocumentById(documentId);
 
       document.setCollectionId(collection.getId());
-      document.setUpdatedBy(authenticatedUser.getCurrentUsername());
+      document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(LocalDateTime.now());
       document.setDataVersion(document.getDataVersion() + 1);
 
@@ -225,7 +225,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private SearchQuery createQueryForLinkInstances(String documentId) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)

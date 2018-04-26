@@ -80,7 +80,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private SearchQuery createSearchQuery(Query query) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)

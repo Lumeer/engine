@@ -81,10 +81,13 @@ public class GroupFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configure() {
+      User user = new User(USER);
+      final User createdUser = userDao.createUser(user);
+
       JsonOrganization organization1 = new JsonOrganization();
       organization1.setCode("LMR");
       organization1.setPermissions(new JsonPermissions());
-      organization1.getPermissions().updateUserPermissions(new JsonPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organization = organizationDao.createOrganization(organization1);
 
       workspaceKeeper.setOrganization(organization.getCode());

@@ -139,6 +139,13 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
    }
 
    @Override
+   public User getUserByKeycloakId(final String keycloakId) {
+      Bson keycloakIdFilter = Filters.eq(UserCodec.KEYCLOAK_ID, keycloakId);
+
+      return databaseCollection().find(keycloakIdFilter).first();
+   }
+
+   @Override
    public User getUserById(final String id) {
       return databaseCollection().find(idFilter(id)).first();
    }

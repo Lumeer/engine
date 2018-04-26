@@ -85,10 +85,10 @@ public class PermissionsChecker {
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(Resource resource) {
-      String user = authenticatedUser.getUserEmail();
+      String userId = authenticatedUser.getCurrentUserId();
       Set<String> groups = getUserGroups(resource);
 
-      Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), user);
+      Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
       return actualRoles;
    }
@@ -100,16 +100,16 @@ public class PermissionsChecker {
       return authenticatedUserGroups.getCurrentUserGroups();
    }
 
-   private Set<Role> getActualUserRoles(Set<Permission> userRoles, String user) {
+   private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
       return userRoles.stream()
-                      .filter(entity -> entity.getName().equals(user))
+                      .filter(entity -> entity.getId().equals(userId))
                       .flatMap(entity -> entity.getRoles().stream())
                       .collect(Collectors.toSet());
    }
 
-   private Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groups) {
+   private Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
       return groupRoles.stream()
-                       .filter(entity -> groups.contains(entity.getName()))
+                       .filter(entity -> groupIds.contains(entity.getId()))
                        .flatMap(entity -> entity.getRoles().stream())
                        .collect(Collectors.toSet());
    }

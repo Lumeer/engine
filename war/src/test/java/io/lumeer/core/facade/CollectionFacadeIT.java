@@ -30,6 +30,7 @@ import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
@@ -38,12 +39,12 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.api.model.View;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -75,8 +76,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ee00";
 
-   private static final Permission USER_PERMISSION = new SimplePermission(USER, View.ROLES);
-   private static final Permission GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+   private Permission userPermission;
+   private Permission groupPermission;
+   private User user;
+   private Group group;
 
    private static final String ATTRIBUTE_NAME = "name";
    private static final String ATTRIBUTE_FULLNAME = "fullname";
@@ -104,6 +107,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private UserDao userDao;
 
    @Inject
+   private GroupDao groupDao;
+
+   @Inject
    private WorkspaceKeeper workspaceKeeper;
 
    @Before
@@ -116,13 +122,20 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(user);
+      this.user = userDao.createUser(user);
+
+      groupDao.setOrganization(storedOrganization);
+      Group group = new Group(GROUP);
+      this.group = groupDao.createGroup(group);
+
+      userPermission = new SimplePermission(this.user.getId(), Collection.ROLES);
+      groupPermission = new SimplePermission(this.group.getId(), Collections.singleton(Role.READ));
 
       JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);
 
       JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(USER, Role.toStringRoles(Project.ROLES)));
+      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Role.toStringRoles(Project.ROLES)));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -145,15 +158,15 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    private Collection createCollection(String code, String name) {
       Collection collection = prepareCollection(code, name);
-      collection.getPermissions().updateUserPermissions(USER_PERMISSION);
-      collection.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      collection.getPermissions().updateUserPermissions(userPermission);
+      collection.getPermissions().updateGroupPermissions(groupPermission);
       return collectionDao.createCollection(collection);
    }
 
    private Collection createCollection(String code, Attribute attribute) {
       Collection collection = prepareCollection(code);
-      collection.getPermissions().updateUserPermissions(USER_PERMISSION);
-      collection.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      collection.getPermissions().updateUserPermissions(userPermission);
+      collection.getPermissions().updateGroupPermissions(groupPermission);
       collection.updateAttribute(attribute.getFullName(), attribute);
       return collectionDao.createCollection(collection);
    }
@@ -174,7 +187,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedCollection.getName()).isEqualTo(NAME);
       assertions.assertThat(storedCollection.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedCollection.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(storedCollection.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -191,7 +204,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionByCode(CODE2);
       assertThat(storedCollection).isNotNull();
       assertThat(storedCollection.getName()).isEqualTo(NAME);
-      assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
    }
 
    @Test
@@ -216,10 +229,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedCollection.getName()).isEqualTo(NAME);
       assertions.assertThat(storedCollection.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedCollection.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedCollection.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
-      assertPermissions(storedCollection.getPermissions().getUserPermissions(), USER_PERMISSION);
+      assertPermissions(storedCollection.getPermissions().getUserPermissions(), userPermission);
+      assertPermissions(storedCollection.getPermissions().getGroupPermissions(), groupPermission);
    }
 
    @Test
@@ -301,45 +314,45 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = collectionFacade.getCollectionPermissions(collectionId);
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), this.userPermission);
+      assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
    }
 
    @Test
    public void testUpdateUserPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      SimplePermission userPermission = new SimplePermission(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       collectionFacade.updateUserPermissions(collectionId, userPermission);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
    }
 
    @Test
    public void testRemoveUserPermission() {
       String collectionId = createCollection(CODE).getId();
 
-      collectionFacade.removeUserPermission(collectionId, USER);
+      collectionFacade.removeUserPermission(collectionId, user.getId());
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
       assertThat(permissions.getUserPermissions()).isEmpty();
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
    }
 
    @Test
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      SimplePermission groupPermission = new SimplePermission(group.getId(), new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
       collectionFacade.updateGroupPermissions(collectionId, groupPermission);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), this.userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
@@ -347,11 +360,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testRemoveGroupPermission() {
       String collectionId = createCollection(CODE).getId();
 
-      collectionFacade.removeGroupPermission(collectionId, GROUP);
+      collectionFacade.removeGroupPermission(collectionId, group.getId());
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), this.userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 }

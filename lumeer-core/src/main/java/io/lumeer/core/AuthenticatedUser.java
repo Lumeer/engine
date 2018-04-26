@@ -20,6 +20,7 @@ package io.lumeer.core;
 
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.UserCache;
+import io.lumeer.storage.api.dao.UserDao;
 
 import org.keycloak.KeycloakPrincipal;
 
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
@@ -43,12 +45,51 @@ public class AuthenticatedUser implements Serializable {
    @Inject
    private UserCache userCache;
 
+   @Inject
+   private UserDao userDao;
+
+   @PostConstruct
+   public void checkUser() {
+      Optional<KeycloakPrincipal> principal = getPrincipal();
+      String keycloakId = principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getId() : null;
+
+      if (keycloakId != null) { // production
+         checkUserInProduction(keycloakId, getUserEmail());
+      } else {
+         userCache.createUserIfNeeded(getUserEmail());
+      }
+   }
+
    public User getCurrentUser() {
       String userEmail = getUserEmail();
       return userCache.getUser(userEmail);
    }
 
-   public String getCurrentUsername() {
+   public String getCurrentUserId() {
+      return getCurrentUser().getId();
+   }
+
+   private void checkUserInProduction(String keycloakId, String email) {
+      User userByKeycloak = userDao.getUserByKeycloakId(keycloakId);
+      if (userByKeycloak != null) {
+         if (!userByKeycloak.getEmail().equals(email)) {
+            userByKeycloak.setEmail(email);
+            userDao.updateUser(userByKeycloak.getId(), userByKeycloak);
+         }
+      } else {
+         User userByEmail = userDao.getUserByEmail(email);
+         if (userByEmail != null) {
+            userByEmail.setKeycloakId(keycloakId);
+            userDao.updateUser(userByEmail.getId(), userByEmail);
+         } else {
+            User user = new User(email);
+            user.setKeycloakId(keycloakId);
+            userDao.createUser(user);
+         }
+      }
+   }
+
+   private String getCurrentUserEmail() {
       return getCurrentUser().getEmail();
    }
 

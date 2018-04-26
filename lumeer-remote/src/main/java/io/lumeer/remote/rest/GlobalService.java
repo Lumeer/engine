@@ -16,14 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.remote.rest;
 
-import java.util.Set;
+import io.lumeer.api.model.User;
+import io.lumeer.core.AuthenticatedUser;
 
-public interface Permission {
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
-   String getId();
+@RequestScoped
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Path("/global")
+public class GlobalService extends AbstractService {
 
-   Set<Role> getRoles();
+   @Inject
+   private AuthenticatedUser authenticatedUser;
 
+   @GET
+   @Path("currentUser")
+   public User getCurrentUser() {
+      return authenticatedUser.getCurrentUser();
+   }
 }

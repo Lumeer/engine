@@ -31,26 +31,26 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class JsonPermission implements Permission {
 
-   private final String name;
+   private final String id;
    private final Set<String> roles;
 
    @JsonCreator
-   public JsonPermission(@JsonProperty("name") final String name,
+   public JsonPermission(@JsonProperty("id") final String id,
          @JsonProperty("roles") final Set<String> roles) {
-      this.name = name;
+      this.id = id;
       this.roles = roles;
    }
 
    public JsonPermission(final Permission permission) {
-      this.name = permission.getName();
+      this.id = permission.getId();
       this.roles = permission.getRoles().stream()
                              .map(Role::toString)
                              .collect(Collectors.toSet());
    }
 
    @Override
-   public String getName() {
-      return name;
+   public String getId() {
+      return id;
    }
 
    @Override
@@ -71,18 +71,18 @@ public class JsonPermission implements Permission {
 
       final Permission that = (Permission) o;
 
-      return getName() != null ? getName().equals(that.getName()) : that.getName() == null;
+      return getId() != null ? getId().equals(that.getId()) : that.getId() == null;
    }
 
    @Override
    public int hashCode() {
-      return getName() != null ? getName().hashCode() : 0;
+      return getId() != null ? getId().hashCode() : 0;
    }
 
    @Override
    public String toString() {
       return "JsonPermission{" +
-            "name='" + name + '\'' +
+            "id='" + id + '\'' +
             ", roles=" + roles +
             '}';
    }

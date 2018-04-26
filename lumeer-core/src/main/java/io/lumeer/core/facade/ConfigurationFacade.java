@@ -286,7 +286,7 @@ public class ConfigurationFacade implements Serializable {
     * @return Config value of the given key
     */
    public Config getUserConfiguration(final ConfigurationLevel levelIn, final String key) {
-      String configName = userConfigName(levelIn, getOrganizationId(), getProjectId(), getUserEmail());
+      String configName = userConfigName(levelIn, getOrganizationId(), getProjectId(), getUserId());
       return configurationManipulator.getConfiguration(USER_CONFIG_COLLECTION, configName, key);
    }
 
@@ -298,7 +298,7 @@ public class ConfigurationFacade implements Serializable {
     * @return List of configurations
     */
    public List<Config> getUserConfigurations(final ConfigurationLevel levelIn) {
-      String configName = userConfigName(levelIn, getOrganizationId(), getProjectId(), getUserEmail());
+      String configName = userConfigName(levelIn, getOrganizationId(), getProjectId(), getUserId());
       return configurationManipulator.getConfigurations(USER_CONFIG_COLLECTION, configName);
    }
 
@@ -477,7 +477,7 @@ public class ConfigurationFacade implements Serializable {
     *       configuration level
     */
    private void resetConfiguration(final ConfigurationLevel level) {
-      final String user = getUserEmail();
+      final String user = getUserId();
       final String organization = getOrganizationId();
       final String project;
 
@@ -514,7 +514,7 @@ public class ConfigurationFacade implements Serializable {
     *       configuration attribute name
     */
    private void resetConfigurationAttribute(final ConfigurationLevel level, final String attributeName) {
-      final String user = getUserEmail();
+      final String user = getUserId();
       final String organization = getOrganizationId();
       final String project;
 
@@ -606,7 +606,7 @@ public class ConfigurationFacade implements Serializable {
     *       configuration object
     */
    private void setConfiguration(final ConfigurationLevel level, final Config config) {
-      final String user = getUserEmail();
+      final String user = getUserId();
       final String organization = getOrganizationId();
       final String project;
 
@@ -636,7 +636,7 @@ public class ConfigurationFacade implements Serializable {
    }
 
    private void setConfigurations(final ConfigurationLevel level, final List<Config> configs, final boolean reset) {
-      final String user = getUserEmail();
+      final String user = getUserId();
       final String organization = getOrganizationId();
       final String project;
 
@@ -712,8 +712,8 @@ public class ConfigurationFacade implements Serializable {
       }
    }
 
-   private String getUserEmail(){
-      return authenticatedUser.getUserEmail();
+   private String getUserId(){
+      return authenticatedUser.getCurrentUserId();
    }
 
    private String getOrganizationId(){

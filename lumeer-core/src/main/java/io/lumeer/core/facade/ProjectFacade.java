@@ -69,7 +69,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project createProject(Project project) {
       checkOrganizationWriteRole();
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), Project.ROLES);
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
 
       Project storedProject = projectDao.createProject(project);
@@ -86,7 +86,7 @@ public class ProjectFacade extends AbstractFacade {
       keepStoredPermissions(project, storedProject.getPermissions());
       Project updatedProject = projectDao.updateProject(storedProject.getId(), project);
 
-      return keepOnlyActualUserRoles(updatedProject);
+      return mapResource(updatedProject);
    }
 
    public void deleteProject(final String projectCode) {
@@ -102,19 +102,19 @@ public class ProjectFacade extends AbstractFacade {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.READ);
 
-      return keepOnlyActualUserRoles(project);
+      return mapResource(project);
    }
 
    public List<Project> getProjects() {
-      User user = authenticatedUser.getCurrentUser();
+      String userId = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
-      DatabaseQuery query = DatabaseQuery.createBuilder(user.getEmail())
+      DatabaseQuery query = DatabaseQuery.createBuilder(userId)
                                          .groups(groups)
                                          .build();
 
       return projectDao.getProjects(query).stream()
-                       .map(this::keepOnlyActualUserRoles)
+                       .map(this::mapResource)
                        .collect(Collectors.toList());
    }
 
@@ -144,11 +144,11 @@ public class ProjectFacade extends AbstractFacade {
       return project.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String projectCode, final String user) {
+   public void removeUserPermission(final String projectCode, final String userId) {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
-      project.getPermissions().removeUserPermission(user);
+      project.getPermissions().removeUserPermission(userId);
       projectDao.updateProject(project.getId(), project);
    }
 
@@ -162,11 +162,11 @@ public class ProjectFacade extends AbstractFacade {
       return project.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String projectCode, final String group) {
+   public void removeGroupPermission(final String projectCode, final String groupId) {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
-      project.getPermissions().removeGroupPermission(group);
+      project.getPermissions().removeGroupPermission(groupId);
       projectDao.updateProject(project.getId(), project);
    }
 

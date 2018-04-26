@@ -47,7 +47,7 @@ public class ViewFacade extends AbstractFacade {
          view.setCode(this.generateViewCode(view.getName()));
       }
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), View.ROLES);
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
 
       return viewDao.createView(view);
@@ -60,7 +60,7 @@ public class ViewFacade extends AbstractFacade {
       keepStoredPermissions(view, storedView.getPermissions());
       View updatedView = viewDao.updateView(storedView.getId(), view);
 
-      return keepOnlyActualUserRoles(updatedView);
+      return mapResource(updatedView);
    }
 
    public void deleteView(final String code) {
@@ -74,14 +74,14 @@ public class ViewFacade extends AbstractFacade {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.READ);
 
-      return keepOnlyActualUserRoles(view);
+      return mapResource(view);
    }
 
    public List<View> getViews(Pagination pagination) {
       SearchQuery searchQuery = createPaginationQuery(pagination);
 
       return viewDao.getViews(searchQuery).stream()
-                    .map(this::keepOnlyActualUserRoles)
+                    .map(this::mapResource)
                     .collect(Collectors.toList());
    }
 
@@ -102,11 +102,11 @@ public class ViewFacade extends AbstractFacade {
       return view.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String code, final String user) {
+   public void removeUserPermission(final String code, final String userId) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
 
-      view.getPermissions().removeUserPermission(user);
+      view.getPermissions().removeUserPermission(userId);
       viewDao.updateView(view.getId(), view);
    }
 
@@ -120,11 +120,11 @@ public class ViewFacade extends AbstractFacade {
       return view.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String code, final String group) {
+   public void removeGroupPermission(final String code, final String groupId) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
 
-      view.getPermissions().removeGroupPermission(group);
+      view.getPermissions().removeGroupPermission(groupId);
       viewDao.updateView(view.getId(), view);
    }
 

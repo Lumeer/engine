@@ -20,7 +20,6 @@ package io.lumeer.storage.mongodb.dao;
 
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.model.MorphiaView;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
@@ -68,7 +67,7 @@ public abstract class MongoDao {
 
    private Query<MorphiaPermission> createPermissionQuery(String name) {
       return datastore.createQuery(MorphiaPermission.class)
-                      .filter(MorphiaPermission.NAME, name)
+                      .filter(MorphiaPermission.ID, name)
                       .field(MorphiaPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
    }
 

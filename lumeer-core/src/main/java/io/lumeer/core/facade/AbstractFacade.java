@@ -49,12 +49,19 @@ abstract class AbstractFacade {
 
    protected <T extends Resource> T keepOnlyActualUserRoles(final T resource) {
       Set<Role> roles = permissionsChecker.getActualRoles(resource);
-      Permission permission = new SimplePermission(authenticatedUser.getUserEmail(), roles);
+      Permission permission = new SimplePermission(authenticatedUser.getCurrentUserId(), roles);
 
       resource.getPermissions().clear();
       resource.getPermissions().updateUserPermissions(permission);
 
       return resource;
+   }
+
+   protected <T extends Resource> T mapResource(final T resource) {
+      if (permissionsChecker.hasRole(resource, Role.MANAGE)) {
+         return resource;
+      }
+      return keepOnlyActualUserRoles(resource);
    }
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
@@ -66,7 +73,7 @@ abstract class AbstractFacade {
    }
 
    protected SearchQuery createPaginationQuery(Pagination pagination) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user)

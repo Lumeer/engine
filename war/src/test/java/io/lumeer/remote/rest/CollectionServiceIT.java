@@ -82,8 +82,9 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final Set<Role> USER_ROLES = View.ROLES;
    private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
-   private static final Permission USER_PERMISSION = new SimplePermission(USER, USER_ROLES);
-   private static final Permission GROUP_PERMISSION = new SimplePermission(GROUP, GROUP_ROLES);
+   private Permission userPermission;
+   private Permission groupPermission;
+   private User user;
 
    private static final String CODE2 = "TCOLL2";
    private static final String NAME2 = "Test collection 2";
@@ -123,13 +124,16 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(user);
+      this.user = userDao.createUser(user);
+
+      userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
+      groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
 
       JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);
 
       JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -151,8 +155,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private Collection createCollection(String code, String name) {
       Collection collection = prepareCollection(code, name);
-      collection.getPermissions().updateUserPermissions(USER_PERMISSION);
-      collection.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      collection.getPermissions().updateUserPermissions(userPermission);
+      collection.getPermissions().updateGroupPermissions(groupPermission);
       collection.updateAttribute(ATTRIBUTE_FULLNAME, ATTRIBUTE);
       return collectionDao.createCollection(collection);
    }
@@ -181,7 +185,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedCollection.getName()).isEqualTo(NAME);
       assertions.assertThat(storedCollection.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedCollection.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(storedCollection.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -205,8 +209,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedCollection.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedCollection.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedCollection.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedCollection.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
+      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
 
       Collection storedCollection = collectionDao.getCollectionByCode(CODE2);
@@ -217,8 +221,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedCollection.getName()).isEqualTo(NAME);
       assertions.assertThat(storedCollection.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedCollection.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(storedCollection.getPermissions().getGroupPermissions()).containsOnly(GROUP_PERMISSION);
+      assertions.assertThat(storedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
+      assertions.assertThat(storedCollection.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
    }
 
@@ -253,8 +257,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedCollection.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedCollection.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedCollection.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedCollection.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
-      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).isEmpty();
+      assertions.assertThat(returnedCollection.getPermissions().getUserPermissions()).containsOnly(userPermission);
+      assertions.assertThat(returnedCollection.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
    }
 
@@ -274,14 +278,14 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE, CODE2);
 
       Permissions permissions1 = collections.get(0).getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
+      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
 
       Permissions permissions2 = collections.get(1).getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(USER_PERMISSION));
+      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
       assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
    }
 
    @Test
@@ -388,15 +392,15 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
       Permissions permissions = response.readEntity(JsonPermissions.class);
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testUpdateUserPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("users")
@@ -413,14 +417,14 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Permissions storedPermissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), userPermission);
-      assertPermissions(storedPermissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
    public void testRemoveUserPermission() {
       String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("users").path(USER)
+      Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("users").path(this.user.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
@@ -428,7 +432,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
    @Test
@@ -451,7 +455,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
       Permissions storedPermissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(storedPermissions).isNotNull();
-      assertPermissions(storedPermissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(storedPermissions.getUserPermissions(), userPermission);
       assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
    }
 
@@ -466,7 +470,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 }

@@ -87,8 +87,8 @@ public class LinkInstanceFacade  extends AbstractFacade{
    }
 
    private SearchQuery createSearchQuery(Query query) {
-      String user = authenticatedUser.getCurrentUsername();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+      String user = authenticatedUser.getCurrentUserId();
 
       return SearchQuery.createBuilder(user).groups(groups)
                         .documentIds(query.getDocumentIds())

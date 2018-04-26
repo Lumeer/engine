@@ -46,6 +46,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String ID = "_id";
    public static final String NAME = "name";
    public static final String EMAIL = "email";
+   public static final String KEYCLOAK_ID = "keycloakId";
    public static final String ALL_GROUPS = "allGroups";
    public static final String ORGANIZATION_ID = "organizationId";
    public static final String GROUPS = "groups";
@@ -85,24 +86,31 @@ public class UserCodec implements CollectibleCodec<User> {
       String id = bson.getObjectId(ID).toHexString();
       String name = bson.getString(NAME);
       String email = bson.getString(EMAIL);
+      String keycloakId = bson.getString(KEYCLOAK_ID);
 
       List<Document> documentList = bson.get(ALL_GROUPS, List.class);
       Map<String, Set<String>> allGroups = convertGroupsListToMap(documentList);
 
-      return new User(id, name, email, allGroups);
+      User user = new User(id, name, email, allGroups);
+      user.setKeycloakId(keycloakId);
+
+      return user;
    }
 
    @Override
    public void encode(final BsonWriter bsonWriter, final User user, final EncoderContext encoderContext) {
       Document bson = user.getId() != null ? new Document(ID, new ObjectId(user.getId())) : new Document();
       bson.append(NAME, user.getName())
-          .append(EMAIL, user.getEmail());
+          .append(EMAIL, user.getEmail())
+          .append(KEYCLOAK_ID, user.getKeycloakId());
 
       if (user.getGroups() != null) {
          List<Document> groupsArray = user.getGroups().entrySet().stream().map(entry -> new Document(ORGANIZATION_ID, entry.getKey())
                .append(GROUPS, entry.getValue())
          ).collect(Collectors.toList());
          bson.append(ALL_GROUPS, groupsArray);
+      } else {
+         bson.append(ALL_GROUPS, Collections.emptyList());
       }
 
       documentCodec.encode(bsonWriter, bson, encoderContext);

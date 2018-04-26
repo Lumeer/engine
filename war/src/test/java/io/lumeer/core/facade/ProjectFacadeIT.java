@@ -84,55 +84,56 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
 
-   private static final Permission USER_PERMISSION;
-   private static final Permission USER_READONLY_PERMISSION;
-   private static final Permission GROUP_PERMISSION;
-   private static final Permission STRANGER_PERMISSION;
+   private Permission userPermissions;
+   private Permission userReadonlyPermissions;
+   private Permission userStrangerPermissions;
+   private Permission groupPermissions;
+
+   private User user;
+   private User stranger;
 
    private static final String ORGANIZATION_CODE = "TORG";
 
-   static {
-      USER_PERMISSION = new SimplePermission(USER, Project.ROLES);
-      USER_READONLY_PERMISSION = new SimplePermission(USER_PERMISSION.getName(), Collections.singleton(Role.READ));
-      STRANGER_PERMISSION = new SimplePermission(STRANGER_USER, Collections.singleton(Role.MANAGE));
-      GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
-   }
-
    private Project createProject(String code) {
       Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
-      project.getPermissions().updateUserPermissions(USER_PERMISSION);
-      project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      project.getPermissions().updateUserPermissions(userPermissions);
+      project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    private Project createProjectWithReadOnlyPermissions(final String code) {
       Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
-      project.getPermissions().updateUserPermissions(USER_READONLY_PERMISSION, STRANGER_PERMISSION);
-      project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      project.getPermissions().updateUserPermissions(userReadonlyPermissions, userStrangerPermissions);
+      project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    private Project createProjectWithStrangerPermissions(final String code) {
       Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(
-            USER_PERMISSION,
-            new SimplePermission(STRANGER_USER, Collections.singleton(Role.MANAGE)));
-      project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+            userPermissions,
+            new SimplePermission(this.stranger.getId(), Collections.singleton(Role.MANAGE)));
+      project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    @Before
    public void configureProject() {
+      this.user = userDao.createUser(new User(USER));
+      this.stranger = userDao.createUser(new User(STRANGER_USER));
+
+      userPermissions = new SimplePermission(this.user.getId(), Project.ROLES);
+      userReadonlyPermissions = new SimplePermission(this.user.getId(), Collections.singleton(Role.READ));
+      userStrangerPermissions = new SimplePermission(this.stranger.getId(), Collections.singleton(Role.MANAGE));
+      groupPermissions = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+
       MorphiaOrganization organization = new MorphiaOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
-      organization.getPermissions().updateUserPermissions(new MorphiaPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization.getPermissions().updateUserPermissions(new MorphiaPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-
-      User user = new User(USER);
-      userDao.createUser(user);
 
       workspaceKeeper.setOrganization(ORGANIZATION_CODE);
    }
@@ -158,10 +159,10 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedProject.getName()).isEqualTo(NAME);
       assertions.assertThat(storedProject.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedProject.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
-      assertPermissions(storedProject.getPermissions().getUserPermissions(), USER_PERMISSION);
+      assertPermissions(storedProject.getPermissions().getUserPermissions(), userPermissions);
+      assertPermissions(storedProject.getPermissions().getGroupPermissions(), groupPermissions);
    }
 
    @Test
@@ -190,7 +191,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedProject.getName()).isEqualTo(NAME);
       assertions.assertThat(storedProject.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedProject.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertions.assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(userPermissions);
       assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
    }
@@ -200,7 +201,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       String id = createProject(CODE1).getId();
 
       Project updatedProject = new JsonProject(CODE2, NAME, ICON, COLOR, null, null);
-      updatedProject.getPermissions().removeUserPermission(USER);
+      updatedProject.getPermissions().removeUserPermission(this.user.getId());
 
       projectFacade.updateProject(CODE1, updatedProject);
 
@@ -210,7 +211,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       assertThat(storedProject.getName()).isEqualTo(NAME);
       assertThat(storedProject.getIcon()).isEqualTo(ICON);
       assertThat(storedProject.getColor()).isEqualTo(COLOR);
-      assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(USER_PERMISSION);
+      assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(userPermissions);
    }
 
    @Test
@@ -221,41 +222,41 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = projectFacade.getProjectPermissions(CODE1);
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermissions);
+      assertPermissions(permissions.getGroupPermissions(), groupPermissions);
 
       permissions = projectFacade.getProjectPermissions(CODE2);
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_READONLY_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userReadonlyPermissions);
 
       permissions = projectFacade.getProjectPermissions(CODE3);
       assertThat(permissions).isNotNull();
-      assertThat(permissions.getUserPermissions()).hasSize(2).contains(USER_PERMISSION, STRANGER_PERMISSION);
+      assertThat(permissions.getUserPermissions()).hasSize(2).contains(userPermissions, userStrangerPermissions);
    }
 
    @Test
    public void testUpdateUserPermissions() {
       createProject(CODE1);
 
-      SimplePermission userPermission = new SimplePermission(USER, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       projectFacade.updateUserPermissions(CODE1, userPermission);
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermissions);
    }
 
    @Test
    public void testRemoveUserPermission() {
       createProject(CODE1);
 
-      projectFacade.removeUserPermission(CODE1, USER);
+      projectFacade.removeUserPermission(CODE1, this.user.getId());
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
       Assertions.assertThat(permissions.getUserPermissions()).isEmpty();
-      assertPermissions(permissions.getGroupPermissions(), GROUP_PERMISSION);
+      assertPermissions(permissions.getGroupPermissions(), groupPermissions);
    }
 
    @Test
@@ -267,7 +268,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermissions);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
 
@@ -279,7 +280,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), USER_PERMISSION);
+      assertPermissions(permissions.getUserPermissions(), userPermissions);
       Assertions.assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 }

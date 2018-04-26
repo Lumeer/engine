@@ -130,7 +130,7 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
 
    private Query<MorphiaPermission> createPermissionQuery(String name) {
       return datastore.createQuery(MorphiaPermission.class)
-                      .filter(MorphiaPermission.NAME, name)
+                      .filter(MorphiaPermission.ID, name)
                       .field(MorphiaPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
    }
 

@@ -81,15 +81,11 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
    private static final JsonQuery QUERY;
-   private static final Permission USER_PERMISSION;
-   private static final Permission GROUP_PERMISSION;
-
+   private Permission userPermission;
+   private Permission groupPermission;
 
    static {
       QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
-
-      USER_PERMISSION = new SimplePermission(USER, View.ROLES);
-      GROUP_PERMISSION = new SimplePermission(GROUP, Collections.singleton(Role.READ));
    }
 
    @Inject
@@ -126,7 +122,10 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(user);
+      final User createdUser = userDao.createUser(user);
+
+      userPermission = new SimplePermission(createdUser.getId(), View.ROLES);
+      groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
 
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());
@@ -148,7 +147,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
       for (String name : COLLECTION_NAMES) {
          JsonPermissions collectionPermissions = new JsonPermissions();
-         collectionPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+         collectionPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
          JsonCollection jsonCollection = new JsonCollection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
          jsonCollection.setDocumentsCount(0);
          collectionIds.add(collectionDao.createCollection(jsonCollection).getId());
@@ -252,7 +251,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    @Test
    public void testSuggestViewsMaxSuggestions() {
       for (int i = 0; i < 20; i++) {
-         createView("someviewwwww"+i);
+         createView("someviewwwww" + i);
       }
       List<JsonView> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
       assertThat(views).hasSize(SUGGESTIONS_LIMIT);
@@ -262,19 +261,18 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       return new LinkType(null, name, Arrays.asList(collectionId1, collectionId2), Collections.emptyList());
    }
 
-
    private View prepareView(String name) {
-      return new JsonView(name, name, null, null, null,null,  QUERY, PERSPECTIVE, CONFIG);
+      return new JsonView(name, name, null, null, null, null, QUERY, PERSPECTIVE, CONFIG);
    }
 
    private View createView(String name) {
       View view = prepareView(name);
-      view.getPermissions().updateUserPermissions(USER_PERMISSION);
-      view.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
+      view.getPermissions().updateUserPermissions(userPermission);
+      view.getPermissions().updateGroupPermissions(groupPermission);
       return viewDao.createView(view);
    }
 
-   private View createViewWithoutPermissions(String name){
+   private View createViewWithoutPermissions(String name) {
       View view = prepareView(name);
       return viewDao.createView(view);
    }

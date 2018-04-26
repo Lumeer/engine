@@ -26,17 +26,17 @@ import java.util.Set;
 
 public class SimplePermission implements Permission {
 
-   private final String name;
+   private final String id;
    private final Set<Role> roles;
 
    public SimplePermission(final String name, final Set<Role> roles) {
-      this.name = name;
+      this.id = name;
       this.roles = roles;
    }
 
    @Override
-   public String getName() {
-      return name;
+   public String getId() {
+      return id;
    }
 
    @Override
@@ -55,18 +55,18 @@ public class SimplePermission implements Permission {
 
       final Permission that = (Permission) o;
 
-      return getName() != null ? getName().equals(that.getName()) : that.getName() == null;
+      return getId() != null ? getId().equals(that.getId()) : that.getId() == null;
    }
 
    @Override
    public int hashCode() {
-      return getName() != null ? getName().hashCode() : 0;
+      return getId() != null ? getId().hashCode() : 0;
    }
 
    @Override
    public String toString() {
       return "SimplePermission{" +
-            "name='" + name + '\'' +
+            "id='" + id + '\'' +
             ", roles=" + roles +
             '}';
    }

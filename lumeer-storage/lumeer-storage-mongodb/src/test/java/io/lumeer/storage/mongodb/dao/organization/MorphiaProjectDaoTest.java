@@ -67,13 +67,13 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
 
    static {
       MorphiaPermission userPermission = new MorphiaPermission();
-      userPermission.setName(USER);
+      userPermission.setId(USER);
       userPermission.setRoles(Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
 
       PERMISSIONS = new MorphiaPermissions();
       PERMISSIONS.updateUserPermissions(userPermission);
 
-      GROUP_PERMISSION.setName(GROUP);
+      GROUP_PERMISSION.setId(GROUP);
       GROUP_PERMISSION.setRoles(Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }

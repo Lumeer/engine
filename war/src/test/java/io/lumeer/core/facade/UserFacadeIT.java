@@ -72,16 +72,19 @@ public class UserFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configure() {
+      User user = new User(USER);
+      final User createdUser = userDao.createUser(user);
+
       JsonOrganization organization1 = new JsonOrganization();
       organization1.setCode("LMR");
       organization1.setPermissions(new JsonPermissions());
-      organization1.getPermissions().updateUserPermissions(new JsonPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organizationId1 = organizationDao.createOrganization(organization1).getId();
 
       JsonOrganization organization2 = new JsonOrganization();
       organization2.setCode("MRL");
       organization2.setPermissions(new JsonPermissions());
-      organization2.getPermissions().updateUserPermissions(new JsonPermission(USER, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization2.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
 
       JsonOrganization organization3 = new JsonOrganization();

@@ -141,7 +141,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(user);
+      final User createdUser = userDao.createUser(user);
 
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());
@@ -154,7 +154,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       documentDao.setProject(storedProject);
 
       JsonPermissions collectionPermissions = new JsonPermissions();
-      collectionPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      collectionPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       JsonCollection jsonCollection = new JsonCollection("col1", "col1", "icon", "color", collectionPermissions);
       jsonCollection.setDocumentsCount(0);
       String collection1 = collectionDao.createCollection(jsonCollection).getId();

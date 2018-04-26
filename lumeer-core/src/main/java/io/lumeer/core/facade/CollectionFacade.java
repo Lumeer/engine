@@ -72,7 +72,7 @@ public class CollectionFacade extends AbstractFacade {
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
 
-      return keepOnlyActualUserRoles(storedCollection);
+      return storedCollection;
    }
 
    public Collection updateCollection(String collectionId, Collection collection) {
@@ -81,7 +81,7 @@ public class CollectionFacade extends AbstractFacade {
 
       keepUnmodifiableFields(collection, storedCollection);
       Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection);
-      return keepOnlyActualUserRoles(updatedCollection);
+      return mapResource(updatedCollection);
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
@@ -112,13 +112,14 @@ public class CollectionFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
-      return keepOnlyActualUserRoles(collection);
+      return mapResource(collection);
    }
 
    public List<Collection> getCollections(Pagination pagination) {
       SearchQuery searchQuery = createPaginationQuery(pagination);
+
       return collectionDao.getCollections(searchQuery).stream()
-                          .map(this::keepOnlyActualUserRoles)
+                          .map(this::mapResource)
                           .collect(Collectors.toList());
    }
 
@@ -161,11 +162,11 @@ public class CollectionFacade extends AbstractFacade {
       return updatedCollection.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String collectionId, final String user) {
+   public void removeUserPermission(final String collectionId, final String userId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.getPermissions().removeUserPermission(user);
+      collection.getPermissions().removeUserPermission(userId);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 
@@ -179,11 +180,11 @@ public class CollectionFacade extends AbstractFacade {
       return updatedCollection.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String collectionId, final String group) {
+   public void removeGroupPermission(final String collectionId, final String groupId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.getPermissions().removeGroupPermission(group);
+      collection.getPermissions().removeGroupPermission(groupId);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 
@@ -201,7 +202,7 @@ public class CollectionFacade extends AbstractFacade {
          collection.setCode(generateCollectionCode(collection.getName()));
       }
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUsername(), Collection.ROLES);
+      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
 
       return collectionDao.createCollection(collection);
@@ -213,7 +214,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private SearchQuery createQueryForLinkTypes(String collectionId) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)
@@ -222,7 +223,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private SearchQuery createQueryForLinkInstances(List<LinkType> linkTypes) {
-      String user = authenticatedUser.getCurrentUsername();
+      String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return SearchQuery.createBuilder(user).groups(groups)

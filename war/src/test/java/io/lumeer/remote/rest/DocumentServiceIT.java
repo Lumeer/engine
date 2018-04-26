@@ -85,6 +85,8 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    private static final String DOCUMENTS_PATH_PREFIX = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
    private static final String DOCUMENTS_URL_PREFIX = SERVER_URL + DOCUMENTS_PATH_PREFIX;
 
+   private User user;
+
    @Inject
    private CollectionDao collectionDao;
 
@@ -115,13 +117,13 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       User user = new User(USER);
-      userDao.createUser(user);
+      this.user = userDao.createUser(user);
 
       JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);
 
       JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -129,7 +131,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       collectionDao.createCollectionsRepository(storedProject);
 
       JsonPermissions collectionPermissions = new JsonPermissions();
-      collectionPermissions.updateUserPermissions(new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      collectionPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       JsonCollection jsonCollection = new JsonCollection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection = collectionDao.createCollection(jsonCollection);
 
@@ -147,7 +149,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    private Document createDocument() {
       Document document = prepareDocument();
       document.setCollectionId(collection.getId());
-      document.setCreatedBy(USER);
+      document.setCreatedBy(this.user.getId());
       document.setCreationDate(LocalDateTime.now());
       document.setDataVersion(DocumentFacade.INITIAL_VERSION);
       Document storedDocument = documentDao.createDocument(document);
@@ -182,7 +184,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(USER);
+      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(LocalDateTime.now());
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
       assertions.assertThat(storedDocument.getUpdateDate()).isNull();
@@ -214,9 +216,9 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(USER);
+      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
-      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(USER);
+      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(LocalDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
       assertions.assertThat(storedDocument.getData()).isNull();
@@ -246,9 +248,9 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(USER);
+      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
-      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(USER);
+      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(LocalDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
       assertions.assertThat(storedDocument.getData()).isNull();
@@ -292,7 +294,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(document.getId()).isEqualTo(id);
       assertions.assertThat(document.getCollectionId()).isNull();
-      assertions.assertThat(document.getCreatedBy()).isEqualTo(USER);
+      assertions.assertThat(document.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(LocalDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();
       assertions.assertThat(document.getUpdateDate()).isNull();
