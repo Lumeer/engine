@@ -45,7 +45,7 @@ public class UserFacade extends AbstractFacade {
 
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
-      checkPermissions(organizationId);
+      checkPermissions(organizationId, Role.MANAGE);
 
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
@@ -62,7 +62,7 @@ public class UserFacade extends AbstractFacade {
 
    public User updateUser(String organizationId, String userId, User user) {
       checkOrganizationInUser(organizationId, user);
-      checkPermissions(organizationId);
+      checkPermissions(organizationId, Role.MANAGE);
 
       User storedUser = userDao.getUserById(userId);
       User updatedUser = updateStoredUserGroups(storedUser, user);
@@ -86,7 +86,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    public void deleteUser(String organizationId, String userId) {
-      checkPermissions(organizationId);
+      checkPermissions(organizationId, Role.MANAGE);
 
       userDao.deleteUserGroups(organizationId, userId);
 
@@ -95,7 +95,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    public List<User> getUsers(String organizationId) {
-      checkPermissions(organizationId);
+      checkPermissions(organizationId, Role.READ);
 
       return userDao.getAllUsers(organizationId).stream()
                     .map(user -> keepOnlyOrganizationGroups(user, organizationId))
@@ -112,9 +112,9 @@ public class UserFacade extends AbstractFacade {
       return user;
    }
 
-   private void checkPermissions(String organizationId) {
+   private void checkPermissions(final String organizationId, final Role role) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
-      permissionsChecker.checkRole(organization, Role.MANAGE);
+      permissionsChecker.checkRole(organization, role);
    }
 
    private void checkOrganizationInUser(String organizationId, User user) {
