@@ -30,11 +30,10 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.facade.CompanyContactFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
-import io.lumeer.core.facade.PaymentGatewayFacade;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -166,6 +165,12 @@ public class OrganizationService extends AbstractService {
       return paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganization(organizationCode));
    }
 
+   @GET
+   @Path("serviceLimits")
+   public Map<String, ServiceLimits> getAllServiceLimits() {
+      return paymentFacade.getAllServiceLimits(organizationFacade.getOrganizations());
+   }
+
    /* Creates a new payment. Communicates with payment gateway. Returns the payment updated with payment ID.
       Must pass RETURN_URL header for the successful redirect. */
    @POST
@@ -180,13 +185,13 @@ public class OrganizationService extends AbstractService {
 
    @GET
    @Path("{organizationCode}/contact")
-   public CompanyContact getCompanyContact(@PathParam("organizationCode")  final String organizationCode) {
+   public CompanyContact getCompanyContact(@PathParam("organizationCode") final String organizationCode) {
       return companyContactFacade.getCompanyContact(organizationFacade.getOrganization(organizationCode));
    }
 
    @PUT
    @Path("{organizationCode}/contact")
-   public CompanyContact setCompanyContact(@PathParam("organizationCode")  final String organizationCode, final CompanyContact companyContact) {
+   public CompanyContact setCompanyContact(@PathParam("organizationCode") final String organizationCode, final CompanyContact companyContact) {
       return companyContactFacade.setCompanyContact(organizationFacade.getOrganization(organizationCode), companyContact);
    }
 
