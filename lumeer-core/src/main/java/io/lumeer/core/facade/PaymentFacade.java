@@ -29,8 +29,10 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -107,6 +109,10 @@ public class PaymentFacade extends AbstractFacade {
       }
 
       return serviceLevel;
+   }
+
+   public Map<String, ServiceLimits> getAllServiceLimits(List<Organization> organizations){
+       return organizations.stream().collect(Collectors.toMap(Organization::getId, this::getCurrentServiceLimits));
    }
 
    public ServiceLimits getCurrentServiceLimits(final Organization organization) {
