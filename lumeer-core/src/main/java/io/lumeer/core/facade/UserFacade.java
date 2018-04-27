@@ -53,7 +53,11 @@ public class UserFacade extends AbstractFacade {
          return userDao.createUser(user);
       }
 
-      return updateStoredUserGroups(organizationId, storedUser, user);
+      User updatedUser = updateStoredUserGroups(storedUser, user);
+
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
 
    public User updateUser(String organizationId, String userId, User user) {
@@ -61,11 +65,14 @@ public class UserFacade extends AbstractFacade {
       checkPermissions(organizationId);
 
       User storedUser = userDao.getUserById(userId);
+      User updatedUser = updateStoredUserGroups(storedUser, user);
 
-      return updateStoredUserGroups(organizationId, storedUser, user);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
 
-   private User updateStoredUserGroups(String organizationId, User storedUser, User user) {
+   private User updateStoredUserGroups(User storedUser, User user) {
       Map<String, Set<String>> groups = storedUser.getGroups();
       if (groups == null) {
          groups = user.getGroups();
@@ -75,14 +82,16 @@ public class UserFacade extends AbstractFacade {
 
       user.setGroups(groups);
 
-      User returnedUser = userDao.updateUser(storedUser.getId(), user);
-      return keepOnlyOrganizationGroups(returnedUser, organizationId);
+      return userDao.updateUser(storedUser.getId(), user);
    }
 
    public void deleteUser(String organizationId, String userId) {
       checkPermissions(organizationId);
 
       userDao.deleteUserGroups(organizationId, userId);
+
+      User storedUser = userDao.getUserById(userId);
+      userCache.updateUser(storedUser.getEmail(), storedUser);
    }
 
    public List<User> getUsers(String organizationId) {

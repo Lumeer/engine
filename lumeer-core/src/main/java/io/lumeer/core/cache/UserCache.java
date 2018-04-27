@@ -44,28 +44,14 @@ public class UserCache {
    }
 
    public User getUser(String email) {
-      return userCache.computeIfAbsent(email, this::getOrCreateUser);
-   }
-
-   public void createUserIfNeeded(String email) {
-      userCache.computeIfAbsent(email, this::getOrCreateUser);
-   }
-
-   private User getOrCreateUser(String email) {
-      User userByEmail = userDao.getUserByEmail(email);
-      if (userByEmail != null) {
-         return userByEmail;
-      }
-
-      User user = new User(email);
-      return userDao.createUser(user);
+      return userCache.computeIfAbsent(email, userDao::getUserByEmail);
    }
 
    public void updateUser(String username, User user) {
       userCache.set(username, user);
    }
 
-   public void remoteUser(String username) {
+   public void removeUser(String username) {
       userCache.remove(username);
    }
 

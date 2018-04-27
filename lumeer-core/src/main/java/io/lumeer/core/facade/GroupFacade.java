@@ -71,6 +71,8 @@ public class GroupFacade extends AbstractFacade {
 
       Organization organization = workspaceKeeper.getOrganization().get();
       userDao.deleteGroupFromUsers(organization.getId(), groupId);
+
+      userCache.clear();
    }
 
    private void checkPermissions() {

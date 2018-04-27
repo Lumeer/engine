@@ -197,7 +197,39 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testDeleteUser(){
+   public void testDeleteUsersGroups() {
+      User usr1 = prepareUser("email1");
+      Map<String, Set<String>> groups = new HashMap<>(usr1.getGroups());
+      groups.put(organization2.getId(), GROUPS);
+      usr1.setGroups(groups);
+      User stored1 = mongoUserDao.createUser(usr1);
+
+      User stored2 = mongoUserDao.createUser(prepareUser("email2"));
+
+      User usr3 = prepareUser("email3");
+      Map<String, Set<String>> groups2 = new HashMap<>(usr3.getGroups());
+      groups2.put(organization2.getId(), GROUPS);
+      usr3.setGroups(groups2);
+      User stored3 = mongoUserDao.createUser(usr3);
+
+      assertThat(stored1.getGroups().keySet()).containsOnly(organization.getId(), organization2.getId());
+      assertThat(stored2.getGroups().keySet()).containsOnly(organization.getId());
+      assertThat(stored3.getGroups().keySet()).containsOnly(organization.getId(), organization2.getId());
+
+      mongoUserDao.deleteUsersGroups(organization.getId());
+
+      stored1 = mongoUserDao.getUserById(stored1.getId());
+      stored2 = mongoUserDao.getUserById(stored2.getId());
+      stored3 = mongoUserDao.getUserById(stored3.getId());
+
+      assertThat(stored1.getGroups().keySet()).containsOnly(organization2.getId());
+      assertThat(stored2.getGroups().keySet()).isEmpty();
+      assertThat(stored3.getGroups().keySet()).containsOnly(organization2.getId());
+
+   }
+
+   @Test
+   public void testDeleteUser() {
       String id = mongoUserDao.createUser(prepareUser()).getId();
 
       User storedUser = mongoUserDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
@@ -287,7 +319,11 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    }
 
    private User prepareUser() {
-      User user = new User(EMAIL);
+      return prepareUser(EMAIL);
+   }
+
+   private User prepareUser(String email) {
+      User user = new User(email);
       user.setName(USERNAME);
       user.setGroups(Collections.singletonMap(organization.getId(), GROUPS));
       return user;
