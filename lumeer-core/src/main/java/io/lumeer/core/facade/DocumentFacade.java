@@ -68,6 +68,7 @@ public class DocumentFacade extends AbstractFacade {
    public Document createDocument(String collectionId, Document document) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
+      permissionsChecker.checkDocumentLimits(document);
 
       DataDocument data = DocumentUtils.checkDocumentKeysValidity(document.getData());
 

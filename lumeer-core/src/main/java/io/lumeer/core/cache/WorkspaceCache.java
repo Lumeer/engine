@@ -21,6 +21,7 @@ package io.lumeer.core.cache;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
@@ -46,12 +47,14 @@ public class WorkspaceCache {
    private Cache<Organization> organizationCache;
    private Cache<Project> projectCache;
    private Cache<Payment.ServiceLevel> serviceLevelCache;
+   private Cache<ServiceLimits> serviceLimitsCache;
 
    @PostConstruct
    public void initCaches() {
       organizationCache = cacheFactory.getCache();
       projectCache = cacheFactory.getCache();
       serviceLevelCache = cacheFactory.getCache();
+      serviceLimitsCache = cacheFactory.getCache();
    }
 
    public Organization getOrganization(String organizationCode) {
@@ -88,6 +91,18 @@ public class WorkspaceCache {
 
    public void removeServiceLevel(final String organizationCode) {
       serviceLevelCache.remove(organizationCode);
+   }
+
+   public void setServiceLimits(final String organizationCode, final ServiceLimits serviceLimits) {
+      serviceLimitsCache.set(organizationCode, serviceLimits);
+   }
+
+   public ServiceLimits getServiceLimits(final String organizationCode) {
+      return serviceLimitsCache.get(organizationCode);
+   }
+
+   public void removeServiceLimits(final String organizationCode) {
+      serviceLimitsCache.remove(organizationCode);
    }
 
    public void clear() {

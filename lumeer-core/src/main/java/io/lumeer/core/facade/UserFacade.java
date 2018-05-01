@@ -46,6 +46,7 @@ public class UserFacade extends AbstractFacade {
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkPermissions(organizationId, Role.MANAGE);
+      checkUserCreate(organizationId);
 
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
@@ -124,6 +125,10 @@ public class UserFacade extends AbstractFacade {
       if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
          throw new BadFormatException("User " + user + " is in incorrect format");
       }
+   }
+
+   private void checkUserCreate(final String organizationId) {
+      permissionsChecker.checkUserCreationLimits(userDao.getAllUsersCount(organizationId));
    }
 
 }

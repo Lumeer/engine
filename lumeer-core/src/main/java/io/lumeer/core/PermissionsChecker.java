@@ -18,12 +18,18 @@
  */
 package io.lumeer.core;
 
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Resource;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageStats;
 
 import java.util.Collections;
 import java.util.Set;
@@ -42,6 +48,12 @@ public class PermissionsChecker {
 
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
+
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private DataStorage dataStorage;
 
    public PermissionsChecker() {
    }
@@ -114,4 +126,55 @@ public class PermissionsChecker {
                        .collect(Collectors.toSet());
    }
 
+   /**
+    * Checks whether it is possible to create more resources of the given type.
+    * @param resource Resource to be created.
+    * @param currentCount Current no of resources of the given type.
+    */
+   public void checkCreationLimits(final Resource resource, final long currentCount) {
+      final ServiceLimits limits = workspaceKeeper.getServiceLimits();
+
+      if (resource.getType().equals(ResourceType.PROJECT)) {
+         if (limits.getProjects() > 0 && limits.getProjects() >= currentCount) {
+            throw new ServiceLimitsExceededException(limits.getProjects(), resource);
+         }
+      }
+
+      if (resource.getType().equals(ResourceType.COLLECTION)) {
+         if (limits.getFiles() > 0 && limits.getFiles() >= currentCount) {
+            throw new ServiceLimitsExceededException(limits.getFiles(), resource);
+         }
+      }
+   }
+
+   /**
+    * Checks whether it is possible to create more documents.
+    * @param resource Resource to be created.
+    * @param currentCount Current no of documents.
+    */
+   public void checkDocumentLimits(final Document document) {
+      final ServiceLimits limits = workspaceKeeper.getServiceLimits();
+      final DataStorageStats storageStats = dataStorage.getDbStats();
+      long dbSizeMb = storageStats.getDataSize() / (1024 * 1024L);
+
+      if (limits.getDocuments() > 0 && storageStats.getDocuments() >= limits.getDocuments()) {
+         throw new ServiceLimitsExceededException(limits.getDocuments(), storageStats.getDocuments(), document);
+      }
+
+      if (limits.getDbSizeMb() > 0 && limits.getDbSizeMb() < dbSizeMb) {
+         throw new ServiceLimitsExceededException(limits.getDbSizeMb(), dbSizeMb);
+      }
+   }
+
+   /**
+    * Checks whether it is possible to create more users in the current organization.
+    * @param currentCount Current no of users.
+    */
+   public void checkUserCreationLimits(final long currentCount) {
+      final ServiceLimits limits = workspaceKeeper.getServiceLimits();
+
+      if (limits.getUsers() > 0 && limits.getUsers() >= currentCount) {
+         throw new ServiceLimitsExceededException(limits.getUsers());
+      }
+   }
 }
