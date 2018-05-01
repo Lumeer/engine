@@ -28,6 +28,7 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageStats;
 
@@ -53,6 +54,7 @@ public class PermissionsChecker {
    private WorkspaceKeeper workspaceKeeper;
 
    @Inject
+   @UserDataStorage
    private DataStorage dataStorage;
 
    public PermissionsChecker() {

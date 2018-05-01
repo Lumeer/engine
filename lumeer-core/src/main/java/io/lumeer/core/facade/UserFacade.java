@@ -21,9 +21,9 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
-import io.lumeer.core.exception.BadFormatException;
 
 import java.util.Collections;
 import java.util.HashMap;

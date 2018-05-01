@@ -23,7 +23,6 @@ import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
-import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
