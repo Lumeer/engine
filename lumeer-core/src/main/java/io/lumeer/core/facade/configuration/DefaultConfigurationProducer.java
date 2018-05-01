@@ -40,6 +40,8 @@ public class DefaultConfigurationProducer implements Serializable {
 
    private Map<String, String> defaultConfiguration = null;
 
+   public static final String GOPAY_API = "gopay_api";
+
    public DefaultConfigurationProducer() {
       defaultConfiguration = new HashMap<>();
 

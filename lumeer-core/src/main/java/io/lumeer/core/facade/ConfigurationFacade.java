@@ -55,8 +55,14 @@ public class ConfigurationFacade implements Serializable {
    private static final String SYSTEM_DB_PASSWORD_PROPERTY = "sys_db_passwd";
    private static final String SYSTEM_DB_USE_SSL = "sys_db_ssl";
 
+   private static final String ENVIRONMENT = "environment";
+
    public enum ConfigurationLevel {
       USER_GLOBAL, USER_PROJECT, USER_ORGANIZATION, PROJECT, ORGANIZATION
+   }
+
+   public enum DeployEnvironment {
+      DEVEL, STAGING, PRODUCTION;
    }
 
    private static Logger log = Resources.produceLog(ConfigurationLevel.class.getName());
@@ -136,6 +142,18 @@ public class ConfigurationFacade implements Serializable {
 
    public Boolean getSystemDataStorageUseSsl() {
       return Boolean.valueOf(defaultConfigurationProducer.get(SYSTEM_DB_USE_SSL));
+   }
+
+   public DeployEnvironment getEnvironment() {
+      final String value = defaultConfigurationProducer.get(ENVIRONMENT);
+
+      if (value != null) {
+         final DeployEnvironment env = DeployEnvironment.valueOf(value.toUpperCase());
+
+         return env != null ? env : DeployEnvironment.DEVEL;
+      }
+
+      return DeployEnvironment.DEVEL;
    }
 
    /**
