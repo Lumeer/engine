@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.dto.JsonOrganization;
@@ -29,6 +30,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -54,6 +56,7 @@ public class UserFacadeIT extends IntegrationTestBase {
    private static final String USER1 = "user1@gmail.com";
    private static final String USER2 = "user2@gmail.com";
    private static final String USER3 = "user3@gmail.com";
+   private static final String USER4 = "user4@gmail.com";
 
    private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
@@ -229,6 +232,17 @@ public class UserFacadeIT extends IntegrationTestBase {
    public void testGetAllUsersNoPermission() {
       assertThatThrownBy(() -> userFacade.getUsers(organizationIdNotPermission))
             .isInstanceOf(NoPermissionException.class);
+   }
+
+   @Test
+   public void testTooManyUsers() {
+      userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
+      userFacade.createUser(organizationId1, prepareUser(organizationId1, USER2));
+      userFacade.createUser(organizationId1, prepareUser(organizationId1, USER3));
+
+      assertThatExceptionOfType(ServiceLimitsExceededException.class).isThrownBy(() -> {
+         userFacade.createUser(organizationId1, prepareUser(organizationId1, USER4));
+      }).as("On Trial plan, only 3 users should be allowed but it was possible to create 4th one.");
    }
 
    private User createUser(String organizationId, String user) {

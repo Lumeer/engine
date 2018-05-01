@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.dto.JsonAttribute;
@@ -41,6 +42,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -366,5 +368,18 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), this.userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
+   }
+
+   @Test
+   public void testTooManyCollections() {
+      for (int i = 1; i <= 10; i++) {
+         Collection collection = prepareCollection(CODE + i);
+         collectionFacade.createCollection(collection);
+      }
+
+      Collection collection = prepareCollection(CODE + "11");
+      assertThatExceptionOfType(ServiceLimitsExceededException.class).isThrownBy(() -> {
+         collectionFacade.createCollection(collection);
+      }).as("On Trial plan, it should be possible to create only 10 collections but it was possible to create another one.");
    }
 }

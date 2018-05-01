@@ -348,4 +348,21 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(permissions.getGroupPermissions()).isEmpty();
    }
 
+   private Response createProjectViaRest(final String code) {
+      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      Entity entity = Entity.json(project);
+      return client.target(PROJECT_URL).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
+   }
+
+   @Test
+   public void testTooManyProjects() {
+      Response response = createProjectViaRest(CODE1);
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      response = createProjectViaRest(CODE2);
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.PAYMENT_REQUIRED);
+   }
+
 }

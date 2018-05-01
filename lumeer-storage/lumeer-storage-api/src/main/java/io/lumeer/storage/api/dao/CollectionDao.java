@@ -52,6 +52,8 @@ public interface CollectionDao {
 
    List<Collection> getCollectionsByAttributes(SuggestionQuery query);
 
+   long getCollectionsCount();
+
    Set<String> getAllCollectionCodes();
 
    Set<String> getAllCollectionNames();

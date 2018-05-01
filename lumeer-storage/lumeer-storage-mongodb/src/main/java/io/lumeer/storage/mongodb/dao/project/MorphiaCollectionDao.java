@@ -144,6 +144,11 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
                       .collect(Collectors.toSet());
    }
 
+   @Override
+   public long getCollectionsCount() {
+      return datastore.createQuery(databaseCollection(), MorphiaCollection.class).count();
+   }
+
    private List<Collection> getCollections(Query<MorphiaCollection> morphiaQuery, DatabaseQuery databaseQuery) {
       FindOptions findOptions = createFindOptions(databaseQuery);
       return new ArrayList<>(morphiaQuery.asList(findOptions));

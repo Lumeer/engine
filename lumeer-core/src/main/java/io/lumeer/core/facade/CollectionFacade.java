@@ -68,6 +68,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
+      permissionsChecker.checkCreationLimits(collection, collectionDao.getCollectionsCount());
 
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());

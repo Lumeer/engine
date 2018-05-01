@@ -137,13 +137,13 @@ public class PermissionsChecker {
       final ServiceLimits limits = workspaceKeeper.getServiceLimits();
 
       if (resource.getType().equals(ResourceType.PROJECT)) {
-         if (limits.getProjects() > 0 && limits.getProjects() >= currentCount) {
+         if (limits.getProjects() > 0 && limits.getProjects() <= currentCount) {
             throw new ServiceLimitsExceededException(limits.getProjects(), resource);
          }
       }
 
       if (resource.getType().equals(ResourceType.COLLECTION)) {
-         if (limits.getFiles() > 0 && limits.getFiles() >= currentCount) {
+         if (limits.getFiles() > 0 && limits.getFiles() <= currentCount) {
             throw new ServiceLimitsExceededException(limits.getFiles(), resource);
          }
       }
@@ -151,8 +151,7 @@ public class PermissionsChecker {
 
    /**
     * Checks whether it is possible to create more documents.
-    * @param resource Resource to be created.
-    * @param currentCount Current no of documents.
+    * @param document The document that is about to be created.
     */
    public void checkDocumentLimits(final Document document) {
       final ServiceLimits limits = workspaceKeeper.getServiceLimits();
@@ -175,7 +174,7 @@ public class PermissionsChecker {
    public void checkUserCreationLimits(final long currentCount) {
       final ServiceLimits limits = workspaceKeeper.getServiceLimits();
 
-      if (limits.getUsers() > 0 && limits.getUsers() >= currentCount) {
+      if (limits.getUsers() > 0 && limits.getUsers() <= currentCount) {
          throw new ServiceLimitsExceededException(limits.getUsers());
       }
    }
