@@ -24,7 +24,6 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
-import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
@@ -69,6 +68,8 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project createProject(Project project) {
       checkOrganizationWriteRole();
+      checkProjectCreate(project);
+      
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
 
@@ -193,5 +194,9 @@ public class ProjectFacade extends AbstractFacade {
 
       Organization organization = workspaceKeeper.getOrganization().get();
       permissionsChecker.checkRole(organization, Role.WRITE);
+   }
+
+   private void checkProjectCreate(final Project project) {
+      permissionsChecker.checkCreationLimits(project, projectDao.getProjectsCount());
    }
 }

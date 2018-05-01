@@ -21,9 +21,9 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
-import io.lumeer.core.exception.BadFormatException;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +46,7 @@ public class UserFacade extends AbstractFacade {
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkPermissions(organizationId, Role.MANAGE);
+      checkUserCreate(organizationId);
 
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
@@ -124,6 +125,10 @@ public class UserFacade extends AbstractFacade {
       if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
          throw new BadFormatException("User " + user + " is in incorrect format");
       }
+   }
+
+   private void checkUserCreate(final String organizationId) {
+      permissionsChecker.checkUserCreationLimits(userDao.getAllUsersCount(organizationId));
    }
 
 }

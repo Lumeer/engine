@@ -41,6 +41,8 @@ public interface ProjectDao {
 
    List<Project> getProjects(DatabaseQuery query);
 
+   long getProjectsCount();
+
    void deleteProject(String projectId);
 
    Project updateProject(String projectId, Project project);

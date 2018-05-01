@@ -44,4 +44,5 @@ public interface UserDao {
 
    List<User> getAllUsers(String organizationId);
 
+   long getAllUsersCount(String organizationId);
 }

@@ -117,6 +117,11 @@ public class PaymentFacade extends AbstractFacade {
 
    public ServiceLimits getCurrentServiceLimits(final Organization organization) {
       checkReadPermissions(organization);
+      ServiceLimits serviceLimits = workspaceKeeper.getServiceLimits(organization);
+
+      if (serviceLimits != null) {
+         return serviceLimits;
+      }
 
       final Payment payment = getCurrentPayment(organization);
       final Optional<Date> validUntil = getValidUntil(getFutureContinuousPayments(organization, new Date()));
@@ -125,11 +130,15 @@ public class PaymentFacade extends AbstractFacade {
          workspaceKeeper.setServiceLevel(organization, payment.getServiceLevel());
 
          if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
-            return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
+            serviceLimits = new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
                   ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get());
+            workspaceKeeper.setServiceLimits(organization, serviceLimits);
+            return serviceLimits;
          }
       }
+
+      workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
 
       return ServiceLimits.FREE_LIMITS;
    }
@@ -140,7 +149,6 @@ public class PaymentFacade extends AbstractFacade {
       Payment payment = getPaymentAt(organization, date);
 
       while (payment != null) {
-         System.out.println("pajoment " + payment.toString());
          result.add(payment);
          payment = getPaymentAt(organization, new Date(payment.getValidUntil().getTime() + TimeUnit.MINUTES.toMillis(1)));
       }
@@ -175,6 +183,7 @@ public class PaymentFacade extends AbstractFacade {
 
       currentPayment = null;
       workspaceKeeper.clearServiceLevel(organization);
+      workspaceKeeper.clearServiceLimits(organization);
 
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);
       payment.setState(paymentGateway.getPaymentStatus(payment.getPaymentId()));

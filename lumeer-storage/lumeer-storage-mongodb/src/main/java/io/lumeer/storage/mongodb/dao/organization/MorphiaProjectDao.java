@@ -109,6 +109,11 @@ public class MorphiaProjectDao extends OrganizationScopedDao implements ProjectD
       return new ArrayList<>(projectQuery.asList(findOptions));
    }
 
+   @Override
+   public long getProjectsCount() {
+      return datastore.createQuery(databaseCollection(), MorphiaProject.class).count();
+   }
+
    private Query<MorphiaProject> createProjectQuery(DatabaseQuery query) {
       Query<MorphiaProject> projectQuery = datastore.createQuery(databaseCollection(), MorphiaProject.class);
 

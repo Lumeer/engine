@@ -22,6 +22,7 @@ import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.exception.PaymentGatewayException;
+import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
@@ -95,6 +96,10 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
 
       if (e instanceof PaymentGatewayException) {
          return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error while communicating with the payment gateway.").type(MediaType.TEXT_PLAIN).build();
+      }
+
+      if (e instanceof ServiceLimitsExceededException) {
+         return Response.status(Response.Status.PAYMENT_REQUIRED).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
