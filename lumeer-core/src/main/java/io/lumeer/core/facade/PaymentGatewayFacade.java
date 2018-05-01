@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Payment;
 import io.lumeer.core.exception.PaymentGatewayException;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -29,7 +30,9 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 
 import cz.gopay.api.v3.GPClientException;
 import cz.gopay.api.v3.IGPConnector;
@@ -49,7 +52,7 @@ import cz.gopay.api.v3.model.payment.support.PaymentInstrument;
 @ApplicationScoped
 public class PaymentGatewayFacade {
 
-   private static final String GOPAY_API = "https://gw.sandbox.gopay.com/axis/EPaymentServiceV2?wsdl";
+   private static String GOPAY_API = "https://gw.sandbox.gopay.com/axis/EPaymentServiceV2?wsdl";
 
    private static final String CLIENT_ID = "1754050331";
    private static final String CLIENT_CREDENTIALS = "";
@@ -81,6 +84,21 @@ public class PaymentGatewayFacade {
    private IGPConnector connector;
 
    private boolean tokenAllType;
+
+   @Inject
+   private ConfigurationFacade configurationFacade;
+
+   @Inject
+   private DefaultConfigurationProducer defaultConfigurationProducer;
+
+   @PostConstruct
+   public void init() {
+      GOPAY_API = defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_API);
+      
+      if (!configurationFacade.getEnvironment().equals(ConfigurationFacade.DeployEnvironment.DEVEL)) {
+         setDryRun(false);
+      }
+   }
 
    public Payment createPayment(final Payment payment, final String returnUrl, final String notifyUrl) {
       if (dryRun) {
