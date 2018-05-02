@@ -33,14 +33,11 @@ import org.mongodb.morphia.annotations.Indexes;
 })
 public class MorphiaProject extends MorphiaResource implements Project {
 
-   private int collectionsCount;
-
    public MorphiaProject() {
    }
 
    public MorphiaProject(Project project) {
       super(project);
-      this.collectionsCount = project.getCollectionsCount();
    }
 
    @Override
@@ -52,17 +49,7 @@ public class MorphiaProject extends MorphiaResource implements Project {
             ", icon='" + icon + '\'' +
             ", color='" + color + '\'' +
             ", permissions=" + permissions +
-            ", collectionsCount=" + collectionsCount +
             '}';
-   }
-
-   @Override
-   public int getCollectionsCount() {
-      return collectionsCount;
-   }
-
-   public void setCollectionsCount(final int collectionsCount) {
-      this.collectionsCount = collectionsCount;
    }
 
 }
