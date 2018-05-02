@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class JsonProject extends JsonResource implements Project {
 
-   private Integer collectionsCount;
+   private int collectionsCount;
 
    public JsonProject() {
    }
@@ -41,12 +41,21 @@ public class JsonProject extends JsonResource implements Project {
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
-         @JsonProperty(PERMISSIONS) final JsonPermissions permissions) {
+         @JsonProperty(PERMISSIONS) final JsonPermissions permissions,
+         @JsonProperty(COLLECTIONS_COUNT) final int collectionsCount) {
       super(code, name, icon, color, description, permissions);
+      this.collectionsCount = collectionsCount;
+   }
+
+   public JsonProject(final String code, final String name, final String icon, final String color,
+         final String description, final JsonPermissions permissions) {
+      super(code, name, icon, color, description, permissions);
+      this.collectionsCount = 0;
    }
 
    public JsonProject(Project project) {
       super(project);
+      this.collectionsCount = project.getCollectionsCount();
    }
 
    @Override
@@ -57,14 +66,16 @@ public class JsonProject extends JsonResource implements Project {
             ", icon='" + icon + '\'' +
             ", color='" + color + '\'' +
             ", permissions=" + permissions +
+            ", collectionsCount=" + collectionsCount +
             '}';
    }
 
-   public Integer getCollectionsCount() {
+   @Override
+   public int getCollectionsCount() {
       return collectionsCount;
    }
 
-   public void setCollectionsCount(final Integer collectionsCount) {
+   public void setCollectionsCount(final int collectionsCount) {
       this.collectionsCount = collectionsCount;
    }
 

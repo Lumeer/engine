@@ -24,6 +24,8 @@ import java.util.Set;
 
 public interface Project extends Resource {
 
+   String COLLECTIONS_COUNT = "collectionsCount";
+
    Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
 
    @Override
@@ -31,4 +33,5 @@ public interface Project extends Resource {
       return ResourceType.PROJECT;
    }
 
+   int getCollectionsCount();
 }
