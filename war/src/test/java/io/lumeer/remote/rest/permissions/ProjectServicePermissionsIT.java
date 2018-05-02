@@ -133,7 +133,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      JsonOrganization fetchedProject = response.readEntity(JsonOrganization.class);
+      JsonProject fetchedProject = response.readEntity(JsonProject.class);
       assertThat(fetchedProject.getCode()).isEqualTo(projectCode);
       assertThat(fetchedProject.getName()).isEqualTo(projectName);
    }

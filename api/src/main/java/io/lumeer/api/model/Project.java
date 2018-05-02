@@ -30,5 +30,4 @@ public interface Project extends Resource {
    default ResourceType getType() {
       return ResourceType.PROJECT;
    }
-
 }

@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 
 public class JsonProject extends JsonResource implements Project {
 
+   private int collectionsCount;
+
    public JsonProject() {
    }
 
@@ -56,6 +58,14 @@ public class JsonProject extends JsonResource implements Project {
             ", color='" + color + '\'' +
             ", permissions=" + permissions +
             '}';
+   }
+
+   public int getCollectionsCount() {
+      return collectionsCount;
+   }
+
+   public void setCollectionsCount(final int collectionsCount) {
+      this.collectionsCount = collectionsCount;
    }
 
    public static JsonProject convert(Project project) {

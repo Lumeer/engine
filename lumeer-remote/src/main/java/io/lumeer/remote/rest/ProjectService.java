@@ -25,6 +25,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.ProjectFacade;
 
 import java.util.List;
@@ -67,7 +68,9 @@ public class ProjectService extends AbstractService {
    public JsonProject createProject(JsonProject project) {
       Project storedProject = projectFacade.createProject(project);
 
-      return JsonProject.convert(storedProject);
+      JsonProject returnedProject = JsonProject.convert(storedProject);
+      returnedProject.setCollectionsCount(0);
+      return returnedProject;
    }
 
    @PUT
@@ -75,7 +78,9 @@ public class ProjectService extends AbstractService {
    public JsonProject updateProject(@PathParam("projectCode") String projectCode, JsonProject project) {
       Project storedProject = projectFacade.updateProject(projectCode, project);
 
-      return JsonProject.convert(storedProject);
+      JsonProject returnedProject = JsonProject.convert(storedProject);
+      returnedProject.setCollectionsCount(projectFacade.getCollectionsCount(returnedProject));
+      return returnedProject;
    }
 
    @DELETE
@@ -90,13 +95,20 @@ public class ProjectService extends AbstractService {
    @Path("{projectCode}")
    public JsonProject getProject(@PathParam("projectCode") String projectCode) {
       Project project = projectFacade.getProject(projectCode);
-      return JsonProject.convert(project);
+
+      JsonProject returnedProject = JsonProject.convert(project);
+      returnedProject.setCollectionsCount(projectFacade.getCollectionsCount(returnedProject));
+      return returnedProject;
    }
 
    @GET
    public List<JsonProject> getProjects() {
       List<Project> projects = projectFacade.getProjects();
-      return JsonProject.convert(projects);
+
+      List<JsonProject> returnedProjects = JsonProject.convert(projects);
+      returnedProjects.forEach(project -> project.setCollectionsCount(projectFacade.getCollectionsCount(project)));
+
+      return returnedProjects;
    }
 
    @GET

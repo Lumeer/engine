@@ -69,7 +69,7 @@ public class ProjectFacade extends AbstractFacade {
    public Project createProject(Project project) {
       checkOrganizationWriteRole();
       checkProjectCreate(project);
-      
+
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
 
@@ -194,6 +194,11 @@ public class ProjectFacade extends AbstractFacade {
 
       Organization organization = workspaceKeeper.getOrganization().get();
       permissionsChecker.checkRole(organization, Role.WRITE);
+   }
+
+   public int getCollectionsCount(Project project) {
+      collectionDao.setProject(project);
+      return (int) collectionDao.getCollectionsCount();
    }
 
    private void checkProjectCreate(final Project project) {
