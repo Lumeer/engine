@@ -119,6 +119,14 @@ public class CollectionService extends AbstractService {
       return JsonAttribute.convert(attributes);
    }
 
+   @POST
+   @Path("{collectionId}/attributes")
+   public JsonAttribute createCollectionAttribute(@PathParam("collectionId") String collectionId, JsonAttribute attribute) {
+      Attribute storedAttribute = collectionFacade.createCollectionAttribute(collectionId, attribute);
+
+      return JsonAttribute.convert(storedAttribute);
+   }
+
    @PUT
    @Path("{collectionId}/attributes/{attributeId}")
    public JsonAttribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId, JsonAttribute attribute) {

@@ -65,6 +65,7 @@ public class JsonCollection extends JsonResource implements Collection {
       this.attributes = attributes != null ? attributes : new LinkedHashSet<>();
       this.documentsCount = 0;
       this.lastAttributeNum = 0;
+      this.attributePrefix = "";
    }
 
    public JsonCollection(Collection collection) {

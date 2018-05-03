@@ -130,19 +130,24 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getAllCollectionNames();
    }
 
+   public Attribute createCollectionAttribute(String collectionId, Attribute attribute) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.MANAGE);
+
+      collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
+      attribute.setId(collection.getAttributePrefix() + collection.getLastAttributeNum());
+      collection.createAttribute(attribute);
+
+      collectionDao.updateCollection(collection.getId(), collection);
+
+      return attribute;
+   }
+
    public Attribute updateCollectionAttribute(String collectionId, String attributeId, Attribute attribute) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      boolean creating = collection.getAttributes().stream().noneMatch(attr -> attr.getId().equals(attributeId));
-      if (creating) {
-         collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
-         attribute.setId(collection.getAttributePrefix() + collection.getLastAttributeNum());
-
-         collection.createAttribute(attribute);
-      } else {
-         collection.updateAttribute(attributeId, attribute);
-      }
+      collection.updateAttribute(attributeId, attribute);
 
       collectionDao.updateCollection(collection.getId(), collection);
 
