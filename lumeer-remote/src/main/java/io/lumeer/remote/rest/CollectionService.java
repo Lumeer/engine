@@ -120,23 +120,23 @@ public class CollectionService extends AbstractService {
    }
 
    @PUT
-   @Path("{collectionId}/attributes/{attributeFullName}")
-   public JsonAttribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeFullName") String attributeFullName, JsonAttribute attribute) {
-      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionId, attributeFullName, attribute);
+   @Path("{collectionId}/attributes/{attributeId}")
+   public JsonAttribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId, JsonAttribute attribute) {
+      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionId, attributeId, attribute);
 
       return JsonAttribute.convert(storedAttribute);
    }
 
    @DELETE
-   @Path("{collectionId}/attributes/{attributeFullName}")
-   public Response deleteCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeFullName") String attributeFullName) {
-      if (attributeFullName == null) {
-         throw new BadRequestException("attributeFullName");
+   @Path("{collectionId}/attributes/{attributeId}")
+   public Response deleteCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId) {
+      if (attributeId == null) {
+         throw new BadRequestException("attributeId");
       }
 
-      collectionFacade.deleteCollectionAttribute(collectionId, attributeFullName);
+      collectionFacade.deleteCollectionAttribute(collectionId, attributeId);
 
-      return Response.ok().link(getParentUri(attributeFullName), "parent").build();
+      return Response.ok().link(getParentUri(attributeId), "parent").build();
    }
 
    @GET

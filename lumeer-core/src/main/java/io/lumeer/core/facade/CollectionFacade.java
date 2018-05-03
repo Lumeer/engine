@@ -40,6 +40,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -68,9 +69,10 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
-      permissionsChecker.checkCreationLimits(collection, collectionDao.getCollectionsCount());
+      long collectionsCount = collectionDao.getCollectionsCount();
+      permissionsChecker.checkCreationLimits(collection, collectionsCount);
 
-      Collection storedCollection = createCollectionMetadata(collection);
+      Collection storedCollection = createCollectionMetadata(collection, collectionsCount);
       dataDao.createDataRepository(storedCollection.getId());
 
       return storedCollection;
@@ -128,22 +130,34 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getAllCollectionNames();
    }
 
-   public Attribute updateCollectionAttribute(String collectionId, String attributeFullName, Attribute attribute) {
+   public Attribute updateCollectionAttribute(String collectionId, String attributeId, Attribute attribute) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.updateAttribute(attributeFullName, attribute);
+      boolean creating = collection.getAttributes().stream().noneMatch(attr -> attr.getId().equals(attributeId));
+      if (creating) {
+         collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
+         attribute.setId(collection.getAttributePrefix() + collection.getLastAttributeNum());
+
+         collection.createAttribute(attribute);
+      } else {
+         collection.updateAttribute(attributeId, attribute);
+      }
+
       collectionDao.updateCollection(collection.getId(), collection);
 
       return attribute;
    }
 
-   public void deleteCollectionAttribute(String collectionId, String attributeFullName) {
+   public void deleteCollectionAttribute(String collectionId, String attributeId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.deleteAttribute(attributeFullName);
-      collectionDao.updateCollection(collection.getId(), collection);
+      Optional<Attribute> toDelete = collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      if (toDelete.isPresent()) {
+         collection.deleteAttribute(toDelete.get().getName());
+         collectionDao.updateCollection(collection.getId(), collection);
+      }
    }
 
    public Permissions getCollectionPermissions(final String collectionId) {
@@ -198,10 +212,13 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(project, Role.WRITE);
    }
 
-   private Collection createCollectionMetadata(Collection collection) {
+   private Collection createCollectionMetadata(Collection collection, long collectionsCount) {
       if (collection.getCode() == null || collection.getCode().isEmpty()) {
          collection.setCode(generateCollectionCode(collection.getName()));
       }
+
+      collection.setAttributePrefix(generateAttributePrefix(collectionsCount + 1));
+      collection.setLastAttributeNum(0);
 
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
@@ -212,6 +229,16 @@ public class CollectionFacade extends AbstractFacade {
    private String generateCollectionCode(String collectionName) {
       Set<String> existingCodes = collectionDao.getAllCollectionCodes();
       return CodeGenerator.generate(existingCodes, collectionName);
+   }
+
+   private String generateAttributePrefix(long order) {
+      StringBuilder prefix = new StringBuilder();
+      while (order > 0) {
+         long numeric = (order - 1) % 26;
+         prefix.insert(0, ((char) (numeric + 97)));
+         order = (long) Math.floor((order - 1) / 26);
+      }
+      return prefix.toString();
    }
 
    private SearchQuery createQueryForLinkTypes(String collectionId) {

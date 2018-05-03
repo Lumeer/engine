@@ -36,7 +36,6 @@ import io.lumeer.storage.api.query.SearchQuery;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -157,7 +156,7 @@ public class DocumentFacade extends AbstractFacade {
 
    private void updateCollectionMetadata(Collection collection, Set<String> attributesToInc, Set<String> attributesToDec, int documentCountDiff) {
       Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
-                                                       .collect(Collectors.toMap(Attribute::getFullName, Function.identity()));
+                                                       .collect(Collectors.toMap(Attribute::getName, Function.identity()));
 
       oldAttributes.keySet().forEach(attributeName -> {
          if (attributesToInc.contains(attributeName)) {
@@ -171,24 +170,21 @@ public class DocumentFacade extends AbstractFacade {
 
       });
 
-      Set<Attribute> newAttributes = attributesToInc.stream()
-                                                    .map(attributeName -> new JsonAttribute(extractAttributeName(attributeName), attributeName, Collections.emptySet(), 1))
-                                                    .collect(Collectors.toSet());
+      Set<Attribute> newAttributes = new HashSet<>();
+
+      int num = collection.getLastAttributeNum();
+      for (String attributeName : attributesToInc) {
+         num++;
+         newAttributes.add(new JsonAttribute(collection.getAttributePrefix() + num, attributeName, Collections.emptySet(), 1));
+      }
 
       newAttributes.addAll(oldAttributes.values());
 
       collection.setAttributes(newAttributes);
       collection.setLastTimeUsed(LocalDateTime.now());
       collection.setDocumentsCount(collection.getDocumentsCount() + documentCountDiff);
+      collection.setLastAttributeNum(num);
       collectionDao.updateCollection(collection.getId(), collection);
-   }
-
-   private String extractAttributeName(String attributeName) {
-      if (!attributeName.contains(".")) {
-         return attributeName;
-      }
-      String[] parts = attributeName.split(".");
-      return parts[parts.length - 1];
    }
 
    public Document getDocument(String collectionId, String documentId) {

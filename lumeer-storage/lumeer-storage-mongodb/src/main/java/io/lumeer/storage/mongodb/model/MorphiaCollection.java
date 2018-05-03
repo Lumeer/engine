@@ -35,6 +35,7 @@ import org.mongodb.morphia.utils.IndexType;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity(noClassnameStored = true)
@@ -53,6 +54,8 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    public static final String ATTRIBUTES = "attributes";
    public static final String DOCUMENTS_COUNT = "docCount";
    public static final String LAST_TIME_USED = "lastTimeUsed";
+   public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
+   public static final String ATTRIBUTE_PREFIX = "attributePrefix";
 
    @Embedded(ATTRIBUTES)
    private Set<MorphiaAttribute> attributes;
@@ -63,6 +66,12 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    @Property(LAST_TIME_USED)
    private LocalDateTime lastTimeUsed;
 
+   @Property(LAST_ATTRIBUTE_NUM)
+   private Integer lastAttributeNum;
+
+   @Property(ATTRIBUTE_PREFIX)
+   private String attributePrefix;
+
    public MorphiaCollection() {
    }
 
@@ -72,6 +81,8 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
       this.attributes = MorphiaAttribute.convert(collection.getAttributes());
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
+      this.lastAttributeNum = collection.getLastAttributeNum();
+      this.attributePrefix = collection.getAttributePrefix();
    }
 
    @Override
@@ -84,18 +95,24 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    }
 
    @Override
-   public void updateAttribute(final String attributeFullName, final Attribute attribute) {
-      attributes.removeIf(a -> a.getFullName().equals(attributeFullName));
+   public void createAttribute(final Attribute attribute) {
+      attributes.add(MorphiaAttribute.convert(attribute));
+   }
+
+   @Override
+   public void updateAttribute(final String attributeId, final Attribute attribute) {
+      Optional<MorphiaAttribute> oldAttribute = attributes.stream().filter(attr -> attribute.getId().equals(attribute.getId())).findFirst();
+      attributes.removeIf(a -> a.getId().equals(attributeId));
       attributes.add(MorphiaAttribute.convert(attribute));
 
-      if (!attribute.getFullName().equals(attributeFullName)) {
-         AttributeUtil.renameChildAttributes(attributes, attributeFullName, attribute.getFullName());
+      if (oldAttribute.isPresent() && !oldAttribute.get().getName().equals(attribute.getName())) {
+         AttributeUtil.renameChildAttributes(attributes, oldAttribute.get().getName(), attribute.getName());
       }
    }
 
    @Override
-   public void deleteAttribute(final String attributeFullName) {
-      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeFullName));
+   public void deleteAttribute(final String attributeName) {
+      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeName));
    }
 
    @Override
@@ -116,6 +133,27 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    public void setLastTimeUsed(final LocalDateTime lastTimeUsed) {
       this.lastTimeUsed = lastTimeUsed;
    }
+
+   @Override
+   public Integer getLastAttributeNum() {
+      return lastAttributeNum;
+   }
+
+   @Override
+   public void setLastAttributeNum(final Integer lastAttributeNum) {
+      this.lastAttributeNum = lastAttributeNum;
+   }
+
+   @Override
+   public String getAttributePrefix() {
+      return attributePrefix;
+   }
+
+   @Override
+   public void setAttributePrefix(final String attributePrefix) {
+      this.attributePrefix = attributePrefix;
+   }
+
 
    @Override
    public boolean equals(final Object o) {

@@ -30,16 +30,16 @@ import java.util.stream.Collectors;
 @Embedded
 public class MorphiaAttribute implements Attribute {
 
+   public static final String ID = "id";
    public static final String NAME = "name";
-   public static final String FULL_NAME = "fullName";
    public static final String CONSTRAINTS = "constraints";
    public static final String USAGE_COUNT = "usageCount";
 
+   @Property(ID)
+   private String id;
+
    @Property(NAME)
    private String name;
-
-   @Property(FULL_NAME)
-   private String fullName;
 
    @Property(CONSTRAINTS)
    private Set<String> constraints;
@@ -51,8 +51,8 @@ public class MorphiaAttribute implements Attribute {
    }
 
    public MorphiaAttribute(Attribute attribute) {
+      this.id = attribute.getId();
       this.name = attribute.getName();
-      this.fullName = attribute.getFullName();
       this.constraints = new HashSet<>(attribute.getConstraints());
       this.usageCount = attribute.getUsageCount();
    }
@@ -68,13 +68,13 @@ public class MorphiaAttribute implements Attribute {
    }
 
    @Override
-   public String getFullName() {
-      return fullName;
+   public String getId() {
+      return id;
    }
 
    @Override
-   public void setFullName(final String fullName) {
-      this.fullName = fullName;
+   public void setId(final String id) {
+      this.id = id;
    }
 
    @Override
@@ -103,19 +103,19 @@ public class MorphiaAttribute implements Attribute {
 
       final Attribute that = (Attribute) o;
 
-      return getFullName() != null ? getFullName().equals(that.getFullName()) : that.getFullName() == null;
+      return getId() != null ? getId().equals(that.getId()) : that.getId() == null;
    }
 
    @Override
    public int hashCode() {
-      return getFullName() != null ? getFullName().hashCode() : 0;
+      return getId() != null ? getId().hashCode() : 0;
    }
 
    @Override
    public String toString() {
       return "MongoAttribute{" +
-            "name='" + name + '\'' +
-            ", fullName='" + fullName + '\'' +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
             ", constraints=" + constraints +
             ", usageCount=" + usageCount +
             '}';

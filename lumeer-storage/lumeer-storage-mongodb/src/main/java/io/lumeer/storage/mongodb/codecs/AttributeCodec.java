@@ -34,8 +34,8 @@ import java.util.List;
 
 public class AttributeCodec implements Codec<JsonAttribute> {
 
+   public static final String ID = "id";
    public static final String NAME = "name";
-   public static final String FULLNAME = "fullName";
    public static final String CONSTRAINTS = "constraints";
    public static final String USAGE_COUNT = "usageCount";
 
@@ -53,19 +53,19 @@ public class AttributeCodec implements Codec<JsonAttribute> {
    }
 
    public static JsonAttribute convertFromDocument(final Document document) {
+      String id = document.getString(ID);
       String name = document.getString(NAME);
-      String fullName = document.getString(FULLNAME);
       List<String> constraints = document.get(CONSTRAINTS, List.class);
       Integer usageCount = document.getInteger(USAGE_COUNT);
 
-      return new JsonAttribute(name, fullName, new HashSet<>(constraints), usageCount);
+      return new JsonAttribute(id, name, new HashSet<>(constraints), usageCount);
    }
 
    @Override
    public void encode(final BsonWriter writer, final JsonAttribute value, final EncoderContext encoderContext) {
       Document bson = new Document()
+            .append(ID, value.getId())
             .append(NAME, value.getName())
-            .append(FULLNAME, value.getFullName())
             .append(CONSTRAINTS, value.getConstraints())
             .append(USAGE_COUNT, value.getUsageCount());
 

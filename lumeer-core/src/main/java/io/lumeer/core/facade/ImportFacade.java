@@ -142,13 +142,15 @@ public class ImportFacade extends AbstractFacade {
 
    private void addCollectionMetadata(Collection collection, String[] headers, int[] counts, int documentsCount) {
       Set<Attribute> attributes = new HashSet<>();
+      String prefix = collection.getAttributePrefix();
       for (int i = 0; i < headers.length; i++) {
-         attributes.add(new JsonAttribute(headers[i], headers[i], Collections.emptySet(), counts[i]));
+         attributes.add(new JsonAttribute(prefix + (i + 1), headers[i], Collections.emptySet(), counts[i]));
       }
 
       collection.setAttributes(attributes);
       collection.setDocumentsCount(documentsCount);
       collection.setLastTimeUsed(LocalDateTime.now());
+      collection.setLastAttributeNum(headers.length + 1);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 

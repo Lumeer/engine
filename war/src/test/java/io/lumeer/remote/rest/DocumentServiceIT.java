@@ -60,10 +60,8 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 
 @RunWith(Arquillian.class)
 public class DocumentServiceIT extends ServiceIntegrationTestBase {

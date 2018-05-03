@@ -25,23 +25,23 @@ import java.util.Set;
 
 public class AttributeUtil {
 
-   public static boolean isEqualOrChild(Attribute attribute, String attributeFullName) {
-      return attribute.getFullName().equals(attributeFullName) || attribute.getFullName().startsWith(attributeFullName + '.');
+   public static boolean isEqualOrChild(Attribute attribute, String attributeName) {
+      return attribute.getName().equals(attributeName) || attribute.getName().startsWith(attributeName + '.');
    }
 
-   public static void renameChildAttributes(Set<? extends Attribute> attributes, String oldParentFullName, String newParentFullName) {
-      String prefix = oldParentFullName + '.';
+   public static void renameChildAttributes(Set<? extends Attribute> attributes, String oldParentName, String newParentName) {
+      String prefix = oldParentName + '.';
       attributes.forEach(attribute -> {
-         if (attribute.getFullName().startsWith(prefix)) {
-            renameChildAttribute(attribute, oldParentFullName, newParentFullName);
+         if (attribute.getName().startsWith(prefix)) {
+            renameChildAttribute(attribute, oldParentName, newParentName);
          }
       });
    }
 
-   private static void renameChildAttribute(Attribute attribute, String oldParentFullName, String newParentFullName) {
-      String[] parts = attribute.getFullName().split(oldParentFullName, 2);
-      String newFullName = newParentFullName.concat(parts[1]);
-      attribute.setFullName(newFullName);
+   private static void renameChildAttribute(Attribute attribute, String oldParentName, String newParentName) {
+      String[] parts = attribute.getName().split(oldParentName, 2);
+      String newName = newParentName.concat(parts[1]);
+      attribute.setName(newName);
    }
 
 }

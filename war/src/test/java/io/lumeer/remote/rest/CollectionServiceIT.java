@@ -89,14 +89,14 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private static final String CODE2 = "TCOLL2";
    private static final String NAME2 = "Test collection 2";
 
-   private static final String ATTRIBUTE_NAME = "name";
-   private static final String ATTRIBUTE_FULLNAME = "fullname";
+   private static final String ATTRIBUTE_ID = "a1";
+   private static final String ATTRIBUTE_NAME = "fullname";
    private static final Set<String> ATTRIBUTE_CONSTRAINTS = Collections.emptySet();
    private static final Integer ATTRIBUTE_COUNT = 0;
 
-   private static final String ATTRIBUTE_FULLNAME2 = "fullname";
+   private static final String ATTRIBUTE_NAME2 = "fullname2";
 
-   private static final JsonAttribute ATTRIBUTE = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+   private static final JsonAttribute ATTRIBUTE = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
 
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String COLLECTIONS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
@@ -163,7 +163,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = prepareCollection(code, name);
       collection.getPermissions().updateUserPermissions(userPermission);
       collection.getPermissions().updateGroupPermissions(groupPermission);
-      collection.updateAttribute(ATTRIBUTE_FULLNAME, ATTRIBUTE);
+      collection.createAttribute(ATTRIBUTE);
       return collectionDao.createCollection(collection);
    }
 
@@ -327,8 +327,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
       JsonAttribute attribute = attributes.get(0);
       SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(attribute.getId()).isEqualTo(ATTRIBUTE_ID);
       assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME);
-      assertions.assertThat(attribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME);
       assertions.assertThat(attribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
       assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
@@ -339,10 +339,10 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       Entity entity = Entity.json(updatedAttribute);
 
-      Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_FULLNAME)
+      Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_ID)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -352,8 +352,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       });
 
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME);
-      assertions.assertThat(attribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME2);
+      assertions.assertThat(attribute.getId()).isEqualTo(ATTRIBUTE_ID);
+      assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
       assertions.assertThat(attribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
       assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
@@ -364,8 +364,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
       Attribute storedAttribute = storedAttributes.iterator().next();
       assertions = new SoftAssertions();
-      assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
-      assertions.assertThat(storedAttribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME2);
+      assertions.assertThat(storedAttribute.getId()).isEqualTo(ATTRIBUTE_ID);
+      assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
       assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
@@ -376,7 +376,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_FULLNAME)
+      Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_ID)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
