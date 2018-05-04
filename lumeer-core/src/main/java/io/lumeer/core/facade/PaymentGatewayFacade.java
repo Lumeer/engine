@@ -52,7 +52,7 @@ import cz.gopay.api.v3.model.payment.support.PaymentInstrument;
 @ApplicationScoped
 public class PaymentGatewayFacade {
 
-   private static String GOPAY_API = "https://gw.sandbox.gopay.com/axis/EPaymentServiceV2?wsdl";
+   private static String GOPAY_API = "https://gw.sandbox.gopay.com/api";
 
    private static final String CLIENT_ID = "1754050331";
    private static final String CLIENT_CREDENTIALS = "";
