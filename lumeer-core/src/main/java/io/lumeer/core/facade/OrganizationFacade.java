@@ -101,6 +101,13 @@ public class OrganizationFacade extends AbstractFacade {
       return mapResource(organization);
    }
 
+   public Organization getOrganizationById(final String id) {
+      final Organization organization = organizationDao.getOrganizationById(id);
+      permissionsChecker.checkRole(organization, Role.READ);
+
+      return mapResource(organization);
+   }
+
    public List<Organization> getOrganizations() {
       String userEmail = authenticatedUser.getCurrentUserId();
       DatabaseQuery query = DatabaseQuery.createBuilder(userEmail)

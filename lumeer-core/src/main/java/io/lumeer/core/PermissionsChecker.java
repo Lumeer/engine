@@ -28,6 +28,7 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
@@ -56,6 +57,9 @@ public class PermissionsChecker {
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
 
    @Inject
    @UserDataStorage
@@ -173,10 +177,11 @@ public class PermissionsChecker {
 
    /**
     * Checks whether it is possible to create more users in the current organization.
+    * @param organizationId Organization ID where the user is being added.
     * @param currentCount Current no of users.
     */
-   public void checkUserCreationLimits(final long currentCount) {
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+   public void checkUserCreationLimits(final String organizationId, final long currentCount) {
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganizationById(organizationId));
 
       if (limits.getUsers() > 0 && limits.getUsers() <= currentCount) {
          throw new ServiceLimitsExceededException(limits.getUsers());
