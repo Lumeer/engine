@@ -45,7 +45,6 @@ public class JsonCollection extends JsonResource implements Collection {
    private LocalDateTime lastTimeUsed;
 
    private Integer lastAttributeNum;
-   private String attributePrefix;
 
    public JsonCollection(final String code, final String name, final String icon, final String color, final JsonPermissions permissions) {
       this(code, name, icon, color, "", permissions, new LinkedHashSet<>());
@@ -65,7 +64,6 @@ public class JsonCollection extends JsonResource implements Collection {
       this.attributes = attributes != null ? attributes : new LinkedHashSet<>();
       this.documentsCount = 0;
       this.lastAttributeNum = 0;
-      this.attributePrefix = "";
    }
 
    public JsonCollection(Collection collection) {
@@ -75,7 +73,6 @@ public class JsonCollection extends JsonResource implements Collection {
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
       this.lastAttributeNum = collection.getLastAttributeNum();
-      this.attributePrefix = collection.getAttributePrefix();
    }
 
    @Override
@@ -137,16 +134,6 @@ public class JsonCollection extends JsonResource implements Collection {
    @Override
    public void setLastAttributeNum(final Integer lastAttributeNum) {
       this.lastAttributeNum = lastAttributeNum;
-   }
-
-   @Override
-   public String getAttributePrefix() {
-      return attributePrefix;
-   }
-
-   @Override
-   public void setAttributePrefix(final String attributePrefix) {
-      this.attributePrefix = attributePrefix;
    }
 
    @Override

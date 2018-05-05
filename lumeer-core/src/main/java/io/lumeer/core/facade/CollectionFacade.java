@@ -72,7 +72,7 @@ public class CollectionFacade extends AbstractFacade {
       long collectionsCount = collectionDao.getCollectionsCount();
       permissionsChecker.checkCreationLimits(collection, collectionsCount);
 
-      Collection storedCollection = createCollectionMetadata(collection, collectionsCount);
+      Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
 
       return storedCollection;
@@ -135,7 +135,7 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
-      attribute.setId(collection.getAttributePrefix() + collection.getLastAttributeNum());
+      attribute.setId(Collection.ATTRIBUTE_PREFIX + collection.getLastAttributeNum());
       collection.createAttribute(attribute);
 
       collectionDao.updateCollection(collection.getId(), collection);
@@ -217,12 +217,11 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(project, Role.WRITE);
    }
 
-   private Collection createCollectionMetadata(Collection collection, long collectionsCount) {
+   private Collection createCollectionMetadata(Collection collection) {
       if (collection.getCode() == null || collection.getCode().isEmpty()) {
          collection.setCode(generateCollectionCode(collection.getName()));
       }
 
-      collection.setAttributePrefix(generateAttributePrefix(collectionsCount + 1));
       collection.setLastAttributeNum(0);
 
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Collection.ROLES);
@@ -234,16 +233,6 @@ public class CollectionFacade extends AbstractFacade {
    private String generateCollectionCode(String collectionName) {
       Set<String> existingCodes = collectionDao.getAllCollectionCodes();
       return CodeGenerator.generate(existingCodes, collectionName);
-   }
-
-   private String generateAttributePrefix(long order) {
-      StringBuilder prefix = new StringBuilder();
-      while (order > 0) {
-         long numeric = (order - 1) % 26;
-         prefix.insert(0, ((char) (numeric + 97)));
-         order = (long) Math.floor((order - 1) / 26);
-      }
-      return prefix.toString();
    }
 
    private SearchQuery createQueryForLinkTypes(String collectionId) {

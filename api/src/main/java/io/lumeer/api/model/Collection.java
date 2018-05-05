@@ -29,6 +29,8 @@ public interface Collection extends Resource {
 
    Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.SHARE, Role.READ));
 
+   String ATTRIBUTE_PREFIX = "a";
+
    @Override
    default ResourceType getType() {
       return ResourceType.COLLECTION;
@@ -58,10 +60,5 @@ public interface Collection extends Resource {
    Integer getLastAttributeNum();
 
    void setLastAttributeNum(final Integer lastAttributeNum);
-
-   @JsonIgnore
-   String getAttributePrefix();
-
-   void setAttributePrefix(final String attributePrefix);
 
 }

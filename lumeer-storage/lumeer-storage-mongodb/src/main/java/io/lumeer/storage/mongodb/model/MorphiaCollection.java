@@ -55,7 +55,6 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    public static final String DOCUMENTS_COUNT = "docCount";
    public static final String LAST_TIME_USED = "lastTimeUsed";
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
-   public static final String ATTRIBUTE_PREFIX = "attributePrefix";
 
    @Embedded(ATTRIBUTES)
    private Set<MorphiaAttribute> attributes;
@@ -69,9 +68,6 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    @Property(LAST_ATTRIBUTE_NUM)
    private Integer lastAttributeNum;
 
-   @Property(ATTRIBUTE_PREFIX)
-   private String attributePrefix;
-
    public MorphiaCollection() {
    }
 
@@ -82,7 +78,6 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
       this.lastAttributeNum = collection.getLastAttributeNum();
-      this.attributePrefix = collection.getAttributePrefix();
    }
 
    @Override
@@ -143,17 +138,6 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    public void setLastAttributeNum(final Integer lastAttributeNum) {
       this.lastAttributeNum = lastAttributeNum;
    }
-
-   @Override
-   public String getAttributePrefix() {
-      return attributePrefix;
-   }
-
-   @Override
-   public void setAttributePrefix(final String attributePrefix) {
-      this.attributePrefix = attributePrefix;
-   }
-
 
    @Override
    public boolean equals(final Object o) {
