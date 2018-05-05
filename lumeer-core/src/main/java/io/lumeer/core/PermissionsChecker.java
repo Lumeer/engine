@@ -18,9 +18,11 @@
  */
 package io.lumeer.core;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
@@ -35,6 +37,8 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageStats;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -65,6 +69,8 @@ public class PermissionsChecker {
    @UserDataStorage
    private DataStorage dataStorage;
 
+   private Map<String, Boolean> hasRoleCache = new HashMap<>();
+
    public PermissionsChecker() {
    }
 
@@ -84,6 +90,16 @@ public class PermissionsChecker {
     * @throws NoPermissionException
     */
    public void checkRole(Resource resource, Role role) {
+      if (!(resource instanceof Organization) && workspaceKeeper.getOrganization().isPresent()) {
+         if (!hasRole(workspaceKeeper.getOrganization().get(), Role.READ)) {
+            throw new NoPermissionException(resource);
+         }
+         if (!(resource instanceof Project) && workspaceKeeper.getProject().isPresent()) {
+            if (!hasRole(workspaceKeeper.getProject().get(), Role.READ)) {
+               throw new NoPermissionException(resource);
+            }
+         }
+      }
       if (!hasRole(resource, role)) {
          throw new NoPermissionException(resource);
       }
@@ -96,7 +112,8 @@ public class PermissionsChecker {
     * @return True if and only if the user has the given role ont he resource.
     */
    public boolean hasRole(Resource resource, Role role) {
-      return getActualRoles(resource).contains(role);
+      return hasRoleCache.computeIfAbsent(resource.getId(), id -> getActualRoles(resource).contains(role));
+      //return getActualRoles(resource).contains(role);
    }
 
    /**
