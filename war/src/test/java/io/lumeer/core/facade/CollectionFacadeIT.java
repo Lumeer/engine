@@ -166,7 +166,6 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    private Collection createCollection(String code, String name) {
       Collection collection = prepareCollection(code, name);
-      collection.setAttributePrefix("a");
       collection.getPermissions().updateUserPermissions(userPermission);
       collection.getPermissions().updateGroupPermissions(groupPermission);
       return collectionDao.createCollection(collection);

@@ -175,7 +175,7 @@ public class DocumentFacade extends AbstractFacade {
       int num = collection.getLastAttributeNum();
       for (String attributeName : attributesToInc) {
          num++;
-         newAttributes.add(new JsonAttribute(collection.getAttributePrefix() + num, attributeName, Collections.emptySet(), 1));
+         newAttributes.add(new JsonAttribute(Collection.ATTRIBUTE_PREFIX + num, attributeName, Collections.emptySet(), 1));
       }
 
       newAttributes.addAll(oldAttributes.values());
