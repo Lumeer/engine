@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.ContentSize;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
@@ -115,7 +116,7 @@ public class UserFacade extends AbstractFacade {
       User user = authenticatedUser.getCurrentUser();
 
       DefaultWorkspace defaultWorkspace = user.getDefaultWorkspace();
-      if (defaultWorkspace == null) {
+      if (defaultWorkspace == null || defaultWorkspace.getOrganizationId() == null || defaultWorkspace.getProjectId() == null) {
          return user;
       }
 
@@ -123,6 +124,7 @@ public class UserFacade extends AbstractFacade {
          Organization organization = organizationDao.getOrganizationById(defaultWorkspace.getOrganizationId());
          defaultWorkspace.setOrganizationCode(organization.getCode());
 
+         projectDao.setOrganization(organization);
          Project project = projectDao.getProjectById(defaultWorkspace.getProjectId());
          defaultWorkspace.setProjectCode(project.getCode());
       } catch (ResourceNotFoundException e) {
@@ -138,6 +140,14 @@ public class UserFacade extends AbstractFacade {
 
       User currentUser = authenticatedUser.getCurrentUser();
       currentUser.setDefaultWorkspace(defaultWorkspace);
+      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+   }
+
+   public void setContentSize(ContentSize contentSize){
+      User currentUser = authenticatedUser.getCurrentUser();
+      currentUser.setContentSize(contentSize);
       User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
 
       userCache.updateUser(updatedUser.getEmail(), updatedUser);

@@ -26,6 +26,7 @@ import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.ContentSize;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
@@ -320,6 +321,19 @@ public class UserFacadeIT extends IntegrationTestBase {
 
       currentUser = userFacade.getCurrentUser();
       assertThat(currentUser.getDefaultWorkspace()).isNull();
+   }
+
+   @Test
+   public void testSetContentSize() {
+      ContentSize contentSize = ContentSize.L;
+
+      User currentUser = userFacade.getCurrentUser();
+      assertThat(currentUser.getContentSize()).isNull();
+
+      userFacade.setContentSize(contentSize);
+
+      currentUser = userFacade.getCurrentUser();
+      assertThat(currentUser.getContentSize()).isEqualTo(contentSize);
    }
 
    private User createUser(String organizationId, String user) {

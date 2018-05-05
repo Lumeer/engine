@@ -18,6 +18,7 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.ContentSize;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
@@ -27,10 +28,12 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -52,9 +55,24 @@ public class GlobalService extends AbstractService {
    }
 
    @PUT
-   @Path("workspace")
+   @Path("settings/workspace")
    public Response updateWorkspace(DefaultWorkspace defaultWorkspace) {
+      if (defaultWorkspace == null) {
+         throw new BadRequestException("defaultWorkspace");
+      }
+
       userFacade.setDefaultWorkspace(defaultWorkspace);
+
+      return Response.ok().build();
+   }
+
+   @PUT
+   @Path("settings/contentSize")
+   public Response updateSliderSize(ContentSize contentSize) {
+      if (contentSize == null) {
+         throw new BadRequestException("contentSize");
+      }
+      userFacade.setContentSize(contentSize);
 
       return Response.ok().build();
    }

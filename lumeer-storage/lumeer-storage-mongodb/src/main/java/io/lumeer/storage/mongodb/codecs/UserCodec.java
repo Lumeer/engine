@@ -19,6 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.ContentSize;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.User;
 
@@ -61,6 +62,8 @@ public class UserCodec implements CollectibleCodec<User> {
 
    public static final String FAVORITE_DOCUMENTS = "favoriteDocuments";
    public static final String DOCUMENT_IDS = "documentsIds";
+
+   public static final String CONTENT_SIZE = "contentSize";
 
    private final Codec<Document> documentCodec;
 
@@ -111,11 +114,14 @@ public class UserCodec implements CollectibleCodec<User> {
       String defaultOrganizationId = bson.getString(DEFAULT_ORGANIZATION_ID);
       String defaultProjectId = bson.getString(DEFAULT_PROJECT_ID);
 
+      String contentSize = bson.getString(CONTENT_SIZE);
+
       User user = new User(id, name, email, allGroups);
       user.setKeycloakId(keycloakId);
       user.setFavoriteCollections(favoriteCollections);
       user.setFavoriteDocuments(favoriteDocuments);
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
+      user.setContentSize(contentSize != null ? ContentSize.valueOf(contentSize) : null);
 
       return user;
    }
@@ -148,6 +154,10 @@ public class UserCodec implements CollectibleCodec<User> {
          bson.append(FAVORITE_DOCUMENTS, convertMapToList(user.getFavoriteDocuments(), DOCUMENT_IDS));
       } else {
          bson.append(FAVORITE_DOCUMENTS, Collections.emptyList());
+      }
+
+      if (user.getContentSize() != null) {
+         bson.append(CONTENT_SIZE, user.getContentSize().toString());
       }
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
