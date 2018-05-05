@@ -55,10 +55,10 @@ public class User {
    @JsonView(UserViews.FullView.class)
    private DefaultWorkspace defaultWorkspace;
 
-   @JsonView(UserViews.FullView.class)
+   @JsonIgnore
    private Map<String, Set<String>> favoriteCollections;
 
-   @JsonView(UserViews.FullView.class)
+   @JsonIgnore
    private Map<String, Set<String>> favoriteDocuments;
 
    public User(final String email) {
