@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -43,6 +44,7 @@ import cz.gopay.api.v3.model.common.Currency;
 import cz.gopay.api.v3.model.payment.BasePayment;
 import cz.gopay.api.v3.model.payment.Lang;
 import cz.gopay.api.v3.model.payment.PaymentFactory;
+import cz.gopay.api.v3.model.payment.support.ItemType;
 import cz.gopay.api.v3.model.payment.support.PayerBuilder;
 import cz.gopay.api.v3.model.payment.support.PaymentInstrument;
 
@@ -54,10 +56,10 @@ public class PaymentGatewayFacade {
 
    private static String GOPAY_API = "https://gw.sandbox.gopay.com/api";
 
-   private static final String CLIENT_ID = "1754050331";
-   private static final String CLIENT_CREDENTIALS = "";
-   private static final long GOPAY_ID = 8121729000L;
-   private static final String[] SWIFTS = { "GIBACZPX", "KOMBCZPP", "RZBCCZPP", "BREXCZPP",
+   private static String CLIENT_ID = "";
+   private static String CLIENT_CREDENTIALS = "";
+   private static long GOPAY_ID = 0L;
+   /*private static final String[] SWIFTS = { "GIBACZPX", "KOMBCZPP", "RZBCCZPP", "BREXCZPP",
       "FIOBCZPP", "CEKOCZPP", "CEKOCZPP-ERA", "BACXCZPP", "SUBASKBX", "TATRSKBX",
       "UNCRSKBX", "GIBASKBX", "POBNSKBA", "CEKOSKBX", "BREXPLPW", "CITIPLPX",
       "BPKOPLPW-IKO", "BPKOPLPW-INTELIGO", "IVSEPLPP", "BPHKPLPK", "OTHERS",
@@ -65,7 +67,7 @@ public class PaymentGatewayFacade {
       "POLUPLPR", "GBGCPLPK-GIO", "GBGCPLPK-BLIK", "GBGCPLPK-NOB", "BREXPLPW-OMB",
       "WBKPPLPP", "RCBWPLPW", "BPKOPLPW", "ALBPPLPW", "INGBPLPW", "PKOPPLPW",
       "GBGCPLPK", "BIGBPLPW", "EBOSPLPW", "PPABPLPK", "AGRIPLPR", "DEUTPLPX",
-      "DNBANOKK", "NBPLPLPW", "SOGEPLPW", "PBPBPLPW" };
+      "DNBANOKK", "NBPLPLPW", "SOGEPLPW", "PBPBPLPW" };*/
 
    private static final Map<String, String> ORDER_FORMAT;
 
@@ -93,8 +95,11 @@ public class PaymentGatewayFacade {
 
    @PostConstruct
    public void init() {
-      GOPAY_API = defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_API);
-      
+      GOPAY_API = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_API)).orElse("");
+      GOPAY_ID = Long.valueOf(Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_ID)).orElse("0"));
+      CLIENT_ID = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_CLIENT_ID)).orElse("");
+      CLIENT_CREDENTIALS = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_CLIENT_CREDENTIALS)).orElse("");
+
       if (!configurationFacade.getEnvironment().equals(ConfigurationFacade.DeployEnvironment.DEVEL)) {
          setDryRun(false);
       }
@@ -109,24 +114,24 @@ public class PaymentGatewayFacade {
 
       ensureToken(false);
 
-      final LocalDateTime tm = LocalDateTime.now();
+      //final LocalDateTime tm = LocalDateTime.now();
       final String description = getPaymentDescription(payment);
-      final PayerBuilder payerBuilder = new PayerBuilder()
+      /*final PayerBuilder payerBuilder = new PayerBuilder()
             .addAllowedPaymentMethod(PaymentInstrument.BANK_ACCOUNT)
             .addAllowedPaymentMethod(PaymentInstrument.PAYMENT_CARD)
             .addAllowedPaymentMethod(PaymentInstrument.MPAYMENT)
             .addAllowedPaymentMethod(PaymentInstrument.GOPAY)
             .addAllowedPaymentMethod(PaymentInstrument.PAYPAL)
             .withDefaultPaymentInstrument(PaymentInstrument.PAYMENT_CARD);
-      Arrays.asList(SWIFTS).forEach(swift -> payerBuilder.addAllowedSwift(swift));
+      Arrays.asList(SWIFTS).forEach(swift -> payerBuilder.addAllowedSwift(swift));*/
       final BasePayment basePayment = PaymentFactory.createBasePaymentBuilder()
-            .order(payment.getId(), payment.getAmount(),
+            .order(payment.getId(), payment.getAmount() * 100L,
                   Currency.getByCode(payment.getCurrency()), description)
-            .addItem(description, payment.getAmount(), 1L)
+            .addItem(description, payment.getAmount() * 100L, 1L, 21, ItemType.ITEM, "", "")
             .withCallback(returnUrl, notifyUrl)
             .inLang("cz".equals(payment.getLanguage()) ? Lang.CS : Lang.EN)
             .toEshop(GOPAY_ID)
-            .payer(payerBuilder.build())
+           // .payer(payerBuilder.build())
             .build();
 
       try {
