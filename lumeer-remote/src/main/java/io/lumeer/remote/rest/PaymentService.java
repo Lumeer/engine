@@ -18,7 +18,6 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 
 import javax.enterprise.context.RequestScoped;
@@ -46,16 +45,13 @@ import javax.ws.rs.core.Response;
 public class PaymentService extends AbstractService {
 
    @Inject
-   private OrganizationFacade organizationFacade;
-
-   @Inject
    private PaymentFacade paymentFacade;
 
    /* Callback method for the payment gateway. */
    @GET
    @Path("{organizationCode}/{id}")
    public Response updatePaymentState(@PathParam("organizationCode") final String organizationCode, @PathParam("id") final String id) {
-      paymentFacade.updatePayment(organizationFacade.getOrganization(organizationCode), id);
+      paymentFacade.updatePayment(organizationCode, id);
 
       return Response.ok().build();
    }

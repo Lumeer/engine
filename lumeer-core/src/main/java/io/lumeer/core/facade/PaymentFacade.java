@@ -23,6 +23,7 @@ import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
@@ -43,6 +44,9 @@ import javax.inject.Inject;
 public class PaymentFacade extends AbstractFacade {
 
    @Inject
+   private OrganizationDao organizationDao;
+
+   @Inject
    private PaymentDao paymentDao;
 
    @Inject
@@ -57,6 +61,12 @@ public class PaymentFacade extends AbstractFacade {
       final Payment establishedPayment = paymentGateway.createPayment(storedPayment, returnUrl, notifyUrl + "/" + storedPayment.getId());
 
       return paymentDao.updatePayment(organization, storedPayment.getId(), establishedPayment);
+   }
+
+   private Organization getOrganizationUnsafe(final String organizationCode) {
+      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
+
+      return organization;
    }
 
    public List<Payment> getPayments(final Organization organization) {
@@ -178,8 +188,8 @@ public class PaymentFacade extends AbstractFacade {
       return ServiceLimits.FREE_LIMITS;
    }
 
-   public Payment updatePayment(final Organization organization, final String id) {
-      checkManagePermissions(organization);
+   public Payment updatePayment(final String organizationCode, final String id) {
+      final Organization organization = getOrganizationUnsafe(organizationCode);
 
       currentPayment = null;
       workspaceKeeper.clearServiceLevel(organization);
