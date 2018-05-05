@@ -28,6 +28,7 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageStats;
@@ -49,6 +50,9 @@ public class PermissionsChecker {
 
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
+
+   @Inject
+   private PaymentFacade paymentFacade;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -134,7 +138,7 @@ public class PermissionsChecker {
     * @param currentCount Current no of resources of the given type.
     */
    public void checkCreationLimits(final Resource resource, final long currentCount) {
-      final ServiceLimits limits = workspaceKeeper.getServiceLimits();
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
 
       if (resource.getType().equals(ResourceType.PROJECT)) {
          if (limits.getProjects() > 0 && limits.getProjects() <= currentCount) {
@@ -154,7 +158,7 @@ public class PermissionsChecker {
     * @param document The document that is about to be created.
     */
    public void checkDocumentLimits(final Document document) {
-      final ServiceLimits limits = workspaceKeeper.getServiceLimits();
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
       final DataStorageStats storageStats = dataStorage.getDbStats();
       long dbSizeMb = storageStats.getDataSize() / (1024 * 1024L);
 
@@ -172,7 +176,7 @@ public class PermissionsChecker {
     * @param currentCount Current no of users.
     */
    public void checkUserCreationLimits(final long currentCount) {
-      final ServiceLimits limits = workspaceKeeper.getServiceLimits();
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
 
       if (limits.getUsers() > 0 && limits.getUsers() <= currentCount) {
          throw new ServiceLimitsExceededException(limits.getUsers());
