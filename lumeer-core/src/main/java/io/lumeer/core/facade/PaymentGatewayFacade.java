@@ -24,8 +24,6 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -45,8 +43,6 @@ import cz.gopay.api.v3.model.payment.BasePayment;
 import cz.gopay.api.v3.model.payment.Lang;
 import cz.gopay.api.v3.model.payment.PaymentFactory;
 import cz.gopay.api.v3.model.payment.support.ItemType;
-import cz.gopay.api.v3.model.payment.support.PayerBuilder;
-import cz.gopay.api.v3.model.payment.support.PaymentInstrument;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -59,16 +55,6 @@ public class PaymentGatewayFacade {
    private static String CLIENT_ID = "";
    private static String CLIENT_CREDENTIALS = "";
    private static long GOPAY_ID = 0L;
-   /*private static final String[] SWIFTS = { "GIBACZPX", "KOMBCZPP", "RZBCCZPP", "BREXCZPP",
-      "FIOBCZPP", "CEKOCZPP", "CEKOCZPP-ERA", "BACXCZPP", "SUBASKBX", "TATRSKBX",
-      "UNCRSKBX", "GIBASKBX", "POBNSKBA", "CEKOSKBX", "BREXPLPW", "CITIPLPX",
-      "BPKOPLPW-IKO", "BPKOPLPW-INTELIGO", "IVSEPLPP", "BPHKPLPK", "OTHERS",
-      "TOBAPLPW", "VOWAPLP1", "GBWCPLPP", "POCZPLP4", "GOPZPLPW", "IEEAPLPA",
-      "POLUPLPR", "GBGCPLPK-GIO", "GBGCPLPK-BLIK", "GBGCPLPK-NOB", "BREXPLPW-OMB",
-      "WBKPPLPP", "RCBWPLPW", "BPKOPLPW", "ALBPPLPW", "INGBPLPW", "PKOPPLPW",
-      "GBGCPLPK", "BIGBPLPW", "EBOSPLPW", "PPABPLPK", "AGRIPLPR", "DEUTPLPX",
-      "DNBANOKK", "NBPLPLPW", "SOGEPLPW", "PBPBPLPW" };*/
-
    private static final Map<String, String> ORDER_FORMAT;
 
    static {
@@ -114,16 +100,7 @@ public class PaymentGatewayFacade {
 
       ensureToken(false);
 
-      //final LocalDateTime tm = LocalDateTime.now();
       final String description = getPaymentDescription(payment);
-      /*final PayerBuilder payerBuilder = new PayerBuilder()
-            .addAllowedPaymentMethod(PaymentInstrument.BANK_ACCOUNT)
-            .addAllowedPaymentMethod(PaymentInstrument.PAYMENT_CARD)
-            .addAllowedPaymentMethod(PaymentInstrument.MPAYMENT)
-            .addAllowedPaymentMethod(PaymentInstrument.GOPAY)
-            .addAllowedPaymentMethod(PaymentInstrument.PAYPAL)
-            .withDefaultPaymentInstrument(PaymentInstrument.PAYMENT_CARD);
-      Arrays.asList(SWIFTS).forEach(swift -> payerBuilder.addAllowedSwift(swift));*/
       final BasePayment basePayment = PaymentFactory.createBasePaymentBuilder()
             .order(payment.getId(), payment.getAmount() * 100L,
                   Currency.getByCode(payment.getCurrency()), description)
@@ -131,7 +108,6 @@ public class PaymentGatewayFacade {
             .withCallback(returnUrl, notifyUrl)
             .inLang("cz".equals(payment.getLanguage()) ? Lang.CS : Lang.EN)
             .toEshop(GOPAY_ID)
-           // .payer(payerBuilder.build())
             .build();
 
       try {
