@@ -61,9 +61,6 @@ public class User {
    @JsonIgnore
    private Map<String, Set<String>> favoriteDocuments;
 
-   @JsonView(UserViews.FullView.class)
-   private ContentSize contentSize;
-
    public User(final String email) {
       this.email = email;
       this.groups = new HashMap<>();
@@ -146,14 +143,6 @@ public class User {
 
    public void setFavoriteDocuments(final Map<String, Set<String>> favoriteDocuments) {
       this.favoriteDocuments = favoriteDocuments;
-   }
-
-   public ContentSize getContentSize() {
-      return contentSize;
-   }
-
-   public void setContentSize(final ContentSize contentSize) {
-      this.contentSize = contentSize;
    }
 
    @Override

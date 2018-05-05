@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.ContentSize;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
@@ -32,7 +31,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,14 +138,6 @@ public class UserFacade extends AbstractFacade {
 
       User currentUser = authenticatedUser.getCurrentUser();
       currentUser.setDefaultWorkspace(defaultWorkspace);
-      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
-
-      userCache.updateUser(updatedUser.getEmail(), updatedUser);
-   }
-
-   public void setContentSize(ContentSize contentSize){
-      User currentUser = authenticatedUser.getCurrentUser();
-      currentUser.setContentSize(contentSize);
       User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
 
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
