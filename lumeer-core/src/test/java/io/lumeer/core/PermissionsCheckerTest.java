@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 public class PermissionsCheckerTest {
@@ -59,7 +60,11 @@ public class PermissionsCheckerTest {
       Mockito.when(authenticatedUser.getUserEmail()).thenReturn(USER);
       Mockito.when(authenticatedUserGroups.getCurrentUserGroups()).thenReturn(Collections.singleton(GROUP));
 
-      permissionsChecker = new PermissionsChecker(userCache, authenticatedUser, authenticatedUserGroups);
+      WorkspaceKeeper workspaceKeeper = Mockito.mock(WorkspaceKeeper.class);
+      Mockito.when(workspaceKeeper.getOrganization()).thenReturn(Optional.empty());
+      Mockito.when(workspaceKeeper.getProject()).thenReturn(Optional.empty());
+
+      permissionsChecker = new PermissionsChecker(userCache, authenticatedUser, authenticatedUserGroups, workspaceKeeper);
    }
 
    private Resource prepareResource(Set<Role> userRoles, Set<Role> groupRoles) {

@@ -80,6 +80,13 @@ public class PermissionsChecker {
       this.authenticatedUserGroups = authenticatedUserGroups;
    }
 
+   PermissionsChecker(UserCache userCache, AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper) {
+      this.userCache = userCache;
+      this.authenticatedUser = authenticatedUser;
+      this.authenticatedUserGroups = authenticatedUserGroups;
+      this.workspaceKeeper = workspaceKeeper;
+   }
+
    /**
     * Checks if the user has the given role on the given resource (either directly or through group membership).
     *
