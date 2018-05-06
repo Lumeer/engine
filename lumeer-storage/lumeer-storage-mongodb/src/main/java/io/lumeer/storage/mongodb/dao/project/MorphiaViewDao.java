@@ -79,6 +79,7 @@ public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
 
    public View getViewByCode(final String code) {
       View view = datastore.createQuery(databaseCollection(), MorphiaView.class)
+                           .disableValidation()
                            .field(MorphiaView.CODE).equal(code)
                            .get();
       if (view == null) {
@@ -105,6 +106,7 @@ public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
    @Override
    public Set<String> getAllViewCodes() {
       return datastore.createQuery(databaseCollection(), MorphiaView.class)
+                      .disableValidation()
                       .project(MorphiaView.CODE, true)
                       .asList().stream()
                       .map(MorphiaView::getCode)
@@ -112,7 +114,7 @@ public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    private Query<MorphiaView> createViewSearchQuery(SearchQuery query) {
-      Query<MorphiaView> viewQuery = datastore.createQuery(databaseCollection(), MorphiaView.class);
+      Query<MorphiaView> viewQuery = datastore.createQuery(databaseCollection(), MorphiaView.class).disableValidation();
 
       if (query.isFulltextQuery()) {
          viewQuery.search(query.getFulltext());
@@ -123,7 +125,7 @@ public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    private Query<MorphiaView> createViewSuggestionQuery(SuggestionQuery query) {
-      Query<MorphiaView> viewQuery = datastore.createQuery(databaseCollection(), MorphiaView.class);
+      Query<MorphiaView> viewQuery = datastore.createQuery(databaseCollection(), MorphiaView.class).disableValidation();
 
       viewQuery.field(MorphiaView.NAME).startsWithIgnoreCase(query.getText());
       viewQuery.or(createPermissionsCriteria(viewQuery, query));

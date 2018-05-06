@@ -91,6 +91,7 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
    @Override
    public void deleteDocuments(final String collectionId) {
       Query<MorphiaDocument> query = datastore.createQuery(databaseCollection(), MorphiaDocument.class)
+                                              .disableValidation()
                                               .field(MorphiaDocument.COLLECTION_ID).equal(collectionId);
       datastore.delete(query);
    }
@@ -98,6 +99,7 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
    @Override
    public Document getDocumentById(final String id) {
       Document document = datastore.createQuery(databaseCollection(), MorphiaDocument.class)
+                                   .disableValidation()
                                    .field(ID).equal(new ObjectId(id))
                                    .get();
       if (document == null) {
@@ -110,6 +112,7 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
    public List<Document> getDocumentsByIds(final String... ids) {
       List<ObjectId> objectIds = Arrays.stream(ids).map(ObjectId::new).collect(Collectors.toList());
       List<MorphiaDocument> documents = datastore.createQuery(databaseCollection(), MorphiaDocument.class)
+                                                 .disableValidation()
                                                  .field(ID).in(objectIds)
                                                  .asList();
       return new ArrayList<>(documents);

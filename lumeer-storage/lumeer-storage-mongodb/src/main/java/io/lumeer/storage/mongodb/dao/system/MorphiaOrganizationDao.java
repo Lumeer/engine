@@ -77,6 +77,7 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
    @Override
    public Organization getOrganizationByCode(final String organizationCode) {
       Organization organization = datastore.createQuery(MorphiaOrganization.class)
+                                           .disableValidation()
                                            .field(MorphiaOrganization.CODE).equal(organizationCode)
                                            .get();
       if (organization == null) {
@@ -88,6 +89,7 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
    @Override
    public Organization getOrganizationById(final String organizationId) {
       Organization organization = datastore.createQuery(MorphiaOrganization.class)
+                                           .disableValidation()
                                            .field(MorphiaOrganization.ID).equal(new ObjectId(organizationId))
                                            .get();
       if (organization == null) {
@@ -99,6 +101,7 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
    @Override
    public Set<String> getOrganizationsCodes() {
       return datastore.createQuery(MorphiaOrganization.class)
+                      .disableValidation()
                       .asList().stream()
                       .map(MorphiaOrganization::getCode)
                       .collect(Collectors.toSet());
@@ -113,7 +116,7 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
    }
 
    private Query<MorphiaOrganization> createOrganizationQuery(DatabaseQuery query) {
-      Query<MorphiaOrganization> organizationQuery = datastore.createQuery(MorphiaOrganization.class);
+      Query<MorphiaOrganization> organizationQuery = datastore.createQuery(MorphiaOrganization.class).disableValidation();
 
       List<Criteria> criteria = new ArrayList<>();
       criteria.add(createUserCriteria(organizationQuery, query.getUser()));
@@ -130,6 +133,7 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
 
    private Query<MorphiaPermission> createPermissionQuery(String name) {
       return datastore.createQuery(MorphiaPermission.class)
+                      .disableValidation()
                       .filter(MorphiaPermission.ID, name)
                       .field(MorphiaPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
    }

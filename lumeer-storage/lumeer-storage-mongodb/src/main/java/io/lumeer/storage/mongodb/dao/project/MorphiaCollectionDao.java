@@ -85,6 +85,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    @Override
    public Collection getCollectionByCode(final String code) {
       Collection collection = datastore.createQuery(databaseCollection(), MorphiaCollection.class)
+                                       .disableValidation()
                                        .field(MorphiaCollection.CODE).equal(code)
                                        .get();
       if (collection == null) {
@@ -96,6 +97,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    @Override
    public Collection getCollectionById(final String id) {
       Collection collection = datastore.createQuery(databaseCollection(), MorphiaCollection.class)
+                                       .disableValidation()
                                        .field(MorphiaCollection.ID).equal(new ObjectId(id))
                                        .get();
       if (collection == null) {
@@ -108,6 +110,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    public List<Collection> getCollectionsByIds(final java.util.Collection<String> ids) {
       List<ObjectId> objectIds = ids.stream().map(ObjectId::new).collect(Collectors.toList());
       return new ArrayList<>(datastore.createQuery(databaseCollection(), MorphiaCollection.class)
+                                      .disableValidation()
                                       .field(MorphiaCollection.ID).in(objectIds).asList());
    }
 
@@ -129,6 +132,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    @Override
    public Set<String> getAllCollectionCodes() {
       return datastore.createQuery(databaseCollection(), MorphiaCollection.class)
+                      .disableValidation()
                       .project(MorphiaCollection.CODE, true)
                       .asList().stream()
                       .map(MorphiaResource::getCode)
@@ -138,6 +142,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    @Override
    public Set<String> getAllCollectionNames() {
       return datastore.createQuery(databaseCollection(), MorphiaCollection.class)
+                      .disableValidation()
                       .project(MorphiaCollection.NAME, true)
                       .asList().stream()
                       .map(MorphiaResource::getName)
@@ -146,7 +151,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
 
    @Override
    public long getCollectionsCount() {
-      return datastore.createQuery(databaseCollection(), MorphiaCollection.class).count();
+      return datastore.createQuery(databaseCollection(), MorphiaCollection.class).disableValidation().count();
    }
 
    private List<Collection> getCollections(Query<MorphiaCollection> morphiaQuery, DatabaseQuery databaseQuery) {
@@ -155,7 +160,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    }
 
    private Query<MorphiaCollection> createCollectionSearchQuery(SearchQuery searchQuery) {
-      Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class);
+      Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class).disableValidation();
 
       mongoQuery.or(createPermissionsCriteria(mongoQuery, searchQuery));
 
@@ -179,7 +184,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    }
 
    private Query<MorphiaCollection> createCollectionSuggestionQuery(SuggestionQuery suggestionQuery) {
-      Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class);
+      Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class).disableValidation();
 
       mongoQuery.or(createPermissionsCriteria(mongoQuery, suggestionQuery));
       mongoQuery.field(MorphiaCollection.NAME).containsIgnoreCase(suggestionQuery.getText());
@@ -188,7 +193,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    }
 
    private Query<MorphiaCollection> createAttributeSuggestionQuery(SuggestionQuery suggestionQuery) {
-      Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class);
+      Query<MorphiaCollection> mongoQuery = datastore.createQuery(databaseCollection(), MorphiaCollection.class).disableValidation();
 
       mongoQuery.or(createPermissionsCriteria(mongoQuery, suggestionQuery));
       mongoQuery.field(MorphiaCollection.ATTRIBUTES + "." + MorphiaAttribute.NAME).containsIgnoreCase(suggestionQuery.getText());
