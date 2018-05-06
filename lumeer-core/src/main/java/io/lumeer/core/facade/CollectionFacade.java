@@ -108,6 +108,11 @@ public class CollectionFacade extends AbstractFacade {
       collectionDao.deleteCollection(collectionId);
 
       deleteCollectionBasedData(collectionId);
+   }
+
+   private void deleteCollectionBasedData(final String collectionId) {
+      documentDao.deleteDocuments(collectionId);
+      dataDao.deleteDataRepository(collectionId);
 
       SearchQuery queryLinkTypes = createQueryForLinkTypes(collectionId);
       List<LinkType> linkTypes = linkTypeDao.getLinkTypes(queryLinkTypes);
@@ -115,11 +120,7 @@ public class CollectionFacade extends AbstractFacade {
          linkTypeDao.deleteLinkTypes(queryLinkTypes);
          linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(linkTypes));
       }
-   }
 
-   private void deleteCollectionBasedData(final String collectionId) {
-      documentDao.deleteDocuments(collectionId);
-      dataDao.deleteDataRepository(collectionId);
       favoriteItemDao.removeFavoriteCollection(collectionId);
       favoriteItemDao.removeFavoriteDocumentsByCollection(collectionId);
    }
