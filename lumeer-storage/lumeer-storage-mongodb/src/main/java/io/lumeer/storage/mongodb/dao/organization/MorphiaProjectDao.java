@@ -60,6 +60,7 @@ public class MorphiaProjectDao extends OrganizationScopedDao implements ProjectD
    @Override
    public Set<String> getProjectsCodes() {
       return datastore.createQuery(databaseCollection(), MorphiaProject.class)
+                      .disableValidation()
                       .asList().stream()
                       .map(MorphiaProject::getCode)
                       .collect(Collectors.toSet());
@@ -93,6 +94,7 @@ public class MorphiaProjectDao extends OrganizationScopedDao implements ProjectD
    @Override
    public Project getProjectByCode(final String projectCode) {
       Project project = datastore.createQuery(databaseCollection(), MorphiaProject.class)
+                                 .disableValidation()
                                  .field(MorphiaProject.CODE).equal(projectCode)
                                  .get();
       if (project == null) {
@@ -111,11 +113,11 @@ public class MorphiaProjectDao extends OrganizationScopedDao implements ProjectD
 
    @Override
    public long getProjectsCount() {
-      return datastore.createQuery(databaseCollection(), MorphiaProject.class).count();
+      return datastore.createQuery(databaseCollection(), MorphiaProject.class).disableValidation().count();
    }
 
    private Query<MorphiaProject> createProjectQuery(DatabaseQuery query) {
-      Query<MorphiaProject> projectQuery = datastore.createQuery(databaseCollection(), MorphiaProject.class);
+      Query<MorphiaProject> projectQuery = datastore.createQuery(databaseCollection(), MorphiaProject.class).disableValidation();
 
       projectQuery.or(createPermissionsCriteria(projectQuery, query));
 
