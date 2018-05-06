@@ -22,6 +22,9 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonOrganization;
+import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Organization;
@@ -42,8 +45,6 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.mongodb.model.MorphiaOrganization;
-import io.lumeer.storage.mongodb.model.MorphiaProject;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;
@@ -105,7 +106,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
-      MorphiaOrganization organization = new MorphiaOrganization();
+      JsonOrganization organization = new JsonOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
@@ -116,13 +117,25 @@ public class ViewFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      userPermission = new SimplePermission(this.user.getId(), View.ROLES);
-      groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+      JsonPermissions organizationPermissions = new JsonPermissions();
+      Permission userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      organizationPermissions.updateUserPermissions(userPermission);
+      storedOrganization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      MorphiaProject project = new MorphiaProject();
+      this.userPermission = new SimplePermission(this.user.getId(), View.ROLES);
+      this.groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+
+      JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);
       project.setPermissions(new MorphiaPermissions());
       Project storedProject = projectDao.createProject(project);
+
+      JsonPermissions projectPermissions = new JsonPermissions();
+      Permission userProjectPermission = new SimplePermission(this.user.getId(), Project.ROLES);
+      projectPermissions.updateUserPermissions(userProjectPermission);
+      storedProject.setPermissions(projectPermissions);
+      storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
       viewDao.setProject(storedProject);
    }

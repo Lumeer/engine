@@ -33,11 +33,14 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -129,6 +132,9 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    @Before
    public void configureLinkInstances() {
       JsonOrganization organization = new JsonOrganization();
@@ -141,14 +147,28 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
+      JsonPermissions organizationPermissions = new JsonPermissions();
+      Permission userPermission = new SimplePermission(createdUser.getId(), Organization.ROLES);
+      organizationPermissions.updateUserPermissions(userPermission);
+      storedOrganization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
 
+      JsonPermissions projectPermissions = new JsonPermissions();
+      Permission userProjectPermission = new SimplePermission(createdUser.getId(), Project.ROLES);
+      projectPermissions.updateUserPermissions(userProjectPermission);
+      storedProject.setPermissions(projectPermissions);
+      storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
+
       workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
 
       collectionDao.setProject(storedProject);
+
+      //permissionsChecker.resetCache();
 
       JsonPermissions collectionPermissions = new JsonPermissions();
       collectionPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
@@ -174,7 +194,6 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       for (int i = 0; i < 3; i++) {
          documentIdsColl2.add(createDocument(collection2).getId());
       }
-
    }
 
    @Test

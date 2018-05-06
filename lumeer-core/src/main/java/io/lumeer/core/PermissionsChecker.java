@@ -18,7 +18,6 @@
  */
 package io.lumeer.core;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -27,7 +26,6 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
-import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.OrganizationFacade;
@@ -46,9 +44,6 @@ import javax.inject.Inject;
 
 @RequestScoped
 public class PermissionsChecker {
-
-   @Inject
-   private UserCache userCache;
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -74,14 +69,7 @@ public class PermissionsChecker {
    public PermissionsChecker() {
    }
 
-   PermissionsChecker(UserCache userCache, AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups) {
-      this.userCache = userCache;
-      this.authenticatedUser = authenticatedUser;
-      this.authenticatedUserGroups = authenticatedUserGroups;
-   }
-
-   PermissionsChecker(UserCache userCache, AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper) {
-      this.userCache = userCache;
+   PermissionsChecker(AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper) {
       this.authenticatedUser = authenticatedUser;
       this.authenticatedUserGroups = authenticatedUserGroups;
       this.workspaceKeeper = workspaceKeeper;
@@ -119,8 +107,7 @@ public class PermissionsChecker {
     * @return True if and only if the user has the given role ont he resource.
     */
    public boolean hasRole(Resource resource, Role role) {
-      return hasRoleCache.computeIfAbsent(resource.getId(), id -> getActualRoles(resource).contains(role));
-      //return getActualRoles(resource).contains(role);
+      return hasRoleCache.computeIfAbsent(resource.getId() + ":" + role.toString(), id -> getActualRoles(resource).contains(role));
    }
 
    /**

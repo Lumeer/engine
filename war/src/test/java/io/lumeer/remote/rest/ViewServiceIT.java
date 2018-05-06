@@ -22,8 +22,10 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Organization;
@@ -119,17 +121,29 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
       groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
 
-      MorphiaOrganization organization = new MorphiaOrganization();
+      JsonOrganization organization = new JsonOrganization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new MorphiaPermissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
+      JsonPermissions organizationPermissions = new JsonPermissions();
+      Permission userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      organizationPermissions.updateUserPermissions(userPermission);
+      storedOrganization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+
       projectDao.setOrganization(storedOrganization);
 
-      MorphiaProject project = new MorphiaProject();
+      JsonProject project = new JsonProject();
       project.setCode(PROJECT_CODE);
       project.setPermissions(new MorphiaPermissions());
       Project storedProject = projectDao.createProject(project);
+
+      JsonPermissions projectPermissions = new JsonPermissions();
+      Permission userProjectPermission = new SimplePermission(this.user.getId(), Project.ROLES);
+      projectPermissions.updateUserPermissions(userProjectPermission);
+      storedProject.setPermissions(projectPermissions);
+      storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
       viewDao.setProject(storedProject);
    }
