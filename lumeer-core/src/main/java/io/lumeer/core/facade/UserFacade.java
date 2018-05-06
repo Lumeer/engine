@@ -128,7 +128,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private void checkUserCreate(final String organizationId) {
-      permissionsChecker.checkUserCreationLimits(userDao.getAllUsersCount(organizationId));
+      permissionsChecker.checkUserCreationLimits(organizationId, userDao.getAllUsersCount(organizationId));
    }
 
 }

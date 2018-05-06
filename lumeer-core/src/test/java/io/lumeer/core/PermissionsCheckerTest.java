@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 public class PermissionsCheckerTest {
@@ -50,16 +51,17 @@ public class PermissionsCheckerTest {
       User user = Mockito.mock(User.class);
       Mockito.when(user.getGroups()).thenReturn(Collections.singletonMap("LMR", Collections.singleton(GROUP)));
 
-      UserCache userCache = Mockito.mock(UserCache.class);
-      Mockito.when(userCache.getUser(USER)).thenReturn(user);
-
       AuthenticatedUser authenticatedUser = Mockito.mock(AuthenticatedUser.class);
       AuthenticatedUserGroups authenticatedUserGroups = Mockito.mock(AuthenticatedUserGroups.class);
       Mockito.when(authenticatedUser.getCurrentUserId()).thenReturn(USER);
       Mockito.when(authenticatedUser.getUserEmail()).thenReturn(USER);
       Mockito.when(authenticatedUserGroups.getCurrentUserGroups()).thenReturn(Collections.singleton(GROUP));
 
-      permissionsChecker = new PermissionsChecker(userCache, authenticatedUser, authenticatedUserGroups);
+      WorkspaceKeeper workspaceKeeper = Mockito.mock(WorkspaceKeeper.class);
+      Mockito.when(workspaceKeeper.getOrganization()).thenReturn(Optional.empty());
+      Mockito.when(workspaceKeeper.getProject()).thenReturn(Optional.empty());
+
+      permissionsChecker = new PermissionsChecker(authenticatedUser, authenticatedUserGroups, workspaceKeeper);
    }
 
    private Resource prepareResource(Set<Role> userRoles, Set<Role> groupRoles) {

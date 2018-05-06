@@ -220,6 +220,7 @@ public class PaymentFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
+      System.out.println("@@@@@@@@@@@@@@@@@@@@ " + organization);
       permissionsChecker.checkRole(organization, Role.READ);
    }
 }

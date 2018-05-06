@@ -33,11 +33,13 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.facade.DocumentFacade;
+import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -143,6 +145,12 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
+      JsonPermissions organizationPermissions = new JsonPermissions();
+      Permission userPermission = new SimplePermission(createdUser.getId(), Organization.ROLES);
+      organizationPermissions.updateUserPermissions(userPermission);
+      storedOrganization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+
       JsonProject project = new JsonProject();
       project.setPermissions(new JsonPermissions());
       project.setCode(PROJECT_CODE);
@@ -152,6 +160,12 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkTypeDao.setProject(storedProject);
       linkInstanceDao.setProject(storedProject);
       documentDao.setProject(storedProject);
+
+      JsonPermissions projectPermissions = new JsonPermissions();
+      Permission userProjectPermission = new SimplePermission(createdUser.getId(), Project.ROLES);
+      projectPermissions.updateUserPermissions(userProjectPermission);
+      storedProject.setPermissions(projectPermissions);
+      storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
       JsonPermissions collectionPermissions = new JsonPermissions();
       collectionPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));

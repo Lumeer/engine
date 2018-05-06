@@ -126,6 +126,12 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
+      JsonPermissions organizationPermissions = new JsonPermissions();
+      userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      organizationPermissions.updateUserPermissions(userPermission);
+      storedOrganization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+
       userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
       groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
 

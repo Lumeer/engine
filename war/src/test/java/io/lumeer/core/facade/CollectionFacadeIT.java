@@ -126,6 +126,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
+      JsonPermissions organizationPermissions = new JsonPermissions();
+      userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      organizationPermissions.updateUserPermissions(userPermission);
+      storedOrganization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+
       groupDao.setOrganization(storedOrganization);
       Group group = new Group(GROUP);
       this.group = groupDao.createGroup(group);

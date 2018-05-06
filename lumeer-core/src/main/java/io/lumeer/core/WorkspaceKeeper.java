@@ -95,20 +95,12 @@ public class WorkspaceKeeper implements SelectedWorkspace {
       }
    }
 
-   public ServiceLimits getServiceLimits() {
-      if (organizationCode != null) {
-         return Optional.ofNullable(workspaceCache.getServiceLimits(organizationCode)).orElse(ServiceLimits.FREE_LIMITS);
-      }
-
-      return ServiceLimits.FREE_LIMITS;
-   }
-
    public ServiceLimits getServiceLimits(final Organization organization) {
       if (organization != null) {
-         return Optional.ofNullable(workspaceCache.getServiceLimits(organization.getCode())).orElse(ServiceLimits.FREE_LIMITS);
+         return workspaceCache.getServiceLimits(organization.getCode());
       }
 
-      return ServiceLimits.FREE_LIMITS;
+      return null;
    }
 
    public void clearServiceLevel(final Organization organization) {
