@@ -39,14 +39,14 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    private void createCollectionsRepository(final Organization organization) {
       database.createCollection(favoriteCollectionsDBName(organization));
 
-      MongoCollection<Document> collection = favoriteCollectionsDBCollection();
+      MongoCollection<Document> collection = database.getCollection(favoriteCollectionsDBName(organization));
       collection.createIndex(Indexes.ascending(USER_ID, PROJECT_ID, COLLECTION_ID), new IndexOptions().unique(true));
    }
 
    private void createDocumentsRepository(final Organization organization) {
       database.createCollection(favoriteDocumentsDBName(organization));
 
-      MongoCollection<Document> collection = favoriteDocumentsDBCollection();
+      MongoCollection<Document> collection = database.getCollection(favoriteDocumentsDBName(organization));
       collection.createIndex(Indexes.ascending(USER_ID, PROJECT_ID, COLLECTION_ID, DOCUMENT_ID), new IndexOptions().unique(true));
    }
 
