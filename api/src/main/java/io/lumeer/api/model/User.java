@@ -55,17 +55,9 @@ public class User {
    @JsonView(UserViews.FullView.class)
    private DefaultWorkspace defaultWorkspace;
 
-   @JsonIgnore
-   private Map<String, Set<String>> favoriteCollections;
-
-   @JsonIgnore
-   private Map<String, Set<String>> favoriteDocuments;
-
    public User(final String email) {
       this.email = email;
       this.groups = new HashMap<>();
-      this.favoriteCollections = new HashMap<>();
-      this.favoriteDocuments = new HashMap<>();
    }
 
    @JsonCreator
@@ -77,8 +69,6 @@ public class User {
       this.name = name;
       this.email = email;
       this.groups = groups;
-      this.favoriteCollections = new HashMap<>();
-      this.favoriteDocuments = new HashMap<>();
    }
 
    public String getId() {
@@ -127,22 +117,6 @@ public class User {
 
    public void setDefaultWorkspace(final DefaultWorkspace defaultWorkspace) {
       this.defaultWorkspace = defaultWorkspace;
-   }
-
-   public Map<String, Set<String>> getFavoriteCollections() {
-      return favoriteCollections;
-   }
-
-   public void setFavoriteCollections(final Map<String, Set<String>> favoriteCollections) {
-      this.favoriteCollections = favoriteCollections;
-   }
-
-   public Map<String, Set<String>> getFavoriteDocuments() {
-      return favoriteDocuments;
-   }
-
-   public void setFavoriteDocuments(final Map<String, Set<String>> favoriteDocuments) {
-      this.favoriteDocuments = favoriteDocuments;
    }
 
    @Override

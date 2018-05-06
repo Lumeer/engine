@@ -53,7 +53,7 @@ public class GlobalService extends AbstractService {
    }
 
    @PUT
-   @Path("settings/workspace")
+   @Path("workspace")
    public Response updateWorkspace(DefaultWorkspace defaultWorkspace) {
       if (defaultWorkspace == null) {
          throw new BadRequestException("defaultWorkspace");

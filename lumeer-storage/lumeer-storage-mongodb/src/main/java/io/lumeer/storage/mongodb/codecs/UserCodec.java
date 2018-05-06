@@ -56,12 +56,6 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String ORGANIZATION_ID = "organizationId";
    public static final String GROUPS = "groups";
 
-   public static final String FAVORITE_COLLECTIONS = "favoriteCollections";
-   public static final String COLLECTION_IDS = "collectionsIds";
-
-   public static final String FAVORITE_DOCUMENTS = "favoriteDocuments";
-   public static final String DOCUMENT_IDS = "documentsIds";
-
    private final Codec<Document> documentCodec;
 
    public UserCodec(final CodecRegistry registry) {
@@ -102,19 +96,11 @@ public class UserCodec implements CollectibleCodec<User> {
       List<Document> documentList = bson.get(ALL_GROUPS, List.class);
       Map<String, Set<String>> allGroups = convertListToMap(documentList, GROUPS);
 
-      List<Document> favoriteCollectionsList = bson.get(FAVORITE_COLLECTIONS, List.class);
-      Map<String, Set<String>> favoriteCollections = convertListToMap(favoriteCollectionsList, COLLECTION_IDS);
-
-      List<Document> favoriteDocumentsList = bson.get(FAVORITE_DOCUMENTS, List.class);
-      Map<String, Set<String>> favoriteDocuments = convertListToMap(favoriteDocumentsList, DOCUMENT_IDS);
-
       String defaultOrganizationId = bson.getString(DEFAULT_ORGANIZATION_ID);
       String defaultProjectId = bson.getString(DEFAULT_PROJECT_ID);
 
       User user = new User(id, name, email, allGroups);
       user.setKeycloakId(keycloakId);
-      user.setFavoriteCollections(favoriteCollections);
-      user.setFavoriteDocuments(favoriteDocuments);
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
 
       return user;
@@ -136,18 +122,6 @@ public class UserCodec implements CollectibleCodec<User> {
          bson.append(ALL_GROUPS, convertMapToList(user.getGroups(), GROUPS));
       } else {
          bson.append(ALL_GROUPS, Collections.emptyList());
-      }
-
-      if (user.getFavoriteCollections() != null) {
-         bson.append(FAVORITE_COLLECTIONS, convertMapToList(user.getFavoriteCollections(), COLLECTION_IDS));
-      } else {
-         bson.append(FAVORITE_COLLECTIONS, Collections.emptyList());
-      }
-
-      if (user.getFavoriteDocuments() != null) {
-         bson.append(FAVORITE_DOCUMENTS, convertMapToList(user.getFavoriteDocuments(), DOCUMENT_IDS));
-      } else {
-         bson.append(FAVORITE_DOCUMENTS, Collections.emptyList());
       }
 
       documentCodec.encode(bsonWriter, bson, encoderContext);

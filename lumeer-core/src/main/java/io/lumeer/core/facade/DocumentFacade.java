@@ -21,8 +21,8 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -31,8 +31,8 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
-import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
@@ -62,7 +62,7 @@ public class DocumentFacade extends AbstractFacade {
    private DocumentDao documentDao;
 
    @Inject
-   private UserDao userDao;
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
@@ -165,50 +165,27 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Set<String> getFavoriteDocumentsIds() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
 
-      String organizationId = workspaceKeeper.getOrganization().get().getId();
-      Map<String, Set<String>> favoriteDocuments = authenticatedUser.getCurrentUser().getFavoriteDocuments();
-      return favoriteDocuments != null && favoriteDocuments.containsKey(organizationId) ? favoriteDocuments.get(organizationId) : Collections.emptySet();
+      return favoriteItemDao.getFavoriteDocumentIds(userId, projectId);
    }
 
    public void addFavoriteDocument(String collectionId, String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
-      User updatedUser = updateFavoriteDocuments(authenticatedUser.getCurrentUser(), getCurrentOrganization().getId(), documentId, null);
-      updateUserCache(updatedUser);
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.addFavoriteDocument(userId, projectId, collectionId, documentId);
    }
 
    public void removeFavoriteDocument(String collectionId, String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
-      User updatedUser = updateFavoriteDocuments(authenticatedUser.getCurrentUser(), getCurrentOrganization().getId(), null, documentId);
-      updateUserCache(updatedUser);
-   }
-
-   private User updateFavoriteDocuments(User user, String organizationId, String addId, String removeId) {
-      Map<String, Set<String>> favoriteDocuments = user.getFavoriteDocuments();
-      Set<String> set = favoriteDocuments.containsKey(organizationId) ? favoriteDocuments.get(organizationId) : new HashSet<>();
-
-      if (addId != null) {
-         set.add(addId);
-      }
-      if (removeId != null) {
-         set.remove(removeId);
-      }
-
-      favoriteDocuments.put(organizationId, set);
-
-      user.setFavoriteCollections(favoriteDocuments);
-      return userDao.updateUser(user.getId(), user);
-   }
-
-   private void updateUserCache(User user) {
-      userCache.updateUser(user.getEmail(), user);
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.removeFavoriteDocument(userId, documentId);
    }
 
    private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
@@ -254,11 +231,15 @@ public class DocumentFacade extends AbstractFacade {
       return getDocuments(dataDocuments);
    }
 
-   private Organization getCurrentOrganization() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+   private Project getCurrentProject() {
+      if (!workspaceKeeper.getProject().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
-      return workspaceKeeper.getOrganization().get();
+      return workspaceKeeper.getProject().get();
+   }
+
+   private User getCurrentUser() {
+      return authenticatedUser.getCurrentUser();
    }
 
    private Map<String, DataDocument> getDataDocuments(String collectionId, Pagination pagination) {

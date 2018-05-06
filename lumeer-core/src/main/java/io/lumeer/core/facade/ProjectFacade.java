@@ -29,6 +29,7 @@ import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -62,6 +63,9 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
@@ -185,6 +189,9 @@ public class ProjectFacade extends AbstractFacade {
       viewDao.deleteViewsRepository(project);
       linkTypeDao.deleteLinkTypeRepository(project);
       linkInstanceDao.deleteLinkInstanceRepository(project);
+
+      favoriteItemDao.removeFavoriteCollectionsByProject(project.getId());
+      favoriteItemDao.removeFavoriteDocumentsByProject(project.getId());
    }
 
    private void checkOrganizationWriteRole() {

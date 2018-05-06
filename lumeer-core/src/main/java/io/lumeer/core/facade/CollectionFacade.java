@@ -21,7 +21,6 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -35,9 +34,9 @@ import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
-import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
@@ -45,7 +44,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -64,13 +62,13 @@ public class CollectionFacade extends AbstractFacade {
    private DocumentDao documentDao;
 
    @Inject
-   private UserDao userDao;
-
-   @Inject
    private LinkTypeDao linkTypeDao;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
@@ -108,8 +106,8 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collectionDao.deleteCollection(collectionId);
-      documentDao.deleteDocuments(collectionId);
-      dataDao.deleteDataRepository(collectionId);
+
+      deleteCollectionBasedData(collectionId);
 
       SearchQuery queryLinkTypes = createQueryForLinkTypes(collectionId);
       List<LinkType> linkTypes = linkTypeDao.getLinkTypes(queryLinkTypes);
@@ -117,6 +115,13 @@ public class CollectionFacade extends AbstractFacade {
          linkTypeDao.deleteLinkTypes(queryLinkTypes);
          linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(linkTypes));
       }
+   }
+
+   private void deleteCollectionBasedData(final String collectionId) {
+      documentDao.deleteDocuments(collectionId);
+      dataDao.deleteDataRepository(collectionId);
+      favoriteItemDao.removeFavoriteCollection(collectionId);
+      favoriteItemDao.removeFavoriteDocumentsByCollection(collectionId);
    }
 
    public Collection getCollection(String collectionId) {
@@ -138,37 +143,17 @@ public class CollectionFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
-      User updatedUser = updateFavoriteCollections(authenticatedUser.getCurrentUser(), getCurrentOrganization().getId(), collectionId, null);
-      updateUserCache(updatedUser);
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.addFavoriteCollection(userId, projectId, collectionId);
    }
 
    public void removeFavoriteCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
-      User updatedUser = updateFavoriteCollections(authenticatedUser.getCurrentUser(), getCurrentOrganization().getId(), null, collectionId);
-      updateUserCache(updatedUser);
-   }
-
-   private User updateFavoriteCollections(User user, String organizationId, String addId, String removeId) {
-      Map<String, Set<String>> favoriteCollections = user.getFavoriteCollections();
-      Set<String> set = favoriteCollections.containsKey(organizationId) ? favoriteCollections.get(organizationId) : new HashSet<>();
-
-      if (addId != null) {
-         set.add(addId);
-      }
-      if (removeId != null) {
-         set.remove(removeId);
-      }
-
-      favoriteCollections.put(organizationId, set);
-
-      user.setFavoriteCollections(favoriteCollections);
-      return userDao.updateUser(user.getId(), user);
-   }
-
-   private void updateUserCache(User user) {
-      userCache.updateUser(user.getEmail(), user);
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.removeFavoriteCollection(userId, collectionId);
    }
 
    public boolean isFavorite(String collectionId) {
@@ -176,13 +161,10 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Set<String> getFavoriteCollectionsIds() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
 
-      String organizationId = workspaceKeeper.getOrganization().get().getId();
-      Map<String, Set<String>> favoriteCollections = authenticatedUser.getCurrentUser().getFavoriteCollections();
-      return favoriteCollections != null && favoriteCollections.containsKey(organizationId) ? favoriteCollections.get(organizationId) : Collections.emptySet();
+      return favoriteItemDao.getFavoriteCollectionIds(userId, projectId);
    }
 
    public Set<String> getCollectionNames() {
@@ -282,11 +264,15 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(project, Role.WRITE);
    }
 
-   private Organization getCurrentOrganization() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+   private Project getCurrentProject() {
+      if (!workspaceKeeper.getProject().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
-      return workspaceKeeper.getOrganization().get();
+      return workspaceKeeper.getProject().get();
+   }
+
+   private User getCurrentUser() {
+      return authenticatedUser.getCurrentUser();
    }
 
    private Collection createCollectionMetadata(Collection collection) {
