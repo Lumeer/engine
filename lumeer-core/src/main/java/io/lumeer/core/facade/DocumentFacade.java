@@ -92,13 +92,13 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, Role.WRITE);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
-      Set<String> attributesToAdd = new HashSet<>(data.keySet());
-      attributesToAdd.removeAll(oldData.keySet());
+      Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
+      attributesIdsToAdd.removeAll(oldData.keySet());
 
-      Set<String> attributesToDec = new HashSet<>(oldData.keySet());
-      attributesToDec.removeAll(data.keySet());
+      Set<String> attributesIdsToDec = new HashSet<>(oldData.keySet());
+      attributesIdsToDec.removeAll(data.keySet());
 
-      updateCollectionMetadata(collection, attributesToAdd, attributesToDec, 0);
+      updateCollectionMetadata(collection, attributesIdsToAdd, attributesIdsToDec, 0);
 
       // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
@@ -115,10 +115,10 @@ public class DocumentFacade extends AbstractFacade {
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
 
-      Set<String> attributesToAdd = new HashSet<>(data.keySet());
-      attributesToAdd.removeAll(oldData.keySet());
+      Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
+      attributesIdsToAdd.removeAll(oldData.keySet());
 
-      updateCollectionMetadata(collection, attributesToAdd, Collections.emptySet(), 0);
+      updateCollectionMetadata(collection, attributesIdsToAdd, Collections.emptySet(), 0);
 
       // TODO archive the old document
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
@@ -152,16 +152,16 @@ public class DocumentFacade extends AbstractFacade {
       linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(documentId));
    }
 
-   private void updateCollectionMetadata(Collection collection, Set<String> attributesToInc, Set<String> attributesToDec, int documentCountDiff) {
+   private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
       Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
                                                        .collect(Collectors.toMap(Attribute::getId, Function.identity()));
 
       oldAttributes.keySet().forEach(attributeId -> {
-         if (attributesToInc.contains(attributeId)) {
+         if (attributesIdsToInc.contains(attributeId)) {
             Attribute attribute = oldAttributes.get(attributeId);
             attribute.setUsageCount(attribute.getUsageCount() + 1);
-            attributesToInc.remove(attributeId);
-         } else if (attributesToDec.contains(attributeId)) {
+            attributesIdsToInc.remove(attributeId);
+         } else if (attributesIdsToDec.contains(attributeId)) {
             Attribute attribute = oldAttributes.get(attributeId);
             attribute.setUsageCount(Math.max(attribute.getUsageCount() - 1, 0));
          }
