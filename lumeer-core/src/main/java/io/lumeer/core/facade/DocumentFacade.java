@@ -18,14 +18,12 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.AuthenticatedUserGroups;
-import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -69,7 +67,7 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, Role.WRITE);
       permissionsChecker.checkDocumentLimits(document);
 
-      DataDocument data = DocumentUtils.checkDocumentKeysValidity(document.getData());
+      DataDocument data = document.getData();
 
       Document storedDocument = createDocument(collection, document);
 
@@ -156,34 +154,23 @@ public class DocumentFacade extends AbstractFacade {
 
    private void updateCollectionMetadata(Collection collection, Set<String> attributesToInc, Set<String> attributesToDec, int documentCountDiff) {
       Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
-                                                       .collect(Collectors.toMap(Attribute::getName, Function.identity()));
+                                                       .collect(Collectors.toMap(Attribute::getId, Function.identity()));
 
-      oldAttributes.keySet().forEach(attributeName -> {
-         if (attributesToInc.contains(attributeName)) {
-            Attribute attribute = oldAttributes.get(attributeName);
+      oldAttributes.keySet().forEach(attributeId -> {
+         if (attributesToInc.contains(attributeId)) {
+            Attribute attribute = oldAttributes.get(attributeId);
             attribute.setUsageCount(attribute.getUsageCount() + 1);
-            attributesToInc.remove(attributeName);
-         } else if (attributesToDec.contains(attributeName)) {
-            Attribute attribute = oldAttributes.get(attributeName);
+            attributesToInc.remove(attributeId);
+         } else if (attributesToDec.contains(attributeId)) {
+            Attribute attribute = oldAttributes.get(attributeId);
             attribute.setUsageCount(Math.max(attribute.getUsageCount() - 1, 0));
          }
 
       });
 
-      Set<Attribute> newAttributes = new HashSet<>();
-
-      int num = collection.getLastAttributeNum();
-      for (String attributeName : attributesToInc) {
-         num++;
-         newAttributes.add(new JsonAttribute(Collection.ATTRIBUTE_PREFIX + num, attributeName, Collections.emptySet(), 1));
-      }
-
-      newAttributes.addAll(oldAttributes.values());
-
-      collection.setAttributes(newAttributes);
+      collection.setAttributes(new HashSet<>(oldAttributes.values()));
       collection.setLastTimeUsed(LocalDateTime.now());
       collection.setDocumentsCount(collection.getDocumentsCount() + documentCountDiff);
-      collection.setLastAttributeNum(num);
       collectionDao.updateCollection(collection.getId(), collection);
    }
 
