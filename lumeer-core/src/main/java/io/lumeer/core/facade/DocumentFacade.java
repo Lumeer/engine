@@ -158,8 +158,6 @@ public class DocumentFacade extends AbstractFacade {
       Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
                                                        .collect(Collectors.toMap(Attribute::getName, Function.identity()));
 
-      System.out.println("LMRDF has now " + oldAttributes.keySet().toString());
-
       oldAttributes.keySet().forEach(attributeName -> {
          if (attributesToInc.contains(attributeName)) {
             Attribute attribute = oldAttributes.get(attributeName);
@@ -171,8 +169,6 @@ public class DocumentFacade extends AbstractFacade {
          }
 
       });
-      System.out.println("LMRDF adding " + attributesToInc.toString());
-
 
       Set<Attribute> newAttributes = new HashSet<>();
 
