@@ -38,7 +38,9 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -130,17 +132,24 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getAllCollectionNames();
    }
 
-   public Attribute createCollectionAttribute(String collectionId, Attribute attribute) {
+   public Set<Attribute> createCollectionAttributes(String collectionId, java.util.Collection<? extends Attribute> attributes) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
-      attribute.setId(Collection.ATTRIBUTE_PREFIX + collection.getLastAttributeNum());
-      collection.createAttribute(attribute);
+      int i = 0;
+      for (Attribute attribute : attributes) {
+         attribute.setId(Collection.ATTRIBUTE_PREFIX + (collection.getLastAttributeNum() + i + 1));
+         attribute.setUsageCount(0);
+         System.out.println("LMRDF creating" + attribute.getName());
+         collection.createAttribute(attribute);
+         i++;
+      }
+
+      collection.setLastAttributeNum(collection.getLastAttributeNum() + attributes.size());
 
       collectionDao.updateCollection(collection.getId(), collection);
 
-      return attribute;
+      return new HashSet<>(attributes);
    }
 
    public Attribute updateCollectionAttribute(String collectionId, String attributeId, Attribute attribute) {
