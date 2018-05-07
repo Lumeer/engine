@@ -22,6 +22,7 @@ package io.lumeer.remote.rest.permissions;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.dto.JsonCollection;
+import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
