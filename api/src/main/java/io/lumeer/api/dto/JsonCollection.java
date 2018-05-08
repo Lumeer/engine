@@ -44,7 +44,7 @@ public class JsonCollection extends JsonResource implements Collection {
    private Integer documentsCount;
    private LocalDateTime lastTimeUsed;
    private Integer lastAttributeNum;
-   private boolean isFavorite;
+   private boolean favorite;
 
    public JsonCollection(final String code, final String name, final String icon, final String color, final JsonPermissions permissions) {
       this(code, name, icon, color, "", permissions, new LinkedHashSet<>());
@@ -127,11 +127,11 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    public boolean isFavorite() {
-      return isFavorite;
+      return favorite;
    }
 
    public void setFavorite(final boolean favorite) {
-      isFavorite = favorite;
+      this.favorite = favorite;
    }
 
    @Override

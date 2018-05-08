@@ -157,7 +157,14 @@ public class DocumentFacade extends AbstractFacade {
 
       documentDao.deleteDocument(documentId);
       dataDao.deleteData(collection.getId(), documentId);
+
+      deleteDocumentBasedData(collectionId, documentId);
+
+   }
+
+   private void deleteDocumentBasedData(String collectionId, String documentId) {
       linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(documentId));
+      favoriteItemDao.removeFavoriteDocumentFromUsers(getCurrentProject().getId(), collectionId, documentId);
    }
 
    public boolean isFavorite(String documentId) {

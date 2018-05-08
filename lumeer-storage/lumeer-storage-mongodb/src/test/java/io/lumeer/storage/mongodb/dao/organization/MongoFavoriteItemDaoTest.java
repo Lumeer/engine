@@ -112,7 +112,7 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID1)).containsOnly(COLLECTION_ID1);
       assertThat(dao.getFavoriteCollectionIds(USER2, PROJECT_ID1)).containsOnly(COLLECTION_ID1);
 
-      dao.removeFavoriteCollection(COLLECTION_ID1);
+      dao.removeFavoriteCollectionFromUsers(PROJECT_ID1, COLLECTION_ID1);
 
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID1)).isEmpty();
       assertThat(dao.getFavoriteCollectionIds(USER2, PROJECT_ID1)).isEmpty();
@@ -128,7 +128,7 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID1)).containsOnly(COLLECTION_ID1);
       assertThat(dao.getFavoriteCollectionIds(USER2, PROJECT_ID1)).containsOnly(COLLECTION_ID2);
 
-      dao.removeFavoriteCollectionsByProject(PROJECT_ID1);
+      dao.removeFavoriteCollectionsByProjectFromUsers(PROJECT_ID1);
 
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID1)).isEmpty();
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID2)).containsOnly(COLLECTION_ID1);

@@ -121,8 +121,8 @@ public class CollectionFacade extends AbstractFacade {
          linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(linkTypes));
       }
 
-      favoriteItemDao.removeFavoriteCollection(collectionId);
-      favoriteItemDao.removeFavoriteDocumentsByCollection(collectionId);
+      favoriteItemDao.removeFavoriteCollectionFromUsers(getCurrentProject().getId(), collectionId);
+      favoriteItemDao.removeFavoriteDocumentsByCollectionFromUsers(getCurrentProject().getId(), collectionId);
    }
 
    public Collection getCollection(String collectionId) {

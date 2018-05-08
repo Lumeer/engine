@@ -43,7 +43,7 @@ public class JsonDocument implements Document {
    private Integer dataVersion;
    private DataDocument data;
 
-   private boolean isFavorite;
+   private boolean favorite;
 
    @JsonCreator
    public JsonDocument(@JsonProperty("data") final DataDocument data) {
@@ -142,11 +142,11 @@ public class JsonDocument implements Document {
    }
 
    public boolean isFavorite() {
-      return isFavorite;
+      return favorite;
    }
 
    public void setFavorite(final boolean favorite) {
-      isFavorite = favorite;
+      this.favorite = favorite;
    }
 
    public static JsonDocument convert(Document document) {

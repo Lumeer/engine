@@ -14,9 +14,9 @@ public interface FavoriteItemDao {
 
    void removeFavoriteCollection(String userId, String collectionId);
 
-   void removeFavoriteCollection(String collectionId);
+   void removeFavoriteCollectionFromUsers(String projectId, String collectionId);
 
-   void removeFavoriteCollectionsByProject(String projectId);
+   void removeFavoriteCollectionsByProjectFromUsers(String projectId);
 
    Set<String> getFavoriteCollectionIds(String userId, String projectId);
 
@@ -24,11 +24,11 @@ public interface FavoriteItemDao {
 
    void removeFavoriteDocument(String userId, String documentId);
 
-   void removeFavoriteDocument(String documentId);
+   void removeFavoriteDocumentFromUsers(String projectId, String collectionId, String documentId);
 
-   void removeFavoriteDocumentsByProject(String projectId);
+   void removeFavoriteDocumentsByProjectFromUsers(String projectId);
 
-   void removeFavoriteDocumentsByCollection(String collectionId);
+   void removeFavoriteDocumentsByCollectionFromUsers(String projectId, String collectionId);
 
    Set<String> getFavoriteDocumentIds(String userId, String projectId);
 }

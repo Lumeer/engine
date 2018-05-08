@@ -1,5 +1,7 @@
 package io.lumeer.storage.mongodb.dao.organization;
 
+import static com.mongodb.client.model.Filters.*;
+
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -8,7 +10,6 @@ import io.lumeer.storage.api.exception.StorageException;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import org.bson.Document;
@@ -71,25 +72,25 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
 
    @Override
    public void removeFavoriteCollection(final String userId, final String collectionId) {
-      Bson filter = Filters.and(Filters.eq(USER_ID, userId), Filters.eq(COLLECTION_ID, collectionId));
+      Bson filter = and(eq(USER_ID, userId), eq(COLLECTION_ID, collectionId));
       favoriteCollectionsDBCollection().findOneAndDelete(filter);
    }
 
    @Override
-   public void removeFavoriteCollection(final String collectionId) {
-      Bson filter = Filters.eq(COLLECTION_ID, collectionId);
+   public void removeFavoriteCollectionFromUsers(String projectId,final String collectionId) {
+      Bson filter = and(eq(PROJECT_ID, projectId), eq(COLLECTION_ID, collectionId));
       favoriteCollectionsDBCollection().deleteMany(filter);
    }
 
    @Override
-   public void removeFavoriteCollectionsByProject(final String projectId) {
-      Bson filter = Filters.eq(PROJECT_ID, projectId);
+   public void removeFavoriteCollectionsByProjectFromUsers(final String projectId) {
+      Bson filter = eq(PROJECT_ID, projectId);
       favoriteCollectionsDBCollection().deleteMany(filter);
    }
 
    @Override
    public Set<String> getFavoriteCollectionIds(final String userId, final String projectId) {
-      Bson filter = Filters.and(Filters.eq(USER_ID, userId), Filters.eq(PROJECT_ID, projectId));
+      Bson filter = and(eq(USER_ID, userId), eq(PROJECT_ID, projectId));
       final ArrayList<Document> favoriteCollections = favoriteCollectionsDBCollection().find(filter).into(new ArrayList<>());
       return favoriteCollections.stream()
                                 .map(document -> document.getString(COLLECTION_ID))
@@ -112,33 +113,33 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
 
    @Override
    public void removeFavoriteDocument(final String userId, final String documentId) {
-      Bson filter = Filters.and(Filters.eq(USER_ID, userId), Filters.eq(DOCUMENT_ID, documentId));
+      Bson filter = and(eq(USER_ID, userId), eq(DOCUMENT_ID, documentId));
       favoriteDocumentsDBCollection().findOneAndDelete(filter);
    }
 
    @Override
-   public void removeFavoriteDocument(final String documentId) {
-      Bson filter = Filters.eq(DOCUMENT_ID, documentId);
+   public void removeFavoriteDocumentFromUsers(final String projectId, final String collectionId, final String documentId) {
+      Bson filter = and(eq(PROJECT_ID, projectId), eq(COLLECTION_ID, collectionId), eq(DOCUMENT_ID, documentId));
       favoriteDocumentsDBCollection().deleteMany(filter);
    }
 
    @Override
-   public void removeFavoriteDocumentsByProject(final String projectId) {
-      Bson filter = Filters.eq(PROJECT_ID, projectId);
+   public void removeFavoriteDocumentsByProjectFromUsers(final String projectId) {
+      Bson filter = eq(PROJECT_ID, projectId);
       favoriteDocumentsDBCollection().deleteMany(filter);
    }
 
    @Override
-   public void removeFavoriteDocumentsByCollection(final String collectionId) {
-      Bson filter = Filters.eq(COLLECTION_ID, collectionId);
+   public void removeFavoriteDocumentsByCollectionFromUsers(final String projectId, final String collectionId) {
+      Bson filter = and(eq(PROJECT_ID, projectId), eq(COLLECTION_ID, collectionId));
       favoriteDocumentsDBCollection().deleteMany(filter);
    }
 
    @Override
    public Set<String> getFavoriteDocumentIds(final String userId, final String projectId) {
-      Bson filter = Filters.and(Filters.eq(USER_ID, userId), Filters.eq(PROJECT_ID, projectId));
-      final ArrayList<Document> favoriteCollections = favoriteDocumentsDBCollection().find(filter).into(new ArrayList<>());
-      return favoriteCollections.stream()
+      Bson filter = and(eq(USER_ID, userId), eq(PROJECT_ID, projectId));
+      final ArrayList<Document> favoriteDocuments = favoriteDocumentsDBCollection().find(filter).into(new ArrayList<>());
+      return favoriteDocuments.stream()
                                 .map(document -> document.getString(DOCUMENT_ID))
                                 .collect(Collectors.toSet());
    }

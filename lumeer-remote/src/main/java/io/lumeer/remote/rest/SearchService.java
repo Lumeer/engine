@@ -88,27 +88,27 @@ public class SearchService extends AbstractService {
    @POST
    @Path("collections")
    public List<JsonCollection> searchCollections(JsonQuery query) {
-      List<JsonCollection> returnCollections = searchFacade.searchCollections(query).stream()
-                                                           .map(JsonCollection::convert)
-                                                           .collect(Collectors.toList());
-
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      returnCollections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
-
-      return returnCollections;
+      return searchFacade.searchCollections(query).stream()
+                         .map(coll -> {
+                            JsonCollection collection = JsonCollection.convert(coll);
+                            collection.setFavorite(favoriteCollectionIds.contains(collection.getId()));
+                            return collection;
+                         })
+                         .collect(Collectors.toList());
    }
 
    @POST
    @Path("documents")
    public List<JsonDocument> searchDocuments(JsonQuery query) {
-      List<JsonDocument> returnDocuments = searchFacade.searchDocuments(query).stream()
-                                                       .map(JsonDocument::convert)
-                                                       .collect(Collectors.toList());
-
       Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
-      returnDocuments.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
-
-      return returnDocuments;
+      return searchFacade.searchDocuments(query).stream()
+                         .map(doc -> {
+                            JsonDocument document = JsonDocument.convert(doc);
+                            document.setFavorite(favoriteDocumentIds.contains(document.getId()));
+                            return document;
+                         })
+                         .collect(Collectors.toList());
 
    }
 

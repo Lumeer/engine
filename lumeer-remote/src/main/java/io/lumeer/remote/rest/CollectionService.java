@@ -32,6 +32,7 @@ import io.lumeer.core.facade.CollectionFacade;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -112,13 +113,14 @@ public class CollectionService extends AbstractService {
    public List<JsonCollection> getCollections(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
       Pagination pagination = new Pagination(page, pageSize);
 
-      List<Collection> collections = collectionFacade.getCollections(pagination);
-      List<JsonCollection> returnCollections = JsonCollection.convert(collections);
-
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      returnCollections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
-
-      return returnCollections;
+      return collectionFacade.getCollections(pagination).stream()
+                             .map(coll -> {
+                                JsonCollection collection = JsonCollection.convert(coll);
+                                collection.setFavorite(favoriteCollectionIds.contains(collection.getId()));
+                                return collection;
+                             })
+                             .collect(Collectors.toList());
    }
 
    @GET

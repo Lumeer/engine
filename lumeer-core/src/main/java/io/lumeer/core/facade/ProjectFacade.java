@@ -190,8 +190,8 @@ public class ProjectFacade extends AbstractFacade {
       linkTypeDao.deleteLinkTypeRepository(project);
       linkInstanceDao.deleteLinkInstanceRepository(project);
 
-      favoriteItemDao.removeFavoriteCollectionsByProject(project.getId());
-      favoriteItemDao.removeFavoriteDocumentsByProject(project.getId());
+      favoriteItemDao.removeFavoriteCollectionsByProjectFromUsers(project.getId());
+      favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
    }
 
    private void checkOrganizationWriteRole() {
