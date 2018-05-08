@@ -190,9 +190,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
@@ -203,9 +200,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
@@ -233,9 +227,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
@@ -246,9 +237,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
@@ -276,9 +264,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
@@ -288,9 +273,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       documentFacade.deleteDocument(collection.getId(), id);
 
@@ -302,9 +284,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(0);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
@@ -340,9 +319,4 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
    }
 
-   private Attribute findCollectionAttribute(Collection collection, String attributeName) {
-      return collection.getAttributes().stream()
-                       .filter(attribute -> attribute.getName().equals(attributeName))
-                       .findFirst().orElse(null);
-   }
 }
