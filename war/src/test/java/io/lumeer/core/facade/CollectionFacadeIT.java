@@ -83,12 +83,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private User user;
    private Group group;
 
-   private static final String ATTRIBUTE_NAME = "name";
-   private static final String ATTRIBUTE_FULLNAME = "fullname";
+   private static final String ATTRIBUTE_ID = "a1";
+   private static final String ATTRIBUTE_NAME = "fullname";
    private static final Set<String> ATTRIBUTE_CONSTRAINTS = Collections.emptySet();
    private static final Integer ATTRIBUTE_COUNT = 0;
 
-   private static final String ATTRIBUTE_FULLNAME2 = "fullname2";
+   private static final String ATTRIBUTE_NAME2 = "fullname2";
 
    private static final String CODE2 = "TCOLL2";
    private static final String NAME2 = "Test collection 2";
@@ -175,7 +175,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = prepareCollection(code);
       collection.getPermissions().updateUserPermissions(userPermission);
       collection.getPermissions().updateGroupPermissions(groupPermission);
-      collection.updateAttribute(attribute.getFullName(), attribute);
+      collection.updateAttribute(attribute.getId(), attribute);
       return collectionDao.createCollection(collection);
    }
 
@@ -265,8 +265,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
 
-      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
-      collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_FULLNAME, attribute);
+      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      final Attribute createdAttribute = collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, attribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
@@ -274,8 +274,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Attribute storedAttribute = collection.getAttributes().iterator().next();
       SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(storedAttribute.getId()).isEqualTo(createdAttribute.getId());
       assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
-      assertions.assertThat(storedAttribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME);
       assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
@@ -283,12 +283,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateCollectionAttributeUpdate() {
-      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
-      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
-      collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_FULLNAME, updatedAttribute);
+      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, updatedAttribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
@@ -296,8 +296,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Attribute storedAttribute = collection.getAttributes().iterator().next();
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
-      assertions.assertThat(storedAttribute.getFullName()).isEqualTo(ATTRIBUTE_FULLNAME2);
+      assertions.assertThat(storedAttribute.getId()).isEqualTo(ATTRIBUTE_ID);
+      assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
       assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
@@ -305,11 +305,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteCollectionAttribute() {
-      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_NAME, ATTRIBUTE_FULLNAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
-      collectionFacade.deleteCollectionAttribute(collection.getId(), ATTRIBUTE_FULLNAME);
+      collectionFacade.deleteCollectionAttribute(collection.getId(), ATTRIBUTE_ID);
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();

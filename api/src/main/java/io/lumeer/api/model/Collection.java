@@ -18,6 +18,8 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -26,6 +28,8 @@ import java.util.Set;
 public interface Collection extends Resource {
 
    Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.SHARE, Role.READ));
+
+   String ATTRIBUTE_PREFIX = "a";
 
    @Override
    default ResourceType getType() {
@@ -38,9 +42,11 @@ public interface Collection extends Resource {
 
    void setName(String name);
 
-   void updateAttribute(String attributeFullName, Attribute attribute);
+   void createAttribute(Attribute attribute);
 
-   void deleteAttribute(String attributeFullName);
+   void updateAttribute(String attributeId, Attribute attribute);
+
+   void deleteAttribute(String attributeName);
 
    Integer getDocumentsCount();
 
@@ -49,5 +55,10 @@ public interface Collection extends Resource {
    LocalDateTime getLastTimeUsed();
 
    void setLastTimeUsed(LocalDateTime lastTimeUsed);
+
+   @JsonIgnore
+   Integer getLastAttributeNum();
+
+   void setLastAttributeNum(final Integer lastAttributeNum);
 
 }

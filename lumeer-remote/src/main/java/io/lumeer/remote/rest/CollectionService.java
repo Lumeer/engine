@@ -29,6 +29,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -119,24 +120,32 @@ public class CollectionService extends AbstractService {
       return JsonAttribute.convert(attributes);
    }
 
+   @POST
+   @Path("{collectionId}/attributes")
+   public Set<JsonAttribute> createCollectionAttributes(@PathParam("collectionId") String collectionId, List<JsonAttribute> attributes) {
+      Set<Attribute> storedAttributes = collectionFacade.createCollectionAttributes(collectionId, attributes);
+
+      return JsonAttribute.convert(storedAttributes);
+   }
+
    @PUT
-   @Path("{collectionId}/attributes/{attributeFullName}")
-   public JsonAttribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeFullName") String attributeFullName, JsonAttribute attribute) {
-      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionId, attributeFullName, attribute);
+   @Path("{collectionId}/attributes/{attributeId}")
+   public JsonAttribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId, JsonAttribute attribute) {
+      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionId, attributeId, attribute);
 
       return JsonAttribute.convert(storedAttribute);
    }
 
    @DELETE
-   @Path("{collectionId}/attributes/{attributeFullName}")
-   public Response deleteCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeFullName") String attributeFullName) {
-      if (attributeFullName == null) {
-         throw new BadRequestException("attributeFullName");
+   @Path("{collectionId}/attributes/{attributeId}")
+   public Response deleteCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId) {
+      if (attributeId == null) {
+         throw new BadRequestException("attributeId");
       }
 
-      collectionFacade.deleteCollectionAttribute(collectionId, attributeFullName);
+      collectionFacade.deleteCollectionAttribute(collectionId, attributeId);
 
-      return Response.ok().link(getParentUri(attributeFullName), "parent").build();
+      return Response.ok().link(getParentUri(attributeId), "parent").build();
    }
 
    @GET

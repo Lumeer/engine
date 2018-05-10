@@ -26,9 +26,9 @@ public interface Attribute {
 
    void setName(String name);
 
-   String getFullName();
+   String getId();
 
-   void setFullName(String fullName);
+   void setId(String id);
 
    Set<String> getConstraints();
 

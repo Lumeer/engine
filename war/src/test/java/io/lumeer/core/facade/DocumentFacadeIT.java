@@ -139,6 +139,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       collectionPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       JsonCollection jsonCollection = new JsonCollection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       jsonCollection.setDocumentsCount(0);
+      jsonCollection.setLastAttributeNum(0);
       collection = collectionDao.createCollection(jsonCollection);
    }
 
@@ -159,7 +160,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).isEmpty();
+      assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).isEmpty();
 
       Document document = prepareDocument();
 
@@ -189,9 +190,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
@@ -202,9 +200,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
@@ -232,9 +227,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
@@ -245,9 +237,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
@@ -275,9 +264,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
    }
 
    @Test
@@ -287,9 +273,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Collection storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(1);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(1);
 
       documentFacade.deleteDocument(collection.getId(), id);
 
@@ -301,9 +284,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
-      assertThat(storedCollection.getAttributes()).extracting(Attribute::getFullName).containsOnly(KEY1, KEY2);
-      assertThat(findCollectionAttribute(storedCollection, KEY1).getUsageCount()).isEqualTo(0);
-      assertThat(findCollectionAttribute(storedCollection, KEY2).getUsageCount()).isEqualTo(0);
    }
 
    @Test
@@ -339,9 +319,4 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
    }
 
-   private Attribute findCollectionAttribute(Collection collection, String attributeName) {
-      return collection.getAttributes().stream()
-                       .filter(attribute -> attribute.getFullName().equals(attributeName))
-                       .findFirst().orElse(null);
-   }
 }

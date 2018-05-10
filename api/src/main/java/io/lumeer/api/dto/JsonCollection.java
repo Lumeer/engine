@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,8 @@ public class JsonCollection extends JsonResource implements Collection {
    private Set<JsonAttribute> attributes;
    private Integer documentsCount;
    private LocalDateTime lastTimeUsed;
+
+   private Integer lastAttributeNum;
 
    public JsonCollection(final String code, final String name, final String icon, final String color, final JsonPermissions permissions) {
       this(code, name, icon, color, "", permissions, new LinkedHashSet<>());
@@ -60,6 +63,7 @@ public class JsonCollection extends JsonResource implements Collection {
 
       this.attributes = attributes != null ? attributes : new LinkedHashSet<>();
       this.documentsCount = 0;
+      this.lastAttributeNum = 0;
    }
 
    public JsonCollection(Collection collection) {
@@ -68,6 +72,7 @@ public class JsonCollection extends JsonResource implements Collection {
       this.attributes = JsonAttribute.convert(collection.getAttributes());
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
+      this.lastAttributeNum = collection.getLastAttributeNum();
    }
 
    @Override
@@ -81,18 +86,24 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
-   public void updateAttribute(final String attributeFullName, final Attribute attribute) {
-      attributes.removeIf(a -> a.getFullName().equals(attributeFullName));
+   public void createAttribute(final Attribute attribute) {
+      attributes.add(JsonAttribute.convert(attribute));
+   }
+
+   @Override
+   public void updateAttribute(final String attributeId, final Attribute attribute) {
+      Optional<JsonAttribute> oldAttribute = attributes.stream().filter(attr -> attribute.getId().equals(attribute.getId())).findFirst();
+      attributes.removeIf(a -> a.getId().equals(attributeId));
       attributes.add(JsonAttribute.convert(attribute));
 
-      if (!attribute.getFullName().equals(attributeFullName)) {
-         AttributeUtil.renameChildAttributes(attributes, attributeFullName, attribute.getFullName());
+      if (oldAttribute.isPresent() && !oldAttribute.get().getName().equals(attribute.getName())) {
+         AttributeUtil.renameChildAttributes(attributes, oldAttribute.get().getName(), attribute.getName());
       }
    }
 
    @Override
-   public void deleteAttribute(final String attributeFullName) {
-      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeFullName));
+   public void deleteAttribute(final String attributeName) {
+      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeName));
    }
 
    @Override
@@ -113,6 +124,16 @@ public class JsonCollection extends JsonResource implements Collection {
    @Override
    public void setLastTimeUsed(final LocalDateTime lastTimeUsed) {
       this.lastTimeUsed = lastTimeUsed;
+   }
+
+   @Override
+   public Integer getLastAttributeNum() {
+      return lastAttributeNum;
+   }
+
+   @Override
+   public void setLastAttributeNum(final Integer lastAttributeNum) {
+      this.lastAttributeNum = lastAttributeNum;
    }
 
    @Override

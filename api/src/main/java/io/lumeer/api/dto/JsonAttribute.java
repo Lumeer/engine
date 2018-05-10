@@ -30,38 +30,38 @@ import java.util.stream.Collectors;
 
 public class JsonAttribute implements Attribute {
 
+   public static final String ID = "id";
    public static final String NAME = "name";
-   public static final String FULLNAME = "fullName";
    public static final String CONSTRAINTS = "constraints";
    public static final String USAGE_COUNT = "usageCount";
 
+   private String id;
    private String name;
-   private String fullName;
    private Set<String> constraints;
    private Integer usageCount;
 
-   public JsonAttribute(final String name){
-      this.name = name;
-      this.fullName = name;
+   public JsonAttribute(final String id){
+      this.id = id;
+      this.name = id;
       this.constraints = Collections.emptySet();
       this.usageCount = 0;
    }
 
    public JsonAttribute(Attribute attribute) {
+      this.id = attribute.getId();
       this.name = attribute.getName();
-      this.fullName = attribute.getFullName();
       this.constraints = new HashSet<>(attribute.getConstraints());
       this.usageCount = attribute.getUsageCount();
    }
 
    @JsonCreator
    public JsonAttribute(
+         @JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
-         @JsonProperty(FULLNAME) final String fullName,
          @JsonProperty(CONSTRAINTS) final Set<String> constraints,
          @JsonProperty(USAGE_COUNT) final Integer usageCount) {
       this.name = name;
-      this.fullName = fullName;
+      this.id = id;
       this.constraints = constraints;
       this.usageCount = usageCount;
    }
@@ -77,13 +77,13 @@ public class JsonAttribute implements Attribute {
    }
 
    @Override
-   public String getFullName() {
-      return fullName;
+   public String getId() {
+      return id;
    }
 
    @Override
-   public void setFullName(final String fullName) {
-      this.fullName = fullName;
+   public void setId(final String id) {
+      this.id = id;
    }
 
    @Override
@@ -112,19 +112,19 @@ public class JsonAttribute implements Attribute {
 
       final Attribute that = (Attribute) o;
 
-      return getFullName() != null ? getFullName().equals(that.getFullName()) : that.getFullName() == null;
+      return getId() != null ? getId().equals(that.getId()) : that.getId() == null;
    }
 
    @Override
    public int hashCode() {
-      return getFullName() != null ? getFullName().hashCode() : 0;
+      return getId() != null ? getId().hashCode() : 0;
    }
 
    @Override
    public String toString() {
       return "JsonAttribute{" +
-            "name='" + name + '\'' +
-            ", fullName='" + fullName + '\'' +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
             ", constraints=" + constraints +
             ", usageCount=" + usageCount +
             '}';

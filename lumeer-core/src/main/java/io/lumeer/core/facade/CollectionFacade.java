@@ -38,8 +38,11 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -68,7 +71,8 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
-      permissionsChecker.checkCreationLimits(collection, collectionDao.getCollectionsCount());
+      long collectionsCount = collectionDao.getCollectionsCount();
+      permissionsChecker.checkCreationLimits(collection, collectionsCount);
 
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
@@ -128,22 +132,45 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getAllCollectionNames();
    }
 
-   public Attribute updateCollectionAttribute(String collectionId, String attributeFullName, Attribute attribute) {
+   public Set<Attribute> createCollectionAttributes(String collectionId, java.util.Collection<? extends Attribute> attributes) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.updateAttribute(attributeFullName, attribute);
+      int i = 0;
+      for (Attribute attribute : attributes) {
+         attribute.setId(Collection.ATTRIBUTE_PREFIX + (collection.getLastAttributeNum() + i + 1));
+         attribute.setUsageCount(0);
+         collection.createAttribute(attribute);
+         i++;
+      }
+
+      collection.setLastAttributeNum(collection.getLastAttributeNum() + attributes.size());
+
+      collectionDao.updateCollection(collection.getId(), collection);
+
+      return new HashSet<>(attributes);
+   }
+
+   public Attribute updateCollectionAttribute(String collectionId, String attributeId, Attribute attribute) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.MANAGE);
+
+      collection.updateAttribute(attributeId, attribute);
+
       collectionDao.updateCollection(collection.getId(), collection);
 
       return attribute;
    }
 
-   public void deleteCollectionAttribute(String collectionId, String attributeFullName) {
+   public void deleteCollectionAttribute(String collectionId, String attributeId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      collection.deleteAttribute(attributeFullName);
-      collectionDao.updateCollection(collection.getId(), collection);
+      Optional<Attribute> toDelete = collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      if (toDelete.isPresent()) {
+         collection.deleteAttribute(toDelete.get().getName());
+         collectionDao.updateCollection(collection.getId(), collection);
+      }
    }
 
    public Permissions getCollectionPermissions(final String collectionId) {
@@ -202,6 +229,8 @@ public class CollectionFacade extends AbstractFacade {
       if (collection.getCode() == null || collection.getCode().isEmpty()) {
          collection.setCode(generateCollectionCode(collection.getName()));
       }
+
+      collection.setLastAttributeNum(0);
 
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
