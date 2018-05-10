@@ -76,6 +76,17 @@ public class MorphiaProjectDao extends OrganizationScopedDao implements ProjectD
    }
 
    @Override
+   public Project getProjectById(final String projectId) {
+      Project project = datastore.createQuery(databaseCollection(), MorphiaProject.class)
+                                 .field(MorphiaProject.ID).equal(new ObjectId(projectId))
+                                 .get();
+      if (project == null) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return project;
+   }
+
+   @Override
    public Project updateProject(final String projectId, final Project project) {
       MorphiaProject morphiaProject = new MorphiaProject(project);
       morphiaProject.setId(projectId);

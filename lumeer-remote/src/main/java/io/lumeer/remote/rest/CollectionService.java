@@ -72,15 +72,21 @@ public class CollectionService extends AbstractService {
    public Collection createCollection(JsonCollection collection) {
       Collection storedCollection = collectionFacade.createCollection(collection);
 
-      return JsonCollection.convert(storedCollection);
+      JsonCollection returnCollection = JsonCollection.convert(storedCollection);
+      returnCollection.setFavorite(false);
+
+      return returnCollection;
    }
 
    @PUT
    @Path("{collectionId}")
-   public Response updateCollection(@PathParam("collectionId") String collectionId, JsonCollection collection) {
+   public Collection updateCollection(@PathParam("collectionId") String collectionId, JsonCollection collection) {
       Collection storedCollection = collectionFacade.updateCollection(collectionId, collection);
 
-      return Response.ok(JsonCollection.convert(storedCollection)).build();
+      JsonCollection returnCollection = JsonCollection.convert(storedCollection);
+      returnCollection.setFavorite(collectionFacade.isFavorite(returnCollection.getId()));
+
+      return returnCollection;
    }
 
    @DELETE
@@ -93,9 +99,13 @@ public class CollectionService extends AbstractService {
 
    @GET
    @Path("{collectionId}")
-   public JsonCollection getCollection(@PathParam("collectionId") String collectionCode) {
-      Collection collection = collectionFacade.getCollection(collectionCode);
-      return JsonCollection.convert(collection);
+   public JsonCollection getCollection(@PathParam("collectionId") String collectionId) {
+      Collection collection = collectionFacade.getCollection(collectionId);
+
+      JsonCollection returnCollection = JsonCollection.convert(collection);
+      returnCollection.setFavorite(collectionFacade.isFavorite(returnCollection.getId()));
+
+      return returnCollection;
    }
 
    @GET
@@ -103,7 +113,12 @@ public class CollectionService extends AbstractService {
       Pagination pagination = new Pagination(page, pageSize);
 
       List<Collection> collections = collectionFacade.getCollections(pagination);
-      return JsonCollection.convert(collections);
+      List<JsonCollection> returnCollections = JsonCollection.convert(collections);
+
+      Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
+      returnCollections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
+
+      return returnCollections;
    }
 
    @GET
@@ -183,6 +198,22 @@ public class CollectionService extends AbstractService {
       collectionFacade.removeGroupPermission(collectionId, groupId);
 
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
+   }
+
+   @POST
+   @Path("{collectionId}/favorite")
+   public Response addFavoriteCollection(@PathParam("collectionId") String collectionId) {
+      collectionFacade.addFavoriteCollection(collectionId);
+
+      return Response.ok().build();
+   }
+
+   @DELETE
+   @Path("{collectionId}/favorite")
+   public Response removeFavoriteCollection(@PathParam("collectionId") String collectionId) {
+      collectionFacade.removeFavoriteCollection(collectionId);
+
+      return Response.ok().build();
    }
 
 }

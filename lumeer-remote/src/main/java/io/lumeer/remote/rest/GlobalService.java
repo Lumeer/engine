@@ -18,16 +18,22 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.User;
-import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.api.view.UserViews;
+import io.lumeer.core.facade.UserFacade;
+
+import com.fasterxml.jackson.annotation.JsonView;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -36,11 +42,20 @@ import javax.ws.rs.core.MediaType;
 public class GlobalService extends AbstractService {
 
    @Inject
-   private AuthenticatedUser authenticatedUser;
+   private UserFacade userFacade;
 
    @GET
    @Path("currentUser")
+   @JsonView(UserViews.FullView.class)
    public User getCurrentUser() {
-      return authenticatedUser.getCurrentUser();
+      return userFacade.getCurrentUser();
+   }
+
+   @PUT
+   @Path("workspace")
+   public Response updateWorkspace(DefaultWorkspace defaultWorkspace) {
+      userFacade.setDefaultWorkspace(defaultWorkspace);
+
+      return Response.ok().build();
    }
 }

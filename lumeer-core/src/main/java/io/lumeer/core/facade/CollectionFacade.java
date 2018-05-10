@@ -21,12 +21,14 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
@@ -35,14 +37,15 @@ import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -59,6 +62,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private DocumentDao documentDao;
+
+   @Inject
+   private UserDao userDao;
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -126,6 +132,57 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getCollections(searchQuery).stream()
                           .map(this::mapResource)
                           .collect(Collectors.toList());
+   }
+
+   public void addFavoriteCollection(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.READ);
+
+      User updatedUser = updateFavoriteCollections(authenticatedUser.getCurrentUser(), getCurrentOrganization().getId(), collectionId, null);
+      updateUserCache(updatedUser);
+   }
+
+   public void removeFavoriteCollection(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.READ);
+
+      User updatedUser = updateFavoriteCollections(authenticatedUser.getCurrentUser(), getCurrentOrganization().getId(), null, collectionId);
+      updateUserCache(updatedUser);
+   }
+
+   private User updateFavoriteCollections(User user, String organizationId, String addId, String removeId) {
+      Map<String, Set<String>> favoriteCollections = user.getFavoriteCollections();
+      Set<String> set = favoriteCollections.containsKey(organizationId) ? favoriteCollections.get(organizationId) : new HashSet<>();
+
+      if (addId != null) {
+         set.add(addId);
+      }
+      if (removeId != null) {
+         set.remove(removeId);
+      }
+
+      favoriteCollections.put(organizationId, set);
+
+      user.setFavoriteCollections(favoriteCollections);
+      return userDao.updateUser(user.getId(), user);
+   }
+
+   private void updateUserCache(User user) {
+      userCache.updateUser(user.getEmail(), user);
+   }
+
+   public boolean isFavorite(String collectionId) {
+      return getFavoriteCollectionsIds().contains(collectionId);
+   }
+
+   public Set<String> getFavoriteCollectionsIds() {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+
+      String organizationId = workspaceKeeper.getOrganization().get().getId();
+      Map<String, Set<String>> favoriteCollections = authenticatedUser.getCurrentUser().getFavoriteCollections();
+      return favoriteCollections != null && favoriteCollections.containsKey(organizationId) ? favoriteCollections.get(organizationId) : Collections.emptySet();
    }
 
    public Set<String> getCollectionNames() {
@@ -223,6 +280,13 @@ public class CollectionFacade extends AbstractFacade {
 
       Project project = workspaceKeeper.getProject().get();
       permissionsChecker.checkRole(project, Role.WRITE);
+   }
+
+   private Organization getCurrentOrganization() {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      return workspaceKeeper.getOrganization().get();
    }
 
    private Collection createCollectionMetadata(Collection collection) {

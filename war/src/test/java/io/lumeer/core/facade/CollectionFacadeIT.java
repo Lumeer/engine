@@ -61,6 +61,8 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -387,5 +389,46 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertThatExceptionOfType(ServiceLimitsExceededException.class).isThrownBy(() -> {
          collectionFacade.createCollection(collection);
       }).as("On Trial plan, it should be possible to create only 10 collections but it was possible to create another one.");
+   }
+
+   @Test
+   public void testAddFavoriteCollection() {
+      List<String> ids = new LinkedList<>();
+      for (int i = 0; i < 10; i++) {
+         Collection collection = prepareCollection(CODE + i);
+         ids.add(collectionFacade.createCollection(collection).getId());
+      }
+
+      assertThat(collectionFacade.getFavoriteCollectionsIds()).isEmpty();
+
+      collectionFacade.addFavoriteCollection(ids.get(0));
+      collectionFacade.addFavoriteCollection(ids.get(3));
+      collectionFacade.addFavoriteCollection(ids.get(5));
+
+      assertThat(collectionFacade.getFavoriteCollectionsIds()).containsOnly(ids.get(0), ids.get(3), ids.get(5));
+
+      for (int i = 0; i < 10; i++) {
+         assertThat(collectionFacade.isFavorite(ids.get(i))).isEqualTo(i == 0 || i == 3 || i == 5);
+      }
+   }
+
+   @Test
+   public void testRemoveFavoriteCollection() {
+      List<String> ids = new LinkedList<>();
+      for (int i = 0; i < 10; i++) {
+         Collection collection = prepareCollection(CODE + i);
+         ids.add(collectionFacade.createCollection(collection).getId());
+      }
+
+      collectionFacade.addFavoriteCollection(ids.get(1));
+      collectionFacade.addFavoriteCollection(ids.get(2));
+      collectionFacade.addFavoriteCollection(ids.get(9));
+
+      assertThat(collectionFacade.getFavoriteCollectionsIds()).containsOnly(ids.get(1), ids.get(2), ids.get(9));
+
+      collectionFacade.removeFavoriteCollection(ids.get(1));
+      collectionFacade.removeFavoriteCollection(ids.get(9));
+
+      assertThat(collectionFacade.getFavoriteCollectionsIds()).containsOnly(ids.get(2));
    }
 }

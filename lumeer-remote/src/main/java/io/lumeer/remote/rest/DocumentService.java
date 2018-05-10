@@ -27,6 +27,7 @@ import io.lumeer.remote.rest.annotation.PATCH;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -75,18 +76,24 @@ public class DocumentService extends AbstractService {
 
    @PUT
    @Path("{documentId}/data")
-   public Response updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
+   public JsonDocument updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.updateDocumentData(collectionId, documentId, data);
 
-      return Response.ok(JsonDocument.convert(storedDocument)).build();
+      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
+      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
+
+      return returnDocument;
    }
 
    @PATCH
    @Path("{documentId}/data")
-   public Response patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
+   public JsonDocument patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.patchDocumentData(collectionId, documentId, data);
 
-      return Response.ok(JsonDocument.convert(storedDocument)).build();
+      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
+      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
+
+      return returnDocument;
    }
 
    @DELETE
@@ -101,7 +108,10 @@ public class DocumentService extends AbstractService {
    @Path("{documentId}")
    public JsonDocument getDocument(@PathParam("documentId") String documentId) {
       Document document = documentFacade.getDocument(collectionId, documentId);
-      return JsonDocument.convert(document);
+      JsonDocument returnDocument = JsonDocument.convert(document);
+      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
+
+      return returnDocument;
    }
 
    @GET
@@ -109,7 +119,28 @@ public class DocumentService extends AbstractService {
       Pagination pagination = new Pagination(page, pageSize);
 
       List<Document> documents = documentFacade.getDocuments(collectionId, pagination);
-      return JsonDocument.convert(documents);
+      List<JsonDocument> returnDocuments = JsonDocument.convert(documents);
+
+      Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
+      returnDocuments.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
+
+      return returnDocuments;
+   }
+
+   @POST
+   @Path("{documentId}/favorite")
+   public Response addFavoriteDocument(@PathParam("documentId") String documentId) {
+      documentFacade.addFavoriteDocument(collectionId, documentId);
+
+      return Response.ok().build();
+   }
+
+   @DELETE
+   @Path("{documentId}/favorite")
+   public Response removeFavoriteDocument(@PathParam("documentId") String documentId) {
+      documentFacade.removeFavoriteDocument(collectionId, documentId);
+
+      return Response.ok().build();
    }
 
 }

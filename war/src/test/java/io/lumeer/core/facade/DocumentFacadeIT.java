@@ -56,6 +56,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -126,7 +127,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission( this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -319,4 +320,42 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
    }
 
+   @Test
+   public void testAddFavoriteDocument() {
+      List<String> ids = new LinkedList<>();
+      for (int i = 0; i < 10; i++) {
+         ids.add(createDocument().getId());
+      }
+
+      assertThat(documentFacade.getFavoriteDocumentsIds()).isEmpty();
+
+      documentFacade.addFavoriteDocument(collection.getId(), ids.get(0));
+      documentFacade.addFavoriteDocument(collection.getId(), ids.get(3));
+      documentFacade.addFavoriteDocument(collection.getId(), ids.get(5));
+
+      assertThat(documentFacade.getFavoriteDocumentsIds()).containsOnly(ids.get(0), ids.get(3), ids.get(5));
+
+      for (int i = 0; i < 10; i++) {
+         assertThat(documentFacade.isFavorite(ids.get(i))).isEqualTo(i == 0 || i == 3 || i == 5);
+      }
+   }
+
+   @Test
+   public void testRemoveFavoriteCollection() {
+      List<String> ids = new LinkedList<>();
+      for (int i = 0; i < 10; i++) {
+         ids.add(createDocument().getId());
+      }
+
+      documentFacade.addFavoriteDocument(collection.getId(), ids.get(1));
+      documentFacade.addFavoriteDocument(collection.getId(), ids.get(2));
+      documentFacade.addFavoriteDocument(collection.getId(), ids.get(9));
+
+      assertThat(documentFacade.getFavoriteDocumentsIds()).containsOnly(ids.get(1), ids.get(2), ids.get(9));
+
+      documentFacade.removeFavoriteDocument(collection.getId(), ids.get(1));
+      documentFacade.removeFavoriteDocument(collection.getId(), ids.get(9));
+
+      assertThat(documentFacade.getFavoriteDocumentsIds()).containsOnly(ids.get(2));
+   }
 }

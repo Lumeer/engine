@@ -24,10 +24,13 @@ import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonSuggestions;
 import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.SuggestionType;
+import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -58,6 +61,12 @@ public class SearchService extends AbstractService {
    private SearchFacade searchFacade;
 
    @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private DocumentFacade documentFacade;
+
+   @Inject
    private SuggestionFacade suggestionFacade;
 
    @PostConstruct
@@ -79,18 +88,27 @@ public class SearchService extends AbstractService {
    @POST
    @Path("collections")
    public List<JsonCollection> searchCollections(JsonQuery query) {
-      return searchFacade.searchCollections(query).stream()
-                         .map(JsonCollection::convert)
-                         .collect(Collectors.toList());
+      List<JsonCollection> returnCollections = searchFacade.searchCollections(query).stream()
+                                                           .map(JsonCollection::convert)
+                                                           .collect(Collectors.toList());
 
+      Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
+      returnCollections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
+
+      return returnCollections;
    }
 
    @POST
    @Path("documents")
    public List<JsonDocument> searchDocuments(JsonQuery query) {
-      return searchFacade.searchDocuments(query).stream()
-                         .map(JsonDocument::convert)
-                         .collect(Collectors.toList());
+      List<JsonDocument> returnDocuments = searchFacade.searchDocuments(query).stream()
+                                                       .map(JsonDocument::convert)
+                                                       .collect(Collectors.toList());
+
+      Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
+      returnDocuments.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
+
+      return returnDocuments;
 
    }
 

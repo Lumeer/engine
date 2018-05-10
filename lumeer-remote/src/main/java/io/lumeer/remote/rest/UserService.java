@@ -19,7 +19,10 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.User;
+import io.lumeer.api.view.UserViews;
 import io.lumeer.core.facade.UserFacade;
+
+import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
@@ -48,6 +51,7 @@ public class UserService extends AbstractService {
    private UserFacade userFacade;
 
    @GET
+   @JsonView(UserViews.DefaultView.class)
    public List<User> getUsers() {
       return userFacade.getUsers(organizationId);
    }
