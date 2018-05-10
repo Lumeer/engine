@@ -58,12 +58,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -391,7 +393,6 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       }).as("On Trial plan, it should be possible to create only 10 collections but it was possible to create another one.");
    }
 
-   @Test
    public void testAddFavoriteCollection() {
       List<String> ids = new LinkedList<>();
       for (int i = 0; i < 10; i++) {
@@ -430,5 +431,22 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.removeFavoriteCollection(ids.get(9));
 
       assertThat(collectionFacade.getFavoriteCollectionsIds()).containsOnly(ids.get(2));
+   }
+
+   @Test
+   public void testSetDefaultAttribute() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE));
+      assertThat(collection.getDefaultAttributeId()).isNull();
+
+      collectionFacade.setDefaultAttribute(collection.getId(), "some not existing id");
+      collection = collectionFacade.getCollection(collection.getId());
+      assertThat(collection.getDefaultAttributeId()).isNull();
+
+      JsonAttribute attribute = new JsonAttribute("a1");
+      Attribute created =  new ArrayList<Attribute>(collectionFacade.createCollectionAttributes(collection.getId(), Collections.singletonList(attribute))).get(0);
+
+      collectionFacade.setDefaultAttribute(collection.getId(), created.getId());
+      collection = collectionFacade.getCollection(collection.getId());
+      assertThat(collection.getDefaultAttributeId()).isEqualTo(created.getId());
    }
 }

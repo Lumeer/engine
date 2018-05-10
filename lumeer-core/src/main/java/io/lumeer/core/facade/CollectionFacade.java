@@ -221,6 +221,7 @@ public class CollectionFacade extends AbstractFacade {
                                             .anyMatch(attribute -> attribute.getId().equals(attributeId));
       if (containsAttribute) {
          collection.setDefaultAttributeId(attributeId);
+         collectionDao.updateCollection(collection.getId(), collection);
       }
    }
 

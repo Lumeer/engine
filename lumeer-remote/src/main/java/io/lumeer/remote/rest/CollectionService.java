@@ -29,7 +29,6 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -136,6 +135,14 @@ public class CollectionService extends AbstractService {
    public Set<JsonAttribute> getCollectionAttributes(@PathParam("collectionId") String collectionId) {
       Set<Attribute> attributes = getCollection(collectionId).getAttributes();
       return JsonAttribute.convert(attributes);
+   }
+
+   @PUT
+   @Path("{collectionId}/attributes/{attributeId}/default")
+   public Response setDefaultAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId) {
+      collectionFacade.setDefaultAttribute(collectionId, attributeId);
+
+      return Response.ok().link(getParentUri(attributeId), "parent").build();
    }
 
    @POST

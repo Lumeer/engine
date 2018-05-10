@@ -74,6 +74,7 @@ public class JsonCollection extends JsonResource implements Collection {
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
       this.lastAttributeNum = collection.getLastAttributeNum();
+      this.defaultAttributeId = collection.getDefaultAttributeId();
    }
 
    @Override

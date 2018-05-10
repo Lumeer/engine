@@ -82,6 +82,7 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
       this.lastAttributeNum = collection.getLastAttributeNum();
+      this.defaultAttributeId = collection.getDefaultAttributeId();
    }
 
    @Override
@@ -141,9 +142,9 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    @Override
    public void setLastAttributeNum(final Integer lastAttributeNum) {
       this.lastAttributeNum = lastAttributeNum;
-
    }
 
+   @Override
    public String getDefaultAttributeId() {
       return this.defaultAttributeId;
    }
