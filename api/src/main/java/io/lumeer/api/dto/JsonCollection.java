@@ -43,6 +43,7 @@ public class JsonCollection extends JsonResource implements Collection {
    private Set<JsonAttribute> attributes;
    private Integer documentsCount;
    private LocalDateTime lastTimeUsed;
+   private String defaultAttributeId;
    private Integer lastAttributeNum;
    private boolean favorite;
 
@@ -145,6 +146,16 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
+   public String getDefaultAttributeId() {
+      return this.defaultAttributeId;
+   }
+
+   @Override
+   public void setDefaultAttributeId(final String attributeId) {
+      this.defaultAttributeId = attributeId;
+   }
+
+   @Override
    public String toString() {
       return "JsonCollection{" +
             "id='" + id + '\'' +
@@ -155,6 +166,7 @@ public class JsonCollection extends JsonResource implements Collection {
             ", permissions=" + permissions +
             ", attributes=" + attributes +
             ", documentsCount=" + documentsCount +
+            ", defaultAttributeId=" + defaultAttributeId +
             ", lastTimeUsed=" + lastTimeUsed +
             '}';
    }

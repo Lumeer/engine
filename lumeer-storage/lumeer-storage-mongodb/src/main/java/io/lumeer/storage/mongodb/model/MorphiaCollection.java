@@ -55,6 +55,7 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    public static final String DOCUMENTS_COUNT = "docCount";
    public static final String LAST_TIME_USED = "lastTimeUsed";
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
+   public static final String DEFAULT_ATTRIBUTE_ID = "defaultAttributeId";
 
    @Embedded(ATTRIBUTES)
    private Set<MorphiaAttribute> attributes;
@@ -67,6 +68,9 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
 
    @Property(LAST_ATTRIBUTE_NUM)
    private Integer lastAttributeNum;
+
+   @Property(DEFAULT_ATTRIBUTE_ID)
+   private String defaultAttributeId;
 
    public MorphiaCollection() {
    }
@@ -137,6 +141,16 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    @Override
    public void setLastAttributeNum(final Integer lastAttributeNum) {
       this.lastAttributeNum = lastAttributeNum;
+
+   }
+
+   public String getDefaultAttributeId() {
+      return this.defaultAttributeId;
+   }
+
+   @Override
+   public void setDefaultAttributeId(final String attributeId) {
+      this.defaultAttributeId = attributeId;
    }
 
    @Override

@@ -213,6 +213,17 @@ public class CollectionFacade extends AbstractFacade {
       }
    }
 
+   public void setDefaultAttribute(String collectionId, String attributeId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.MANAGE);
+
+      boolean containsAttribute = collection.getAttributes().stream()
+                                            .anyMatch(attribute -> attribute.getId().equals(attributeId));
+      if (containsAttribute) {
+         collection.setDefaultAttributeId(attributeId);
+      }
+   }
+
    public Permissions getCollectionPermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);

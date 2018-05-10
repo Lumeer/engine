@@ -61,4 +61,8 @@ public interface Collection extends Resource {
 
    void setLastAttributeNum(final Integer lastAttributeNum);
 
+   String getDefaultAttributeId();
+
+   void setDefaultAttributeId(String attributeId);
+
 }
