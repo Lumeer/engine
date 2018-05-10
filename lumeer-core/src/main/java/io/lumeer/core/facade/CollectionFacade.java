@@ -140,7 +140,6 @@ public class CollectionFacade extends AbstractFacade {
       for (Attribute attribute : attributes) {
          attribute.setId(Collection.ATTRIBUTE_PREFIX + (collection.getLastAttributeNum() + i + 1));
          attribute.setUsageCount(0);
-         System.out.println("LMRDF creating" + attribute.getName());
          collection.createAttribute(attribute);
          i++;
       }
