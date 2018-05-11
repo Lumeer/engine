@@ -132,7 +132,7 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getAllCollectionNames();
    }
 
-   public Set<Attribute> createCollectionAttributes(String collectionId, java.util.Collection<? extends Attribute> attributes) {
+   public java.util.Collection<? extends Attribute> createCollectionAttributes(String collectionId, java.util.Collection<? extends Attribute> attributes) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
@@ -148,7 +148,7 @@ public class CollectionFacade extends AbstractFacade {
 
       collectionDao.updateCollection(collection.getId(), collection);
 
-      return new HashSet<>(attributes);
+      return attributes;
    }
 
    public Attribute updateCollectionAttribute(String collectionId, String attributeId, Attribute attribute) {

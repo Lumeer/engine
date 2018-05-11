@@ -85,6 +85,8 @@ public class ImportFacadeIT extends IntegrationTestBase {
    private static final String COLLECTION_ICON = "fa-user";
    private static final String COLLECTION_COLOR = "#ababab";
 
+   private static final String PREFIX = Collection.ATTRIBUTE_PREFIX;
+
    private User user;
 
    @Before
@@ -150,13 +152,14 @@ public class ImportFacadeIT extends IntegrationTestBase {
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
+
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
       assertThat(data).hasSize(1); // it's because library ignores any leading empty lines
-      assertThat(data.get(0).keySet()).containsOnly("_id", "a", "b", "c", "d");
-      assertThat(data.get(0).getString("a")).isEqualTo("a");
-      assertThat(data.get(0).getString("b")).isEqualTo("b");
-      assertThat(data.get(0).getString("c")).isEqualTo("c");
-      assertThat(data.get(0).getString("d")).isEqualTo("d");
+      assertThat(data.get(0).keySet()).containsOnly("_id", PREFIX + 1, PREFIX + 2, PREFIX + 3, PREFIX + 4);
+      assertThat(data.get(0).getString(PREFIX + 1)).isEqualTo("a");
+      assertThat(data.get(0).getString(PREFIX + 2)).isEqualTo("b");
+      assertThat(data.get(0).getString(PREFIX + 3)).isEqualTo("c");
+      assertThat(data.get(0).getString(PREFIX + 4)).isEqualTo("d");
    }
 
    @Test
@@ -168,6 +171,24 @@ public class ImportFacadeIT extends IntegrationTestBase {
 
       List<DataDocument> data = dataDao.getData(collection.getId(), query());
       assertThat(data).isEmpty();
+   }
+
+   @Test
+   public void testImportWithSameHeaderAttributes(){
+      final String correctCsv = "h1;h2;h1;h1\n"
+            + "a;b;c;d\n";
+      ImportedCollection importedCollection = createImportObject(correctCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
+      assertThat(collection).isNotNull();
+
+      DataDocument document = dataDao.getData(collection.getId(), query()).get(0);
+      assertThat(document).isNotNull();
+
+      assertThat(document.keySet()).containsOnly("_id", PREFIX + 1, PREFIX + 2, PREFIX + 3, PREFIX + 4);
+      assertThat(document.getString(PREFIX + 1)).isEqualTo("a");
+      assertThat(document.getString(PREFIX + 2)).isEqualTo("b");
+      assertThat(document.getString(PREFIX + 3)).isEqualTo("c");
+      assertThat(document.getString(PREFIX + 4)).isEqualTo("d");
    }
 
    @Test
@@ -189,10 +210,10 @@ public class ImportFacadeIT extends IntegrationTestBase {
       int h3Num = 0;
       int h4Num = 0;
       for (DataDocument dataDocument : data) {
-         String h1 = dataDocument.getString("h1");
-         String h2 = dataDocument.getString("h2");
-         String h3 = dataDocument.getString("h3");
-         String h4 = dataDocument.getString("h4");
+         String h1 = dataDocument.getString(PREFIX + 1);
+         String h2 = dataDocument.getString(PREFIX + 2);
+         String h3 = dataDocument.getString(PREFIX + 3);
+         String h4 = dataDocument.getString(PREFIX + 4);
          h1Num += h1 != null && h1.equals("a") ? 1 : 0;
          h2Num += h2 != null && h2.equals("b") ? 1 : 0;
          h3Num += h3 != null && h3.equals("c") ? 1 : 0;
@@ -223,9 +244,9 @@ public class ImportFacadeIT extends IntegrationTestBase {
       int h2Num = 0;
       int h3Num = 0;
       for (DataDocument dataDocument : data) {
-         String h1 = dataDocument.getString("h1");
-         String h2 = dataDocument.getString("h2");
-         String h3 = dataDocument.getString("h3");
+         String h1 = dataDocument.getString(PREFIX + 1);
+         String h2 = dataDocument.getString(PREFIX + 2);
+         String h3 = dataDocument.getString(PREFIX + 3);
          h1Num += h1 != null && h1.equals("a") ? 1 : 0;
          h2Num += h2 != null && h2.equals("b") ? 1 : 0;
          h3Num += h3 != null && h3.equals("c") ? 1 : 0;
@@ -252,9 +273,9 @@ public class ImportFacadeIT extends IntegrationTestBase {
       int h2Num = 0;
       int h3Num = 0;
       for (DataDocument dataDocument : data) {
-         String h1 = dataDocument.getString("h1");
-         String h2 = dataDocument.getString("h2");
-         String h3 = dataDocument.getString("h3");
+         String h1 = dataDocument.getString(PREFIX + 1);
+         String h2 = dataDocument.getString(PREFIX + 2);
+         String h3 = dataDocument.getString(PREFIX + 3);
          h1Num += h1 != null && h1.equals("a") ? 1 : 0;
          h2Num += h2 != null && h2.equals("b") ? 1 : 0;
          h3Num += h3 != null && h3.equals("c") ? 1 : 0;

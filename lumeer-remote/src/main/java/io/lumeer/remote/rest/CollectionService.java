@@ -30,6 +30,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -123,7 +124,7 @@ public class CollectionService extends AbstractService {
    @POST
    @Path("{collectionId}/attributes")
    public Set<JsonAttribute> createCollectionAttributes(@PathParam("collectionId") String collectionId, List<JsonAttribute> attributes) {
-      Set<Attribute> storedAttributes = collectionFacade.createCollectionAttributes(collectionId, attributes);
+      Set<Attribute> storedAttributes = new HashSet<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
 
       return JsonAttribute.convert(storedAttributes);
    }
