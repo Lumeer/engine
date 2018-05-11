@@ -42,6 +42,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -112,14 +113,19 @@ public class ImportFacade extends AbstractFacade {
       if (headers.length == 0) {
          return;
       }
+
+      List<Attribute> createdAttributes = createAttributes(collection.getId(), headers);
+      collection.setAttributes(new HashSet<>(createdAttributes));
+      String[] headerIds = createdAttributes.stream().map(Attribute::getId).toArray(String[]::new);
+
       int[] counts = new int[headers.length];
 
       int documentsCount = 0;
       List<Document> documents = new ArrayList<>();
       String[] row;
       while ((row = parser.parseNext()) != null) {
-         Document d = createDocumentFromRow(headers, row, counts);
-         addDocumentMetadata(collection, d);
+         Document d = createDocumentFromRow(headerIds, row, counts);
+         addDocumentMetadata(collection.getId(), d);
 
          documents.add(d);
 
@@ -137,21 +143,23 @@ public class ImportFacade extends AbstractFacade {
 
       parser.stopParsing();
 
-      addCollectionMetadata(collection, headers, counts, documentsCount);
+      addCollectionMetadata(collection, headerIds, counts, documentsCount);
    }
 
-   private void addCollectionMetadata(Collection collection, String[] headers, int[] counts, int documentsCount) {
-      Set<Attribute> attributes = new HashSet<>();
-      String prefix = Collection.ATTRIBUTE_PREFIX;
-      for (int i = 0; i < headers.length; i++) {
-         attributes.add(new JsonAttribute(prefix + (i + 1), headers[i], Collections.emptySet(), counts[i]));
-      }
+   private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, int documentsCount) {
+      collection.getAttributes().forEach(attr -> {
+         int index = Arrays.asList(headersIds).indexOf(attr.getId());
+         attr.setUsageCount(counts[index]);
+      });
 
-      collection.setAttributes(attributes);
       collection.setDocumentsCount(documentsCount);
       collection.setLastTimeUsed(LocalDateTime.now());
-      collection.setLastAttributeNum(headers.length + 1);
       collectionDao.updateCollection(collection.getId(), collection);
+   }
+
+   private List<Attribute> createAttributes(String collectionId, String[] headers) {
+      List<Attribute> attributes = Arrays.stream(headers).map(header -> new JsonAttribute(header, header, Collections.emptySet(), 0)).collect(Collectors.toList());
+      return new ArrayList<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 
    private void addDocumentsToDb(String collectionId, List<Document> documents) {
@@ -166,8 +174,8 @@ public class ImportFacade extends AbstractFacade {
       dataDao.createData(collectionId, dataDocuments);
    }
 
-   private void addDocumentMetadata(Collection collection, Document document) {
-      document.setCollectionId(collection.getId());
+   private void addDocumentMetadata(String collectionId, Document document) {
+      document.setCollectionId(collectionId);
       document.setCreatedBy(authenticatedUser.getCurrentUserId());
       document.setCreationDate(LocalDateTime.now());
       document.setDataVersion(DocumentFacade.INITIAL_VERSION);
