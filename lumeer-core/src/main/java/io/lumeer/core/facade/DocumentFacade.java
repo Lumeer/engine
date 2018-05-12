@@ -22,13 +22,18 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Pagination;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.time.LocalDateTime;
@@ -55,6 +60,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private DocumentDao documentDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
@@ -149,7 +157,42 @@ public class DocumentFacade extends AbstractFacade {
 
       documentDao.deleteDocument(documentId);
       dataDao.deleteData(collection.getId(), documentId);
+
+      deleteDocumentBasedData(collectionId, documentId);
+
+   }
+
+   private void deleteDocumentBasedData(String collectionId, String documentId) {
       linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(documentId));
+      favoriteItemDao.removeFavoriteDocumentFromUsers(getCurrentProject().getId(), collectionId, documentId);
+   }
+
+   public boolean isFavorite(String documentId) {
+      return getFavoriteDocumentsIds().contains(documentId);
+   }
+
+   public Set<String> getFavoriteDocumentsIds() {
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+
+      return favoriteItemDao.getFavoriteDocumentIds(userId, projectId);
+   }
+
+   public void addFavoriteDocument(String collectionId, String documentId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.WRITE);
+
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.addFavoriteDocument(userId, projectId, collectionId, documentId);
+   }
+
+   public void removeFavoriteDocument(String collectionId, String documentId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.WRITE);
+
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.removeFavoriteDocument(userId, documentId);
    }
 
    private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
@@ -193,6 +236,17 @@ public class DocumentFacade extends AbstractFacade {
       Map<String, DataDocument> dataDocuments = getDataDocuments(collection.getId(), pagination);
 
       return getDocuments(dataDocuments);
+   }
+
+   private Project getCurrentProject() {
+      if (!workspaceKeeper.getProject().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return workspaceKeeper.getProject().get();
+   }
+
+   private User getCurrentUser() {
+      return authenticatedUser.getCurrentUser();
    }
 
    private Map<String, DataDocument> getDataDocuments(String collectionId, Pagination pagination) {

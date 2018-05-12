@@ -18,9 +18,12 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.view.UserViews;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,13 +37,23 @@ public class User {
    public static final String EMAIL = "email";
    public static final String GROUPS = "groups";
 
+   @JsonView(UserViews.DefaultView.class)
    private String id;
+
+   @JsonView(UserViews.DefaultView.class)
    private String name;
+
+   @JsonView(UserViews.DefaultView.class)
    private String email;
 
    @JsonIgnore
    private String keycloakId;
+
+   @JsonView(UserViews.DefaultView.class)
    private Map<String, Set<String>> groups;
+
+   @JsonView(UserViews.FullView.class)
+   private DefaultWorkspace defaultWorkspace;
 
    public User(final String email) {
       this.email = email;
@@ -96,6 +109,14 @@ public class User {
 
    public void setGroups(final Map<String, Set<String>> groups) {
       this.groups = groups;
+   }
+
+   public DefaultWorkspace getDefaultWorkspace() {
+      return defaultWorkspace;
+   }
+
+   public void setDefaultWorkspace(final DefaultWorkspace defaultWorkspace) {
+      this.defaultWorkspace = defaultWorkspace;
    }
 
    @Override

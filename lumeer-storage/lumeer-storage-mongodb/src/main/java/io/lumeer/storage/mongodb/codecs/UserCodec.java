@@ -19,6 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.User;
 
 import org.bson.BsonObjectId;
@@ -47,6 +48,10 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String NAME = "name";
    public static final String EMAIL = "email";
    public static final String KEYCLOAK_ID = "keycloakId";
+
+   public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
+   public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
+
    public static final String ALL_GROUPS = "allGroups";
    public static final String ORGANIZATION_ID = "organizationId";
    public static final String GROUPS = "groups";
@@ -89,10 +94,14 @@ public class UserCodec implements CollectibleCodec<User> {
       String keycloakId = bson.getString(KEYCLOAK_ID);
 
       List<Document> documentList = bson.get(ALL_GROUPS, List.class);
-      Map<String, Set<String>> allGroups = convertGroupsListToMap(documentList);
+      Map<String, Set<String>> allGroups = convertListToMap(documentList, GROUPS);
+
+      String defaultOrganizationId = bson.getString(DEFAULT_ORGANIZATION_ID);
+      String defaultProjectId = bson.getString(DEFAULT_PROJECT_ID);
 
       User user = new User(id, name, email, allGroups);
       user.setKeycloakId(keycloakId);
+      user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
 
       return user;
    }
@@ -104,11 +113,13 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(EMAIL, user.getEmail())
           .append(KEYCLOAK_ID, user.getKeycloakId());
 
+      if (user.getDefaultWorkspace() != null) {
+         bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());
+         bson.append(DEFAULT_PROJECT_ID, user.getDefaultWorkspace().getProjectId());
+      }
+
       if (user.getGroups() != null) {
-         List<Document> groupsArray = user.getGroups().entrySet().stream().map(entry -> new Document(ORGANIZATION_ID, entry.getKey())
-               .append(GROUPS, entry.getValue())
-         ).collect(Collectors.toList());
-         bson.append(ALL_GROUPS, groupsArray);
+         bson.append(ALL_GROUPS, convertMapToList(user.getGroups(), GROUPS));
       } else {
          bson.append(ALL_GROUPS, Collections.emptyList());
       }
@@ -121,17 +132,23 @@ public class UserCodec implements CollectibleCodec<User> {
       return User.class;
    }
 
-   private Map<String, Set<String>> convertGroupsListToMap(List<Document> documentList) {
+   private List<Document> convertMapToList(Map<String, Set<String>> map, String key) {
+      return map.entrySet().stream().map(entry -> new Document(ORGANIZATION_ID, entry.getKey())
+            .append(key, entry.getValue())
+      ).collect(Collectors.toList());
+   }
+
+   private Map<String, Set<String>> convertListToMap(List<Document> documentList, String key) {
       if (documentList == null) {
          return new HashMap<>();
       }
 
       return documentList.stream()
-                         .collect(Collectors.toMap(document -> document.getString(ORGANIZATION_ID), this::convertGroupsListToSet));
+                         .collect(Collectors.toMap(document -> document.getString(ORGANIZATION_ID), document -> convertListToSet(document, key)));
    }
 
-   private Set<String> convertGroupsListToSet(Document document) {
-      List<String> groups = document.get(GROUPS, List.class);
+   private Set<String> convertListToSet(Document document, String key) {
+      List<String> groups = document.get(key, List.class);
       if (groups == null) {
          return new HashSet<>();
       }

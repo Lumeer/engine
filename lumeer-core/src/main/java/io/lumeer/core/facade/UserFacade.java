@@ -18,12 +18,16 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +46,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private ProjectDao projectDao;
 
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
@@ -103,6 +110,39 @@ public class UserFacade extends AbstractFacade {
                     .collect(Collectors.toList());
    }
 
+   public User getCurrentUser() {
+      User user = authenticatedUser.getCurrentUser();
+
+      DefaultWorkspace defaultWorkspace = user.getDefaultWorkspace();
+      if (defaultWorkspace == null || defaultWorkspace.getOrganizationId() == null || defaultWorkspace.getProjectId() == null) {
+         return user;
+      }
+
+      try {
+         Organization organization = organizationDao.getOrganizationById(defaultWorkspace.getOrganizationId());
+         defaultWorkspace.setOrganizationCode(organization.getCode());
+
+         projectDao.setOrganization(organization);
+         Project project = projectDao.getProjectById(defaultWorkspace.getProjectId());
+         defaultWorkspace.setProjectCode(project.getCode());
+      } catch (ResourceNotFoundException e) {
+         user.setDefaultWorkspace(null);
+      }
+
+      return user;
+   }
+
+   public void setDefaultWorkspace(DefaultWorkspace defaultWorkspace) {
+      Organization organization = checkPermissions(defaultWorkspace.getOrganizationId(), Role.READ);
+      checkProjectPermissions(organization.getCode(), defaultWorkspace.getProjectId(), Role.READ);
+
+      User currentUser = authenticatedUser.getCurrentUser();
+      currentUser.setDefaultWorkspace(defaultWorkspace);
+      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+   }
+
    private User keepOnlyOrganizationGroups(User user, String organizationId) {
       if (user.getGroups().containsKey(organizationId)) {
          Set<String> groups = user.getGroups().get(organizationId);
@@ -113,9 +153,17 @@ public class UserFacade extends AbstractFacade {
       return user;
    }
 
-   private void checkPermissions(final String organizationId, final Role role) {
+   private Organization checkPermissions(final String organizationId, final Role role) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
       permissionsChecker.checkRole(organization, role);
+
+      return organization;
+   }
+
+   private void checkProjectPermissions(final String organizationCode, final String projectId, final Role role) {
+      workspaceKeeper.setOrganization(organizationCode);
+      Project project = projectDao.getProjectById(projectId);
+      permissionsChecker.checkRole(project, role);
    }
 
    private void checkOrganizationInUser(String organizationId, User user) {

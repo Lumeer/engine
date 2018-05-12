@@ -27,18 +27,19 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUserGroups;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +66,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
@@ -102,6 +106,11 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collectionDao.deleteCollection(collectionId);
+
+      deleteCollectionBasedData(collectionId);
+   }
+
+   private void deleteCollectionBasedData(final String collectionId) {
       documentDao.deleteDocuments(collectionId);
       dataDao.deleteDataRepository(collectionId);
 
@@ -111,6 +120,9 @@ public class CollectionFacade extends AbstractFacade {
          linkTypeDao.deleteLinkTypes(queryLinkTypes);
          linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(linkTypes));
       }
+
+      favoriteItemDao.removeFavoriteCollectionFromUsers(getCurrentProject().getId(), collectionId);
+      favoriteItemDao.removeFavoriteDocumentsByCollectionFromUsers(getCurrentProject().getId(), collectionId);
    }
 
    public Collection getCollection(String collectionId) {
@@ -126,6 +138,34 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.getCollections(searchQuery).stream()
                           .map(this::mapResource)
                           .collect(Collectors.toList());
+   }
+
+   public void addFavoriteCollection(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.READ);
+
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.addFavoriteCollection(userId, projectId, collectionId);
+   }
+
+   public void removeFavoriteCollection(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.READ);
+
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.removeFavoriteCollection(userId, collectionId);
+   }
+
+   public boolean isFavorite(String collectionId) {
+      return getFavoriteCollectionsIds().contains(collectionId);
+   }
+
+   public Set<String> getFavoriteCollectionsIds() {
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+
+      return favoriteItemDao.getFavoriteCollectionIds(userId, projectId);
    }
 
    public Set<String> getCollectionNames() {
@@ -223,6 +263,17 @@ public class CollectionFacade extends AbstractFacade {
 
       Project project = workspaceKeeper.getProject().get();
       permissionsChecker.checkRole(project, Role.WRITE);
+   }
+
+   private Project getCurrentProject() {
+      if (!workspaceKeeper.getProject().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return workspaceKeeper.getProject().get();
+   }
+
+   private User getCurrentUser() {
+      return authenticatedUser.getCurrentUser();
    }
 
    private Collection createCollectionMetadata(Collection collection) {

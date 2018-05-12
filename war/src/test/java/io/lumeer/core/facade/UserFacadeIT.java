@@ -25,6 +25,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.AuthenticatedUser;
@@ -33,7 +37,9 @@ import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -60,9 +66,13 @@ public class UserFacadeIT extends IntegrationTestBase {
 
    private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
+   private Organization organization;
    private String organizationId1;
+
    private String organizationId2;
    private String organizationIdNotPermission;
+
+   private Project project;
 
    @Inject
    private UserFacade userFacade;
@@ -73,6 +83,9 @@ public class UserFacadeIT extends IntegrationTestBase {
    @Inject
    private OrganizationDao organizationDao;
 
+   @Inject
+   private ProjectDao projectDao;
+
    @Before
    public void configure() {
       User user = new User(USER);
@@ -82,7 +95,8 @@ public class UserFacadeIT extends IntegrationTestBase {
       organization1.setCode("LMR");
       organization1.setPermissions(new JsonPermissions());
       organization1.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
-      organizationId1 = organizationDao.createOrganization(organization1).getId();
+      organization = organizationDao.createOrganization(organization1);
+      organizationId1 = organization.getId();
 
       JsonOrganization organization2 = new JsonOrganization();
       organization2.setCode("MRL");
@@ -94,6 +108,13 @@ public class UserFacadeIT extends IntegrationTestBase {
       organization3.setCode("RML");
       organization3.setPermissions(new JsonPermissions());
       organizationIdNotPermission = organizationDao.createOrganization(organization3).getId();
+
+      projectDao.setOrganization(organization);
+      JsonProject project = new JsonProject();
+      project.setCode("Lalala");
+      project.setPermissions(new JsonPermissions());
+      project.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      this.project = projectDao.createProject(project);
    }
 
    @Test
@@ -122,9 +143,9 @@ public class UserFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateUserExistingOrganization() {
-      User user1 = userFacade.createUser(organizationId1, prepareUser(organizationId1,USER1));
-      User user2 = userFacade.createUser(organizationId1, prepareUser(organizationId1,USER1));
-      User user3 = userFacade.createUser(organizationId1, prepareUser(organizationId1,USER1));
+      User user1 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
+      User user2 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
+      User user3 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
 
       assertThat(user1.getId()).isEqualTo(user2.getId()).isEqualTo(user3.getId());
    }
@@ -136,7 +157,7 @@ public class UserFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testCreateUserBadFormat(){
+   public void testCreateUserBadFormat() {
       assertThatThrownBy(() -> userFacade.createUser(organizationId1, prepareUser(organizationId2, USER1)))
             .isInstanceOf(BadFormatException.class);
    }
@@ -243,6 +264,62 @@ public class UserFacadeIT extends IntegrationTestBase {
       assertThatExceptionOfType(ServiceLimitsExceededException.class).isThrownBy(() -> {
          userFacade.createUser(organizationId1, prepareUser(organizationId1, USER4));
       }).as("On Trial plan, only 3 users should be allowed but it was possible to create 4th one.");
+   }
+
+   @Test
+   public void testSetWorkspace() {
+      DefaultWorkspace defaultWorkspace = new DefaultWorkspace(organization.getId(), project.getId());
+      userFacade.setDefaultWorkspace(defaultWorkspace);
+
+      User currentUser = userFacade.getCurrentUser();
+      assertThat(currentUser.getDefaultWorkspace()).isNotNull();
+      assertThat(currentUser.getDefaultWorkspace().getOrganizationId()).isEqualTo(organization.getId());
+      assertThat(currentUser.getDefaultWorkspace().getOrganizationCode()).isEqualTo(organization.getCode());
+      assertThat(currentUser.getDefaultWorkspace().getProjectId()).isEqualTo(project.getId());
+      assertThat(currentUser.getDefaultWorkspace().getProjectCode()).isEqualTo(project.getCode());
+   }
+
+   @Test
+   public void testSetWorkspaceNotExisting() {
+      DefaultWorkspace defaultWorkspace = new DefaultWorkspace("5aedf1030b4e0ec3f46502d8", "5aedf1030b4e0ec3f46502d8");
+
+      assertThatExceptionOfType(ResourceNotFoundException.class).isThrownBy(() ->
+            userFacade.setDefaultWorkspace(defaultWorkspace));
+
+   }
+
+   @Test
+   public void testSetWorkspaceAndChange() {
+      DefaultWorkspace defaultWorkspace = new DefaultWorkspace(organization.getId(), project.getId());
+      userFacade.setDefaultWorkspace(defaultWorkspace);
+
+      User currentUser = userFacade.getCurrentUser();
+      assertThat(currentUser.getDefaultWorkspace().getOrganizationCode()).isNotEqualTo("newCode");
+      assertThat(currentUser.getDefaultWorkspace().getProjectCode()).isNotEqualTo("someNewCode");
+
+      project.setCode("someNewCode");
+      projectDao.updateProject(project.getId(), project);
+
+      organization.setCode("newCode");
+      organizationDao.updateOrganization(organization.getId(), organization);
+
+      currentUser = userFacade.getCurrentUser();
+      assertThat(currentUser.getDefaultWorkspace().getOrganizationCode()).isEqualTo("newCode");
+      assertThat(currentUser.getDefaultWorkspace().getProjectCode()).isEqualTo("someNewCode");
+   }
+
+   @Test
+   public void testSetWorkspaceAndRemove() {
+      DefaultWorkspace defaultWorkspace = new DefaultWorkspace(organization.getId(), project.getId());
+      userFacade.setDefaultWorkspace(defaultWorkspace);
+
+      User currentUser = userFacade.getCurrentUser();
+      assertThat(currentUser.getDefaultWorkspace()).isNotNull();
+
+      projectDao.deleteProject(project.getId());
+
+      currentUser = userFacade.getCurrentUser();
+      assertThat(currentUser.getDefaultWorkspace()).isNull();
    }
 
    private User createUser(String organizationId, String user) {

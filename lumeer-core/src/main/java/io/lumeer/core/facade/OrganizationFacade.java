@@ -26,6 +26,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.model.SimplePermission;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
@@ -57,6 +58,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private PaymentDao paymentDao;
@@ -188,6 +192,7 @@ public class OrganizationFacade extends AbstractFacade {
       projectDao.createProjectsRepository(organization);
       groupDao.createGroupsRepository(organization);
       paymentDao.createPaymentRepository(organization);
+      favoriteItemDao.createRepositories(organization);
    }
 
    private void deleteOrganizationScopedRepositories(Organization organization) {
@@ -195,6 +200,7 @@ public class OrganizationFacade extends AbstractFacade {
       projectDao.deleteProjectsRepository(organization);
       groupDao.deleteGroupsRepository(organization);
       paymentDao.deletePaymentRepository(organization);
+      favoriteItemDao.deleteRepositories(organization);
 
       userDao.deleteUsersGroups(organization.getId());
       userCache.clear();
