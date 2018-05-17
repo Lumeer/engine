@@ -111,8 +111,8 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    }
 
    @Override
-   public void deleteAttribute(final String attributeName) {
-      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeName));
+   public void deleteAttribute(final String attributeId) {
+      attributes.removeIf(attribute -> attribute.getId().equals(attributeId));
    }
 
    @Override

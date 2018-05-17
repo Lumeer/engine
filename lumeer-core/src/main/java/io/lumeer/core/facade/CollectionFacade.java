@@ -41,7 +41,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -206,9 +205,13 @@ public class CollectionFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      Optional<Attribute> toDelete = collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
-      if (toDelete.isPresent()) {
-         collection.deleteAttribute(toDelete.get().getName());
+      Optional<Attribute> toDeleteOptional = collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      if (toDeleteOptional.isPresent()) {
+         String toDeleteId = toDeleteOptional.get().getId();
+         collection.deleteAttribute(toDeleteId);
+         if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(toDeleteId)) {
+            collection.setDefaultAttributeId(null);
+         }
          collectionDao.updateCollection(collection.getId(), collection);
       }
    }
