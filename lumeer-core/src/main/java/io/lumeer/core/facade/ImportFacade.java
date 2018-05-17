@@ -116,6 +116,7 @@ public class ImportFacade extends AbstractFacade {
 
       List<Attribute> createdAttributes = createAttributes(collection.getId(), headers);
       collection.setAttributes(new HashSet<>(createdAttributes));
+      collection.setLastAttributeNum(collection.getLastAttributeNum() + createdAttributes.size());
       String[] headerIds = createdAttributes.stream().map(Attribute::getId).toArray(String[]::new);
 
       int[] counts = new int[headers.length];
