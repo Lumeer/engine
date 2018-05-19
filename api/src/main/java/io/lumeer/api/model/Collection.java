@@ -46,7 +46,7 @@ public interface Collection extends Resource {
 
    void updateAttribute(String attributeId, Attribute attribute);
 
-   void deleteAttribute(String attributeName);
+   void deleteAttribute(String attributeId);
 
    Integer getDocumentsCount();
 
@@ -60,5 +60,9 @@ public interface Collection extends Resource {
    Integer getLastAttributeNum();
 
    void setLastAttributeNum(final Integer lastAttributeNum);
+
+   String getDefaultAttributeId();
+
+   void setDefaultAttributeId(String attributeId);
 
 }

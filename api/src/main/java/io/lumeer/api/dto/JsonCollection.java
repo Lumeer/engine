@@ -43,6 +43,7 @@ public class JsonCollection extends JsonResource implements Collection {
    private Set<JsonAttribute> attributes;
    private Integer documentsCount;
    private LocalDateTime lastTimeUsed;
+   private String defaultAttributeId;
    private Integer lastAttributeNum;
    private boolean favorite;
 
@@ -73,6 +74,7 @@ public class JsonCollection extends JsonResource implements Collection {
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
       this.lastAttributeNum = collection.getLastAttributeNum();
+      this.defaultAttributeId = collection.getDefaultAttributeId();
    }
 
    @Override
@@ -102,8 +104,9 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
-   public void deleteAttribute(final String attributeName) {
-      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeName));
+   public void deleteAttribute(final String attributeId) {
+      Optional<JsonAttribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
    }
 
    @Override
@@ -145,6 +148,16 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
+   public String getDefaultAttributeId() {
+      return this.defaultAttributeId;
+   }
+
+   @Override
+   public void setDefaultAttributeId(final String attributeId) {
+      this.defaultAttributeId = attributeId;
+   }
+
+   @Override
    public String toString() {
       return "JsonCollection{" +
             "id='" + id + '\'' +
@@ -155,6 +168,7 @@ public class JsonCollection extends JsonResource implements Collection {
             ", permissions=" + permissions +
             ", attributes=" + attributes +
             ", documentsCount=" + documentsCount +
+            ", defaultAttributeId=" + defaultAttributeId +
             ", lastTimeUsed=" + lastTimeUsed +
             '}';
    }

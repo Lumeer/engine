@@ -18,6 +18,7 @@
  */
 package io.lumeer.storage.mongodb.model;
 
+import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.util.AttributeUtil;
@@ -55,6 +56,7 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    public static final String DOCUMENTS_COUNT = "docCount";
    public static final String LAST_TIME_USED = "lastTimeUsed";
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
+   public static final String DEFAULT_ATTRIBUTE_ID = "defaultAttributeId";
 
    @Embedded(ATTRIBUTES)
    private Set<MorphiaAttribute> attributes;
@@ -68,6 +70,9 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    @Property(LAST_ATTRIBUTE_NUM)
    private Integer lastAttributeNum;
 
+   @Property(DEFAULT_ATTRIBUTE_ID)
+   private String defaultAttributeId;
+
    public MorphiaCollection() {
    }
 
@@ -78,6 +83,7 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
       this.documentsCount = collection.getDocumentsCount();
       this.lastTimeUsed = collection.getLastTimeUsed();
       this.lastAttributeNum = collection.getLastAttributeNum();
+      this.defaultAttributeId = collection.getDefaultAttributeId();
    }
 
    @Override
@@ -106,8 +112,9 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    }
 
    @Override
-   public void deleteAttribute(final String attributeName) {
-      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeName));
+   public void deleteAttribute(final String attributeId) {
+      Optional<MorphiaAttribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
    }
 
    @Override
@@ -137,6 +144,16 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    @Override
    public void setLastAttributeNum(final Integer lastAttributeNum) {
       this.lastAttributeNum = lastAttributeNum;
+   }
+
+   @Override
+   public String getDefaultAttributeId() {
+      return this.defaultAttributeId;
+   }
+
+   @Override
+   public void setDefaultAttributeId(final String attributeId) {
+      this.defaultAttributeId = attributeId;
    }
 
    @Override
