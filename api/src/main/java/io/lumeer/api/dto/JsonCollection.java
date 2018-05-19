@@ -104,8 +104,9 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
-   public void deleteAttribute(final String attributeName) {
-      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeName));
+   public void deleteAttribute(final String attributeId) {
+      Optional<JsonAttribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
    }
 
    @Override

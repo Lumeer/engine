@@ -42,7 +42,6 @@ import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -205,15 +204,11 @@ public class CollectionFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      Optional<Attribute> toDeleteOptional = collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
-      if (toDeleteOptional.isPresent()) {
-         Attribute toDelete = toDeleteOptional.get();
-         collection.deleteAttribute(toDelete.getName());
-         if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(toDelete.getId())) {
-            collection.setDefaultAttributeId(null);
-         }
-         collectionDao.updateCollection(collection.getId(), collection);
+      collection.deleteAttribute(attributeId);
+      if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(attributeId)) {
+         collection.setDefaultAttributeId(null);
       }
+      collectionDao.updateCollection(collection.getId(), collection);
    }
 
    public void setDefaultAttribute(String collectionId, String attributeId) {

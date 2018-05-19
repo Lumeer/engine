@@ -18,6 +18,7 @@
  */
 package io.lumeer.storage.mongodb.model;
 
+import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.util.AttributeUtil;
@@ -111,8 +112,9 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    }
 
    @Override
-   public void deleteAttribute(final String attributeName) {
-      attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, attributeName));
+   public void deleteAttribute(final String attributeId) {
+      Optional<MorphiaAttribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
    }
 
    @Override
