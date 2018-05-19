@@ -207,9 +207,9 @@ public class CollectionFacade extends AbstractFacade {
 
       Optional<Attribute> toDeleteOptional = collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
       if (toDeleteOptional.isPresent()) {
-         String toDeleteId = toDeleteOptional.get().getId();
-         collection.deleteAttribute(toDeleteId);
-         if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(toDeleteId)) {
+         Attribute toDelete = toDeleteOptional.get();
+         collection.deleteAttribute(toDelete.getName());
+         if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(toDelete.getId())) {
             collection.setDefaultAttributeId(null);
          }
          collectionDao.updateCollection(collection.getId(), collection);
