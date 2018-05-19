@@ -25,6 +25,7 @@ import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ImportedCollection;
 import io.lumeer.api.model.Organization;
@@ -133,14 +134,20 @@ public class ImportFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testImportCollectionInfo() {
-      final String emptyCSV = "";
-      ImportedCollection importedCollection = createImportObject(emptyCSV);
+      final String correctCsv = "h1;h2;h3;h4\n"
+            + ";b;c;d\n"
+            + ";;c;d\n"
+            + "a;b;;d\n"
+            + "a;b;;\n";
+      ImportedCollection importedCollection = createImportObject(correctCsv);
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
       assertThat(collection.getName()).isEqualTo(COLLECTION_NAME);
       assertThat(collection.getCode()).isEqualTo(COLLECTION_CODE);
       assertThat(collection.getIcon()).isEqualTo(COLLECTION_ICON);
       assertThat(collection.getColor()).isEqualTo(COLLECTION_COLOR);
+      assertThat(collection.getAttributes()).extracting(Attribute::getName).containsOnly("h1", "h2", "h3", "h4");
+      assertThat(collection.getLastAttributeNum()).isEqualTo(4);
    }
 
    @Test
