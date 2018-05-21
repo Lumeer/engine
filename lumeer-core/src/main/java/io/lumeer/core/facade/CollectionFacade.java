@@ -173,7 +173,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public long getDocumentsCountInAllCollections() {
       final LongAdder la = new LongAdder();
-      collectionDao.getAllCollectionIds().forEach(id -> la.add(getCollection(id).getDocumentsCount()) );
+      collectionDao.getAllCollectionIds().forEach(id -> la.add(getCollection(id).getDocumentsCount()));
 
       return la.longValue();
    }

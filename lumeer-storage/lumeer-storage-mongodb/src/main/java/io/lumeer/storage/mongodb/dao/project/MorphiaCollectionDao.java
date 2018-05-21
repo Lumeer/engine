@@ -145,7 +145,7 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
             .disableValidation()
             .project(MorphiaCollection.ID, true)
             .asList().stream()
-            .map(MorphiaResource::getCode)
+            .map(MorphiaResource::getId)
             .collect(Collectors.toSet());
    }
 
