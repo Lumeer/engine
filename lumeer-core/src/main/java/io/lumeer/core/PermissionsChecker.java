@@ -28,6 +28,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.annotation.UserDataStorage;
@@ -36,6 +37,7 @@ import io.lumeer.engine.api.data.DataStorageStats;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,6 +61,9 @@ public class PermissionsChecker {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private CollectionFacade collectionFacade;
 
    @Inject
    @UserDataStorage
@@ -174,16 +179,28 @@ public class PermissionsChecker {
     */
    public void checkDocumentLimits(final Document document) {
       final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
-      final DataStorageStats storageStats = dataStorage.getDbStats();
-      long dbSizeMb = storageStats.getDataSize() / (1024 * 1024L);
+      final long documentsCount = countDocuments();
 
-      if (limits.getDocuments() > 0 && storageStats.getDocuments() >= limits.getDocuments()) {
-         throw new ServiceLimitsExceededException(limits.getDocuments(), storageStats.getDocuments(), document);
+      if (limits.getDocuments() > 0 && documentsCount >= limits.getDocuments()) {
+         throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, document);
       }
+   }
 
-      if (limits.getDbSizeMb() > 0 && limits.getDbSizeMb() < dbSizeMb) {
-         throw new ServiceLimitsExceededException(limits.getDbSizeMb(), dbSizeMb);
+   /**
+    * Checks whether it is possible to create more documents.
+    * @param documents The list of documents that are about to be created.
+    */
+   public void checkDocumentLimits(final List<Document> documents) {
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      final long documentsCount = countDocuments();
+
+      if (limits.getDocuments() > 0 && documentsCount + documents.size() > limits.getDocuments()) {
+         throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
       }
+   }
+
+   private long countDocuments() {
+      return collectionFacade.getDocumentsCountInAllCollections();
    }
 
    /**

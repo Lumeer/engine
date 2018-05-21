@@ -24,6 +24,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.ImportedCollection;
+import io.lumeer.core.PermissionsChecker;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -64,6 +65,9 @@ public class ImportFacade extends AbstractFacade {
 
    @Inject
    private DataDao dataDao;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    public Collection importDocuments(String format, ImportedCollection importedCollection) {
       Collection collectionToCreate = importedCollection.getCollection();
@@ -164,6 +168,8 @@ public class ImportFacade extends AbstractFacade {
    }
 
    private void addDocumentsToDb(String collectionId, List<Document> documents) {
+      permissionsChecker.checkDocumentLimits(documents);
+
       List<Document> storedDocuments = documentDao.createDocuments(documents);
 
       List<DataDocument> dataDocuments = new LinkedList<>();
