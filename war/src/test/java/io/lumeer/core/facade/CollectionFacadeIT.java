@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.dto.JsonCollection;
+import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
@@ -45,6 +46,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -102,6 +104,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Inject
    private CollectionDao collectionDao;
+
+   @Inject
+   private DocumentFacade documentFacade;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -448,5 +453,18 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.setDefaultAttribute(collection.getId(), created.getId());
       collection = collectionFacade.getCollection(collection.getId());
       assertThat(collection.getDefaultAttributeId()).isEqualTo(created.getId());
+   }
+
+   @Test
+   public void testDocumentCount() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE));
+
+      assertThat(collectionFacade.getDocumentsCountInAllCollections()).isEqualTo(0);
+
+      documentFacade.createDocument(collection.getId(), new JsonDocument(new DataDocument("pepa", "zdepa")));
+      documentFacade.createDocument(collection.getId(), new JsonDocument(new DataDocument("tonda", "fonda")));
+      documentFacade.createDocument(collection.getId(), new JsonDocument(new DataDocument("franta", "pajta")));
+
+      assertThat(collectionFacade.getDocumentsCountInAllCollections()).isEqualTo(3);
    }
 }

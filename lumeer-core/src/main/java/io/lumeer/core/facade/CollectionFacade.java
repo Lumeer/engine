@@ -43,6 +43,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -168,6 +169,13 @@ public class CollectionFacade extends AbstractFacade {
 
    public Set<String> getCollectionNames() {
       return collectionDao.getAllCollectionNames();
+   }
+
+   public long getDocumentsCountInAllCollections() {
+      final LongAdder la = new LongAdder();
+      collectionDao.getAllCollectionIds().forEach(id -> la.add(getCollection(id).getDocumentsCount()));
+
+      return la.longValue();
    }
 
    public java.util.Collection<? extends Attribute> createCollectionAttributes(String collectionId, java.util.Collection<? extends Attribute> attributes) {

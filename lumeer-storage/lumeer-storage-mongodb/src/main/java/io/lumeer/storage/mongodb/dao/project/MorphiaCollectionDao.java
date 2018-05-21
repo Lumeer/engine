@@ -140,6 +140,16 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
    }
 
    @Override
+   public Set<String> getAllCollectionIds() {
+      return datastore.createQuery(databaseCollection(), MorphiaCollection.class)
+            .disableValidation()
+            .project(MorphiaCollection.ID, true)
+            .asList().stream()
+            .map(MorphiaResource::getId)
+            .collect(Collectors.toSet());
+   }
+
+   @Override
    public Set<String> getAllCollectionNames() {
       return datastore.createQuery(databaseCollection(), MorphiaCollection.class)
                       .disableValidation()
