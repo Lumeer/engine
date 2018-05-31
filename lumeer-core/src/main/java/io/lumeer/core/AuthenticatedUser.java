@@ -26,6 +26,7 @@ import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.UserLoginDao;
 
 import org.keycloak.KeycloakPrincipal;
 
@@ -56,6 +57,9 @@ public class AuthenticatedUser implements Serializable {
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private UserLoginDao userLoginDao;
 
    @PostConstruct
    public void checkUser() {
@@ -88,15 +92,18 @@ public class AuthenticatedUser implements Serializable {
          } else {
             createDemoOrganizationIfNeeded(userByKeycloak, true);
          }
+         userLoginDao.userLoggedIn(userByKeycloak.getId());
       } else {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
             userByEmail.setKeycloakId(keycloakId);
             createDemoOrganizationIfNeeded(userByEmail, false);
             userDao.updateUser(userByEmail.getId(), userByEmail);
+            userLoginDao.userLoggedIn(userByEmail.getId());
          } else {
             User createdUser = createNewUser(email, keycloakId);
             createDemoOrganizationIfNeeded(createdUser, true);
+            userLoginDao.userLoggedIn(createdUser.getId());
          }
       }
    }
