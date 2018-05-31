@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 public class UserCodec implements CollectibleCodec<User> {
 
+   public static final String DB_ID = "_id";
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
 
@@ -83,7 +84,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public User decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(bsonReader, decoderContext);
 
-      String id = bson.getObjectId(User.ID).toHexString();
+      String id = bson.getObjectId(DB_ID).toHexString();
       String name = bson.getString(User.NAME);
       String email = bson.getString(User.EMAIL);
       String keycloakId = bson.getString(User.KEYCLOAK_ID);
@@ -105,7 +106,7 @@ public class UserCodec implements CollectibleCodec<User> {
 
    @Override
    public void encode(final BsonWriter bsonWriter, final User user, final EncoderContext encoderContext) {
-      Document bson = user.getId() != null ? new Document(User.ID, new ObjectId(user.getId())) : new Document();
+      Document bson = user.getId() != null ? new Document(DB_ID, new ObjectId(user.getId())) : new Document();
       bson.append(User.NAME, user.getName())
           .append(User.EMAIL, user.getEmail())
           .append(User.KEYCLOAK_ID, user.getKeycloakId())
