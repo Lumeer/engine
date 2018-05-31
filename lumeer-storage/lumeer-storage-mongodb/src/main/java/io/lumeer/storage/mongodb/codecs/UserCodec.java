@@ -44,11 +44,6 @@ import java.util.stream.Collectors;
 
 public class UserCodec implements CollectibleCodec<User> {
 
-   public static final String ID = "_id";
-   public static final String NAME = "name";
-   public static final String EMAIL = "email";
-   public static final String KEYCLOAK_ID = "keycloakId";
-
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
 
@@ -88,10 +83,10 @@ public class UserCodec implements CollectibleCodec<User> {
    public User decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(bsonReader, decoderContext);
 
-      String id = bson.getObjectId(ID).toHexString();
-      String name = bson.getString(NAME);
-      String email = bson.getString(EMAIL);
-      String keycloakId = bson.getString(KEYCLOAK_ID);
+      String id = bson.getObjectId(User.ID).toHexString();
+      String name = bson.getString(User.NAME);
+      String email = bson.getString(User.EMAIL);
+      String keycloakId = bson.getString(User.KEYCLOAK_ID);
 
       List<Document> documentList = bson.get(ALL_GROUPS, List.class);
       Map<String, Set<String>> allGroups = convertListToMap(documentList, GROUPS);
@@ -99,7 +94,9 @@ public class UserCodec implements CollectibleCodec<User> {
       String defaultOrganizationId = bson.getString(DEFAULT_ORGANIZATION_ID);
       String defaultProjectId = bson.getString(DEFAULT_PROJECT_ID);
 
-      User user = new User(id, name, email, allGroups);
+      List<String> wishes = bson.get(User.WISHES, List.class);
+
+      User user = new User(id, name, email, allGroups, wishes);
       user.setKeycloakId(keycloakId);
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
 
@@ -108,10 +105,11 @@ public class UserCodec implements CollectibleCodec<User> {
 
    @Override
    public void encode(final BsonWriter bsonWriter, final User user, final EncoderContext encoderContext) {
-      Document bson = user.getId() != null ? new Document(ID, new ObjectId(user.getId())) : new Document();
-      bson.append(NAME, user.getName())
-          .append(EMAIL, user.getEmail())
-          .append(KEYCLOAK_ID, user.getKeycloakId());
+      Document bson = user.getId() != null ? new Document(User.ID, new ObjectId(user.getId())) : new Document();
+      bson.append(User.NAME, user.getName())
+          .append(User.EMAIL, user.getEmail())
+          .append(User.KEYCLOAK_ID, user.getKeycloakId())
+          .append(User.WISHES, user.getWishes());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());
