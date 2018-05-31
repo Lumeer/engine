@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -36,6 +37,8 @@ public class User {
    public static final String NAME = "name";
    public static final String EMAIL = "email";
    public static final String GROUPS = "groups";
+   public static final String KEYCLOAK_ID = "keycloakId";
+   public static final String WISHES = "wishes";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -55,6 +58,8 @@ public class User {
    @JsonView(UserViews.FullView.class)
    private DefaultWorkspace defaultWorkspace;
 
+   private List<String> wishes;
+
    public User(final String email) {
       this.email = email;
       this.groups = new HashMap<>();
@@ -64,11 +69,13 @@ public class User {
    public User(@JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
          @JsonProperty(EMAIL) final String email,
-         @JsonProperty(GROUPS) final Map<String, Set<String>> groups) {
+         @JsonProperty(GROUPS) final Map<String, Set<String>> groups,
+         @JsonProperty(WISHES) final List<String> wishes) {
       this.id = id;
       this.name = name;
       this.email = email;
       this.groups = groups;
+      this.wishes = wishes;
    }
 
    public String getId() {
@@ -119,24 +126,35 @@ public class User {
       this.defaultWorkspace = defaultWorkspace;
    }
 
+   public List<String> getWishes() {
+      return wishes;
+   }
+
+   public void setWishes(final List<String> wishes) {
+      this.wishes = wishes;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof User)) {
+      if (o == null || getClass() != o.getClass()) {
          return false;
       }
       final User user = (User) o;
-      return Objects.equals(getId(), user.getId()) &&
-            Objects.equals(getName(), user.getName()) &&
-            Objects.equals(getEmail(), user.getEmail()) &&
-            Objects.equals(getGroups(), user.getGroups());
+      return Objects.equals(id, user.id) &&
+            Objects.equals(name, user.name) &&
+            Objects.equals(email, user.email) &&
+            Objects.equals(keycloakId, user.keycloakId) &&
+            Objects.equals(groups, user.groups) &&
+            Objects.equals(defaultWorkspace, user.defaultWorkspace) &&
+            Objects.equals(wishes, user.wishes);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(getId(), getName(), getEmail(), getGroups());
+      return Objects.hash(id, name, email, keycloakId, groups, defaultWorkspace, wishes);
    }
 
    @Override
@@ -145,7 +163,10 @@ public class User {
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             ", email='" + email + '\'' +
+            ", keycloakId='" + keycloakId + '\'' +
             ", groups=" + groups +
+            ", defaultWorkspace=" + defaultWorkspace +
+            ", wishes=" + wishes +
             '}';
    }
 }
