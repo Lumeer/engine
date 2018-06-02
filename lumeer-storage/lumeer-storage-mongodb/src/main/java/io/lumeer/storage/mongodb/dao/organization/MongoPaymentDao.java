@@ -26,6 +26,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.mongodb.codecs.PaymentCodec;
 import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
 
 import com.mongodb.MongoException;
@@ -107,7 +108,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
    @Override
    public Payment getLatestPayment(final Organization organization) {
       return databaseCollection(organization).find(paymentStateFilter(Payment.PaymentState.PAID.ordinal()))
-                                             .sort(Sorts.descending(Payment.VALID_UNTIL)).limit(1).first();
+                                             .sort(Sorts.descending(PaymentCodec.VALID_UNTIL)).limit(1).first();
    }
 
    @Override
@@ -115,7 +116,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
       return databaseCollection(organization)
             .find(Filters.and(paymentStateFilter(Payment.PaymentState.PAID.ordinal()),
                   paymentValidUntilFilter(date), paymentStartFilter(date)))
-            .sort(Sorts.descending(Payment.VALID_UNTIL)).limit(1).first();
+            .sort(Sorts.descending(PaymentCodec.VALID_UNTIL)).limit(1).first();
    }
 
    @Override
@@ -123,10 +124,10 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
       database.createCollection(databaseCollectionName(organization));
 
       MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
-      groupCollection.createIndex(Indexes.ascending(Payment.PAYMENT_ID), new IndexOptions().unique(true));
-      groupCollection.createIndex(Indexes.descending(Payment.DATE), new IndexOptions().unique(true));
-      groupCollection.createIndex(Indexes.descending(Payment.START), new IndexOptions().unique(true));
-      groupCollection.createIndex(Indexes.descending(Payment.VALID_UNTIL), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.ascending(PaymentCodec.PAYMENT_ID), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.descending(PaymentCodec.DATE), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.descending(PaymentCodec.START), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.descending(PaymentCodec.VALID_UNTIL), new IndexOptions().unique(true));
    }
 
    @Override
