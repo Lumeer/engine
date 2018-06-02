@@ -37,7 +37,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -65,7 +64,7 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
       database.createCollection(databaseCollectionName());
 
       MongoCollection<Document> userCollection = database.getCollection(databaseCollectionName());
-      userCollection.createIndex(Indexes.ascending(User.EMAIL), new IndexOptions().unique(true));
+      userCollection.createIndex(Indexes.ascending(UserCodec.EMAIL), new IndexOptions().unique(true));
    }
 
    public void deleteUsersRepository() {
@@ -143,14 +142,14 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
 
    @Override
    public User getUserByEmail(final String email) {
-      Bson emailFilter = Filters.eq(User.EMAIL, email);
+      Bson emailFilter = Filters.eq(UserCodec.EMAIL, email);
 
       return databaseCollection().find(emailFilter).first();
    }
 
    @Override
    public User getUserByKeycloakId(final String keycloakId) {
-      Bson keycloakIdFilter = Filters.eq(User.KEYCLOAK_ID, keycloakId);
+      Bson keycloakIdFilter = Filters.eq(UserCodec.KEYCLOAK_ID, keycloakId);
 
       return databaseCollection().find(keycloakIdFilter).first();
    }

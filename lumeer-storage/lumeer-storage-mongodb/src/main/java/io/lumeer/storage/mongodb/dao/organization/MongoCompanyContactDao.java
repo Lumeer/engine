@@ -22,6 +22,7 @@ import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.mongodb.codecs.CompanyContactCodec;
 import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
@@ -75,7 +76,7 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
          database.createCollection(COMPANY_CONTACT_COLLECTION);
 
          MongoCollection<Document> companyContactCollection = database.getCollection(COMPANY_CONTACT_COLLECTION);
-         companyContactCollection.createIndex(Indexes.ascending(CompanyContact.ORGANIZATION_ID), new IndexOptions().unique(true));
+         companyContactCollection.createIndex(Indexes.ascending(CompanyContactCodec.ORGANIZATION_ID), new IndexOptions().unique(true));
       }
    }
 

@@ -38,6 +38,20 @@ import org.bson.types.ObjectId;
 public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
 
    public static final String ID = "_id";
+   public static final String ORGANIZATION_ID = "organizationId";
+   public static final String COMPANY = "company";
+   public static final String FIRST_NAME = "firstName";
+   public static final String LAST_NAME = "lastName";
+   public static final String ADDRESS1 = "address1";
+   public static final String ADDRESS2 = "address2";
+   public static final String CITY = "city";
+   public static final String ZIP = "zip";
+   public static final String STATE = "state";
+   public static final String COUNTRY = "country";
+   public static final String EMAIL = "email";
+   public static final String PHONE = "phone";
+   public static final String IC = "ic";
+   public static final String DIC = "dic";
 
    private final Codec<Document> documentCodec;
 
@@ -76,20 +90,20 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
 
    private static CompanyContact convertFromDocument(final Document bson) {
       String id = bson.get(ID) != null ? bson.getObjectId(ID).toHexString() : null;
-      String organizationId = bson.getString(CompanyContact.ORGANIZATION_ID);
-      String company = bson.getString(CompanyContact.COMPANY);
-      String firstName = bson.getString(CompanyContact.FIRST_NAME);
-      String surname = bson.getString(CompanyContact.LAST_NAME);
-      String address1 = bson.getString(CompanyContact.ADDRESS1);
-      String address2 = bson.getString(CompanyContact.ADDRESS2);
-      String city = bson.getString(CompanyContact.CITY);
-      String zip = bson.getString(CompanyContact.ZIP);
-      String state = bson.getString(CompanyContact.STATE);
-      String country = bson.getString(CompanyContact.COUNTRY);
-      String email = bson.getString(CompanyContact.EMAIL);
-      String phone = bson.getString(CompanyContact.PHONE);
-      String ic = bson.getString(CompanyContact.IC);
-      String dic = bson.getString(CompanyContact.DIC);
+      String organizationId = bson.getString(ORGANIZATION_ID);
+      String company = bson.getString(COMPANY);
+      String firstName = bson.getString(FIRST_NAME);
+      String surname = bson.getString(LAST_NAME);
+      String address1 = bson.getString(ADDRESS1);
+      String address2 = bson.getString(ADDRESS2);
+      String city = bson.getString(CITY);
+      String zip = bson.getString(ZIP);
+      String state = bson.getString(STATE);
+      String country = bson.getString(COUNTRY);
+      String email = bson.getString(EMAIL);
+      String phone = bson.getString(PHONE);
+      String ic = bson.getString(IC);
+      String dic = bson.getString(DIC);
 
       return new CompanyContact(id, organizationId, company, firstName, surname, address1, address2, city, zip, state, country, email, phone, ic, dic);
    }
@@ -97,20 +111,20 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
    @Override
    public void encode(final BsonWriter bsonWriter, final CompanyContact companyContact, final EncoderContext encoderContext) {
       Document document = (documentHasId(companyContact) ? new Document(ID, getDocumentId(companyContact)) : new Document())
-            .append(CompanyContact.ORGANIZATION_ID, companyContact.getOrganizationId())
-            .append(CompanyContact.COMPANY, companyContact.getCompany())
-            .append(CompanyContact.FIRST_NAME, companyContact.getFirstName())
-            .append(CompanyContact.LAST_NAME, companyContact.getLastName())
-            .append(CompanyContact.ADDRESS1, companyContact.getAddress1())
-            .append(CompanyContact.ADDRESS2, companyContact.getAddress2())
-            .append(CompanyContact.CITY, companyContact.getCity())
-            .append(CompanyContact.ZIP, companyContact.getZip())
-            .append(CompanyContact.STATE, companyContact.getState())
-            .append(CompanyContact.COUNTRY, companyContact.getCountry())
-            .append(CompanyContact.EMAIL, companyContact.getEmail())
-            .append(CompanyContact.PHONE, companyContact.getPhone())
-            .append(CompanyContact.IC, companyContact.getIc())
-            .append(CompanyContact.DIC, companyContact.getDic());
+            .append(ORGANIZATION_ID, companyContact.getOrganizationId())
+            .append(COMPANY, companyContact.getCompany())
+            .append(FIRST_NAME, companyContact.getFirstName())
+            .append(LAST_NAME, companyContact.getLastName())
+            .append(ADDRESS1, companyContact.getAddress1())
+            .append(ADDRESS2, companyContact.getAddress2())
+            .append(CITY, companyContact.getCity())
+            .append(ZIP, companyContact.getZip())
+            .append(STATE, companyContact.getState())
+            .append(COUNTRY, companyContact.getCountry())
+            .append(EMAIL, companyContact.getEmail())
+            .append(PHONE, companyContact.getPhone())
+            .append(IC, companyContact.getIc())
+            .append(DIC, companyContact.getDic());
 
       documentCodec.encode(bsonWriter, document, encoderContext);
    }
