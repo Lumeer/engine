@@ -37,7 +37,6 @@ public class User {
    public static final String NAME = "name";
    public static final String EMAIL = "email";
    public static final String GROUPS = "groups";
-   public static final String KEYCLOAK_ID = "keycloakId";
    public static final String WISHES = "wishes";
 
    @JsonView(UserViews.DefaultView.class)

@@ -40,6 +40,18 @@ import java.util.Date;
 public class PaymentCodec implements CollectibleCodec<Payment> {
 
    public static final String ID = "_id";
+   public static final String DATE = "date";
+   public static final String AMOUNT = "amount";
+   public static final String PAYMENT_ID = "paymentId";
+   public static final String START = "start";
+   public static final String VALID_UNTIL = "validUntil";
+   public static final String STATE = "state";
+   public static final String SERVICE_LEVEL = "serviceLevel";
+   public static final String USERS = "users";
+   public static final String LANGUAGE = "language";
+   public static final String CURRENCY = "currency";
+   public static final String GW_URL = "gwUrl";
+
 
    private final Codec<Document> documentCodec;
 
@@ -56,17 +68,17 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
 
    public static Payment convertFromDocument(Document bson) {
       String id = bson.get(ID) != null ? bson.getObjectId(ID).toHexString() : null;
-      Date date = bson.getDate(Payment.DATE);
-      long amount = bson.getLong(Payment.AMOUNT);
-      String paymentId = bson.getString(Payment.PAYMENT_ID);
-      Date start = bson.getDate(Payment.START);
-      Date validUntil = bson.getDate(Payment.VALID_UNTIL);
-      Payment.PaymentState state = Payment.PaymentState.fromInt(bson.getInteger(Payment.STATE));
-      Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.fromInt(bson.getInteger(Payment.SERVICE_LEVEL));
-      int users = bson.getInteger(Payment.USERS);
-      String language = bson.getString(Payment.LANGUAGE);
-      String currency = bson.getString(Payment.CURRENCY);
-      String gwUrl = bson.getString(Payment.GW_URL);
+      Date date = bson.getDate(DATE);
+      long amount = bson.getLong(AMOUNT);
+      String paymentId = bson.getString(PAYMENT_ID);
+      Date start = bson.getDate(START);
+      Date validUntil = bson.getDate(VALID_UNTIL);
+      Payment.PaymentState state = Payment.PaymentState.fromInt(bson.getInteger(STATE));
+      Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.fromInt(bson.getInteger(SERVICE_LEVEL));
+      int users = bson.getInteger(USERS);
+      String language = bson.getString(LANGUAGE);
+      String currency = bson.getString(CURRENCY);
+      String gwUrl = bson.getString(GW_URL);
 
       return new Payment(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl);
    }
@@ -74,17 +86,17 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
    @Override
    public void encode(final BsonWriter bsonWriter, final Payment payment, final EncoderContext encoderContext) {
       Document document = (documentHasId(payment) ? new Document(ID, getDocumentId(payment)) : new Document())
-            .append(Payment.DATE, payment.getDate())
-            .append(Payment.AMOUNT, payment.getAmount())
-            .append(Payment.PAYMENT_ID, payment.getPaymentId())
-            .append(Payment.START, payment.getStart())
-            .append(Payment.VALID_UNTIL, payment.getValidUntil())
-            .append(Payment.STATE, payment.getState().ordinal())
-            .append(Payment.SERVICE_LEVEL, payment.getServiceLevel().ordinal())
-            .append(Payment.USERS, payment.getUsers())
-            .append(Payment.LANGUAGE, payment.getLanguage())
-            .append(Payment.CURRENCY, payment.getCurrency())
-            .append(Payment.GW_URL, payment.getGwUrl());
+            .append(DATE, payment.getDate())
+            .append(AMOUNT, payment.getAmount())
+            .append(PAYMENT_ID, payment.getPaymentId())
+            .append(START, payment.getStart())
+            .append(VALID_UNTIL, payment.getValidUntil())
+            .append(STATE, payment.getState().ordinal())
+            .append(SERVICE_LEVEL, payment.getServiceLevel().ordinal())
+            .append(USERS, payment.getUsers())
+            .append(LANGUAGE, payment.getLanguage())
+            .append(CURRENCY, payment.getCurrency())
+            .append(GW_URL, payment.getGwUrl());
 
       documentCodec.encode(bsonWriter, document, encoderContext);
    }
