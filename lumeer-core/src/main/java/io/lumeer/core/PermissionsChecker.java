@@ -33,7 +33,6 @@ import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.DataStorageStats;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -107,8 +106,11 @@ public class PermissionsChecker {
 
    /**
     * Checks whether the current user has the given role on the resource.
-    * @param resource The resource to be checked.
-    * @param role The required role.
+    *
+    * @param resource
+    *       The resource to be checked.
+    * @param role
+    *       The required role.
     * @return True if and only if the user has the given role ont he resource.
     */
    public boolean hasRole(Resource resource, Role role) {
@@ -140,24 +142,31 @@ public class PermissionsChecker {
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
       return userRoles.stream()
-                      .filter(entity -> entity.getId().equals(userId))
-                      .flatMap(entity -> entity.getRoles().stream())
-                      .collect(Collectors.toSet());
+            .filter(entity -> entity.getId().equals(userId))
+            .flatMap(entity -> entity.getRoles().stream())
+            .collect(Collectors.toSet());
    }
 
    private Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
       return groupRoles.stream()
-                       .filter(entity -> groupIds.contains(entity.getId()))
-                       .flatMap(entity -> entity.getRoles().stream())
-                       .collect(Collectors.toSet());
+            .filter(entity -> groupIds.contains(entity.getId()))
+            .flatMap(entity -> entity.getRoles().stream())
+            .collect(Collectors.toSet());
    }
 
    /**
     * Checks whether it is possible to create more resources of the given type.
-    * @param resource Resource to be created.
-    * @param currentCount Current no of resources of the given type.
+    *
+    * @param resource
+    *       Resource to be created.
+    * @param currentCount
+    *       Current no of resources of the given type.
     */
    public void checkCreationLimits(final Resource resource, final long currentCount) {
+      if (skipLimits()) {
+         return;
+      }
+
       final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
 
       if (resource.getType().equals(ResourceType.PROJECT)) {
@@ -175,9 +184,15 @@ public class PermissionsChecker {
 
    /**
     * Checks whether it is possible to create more documents.
-    * @param document The document that is about to be created.
+    *
+    * @param document
+    *       The document that is about to be created.
     */
    public void checkDocumentLimits(final Document document) {
+      if (skipLimits()) {
+         return;
+      }
+
       final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
       final long documentsCount = countDocuments();
 
@@ -188,9 +203,15 @@ public class PermissionsChecker {
 
    /**
     * Checks whether it is possible to create more documents.
-    * @param documents The list of documents that are about to be created.
+    *
+    * @param documents
+    *       The list of documents that are about to be created.
     */
    public void checkDocumentLimits(final List<Document> documents) {
+      if (skipLimits()) {
+         return;
+      }
+
       final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
       final long documentsCount = countDocuments();
 
@@ -205,14 +226,25 @@ public class PermissionsChecker {
 
    /**
     * Checks whether it is possible to create more users in the current organization.
-    * @param organizationId Organization ID where the user is being added.
-    * @param currentCount Current no of users.
+    *
+    * @param organizationId
+    *       Organization ID where the user is being added.
+    * @param currentCount
+    *       Current no of users.
     */
    public void checkUserCreationLimits(final String organizationId, final long currentCount) {
+      if (skipLimits()) {
+         return;
+      }
+
       final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganizationById(organizationId));
 
       if (limits.getUsers() > 0 && limits.getUsers() <= currentCount) {
          throw new ServiceLimitsExceededException(limits.getUsers());
       }
+   }
+
+   private boolean skipLimits() {
+      return System.getenv("SKIP_LIMITS") != null;
    }
 }
