@@ -19,12 +19,17 @@
 package io.lumeer.core;
 
 import io.lumeer.api.dto.JsonOrganization;
+import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
+import io.lumeer.core.util.Colors;
+import io.lumeer.core.util.Icons;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 
@@ -34,6 +39,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
 import javax.annotation.PostConstruct;
@@ -59,7 +65,12 @@ public class AuthenticatedUser implements Serializable {
    private OrganizationDao organizationDao;
 
    @Inject
+   private ProjectDao projectDao;
+
+   @Inject
    private UserLoginDao userLoginDao;
+
+   private Random rnd = new Random();
 
    @PostConstruct
    public void checkUser() {
@@ -128,6 +139,9 @@ public class AuthenticatedUser implements Serializable {
 
       Organization organization = createDemoOrganization(user);
       user.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>()));
+
+      createDemoProject(user);
+
       if (performUpdate) {
          userDao.updateUser(user.getId(), user);
       }
@@ -137,10 +151,19 @@ public class AuthenticatedUser implements Serializable {
       String code = generateOrganizationCode(user.getEmail());
       Permission userPermission = new SimplePermission(user.getId(), Organization.ROLES);
 
-      Organization organization = new JsonOrganization(code, "Lumeer demo", "fas fa-badge-check", "#6aa84f", null, null);
+      Organization organization = new JsonOrganization(code, "Lumeer demo", getDemoIcon(), getDemoColor(), null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
 
       return organizationDao.createOrganization(organization);
+   }
+
+   private Project createDemoProject(final User user) {
+      final String code = generateProjectCode();
+      final Permission userPermission = new SimplePermission(user.getId(), Project.ROLES);
+      Project project = new JsonProject(code, "Project", getDemoIcon(), getDemoColor(), null, null);
+      project.getPermissions().updateUserPermissions(userPermission);
+
+      return projectDao.createProject(project);
    }
 
    private String generateOrganizationCode(String userEmail) {
@@ -170,6 +193,26 @@ public class AuthenticatedUser implements Serializable {
          num++;
       }
       return codeWithSuffix;
+   }
+
+   private String generateProjectCode() {
+      final Set<String> existingCodes = projectDao.getProjectsCodes();
+      final String prefix = "PRJ";
+      int no = 1;
+
+      while (existingCodes.contains(prefix + no)) {
+         no++;
+      }
+
+      return prefix + no;
+   }
+
+   private String getDemoIcon() {
+      return Icons.solidIcons.get(rnd.nextInt(Icons.solidIcons.size()));
+   }
+
+   private String getDemoColor() {
+      return Colors.palette.get(rnd.nextInt(Colors.palette.size()));
    }
 
    private String getCurrentUserEmail() {
