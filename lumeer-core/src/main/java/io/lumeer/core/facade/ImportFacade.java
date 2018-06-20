@@ -35,6 +35,7 @@ import com.univocity.parsers.csv.CsvParserSettings;
 
 import java.io.StringReader;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -184,7 +185,7 @@ public class ImportFacade extends AbstractFacade {
    private void addDocumentMetadata(String collectionId, Document document) {
       document.setCollectionId(collectionId);
       document.setCreatedBy(authenticatedUser.getCurrentUserId());
-      document.setCreationDate(LocalDateTime.now());
+      document.setCreationDate(ZonedDateTime.now());
       document.setDataVersion(DocumentFacade.INITIAL_VERSION);
    }
 

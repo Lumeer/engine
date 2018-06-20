@@ -55,6 +55,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -156,7 +157,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       Document document = prepareDocument();
       document.setCollectionId(collection.getId());
       document.setCreatedBy(this.user.getId());
-      document.setCreationDate(LocalDateTime.now());
+      document.setCreationDate(ZonedDateTime.now());
       document.setDataVersion(DocumentFacade.INITIAL_VERSION);
       Document storedDocument = documentDao.createDocument(document);
 
@@ -171,7 +172,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       Document document = prepareDocument();
       Entity entity = Entity.json(document);
 
-      LocalDateTime beforeTime = LocalDateTime.now();
+      ZonedDateTime beforeTime = ZonedDateTime.now();
 
       Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents")
                                 .request(MediaType.APPLICATION_JSON)
@@ -191,7 +192,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
       assertions.assertThat(storedDocument.getUpdateDate()).isNull();
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
@@ -211,7 +212,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       DataDocument data = new DataDocument(KEY1, VALUE2);
       Entity entity = Entity.json(data);
 
-      LocalDateTime beforeUpdateTime = LocalDateTime.now();
+      ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
       Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
@@ -225,7 +226,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
@@ -243,7 +244,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       DataDocument data = new DataDocument(KEY1, VALUE2);
       Entity entity = Entity.json(data);
 
-      LocalDateTime beforeUpdateTime = LocalDateTime.now();
+      ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
       Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .build("PATCH", entity).invoke();
@@ -257,7 +258,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
@@ -301,7 +302,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(document.getId()).isEqualTo(id);
       assertions.assertThat(document.getCollectionId()).isNull();
       assertions.assertThat(document.getCreatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();
       assertions.assertThat(document.getUpdateDate()).isNull();
       assertions.assertThat(document.getDataVersion()).isEqualTo(1);

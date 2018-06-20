@@ -16,44 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
 
-import io.lumeer.engine.api.data.DataDocument;
+package io.lumeer.api.dto.adapter;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public interface Document {
+public class ZonedDateTimeAdapter extends XmlAdapter<Long, ZonedDateTime> {
 
-   String getId();
+   public ZonedDateTime unmarshal(Long epochMillis) {
+      return epochMillis != null ? ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC) : null;
+   }
 
-   void setId(String id);
-
-   String getCollectionId();
-
-   void setCollectionId(String collectionId);
-
-   ZonedDateTime getCreationDate();
-
-   void setCreationDate(ZonedDateTime creationDate);
-
-   ZonedDateTime getUpdateDate();
-
-   void setUpdateDate(ZonedDateTime updateDate);
-
-   String getCreatedBy();
-
-   void setCreatedBy(String createdBy);
-
-   String getUpdatedBy();
-
-   void setUpdatedBy(String updatedBy);
-
-   Integer getDataVersion();
-
-   void setDataVersion(Integer dataVersion);
-
-   DataDocument getData();
-
-   void setData(DataDocument data);
+   public Long marshal(ZonedDateTime dateTime) {
+      return dateTime != null ? dateTime.toInstant().toEpochMilli() : null;
+   }
 
 }

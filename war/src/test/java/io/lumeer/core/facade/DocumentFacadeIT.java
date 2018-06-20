@@ -55,7 +55,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -165,7 +165,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
       Document document = prepareDocument();
 
-      LocalDateTime beforeTime = LocalDateTime.now();
+      ZonedDateTime beforeTime = ZonedDateTime.now();
       String id = documentFacade.createDocument(collection.getId(), document).getId();
       assertThat(id).isNotNull();
 
@@ -176,7 +176,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
       assertions.assertThat(storedDocument.getUpdateDate()).isNull();
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
@@ -204,7 +204,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
-      LocalDateTime beforeUpdateTime = LocalDateTime.now();
+      ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
       Document updatedDocument = documentFacade.updateDocumentData(collection.getId(), id, data);
       assertThat(updatedDocument).isNotNull();
 
@@ -215,7 +215,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
@@ -241,7 +241,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
 
-      LocalDateTime beforeUpdateTime = LocalDateTime.now();
+      ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
       Document updatedDocument = documentFacade.patchDocumentData(collection.getId(), id, data);
       assertThat(updatedDocument).isNotNull();
 
@@ -252,7 +252,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
@@ -298,7 +298,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(document.getId()).isEqualTo(id);
       assertions.assertThat(document.getCollectionId()).isEqualTo(collection.getId());
       assertions.assertThat(document.getCreatedBy()).isEqualTo(this.user.getId());
-      assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(LocalDateTime.now());
+      assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();
       assertions.assertThat(document.getUpdateDate()).isNull();
       assertions.assertThat(document.getDataVersion()).isEqualTo(1);

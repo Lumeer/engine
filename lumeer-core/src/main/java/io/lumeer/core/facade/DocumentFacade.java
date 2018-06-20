@@ -37,6 +37,7 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -90,7 +91,7 @@ public class DocumentFacade extends AbstractFacade {
    private Document createDocument(Collection collection, Document document) {
       document.setCollectionId(collection.getId());
       document.setCreatedBy(authenticatedUser.getCurrentUserId());
-      document.setCreationDate(LocalDateTime.now());
+      document.setCreationDate(ZonedDateTime.now());
       document.setDataVersion(INITIAL_VERSION);
       return documentDao.createDocument(document);
    }
@@ -142,7 +143,7 @@ public class DocumentFacade extends AbstractFacade {
 
       document.setCollectionId(collection.getId());
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
-      document.setUpdateDate(LocalDateTime.now());
+      document.setUpdateDate(ZonedDateTime.now());
       document.setDataVersion(document.getDataVersion() + 1);
 
       return documentDao.updateDocument(document.getId(), document);
