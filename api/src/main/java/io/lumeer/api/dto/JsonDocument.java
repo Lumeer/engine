@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.dto;
 
+import io.lumeer.api.dto.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -25,9 +26,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class JsonDocument implements Document {
@@ -36,8 +38,12 @@ public class JsonDocument implements Document {
 
    private String collectionId;
 
-   private LocalDateTime creationDate;
-   private LocalDateTime updateDate;
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime creationDate;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime updateDate;
+
    private String createdBy;
    private String updatedBy;
    private Integer dataVersion;
@@ -82,22 +88,22 @@ public class JsonDocument implements Document {
    }
 
    @Override
-   public LocalDateTime getCreationDate() {
+   public ZonedDateTime getCreationDate() {
       return creationDate;
    }
 
    @Override
-   public void setCreationDate(final LocalDateTime creationDate) {
+   public void setCreationDate(final ZonedDateTime creationDate) {
       this.creationDate = creationDate;
    }
 
    @Override
-   public LocalDateTime getUpdateDate() {
+   public ZonedDateTime getUpdateDate() {
       return updateDate;
    }
 
    @Override
-   public void setUpdateDate(final LocalDateTime updateDate) {
+   public void setUpdateDate(final ZonedDateTime updateDate) {
       this.updateDate = updateDate;
    }
 

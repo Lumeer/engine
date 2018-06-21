@@ -20,7 +20,6 @@ package io.lumeer.storage.mongodb.model;
 
 import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.model.common.MorphiaEntity;
 
 import org.mongodb.morphia.annotations.Entity;
@@ -30,8 +29,8 @@ import org.mongodb.morphia.annotations.Indexes;
 import org.mongodb.morphia.annotations.Property;
 import org.mongodb.morphia.annotations.Transient;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 @Entity(noClassnameStored = true)
@@ -51,10 +50,10 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    private String collectionId;
 
    @Property(CREATION_DATE)
-   private LocalDateTime creationDate;
+   private Date creationDate;
 
    @Property(UPDATE_DATE)
-   private LocalDateTime updateDate;
+   private Date updateDate;
 
    @Property(CREATED_BY)
    private String createdBy;
@@ -75,8 +74,12 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
       super(document.getId());
 
       this.collectionId = document.getCollectionId();
-      this.creationDate = document.getCreationDate();
-      this.updateDate = document.getUpdateDate();
+      if (document.getCreationDate() != null) {
+         this.creationDate = Date.from(document.getCreationDate().toInstant());
+      }
+      if (document.getUpdateDate() != null) {
+         this.updateDate = Date.from(document.getUpdateDate().toInstant());
+      }
       this.createdBy = document.getCreatedBy();
       this.updatedBy = document.getUpdatedBy();
       this.dataVersion = document.getDataVersion();
@@ -94,23 +97,23 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    }
 
    @Override
-   public LocalDateTime getCreationDate() {
-      return creationDate;
+   public ZonedDateTime getCreationDate() {
+      return creationDate != null ? ZonedDateTime.ofInstant(creationDate.toInstant(), ZoneOffset.UTC) : null;
    }
 
    @Override
-   public void setCreationDate(final LocalDateTime creationDate) {
-      this.creationDate = creationDate;
+   public void setCreationDate(final ZonedDateTime creationDate) {
+      this.creationDate = creationDate != null ? Date.from(creationDate.toInstant()) : null;
    }
 
    @Override
-   public LocalDateTime getUpdateDate() {
-      return updateDate;
+   public ZonedDateTime getUpdateDate() {
+      return updateDate != null ? ZonedDateTime.ofInstant(updateDate.toInstant(), ZoneOffset.UTC) : null;
    }
 
    @Override
-   public void setUpdateDate(final LocalDateTime updateDate) {
-      this.updateDate = updateDate;
+   public void setUpdateDate(final ZonedDateTime updateDate) {
+      this.updateDate = updateDate != null ? Date.from(updateDate.toInstant()) : null;
    }
 
    @Override
@@ -189,17 +192,11 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    public org.bson.Document toBsonDocument() {
       DataDocument dataDocument = new DataDocument(COLLECTION_ID, collectionId)
             .append(CREATED_BY, createdBy)
-            .append(CREATION_DATE, convertLocalDateTimeToDate(creationDate))
+            .append(CREATION_DATE, creationDate)
             .append(UPDATED_BY, updatedBy)
-            .append(UPDATE_DATE, convertLocalDateTimeToDate(updateDate))
+            .append(UPDATE_DATE, updateDate)
             .append(DATA_VERSION, dataVersion);
       return new org.bson.Document(dataDocument);
    }
 
-   private Date convertLocalDateTimeToDate(LocalDateTime dateTime) {
-      if (dateTime == null) {
-         return null;
-      }
-      return Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
-   }
 }

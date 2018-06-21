@@ -49,7 +49,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -302,7 +302,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       Document document = new JsonDocument(new DataDocument(DOCUMENT_KEY, value));
       document.setCollectionId(collectionId);
       document.setCreatedBy(USER);
-      document.setCreationDate(LocalDateTime.now());
+      document.setCreationDate(ZonedDateTime.now());
       document.setDataVersion(DocumentFacade.INITIAL_VERSION);
       Document storedDocument = documentDao.createDocument(document);
 
