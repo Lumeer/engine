@@ -43,6 +43,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -182,19 +183,26 @@ public class CollectionFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
-      int i = 0;
       for (Attribute attribute : attributes) {
-         attribute.setId(Collection.ATTRIBUTE_PREFIX + (collection.getLastAttributeNum() + i + 1));
+         final Integer freeNum = getFreeAttributeNum(collection);
+         attribute.setId(Collection.ATTRIBUTE_PREFIX + freeNum);
          attribute.setUsageCount(0);
          collection.createAttribute(attribute);
-         i++;
+         collection.setLastAttributeNum(freeNum);
       }
-
-      collection.setLastAttributeNum(collection.getLastAttributeNum() + attributes.size());
 
       collectionDao.updateCollection(collection.getId(), collection);
 
       return attributes;
+   }
+
+   private Integer getFreeAttributeNum(final Collection collection) {
+      final AtomicInteger last = new AtomicInteger(collection.getLastAttributeNum());
+      while (collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(Collection.ATTRIBUTE_PREFIX + last.get())).count() > 0) {
+         last.incrementAndGet();
+      }
+
+      return last.get();
    }
 
    public Attribute updateCollectionAttribute(String collectionId, String attributeId, Attribute attribute) {
