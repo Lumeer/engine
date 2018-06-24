@@ -197,7 +197,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Integer getFreeAttributeNum(final Collection collection) {
-      final AtomicInteger last = new AtomicInteger(collection.getLastAttributeNum());
+      final AtomicInteger last = new AtomicInteger(Math.max(1, collection.getLastAttributeNum()));
       while (collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(Collection.ATTRIBUTE_PREFIX + last.get())).count() > 0) {
          last.incrementAndGet();
       }
