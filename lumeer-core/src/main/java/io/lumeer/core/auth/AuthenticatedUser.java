@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core;
+package io.lumeer.core.auth;
 
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonProject;
@@ -41,13 +41,20 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import javax.enterprise.context.SessionScoped;
+import java.util.concurrent.Semaphore;
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 @SessionScoped
 public class AuthenticatedUser implements Serializable {
+
+   protected static class AuthUserInfo {
+      protected User user = null;
+      protected long lastUpdated = 0;
+      protected String accessToken = "";
+   }
 
    public static final String DEFAULT_USERNAME = "aturing";
    public static final String DEFAULT_EMAIL = "aturing@lumeer.io";
@@ -70,6 +77,10 @@ public class AuthenticatedUser implements Serializable {
    @Inject
    private UserLoginDao userLoginDao;
 
+   private AuthUserInfo authUserInfo = new AuthUserInfo();
+
+   private final Semaphore semaphore = new Semaphore(1);
+
    private Random rnd = new Random();
 
    @PostConstruct
@@ -82,6 +93,18 @@ public class AuthenticatedUser implements Serializable {
       } else {
          checkLocalUser(DEFAULT_EMAIL);
       }
+   }
+
+   protected AuthUserInfo getAuthUserInfo() {
+      return authUserInfo;
+   }
+
+   protected void setAuthUserInfo(final AuthUserInfo authUserInfo) {
+      this.authUserInfo = authUserInfo;
+   }
+
+   protected Semaphore getSemaphore() {
+      return this.semaphore;
    }
 
    public User getCurrentUser() {

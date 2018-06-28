@@ -24,7 +24,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.api.model.View;
-import io.lumeer.core.AuthenticatedUserGroups;
+import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;

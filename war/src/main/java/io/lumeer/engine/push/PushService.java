@@ -18,7 +18,7 @@
  */
 package io.lumeer.engine.push;
 
-import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.push.PushMessage;
 

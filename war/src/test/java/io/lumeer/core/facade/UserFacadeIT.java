@@ -31,7 +31,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;

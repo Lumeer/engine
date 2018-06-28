@@ -27,7 +27,9 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.cache.UserCache;
+import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.AuthenticatedUserGroups;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoPermissionException;
 
 import org.assertj.core.util.Sets;

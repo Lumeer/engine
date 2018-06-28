@@ -34,7 +34,7 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
-import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentGatewayFacade;
 import io.lumeer.core.model.SimplePermission;

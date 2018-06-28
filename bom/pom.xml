@@ -107,6 +107,8 @@
       <version.jaxrs>3.0.12.Final</version.jaxrs>
       <version.netty>4.1.4.Final</version.netty>
       <version.univocity>2.5.3</version.univocity>
+      <version.mvc-auth>1.0.0</version.mvc-auth>
+      <version.jwt>3.3.0</version.jwt>
 
       <version.maven.plugin.api>3.3.9</version.maven.plugin.api>
       <version.maven.core>3.3.9</version.maven.core>
@@ -226,6 +228,17 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>${version.netty}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>mvc-auth-commons</artifactId>
+            <version>${version.mvc-auth}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>${version.jwt}</version>
          </dependency>
 
          <!-- Logging -->

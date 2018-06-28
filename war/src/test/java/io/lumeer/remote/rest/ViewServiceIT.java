@@ -36,15 +36,13 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
-import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.mongodb.model.MorphiaOrganization;
-import io.lumeer.storage.mongodb.model.MorphiaProject;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;

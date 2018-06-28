@@ -24,7 +24,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.ImportedCollection;
-import io.lumeer.core.PermissionsChecker;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
