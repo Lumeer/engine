@@ -38,7 +38,7 @@ public interface UserDao {
 
    User getUserByEmail(String email);
 
-   User getUserByKeycloakId(String keycloakId);
+   User getUserByAuthId(String authId);
 
    User getUserById(String id);
 

@@ -1,7 +1,6 @@
 <jboss-deployment-structure>
   <deployment>
     <dependencies>
-      <module name="org.keycloak.keycloak-core" />
       <module name="org.jboss.resteasy.resteasy-jaxrs" />
       <module name="org.jboss.resteasy.resteasy-jackson-provider" />
       <module name="org.jboss.resteasy.resteasy-jaxb-provider" />

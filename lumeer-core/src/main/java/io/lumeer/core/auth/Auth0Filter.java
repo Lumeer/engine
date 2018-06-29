@@ -102,7 +102,7 @@ public class Auth0Filter implements Filter {
          // we are safe to go, make sure we have use info
          final AuthenticatedUser.AuthUserInfo authUserInfo = authenticatedUser.getAuthUserInfo();
          if (!accessToken.equals(authUserInfo.accessToken) || authUserInfo.user == null || authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) {
-            if (authenticatedUser.getSemaphore().tryAcquire()) { // onlyl one thread must do that at the same time
+            if (authenticatedUser.getSemaphore().tryAcquire()) { // only one thread must do that at the same time
                try {
                   final AuthenticatedUser.AuthUserInfo newAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
                   try {
@@ -158,7 +158,7 @@ public class Auth0Filter implements Filter {
       final String sub = (String) values.get("sub");
       final String name = (String) values.get("name");
       final User user = new User(sub.startsWith("google-oauth2") ? nickname + "@gmail.com" : name);
-      user.setKeycloakId(sub);
+      user.setAuthId(sub);
       user.setName(name);
 
       return user;

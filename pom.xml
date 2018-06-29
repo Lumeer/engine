@@ -101,7 +101,6 @@
       <maven.failsafe.plugin.version>2.19.1</maven.failsafe.plugin.version>
       <maven.cargo.plugin.version>1.6.3</maven.cargo.plugin.version>
 
-      <version.keycloak>3.4.3.Final</version.keycloak>
       <version.wildfly>12.0.0.Final</version.wildfly>
       <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
    </properties>
@@ -245,14 +244,6 @@
                               <type>zip</type>
                               <overWrite>false</overWrite>
                               <outputDirectory>${project.build.directory}</outputDirectory>
-                           </artifactItem>
-                           <artifactItem>
-                              <groupId>org.keycloak</groupId>
-                              <artifactId>keycloak-wildfly-adapter-dist</artifactId>
-                              <version>${version.keycloak}</version>
-                              <type>zip</type>
-                              <overWrite>true</overWrite>
-                              <outputDirectory>${wildfly.dir}</outputDirectory>
                            </artifactItem>
                         </artifactItems>
                      </configuration>
