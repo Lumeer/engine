@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core;
+package io.lumeer.core.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,9 +27,7 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
-import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.NoPermissionException;
 
 import org.assertj.core.util.Sets;

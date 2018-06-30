@@ -101,8 +101,6 @@ public abstract class AuthenticationControllerProvider {
          sb.append("-----END CERTIFICATE-----");
          final String pemN = sb.toString();
 
-         System.out.println("Náš PEM: " + pemN);
-
          final RSAPublicKey pubKey = AuthenticationControllerProvider.getPublicKeyFromCertificate(pemN);
          final Verification verification = JWT.require(Algorithm.RSA256(pubKey, null));
          final JWTVerifier verifier = verification.acceptExpiresAt(60).build();

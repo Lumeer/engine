@@ -85,8 +85,9 @@ public class Auth0Filter implements Filter {
          }
 
          // we failed to verify the token
-         final DecodedJWT jwt = JWT.decode(accessToken);
+         final DecodedJWT jwt;
          try {
+            jwt = JWT.decode(accessToken);
             verifier.verify(jwt.getToken());
          } catch (Exception e) {
             res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
