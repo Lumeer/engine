@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.core.facade.UserFacade;
@@ -30,6 +31,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -60,6 +62,14 @@ public class GlobalService extends AbstractService {
       }
 
       userFacade.setDefaultWorkspace(defaultWorkspace);
+
+      return Response.ok().build();
+   }
+
+   @POST
+   @Path("feedback")
+   public Response createFeedback(Feedback feedback) {
+      userFacade.createFeedback(feedback);
 
       return Response.ok().build();
    }
