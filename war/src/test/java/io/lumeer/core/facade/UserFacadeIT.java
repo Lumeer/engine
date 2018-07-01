@@ -18,15 +18,14 @@
  */
 package io.lumeer.core.facade;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
@@ -36,6 +35,7 @@ import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -46,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -85,6 +86,9 @@ public class UserFacadeIT extends IntegrationTestBase {
 
    @Inject
    private ProjectDao projectDao;
+
+   @Inject
+   private FeedbackDao feedbackDao;
 
    @Before
    public void configure() {
@@ -320,6 +324,31 @@ public class UserFacadeIT extends IntegrationTestBase {
 
       currentUser = userFacade.getCurrentUser();
       assertThat(currentUser.getDefaultWorkspace()).isNull();
+   }
+
+   @Test
+   public void testCreateFeedback() {
+      ZonedDateTime before = ZonedDateTime.now();
+
+      String message = "This application is great!";
+      Feedback feedback = new Feedback(message);
+      Feedback returnedFeedback = userFacade.createFeedback(feedback);
+
+      ZonedDateTime after = ZonedDateTime.now();
+
+      assertThat(returnedFeedback).isNotNull();
+      assertThat(returnedFeedback.getId()).isNotNull();
+      assertThat(returnedFeedback.getUserId()).isEqualTo(userFacade.getCurrentUser().getId());
+      assertThat(returnedFeedback.getCreationTime()).isAfterOrEqualTo(before);
+      assertThat(returnedFeedback.getCreationTime()).isBeforeOrEqualTo(after);
+      assertThat(returnedFeedback.getMessage()).isEqualTo(message);
+
+      Feedback storedFeedback = feedbackDao.getFeedbackById(returnedFeedback.getId());
+      assertThat(storedFeedback).isNotNull();
+      assertThat(storedFeedback.getId()).isEqualTo(returnedFeedback.getId());
+      assertThat(storedFeedback.getUserId()).isEqualTo(returnedFeedback.getUserId());
+      assertThat(storedFeedback.getCreationTime()).isEqualTo(returnedFeedback.getCreationTime());
+      assertThat(storedFeedback.getMessage()).isEqualTo(returnedFeedback.getMessage());
    }
 
    private User createUser(String organizationId, String user) {

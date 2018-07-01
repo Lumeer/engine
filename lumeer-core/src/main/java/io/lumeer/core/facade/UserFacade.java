@@ -19,16 +19,19 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.exception.BadFormatException;
+import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +52,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private ProjectDao projectDao;
+
+   @Inject
+   private FeedbackDao feedbackDao;
 
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
@@ -141,6 +147,14 @@ public class UserFacade extends AbstractFacade {
       User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
 
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
+   }
+
+   public Feedback createFeedback(Feedback feedback) {
+      User currentUser = authenticatedUser.getCurrentUser();
+      feedback.setUserId(currentUser.getId());
+      feedback.setCreationTime(ZonedDateTime.now());
+
+      return feedbackDao.createFeedback(feedback);
    }
 
    private User keepOnlyOrganizationGroups(User user, String organizationId) {
