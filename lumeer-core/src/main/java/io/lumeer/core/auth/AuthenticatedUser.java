@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -75,8 +74,6 @@ public class AuthenticatedUser implements Serializable {
 
    private AuthUserInfo authUserInfo = new AuthUserInfo();
 
-   private final Semaphore semaphore = new Semaphore(1);
-
    private Random rnd = new Random();
 
    void checkUser() {
@@ -95,10 +92,6 @@ public class AuthenticatedUser implements Serializable {
 
    void setAuthUserInfo(final AuthUserInfo authUserInfo) {
       this.authUserInfo = authUserInfo;
-   }
-
-   Semaphore getSemaphore() {
-      return this.semaphore;
    }
 
    public User getCurrentUser() {

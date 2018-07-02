@@ -33,6 +33,13 @@ import com.auth0.net.Request;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -58,10 +65,17 @@ public class Auth0Filter implements Filter {
    @Inject
    private ConfigurationFacade configurationFacade;
 
+   private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
+   private Map<String, Semaphore> semaphores = new ConcurrentHashMap<>();
+
    private JWTVerifier verifier = null;
    private String domain;
    private String clientId;
    private String clientSecret;
+
+   private ExecutorService executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), new ThreadPoolExecutor.DiscardPolicy());
+
+   private AtomicLong lastCheck = new AtomicLong(System.currentTimeMillis());
 
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
@@ -73,6 +87,9 @@ public class Auth0Filter implements Filter {
 
    @Override
    public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain) throws IOException, ServletException {
+      // clean caches in a background thread, only one task at a time, checks for clean interval of 60s
+      executor.submit(this::cleanCache);
+
       final HttpServletRequest req = (HttpServletRequest) servletRequest;
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
       final String accessToken = getAccessToken(req);
@@ -101,29 +118,52 @@ public class Auth0Filter implements Filter {
          }
 
          // we are safe to go, make sure we have use info
-         final AuthenticatedUser.AuthUserInfo authUserInfo = authenticatedUser.getAuthUserInfo();
+         AuthenticatedUser.AuthUserInfo authUserInfo = authenticatedUser.getAuthUserInfo();
+         if (authUserInfo.user == null && authUserCache.containsKey(accessToken)) {
+            authUserInfo = authUserCache.get(accessToken);
+            authenticatedUser.setAuthUserInfo(authUserCache.get(accessToken));
+            System.out.println("používáme cache");
+         }
+
          if (!accessToken.equals(authUserInfo.accessToken) || authUserInfo.user == null || authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) {
-            if (authenticatedUser.getSemaphore().tryAcquire()) { // only one thread must do that at the same time
+            final Semaphore s = semaphores.computeIfAbsent(accessToken, key -> new Semaphore(1));
+            if (s.tryAcquire()) { // only one thread must do that at the same time
                try {
                   final AuthenticatedUser.AuthUserInfo newAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
-                  try {
-                     newAuthUserInfo.user = getUserInfo(accessToken);
-                  } catch (Auth0Exception a0e) {
+                  System.out.println("ptáme se na user info");
+
+                  // try to get user info 3 times in a row with 500ms delays
+                  for (int i = 0; i < 3 && newAuthUserInfo.user == null; i++) {
+                     try {
+                        newAuthUserInfo.user = getUserInfo(accessToken);
+                     } catch (Auth0Exception a0e) {
+                        try {
+                           Thread.sleep(500);
+                        } catch (InterruptedException ie) {
+                           // NOP
+                        }
+                     }
+                  }
+
+                  // we still could not get user info
+                  if (newAuthUserInfo.user == null) {
                      res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                     authenticatedUser.getSemaphore().release();
+                     s.release();
                      return;
                   }
+
                   newAuthUserInfo.accessToken = accessToken;
                   newAuthUserInfo.lastUpdated = System.currentTimeMillis();
+                  authUserCache.put(accessToken, newAuthUserInfo);
                   authenticatedUser.setAuthUserInfo(newAuthUserInfo);
                   authenticatedUser.checkUser();
                } finally {
-                  authenticatedUser.getSemaphore().release();
+                  s.release();
                }
             } else {
                try {
-                  authenticatedUser.getSemaphore().acquire();
-                  authenticatedUser.getSemaphore().release();
+                  s.acquire();
+                  s.release();
                } catch (InterruptedException ie) {
                   // do nothing
                }
@@ -163,6 +203,32 @@ public class Auth0Filter implements Filter {
       user.setName(name);
 
       return user;
+   }
+
+   private void cleanCache() {
+      if (lastCheck.get() + 60_000 < System.currentTimeMillis()) {
+         System.out.println("cleaning house");
+         lastCheck.set(System.currentTimeMillis());
+
+         for (final String accessToken : authUserCache.keySet()) {
+            final DecodedJWT jwt;
+            try {
+               jwt = JWT.decode(accessToken);
+
+               if (Instant.now().isAfter(jwt.getExpiresAt().toInstant())) {
+                  removeFromCache(accessToken);
+               }
+            } catch (Exception e) {
+               removeFromCache(accessToken);
+            }
+         }
+      }
+   }
+
+   private void removeFromCache(final String accessToken) {
+      System.out.println("removing from house " + accessToken);
+      authUserCache.remove(accessToken);
+      semaphores.remove(accessToken);
    }
 
 }
