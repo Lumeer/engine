@@ -124,7 +124,7 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   @Path("names")
+   @Path("info/names")
    public Set<String> getCollectionNames() {
       return collectionFacade.getCollectionNames();
    }

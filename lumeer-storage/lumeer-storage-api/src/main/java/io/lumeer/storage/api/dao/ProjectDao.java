@@ -35,8 +35,6 @@ public interface ProjectDao {
 
    Set<String> getProjectsCodes();
 
-   Set<String> getProjectsCodes(Organization organization);
-
    Project createProject(Project project);
 
    Project getProjectById(String projectId);

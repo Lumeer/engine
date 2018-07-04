@@ -18,12 +18,14 @@
  */
 package io.lumeer.core.auth;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.Colors;
@@ -71,6 +73,9 @@ public class AuthenticatedUser implements Serializable {
 
    @Inject
    private UserLoginDao userLoginDao;
+
+   @Inject
+   private SelectedWorkspace selectedWorkspace;
 
    private AuthUserInfo authUserInfo = new AuthUserInfo();
 
@@ -154,7 +159,9 @@ public class AuthenticatedUser implements Serializable {
       Organization organization = createDemoOrganization(user);
       user.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>()));
 
-      createDemoProject(user, organization);
+      ((WorkspaceKeeper) selectedWorkspace).setOrganization(organization.getCode());
+
+      createDemoProject(user);
 
       if (performUpdate) {
          userDao.updateUser(user.getId(), user);
@@ -171,8 +178,8 @@ public class AuthenticatedUser implements Serializable {
       return organizationDao.createOrganization(organization);
    }
 
-   private Project createDemoProject(final User user, final Organization organization) {
-      final String code = generateProjectCode(organization);
+   private Project createDemoProject(final User user) {
+      final String code = generateProjectCode();
       final Permission userPermission = new SimplePermission(user.getId(), Project.ROLES);
       Project project = new JsonProject(code, "Project", getDemoIcon(), getDemoColor(), null, null);
       project.getPermissions().updateUserPermissions(userPermission);
@@ -209,8 +216,8 @@ public class AuthenticatedUser implements Serializable {
       return codeWithSuffix;
    }
 
-   private String generateProjectCode(Organization organization) {
-      final Set<String> existingCodes = projectDao.getProjectsCodes(organization);
+   private String generateProjectCode() {
+      final Set<String> existingCodes = projectDao.getProjectsCodes();
       final String prefix = "PRJ";
       int no = 1;
 
