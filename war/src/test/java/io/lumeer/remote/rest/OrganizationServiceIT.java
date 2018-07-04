@@ -378,7 +378,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    }
 
    private ServiceLimits getServiceLimits(final String organization) {
-      return getEntity(organization, "serviceLimits", ServiceLimits.class);
+      return getEntity(organization, "serviceLimit", ServiceLimits.class);
    }
 
    @Test
