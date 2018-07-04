@@ -94,6 +94,11 @@ public class Auth0Filter implements Filter {
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
       final String accessToken = getAccessToken(req);
 
+      if (req.getMethod().equals("OPTIONS")) {
+         filterChain.doFilter(servletRequest, servletResponse);
+         return;
+      }
+
       if (!req.getServletPath().startsWith("/rest/paymentNotify")) {
          // we do not have the token at all, or we failed to obtain verifier
          if (accessToken == null || verifier == null) {

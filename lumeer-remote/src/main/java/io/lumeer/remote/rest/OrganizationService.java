@@ -166,8 +166,8 @@ public class OrganizationService extends AbstractService {
       return paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganization(organizationCode));
    }
 
-   @OPTIONS
-   @Path("serviceLimits")
+   @GET
+   @Path("info/serviceLimits")
    public Map<String, ServiceLimits> getAllServiceLimits() {
       return paymentFacade.getAllServiceLimits(organizationFacade.getOrganizations());
    }
