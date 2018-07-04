@@ -161,7 +161,7 @@ public class OrganizationService extends AbstractService {
 
    /* Gets the current service level the organization has prepaid. */
    @GET
-   @Path("{organizationCode}/serviceLimits")
+   @Path("{organizationCode}/serviceLimit")
    public ServiceLimits getServiceLimits(@PathParam("organizationCode") final String organizationCode) {
       return paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganization(organizationCode));
    }
