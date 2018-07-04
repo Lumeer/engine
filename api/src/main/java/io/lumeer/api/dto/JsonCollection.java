@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.dto;
 
+import io.lumeer.api.dto.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -27,13 +28,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCollection extends JsonResource implements Collection {
@@ -42,7 +44,9 @@ public class JsonCollection extends JsonResource implements Collection {
 
    private Set<JsonAttribute> attributes;
    private Integer documentsCount;
-   private LocalDateTime lastTimeUsed;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime lastTimeUsed;
    private String defaultAttributeId;
    private Integer lastAttributeNum;
    private boolean favorite;
@@ -120,12 +124,12 @@ public class JsonCollection extends JsonResource implements Collection {
    }
 
    @Override
-   public LocalDateTime getLastTimeUsed() {
+   public ZonedDateTime getLastTimeUsed() {
       return lastTimeUsed;
    }
 
    @Override
-   public void setLastTimeUsed(final LocalDateTime lastTimeUsed) {
+   public void setLastTimeUsed(final ZonedDateTime lastTimeUsed) {
       this.lastTimeUsed = lastTimeUsed;
    }
 

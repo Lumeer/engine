@@ -34,7 +34,6 @@ import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
 import java.io.StringReader;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -159,7 +158,7 @@ public class ImportFacade extends AbstractFacade {
       });
 
       collection.setDocumentsCount(documentsCount);
-      collection.setLastTimeUsed(LocalDateTime.now());
+      collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection);
    }
 

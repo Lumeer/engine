@@ -20,7 +20,7 @@ package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,9 +52,9 @@ public interface Collection extends Resource {
 
    void setDocumentsCount(Integer documentsCount);
 
-   LocalDateTime getLastTimeUsed();
+   ZonedDateTime getLastTimeUsed();
 
-   void setLastTimeUsed(LocalDateTime lastTimeUsed);
+   void setLastTimeUsed(ZonedDateTime lastTimeUsed);
 
    @JsonIgnore
    Integer getLastAttributeNum();
