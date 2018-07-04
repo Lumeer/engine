@@ -67,6 +67,15 @@ public class MorphiaProjectDao extends OrganizationScopedDao implements ProjectD
    }
 
    @Override
+   public Set<String> getProjectsCodes(Organization organization) {
+      return datastore.createQuery(databaseCollection(organization), MorphiaProject.class)
+                      .disableValidation()
+                      .asList().stream()
+                      .map(MorphiaProject::getCode)
+                      .collect(Collectors.toSet());
+   }
+
+   @Override
    public Project createProject(final Project project) {
       ensureIndexes();
 
