@@ -154,7 +154,7 @@ public class AuthenticatedUser implements Serializable {
       Organization organization = createDemoOrganization(user);
       user.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>()));
 
-      createDemoProject(user);
+      createDemoProject(user, organization);
 
       if (performUpdate) {
          userDao.updateUser(user.getId(), user);
@@ -171,8 +171,8 @@ public class AuthenticatedUser implements Serializable {
       return organizationDao.createOrganization(organization);
    }
 
-   private Project createDemoProject(final User user) {
-      final String code = generateProjectCode();
+   private Project createDemoProject(final User user, final Organization organization) {
+      final String code = generateProjectCode(organization);
       final Permission userPermission = new SimplePermission(user.getId(), Project.ROLES);
       Project project = new JsonProject(code, "Project", getDemoIcon(), getDemoColor(), null, null);
       project.getPermissions().updateUserPermissions(userPermission);
@@ -209,8 +209,8 @@ public class AuthenticatedUser implements Serializable {
       return codeWithSuffix;
    }
 
-   private String generateProjectCode() {
-      final Set<String> existingCodes = projectDao.getProjectsCodes();
+   private String generateProjectCode(Organization organization) {
+      final Set<String> existingCodes = projectDao.getProjectsCodes(organization);
       final String prefix = "PRJ";
       int no = 1;
 
