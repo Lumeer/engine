@@ -191,7 +191,6 @@
                   <configuration>
                      <properties>
                         <cargo.jvmargs>-Xmx1g -Xms1g</cargo.jvmargs>
-                        <cargo.wildfly.script.cli.embedded.adapter-install>${wildfly.dir}/bin/adapter-install.cli</cargo.wildfly.script.cli.embedded.adapter-install>
                      </properties>
                      <users>
                         <user>
