@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.mongodb.model;
 
-import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.util.AttributeUtil;
@@ -34,8 +33,10 @@ import org.mongodb.morphia.annotations.Indexes;
 import org.mongodb.morphia.annotations.Property;
 import org.mongodb.morphia.utils.IndexType;
 
-import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 
@@ -65,7 +66,7 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    private Integer documentsCount;
 
    @Property(LAST_TIME_USED)
-   private LocalDateTime lastTimeUsed;
+   private Date lastTimeUsed;
 
    @Property(LAST_ATTRIBUTE_NUM)
    private Integer lastAttributeNum;
@@ -81,7 +82,9 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
 
       this.attributes = MorphiaAttribute.convert(collection.getAttributes());
       this.documentsCount = collection.getDocumentsCount();
-      this.lastTimeUsed = collection.getLastTimeUsed();
+      if (collection.getLastTimeUsed() != null) {
+         this.lastTimeUsed = Date.from(collection.getLastTimeUsed().toInstant());
+      }
       this.lastAttributeNum = collection.getLastAttributeNum();
       this.defaultAttributeId = collection.getDefaultAttributeId();
    }
@@ -127,13 +130,13 @@ public class MorphiaCollection extends MorphiaResource implements Collection {
    }
 
    @Override
-   public LocalDateTime getLastTimeUsed() {
-      return lastTimeUsed;
+   public ZonedDateTime getLastTimeUsed() {
+      return lastTimeUsed != null ? ZonedDateTime.ofInstant(lastTimeUsed.toInstant(), ZoneOffset.UTC) : null;
    }
 
    @Override
-   public void setLastTimeUsed(final LocalDateTime lastTimeUsed) {
-      this.lastTimeUsed = lastTimeUsed;
+   public void setLastTimeUsed(final ZonedDateTime lastTimeUsed) {
+      this.lastTimeUsed = lastTimeUsed != null ? Date.from(lastTimeUsed.toInstant()) : null;
    }
 
    @Override

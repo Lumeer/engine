@@ -21,8 +21,6 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDateTime;
-import java.util.Currency;
 import java.util.Date;
 import java.util.Objects;
 

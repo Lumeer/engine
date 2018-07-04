@@ -36,7 +36,6 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
@@ -213,7 +212,7 @@ public class DocumentFacade extends AbstractFacade {
       });
 
       collection.setAttributes(new HashSet<>(oldAttributes.values()));
-      collection.setLastTimeUsed(LocalDateTime.now());
+      collection.setLastTimeUsed(ZonedDateTime.now());
       collection.setDocumentsCount(collection.getDocumentsCount() + documentCountDiff);
       collectionDao.updateCollection(collection.getId(), collection);
    }

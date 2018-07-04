@@ -44,7 +44,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -67,7 +67,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    private static final String ICON = "fa-eye";
    private static final Set<Attribute> ATTRIBUTES;
    private static final Integer DOCUMENTS_COUNT = 0;
-   private static final LocalDateTime LAST_TIME_USED = LocalDateTime.now().withNano(0);
+   private static final ZonedDateTime LAST_TIME_USED = ZonedDateTime.now().withNano(0);
 
    private static final MorphiaPermissions PERMISSIONS = new MorphiaPermissions();
    private static final MorphiaPermission USER_PERMISSION;
