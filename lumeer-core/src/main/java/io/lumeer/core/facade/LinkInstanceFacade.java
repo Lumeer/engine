@@ -24,7 +24,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
-import io.lumeer.core.AuthenticatedUserGroups;
+import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core;
+package io.lumeer.core.auth;
 
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonProject;
@@ -33,21 +33,23 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 
-import org.keycloak.KeycloakPrincipal;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 @SessionScoped
 public class AuthenticatedUser implements Serializable {
+
+   static class AuthUserInfo {
+      User user = null;
+      long lastUpdated = 0;
+      String accessToken = "";
+   }
 
    public static final String DEFAULT_USERNAME = "aturing";
    public static final String DEFAULT_EMAIL = "aturing@lumeer.io";
@@ -70,21 +72,33 @@ public class AuthenticatedUser implements Serializable {
    @Inject
    private UserLoginDao userLoginDao;
 
+   private AuthUserInfo authUserInfo = new AuthUserInfo();
+
    private Random rnd = new Random();
 
-   @PostConstruct
-   public void checkUser() {
-      Optional<KeycloakPrincipal> principal = getPrincipal();
-      String keycloakId = principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getId() : null;
+   void checkUser() {
+      String authId = authUserInfo.user != null && authUserInfo.user.getAuthId() != null ? authUserInfo.user.getAuthId() : null;
 
-      if (keycloakId != null) { // production
-         checkUserInProduction(keycloakId, getUserEmail());
+      if (authId != null) { // production
+         checkUserInProduction(authId, getUserEmail());
       } else {
          checkLocalUser(DEFAULT_EMAIL);
       }
    }
 
+   AuthUserInfo getAuthUserInfo() {
+      return authUserInfo;
+   }
+
+   void setAuthUserInfo(final AuthUserInfo authUserInfo) {
+      this.authUserInfo = authUserInfo;
+   }
+
    public User getCurrentUser() {
+      if (authUserInfo.user == null) {
+         checkLocalUser(DEFAULT_EMAIL);
+      }
+
       String userEmail = getUserEmail();
       return userCache.getUser(userEmail);
    }
@@ -93,26 +107,26 @@ public class AuthenticatedUser implements Serializable {
       return getCurrentUser().getId();
    }
 
-   private void checkUserInProduction(String keycloakId, String email) {
-      User userByKeycloak = userDao.getUserByKeycloakId(keycloakId);
-      if (userByKeycloak != null) {
-         if (!userByKeycloak.getEmail().equals(email)) {
-            userByKeycloak.setEmail(email);
-            createDemoOrganizationIfNeeded(userByKeycloak, false);
-            userDao.updateUser(userByKeycloak.getId(), userByKeycloak);
+   private void checkUserInProduction(String authId, String email) {
+      User userByAuthId = userDao.getUserByAuthId(authId);
+      if (userByAuthId != null) {
+         if (!userByAuthId.getEmail().equals(email)) {
+            userByAuthId.setEmail(email);
+            createDemoOrganizationIfNeeded(userByAuthId, false);
+            userDao.updateUser(userByAuthId.getId(), userByAuthId);
          } else {
-            createDemoOrganizationIfNeeded(userByKeycloak, true);
+            createDemoOrganizationIfNeeded(userByAuthId, true);
          }
-         userLoginDao.userLoggedIn(userByKeycloak.getId());
+         userLoginDao.userLoggedIn(userByAuthId.getId());
       } else {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
-            userByEmail.setKeycloakId(keycloakId);
+            userByEmail.setAuthId(authId);
             createDemoOrganizationIfNeeded(userByEmail, false);
             userDao.updateUser(userByEmail.getId(), userByEmail);
             userLoginDao.userLoggedIn(userByEmail.getId());
          } else {
-            User createdUser = createNewUser(email, keycloakId);
+            User createdUser = createNewUser(email, authId);
             createDemoOrganizationIfNeeded(createdUser, true);
             userLoginDao.userLoggedIn(createdUser.getId());
          }
@@ -126,9 +140,9 @@ public class AuthenticatedUser implements Serializable {
       }
    }
 
-   private User createNewUser(String email, String keycloakId) {
+   private User createNewUser(String email, String authId) {
       User user = new User(email);
-      user.setKeycloakId(keycloakId);
+      user.setAuthId(authId);
       return userDao.createUser(user);
    }
 
@@ -225,8 +239,7 @@ public class AuthenticatedUser implements Serializable {
     * @return The name of currently logged in user.
     */
    private String getUserName() {
-      final Optional<KeycloakPrincipal> principal = getPrincipal();
-      return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getName() : DEFAULT_USERNAME;
+      return authUserInfo.user != null && authUserInfo.user.getName() != null ? authUserInfo.user.getName() : DEFAULT_USERNAME;
    }
 
    /**
@@ -235,34 +248,10 @@ public class AuthenticatedUser implements Serializable {
     * @return The email of currently logged in user.
     */
    public String getUserEmail() {
-      final Optional<KeycloakPrincipal> principal = getPrincipal();
-      return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getEmail() : DEFAULT_EMAIL;
-   }
-
-   /**
-    * Get the user roles of currently logged in user.
-    *
-    * @return The user roles of currently logged in user.
-    */
-   private Set<String> getUserRoles() {
-      final Optional<KeycloakPrincipal> principal = getPrincipal();
-      return principal.isPresent() ? principal.get().getKeycloakSecurityContext().getToken().getRealmAccess().getRoles() : Collections.emptySet();
+      return authUserInfo.user != null && authUserInfo.user.getEmail() != null ? authUserInfo.user.getEmail() : DEFAULT_EMAIL;
    }
 
    public String getUserSessionId() {
       return request.getSession().getId();
-   }
-
-   /**
-    * Obtains Keycloak principal is possible.
-    *
-    * @return Optionally returns the Keycloak principal if it was available.
-    */
-   private Optional<KeycloakPrincipal> getPrincipal() {
-      try {
-         return Optional.ofNullable((KeycloakPrincipal) request.getUserPrincipal());
-      } catch (Throwable t) {
-         return Optional.empty();
-      }
    }
 }

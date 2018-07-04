@@ -19,8 +19,8 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.dto.Config;
-import io.lumeer.core.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.configuration.ConfigurationManipulator;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Resources;
@@ -602,7 +602,9 @@ public class ConfigurationFacade implements Serializable {
 
    /**
     * Gets configuration value either from organization and when there is none present, it backs up to property files.
-    * @param key Property to obtain.
+    *
+    * @param key
+    *       Property to obtain.
     * @return Configuration value.
     */
    private Optional<String> getSystemConfigurationString(final String key) {
@@ -730,15 +732,15 @@ public class ConfigurationFacade implements Serializable {
       }
    }
 
-   private String getUserId(){
+   private String getUserId() {
       return authenticatedUser.getCurrentUserId();
    }
 
-   private String getOrganizationId(){
+   private String getOrganizationId() {
       return workspaceKeeper.getOrganization().isPresent() ? workspaceKeeper.getOrganization().get().getId() : null;
    }
 
-   private String getProjectId(){
+   private String getProjectId() {
       return workspaceKeeper.getProject().isPresent() ? workspaceKeeper.getProject().get().getId() : null;
    }
 

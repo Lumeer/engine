@@ -29,7 +29,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;

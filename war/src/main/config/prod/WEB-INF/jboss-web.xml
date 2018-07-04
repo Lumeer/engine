@@ -4,6 +4,5 @@
            version="10.0">
 
    <context-root>lumeer-engine</context-root>
-   <security-domain>keycloak</security-domain>
 
 </jboss-web>

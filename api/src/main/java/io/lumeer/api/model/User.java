@@ -49,7 +49,7 @@ public class User {
    private String email;
 
    @JsonIgnore
-   private String keycloakId;
+   private String authId;
 
    @JsonView(UserViews.DefaultView.class)
    private Map<String, Set<String>> groups;
@@ -101,12 +101,12 @@ public class User {
       this.email = email;
    }
 
-   public String getKeycloakId() {
-      return keycloakId;
+   public String getAuthId() {
+      return authId;
    }
 
-   public void setKeycloakId(final String keycloakId) {
-      this.keycloakId = keycloakId;
+   public void setAuthId(final String authId) {
+      this.authId = authId;
    }
 
    public Map<String, Set<String>> getGroups() {
@@ -145,7 +145,7 @@ public class User {
       return Objects.equals(id, user.id) &&
             Objects.equals(name, user.name) &&
             Objects.equals(email, user.email) &&
-            Objects.equals(keycloakId, user.keycloakId) &&
+            Objects.equals(authId, user.authId) &&
             Objects.equals(groups, user.groups) &&
             Objects.equals(defaultWorkspace, user.defaultWorkspace) &&
             Objects.equals(wishes, user.wishes);
@@ -153,7 +153,7 @@ public class User {
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, name, email, keycloakId, groups, defaultWorkspace, wishes);
+      return Objects.hash(id, name, email, authId, groups, defaultWorkspace, wishes);
    }
 
    @Override
@@ -162,7 +162,7 @@ public class User {
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             ", email='" + email + '\'' +
-            ", keycloakId='" + keycloakId + '\'' +
+            ", authId='" + authId + '\'' +
             ", groups=" + groups +
             ", defaultWorkspace=" + defaultWorkspace +
             ", wishes=" + wishes +

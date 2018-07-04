@@ -34,7 +34,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.AuthenticatedUser;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;

@@ -113,21 +113,6 @@
          <artifactId>jboss-servlet-api_3.1_spec</artifactId>
          <scope>provided</scope>
       </dependency>
-      <!-- Push notifications -->
-      <!--dependency>
-         <groupId>org.atmosphere</groupId>
-         <artifactId>atmosphere-runtime</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.atmosphere</groupId>
-         <artifactId>atmosphere-annotations</artifactId>
-      </dependency-->
-
-      <dependency>
-         <groupId>org.keycloak</groupId>
-         <artifactId>keycloak-core</artifactId>
-         <scope>provided</scope>
-      </dependency>
 
       <!-- Groovy -->
       <dependency>
@@ -181,13 +166,6 @@
       <dependency>
          <groupId>org.wildfly</groupId>
          <artifactId>wildfly-dist</artifactId>
-         <type>zip</type>
-         <scope>test</scope>
-      </dependency>
-      <!-- https://mvnrepository.com/artifact/org.keycloak/keycloak-wildfly-adapter-dist -->
-      <dependency>
-         <groupId>org.keycloak</groupId>
-         <artifactId>keycloak-wildfly-adapter-dist</artifactId>
          <type>zip</type>
          <scope>test</scope>
       </dependency>
@@ -457,6 +435,32 @@
                      <webResources>
                         <resource>
                            <directory>src/main/config/prod</directory>
+                        </resource>
+                     </webResources>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+      <profile>
+         <id>development</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-war-plugin</artifactId>
+                  <version>${maven.war.plugin.version}</version>
+                  <configuration>
+                     <webResources>
+                        <resource>
+                           <directory>src/main/config/devel</directory>
                         </resource>
                      </webResources>
                   </configuration>

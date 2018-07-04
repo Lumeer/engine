@@ -24,7 +24,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
-import io.lumeer.core.AuthenticatedUserGroups;
+import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;

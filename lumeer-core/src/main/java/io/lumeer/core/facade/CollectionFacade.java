@@ -28,7 +28,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.AuthenticatedUserGroups;
+import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;

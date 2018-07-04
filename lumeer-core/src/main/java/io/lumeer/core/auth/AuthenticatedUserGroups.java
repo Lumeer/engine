@@ -16,10 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core;
+package io.lumeer.core.auth;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
