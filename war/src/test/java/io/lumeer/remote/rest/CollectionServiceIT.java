@@ -299,7 +299,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       createCollection(CODE, NAME);
       createCollection(CODE2, NAME2);
 
-      Response response = client.target(COLLECTIONS_URL).path("names")
+      Response response = client.target(COLLECTIONS_URL).path("info/names")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
