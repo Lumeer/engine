@@ -425,6 +425,48 @@
       </profile>
       <profile>
          <id>production</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-war-plugin</artifactId>
+                  <version>${maven.war.plugin.version}</version>
+                  <configuration>
+                     <webResources>
+                        <resource>
+                           <directory>src/main/config/prod</directory>
+                        </resource>
+                     </webResources>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+      <profile>
+         <id>development</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-war-plugin</artifactId>
+                  <version>${maven.war.plugin.version}</version>
+                  <configuration>
+                     <webResources>
+                        <resource>
+                           <directory>src/main/config/devel</directory>
+                        </resource>
+                     </webResources>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
          <dependencies>
             <dependency>
                <groupId>org.wildfly.arquillian</groupId>

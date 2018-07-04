@@ -19,7 +19,6 @@
 package io.lumeer.core.auth;
 
 import io.lumeer.api.model.User;
-import io.lumeer.core.facade.ConfigurationFacade;
 
 import com.auth0.SessionUtils;
 import com.auth0.client.auth.AuthAPI;
@@ -62,9 +61,6 @@ public class Auth0Filter implements Filter {
    @Inject
    private AuthenticatedUser authenticatedUser;
 
-   @Inject
-   private ConfigurationFacade configurationFacade;
-
    private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
    private Map<String, Semaphore> semaphores = new ConcurrentHashMap<>();
 
@@ -87,6 +83,11 @@ public class Auth0Filter implements Filter {
 
    @Override
    public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain) throws IOException, ServletException {
+      if (System.getenv("SKIP_SECURITY") != null) {
+         filterChain.doFilter(servletRequest, servletResponse);
+         return;
+      }
+
       // clean caches in a background thread, only one task at a time, checks for clean interval of 60s
       executor.submit(this::cleanCache);
 
@@ -127,7 +128,6 @@ public class Auth0Filter implements Filter {
          if (authUserInfo.user == null && authUserCache.containsKey(accessToken)) {
             authUserInfo = authUserCache.get(accessToken);
             authenticatedUser.setAuthUserInfo(authUserCache.get(accessToken));
-            System.out.println("používáme cache");
          }
 
          if (!accessToken.equals(authUserInfo.accessToken) || authUserInfo.user == null || authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) {
@@ -135,7 +135,6 @@ public class Auth0Filter implements Filter {
             if (s.tryAcquire()) { // only one thread must do that at the same time
                try {
                   final AuthenticatedUser.AuthUserInfo newAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
-                  System.out.println("ptáme se na user info");
 
                   // try to get user info 3 times in a row with 500ms delays
                   for (int i = 0; i < 3 && newAuthUserInfo.user == null; i++) {
@@ -212,7 +211,6 @@ public class Auth0Filter implements Filter {
 
    private void cleanCache() {
       if (lastCheck.get() + 60_000 < System.currentTimeMillis()) {
-         System.out.println("cleaning house");
          lastCheck.set(System.currentTimeMillis());
 
          for (final String accessToken : authUserCache.keySet()) {
@@ -231,7 +229,6 @@ public class Auth0Filter implements Filter {
    }
 
    private void removeFromCache(final String accessToken) {
-      System.out.println("removing from house " + accessToken);
       authUserCache.remove(accessToken);
       semaphores.remove(accessToken);
    }
