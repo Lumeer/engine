@@ -75,10 +75,12 @@ public class Auth0Filter implements Filter {
 
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
-      domain = filterConfig.getServletContext().getInitParameter("com.auth0.domain");
-      clientId = filterConfig.getServletContext().getInitParameter("com.auth0.clientId");
-      clientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.clientSecret");
-      verifier = AuthenticationControllerProvider.getVerifier(domain);
+      if (System.getenv("SKIP_SECURITY") == null) {
+         domain = filterConfig.getServletContext().getInitParameter("com.auth0.domain");
+         clientId = filterConfig.getServletContext().getInitParameter("com.auth0.clientId");
+         clientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.clientSecret");
+         verifier = AuthenticationControllerProvider.getVerifier(domain);
+      }
    }
 
    @Override

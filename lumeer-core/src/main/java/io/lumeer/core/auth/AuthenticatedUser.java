@@ -95,6 +95,10 @@ public class AuthenticatedUser implements Serializable {
    }
 
    public User getCurrentUser() {
+      if (authUserInfo.user == null) {
+         checkLocalUser(DEFAULT_EMAIL);
+      }
+
       String userEmail = getUserEmail();
       return userCache.getUser(userEmail);
    }

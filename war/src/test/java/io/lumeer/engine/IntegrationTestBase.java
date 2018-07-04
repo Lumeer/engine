@@ -60,7 +60,7 @@ public abstract class IntegrationTestBase {
       return ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME)
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb", "io.netty",
                              "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson",
-                             "com.auth0")
+                             "com.auth0", "okhttp3", "okio")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
