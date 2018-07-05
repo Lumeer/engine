@@ -21,6 +21,7 @@ package io.lumeer.core.auth;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonProject;
+import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -161,7 +162,9 @@ public class AuthenticatedUser implements Serializable {
 
       ((WorkspaceKeeper) selectedWorkspace).setOrganization(organization.getCode());
 
-      createDemoProject(user);
+      Project project = createDemoProject(user);
+
+      user.setDefaultWorkspace(new DefaultWorkspace(organization.getId(), project.getId()));
 
       if (performUpdate) {
          userDao.updateUser(user.getId(), user);
