@@ -34,7 +34,10 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +53,9 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String GROUPS = "groups";
    public static final String WISHES = "wishes";
    public static final String AUTH_ID = "authId";
+   public static final String AGREEMENT = "agreement";
+   public static final String AGREEMENT_DATE = "agreementDate";
+   public static final String NEWSLETTER = "newsletter";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -102,7 +108,14 @@ public class UserCodec implements CollectibleCodec<User> {
 
       List<String> wishes = bson.get(User.WISHES, List.class);
 
-      User user = new User(id, name, email, allGroups, wishes);
+      Boolean agreement = bson.getBoolean(AGREEMENT);
+      ZonedDateTime agreementDate = null;
+      if (bson.getDate(AGREEMENT_DATE) != null) {
+         agreementDate = ZonedDateTime.ofInstant(bson.getDate(AGREEMENT_DATE).toInstant(), ZoneOffset.UTC);
+      }
+      Boolean newsletter = bson.getBoolean(NEWSLETTER);
+
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter);
       user.setAuthId(authId);
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
 
@@ -127,6 +140,12 @@ public class UserCodec implements CollectibleCodec<User> {
       } else {
          bson.append(ALL_GROUPS, Collections.emptyList());
       }
+
+      bson.append(AGREEMENT, user.hasAgreement());
+      if (user.getAgreementDate() != null) {
+         bson.append(AGREEMENT_DATE, new Date(user.getAgreementDate().toInstant().toEpochMilli()));
+      }
+      bson.append(NEWSLETTER, user.hasNewsletter());
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }

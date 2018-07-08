@@ -18,15 +18,19 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.core.facade.UserFacade;
+import io.lumeer.remote.rest.annotation.PATCH;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -41,37 +45,72 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("/organizations/{organizationId}/users")
+@Path("users")
 public class UserService extends AbstractService {
-
-   @PathParam("organizationId")
-   private String organizationId;
 
    @Inject
    private UserFacade userFacade;
 
    @GET
    @JsonView(UserViews.DefaultView.class)
-   public List<User> getUsers() {
+   @Path("organizations/{organizationId}/users")
+   public List<User> getUsers(@PathParam("organizationId") String organizationId) {
       return userFacade.getUsers(organizationId);
    }
 
    @POST
-   public User createUser(User user) {
+   @Path("organizations/{organizationId}/users")
+   public User createUserInOrganization(@PathParam("organizationId") String organizationId, User user) {
       return userFacade.createUser(organizationId, user);
    }
 
    @PUT
-   @Path("{userId}")
-   public User updateUser(@PathParam("userId") String userId, User user) {
+   @Path("organizations/{organizationId}/users/{userId}")
+   public User updateUserInOrganization(@PathParam("organizationId") String organizationId,
+         @PathParam("userId") String userId, User user) {
       return userFacade.updateUser(organizationId, userId, user);
    }
 
    @DELETE
-   @Path("{userId}")
-   public Response deleteUser(@PathParam("userId") String userId) {
+   @Path("organizations/{organizationId}/users/{userId}")
+   public Response deleteUserFromOrganization(@PathParam("organizationId") String organizationId,
+         @PathParam("userId") String userId) {
       userFacade.deleteUser(organizationId, userId);
 
       return Response.ok().link(getParentUri(userId), "parent").build();
+   }
+
+   @GET
+   @Path("current")
+   @JsonView(UserViews.FullView.class)
+   public User getCurrentUser() {
+      return userFacade.getCurrentUser();
+   }
+
+   @PATCH
+   @Path("current")
+   @JsonView(UserViews.FullView.class)
+   public User patchCurrentUser(User user) {
+      return userFacade.patchCurrentUser(user);
+   }
+
+   @PUT
+   @Path("workspace")
+   public Response updateWorkspace(DefaultWorkspace defaultWorkspace) {
+      if (defaultWorkspace == null) {
+         throw new BadRequestException("defaultWorkspace");
+      }
+
+      userFacade.setDefaultWorkspace(defaultWorkspace);
+
+      return Response.ok().build();
+   }
+
+   @POST
+   @Path("feedback")
+   public Response createFeedback(Feedback feedback) {
+      userFacade.createFeedback(feedback);
+
+      return Response.ok().build();
    }
 }
