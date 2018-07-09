@@ -18,19 +18,24 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.dto.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.view.UserViews;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
 
    public static final String ID = "id";
@@ -38,6 +43,9 @@ public class User {
    public static final String EMAIL = "email";
    public static final String GROUPS = "groups";
    public static final String WISHES = "wishes";
+   public static final String AGREEMENT = "agreement";
+   public static final String AGREEMENT_DATE = "agreementDate";
+   public static final String NEWSLETTER = "newsletter";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -57,6 +65,16 @@ public class User {
    @JsonView(UserViews.FullView.class)
    private DefaultWorkspace defaultWorkspace;
 
+   @JsonView(UserViews.FullView.class)
+   private Boolean agreement;
+
+   @JsonView(UserViews.FullView.class)
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime agreementDate;
+
+   @JsonView(UserViews.FullView.class)
+   private Boolean newsletter;
+
    private List<String> wishes;
 
    public User(final String email) {
@@ -69,12 +87,18 @@ public class User {
          @JsonProperty(NAME) final String name,
          @JsonProperty(EMAIL) final String email,
          @JsonProperty(GROUPS) final Map<String, Set<String>> groups,
-         @JsonProperty(WISHES) final List<String> wishes) {
+         @JsonProperty(WISHES) final List<String> wishes,
+         @JsonProperty(AGREEMENT) final Boolean agreement,
+         @JsonProperty(AGREEMENT_DATE) final ZonedDateTime agreementDate,
+         @JsonProperty(NEWSLETTER) final Boolean newsletter) {
       this.id = id;
       this.name = name;
       this.email = email;
       this.groups = groups;
       this.wishes = wishes;
+      this.agreement = agreement;
+      this.agreementDate = agreementDate;
+      this.newsletter = newsletter;
    }
 
    public String getId() {
@@ -133,6 +157,30 @@ public class User {
       this.wishes = wishes;
    }
 
+   public Boolean hasAgreement() {
+      return agreement;
+   }
+
+   public void setAgreement(final Boolean agreement) {
+      this.agreement = agreement;
+   }
+
+   public ZonedDateTime getAgreementDate() {
+      return agreementDate;
+   }
+
+   public void setAgreementDate(final ZonedDateTime agreementDate) {
+      this.agreementDate = agreementDate;
+   }
+
+   public Boolean hasNewsletter() {
+      return newsletter;
+   }
+
+   public void setNewsletter(final Boolean newsletter) {
+      this.newsletter = newsletter;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -142,18 +190,13 @@ public class User {
          return false;
       }
       final User user = (User) o;
-      return Objects.equals(id, user.id) &&
-            Objects.equals(name, user.name) &&
-            Objects.equals(email, user.email) &&
-            Objects.equals(authId, user.authId) &&
-            Objects.equals(groups, user.groups) &&
-            Objects.equals(defaultWorkspace, user.defaultWorkspace) &&
-            Objects.equals(wishes, user.wishes);
+      return Objects.equals(id, user.id);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, name, email, authId, groups, defaultWorkspace, wishes);
+
+      return Objects.hash(id);
    }
 
    @Override
@@ -165,6 +208,9 @@ public class User {
             ", authId='" + authId + '\'' +
             ", groups=" + groups +
             ", defaultWorkspace=" + defaultWorkspace +
+            ", agreement=" + agreement +
+            ", agreementDate=" + agreementDate +
+            ", newsletter=" + newsletter +
             ", wishes=" + wishes +
             '}';
    }

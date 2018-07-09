@@ -39,7 +39,7 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
 
    private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
-   private static final String URL_PREFIX = "http://localhost:8080/" + PATH_CONTEXT + "/rest/organizations/";
+   private static final String URL_PREFIX = "http://localhost:8080/" + PATH_CONTEXT + "/rest/users/organizations/";
 
    private String organizationId1;
    private String organizationId2;

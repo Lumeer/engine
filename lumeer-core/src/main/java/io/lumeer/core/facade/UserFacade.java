@@ -138,6 +138,25 @@ public class UserFacade extends AbstractFacade {
       return user;
    }
 
+   public User patchCurrentUser(User user) {
+      User currentUser = authenticatedUser.getCurrentUser();
+
+      if (user.hasNewsletter() != null) {
+         currentUser.setNewsletter(user.hasNewsletter());
+         // TODO add/remove email address to/from MailChimp
+      }
+
+      if (user.hasAgreement() != null && user.hasAgreement()) {
+         currentUser.setAgreement(user.hasAgreement());
+         currentUser.setAgreementDate(ZonedDateTime.now());
+      }
+
+      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      return updatedUser;
+   }
+
    public void setDefaultWorkspace(DefaultWorkspace defaultWorkspace) {
       Organization organization = checkPermissions(defaultWorkspace.getOrganizationId(), Role.READ);
       checkProjectPermissions(organization.getCode(), defaultWorkspace.getProjectId(), Role.READ);
