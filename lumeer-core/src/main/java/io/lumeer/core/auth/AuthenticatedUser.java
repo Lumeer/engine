@@ -86,7 +86,7 @@ public class AuthenticatedUser implements Serializable {
       String authId = authUserInfo.user != null && authUserInfo.user.getAuthId() != null ? authUserInfo.user.getAuthId() : null;
 
       if (authId != null) { // production
-         checkUserInProduction(authId, getUserEmail());
+         checkUserInProduction(authId, getUserEmail(), getUserName());
       } else {
          checkLocalUser(DEFAULT_EMAIL);
       }
@@ -113,26 +113,33 @@ public class AuthenticatedUser implements Serializable {
       return getCurrentUser().getId();
    }
 
-   private void checkUserInProduction(String authId, String email) {
+   private void checkUserInProduction(String authId, String email, String name) {
       User userByAuthId = userDao.getUserByAuthId(authId);
       if (userByAuthId != null) {
          if (!userByAuthId.getEmail().equals(email)) {
+            userByAuthId.setName(name);
             userByAuthId.setEmail(email);
             createDemoOrganizationIfNeeded(userByAuthId, false);
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
          } else {
             createDemoOrganizationIfNeeded(userByAuthId, true);
+            if (userByAuthId.getName() == null || !userByAuthId.getName().equals(name)) {
+               userByAuthId.setName(name);
+               userDao.updateUser(userByAuthId.getId(), userByAuthId);
+            }
          }
          userLoginDao.userLoggedIn(userByAuthId.getId());
       } else {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
+            userByEmail.setName(name);
             userByEmail.setAuthId(authId);
             createDemoOrganizationIfNeeded(userByEmail, false);
             userDao.updateUser(userByEmail.getId(), userByEmail);
             userLoginDao.userLoggedIn(userByEmail.getId());
          } else {
             User createdUser = createNewUser(email, authId);
+            createdUser.setName(name);
             createDemoOrganizationIfNeeded(createdUser, true);
             userLoginDao.userLoggedIn(createdUser.getId());
          }

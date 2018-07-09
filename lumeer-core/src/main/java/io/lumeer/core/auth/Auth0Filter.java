@@ -204,7 +204,8 @@ public class Auth0Filter implements Filter {
       final String nickname = (String) values.get("nickname");
       final String sub = (String) values.get("sub");
       final String name = (String) values.get("name");
-      final User user = new User(sub.startsWith("google-oauth2") ? nickname + "@gmail.com" : name);
+      final String email = (String) values.get("email");
+      final User user = new User(email == null ? (sub.startsWith("google-oauth2") ? nickname + "@gmail.com" : name) : email);
       user.setAuthId(sub);
       user.setName(name);
 
