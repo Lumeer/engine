@@ -282,7 +282,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, this.user.getId());
 
-      Permission newPermission = new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))))};
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
@@ -295,7 +295,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
-      Permission newPermission = new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))))};
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -332,7 +332,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, this.user.getId());
       String group = "testGroup4";
-      Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))))};
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
@@ -346,7 +346,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(projectCode, new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String group = "testGroup5";
-      Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))))};
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();

@@ -34,6 +34,10 @@ public interface Permissions {
 
    void removeGroupPermission(String groupId);
 
+   void clearUserPermissions();
+
+   void clearGroupPermissions();
+
    void clear();
 
 }

@@ -312,7 +312,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createProject(CODE1);
 
-      SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      SimplePermission[] groupPermission = {new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("groups")
@@ -324,12 +324,12 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
-      assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission);
+      assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);
 
       Permissions storedPermissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), userPermission);
-      assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
+      assertPermissions(storedPermissions.getGroupPermissions(), groupPermission[0]);
    }
 
    @Test

@@ -268,7 +268,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       createOrganizationWithSpecificPermissions(CODE1);
 
-      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      SimplePermission[] userPermission = {new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("users")
@@ -280,11 +280,11 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
-      assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission);
+      assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission[0]);
 
       Permissions storedPermissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(storedPermissions).isNotNull();
-      assertPermissions(storedPermissions.getUserPermissions(), userPermission);
+      assertPermissions(storedPermissions.getUserPermissions(), userPermission[0]);
       assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
    }
 
@@ -308,7 +308,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createOrganizationWithSpecificPermissions(CODE1);
 
-      SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      SimplePermission[] groupPermission = {new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("groups")
@@ -320,12 +320,12 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
-      assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission);
+      assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);
 
       Permissions storedPermissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), userPermission);
-      assertPermissions(storedPermissions.getGroupPermissions(), groupPermission);
+      assertPermissions(storedPermissions.getGroupPermissions(), groupPermission[0]);
    }
 
    @Test
