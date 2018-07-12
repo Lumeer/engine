@@ -113,7 +113,7 @@ public class ViewService extends AbstractService {
 
    @PUT
    @Path("{viewCode}/permissions/users")
-   public Set<JsonPermission> updateUserPermission(@PathParam("viewCode") String code, JsonPermission userPermission) {
+   public Set<JsonPermission> updateUserPermission(@PathParam("viewCode") String code, JsonPermission... userPermission) {
       Set<Permission> storedUserPermissions = viewFacade.updateUserPermissions(code, userPermission);
       return JsonPermission.convert(storedUserPermissions);
    }
@@ -128,7 +128,7 @@ public class ViewService extends AbstractService {
 
    @PUT
    @Path("{viewCode}/permissions/groups")
-   public Set<JsonPermission> updateGroupPermission(@PathParam("viewCode") String code, JsonPermission groupPermission) {
+   public Set<JsonPermission> updateGroupPermission(@PathParam("viewCode") String code, JsonPermission... groupPermission) {
       Set<Permission> storedGroupPermissions = viewFacade.updateGroupPermissions(code, groupPermission);
       return JsonPermission.convert(storedGroupPermissions);
    }

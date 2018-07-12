@@ -24,7 +24,7 @@ import java.util.Set;
 
 public interface View extends Resource {
 
-   Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.CLONE, Role.READ));
+   Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.CLONE, Role.READ, Role.SHARE, Role.WRITE));
 
    @Override
    default ResourceType getType() {

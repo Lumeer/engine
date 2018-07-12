@@ -96,6 +96,7 @@ public class ViewFacade extends AbstractFacade {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
 
+      view.getPermissions().clear();
       view.getPermissions().updateUserPermissions(userPermissions);
       viewDao.updateView(view.getId(), view);
 
@@ -114,6 +115,7 @@ public class ViewFacade extends AbstractFacade {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
 
+      view.getPermissions().clear();
       view.getPermissions().updateGroupPermissions(groupPermissions);
       viewDao.updateView(view.getId(), view);
 
