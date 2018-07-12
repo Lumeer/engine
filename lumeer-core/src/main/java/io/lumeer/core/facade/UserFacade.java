@@ -59,7 +59,7 @@ public class UserFacade extends AbstractFacade {
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkPermissions(organizationId, Role.MANAGE);
-//      checkUserCreate(organizationId);
+      checkUserCreate(organizationId);
 
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
