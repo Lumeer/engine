@@ -116,7 +116,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -145,7 +145,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newProject)).invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -206,7 +206,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
             request(MediaType.APPLICATION_JSON).buildDelete().invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -233,7 +233,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/collections").
             request(MediaType.APPLICATION_JSON).buildPost(Entity.json(collection)).invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -259,7 +259,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions").
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -285,7 +285,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       Permission newPermission = new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE))));
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -310,7 +310,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users/" + this.user.getId()).
             request(MediaType.APPLICATION_JSON).buildDelete().invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -336,7 +336,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -363,7 +363,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups/" + group).
             request(MediaType.APPLICATION_JSON).buildDelete().invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
