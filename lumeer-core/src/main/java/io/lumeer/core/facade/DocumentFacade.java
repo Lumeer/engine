@@ -198,12 +198,13 @@ public class DocumentFacade extends AbstractFacade {
    private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
       Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
                                                        .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+      Set<String> incrementedAttributeIds = new HashSet<>(attributesIdsToInc);
 
       oldAttributes.keySet().forEach(attributeId -> {
-         if (attributesIdsToInc.contains(attributeId)) {
+         if (incrementedAttributeIds.contains(attributeId)) {
             Attribute attribute = oldAttributes.get(attributeId);
             attribute.setUsageCount(attribute.getUsageCount() + 1);
-            attributesIdsToInc.remove(attributeId);
+            incrementedAttributeIds.remove(attributeId);
          } else if (attributesIdsToDec.contains(attributeId)) {
             Attribute attribute = oldAttributes.get(attributeId);
             attribute.setUsageCount(Math.max(attribute.getUsageCount() - 1, 0));

@@ -25,7 +25,6 @@ import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.PATCH;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -67,11 +66,10 @@ public class DocumentService extends AbstractService {
    }
 
    @POST
-   public Response createDocument(JsonDocument document) {
+   public JsonDocument createDocument(JsonDocument document) {
       Document storedDocument = documentFacade.createDocument(collectionId, document);
 
-      URI resourceUri = getResourceUri(storedDocument.getId());
-      return Response.created(resourceUri).build();
+      return JsonDocument.convert(storedDocument);
    }
 
    @PUT
