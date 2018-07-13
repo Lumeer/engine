@@ -177,12 +177,24 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.CREATED);
-      assertThat(response.getLocation().getPath()).startsWith(DOCUMENTS_PATH_PREFIX);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      String[] path = response.getLocation().getPath().split("/");
-      String id = path[path.length - 1];
+      JsonDocument returnedDocument = response.readEntity(JsonDocument.class);
+      assertThat(returnedDocument).isNotNull();
+
+      String id = returnedDocument.getId();
+      assertThat(id).isNotNull();
       assertThat(ObjectId.isValid(id)).isTrue();
+
+      SoftAssertions returnedAssertions = new SoftAssertions();
+      returnedAssertions.assertThat(returnedDocument.getCollectionId()).isEqualTo(collection.getId());
+      returnedAssertions.assertThat(returnedDocument.getCreatedBy()).isEqualTo(this.user.getId());
+      returnedAssertions.assertThat(returnedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
+      returnedAssertions.assertThat(returnedDocument.getUpdatedBy()).isNull();
+      returnedAssertions.assertThat(returnedDocument.getUpdateDate()).isNull();
+      returnedAssertions.assertThat(returnedDocument.getDataVersion()).isEqualTo(1);
+      returnedAssertions.assertThat(returnedDocument.getData()).isEqualTo(document.getData());
+      returnedAssertions.assertAll();
 
       Document storedDocument = documentDao.getDocumentById(id);
       assertThat(storedDocument).isNotNull();

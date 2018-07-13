@@ -250,7 +250,7 @@ public class Auth0Filter implements Filter {
          res.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
          res.addHeader("Access-Control-Allow-Credentials", "true");
          String reqHeader = req.getHeader("Access-Control-Request-Headers");
-         if (reqHeader != null && reqHeader != "") {
+         if (reqHeader != null && !reqHeader.isEmpty()) {
             res.addHeader("Access-Control-Allow-Headers", reqHeader);
          }
       }
