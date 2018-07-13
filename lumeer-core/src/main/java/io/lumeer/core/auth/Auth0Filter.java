@@ -19,6 +19,7 @@
 package io.lumeer.core.auth;
 
 import io.lumeer.api.model.User;
+import io.lumeer.core.facade.ConfigurationFacade;
 
 import com.auth0.SessionUtils;
 import com.auth0.client.auth.AuthAPI;
@@ -61,6 +62,9 @@ public class Auth0Filter implements Filter {
    @Inject
    private AuthenticatedUser authenticatedUser;
 
+   @Inject
+   private ConfigurationFacade configurationFacade;
+
    private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
    private Map<String, Semaphore> semaphores = new ConcurrentHashMap<>();
 
@@ -85,17 +89,18 @@ public class Auth0Filter implements Filter {
 
    @Override
    public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain) throws IOException, ServletException {
-      if (System.getenv("SKIP_SECURITY") != null) {
-         filterChain.doFilter(servletRequest, servletResponse);
-         return;
-      }
-
       // clean caches in a background thread, only one task at a time, checks for clean interval of 60s
       executor.submit(this::cleanCache);
 
       final HttpServletRequest req = (HttpServletRequest) servletRequest;
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
-      final String accessToken = getAccessToken(req);
+
+      addCorsHeaders(req, res);
+
+      if (System.getenv("SKIP_SECURITY") != null) {
+         filterChain.doFilter(servletRequest, servletResponse);
+         return;
+      }
 
       if (req.getMethod().equals("OPTIONS")) {
          filterChain.doFilter(servletRequest, servletResponse);
@@ -103,8 +108,11 @@ public class Auth0Filter implements Filter {
       }
 
       if (!req.getServletPath().startsWith("/rest/paymentNotify")) {
+         final String accessToken = getAccessToken(req);
+
          // we do not have the token at all, or we failed to obtain verifier
          if (accessToken == null || verifier == null) {
+            System.out.println("není token");
             res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return;
          }
@@ -234,6 +242,18 @@ public class Auth0Filter implements Filter {
    private void removeFromCache(final String accessToken) {
       authUserCache.remove(accessToken);
       semaphores.remove(accessToken);
+   }
+
+   private void addCorsHeaders(HttpServletRequest req, HttpServletResponse res) {
+      if (configurationFacade.getEnvironment() == ConfigurationFacade.DeployEnvironment.DEVEL) {
+         res.addHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
+         res.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
+         res.addHeader("Access-Control-Allow-Credentials", "true");
+         String reqHeader = req.getHeader("Access-Control-Request-Headers");
+         if (reqHeader != null && reqHeader != "") {
+            res.addHeader("Access-Control-Allow-Headers", reqHeader);
+         }
+      }
    }
 
 }
