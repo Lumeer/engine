@@ -83,7 +83,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + code).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -149,7 +149,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(Entity.json(newOrganization))
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
 
    }
 
@@ -187,7 +187,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet()
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -220,7 +220,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(Entity.json(newPermission))
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -253,7 +253,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete()
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -287,7 +287,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(Entity.json(newPermission))
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -322,7 +322,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete()
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test
@@ -358,7 +358,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(Entity.json(project))
                                 .invoke();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.UNAUTHORIZED);
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
    @Test

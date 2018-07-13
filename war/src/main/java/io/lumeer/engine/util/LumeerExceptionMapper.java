@@ -37,7 +37,6 @@ import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
 import io.lumeer.api.exception.LumeerException;
 import io.lumeer.engine.api.exception.NullParameterException;
-import io.lumeer.engine.api.exception.UnauthorizedAccessException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
@@ -77,9 +76,9 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
          return Response.status(Response.Status.BAD_REQUEST).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
-      // 401 - UNAUTHORIZED
-      if (e instanceof UnauthorizedAccessException || e instanceof NoPermissionException || e instanceof NoSystemPermissionException) {
-         return Response.status(Response.Status.UNAUTHORIZED).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
+      // 403 - FORBIDDEN
+      if (e instanceof NoPermissionException || e instanceof NoSystemPermissionException) {
+         return Response.status(Response.Status.FORBIDDEN).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 404 - NOT FOUND
