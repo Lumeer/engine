@@ -18,7 +18,10 @@
  */
 package io.lumeer.core.auth;
 
+import io.lumeer.core.facade.ConfigurationFacade;
+
 import java.io.IOException;
+import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
@@ -31,14 +34,19 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class CorsFilter implements ContainerResponseFilter {
 
+   @Inject
+   private ConfigurationFacade configurationFacade;
+
    @Override
    public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext) throws IOException {
-      responseContext.getHeaders().putSingle("Access-Control-Allow-Origin", requestContext.getHeaders().getFirst("Origin"));
-      responseContext.getHeaders().putSingle("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
-      responseContext.getHeaders().putSingle("Access-Control-Allow-Credentials", "true");
-      String reqHeader = requestContext.getHeaderString("Access-Control-Request-Headers");
-      if (reqHeader != null && reqHeader != "") {
-         responseContext.getHeaders().putSingle("Access-Control-Allow-Headers", reqHeader);
+      if (configurationFacade.getEnvironment() == ConfigurationFacade.DeployEnvironment.DEVEL) {
+         responseContext.getHeaders().putSingle("Access-Control-Allow-Origin", requestContext.getHeaders().getFirst("Origin"));
+         responseContext.getHeaders().putSingle("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
+         responseContext.getHeaders().putSingle("Access-Control-Allow-Credentials", "true");
+         String reqHeader = requestContext.getHeaderString("Access-Control-Request-Headers");
+         if (reqHeader != null && reqHeader != "") {
+            responseContext.getHeaders().putSingle("Access-Control-Allow-Headers", reqHeader);
+         }
       }
    }
 }
