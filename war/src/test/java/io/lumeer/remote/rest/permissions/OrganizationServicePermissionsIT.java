@@ -213,7 +213,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
-      Permission newPermission = new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users")
@@ -230,7 +230,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
-      Permission newPermission = new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users")
@@ -280,7 +280,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
       String group = "testGroup1";
-      Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups")
@@ -298,7 +298,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String group = "testGroup2";
-      Permission newPermission = new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))));
+      Permission[] newPermission = {new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups")

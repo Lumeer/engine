@@ -182,7 +182,7 @@ public class CollectionService extends AbstractService {
 
    @PUT
    @Path("{collectionId}/permissions/users")
-   public Set<JsonPermission> updateUserPermission(@PathParam("collectionId") String collectionId, JsonPermission userPermission) {
+   public Set<JsonPermission> updateUserPermission(@PathParam("collectionId") String collectionId, JsonPermission... userPermission) {
       Set<Permission> storedUserPermissions = collectionFacade.updateUserPermissions(collectionId, userPermission);
       return JsonPermission.convert(storedUserPermissions);
    }
@@ -197,7 +197,7 @@ public class CollectionService extends AbstractService {
 
    @PUT
    @Path("{collectionId}/permissions/groups")
-   public Set<JsonPermission> updateGroupPermission(@PathParam("collectionId") String collectionId, JsonPermission groupPermission) {
+   public Set<JsonPermission> updateGroupPermission(@PathParam("collectionId") String collectionId, JsonPermission... groupPermission) {
       Set<Permission> storedGroupPermissions = collectionFacade.updateGroupPermissions(collectionId, groupPermission);
       return JsonPermission.convert(storedGroupPermissions);
    }

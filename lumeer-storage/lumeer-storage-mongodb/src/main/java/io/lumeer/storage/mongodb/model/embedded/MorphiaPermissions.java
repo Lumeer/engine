@@ -94,9 +94,19 @@ public class MorphiaPermissions implements Permissions {
    }
 
    @Override
-   public void clear() {
+   public void clearUserPermissions() {
       userPermissions.clear();
+   }
+
+   @Override
+   public void clearGroupPermissions() {
       groupPermissions.clear();
+   }
+
+   @Override
+   public void clear() {
+      clearUserPermissions();
+      clearGroupPermissions();
    }
 
    @Override
