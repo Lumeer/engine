@@ -44,6 +44,7 @@ public class UserLoginEvent {
 
    public UserLoginEvent(final String userId) {
       this.userId = userId;
+      this.date = new Date();
    }
 
    public String getId() {
