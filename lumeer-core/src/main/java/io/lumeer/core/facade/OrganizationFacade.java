@@ -23,6 +23,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.model.SimplePermission;
@@ -65,6 +66,9 @@ public class OrganizationFacade extends AbstractFacade {
    @Inject
    private PaymentDao paymentDao;
 
+   @Inject
+   private WorkspaceCache workspaceCache;
+
    public Organization createOrganization(final Organization organization) {
       checkSystemPermission();
 
@@ -85,6 +89,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
       Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization);
+      workspaceCache.updateOrganization(updatedOrganization.getCode(), updatedOrganization);
 
       return mapResource(updatedOrganization);
    }
@@ -96,6 +101,7 @@ public class OrganizationFacade extends AbstractFacade {
       deleteOrganizationScopedRepositories(organization);
 
       organizationDao.deleteOrganization(organization.getId());
+      workspaceCache.removeOrganization(organizationCode);
    }
 
    public Organization getOrganization(final String organizationCode) {
@@ -150,6 +156,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       organization.getPermissions().updateUserPermissions(userPermissions);
       organizationDao.updateOrganization(organization.getId(), organization);
+      workspaceCache.updateOrganization(organizationCode, organization);
 
       return organization.getPermissions().getUserPermissions();
    }
@@ -159,6 +166,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       organization.getPermissions().removeUserPermission(userId);
       organizationDao.updateOrganization(organization.getId(), organization);
+      workspaceCache.updateOrganization(organizationCode, organization);
    }
 
    public Set<Permission> updateGroupPermissions(final String organizationCode, final Permission... groupPermissions) {
@@ -166,6 +174,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       organization.getPermissions().updateGroupPermissions(groupPermissions);
       organizationDao.updateOrganization(organization.getId(), organization);
+      workspaceCache.updateOrganization(organizationCode, organization);
 
       return organization.getPermissions().getGroupPermissions();
    }
@@ -175,6 +184,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       organization.getPermissions().removeGroupPermission(groupId);
       organizationDao.updateOrganization(organization.getId(), organization);
+      workspaceCache.updateOrganization(organizationCode, organization);
    }
 
    private void createOrganizationInUser(final String organizationId) {

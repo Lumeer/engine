@@ -25,6 +25,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
+import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -70,6 +71,9 @@ public class ProjectFacade extends AbstractFacade {
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
+   @Inject
+   private WorkspaceCache workspaceCache;
+
    public Project createProject(Project project) {
       checkOrganizationWriteRole();
       checkProjectCreate(project);
@@ -90,6 +94,7 @@ public class ProjectFacade extends AbstractFacade {
 
       keepStoredPermissions(project, storedProject.getPermissions());
       Project updatedProject = projectDao.updateProject(storedProject.getId(), project);
+      workspaceCache.updateProject(projectCode, project);
 
       return mapResource(updatedProject);
    }
@@ -98,7 +103,8 @@ public class ProjectFacade extends AbstractFacade {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
-      deleleProjectScopedRepositories(project);
+      deleteProjectScopedRepositories(project);
+      workspaceCache.removeProject(projectCode);
 
       projectDao.deleteProject(project.getId());
    }
@@ -145,6 +151,7 @@ public class ProjectFacade extends AbstractFacade {
 
       project.getPermissions().updateUserPermissions(userPermissions);
       projectDao.updateProject(project.getId(), project);
+      workspaceCache.updateProject(projectCode, project);
 
       return project.getPermissions().getUserPermissions();
    }
@@ -155,6 +162,7 @@ public class ProjectFacade extends AbstractFacade {
 
       project.getPermissions().removeUserPermission(userId);
       projectDao.updateProject(project.getId(), project);
+      workspaceCache.updateProject(projectCode, project);
    }
 
    public Set<Permission> updateGroupPermissions(final String projectCode, final Permission... groupPermissions) {
@@ -163,6 +171,7 @@ public class ProjectFacade extends AbstractFacade {
 
       project.getPermissions().updateGroupPermissions(groupPermissions);
       projectDao.updateProject(project.getId(), project);
+      workspaceCache.updateProject(projectCode, project);
 
       return project.getPermissions().getGroupPermissions();
    }
@@ -173,6 +182,7 @@ public class ProjectFacade extends AbstractFacade {
 
       project.getPermissions().removeGroupPermission(groupId);
       projectDao.updateProject(project.getId(), project);
+      workspaceCache.updateProject(projectCode, project);
    }
 
    private void createProjectScopedRepositories(Project project) {
@@ -183,7 +193,7 @@ public class ProjectFacade extends AbstractFacade {
       linkTypeDao.createLinkTypeRepository(project);
    }
 
-   private void deleleProjectScopedRepositories(Project project) {
+   private void deleteProjectScopedRepositories(Project project) {
       collectionDao.deleteCollectionsRepository(project);
       documentDao.deleteDocumentsRepository(project);
       viewDao.deleteViewsRepository(project);
