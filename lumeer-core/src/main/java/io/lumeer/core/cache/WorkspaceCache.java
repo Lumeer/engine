@@ -19,20 +19,18 @@
 package io.lumeer.core.cache;
 
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ServiceLimits;
-import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
-@ApplicationScoped
+@RequestScoped
 public class WorkspaceCache {
 
    @Inject
@@ -46,14 +44,12 @@ public class WorkspaceCache {
 
    private Cache<Organization> organizationCache;
    private Cache<Project> projectCache;
-   private Cache<Payment.ServiceLevel> serviceLevelCache;
    private Cache<ServiceLimits> serviceLimitsCache;
 
    @PostConstruct
    public void initCaches() {
       organizationCache = cacheFactory.getCache();
       projectCache = cacheFactory.getCache();
-      serviceLevelCache = cacheFactory.getCache();
       serviceLimitsCache = cacheFactory.getCache();
    }
 
@@ -79,18 +75,6 @@ public class WorkspaceCache {
 
    public void removeProject(String projectCode) {
       projectCache.remove(projectCode);
-   }
-
-   public void setServiceLevel(final String organizationCode, final Payment.ServiceLevel serviceLevel) {
-      serviceLevelCache.set(organizationCode, serviceLevel);
-   }
-
-   public Payment.ServiceLevel getServiceLevel(final String organizationCode) {
-      return serviceLevelCache.get(organizationCode);
-   }
-
-   public void removeServiceLevel(final String organizationCode) {
-      serviceLevelCache.remove(organizationCode);
    }
 
    public void setServiceLimits(final String organizationCode, final ServiceLimits serviceLimits) {
