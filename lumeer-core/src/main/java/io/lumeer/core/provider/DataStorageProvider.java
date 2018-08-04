@@ -20,7 +20,6 @@ package io.lumeer.core.provider;
 
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ConfigurationFacade;
-import io.lumeer.engine.api.cache.CacheManager;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 
@@ -46,18 +45,15 @@ public class DataStorageProvider {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
-   @Inject
-   private CacheManager cacheManager;
-
    public DataStorage getUserStorage() {
       String code = workspaceKeeper.getOrganization().isPresent() ? workspaceKeeper.getOrganization().get().getCode() : "Default";
       return connections.computeIfAbsent(code,
-            k -> dataStorageFactory.getStorage(cacheManager.getCacheProvider("userDataStorage"), configurationFacade.getDataStorage(), configurationFacade.getDataStorageDatabase(), configurationFacade.getDataStorageUseSsl()));
+            k -> dataStorageFactory.getStorage(configurationFacade.getDataStorage(), configurationFacade.getDataStorageDatabase(), configurationFacade.getDataStorageUseSsl()));
    }
 
    public DataStorage getSystemStorage() {
       return connections.computeIfAbsent(SYSTEM_CONNECTION,
-            k -> dataStorageFactory.getStorage(cacheManager.getCacheProvider("systemDataStorage"), configurationFacade.getSystemDataStorage(), configurationFacade.getSystemDataStorageDatabase(), configurationFacade.getSystemDataStorageUseSsl()));
+            k -> dataStorageFactory.getStorage(configurationFacade.getSystemDataStorage(), configurationFacade.getSystemDataStorageDatabase(), configurationFacade.getSystemDataStorageUseSsl()));
    }
 
    @PreDestroy

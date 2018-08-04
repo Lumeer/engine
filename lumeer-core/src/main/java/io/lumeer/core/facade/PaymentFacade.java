@@ -102,25 +102,6 @@ public class PaymentFacade extends AbstractFacade {
       return null;
    }
 
-   public Payment.ServiceLevel getCurrentServiceLevel(final Organization organization) {
-      checkReadPermissions(organization);
-
-      Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.FREE;
-
-      if (workspaceKeeper.getServiceLevel(organization) == null) {
-         final Payment payment = getCurrentPayment(organization);
-         if (payment != null) {
-            serviceLevel = payment.getServiceLevel();
-         }
-
-         workspaceKeeper.setServiceLevel(organization, serviceLevel);
-      } else {
-         serviceLevel = workspaceKeeper.getServiceLevel(organization);
-      }
-
-      return serviceLevel;
-   }
-
    public Map<String, ServiceLimits> getAllServiceLimits(List<Organization> organizations){
        return organizations.stream().collect(Collectors.toMap(Organization::getId, this::getCurrentServiceLimits));
    }
@@ -137,8 +118,6 @@ public class PaymentFacade extends AbstractFacade {
       final Optional<Date> validUntil = getValidUntil(getFutureContinuousPayments(organization, new Date()));
 
       if (payment != null && validUntil.isPresent()) {
-         workspaceKeeper.setServiceLevel(organization, payment.getServiceLevel());
-
          if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
             serviceLimits = new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
@@ -192,7 +171,6 @@ public class PaymentFacade extends AbstractFacade {
       final Organization organization = getOrganizationUnsafe(organizationCode);
 
       currentPayment = null;
-      workspaceKeeper.clearServiceLevel(organization);
       workspaceKeeper.clearServiceLimits(organization);
 
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);

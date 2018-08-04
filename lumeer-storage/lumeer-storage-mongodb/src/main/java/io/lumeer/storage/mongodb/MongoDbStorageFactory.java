@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.mongodb;
 
-import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 import io.lumeer.engine.api.data.StorageConnection;
@@ -42,9 +41,8 @@ public class MongoDbStorageFactory implements DataStorageFactory {
    }
 
    @Override
-   public DataStorage getStorage(final CacheProvider cacheProvider, final List<StorageConnection> connections, final String database, final Boolean useSsl) {
+   public DataStorage getStorage(final List<StorageConnection> connections, final String database, final Boolean useSsl) {
       final DataStorage storage = new MongoDbStorage(morphia);
-      storage.setCacheProvider(cacheProvider);
       storage.connect(connections, database, useSsl);
 
       return storage;

@@ -18,8 +18,6 @@
  */
 package io.lumeer.engine.api.data;
 
-import io.lumeer.engine.api.cache.CacheProvider;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -30,10 +28,10 @@ import java.util.List;
  */
 public interface DataStorageFactory {
 
-   DataStorage getStorage(final CacheProvider cacheProvider, final List<StorageConnection> connections, final String database, final Boolean useSsl);
+   DataStorage getStorage(final List<StorageConnection> connections, final String database, final Boolean useSsl);
 
-   default DataStorage getStorage(final CacheProvider cacheProvider, final StorageConnection connection, final String database, final Boolean useSsl) {
-      return getStorage(cacheProvider, Collections.singletonList(connection), database, useSsl);
+   default DataStorage getStorage(final StorageConnection connection, final String database, final Boolean useSsl) {
+      return getStorage(Collections.singletonList(connection), database, useSsl);
    }
 
 }
