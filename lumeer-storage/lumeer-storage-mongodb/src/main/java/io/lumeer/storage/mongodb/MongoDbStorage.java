@@ -24,8 +24,6 @@ import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Sorts.descending;
 import static com.mongodb.client.model.Updates.*;
 
-import io.lumeer.engine.api.cache.Cache;
-import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataSort;
@@ -84,7 +82,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -96,7 +93,6 @@ public class MongoDbStorage implements DataStorage {
 
    private static final String CURSOR_KEY = "cursor";
    private static final String FIRST_BATCH_KEY = "firstBatch";
-   private static final String COLLECTION_CACHE = "collections";
 
    private static final String DOCUMENT_ID = "_id";
 
@@ -106,44 +102,8 @@ public class MongoDbStorage implements DataStorage {
    private final Morphia morphia;
    private AdvancedDatastore datastore;
 
-   private long cacheLastUpdated = 0L;
-   private CacheProvider cacheProvider;
-   private AtomicReference<Cache<List<String>>> collectionCacheRef = new AtomicReference<>();
-
    public MongoDbStorage(Morphia morphia) {
       this.morphia = morphia;
-   }
-
-   @Override
-   public void setCacheProvider(final CacheProvider cacheProvider) {
-      this.cacheProvider = cacheProvider;
-   }
-
-   private List<String> getCollectionCache() {
-      if (cacheProvider != null) {
-         Cache<List<String>> cache = collectionCacheRef.get();
-         if (cache == null) {
-            cache = cacheProvider.getCache(COLLECTION_CACHE);         // create and initialize actual instance
-            if (collectionCacheRef.compareAndSet(null, cache)) // CAS succeeded
-            {
-               return cache.get();
-            } else                                                      // CAS failed: other thread set an object
-            {
-               return collectionCacheRef.get().get();
-            }
-         } else {
-            return cache.get();
-         }
-      } else {
-         return null;
-      }
-   }
-
-   private void setCollectionCache(final List<String> collections) {
-      Cache<List<String>> cache = collectionCacheRef.get();
-      if (cache != null) {
-         cache.set(collections);
-      }
    }
 
    @Override
@@ -189,87 +149,23 @@ public class MongoDbStorage implements DataStorage {
    @Override
    @SuppressWarnings("unchecked")
    public List<String> getAllCollections() {
-      if (getCollectionCache() != null) {
-         collectionCacheRef.get().lock(COLLECTION_CACHE);
-         try {
-            if (getCollectionCache() == null || cacheLastUpdated + 5000 < System.currentTimeMillis()) {
-               setCollectionCache(database.listCollectionNames().into(new ArrayList<>()));
-               cacheLastUpdated = System.currentTimeMillis();
-            }
-         } finally {
-            collectionCacheRef.get().unlock(COLLECTION_CACHE);
-         }
-
-         return getCollectionCache();
-      } else {
-         return database.listCollectionNames().into(new ArrayList<>());
-      }
+      return database.listCollectionNames().into(new ArrayList<>());
    }
 
    @Override
    public void createCollection(final String collectionName) {
-      if (getCollectionCache() != null) {
-         collectionCacheRef.get().lock(COLLECTION_CACHE);
-         try {
-            final List<String> collections = getCollectionCache();
-
-            if (collections != null) {
-               collections.add(collectionName);
-            } else {
-               setCollectionCache(new ArrayList<>(Collections.singletonList(collectionName)));
-            }
-
-            database.createCollection(collectionName);
-         } finally {
-            collectionCacheRef.get().unlock(COLLECTION_CACHE);
-         }
-      } else {
-         database.createCollection(collectionName);
-      }
+      database.createCollection(collectionName);
    }
 
    @Override
    public void dropCollection(final String collectionName) {
-      if (getCollectionCache() != null) {
-         collectionCacheRef.get().lock(COLLECTION_CACHE);
-         try {
-            final List<String> collections = getCollectionCache();
-
-            if (collections != null) {
-               collections.remove(collectionName);
-            }
-
-            database.getCollection(collectionName).drop();
-         } finally {
-            collectionCacheRef.get().unlock(COLLECTION_CACHE);
-         }
-      } else {
-         database.getCollection(collectionName).drop();
-      }
+      database.getCollection(collectionName).drop();
    }
 
    @Override
    public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-      if (getCollectionCache() != null) {
-         collectionCacheRef.get().lock(COLLECTION_CACHE);
-         try {
-            final List<String> collections = getCollectionCache();
-
-            if (collections != null) {
-               collections.remove(oldCollectionName);
-               collections.add(newCollectionName);
-            }
-
-            if (hasCollection(oldCollectionName)) {
-               database.getCollection(oldCollectionName).renameCollection(new MongoNamespace(database.getName(), newCollectionName));
-            }
-         } finally {
-            collectionCacheRef.get().unlock(COLLECTION_CACHE);
-         }
-      } else {
-         if (hasCollection(oldCollectionName)) {
-            database.getCollection(oldCollectionName).renameCollection(new MongoNamespace(database.getName(), newCollectionName));
-         }
+      if (hasCollection(oldCollectionName)) {
+         database.getCollection(oldCollectionName).renameCollection(new MongoNamespace(database.getName(), newCollectionName));
       }
    }
 
@@ -286,25 +182,8 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public String createDocument(final String collectionName, final DataDocument dataDocument) {
       Document doc = new Document(dataDocument);
+      database.getCollection(collectionName).insertOne(doc);
 
-      if (getCollectionCache() != null) {
-         collectionCacheRef.get().lock(COLLECTION_CACHE);
-         try {
-            final List<String> collections = getCollectionCache();
-
-            if (collections != null) {
-               collections.add(collectionName);
-            } else {
-               setCollectionCache(new ArrayList<>(Collections.singletonList(collectionName)));
-            }
-
-            database.getCollection(collectionName).insertOne(doc);
-         } finally {
-            collectionCacheRef.get().unlock(COLLECTION_CACHE);
-         }
-      } else {
-         database.getCollection(collectionName).insertOne(doc);
-      }
       return doc.containsKey(DOCUMENT_ID) ? doc.getObjectId(DOCUMENT_ID).toString() : null;
    }
 
@@ -314,24 +193,7 @@ public class MongoDbStorage implements DataStorage {
                                               .map(MongoUtils::dataDocumentToDocument)
                                               .collect(Collectors.toList());
 
-      if (getCollectionCache() != null) {
-         collectionCacheRef.get().lock(COLLECTION_CACHE);
-         try {
-            final List<String> collections = getCollectionCache();
-
-            if (collections != null) {
-               collections.add(collectionName);
-            } else {
-               setCollectionCache(new ArrayList<>(Collections.singletonList(collectionName)));
-            }
-
-            database.getCollection(collectionName).insertMany(documents, new InsertManyOptions().ordered(false));
-         } finally {
-            collectionCacheRef.get().unlock(COLLECTION_CACHE);
-         }
-      } else {
-         database.getCollection(collectionName).insertMany(documents, new InsertManyOptions().ordered(false));
-      }
+      database.getCollection(collectionName).insertMany(documents, new InsertManyOptions().ordered(false));
 
       return documents.stream()
                       .filter(d -> d.containsKey(DOCUMENT_ID))
@@ -670,13 +532,6 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void dropIndex(final String collectionName, final String indexName) {
       database.getCollection(collectionName).dropIndex(indexName);
-   }
-
-   @Override
-   public void invalidateCaches() {
-      if (getCollectionCache() != null) {
-         collectionCacheRef.get().remove(COLLECTION_CACHE);
-      }
    }
 
    @Override

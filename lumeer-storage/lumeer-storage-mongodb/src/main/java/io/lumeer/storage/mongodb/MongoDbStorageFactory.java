@@ -42,9 +42,8 @@ public class MongoDbStorageFactory implements DataStorageFactory {
    }
 
    @Override
-   public DataStorage getStorage(final CacheProvider cacheProvider, final List<StorageConnection> connections, final String database, final Boolean useSsl) {
+   public DataStorage getStorage(final List<StorageConnection> connections, final String database, final Boolean useSsl) {
       final DataStorage storage = new MongoDbStorage(morphia);
-      storage.setCacheProvider(cacheProvider);
       storage.connect(connections, database, useSsl);
 
       return storage;

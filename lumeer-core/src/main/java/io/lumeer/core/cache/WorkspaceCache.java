@@ -26,6 +26,7 @@ import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 
+import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -45,12 +46,16 @@ public class WorkspaceCache {
    private Cache<Organization> organizationCache;
    private Cache<Project> projectCache;
    private Cache<ServiceLimits> serviceLimitsCache;
+   private Cache<List<String>> userCollections;
+   private Cache<List<String>> systemCollections;
 
    @PostConstruct
    public void initCaches() {
       organizationCache = cacheFactory.getCache();
       projectCache = cacheFactory.getCache();
       serviceLimitsCache = cacheFactory.getCache();
+      userCollections = cacheFactory.getCache();
+      systemCollections = cacheFactory.getCache();
    }
 
    public Organization getOrganization(String organizationCode) {
@@ -93,5 +98,4 @@ public class WorkspaceCache {
       organizationCache.clear();
       projectCache.clear();
    }
-
 }

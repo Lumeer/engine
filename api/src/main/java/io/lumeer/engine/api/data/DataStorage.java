@@ -18,7 +18,6 @@
  */
 package io.lumeer.engine.api.data;
 
-import io.lumeer.engine.api.cache.CacheProvider;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 
 import java.io.Serializable;
@@ -34,8 +33,6 @@ import java.util.Set;
  * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
  */
 public interface DataStorage extends Serializable {
-
-   void setCacheProvider(final CacheProvider cacheProvider);
 
    void connect(final List<StorageConnection> connections, final String database, final Boolean useSsl);
 
@@ -473,11 +470,6 @@ public interface DataStorage extends Serializable {
     *       The name of an index to drop.
     */
    void dropIndex(final String collectionName, final String indexName);
-
-   /**
-    * Invalidates all caches.
-    */
-   void invalidateCaches();
 
    /**
     * Gets the statistics about database usage.
