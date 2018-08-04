@@ -82,6 +82,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -109,14 +110,15 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void connect(final List<StorageConnection> connections, final String database, final Boolean useSsl) {
       final List<ServerAddress> addresses = new ArrayList<>();
-      final List<MongoCredential> credentials = new ArrayList<>();
 
       connections.forEach(c -> {
          addresses.add(new ServerAddress(c.getHost(), c.getPort()));
-         if (c.getUserName() != null && !c.getUserName().isEmpty()) {
-            credentials.add(MongoCredential.createScramSha1Credential(c.getUserName(), database, c.getPassword()));
-         }
       });
+
+      MongoCredential credential = null;
+      if (connections.size() > 0 && connections.get(0).getUserName() != null && !connections.get(0).getUserName().isEmpty()) {
+         credential = MongoCredential.createScramSha1Credential(connections.get(0).getUserName(), database, connections.get(0).getPassword());
+      }
 
       final MongoClientOptions.Builder optionsBuilder = (new MongoClientOptions.Builder()).connectTimeout(30000);
 
@@ -134,7 +136,13 @@ public class MongoDbStorage implements DataStorage {
       );
       final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 
-      this.mongoClient = new MongoClient(addresses, credentials, optionsBuilder.codecRegistry(registry).build());
+
+      if (credential != null) {
+         this.mongoClient = new MongoClient(addresses, credential, optionsBuilder.codecRegistry(registry).build());
+      } else {
+         this.mongoClient = new MongoClient(addresses, optionsBuilder.codecRegistry(registry).build());
+      }
+
       this.database = mongoClient.getDatabase(database);
       this.datastore = (AdvancedDatastore) morphia.createDatastore(this.mongoClient, database);
    }
