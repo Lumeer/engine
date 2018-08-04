@@ -18,8 +18,6 @@
  */
 package io.lumeer.engine.api.data;
 
-import io.lumeer.engine.api.cache.CacheProvider;
-
 import java.util.Collections;
 import java.util.List;
 
