@@ -37,6 +37,7 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.TextSearchOptions;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -141,9 +142,10 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    private Bson createFilter(SearchQuery query) {
       List<Bson> filters = new ArrayList<>();
-      if (query.isFulltextQuery()) {
-         filters.add(Filters.text(query.getFulltext()));
-      }
+      // does not work as expected - cannot search for a single character for example, only whole words
+/*      if (query.isFulltextQuery()) {
+         filters.add(Filters.text(query.getFulltext(), new TextSearchOptions().caseSensitive(false).diacriticSensitive(false)));
+      }*/
       if (query.isDocumentIdsQuery()) {
          List<ObjectId> ids = query.getDocumentIds().stream().filter(ObjectId::isValid).map(ObjectId::new).collect(Collectors.toList());
          if (!ids.isEmpty()) {

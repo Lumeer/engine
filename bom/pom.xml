@@ -108,6 +108,8 @@
       <version.univocity>2.5.3</version.univocity>
       <version.mvc-auth>1.0.0</version.mvc-auth>
       <version.jwt>3.3.0</version.jwt>
+      <version.jaxb>2.3.0</version.jaxb>
+      <version.annotation>1.3.1</version.annotation>
 
       <version.maven.plugin.api>3.3.9</version.maven.plugin.api>
       <version.maven.core>3.3.9</version.maven.core>
@@ -128,7 +130,7 @@
       <version.junit>4.12</version.junit>
       <version.embedded.mongodb>2.0.3</version.embedded.mongodb>
 
-      <java.level>1.8</java.level>
+      <java.level>10</java.level>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -227,6 +229,30 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>${version.netty}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>${version.jaxb}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-core</artifactId>
+            <version>${version.jaxb}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>${version.jaxb}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>${version.annotation}</version>
+            <scope>provided</scope>
          </dependency>
 
          <dependency>

@@ -141,7 +141,20 @@ public class SearchFacade extends AbstractFacade {
 
       for (Collection collection : collections.values()) {
          SearchQuery usedSearchQuery = collectionIdsFromFilters.contains(collection.getId()) ? createSearchQuery(query) : createSearchQueryWithoutFilters(query);
-         dataDocuments.putAll(getDataDocuments(collection.getId(), usedSearchQuery));
+         Map<String, DataDocument> foundDocuments = getDataDocuments(collection.getId(), usedSearchQuery);
+         if (usedSearchQuery.isFulltextQuery()) {
+            foundDocuments.forEach((id, document) -> {
+               for (String attribute : document.keySet()) {
+                  Object value = document.get(attribute);
+                  if (value != null && value.toString().toLowerCase().contains(usedSearchQuery.getFulltext().toLowerCase())) {
+                     dataDocuments.put(id, document);
+                     break;
+                  }
+               }
+            });
+         } else {
+            dataDocuments.putAll(foundDocuments);
+         }
       }
 
       return getDocuments(dataDocuments);
@@ -196,12 +209,16 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<Document> getDocuments(Map<String, DataDocument> dataDocuments) {
-      String[] documentIds = dataDocuments.keySet().toArray(new String[] {});
-      List<Document> documents = documentDao.getDocumentsByIds(documentIds);
-      documents.forEach(document -> {
-         document.setData(dataDocuments.get(document.getId()));
-      });
-      return documents;
+      if (dataDocuments.size() > 0) {
+         String[] documentIds = dataDocuments.keySet().toArray(new String[] {});
+         List<Document> documents = documentDao.getDocumentsByIds(documentIds);
+         documents.forEach(document -> {
+            document.setData(dataDocuments.get(document.getId()));
+         });
+         return documents;
+      }
+
+      return new ArrayList<>();
    }
 
    private SearchQuery createCollectionQuery(Query query) {

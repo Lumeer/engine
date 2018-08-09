@@ -49,10 +49,15 @@
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
 
-      <java.level>1.8</java.level>
+      <java.level>10</java.level>
    </properties>
 
    <dependencies>
+      <dependency>
+         <groupId>javax.xml.bind</groupId>
+         <artifactId>jaxb-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
       <!-- Logging -->
       <dependency>
          <groupId>org.apache.logging.log4j</groupId>
