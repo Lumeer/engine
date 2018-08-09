@@ -4,5 +4,3 @@ sudo: required
 dist: trusty
 jdk:
   - oraclejdk10
-script:
- - jdk_switcher use oraclejdk10
