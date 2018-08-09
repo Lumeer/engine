@@ -229,7 +229,6 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   @Ignore("Does not work at the moment")
    public void testGetDataByFulltextAttributeName() {
       String id1 = createDocument(KEY1, VALUE1);
       String id2 = createDocument("fulltext", VALUE1);

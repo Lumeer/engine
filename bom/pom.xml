@@ -127,8 +127,9 @@
       <version.amq>5.14.0</version.amq>
       <version.arquillian-jacoco>1.0.0.Alpha8</version.arquillian-jacoco>
       <version.mockito>2.21.0</version.mockito>
+      <version.bytebuddy>1.8.17</version.bytebuddy>
       <version.junit>4.12</version.junit>
-      <version.embedded.mongodb>2.0.3</version.embedded.mongodb>
+      <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
 
       <java.level>10</java.level>
    </properties>
@@ -320,6 +321,16 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${version.mockito}</version>
+         </dependency>
+         <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${version.bytebuddy}</version>
+         </dependency>
+         <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${version.bytebuddy}</version>
          </dependency>
 
          <!-- Vert.x for testing -->

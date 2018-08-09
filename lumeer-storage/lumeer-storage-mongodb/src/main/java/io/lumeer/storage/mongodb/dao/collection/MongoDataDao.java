@@ -43,7 +43,9 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -130,9 +132,26 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    @Override
    public List<DataDocument> getData(final String collectionId, final SearchQuery query) {
-      FindIterable<Document> mongoIterable = dataCollection(collectionId).find(createFilter(query));
+      final FindIterable<Document> mongoIterable = dataCollection(collectionId).find(createFilter(query));
       addPaginationToSuggestionQuery(mongoIterable, query);
-      return MongoUtils.convertIterableToList(mongoIterable);
+      final List<DataDocument> foundDocuments = MongoUtils.convertIterableToList(mongoIterable);
+
+      if (query.isFulltextQuery()) {
+         final String search = query.getFulltext().toLowerCase();
+
+         return foundDocuments.stream().filter((document) -> {
+            for (String attribute : document.keySet()) {
+               final Object value = document.get(attribute);
+               if (attribute.toLowerCase().contains(search) || (value != null && value.toString().toLowerCase().contains(search))) {
+                  return true;
+               }
+            }
+            return false;
+         }).collect(Collectors.toList());
+      } else {
+         return foundDocuments;
+      }
+
    }
 
    @Override
