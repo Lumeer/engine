@@ -159,6 +159,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.jboss.shrinkwrap.resolver</groupId>
+         <artifactId>shrinkwrap-resolver-spi</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.jboss.arquillian.protocol</groupId>
          <artifactId>arquillian-protocol-servlet</artifactId>
          <scope>test</scope>

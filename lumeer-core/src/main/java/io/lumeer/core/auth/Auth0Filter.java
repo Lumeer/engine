@@ -112,7 +112,6 @@ public class Auth0Filter implements Filter {
 
          // we do not have the token at all, or we failed to obtain verifier
          if (accessToken == null || verifier == null) {
-            System.out.println("není token");
             res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return;
          }
