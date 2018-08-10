@@ -44,7 +44,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
       <version.gmaven>1.5</version.gmaven>
-      <version.groovy>2.4.7</version.groovy>
+      <version.groovy>2.5.1</version.groovy>
       <version.jacoco>0.7.7.201606060606</version.jacoco>
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
