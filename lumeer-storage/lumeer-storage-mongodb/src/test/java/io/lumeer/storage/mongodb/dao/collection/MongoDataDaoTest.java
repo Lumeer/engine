@@ -20,10 +20,14 @@ package io.lumeer.storage.mongodb.dao.collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lumeer.api.dto.JsonAttribute;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
+import io.lumeer.storage.mongodb.model.MorphiaCollection;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -51,15 +55,22 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    private static final String VALUE2 = "secondValue";
 
    private MongoDataDao dataDao;
+   private CollectionDao collectionDao;
 
    @Before
    public void initDataDao() {
-      Collection collection = Mockito.mock(Collection.class);
-      Mockito.when(collection.getId()).thenReturn(COLLECTION_ID);
+      Collection col = new MorphiaCollection();
+      col.setId(COLLECTION_ID);
+      col.setAttributes(Collections.EMPTY_SET);
+      col.setLastAttributeNum(0);
+
+      collectionDao = Mockito.mock(CollectionDao.class);
+      Mockito.when(collectionDao.getCollectionById(COLLECTION_ID)).thenReturn(col);
 
       dataDao = new MongoDataDao();
       dataDao.setDatabase(database);
       dataDao.setDatastore(datastore);
+      dataDao.setCollectionDao(collectionDao);
 
       dataDao.createDataRepository(COLLECTION_ID);
    }
@@ -73,6 +84,18 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    }
 
    private String createDocument(String key, String value) {
+      Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
+      final String id = key; // use the same document id for simplicity in tests
+      if (!collection.getAttributes().stream().anyMatch(attr -> attr.getName().equals(key))) {
+         collection.createAttribute(new JsonAttribute(id, key, Collections.emptySet(), 1));
+         collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
+         collectionDao.updateCollection(COLLECTION_ID, collection);
+      } else {
+         Attribute attr = collection.getAttributes().stream().filter(a -> a.getName().equals(key)).findFirst().get();
+         attr.setUsageCount(attr.getUsageCount() + 1);
+         collectionDao.updateCollection(COLLECTION_ID, collection);
+      }
+
       Document document = new Document(key, value);
       dataCollection().insertOne(document);
       return document.getObjectId("_id").toHexString();
