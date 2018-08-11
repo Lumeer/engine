@@ -14,8 +14,8 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.source>1.8</maven.compiler.source>
-      <maven.compiler.target>1.8</maven.compiler.target>
+      <maven.compiler.source>10</maven.compiler.source>
+      <maven.compiler.target>10</maven.compiler.target>
    </properties>
 
    <dependencies>
@@ -35,6 +35,12 @@
          <scope>provided</scope>
       </dependency>
       <dependency>
+         <groupId>javax.annotation</groupId>
+         <artifactId>javax.annotation-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.spec.javax.servlet</groupId>
          <artifactId>jboss-servlet-api_3.1_spec</artifactId>
          <scope>provided</scope>
@@ -48,6 +54,17 @@
       <dependency>
          <groupId>org.mockito</groupId>
          <artifactId>mockito-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <!-- Byte buddy is needed to override default version imported by mockito to support Java 10, might be removed in the future -->
+      <dependency>
+         <groupId>net.bytebuddy</groupId>
+         <artifactId>byte-buddy</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>net.bytebuddy</groupId>
+         <artifactId>byte-buddy-agent</artifactId>
          <scope>test</scope>
       </dependency>
 

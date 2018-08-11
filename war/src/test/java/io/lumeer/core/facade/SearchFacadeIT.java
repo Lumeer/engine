@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lumeer.api.dto.JsonAttribute;
 import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.dto.JsonOrganization;
@@ -27,6 +28,7 @@ import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
@@ -299,7 +301,19 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    private Document createDocument(String collectionId, Object value) {
-      Document document = new JsonDocument(new DataDocument(DOCUMENT_KEY, value));
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      final String id = DOCUMENT_KEY; // use the same document id for simplicity in tests
+      if (!collection.getAttributes().stream().anyMatch(attr -> attr.getName().equals(DOCUMENT_KEY))) {
+         collection.createAttribute(new JsonAttribute(id, DOCUMENT_KEY, Collections.emptySet(), 1));
+         collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
+         collectionDao.updateCollection(collectionId, collection);
+      } else {
+         Attribute attr = collection.getAttributes().stream().filter(a -> a.getName().equals(DOCUMENT_KEY)).findFirst().get();
+         attr.setUsageCount(attr.getUsageCount() + 1);
+         collectionDao.updateCollection(collectionId, collection);
+      }
+
+      Document document = new JsonDocument(new DataDocument(id, value));
       document.setCollectionId(collectionId);
       document.setCreatedBy(USER);
       document.setCreationDate(ZonedDateTime.now());

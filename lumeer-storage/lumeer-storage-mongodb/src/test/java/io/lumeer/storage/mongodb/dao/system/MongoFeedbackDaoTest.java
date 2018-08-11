@@ -30,6 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 
 public class MongoFeedbackDaoTest extends MongoDbTestBase {
 
@@ -61,7 +63,7 @@ public class MongoFeedbackDaoTest extends MongoDbTestBase {
       Feedback storedFeedback = mongoFeedbackDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedFeedback).isNotNull();
       assertThat(storedFeedback.getUserId()).isEqualTo(feedback.getUserId());
-      assertThat(storedFeedback.getCreationTime()).isEqualTo(feedback.getCreationTime());
+      assertThat(storedFeedback.getCreationTime()).isEqualTo(feedback.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
       assertThat(storedFeedback.getMessage()).isEqualTo(feedback.getMessage());
    }
 
@@ -74,7 +76,7 @@ public class MongoFeedbackDaoTest extends MongoDbTestBase {
       assertThat(storedFeedback).isNotNull();
       assertThat(storedFeedback.getId()).isEqualTo(feedback.getId());
       assertThat(storedFeedback.getUserId()).isEqualTo(feedback.getUserId());
-      assertThat(storedFeedback.getCreationTime()).isEqualTo(feedback.getCreationTime());
+      assertThat(storedFeedback.getCreationTime()).isEqualTo(feedback.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
       assertThat(storedFeedback.getMessage()).isEqualTo(feedback.getMessage());
    }
 

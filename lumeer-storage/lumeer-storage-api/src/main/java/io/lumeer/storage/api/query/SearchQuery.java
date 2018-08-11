@@ -135,4 +135,15 @@ public class SearchQuery extends DatabaseQuery {
          return new SearchQuery(this);
       }
    }
+
+   @Override
+   public String toString() {
+      return "SearchQuery{" +
+            "fulltext='" + fulltext + '\'' +
+            ", collectionIds=" + collectionIds +
+            ", linkTypeIds=" + linkTypeIds +
+            ", documentIds=" + documentIds +
+            ", filters=" + filters +
+            '}';
+   }
 }

@@ -46,7 +46,7 @@
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
 
-      <java.level>1.8</java.level>
+      <java.level>10</java.level>
    </properties>
    <dependencies>
       <dependency>
@@ -116,6 +116,17 @@
       <dependency>
          <groupId>org.mockito</groupId>
          <artifactId>mockito-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <!-- Byte buddy is needed to override default version imported by mockito to support Java 10, might be removed in the future -->
+      <dependency>
+         <groupId>net.bytebuddy</groupId>
+         <artifactId>byte-buddy</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>net.bytebuddy</groupId>
+         <artifactId>byte-buddy-agent</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
