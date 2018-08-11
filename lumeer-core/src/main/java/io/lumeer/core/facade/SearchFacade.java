@@ -142,19 +142,7 @@ public class SearchFacade extends AbstractFacade {
       for (Collection collection : collections.values()) {
          SearchQuery usedSearchQuery = collectionIdsFromFilters.contains(collection.getId()) ? createSearchQuery(query) : createSearchQueryWithoutFilters(query);
          Map<String, DataDocument> foundDocuments = getDataDocuments(collection.getId(), usedSearchQuery);
-         if (usedSearchQuery.isFulltextQuery()) {
-            foundDocuments.forEach((id, document) -> {
-               for (String attribute : document.keySet()) {
-                  Object value = document.get(attribute);
-                  if (value != null && value.toString().toLowerCase().contains(usedSearchQuery.getFulltext().toLowerCase())) {
-                     dataDocuments.put(id, document);
-                     break;
-                  }
-               }
-            });
-         } else {
-            dataDocuments.putAll(foundDocuments);
-         }
+         dataDocuments.putAll(foundDocuments);
       }
 
       return getDocuments(dataDocuments);

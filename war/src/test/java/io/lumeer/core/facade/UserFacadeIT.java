@@ -47,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -339,15 +340,15 @@ public class UserFacadeIT extends IntegrationTestBase {
       assertThat(returnedFeedback).isNotNull();
       assertThat(returnedFeedback.getId()).isNotNull();
       assertThat(returnedFeedback.getUserId()).isEqualTo(userFacade.getCurrentUser().getId());
-      assertThat(returnedFeedback.getCreationTime()).isAfterOrEqualTo(before);
-      assertThat(returnedFeedback.getCreationTime()).isBeforeOrEqualTo(after);
+      assertThat(returnedFeedback.getCreationTime()).isAfterOrEqualTo(before.truncatedTo(ChronoUnit.MILLIS));
+      assertThat(returnedFeedback.getCreationTime()).isBeforeOrEqualTo(after.truncatedTo(ChronoUnit.MILLIS));
       assertThat(returnedFeedback.getMessage()).isEqualTo(message);
 
       Feedback storedFeedback = feedbackDao.getFeedbackById(returnedFeedback.getId());
       assertThat(storedFeedback).isNotNull();
       assertThat(storedFeedback.getId()).isEqualTo(returnedFeedback.getId());
       assertThat(storedFeedback.getUserId()).isEqualTo(returnedFeedback.getUserId());
-      assertThat(storedFeedback.getCreationTime()).isEqualTo(returnedFeedback.getCreationTime());
+      assertThat(storedFeedback.getCreationTime()).isEqualTo(returnedFeedback.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
       assertThat(storedFeedback.getMessage()).isEqualTo(returnedFeedback.getMessage());
    }
 

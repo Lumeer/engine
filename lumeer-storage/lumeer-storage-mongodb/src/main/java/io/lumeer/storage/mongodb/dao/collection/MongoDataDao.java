@@ -20,8 +20,11 @@ package io.lumeer.storage.mongodb.dao.collection;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -49,9 +52,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoDataDao extends CollectionScopedDao implements DataDao {
+
+   @Inject
+   private CollectionDao collectionDao;
 
    private static final String ID = "_id";
    private static final String PREFIX = "data_c-";
@@ -132,39 +139,35 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    @Override
    public List<DataDocument> getData(final String collectionId, final SearchQuery query) {
-      final FindIterable<Document> mongoIterable = dataCollection(collectionId).find(createFilter(query));
+      final MongoCollection<Document> collection = dataCollection(collectionId);
+      final FindIterable<Document> mongoIterable = collection.find(createFilter(collectionId, query));
       addPaginationToSuggestionQuery(mongoIterable, query);
       final List<DataDocument> foundDocuments = MongoUtils.convertIterableToList(mongoIterable);
 
-      if (query.isFulltextQuery()) {
-         final String search = query.getFulltext().toLowerCase();
-
-         return foundDocuments.stream().filter((document) -> {
-            for (String attribute : document.keySet()) {
-               final Object value = document.get(attribute);
-               if (attribute.toLowerCase().contains(search) || (value != null && value.toString().toLowerCase().contains(search))) {
-                  return true;
-               }
-            }
-            return false;
-         }).collect(Collectors.toList());
-      } else {
-         return foundDocuments;
-      }
-
+      return foundDocuments;
    }
 
    @Override
    public long getDataCount(final String collectionId, final SearchQuery query) {
-      return dataCollection(collectionId).count(createFilter(query));
+      final MongoCollection<Document> collection = dataCollection(collectionId);
+      return collection.countDocuments(createFilter(collectionId, query));
    }
 
-   private Bson createFilter(SearchQuery query) {
+   private Bson createFilter(String collectionId, SearchQuery query) {
       List<Bson> filters = new ArrayList<>();
       // does not work as expected - cannot search for a single character for example, only whole words
-/*      if (query.isFulltextQuery()) {
-         filters.add(Filters.text(query.getFulltext(), new TextSearchOptions().caseSensitive(false).diacriticSensitive(false)));
-      }*/
+      if (query.isFulltextQuery()) {
+
+         Collection collection = collectionDao.getCollectionById(collectionId);
+         List<Attribute> fulltextAttrs = collection.getAttributes().stream().filter(attr -> attr.getName().toLowerCase().contains(query.getFulltext().toLowerCase())).collect(Collectors.toList());
+
+         // we only search by presence of the matching attributes
+         if (fulltextAttrs.size() > 0) {
+            filters.add(Filters.or(fulltextAttrs.stream().map(attr -> Filters.exists(attr.getId())).collect(Collectors.toList())));
+         } else if (collection.getAttributes().size() > 0) { // we search by content
+            filters.add(Filters.or(collection.getAttributes().stream().map(attr -> Filters.regex(attr.getId(), query.getFulltext(), "i")).collect(Collectors.toList())));
+         }
+      }
       if (query.isDocumentIdsQuery()) {
          List<ObjectId> ids = query.getDocumentIds().stream().filter(ObjectId::isValid).map(ObjectId::new).collect(Collectors.toList());
          if (!ids.isEmpty()) {
@@ -179,7 +182,8 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
          filters.addAll(attributeFilters);
       }
 
-      return filters.size() > 0 ? Filters.and(filters) : new Document();
+      final Bson result = filters.size() > 0 ? Filters.and(filters) : new Document();
+      return result;
    }
 
    private Bson attributeFilter(AttributeFilter filter) {
