@@ -1,0 +1,6 @@
+<settings>
+  <pluginGroups>
+    <pluginGroup>org.wildfly.plugins</pluginGroup>
+    <pluginGroup>com.github.joelittlejohn.embedmongo</pluginGroup>
+  </pluginGroups>
+</settings>

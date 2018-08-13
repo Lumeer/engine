@@ -224,11 +224,6 @@
             <artifactId>jaxrs-api</artifactId>
             <version>${version.jaxrs}</version>
          </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>${version.netty}</version>
-         </dependency>
 
          <dependency>
             <groupId>javax.xml.bind</groupId>
@@ -330,18 +325,6 @@
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy-agent</artifactId>
             <version>${version.bytebuddy}</version>
-         </dependency>
-
-         <!-- Vert.x for testing -->
-         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-core</artifactId>
-            <version>${version.vertx}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-            <version>${version.vertx}</version>
          </dependency>
 
          <!-- Findbugs -->
