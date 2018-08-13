@@ -44,8 +44,13 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+      <maven.embedmongo.plugin.version>0.4.0</maven.embedmongo.plugin.version>
+
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>7.1</version.puppycrawl>
+      <version.mongo.driver>3.8.0</version.mongo.driver>
+      <version.commons.io>2.6</version.commons.io>
+      <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
 
       <java.level>10</java.level>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
@@ -497,6 +502,56 @@
                         </goals>
                      </execution>
                   </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>startEngine</id>
+         <properties>
+            <skipTests>true</skipTests>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>com.github.joelittlejohn.embedmongo</groupId>
+                  <artifactId>embedmongo-maven-plugin</artifactId>
+                  <version>${maven.embedmongo.plugin.version}</version>
+                  <dependencies>
+                     <dependency>
+                        <groupId>org.mongodb</groupId>
+                        <artifactId>mongo-java-driver</artifactId>
+                        <version>${version.mongo.driver}</version>
+                     </dependency>
+                     <dependency>
+                        <groupId>commons-io</groupId>
+                        <artifactId>commons-io</artifactId>
+                        <version>${version.commons.io}</version>
+                     </dependency>
+                     <dependency>
+                        <groupId>de.flapdoodle.embed</groupId>
+                        <artifactId>de.flapdoodle.embed.mongo</artifactId>
+                        <version>${version.embedded.mongodb}</version>
+                     </dependency>
+                  </dependencies>
+                  <executions>
+                     <execution>
+                        <id>start</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                           <goal>start</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <port>27017</port>
+                     <databaseDirectory>${project.build.directory}/embedmongo</databaseDirectory>
+                     <version>3.4.0</version>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>org.wildfly.plugins</groupId>
+                  <artifactId>wildfly-maven-plugin</artifactId>
                </plugin>
             </plugins>
          </build>
