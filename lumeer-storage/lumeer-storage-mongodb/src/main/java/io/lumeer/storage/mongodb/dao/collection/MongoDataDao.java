@@ -167,13 +167,10 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
          // we only search by presence of the matching attributes
          if (fulltextAttrs.size() > 0) {
-            System.out.println("fulltext attrs");
             filters.add(Filters.or(fulltextAttrs.stream().map(attr -> Filters.exists(attr.getId())).collect(Collectors.toList())));
          } else if (collection.getAttributes().size() > 0) { // we search by content
-            System.out.println("normal");
             filters.add(Filters.or(collection.getAttributes().stream().map(attr -> Filters.regex(attr.getId(), query.getFulltext(), "i")).collect(Collectors.toList())));
          }
-         System.out.println("nic");
       }
       if (query.isDocumentIdsQuery()) {
          List<ObjectId> ids = query.getDocumentIds().stream().filter(ObjectId::isValid).map(ObjectId::new).collect(Collectors.toList());

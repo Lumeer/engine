@@ -136,7 +136,7 @@ public class Auth0Filter implements Filter {
          AuthenticatedUser.AuthUserInfo authUserInfo = authenticatedUser.getAuthUserInfo();
          if (authUserInfo.user == null && authUserCache.containsKey(accessToken)) {
             authUserInfo = authUserCache.get(accessToken);
-            authenticatedUser.setAuthUserInfo(authUserCache.get(accessToken));
+            authenticatedUser.setAuthUserInfo(authUserInfo);
          }
 
          if (!accessToken.equals(authUserInfo.accessToken) || authUserInfo.user == null || authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) {
@@ -177,6 +177,12 @@ public class Auth0Filter implements Filter {
                try {
                   s.acquire();
                   s.release();
+                  // we might have a different session id for the same user
+                  if (authenticatedUser.getAuthUserInfo().user == null) {
+                     AuthenticatedUser.AuthUserInfo newAuthUserInfo = authUserCache.get(accessToken);
+                     authenticatedUser.setAuthUserInfo(newAuthUserInfo);
+                     // we do not need to check the user again, it was already done in the first session
+                  }
                } catch (InterruptedException ie) {
                   // do nothing
                }
