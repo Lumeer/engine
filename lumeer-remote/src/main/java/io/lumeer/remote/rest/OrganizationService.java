@@ -179,7 +179,11 @@ public class OrganizationService extends AbstractService {
       final String notifyUrl = servletContext.getRequestURL().toString().replaceAll("/payments$", "").replaceFirst("organizations", "paymentNotify");
       final String returnUrl = servletContext.getHeader("RETURN_URL");
 
-      return paymentFacade.createPayment(organizationFacade.getOrganization(organizationCode), payment, notifyUrl, returnUrl);
+      return paymentFacade.createPayment(
+            organizationFacade.getOrganization(organizationCode),
+            paymentFacade.checkPaymentValues(payment),
+            notifyUrl,
+            returnUrl);
    }
 
    @GET

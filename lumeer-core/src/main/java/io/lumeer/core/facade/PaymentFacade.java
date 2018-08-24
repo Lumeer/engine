@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.facade;
 
+import static java.util.Map.entry;
+
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
@@ -27,6 +29,11 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -42,6 +49,17 @@ import javax.inject.Inject;
  */
 @RequestScoped
 public class PaymentFacade extends AbstractFacade {
+
+   private static final Map<String, Double> FULL_PRICES = Map.ofEntries(
+         entry("CZK", 205.0d),
+         entry("EUR", 8.0d),
+         entry("USD", 9.9d)
+   );
+   private static final Map<String, Double> DISCOUNT_PRICES = Map.ofEntries(
+         entry("CZK", 169.0d),
+         entry("EUR", 6.7d),
+         entry("USD", 8.3d)
+   );
 
    @Inject
    private OrganizationDao organizationDao;
@@ -183,6 +201,21 @@ public class PaymentFacade extends AbstractFacade {
       checkManagePermissions(organization);
 
       return paymentDao.getPayment(organization, paymentId);
+   }
+
+   public Payment checkPaymentValues(final Payment payment) {
+      int months = Period.between(
+            LocalDate.ofInstant(payment.getStart().toInstant(), ZoneId.systemDefault()),
+            LocalDate.ofInstant(payment.getValidUntil().toInstant(), ZoneId.systemDefault())
+            ).getMonths();
+      final Map<String, Double> prices = months >= 12 ? DISCOUNT_PRICES : FULL_PRICES;
+      long minPrice = Math.round(months * prices.get(payment.getCurrency()) * payment.getUsers());
+
+      if (payment.getAmount() < minPrice) {
+         payment.setAmount(minPrice);
+      }
+
+      return payment;
    }
 
    private void checkManagePermissions(final Organization organization) {
