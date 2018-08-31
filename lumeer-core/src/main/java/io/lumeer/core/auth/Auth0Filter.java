@@ -32,6 +32,9 @@ import com.auth0.net.Request;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -219,7 +222,7 @@ public class Auth0Filter implements Filter {
       final String name = (String) values.get("name");
       final String email = (String) values.get("email");
       final User user = new User(email == null ? (sub.startsWith("google-oauth2") ? nickname + "@gmail.com" : name) : email);
-      user.setAuthId(sub);
+      user.setAuthIds(new HashSet<>(Arrays.asList(sub)));
       user.setName(name);
 
       return user;
