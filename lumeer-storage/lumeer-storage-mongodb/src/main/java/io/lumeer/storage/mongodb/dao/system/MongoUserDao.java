@@ -149,7 +149,7 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
 
    @Override
    public User getUserByAuthId(final String authId) {
-      Bson authIdFilter = Filters.eq(UserCodec.AUTH_ID, authId);
+      Bson authIdFilter = Filters.eq(UserCodec.AUTH_IDS, authId);
 
       return databaseCollection().find(authIdFilter).first();
    }

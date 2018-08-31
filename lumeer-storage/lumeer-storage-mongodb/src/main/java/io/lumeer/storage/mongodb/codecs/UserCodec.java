@@ -52,7 +52,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String EMAIL = "email";
    public static final String GROUPS = "groups";
    public static final String WISHES = "wishes";
-   public static final String AUTH_ID = "authId";
+   public static final String AUTH_IDS = "authIds";
    public static final String AGREEMENT = "agreement";
    public static final String AGREEMENT_DATE = "agreementDate";
    public static final String NEWSLETTER = "newsletter";
@@ -98,7 +98,7 @@ public class UserCodec implements CollectibleCodec<User> {
       String id = bson.getObjectId(ID).toHexString();
       String name = bson.getString(NAME);
       String email = bson.getString(EMAIL);
-      String authId = bson.getString(AUTH_ID);
+      List<String> authIds = bson.get(AUTH_IDS, List.class);
 
       List<Document> documentList = bson.get(ALL_GROUPS, List.class);
       Map<String, Set<String>> allGroups = convertListToMap(documentList, GROUPS);
@@ -116,7 +116,7 @@ public class UserCodec implements CollectibleCodec<User> {
       Boolean newsletter = bson.getBoolean(NEWSLETTER);
 
       User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter);
-      user.setAuthId(authId);
+      user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
 
       return user;
@@ -127,7 +127,7 @@ public class UserCodec implements CollectibleCodec<User> {
       Document bson = user.getId() != null ? new Document(ID, new ObjectId(user.getId())) : new Document();
       bson.append(NAME, user.getName())
           .append(EMAIL, user.getEmail())
-          .append(AUTH_ID, user.getAuthId())
+          .append(AUTH_IDS, user.getAuthIds())
           .append(WISHES, user.getWishes());
 
       if (user.getDefaultWorkspace() != null) {

@@ -37,6 +37,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
@@ -83,7 +84,8 @@ public class AuthenticatedUser implements Serializable {
    private Random rnd = new Random();
 
    void checkUser() {
-      String authId = authUserInfo.user != null && authUserInfo.user.getAuthId() != null ? authUserInfo.user.getAuthId() : null;
+      Set<String> authIds = authUserInfo.user != null && authUserInfo.user.getAuthIds() != null ? authUserInfo.user.getAuthIds() : Collections.emptySet();
+      String authId = authIds.isEmpty() ? null : authIds.iterator().next();
 
       if (authId != null) { // production
          checkUserInProduction(authId, getUserEmail(), getUserName());
@@ -133,7 +135,11 @@ public class AuthenticatedUser implements Serializable {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
             userByEmail.setName(name);
-            userByEmail.setAuthId(authId);
+            if (userByEmail.getAuthIds() != null) {
+               userByEmail.getAuthIds().add(authId);
+            } else {
+               userByEmail.setAuthIds(new HashSet<>(Arrays.asList(authId)));
+            }
             createDemoOrganizationIfNeeded(userByEmail, false);
             userDao.updateUser(userByEmail.getId(), userByEmail);
             userLoginDao.userLoggedIn(userByEmail.getId());
@@ -155,7 +161,7 @@ public class AuthenticatedUser implements Serializable {
 
    private User createNewUser(String email, String authId) {
       User user = new User(email);
-      user.setAuthId(authId);
+      user.setAuthIds(new HashSet<>(Arrays.asList(authId)));
       return userDao.createUser(user);
    }
 

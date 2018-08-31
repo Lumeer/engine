@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,7 +58,7 @@ public class User {
    private String email;
 
    @JsonIgnore
-   private String authId;
+   private Set<String> authIds;
 
    @JsonView(UserViews.DefaultView.class)
    private Map<String, Set<String>> groups;
@@ -125,12 +126,12 @@ public class User {
       this.email = email;
    }
 
-   public String getAuthId() {
-      return authId;
+   public Set<String> getAuthIds() {
+      return authIds;
    }
 
-   public void setAuthId(final String authId) {
-      this.authId = authId;
+   public void setAuthIds(final Set<String> authIds) {
+      this.authIds = authIds;
    }
 
    public Map<String, Set<String>> getGroups() {
@@ -205,7 +206,7 @@ public class User {
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             ", email='" + email + '\'' +
-            ", authId='" + authId + '\'' +
+            ", authId='" + authIds + '\'' +
             ", groups=" + groups +
             ", defaultWorkspace=" + defaultWorkspace +
             ", agreement=" + agreement +
