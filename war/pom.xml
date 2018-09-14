@@ -54,6 +54,7 @@
 
       <java.level>10</java.level>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
+      <wildfly.version>13.0.0.Final</wildfly.version>
    </properties>
 
    <dependencies>
