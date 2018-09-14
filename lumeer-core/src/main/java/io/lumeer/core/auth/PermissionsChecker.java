@@ -67,6 +67,8 @@ public class PermissionsChecker {
    @Inject
    private CollectionFacade collectionFacade;
 
+   private String viewId = null;
+
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
@@ -249,5 +251,18 @@ public class PermissionsChecker {
 
    private boolean skipLimits() {
       return System.getenv("SKIP_LIMITS") != null;
+   }
+
+   /**
+    * Sets the view ID that is being worked with. This allows us to execute queries under a different user supposing
+    * we have access to the view and the owner of the view can still execute it. For security reasons, the view ID
+    * cannot be changed along the way.
+    *
+    * @param viewId ID of the view
+    */
+   public void setViewId(final String viewId) {
+      if (this.viewId == null) {
+         this.viewId = viewId;
+      }
    }
 }
