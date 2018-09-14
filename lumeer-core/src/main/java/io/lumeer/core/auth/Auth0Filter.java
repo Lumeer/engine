@@ -61,12 +61,16 @@ import javax.servlet.http.HttpServletResponse;
 public class Auth0Filter implements Filter {
 
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
+   public static final String VIEW_ID = "view_id";
 
    @Inject
    private AuthenticatedUser authenticatedUser;
 
    @Inject
    private ConfigurationFacade configurationFacade;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
    private Map<String, Semaphore> semaphores = new ConcurrentHashMap<>();
@@ -99,6 +103,8 @@ public class Auth0Filter implements Filter {
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
 
       addCorsHeaders(req, res);
+
+      parseViewId(req);
 
       if (System.getenv("SKIP_SECURITY") != null) {
          filterChain.doFilter(servletRequest, servletResponse);
@@ -195,6 +201,17 @@ public class Auth0Filter implements Filter {
       }
 
       filterChain.doFilter(servletRequest, servletResponse);
+   }
+
+   private void parseViewId(final HttpServletRequest req) {
+      final String viewId = req.getHeader(VIEW_ID);
+
+      if (viewId != null) {
+         permissionsChecker.setViewId(viewId);
+      } else {
+         // there is no view, by setting it to an empty string, we lock any further view id changes
+         permissionsChecker.setViewId("");
+      }
    }
 
    @Override
