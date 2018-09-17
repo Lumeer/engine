@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.auth;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -122,11 +123,13 @@ public class PermissionsChecker {
                if (hasRole(view, viewRole)) { // do we have access to the view?
                   final String authorId = view.getAuthorId();
 
-                  // TODO: does the view contain the resource?
-
-                  if (authorId != null && !"".equals(authorId)) { // has the view author access to the resource?
-                     if (hasRole(resource, role, authorId)) {
-                        return;
+                  if (resource instanceof Collection) {
+                     if (view.getQuery().getCollectionIds().contains(resource.getId())) { // does the view contain the resource?
+                        if (authorId != null && !"".equals(authorId)) {
+                           if (hasRole(resource, role, authorId)) { // has the view author access to the resource?
+                              return; // grant access
+                           }
+                        }
                      }
                   }
                }
