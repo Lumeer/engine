@@ -26,6 +26,8 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
@@ -36,6 +38,8 @@ import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.ViewDao;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,6 +71,12 @@ public class PermissionsChecker {
    @Inject
    private CollectionFacade collectionFacade;
 
+   @Inject
+   private ViewDao viewDao;
+
+   @Inject
+   private UserDao userDao;
+
    private String viewId = null;
 
    @Inject
@@ -94,6 +104,40 @@ public class PermissionsChecker {
     * @throws NoPermissionException
     */
    public void checkRole(Resource resource, Role role) {
+      checkOrganizationAndProject(resource, role);
+
+      if (!hasRole(resource, role)) {
+         throw new NoPermissionException(resource);
+      }
+   }
+
+   public void checkRoleWithView(final Resource resource, final Role role, final Role viewRole) {
+      checkOrganizationAndProject(resource, role);
+
+      if (!hasRole(resource, role)) { // we do not have direct access
+         if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
+            final View view = viewDao.getViewById(viewId);
+
+            if (view != null) {
+               if (hasRole(view, viewRole)) { // do we have access to the view?
+                  final String authorId = view.getAuthorId();
+
+                  // TODO: does the view contain the resource?
+
+                  if (authorId != null && !"".equals(authorId)) { // has the view author access to the resource?
+                     if (hasRole(resource, role, authorId)) {
+                        return;
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      throw new NoPermissionException(resource);
+   }
+
+   private void checkOrganizationAndProject(final Resource resource, final Role role) {
       if (!(resource instanceof Organization) && workspaceKeeper.getOrganization().isPresent()) {
          if (!hasRole(workspaceKeeper.getOrganization().get(), Role.READ)) {
             throw new NoPermissionException(resource);
@@ -103,9 +147,6 @@ public class PermissionsChecker {
                throw new NoPermissionException(resource);
             }
          }
-      }
-      if (!hasRole(resource, role)) {
-         throw new NoPermissionException(resource);
       }
    }
 
@@ -122,6 +163,10 @@ public class PermissionsChecker {
       return hasRoleCache.computeIfAbsent(resource.getId() + ":" + role.toString(), id -> getActualRoles(resource).contains(role));
    }
 
+   private boolean hasRole(Resource resource, Role role, String userId) {
+      return getActualRoles(resource, userId).contains(role);
+   }
+
    /**
     * Returns all roles assigned to the authenticated user (whether direct or gained through group membership).
     *
@@ -131,6 +176,10 @@ public class PermissionsChecker {
     */
    public Set<Role> getActualRoles(Resource resource) {
       String userId = authenticatedUser.getCurrentUserId();
+      return getActualRoles(resource, userId);
+   }
+
+   private Set<Role> getActualRoles(final Resource resource, final String userId) {
       Set<String> groups = getUserGroups(resource);
 
       Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);

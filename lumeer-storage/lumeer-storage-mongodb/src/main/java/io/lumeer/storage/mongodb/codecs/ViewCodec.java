@@ -47,6 +47,7 @@ public class ViewCodec implements CollectibleCodec<JsonView> {
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
+   public static final String AUTHOR_ID = "authorId";
 
    private final Codec<Document> documentCodec;
 
@@ -68,8 +69,9 @@ public class ViewCodec implements CollectibleCodec<JsonView> {
       JsonQuery query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
       String perspective = bson.getString(PERSPECTIVE);
       Object config = bson.get(CONFIG);
+      String authorId = bson.getString(AUTHOR_ID);
 
-      JsonView view = new JsonView(code, name, icon, color, description, permissions, query, perspective, config);
+      JsonView view = new JsonView(code, name, icon, color, description, permissions, query, perspective, config, authorId);
       view.setId(id);
       return view;
    }
@@ -85,7 +87,8 @@ public class ViewCodec implements CollectibleCodec<JsonView> {
           .append(PERMISSIONS, value.getPermissions())
           .append(QUERY, value.getQuery())
           .append(PERSPECTIVE, value.getPerspective())
-          .append(CONFIG, value.getConfig());
+          .append(CONFIG, value.getConfig())
+          .append(AUTHOR_ID, value.getAuthorId());
 
       documentCodec.encode(writer, bson, encoderContext);
    }

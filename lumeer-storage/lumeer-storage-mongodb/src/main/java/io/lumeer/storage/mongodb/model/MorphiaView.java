@@ -46,6 +46,7 @@ public class MorphiaView extends MorphiaResource implements View {
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
+   public static final String AUTHOR_ID = "authorId";
 
    @Embedded(QUERY)
    private MorphiaQuery query;
@@ -56,6 +57,9 @@ public class MorphiaView extends MorphiaResource implements View {
    @Property(CONFIG)
    private Object config;
 
+   @Property(AUTHOR_ID)
+   private String authorId;
+
    public MorphiaView() {
    }
 
@@ -65,6 +69,7 @@ public class MorphiaView extends MorphiaResource implements View {
       this.query = new MorphiaQuery(view.getQuery());
       this.perspective = view.getPerspective();
       this.config = view.getConfig();
+      this.authorId = view.getAuthorId();
    }
 
    @Override
@@ -82,6 +87,11 @@ public class MorphiaView extends MorphiaResource implements View {
       return config;
    }
 
+   @Override
+   public String getAuthorId() {
+      return authorId;
+   }
+
    public void setConfig(final Object config) {
       this.config = config;
    }
@@ -92,6 +102,10 @@ public class MorphiaView extends MorphiaResource implements View {
 
    public void setPerspective(final String perspective) {
       this.perspective = perspective;
+   }
+
+   public void setAuthorId(final String authorId) {
+      this.authorId = authorId;
    }
 
    @Override
@@ -105,6 +119,7 @@ public class MorphiaView extends MorphiaResource implements View {
             ", permissions=" + permissions +
             ", query=" + query +
             ", perspective='" + perspective + '\'' +
+            ", authorId='" + authorId + '\'' +
             '}';
    }
 }
