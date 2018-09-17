@@ -265,4 +265,10 @@ public class PermissionsChecker {
          this.viewId = viewId;
       }
    }
+
+   public void checkCanDelete(Resource resource) {
+      if (resource.isNonRemovable()) {
+         throw new NoPermissionException(resource);
+      }
+   }
 }
