@@ -78,7 +78,8 @@ public class PermissionsChecker {
    @Inject
    private UserDao userDao;
 
-   private String viewId = null;
+   // Package private so that tests can set it
+   String viewId = null;
 
    @Inject
    @UserDataStorage
@@ -99,10 +100,10 @@ public class PermissionsChecker {
     * Checks if the user has the given role on the given resource (either directly or through group membership).
     *
     * @param resource
-    *       any resource with defined permissions
+    *       any resource with defined permissions.
     * @param role
-    *       role to be checked
-    * @throws NoPermissionException
+    *       role to be checked.
+    * @throws NoPermissionException when the user does not have the permission.
     */
    public void checkRole(Resource resource, Role role) {
       checkOrganizationAndProject(resource, role);
@@ -112,32 +113,22 @@ public class PermissionsChecker {
       }
    }
 
+   /**
+    * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
+    * @param resource
+    *       any resource with the defined permissions.
+    * @param role
+    *       role to be checked.
+    * @param viewRole
+    *       role needed at the view.
+    * @throws NoPermissionException when the user does not have the permission.
+    */
    public void checkRoleWithView(final Resource resource, final Role role, final Role viewRole) {
       checkOrganizationAndProject(resource, role);
 
-      if (!hasRole(resource, role)) { // we do not have direct access
-         if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
-            final View view = viewDao.getViewById(viewId);
-
-            if (view != null) {
-               if (hasRole(view, viewRole)) { // do we have access to the view?
-                  final String authorId = view.getAuthorId();
-
-                  if (resource instanceof Collection) {
-                     if (view.getQuery().getCollectionIds().contains(resource.getId())) { // does the view contain the resource?
-                        if (authorId != null && !"".equals(authorId)) {
-                           if (hasRole(resource, role, authorId)) { // has the view author access to the resource?
-                              return; // grant access
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
+      if (!hasRoleWithView(resource, role, viewRole)) {
+         throw new NoPermissionException(resource);
       }
-
-      throw new NoPermissionException(resource);
    }
 
    private void checkOrganizationAndProject(final Resource resource, final Role role) {
@@ -168,6 +159,56 @@ public class PermissionsChecker {
 
    private boolean hasRole(Resource resource, Role role, String userId) {
       return getActualRoles(resource, userId).contains(role);
+   }
+
+   /**
+    * Invalidates a bit of cache when the information changes.
+    *
+    * @param resource Resource being updated.
+    */
+   public void invalidateCache(final Resource resource) {
+      for (final Role role : Role.values()) {
+         hasRoleCache.remove(resource.getId() + ":" + role.toString());
+      }
+   }
+
+   /**
+    * Checks whether the current user has the given role on the given resource
+    * or the user has access to a view whose author has the given role.
+    * @param resource
+    *       any resource with the defined permissions.
+    * @param role
+    *       role to be checked.
+    * @param viewRole
+    *       role needed at the view.
+    * @return true if and only if the user has the given role ont he resource.
+    */
+   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole) {
+      if (!hasRole(resource, role)) { // we do not have direct access
+         if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
+            final View view = viewDao.getViewById(viewId);
+
+            if (view != null) {
+               if (hasRole(view, viewRole)) { // do we have access to the view?
+                  final String authorId = view.getAuthorId();
+
+                  if (resource instanceof Collection) {
+                     if (view.getQuery().getCollectionIds().contains(resource.getId())) { // does the view contain the resource?
+                        if (authorId != null && !"".equals(authorId)) {
+                           if (hasRole(resource, role, authorId)) { // has the view author access to the resource?
+                              return true; // grant access
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      } else { // we have direct access
+         return true;
+      }
+
+      return false;
    }
 
    /**

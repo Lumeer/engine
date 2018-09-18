@@ -19,25 +19,30 @@
 package io.lumeer.core.facade;
 
 import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
+import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -104,6 +109,15 @@ public class ViewFacadeIT extends IntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private PermissionCheckerUtil permissionCheckerUtil;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    @Before
    public void configureProject() {
       JsonOrganization organization = new JsonOrganization();
@@ -141,7 +155,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    }
 
    private View prepareView(String code) {
-      return new JsonView(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE.toString(), CONFIG);
+      return new JsonView(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE.toString(), CONFIG, this.user.getId());
    }
 
    private View createView(String code) {
@@ -288,5 +302,66 @@ public class ViewFacadeIT extends IntegrationTestBase {
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
+   }
+
+   @Test
+   public void testCollectionAccessViaView() {
+      final String NON_EXISTING_USER = "non_existing_user";
+      final String COLLECTION_NAME = "kolekce1";
+      final String COLLECTION_ICON = "fa-eye";
+      final String COLLECTION_COLOR = "#abcdea";
+
+      // create collection under a different user
+      JsonPermissions collectionPermissions = new JsonPermissions();
+      Permission userPermission = new SimplePermission(NON_EXISTING_USER, Collection.ROLES);
+      collectionPermissions.updateUserPermissions(userPermission);
+
+      Collection collection = collectionFacade.createCollection(
+            new JsonCollection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.emptySet()));
+
+      // we are not able to read the collection now
+      try {
+         collectionFacade.getCollection(collection.getId());
+         fail("Still able to access collection where I have no access rights");
+      } catch (Exception e) {
+         assertThat(e).isInstanceOf(NoPermissionException.class);
+      }
+
+      // create a view under a different user
+      View view = createView(CODE2);
+      ((JsonView) view).setQuery(new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
+      viewFacade.updateView(view.getCode(), view);
+
+      System.out.println(viewFacade.updateUserPermissions(view.getCode(), new SimplePermission(NON_EXISTING_USER, View.ROLES), new SimplePermission(this.user.getId(), Collections.emptySet())));
+
+      try {
+         viewFacade.getViewByCode(CODE2);
+         fail("Still able to access view where I have no access rights");
+      } catch (Exception e) {
+         assertThat(e).isInstanceOf(NoPermissionException.class);
+      }
+
+      try {
+         viewFacade.updateUserPermissions(view.getCode(), new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+         fail("Can manage view without manage rights");
+      } catch (Exception e) {
+         assertThat(e).isInstanceOf(NoPermissionException.class);
+      }
+
+      // share the view and make sure we can see it now
+      Permissions viewPermissions = new JsonPermissions();
+      viewPermissions.updateUserPermissions(new SimplePermission(NON_EXISTING_USER, View.ROLES));
+      viewPermissions.updateUserPermissions(new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+      view.setPermissions(viewPermissions);
+      viewDao.updateView(view.getId(), view); // since we lost manage rights, we can only do it directly
+      permissionsChecker.invalidateCache(view);
+
+      // now this should be all possible
+      viewFacade.getViewByCode(CODE2);
+
+      // access the collection via the view with the current user
+      permissionCheckerUtil.setViewId(view.getId());
+      collectionFacade.getCollection(collection.getId());
    }
 }

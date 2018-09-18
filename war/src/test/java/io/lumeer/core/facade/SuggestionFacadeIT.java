@@ -83,6 +83,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    private static final JsonQuery QUERY;
    private Permission userPermission;
    private Permission groupPermission;
+   private User user;
 
    static {
       QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
@@ -123,6 +124,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
+      this.user = createdUser;
 
       userPermission = new SimplePermission(createdUser.getId(), View.ROLES);
       groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
@@ -262,7 +264,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    }
 
    private View prepareView(String name) {
-      return new JsonView(name, name, null, null, null, null, QUERY, PERSPECTIVE, CONFIG);
+      return new JsonView(name, name, null, null, null, null, QUERY, PERSPECTIVE, CONFIG, this.user.getId());
    }
 
    private View createView(String name) {
