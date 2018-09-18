@@ -78,8 +78,7 @@ public class PermissionsChecker {
    @Inject
    private UserDao userDao;
 
-   // Package private so that tests can set it
-   String viewId = null;
+   private String viewId = null;
 
    @Inject
    @UserDataStorage
@@ -357,5 +356,14 @@ public class PermissionsChecker {
       if (this.viewId == null) {
          this.viewId = viewId;
       }
+   }
+
+   // For testing purposes to allow viewId manipulation during test run.
+   void testSetViewId(final String viewId) {
+      this.viewId = viewId;
+   }
+
+   String testGetViewId() {
+      return viewId;
    }
 }

@@ -27,13 +27,13 @@ import javax.inject.Inject;
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-@RequestScoped
-public class PermissionCheckerUtil {
+public abstract class PermissionCheckerUtil {
 
-   @Inject
-   private PermissionsChecker permissionsChecker;
+   public static void setViewId(final PermissionsChecker permissionsChecker, final String viewId) {
+      permissionsChecker.testSetViewId(viewId);
+   }
 
-   public void setViewId(final String viewId) {
-      permissionsChecker.viewId = viewId;
+   public static String getViewId(final PermissionsChecker permissionsChecker) {
+      return permissionsChecker.testGetViewId();
    }
 }

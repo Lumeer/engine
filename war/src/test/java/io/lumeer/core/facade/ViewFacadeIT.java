@@ -113,9 +113,6 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private CollectionFacade collectionFacade;
 
    @Inject
-   private PermissionCheckerUtil permissionCheckerUtil;
-
-   @Inject
    private PermissionsChecker permissionsChecker;
 
    @Before
@@ -330,10 +327,11 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       // create a view under a different user
       View view = createView(CODE2);
+      ((JsonView) view).setAuthorId(NON_EXISTING_USER);
       ((JsonView) view).setQuery(new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
       viewFacade.updateView(view.getCode(), view);
 
-      System.out.println(viewFacade.updateUserPermissions(view.getCode(), new SimplePermission(NON_EXISTING_USER, View.ROLES), new SimplePermission(this.user.getId(), Collections.emptySet())));
+      viewFacade.updateUserPermissions(view.getCode(), new SimplePermission(NON_EXISTING_USER, View.ROLES), new SimplePermission(this.user.getId(), Collections.emptySet()));
 
       try {
          viewFacade.getViewByCode(CODE2);
@@ -361,7 +359,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       viewFacade.getViewByCode(CODE2);
 
       // access the collection via the view with the current user
-      permissionCheckerUtil.setViewId(view.getId());
+      PermissionCheckerUtil.setViewId(permissionsChecker, view.getId());
       collectionFacade.getCollection(collection.getId());
    }
 }
