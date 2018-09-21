@@ -121,14 +121,14 @@ public class AuthenticatedUser implements Serializable {
          if (!userByAuthId.getEmail().equals(email)) {
             userByAuthId.setName(name);
             userByAuthId.setEmail(email);
-            createDemoOrganizationIfNeeded(userByAuthId, false);
+            createDemoWorkspaceIfNeeded(userByAuthId);
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
          } else {
-            createDemoOrganizationIfNeeded(userByAuthId, true);
+            createDemoWorkspaceIfNeeded(userByAuthId);
             if (userByAuthId.getName() == null || !userByAuthId.getName().equals(name)) {
                userByAuthId.setName(name);
-               userDao.updateUser(userByAuthId.getId(), userByAuthId);
             }
+            userDao.updateUser(userByAuthId.getId(), userByAuthId);
          }
          userLoginDao.userLoggedIn(userByAuthId.getId());
       } else {
@@ -138,15 +138,16 @@ public class AuthenticatedUser implements Serializable {
             if (userByEmail.getAuthIds() != null) {
                userByEmail.getAuthIds().add(authId);
             } else {
-               userByEmail.setAuthIds(new HashSet<>(Arrays.asList(authId)));
+               userByEmail.setAuthIds(new HashSet<>(Collections.singletonList(authId)));
             }
-            createDemoOrganizationIfNeeded(userByEmail, false);
+            createDemoWorkspaceIfNeeded(userByEmail);
             userDao.updateUser(userByEmail.getId(), userByEmail);
             userLoginDao.userLoggedIn(userByEmail.getId());
          } else {
             User createdUser = createNewUser(email, authId);
             createdUser.setName(name);
-            createDemoOrganizationIfNeeded(createdUser, true);
+            createDemoWorkspaceIfNeeded(createdUser);
+            userDao.updateUser(createdUser.getId(), createdUser);
             userLoginDao.userLoggedIn(createdUser.getId());
          }
       }
@@ -165,7 +166,7 @@ public class AuthenticatedUser implements Serializable {
       return userDao.createUser(user);
    }
 
-   private void createDemoOrganizationIfNeeded(User user, boolean performUpdate) {
+   private void createDemoWorkspaceIfNeeded(User user) {
       if (user.getGroups() != null && !user.getGroups().isEmpty()) {
          return;
       }
@@ -178,10 +179,6 @@ public class AuthenticatedUser implements Serializable {
       Project project = createDemoProject(user);
 
       user.setDefaultWorkspace(new DefaultWorkspace(organization.getId(), project.getId()));
-
-      if (performUpdate) {
-         userDao.updateUser(user.getId(), user);
-      }
    }
 
    private Organization createDemoOrganization(User user) {
@@ -190,6 +187,7 @@ public class AuthenticatedUser implements Serializable {
 
       Organization organization = new JsonOrganization(code, "Lumeer demo", getDemoIcon(), getDemoColor(), null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
+      organization.setNonRemovable(true);
 
       return organizationDao.createOrganization(organization);
    }
@@ -199,6 +197,7 @@ public class AuthenticatedUser implements Serializable {
       final Permission userPermission = new SimplePermission(user.getId(), Project.ROLES);
       Project project = new JsonProject(code, "Project", getDemoIcon(), getDemoColor(), null, null);
       project.getPermissions().updateUserPermissions(userPermission);
+      project.setNonRemovable(true);
 
       return projectDao.createProject(project);
    }

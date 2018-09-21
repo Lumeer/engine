@@ -32,6 +32,7 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
    public static final String ICON = "icon";
    public static final String COLOR = "color";
    public static final String DESCRIPTION = "description";
+   public static final String NON_REMOVABLE = "nonRemovable";
    public static final String PERMISSIONS = "permissions";
 
    @Property(CODE)
@@ -49,6 +50,9 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
    @Property(DESCRIPTION)
    protected String description;
 
+   @Property(NON_REMOVABLE)
+   protected boolean nonRemovable;
+
    @Embedded(PERMISSIONS)
    protected MorphiaPermissions permissions;
 
@@ -63,6 +67,7 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
       this.icon = resource.getIcon();
       this.color = resource.getColor();
       this.description = resource.getDescription();
+      this.nonRemovable = resource.isNonRemovable();
       this.permissions = new MorphiaPermissions(resource.getPermissions());
    }
 
@@ -104,6 +109,14 @@ public abstract class MorphiaResource extends MorphiaEntity implements Resource 
 
    public void setDescription(final String description) {
       this.description = description;
+   }
+
+   public boolean isNonRemovable() {
+      return nonRemovable;
+   }
+
+   public void setNonRemovable(final boolean nonRemovable) {
+      this.nonRemovable = nonRemovable;
    }
 
    public Permissions getPermissions() {

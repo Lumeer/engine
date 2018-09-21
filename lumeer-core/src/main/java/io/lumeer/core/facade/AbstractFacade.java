@@ -76,6 +76,10 @@ abstract class AbstractFacade {
       resource.getPermissions().updateGroupPermissions(groupPermissions.toArray(new Permission[0]));
    }
 
+   protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {
+      destinationResource.setNonRemovable(originalResource.isNonRemovable());
+   }
+
    protected SearchQuery createPaginationQuery(Pagination pagination) {
       String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
