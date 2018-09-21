@@ -23,6 +23,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
@@ -184,6 +185,7 @@ public class PermissionsChecker {
     */
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole) {
       if (!hasRole(resource, role)) { // we do not have direct access
+
          if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
             final View view = viewDao.getViewById(viewId);
 
@@ -210,13 +212,37 @@ public class PermissionsChecker {
       return false;
    }
 
-   /**
-    * Returns all roles assigned to the authenticated user (whether direct or gained through group membership).
-    *
-    * @param resource
-    *       any resource with defined permissions
-    * @return set of actual roles
-    */
+
+   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final Query query) {
+      if (!hasRole(resource, role)) { // we do not have direct access
+
+         if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
+            final View view = viewDao.getViewById(viewId);
+
+            if (view != null) {
+               if (hasRole(view, viewRole)) { // do we have access to the view?
+                  final String authorId = view.getAuthorId();
+
+                  if (query != null && query.isMoreSpecificThan(view.getQuery())) {
+                     return true;
+                  }
+               }
+            }
+         }
+      } else { // we have direct access
+         return true;
+      }
+
+      return false;
+   }
+
+      /**
+       * Returns all roles assigned to the authenticated user (whether direct or gained through group membership).
+       *
+       * @param resource
+       *       any resource with defined permissions
+       * @return set of actual roles
+       */
    public Set<Role> getActualRoles(Resource resource) {
       String userId = authenticatedUser.getCurrentUserId();
       return getActualRoles(resource, userId);
