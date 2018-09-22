@@ -41,6 +41,10 @@ public interface Resource {
 
    String getColor();
 
+   boolean isNonRemovable();
+
+   void setNonRemovable(boolean nonRemovable);
+
    Permissions getPermissions();
 
    void setPermissions(Permissions permissions);

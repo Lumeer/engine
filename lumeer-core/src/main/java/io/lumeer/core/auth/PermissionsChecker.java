@@ -380,4 +380,16 @@ public class PermissionsChecker {
    String testGetViewId() {
       return viewId;
    }
+
+   /**
+    * Checks whether it is possible to delete the given resource.
+    *
+    * @param resource Resource to check.
+    * @throws NoPermissionException When it is not possible to delete the resource.
+    */
+   public void checkCanDelete(Resource resource) {
+      if (resource.isNonRemovable()) {
+         throw new NoPermissionException(resource);
+      }
+   }
 }

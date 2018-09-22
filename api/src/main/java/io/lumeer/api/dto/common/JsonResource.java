@@ -40,13 +40,14 @@ public abstract class JsonResource implements Resource {
    protected String icon;
    protected String color;
    protected String description;
+   protected boolean nonRemovable;
 
    protected JsonPermissions permissions;
 
    protected JsonResource() {
    }
 
-   protected JsonResource(final String code, final String name, final String icon, final String color,  String description, final JsonPermissions permissions) {
+   protected JsonResource(final String code, final String name, final String icon, final String color, String description, final JsonPermissions permissions) {
       this.code = code;
       this.name = name;
       this.icon = icon;
@@ -61,7 +62,8 @@ public abstract class JsonResource implements Resource {
       this.name = resource.getName();
       this.icon = resource.getIcon();
       this.color = resource.getColor();
-      this.description =  resource.getDescription();
+      this.description = resource.getDescription();
+      this.nonRemovable = resource.isNonRemovable();
       this.permissions = new JsonPermissions(resource.getPermissions());
    }
 
@@ -103,6 +105,16 @@ public abstract class JsonResource implements Resource {
    @Override
    public String getColor() {
       return color;
+   }
+
+   @Override
+   public boolean isNonRemovable() {
+      return nonRemovable;
+   }
+
+   @Override
+   public void setNonRemovable(final boolean nonRemovable) {
+      this.nonRemovable = nonRemovable;
    }
 
    @Override

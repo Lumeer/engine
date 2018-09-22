@@ -93,6 +93,7 @@ public class ProjectFacade extends AbstractFacade {
       permissionsChecker.checkRole(storedProject, Role.MANAGE);
 
       keepStoredPermissions(project, storedProject.getPermissions());
+      keepUnmodifiableFields(project, storedProject);
       Project updatedProject = projectDao.updateProject(storedProject.getId(), project);
       workspaceCache.updateProject(projectCode, project);
 
@@ -102,6 +103,7 @@ public class ProjectFacade extends AbstractFacade {
    public void deleteProject(final String projectCode) {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
+      permissionsChecker.checkCanDelete(project);
 
       deleteProjectScopedRepositories(project);
       workspaceCache.removeProject(projectCode);

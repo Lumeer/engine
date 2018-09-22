@@ -88,6 +88,7 @@ public class OrganizationFacade extends AbstractFacade {
       permissionsChecker.checkRole(storedOrganization, Role.MANAGE);
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
+      keepUnmodifiableFields(organization, storedOrganization);
       Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization);
       workspaceCache.updateOrganization(updatedOrganization.getCode(), updatedOrganization);
 
@@ -97,6 +98,7 @@ public class OrganizationFacade extends AbstractFacade {
    public void deleteOrganization(final String organizationCode) {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(organization, Role.MANAGE);
+      permissionsChecker.checkCanDelete(organization);
 
       deleteOrganizationScopedRepositories(organization);
 
