@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.util.FilterParser;
@@ -78,11 +79,15 @@ public class SearchFacade extends AbstractFacade {
          collections.addAll(getCollectionsByCollectionSearch(query));
       }
 
-      return new ArrayList<>(collections);
+      return collections
+            .stream()
+            .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ, query))
+            .collect(Collectors.toList());
    }
 
-   public List<Document> searchDocuments(Query query) {
-      Set<Document> documents = new HashSet<>();
+   public List<Document> searchDocuments(final Query query) {
+      final Map<String, Collection> collectionCache = new HashMap<>();
+      final Set<Document> documents = new HashSet<>();
 
       if (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()) {
          documents.addAll(getDocumentsByIds(query.getDocumentIds()));
@@ -92,7 +97,15 @@ public class SearchFacade extends AbstractFacade {
          documents.addAll(searchDocumentsByQuery(query));
       }
 
-      return new ArrayList<>(documents);
+      return documents
+            .stream()
+            .filter(document ->
+                  permissionsChecker.hasRoleWithView(
+                        collectionCache.computeIfAbsent(document.getCollectionId(), id -> collectionDao.getCollectionById(id)),
+                        Role.READ,
+                        Role.READ,
+                        query))
+            .collect(Collectors.toList());
    }
 
    private boolean isEmptyQuery(final Query query) {

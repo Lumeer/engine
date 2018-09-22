@@ -81,6 +81,7 @@ public class ViewFacade extends AbstractFacade {
       SearchQuery searchQuery = createPaginationQuery(pagination);
 
       return viewDao.getViews(searchQuery).stream()
+                    .filter(view -> permissionsChecker.hasRole(view, Role.READ))
                     .map(this::mapResource)
                     .collect(Collectors.toList());
    }

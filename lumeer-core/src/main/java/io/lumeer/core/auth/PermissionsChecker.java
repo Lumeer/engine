@@ -185,64 +185,52 @@ public class PermissionsChecker {
     */
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole) {
       if (!hasRole(resource, role)) { // we do not have direct access
+         return getResourceRoleViaView(resource, role, viewRole);
+      } else { // we have direct access
+         return true;
+      }
+   }
 
-         if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
-            final View view = viewDao.getViewById(viewId);
+   private boolean getResourceRoleViaView(final Resource resource, final Role role, final Role viewRole) {
+      if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
+         final View view = viewDao.getViewById(viewId);
 
-            if (view != null) {
-               if (hasRole(view, viewRole)) { // do we have access to the view?
-                  final String authorId = view.getAuthorId();
+         if (view != null) {
+            if (hasRole(view, viewRole)) { // do we have access to the view?
+               final String authorId = view.getAuthorId();
 
-                  if (resource instanceof Collection) {
-                     if (view.getQuery().getCollectionIds().contains(resource.getId())) { // does the view contain the resource?
-                        if (authorId != null && !"".equals(authorId)) {
-                           if (hasRole(resource, role, authorId)) { // has the view author access to the resource?
-                              return true; // grant access
-                           }
+               if (resource instanceof Collection) {
+                  if (view.getQuery().getCollectionIds().contains(resource.getId())) { // does the view contain the resource?
+                     if (authorId != null && !"".equals(authorId)) {
+                        if (hasRole(resource, role, authorId)) { // has the view author access to the resource?
+                           return true; // grant access
                         }
                      }
                   }
                }
             }
          }
-      } else { // we have direct access
-         return true;
       }
 
       return false;
    }
-
 
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final Query query) {
       if (!hasRole(resource, role)) { // we do not have direct access
-
-         if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
-            final View view = viewDao.getViewById(viewId);
-
-            if (view != null) {
-               if (hasRole(view, viewRole)) { // do we have access to the view?
-                  final String authorId = view.getAuthorId();
-
-                  if (query != null && query.isMoreSpecificThan(view.getQuery())) {
-                     return true;
-                  }
-               }
-            }
-         }
+         return getResourceRoleViaView(resource, role, viewRole) &&
+               (query == null || query.isMoreSpecificThan(viewDao.getViewById(viewId).getQuery()));
       } else { // we have direct access
          return true;
       }
-
-      return false;
    }
 
-      /**
-       * Returns all roles assigned to the authenticated user (whether direct or gained through group membership).
-       *
-       * @param resource
-       *       any resource with defined permissions
-       * @return set of actual roles
-       */
+   /**
+    * Returns all roles assigned to the authenticated user (whether direct or gained through group membership).
+    *
+    * @param resource
+    *       any resource with defined permissions
+    * @return set of actual roles
+    */
    public Set<Role> getActualRoles(Resource resource) {
       String userId = authenticatedUser.getCurrentUserId();
       return getActualRoles(resource, userId);
