@@ -36,4 +36,38 @@ public interface Query {
 
    Integer getPageSize();
 
+   default boolean isMoreSpecificThan(Query otherQuery) {
+      if (otherQuery.getCollectionIds() != null && otherQuery.getCollectionIds().size() > 0) {
+         if (getCollectionIds() == null || !getCollectionIds().containsAll(otherQuery.getCollectionIds())) {
+            return false;
+         }
+      }
+
+      if (otherQuery.getDocumentIds() != null && otherQuery.getDocumentIds().size() > 0) {
+         if (getDocumentIds() == null || !getDocumentIds().containsAll(otherQuery.getDocumentIds())) {
+            return false;
+         }
+      }
+
+      if (otherQuery.getLinkTypeIds() != null && otherQuery.getLinkTypeIds().size() > 0) {
+         if (getLinkTypeIds() == null || !getLinkTypeIds().containsAll(otherQuery.getLinkTypeIds())) {
+            return false;
+         }
+      }
+
+      if (otherQuery.getFilters() != null && otherQuery.getFilters().size() > 0) {
+         if (getFilters() == null || !getFilters().containsAll(otherQuery.getFilters())) {
+            return false;
+         }
+      }
+
+      if (otherQuery.getFulltext() != null) {
+         if (getFulltext() == null || !getFulltext().startsWith(otherQuery.getFulltext())) {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
 }

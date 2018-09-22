@@ -33,10 +33,12 @@ public class JsonView extends JsonResource implements View {
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
+   public static final String AUTHOR_ID = "authorId";
 
    private JsonQuery query;
    private String perspective;
    private Object config;
+   private String authorId;
 
    public JsonView() {
    }
@@ -50,12 +52,14 @@ public class JsonView extends JsonResource implements View {
          @JsonProperty(PERMISSIONS) final JsonPermissions permissions,
          @JsonProperty(QUERY) final JsonQuery query,
          @JsonProperty(PERSPECTIVE) final String perspective,
-         @JsonProperty(CONFIG) final Object config) {
+         @JsonProperty(CONFIG) final Object config,
+         @JsonProperty(AUTHOR_ID) final String authorId) {
       super(code, name, icon, color, description, permissions);
 
       this.query = query;
       this.perspective = perspective;
       this.config = config;
+      this.authorId = authorId;
    }
 
    public JsonView(View view) {
@@ -64,6 +68,7 @@ public class JsonView extends JsonResource implements View {
       this.query = new JsonQuery(view.getQuery());
       this.perspective = view.getPerspective();
       this.config = view.getConfig();
+      this.authorId = view.getAuthorId();
    }
 
    @Override
@@ -81,6 +86,11 @@ public class JsonView extends JsonResource implements View {
       return config;
    }
 
+   @Override
+   public String getAuthorId() {
+      return authorId;
+   }
+
    public void setQuery(final JsonQuery query) {
       this.query = query;
    }
@@ -91,6 +101,10 @@ public class JsonView extends JsonResource implements View {
 
    public void setConfig(final Object config) {
       this.config = config;
+   }
+
+   public void setAuthorId(final String authorId) {
+      this.authorId = authorId;
    }
 
    @Override
@@ -104,6 +118,7 @@ public class JsonView extends JsonResource implements View {
             ", permissions=" + permissions +
             ", query=" + query +
             ", perspective='" + perspective + '\'' +
+            ", authorId='" + authorId + '\'' +
             '}';
    }
 

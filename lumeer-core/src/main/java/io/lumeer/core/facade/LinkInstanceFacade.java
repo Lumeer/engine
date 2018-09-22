@@ -82,7 +82,7 @@ public class LinkInstanceFacade  extends AbstractFacade{
    private void checkLinkInstancePermission(java.util.Collection<String> collectionIds) {
       List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       for (Collection collection : collections) {
-         permissionsChecker.checkRole(collection, Role.WRITE);
+         permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
       }
    }
 

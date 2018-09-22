@@ -127,7 +127,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection getCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.READ);
+      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
       return mapResource(collection);
    }
@@ -137,6 +137,7 @@ public class CollectionFacade extends AbstractFacade {
 
       return collectionDao.getCollections(searchQuery).stream()
                           .map(this::mapResource)
+                          .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
                           .collect(Collectors.toList());
    }
 
@@ -174,7 +175,12 @@ public class CollectionFacade extends AbstractFacade {
 
    public long getDocumentsCountInAllCollections() {
       final LongAdder la = new LongAdder();
-      collectionDao.getAllCollectionIds().forEach(id -> la.add(getCollection(id).getDocumentsCount()));
+      collectionDao.getAllCollectionIds().forEach(id -> {
+         final Collection collection = collectionDao.getCollectionById(id);
+         if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
+            la.add(getCollection(id).getDocumentsCount());
+         }
+      });
 
       return la.longValue();
    }
@@ -249,6 +255,7 @@ public class CollectionFacade extends AbstractFacade {
    public Set<Permission> updateUserPermissions(final String collectionId, final Permission... userPermissions) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.invalidateCache(collection);
 
       collection.getPermissions().updateUserPermissions(userPermissions);
       Collection updatedCollection = collectionDao.updateCollection(collection.getId(), collection);
@@ -259,6 +266,7 @@ public class CollectionFacade extends AbstractFacade {
    public void removeUserPermission(final String collectionId, final String userId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.invalidateCache(collection);
 
       collection.getPermissions().removeUserPermission(userId);
       collectionDao.updateCollection(collection.getId(), collection);
@@ -267,6 +275,7 @@ public class CollectionFacade extends AbstractFacade {
    public Set<Permission> updateGroupPermissions(final String collectionId, final Permission... groupPermissions) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.invalidateCache(collection);
 
       collection.getPermissions().updateGroupPermissions(groupPermissions);
       Collection updatedCollection = collectionDao.updateCollection(collection.getId(), collection);
@@ -277,6 +286,7 @@ public class CollectionFacade extends AbstractFacade {
    public void removeGroupPermission(final String collectionId, final String groupId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.invalidateCache(collection);
 
       collection.getPermissions().removeGroupPermission(groupId);
       collectionDao.updateCollection(collection.getId(), collection);

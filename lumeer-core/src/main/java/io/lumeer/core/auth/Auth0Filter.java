@@ -61,7 +61,7 @@ import javax.servlet.http.HttpServletResponse;
 public class Auth0Filter implements Filter {
 
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
-   public static final String VIEW_ID = "view_id";
+   public static final String VIEW_CODE = "view_code";
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -204,13 +204,13 @@ public class Auth0Filter implements Filter {
    }
 
    private void parseViewId(final HttpServletRequest req) {
-      final String viewId = req.getHeader(VIEW_ID);
+      final String viewCode = req.getHeader(VIEW_CODE);
 
-      if (viewId != null) {
-         permissionsChecker.setViewId(viewId);
+      if (viewCode != null) {
+         permissionsChecker.setViewCode(viewCode);
       } else {
          // there is no view, by setting it to an empty string, we lock any further view id changes
-         permissionsChecker.setViewId("");
+         permissionsChecker.setViewCode("");
       }
    }
 

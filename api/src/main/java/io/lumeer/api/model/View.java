@@ -37,4 +37,6 @@ public interface View extends Resource {
 
    Object getConfig();
 
+   String getAuthorId();
+
 }

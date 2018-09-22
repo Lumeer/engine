@@ -72,7 +72,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public Document createDocument(String collectionId, Document document) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.WRITE);
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
       permissionsChecker.checkDocumentLimits(document);
 
       DataDocument data = document.getData();
@@ -97,7 +97,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public Document updateDocumentData(String collectionId, String documentId, DataDocument data) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.WRITE);
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
       Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
@@ -119,7 +119,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.WRITE);
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
 
@@ -150,7 +150,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public void deleteDocument(String collectionId, String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.WRITE);
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       DataDocument data = dataDao.getData(collectionId, documentId);
       updateCollectionMetadata(collection, Collections.emptySet(), data.keySet(), -1);
@@ -220,7 +220,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public Document getDocument(String collectionId, String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.READ);
+      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
       Document document = documentDao.getDocumentById(documentId);
 
@@ -232,7 +232,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public List<Document> getDocuments(String collectionId, Pagination pagination) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.READ);
+      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
       Map<String, DataDocument> dataDocuments = getDataDocuments(collection.getId(), pagination);
 

@@ -81,6 +81,7 @@ public class ViewFacade extends AbstractFacade {
       SearchQuery searchQuery = createPaginationQuery(pagination);
 
       return viewDao.getViews(searchQuery).stream()
+                    .filter(view -> permissionsChecker.hasRole(view, Role.READ))
                     .map(this::mapResource)
                     .collect(Collectors.toList());
    }
@@ -95,6 +96,7 @@ public class ViewFacade extends AbstractFacade {
    public Set<Permission> updateUserPermissions(final String code, final Permission... userPermissions) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.invalidateCache(view);
 
       view.getPermissions().clearUserPermissions();
       view.getPermissions().updateUserPermissions(userPermissions);
@@ -106,6 +108,7 @@ public class ViewFacade extends AbstractFacade {
    public void removeUserPermission(final String code, final String userId) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.invalidateCache(view);
 
       view.getPermissions().removeUserPermission(userId);
       viewDao.updateView(view.getId(), view);
@@ -114,6 +117,7 @@ public class ViewFacade extends AbstractFacade {
    public Set<Permission> updateGroupPermissions(final String code, final Permission... groupPermissions) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.invalidateCache(view);
 
       view.getPermissions().clearGroupPermissions();
       view.getPermissions().updateGroupPermissions(groupPermissions);
@@ -125,6 +129,7 @@ public class ViewFacade extends AbstractFacade {
    public void removeGroupPermission(final String code, final String groupId) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.invalidateCache(view);
 
       view.getPermissions().removeGroupPermission(groupId);
       viewDao.updateView(view.getId(), view);
