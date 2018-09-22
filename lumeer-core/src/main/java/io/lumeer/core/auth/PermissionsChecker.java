@@ -79,7 +79,7 @@ public class PermissionsChecker {
    @Inject
    private UserDao userDao;
 
-   private String viewId = null;
+   private String viewCode = null;
 
    @Inject
    @UserDataStorage
@@ -192,8 +192,8 @@ public class PermissionsChecker {
    }
 
    private boolean getResourceRoleViaView(final Resource resource, final Role role, final Role viewRole) {
-      if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
-         final View view = viewDao.getViewById(viewId);
+      if (viewCode != null && !"".equals(viewCode)) { // we might have the access through a view
+         final View view = viewDao.getViewByCode(viewCode);
 
          if (view != null) {
             if (hasRole(view, viewRole)) { // do we have access to the view?
@@ -218,7 +218,7 @@ public class PermissionsChecker {
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final Query query) {
       if (!hasRole(resource, role)) { // we do not have direct access
          return getResourceRoleViaView(resource, role, viewRole) &&
-               (query == null || query.isMoreSpecificThan(viewDao.getViewById(viewId).getQuery()));
+               (query == null || query.isMoreSpecificThan(viewDao.getViewByCode(viewCode).getQuery()));
       } else { // we have direct access
          return true;
       }
@@ -360,25 +360,25 @@ public class PermissionsChecker {
    }
 
    /**
-    * Sets the view ID that is being worked with. This allows us to execute queries under a different user supposing
-    * we have access to the view and the owner of the view can still execute it. For security reasons, the view ID
+    * Sets the view code that is being worked with. This allows us to execute queries under a different user supposing
+    * we have access to the view and the owner of the view can still execute it. For security reasons, the view code
     * cannot be changed along the way.
     *
-    * @param viewId ID of the view
+    * @param viewCode code of the view
     */
-   public void setViewId(final String viewId) {
-      if (this.viewId == null) {
-         this.viewId = viewId;
+   public void setViewCode(final String viewCode) {
+      if (this.viewCode == null) {
+         this.viewCode = viewCode;
       }
    }
 
-   // For testing purposes to allow viewId manipulation during test run.
-   void testSetViewId(final String viewId) {
-      this.viewId = viewId;
+   // For testing purposes to allow viewCode manipulation during test run.
+   void testSetViewCode(final String viewCode) {
+      this.viewCode = viewCode;
    }
 
-   String testGetViewId() {
-      return viewId;
+   String testGetViewCode() {
+      return viewCode;
    }
 
    /**

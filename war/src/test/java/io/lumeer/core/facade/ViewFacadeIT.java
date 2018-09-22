@@ -359,7 +359,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       viewFacade.getViewByCode(CODE2);
 
       // access the collection via the view with the current user
-      PermissionCheckerUtil.setViewId(permissionsChecker, view.getId());
+      PermissionCheckerUtil.setViewCode(permissionsChecker, view.getCode());
       collectionFacade.getCollection(collection.getId());
    }
 }

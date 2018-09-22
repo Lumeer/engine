@@ -29,11 +29,11 @@ import javax.inject.Inject;
  */
 public abstract class PermissionCheckerUtil {
 
-   public static void setViewId(final PermissionsChecker permissionsChecker, final String viewId) {
-      permissionsChecker.testSetViewId(viewId);
+   public static void setViewCode(final PermissionsChecker permissionsChecker, final String viewCode) {
+      permissionsChecker.testSetViewCode(viewCode);
    }
 
-   public static String getViewId(final PermissionsChecker permissionsChecker) {
-      return permissionsChecker.testGetViewId();
+   public static String getViewCode(final PermissionsChecker permissionsChecker) {
+      return permissionsChecker.testGetViewCode();
    }
 }
