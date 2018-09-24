@@ -23,8 +23,10 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
@@ -40,8 +42,18 @@ public class ViewFacade extends AbstractFacade {
    @Inject
    private ViewDao viewDao;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private CollectionDao collectionDao;
+
    public View createView(View view) {
-      // TODO check collection permissions
+      if (view.getQuery().getCollectionIds() != null) {
+         collectionDao.getCollectionsByIds(view.getQuery().getCollectionIds()).forEach(collection ->
+               permissionsChecker.checkRole(collection, Role.READ));
+      }
+      view.setAuthorId(authenticatedUser.getCurrentUserId());
 
       if (view.getCode() == null || view.getCode().isEmpty()) {
          view.setCode(this.generateViewCode(view.getName()));
