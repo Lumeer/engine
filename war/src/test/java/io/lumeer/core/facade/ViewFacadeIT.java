@@ -88,7 +88,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "TORG";
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("54759eb3c090d83494e2d804"), null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject
@@ -149,6 +149,12 @@ public class ViewFacadeIT extends IntegrationTestBase {
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
       viewDao.setProject(storedProject);
+
+      Collection collection = collectionFacade.createCollection(
+            new JsonCollection("abc", "abc random", ICON, COLOR, projectPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+      QUERY.getCollectionIds().clear();
+      QUERY.getCollectionIds().add(collection.getId());
    }
 
    private View prepareView(String code) {
