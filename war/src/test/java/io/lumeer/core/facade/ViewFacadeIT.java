@@ -88,7 +88,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "TORG";
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("54759eb3c090d83494e2d804"), null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject
