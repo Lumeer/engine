@@ -22,12 +22,14 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -36,7 +38,9 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -96,7 +100,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String PERMISSIONS_URL = VIEWS_URL + "/" + CODE + "/permissions";
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject
@@ -110,6 +114,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private ViewDao viewDao;
+
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
 
    @Before
    public void configureProject() {
@@ -143,7 +153,15 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
+      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
+
       viewDao.setProject(storedProject);
+
+      Collection collection = collectionFacade.createCollection(
+            new JsonCollection("abc", "abc random", ICON, COLOR, projectPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+      QUERY.getCollectionIds().clear();
+      QUERY.getCollectionIds().add(collection.getId());
    }
 
    private View prepareView(String code) {
