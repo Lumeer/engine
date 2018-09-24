@@ -39,4 +39,6 @@ public interface View extends Resource {
 
    String getAuthorId();
 
+   void setAuthorId(final String authorId);
+
 }
