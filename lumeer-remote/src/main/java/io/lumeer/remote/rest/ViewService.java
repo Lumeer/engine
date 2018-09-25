@@ -152,13 +152,17 @@ public class ViewService extends AbstractService {
 
    @GET
    @Path("all/collections")
-   public List<JsonCollection> getViewsCollections(String... viewCodes) {
+   public List<JsonCollection> getViewsCollections(@QueryParam("viewCodes") String viewCodes) {
       final Set<Collection> collections = new HashSet<>();
 
-      Arrays.asList(viewCodes).stream()
+      System.out.println("@@@@@@@@@@@@########### " + viewCodes);
+
+      Arrays.asList(viewCodes.split(",")).stream()
             .map(viewFacade::getViewByCode)
-            .map(View::getQuery)
-            .forEach(query -> collections.addAll(searchFacade.searchCollections(query)));
+            .forEach(view -> {
+               //TODO add permission checker to switch view_codes
+               collections.addAll(searchFacade.searchCollections(view.getQuery()));
+            });
 
       return collections.stream()
             .map(JsonCollection::convert)

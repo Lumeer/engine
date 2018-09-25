@@ -70,6 +70,19 @@ public class SearchFacade extends AbstractFacade {
    private AuthenticatedUserGroups authenticatedUserGroups;
 
    public List<Collection> searchCollections(Query query) {
+      Set<Collection> collections = getQueryCollections(query);
+
+      final View view = permissionsChecker.getActiveView();
+      if (view != null) {
+         collections.addAll(getQueryCollections(view.getQuery()));
+      }
+
+      return new ArrayList<>(collections);
+   }
+
+   private Set<Collection> getQueryCollections(Query query) {
+      System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$čč qjurijuju " + query.toString());
+
       Set<Collection> collections = new HashSet<>();
 
       if (query.getLinkTypeIds() != null && query.getLinkTypeIds().size() > 0) {
@@ -89,15 +102,11 @@ public class SearchFacade extends AbstractFacade {
          collections.addAll(getCollectionsByCollectionSearch(query));
       }
 
-      final View view = permissionsChecker.getActiveView();
-      if (view != null) {
-         collections.addAll(searchCollections(view.getQuery()));
-      }
+      collections.forEach(System.out::println);
 
-      return collections
-            .stream()
+      return collections.stream()
             .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ, query))
-            .collect(Collectors.toList());
+            .collect(Collectors.toSet());
    }
 
    public List<Document> searchDocuments(final Query query) {
