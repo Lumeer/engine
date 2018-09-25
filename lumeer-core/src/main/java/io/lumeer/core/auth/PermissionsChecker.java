@@ -28,11 +28,8 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
-import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.CollectionFacade;
@@ -213,6 +210,18 @@ public class PermissionsChecker {
       }
 
       return false;
+   }
+
+   /**
+    * Gets the active view provided in view_code HTTP header through REST endpoint.
+    * @return The active View when exists, null otherwise.
+    */
+   public View getActiveView() {
+      if (viewCode != null && !"".equals(viewCode)) {
+         return viewDao.getViewByCode(viewCode);
+      }
+
+      return null;
    }
 
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final Query query) {

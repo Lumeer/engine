@@ -18,28 +18,30 @@
  */
 package io.lumeer.storage.api.query;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public class DatabaseQuery {
 
-   private final String user;
+   private final Set<String> users;
    private final Set<String> groups;
    private final Integer page;
    private final Integer pageSize;
 
    protected DatabaseQuery(Builder builder) {
-      this.user = builder.user;
+      this.users = builder.users;
       this.groups = builder.groups;
       this.page = builder.page;
       this.pageSize = builder.pageSize;
    }
 
-   public String getUser() {
-      return user;
+   public Set<String> getUsers() {
+      return Collections.unmodifiableSet(users);
    }
 
    public Set<String> getGroups() {
@@ -54,19 +56,19 @@ public class DatabaseQuery {
       return pageSize;
    }
 
-   public static Builder createBuilder(String user) {
-      return new Builder(user);
+   public static Builder createBuilder(String... users) {
+      return new Builder(users);
    }
 
    public static class Builder<T extends Builder<T>> {
 
-      private final String user;
+      private final Set<String> users;
       private Set<String> groups = new HashSet<>();
       private Integer page;
       private Integer pageSize;
 
-      protected Builder(String user) {
-         this.user = user;
+      protected Builder(String... users) {
+         this.users = Arrays.asList(users).stream().collect(Collectors.toSet());
       }
 
       public T groups(Set<String> groups) {

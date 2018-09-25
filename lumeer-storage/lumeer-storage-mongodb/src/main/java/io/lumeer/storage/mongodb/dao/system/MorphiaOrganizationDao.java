@@ -20,23 +20,18 @@ package io.lumeer.storage.mongodb.dao.system;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.MorphiaOrganization;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import com.mongodb.WriteResult;
 import org.bson.types.ObjectId;
-import org.mongodb.morphia.query.Criteria;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -118,29 +113,8 @@ public class MorphiaOrganizationDao extends SystemScopedDao implements Organizat
    private Query<MorphiaOrganization> createOrganizationQuery(DatabaseQuery query) {
       Query<MorphiaOrganization> organizationQuery = datastore.createQuery(MorphiaOrganization.class).disableValidation();
 
-      List<Criteria> criteria = new ArrayList<>();
-      criteria.add(createUserCriteria(organizationQuery, query.getUser()));
-      query.getGroups().forEach(group -> criteria.add(createGroupCriteria(organizationQuery, group)));
-      organizationQuery.or(criteria.toArray(new Criteria[] {}));
+      organizationQuery.or(createPermissionsCriteria(organizationQuery, query));
 
       return organizationQuery;
    }
-
-   private Criteria createUserCriteria(Query<MorphiaOrganization> organizationQuery, String user) {
-      return organizationQuery.criteria(MorphiaOrganization.PERMISSIONS + "." + MorphiaPermissions.USER_ROLES)
-                              .elemMatch(createPermissionQuery(user));
-   }
-
-   private Query<MorphiaPermission> createPermissionQuery(String name) {
-      return datastore.createQuery(MorphiaPermission.class)
-                      .disableValidation()
-                      .filter(MorphiaPermission.ID, name)
-                      .field(MorphiaPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
-   }
-
-   private Criteria createGroupCriteria(Query<MorphiaOrganization> organizationQuery, String group) {
-      return organizationQuery.criteria(MorphiaOrganization.PERMISSIONS + "." + MorphiaPermissions.GROUP_ROLES)
-                              .elemMatch(createPermissionQuery(group));
-   }
-
 }

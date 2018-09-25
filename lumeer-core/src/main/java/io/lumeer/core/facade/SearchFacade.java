@@ -256,13 +256,20 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private SearchQuery.Builder createCollectionSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+      final View view = permissionsChecker.getActiveView();
+      final String currentUserId = authenticatedUser.getCurrentUserId();
+      final Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+      final List<String> users = new ArrayList<>();
+
+      users.add(currentUserId);
+      if (view != null) {
+         users.add(view.getAuthorId());
+      }
 
       Set<String> collectionIds = query.getCollectionIds() != null ? new HashSet<>(query.getCollectionIds()) : new HashSet<>();
       collectionIds.addAll(additionalCollectionIds);
 
-      return SearchQuery.createBuilder(user).groups(groups)
+      return SearchQuery.createBuilder(users.toArray(new String[users.size()])).groups(groups)
                         .collectionIds(collectionIds);
    }
 

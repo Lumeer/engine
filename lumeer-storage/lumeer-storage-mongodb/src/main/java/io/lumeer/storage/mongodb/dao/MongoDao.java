@@ -50,7 +50,7 @@ public abstract class MongoDao {
 
    protected <T> Criteria[] createPermissionsCriteria(Query<T> mongoQuery, DatabaseQuery databaseQuery) {
       List<Criteria> criteria = new ArrayList<>();
-      criteria.add(createUserCriteria(mongoQuery, databaseQuery.getUser()));
+      databaseQuery.getUsers().forEach(user -> criteria.add(createUserCriteria(mongoQuery, user)));
       databaseQuery.getGroups().forEach(group -> criteria.add(createGroupCriteria(mongoQuery, group)));
       return criteria.toArray(new Criteria[] {});
    }
