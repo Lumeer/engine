@@ -70,10 +70,13 @@ public class MongoFilters {
    }
 
    public static Bson permissionsFilter(DatabaseQuery databaseQuery) {
-      List<Bson> filters = databaseQuery.getGroups().stream()
+      final List<Bson> filters = databaseQuery.getGroups().stream()
                                         .map(MongoFilters::groupPermissionsFilter)
                                         .collect(Collectors.toList());
-      filters.add(userPermissionsFilter(databaseQuery.getUser()));
+
+      filters.addAll(databaseQuery.getUsers().stream()
+            .map(MongoFilters::userPermissionsFilter)
+            .collect(Collectors.toList()));
 
       return Filters.or(filters);
    }

@@ -21,7 +21,6 @@ package io.lumeer.storage.api.query;
 import io.lumeer.storage.api.filter.AttributeFilter;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 
@@ -88,8 +87,8 @@ public class SearchQuery extends DatabaseQuery {
       return !isFulltextQuery()  && !isLinkTypeIdsQuery() && !isDocumentIdsQuery() && !isCollectionIdsQuery();
    }
 
-   public static Builder createBuilder(String user) {
-      return new Builder(user);
+   public static Builder createBuilder(String... users) {
+      return new Builder(users);
    }
 
    public static class Builder extends DatabaseQuery.Builder<Builder> {
@@ -100,8 +99,8 @@ public class SearchQuery extends DatabaseQuery {
       private Set<String> documentIds;
       private Set<AttributeFilter> filters;
 
-      private Builder(final String user) {
-         super(user);
+      private Builder(final String... users) {
+         super(users);
       }
 
       public Builder fulltext(String fulltext) {
