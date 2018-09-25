@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
@@ -30,6 +31,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -62,10 +64,18 @@ public class SearchFacade extends AbstractFacade {
    private ViewDao viewDao;
 
    @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
    public List<Collection> searchCollections(Query query) {
       Set<Collection> collections = new HashSet<>();
+
+      if (query.getLinkTypeIds() != null && query.getLinkTypeIds().size() > 0) {
+         final List<LinkType> linkTypes = query.getLinkTypeIds().stream().map(linkTypeDao::getLinkType).collect(Collectors.toList());
+         linkTypes.forEach(linkType -> collections.addAll(collectionDao.getCollectionsByIds(linkType.getCollectionIds())));
+      }
 
       if ((query.getFulltext() != null && !query.getFulltext().isEmpty()) || (query.getFilters() != null && !query.getFilters().isEmpty())) {
          collections.addAll(getCollectionsByDocumentsSearch(query));
@@ -77,6 +87,11 @@ public class SearchFacade extends AbstractFacade {
 
       if (collectionQueryIsNotEmpty(query) || isEmptyQuery(query)) {
          collections.addAll(getCollectionsByCollectionSearch(query));
+      }
+
+      final View view = permissionsChecker.getActiveView();
+      if (view != null) {
+         collections.addAll(searchCollections(view.getQuery()));
       }
 
       return collections

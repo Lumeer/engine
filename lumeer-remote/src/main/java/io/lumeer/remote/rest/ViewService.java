@@ -18,17 +18,23 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.View;
+import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.ViewFacade;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -58,6 +64,9 @@ public class ViewService extends AbstractService {
 
    @Inject
    private ViewFacade viewFacade;
+
+   @Inject
+   private SearchFacade searchFacade;
 
    @PostConstruct
    public void init() {
@@ -139,5 +148,20 @@ public class ViewService extends AbstractService {
       viewFacade.removeGroupPermission(code, groupId);
 
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
+   }
+
+   @GET
+   @Path("all/collections")
+   public List<JsonCollection> getViewsCollections(String... viewCodes) {
+      final Set<Collection> collections = new HashSet<>();
+
+      Arrays.asList(viewCodes).stream()
+            .map(viewFacade::getViewByCode)
+            .map(View::getQuery)
+            .forEach(query -> collections.addAll(searchFacade.searchCollections(query)));
+
+      return collections.stream()
+            .map(JsonCollection::convert)
+            .collect(Collectors.toList());
    }
 }
