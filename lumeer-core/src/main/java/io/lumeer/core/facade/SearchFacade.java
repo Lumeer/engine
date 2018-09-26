@@ -81,14 +81,14 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<Collection> searchCollectionsByView(final View view) {
-      return new ArrayList<>(getQueryCollections(view.getQuery(), view));
+      return new ArrayList<>(getQueryCollections(view.getQuery(), view, false));
    }
 
    private Set<Collection> getQueryCollections(final Query query) {
-      return getQueryCollections(query, permissionsChecker.getActiveView());
+      return getQueryCollections(query, permissionsChecker.getActiveView(), true);
    }
 
-   private Set<Collection> getQueryCollections(final Query query, final View view) {
+   private Set<Collection> getQueryCollections(final Query query, final View view, final boolean filterByDocs) {
       Set<Collection> collections = new HashSet<>();
 
       if (query.getLinkTypeIds() != null && query.getLinkTypeIds().size() > 0) {
@@ -97,7 +97,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       if ((query.getFulltext() != null && !query.getFulltext().isEmpty()) || (query.getFilters() != null && !query.getFilters().isEmpty())) {
-         collections.addAll(getCollections(query, view).values());
+         collections.addAll(getCollectionsByDocumentsSearch(query, view, filterByDocs));
       }
 
       if (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()) {
@@ -109,6 +109,25 @@ public class SearchFacade extends AbstractFacade {
       }
 
       return collections;
+   }
+
+   private java.util.Collection<Collection> getCollectionsByDocumentsSearch(final Query query, final View view, final boolean filterByDocs) {
+      java.util.Collection<Collection> searchedCollections = getCollections(query, view).values();
+
+      if (filterByDocs) {
+         List<Collection> matchedCollections = new ArrayList<>();
+
+         for (Collection collection : searchedCollections) {
+            long documentCount = dataDao.getDataCount(collection.getId(), createSearchQuery(query, view));
+            if (documentCount > 0) {
+               matchedCollections.add(collection);
+            }
+         }
+
+         return matchedCollections;
+      }
+
+      return searchedCollections;
    }
 
    public List<Document> searchDocuments(final Query query) {
