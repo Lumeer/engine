@@ -157,11 +157,10 @@ public class ViewService extends AbstractService {
 
       System.out.println("@@@@@@@@@@@@########### " + viewCodes);
 
-      Arrays.asList(viewCodes.split(",")).stream()
+      Arrays.stream(viewCodes.split(","))
             .map(viewFacade::getViewByCode)
             .forEach(view -> {
-               //TODO add permission checker to switch view_codes
-               collections.addAll(searchFacade.searchCollections(view.getQuery()));
+               collections.addAll(searchFacade.searchCollectionsByView(view));
             });
 
       return collections.stream()

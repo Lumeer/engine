@@ -181,14 +181,20 @@ public class PermissionsChecker {
     * @return true if and only if the user has the given role ont he resource.
     */
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole) {
+      return hasRoleWithView(resource, role, viewRole, viewCode);
+   }
+
+   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final String viewCode) {
       if (!hasRole(resource, role)) { // we do not have direct access
-         return getResourceRoleViaView(resource, role, viewRole);
+         return getResourceRoleViaView(resource, role, viewRole, viewCode);
       } else { // we have direct access
          return true;
       }
    }
 
-   private boolean getResourceRoleViaView(final Resource resource, final Role role, final Role viewRole) {
+
+
+   private boolean getResourceRoleViaView(final Resource resource, final Role role, final Role viewRole, final String viewCode) {
       if (viewCode != null && !"".equals(viewCode)) { // we might have the access through a view
          final View view = viewDao.getViewByCode(viewCode);
 
@@ -224,9 +230,14 @@ public class PermissionsChecker {
       return null;
    }
 
+
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final Query query) {
+      return hasRoleWithView(resource, role, viewRole, viewCode, query);
+   }
+
+   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final String viewCode, final Query query) {
       if (!hasRole(resource, role)) { // we do not have direct access
-         return getResourceRoleViaView(resource, role, viewRole) &&
+         return getResourceRoleViaView(resource, role, viewRole, viewCode) &&
                (query == null || query.isMoreSpecificThan(viewDao.getViewByCode(viewCode).getQuery()));
       } else { // we have direct access
          return true;
@@ -375,10 +386,14 @@ public class PermissionsChecker {
     *
     * @param viewCode code of the view
     */
-   public void setViewCode(final String viewCode) {
+   void setViewCode(final String viewCode) {
       if (this.viewCode == null) {
          this.viewCode = viewCode;
       }
+   }
+
+   public String getViewCode() {
+      return viewCode;
    }
 
    // For testing purposes to allow viewCode manipulation during test run.
