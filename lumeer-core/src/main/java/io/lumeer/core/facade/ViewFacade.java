@@ -27,6 +27,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -36,6 +37,7 @@ import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
@@ -53,6 +55,9 @@ public class ViewFacade extends AbstractFacade {
 
    @Inject
    private SearchFacade searchFacade;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
 
    public View createView(View view) {
       if (view.getQuery().getCollectionIds() != null) {
@@ -172,5 +177,20 @@ public class ViewFacade extends AbstractFacade {
       });
 
       return new ArrayList<>(collections);
+   }
+
+   public List<LinkType> getViewsLinkTypes() {
+      final Set<LinkType> linkTypes = new HashSet<>();
+
+      getViews().forEach(view ->
+            view.getQuery().getLinkTypeIds().stream()
+                .map(linkTypeDao::getLinkType)
+                .filter(linkType -> linkType.getCollectionIds().stream()
+                     .allMatch(collectionId ->
+                           permissionsChecker.hasRoleWithView(
+                                 collectionDao.getCollectionById(collectionId), Role.READ, Role.READ, view.getCode()))
+                ).forEach(linkTypes::add));
+
+      return new ArrayList<>(linkTypes);
    }
 }

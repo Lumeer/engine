@@ -40,6 +40,7 @@ import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.dto.JsonPermission;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -145,11 +146,17 @@ public class ViewService extends AbstractService {
 
    @GET
    @Path("all/collections")
-   public List<JsonCollection> getViewsCollections(@QueryParam("viewCodes") String viewCodes) {
-      System.out.println("@@@@@@@@@@@@########### " + viewCodes);
+   public List<JsonCollection> getViewsCollections() {
+      System.out.println("@@@@@@@@@@@@########### ");
 
       return viewFacade.getViewsCollections().stream()
             .map(JsonCollection::convert)
             .collect(Collectors.toList());
+   }
+
+   @GET
+   @Path("all/linkTypes")
+   public List<LinkType> getViewsLinkTypes() {
+      return viewFacade.getViewsLinkTypes();
    }
 }
