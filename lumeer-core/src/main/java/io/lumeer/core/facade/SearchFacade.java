@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
@@ -30,6 +31,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -62,13 +64,40 @@ public class SearchFacade extends AbstractFacade {
    private ViewDao viewDao;
 
    @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
    public List<Collection> searchCollections(Query query) {
+      Set<Collection> collections = getQueryCollections(query);
+
+      final View view = permissionsChecker.getActiveView();
+      if (view != null) {
+         collections.addAll(getQueryCollections(view.getQuery()));
+      }
+
+      return new ArrayList<>(collections);
+   }
+
+   public List<Collection> searchCollectionsByView(final View view) {
+      return new ArrayList<>(getQueryCollections(view.getQuery(), view, false));
+   }
+
+   private Set<Collection> getQueryCollections(final Query query) {
+      return getQueryCollections(query, permissionsChecker.getActiveView(), true);
+   }
+
+   private Set<Collection> getQueryCollections(final Query query, final View view, final boolean filterByDocs) {
       Set<Collection> collections = new HashSet<>();
 
+      if (query.getLinkTypeIds() != null && query.getLinkTypeIds().size() > 0) {
+         final List<LinkType> linkTypes = query.getLinkTypeIds().stream().map(linkTypeDao::getLinkType).collect(Collectors.toList());
+         linkTypes.forEach(linkType -> collections.addAll(collectionDao.getCollectionsByIds(linkType.getCollectionIds())));
+      }
+
       if ((query.getFulltext() != null && !query.getFulltext().isEmpty()) || (query.getFilters() != null && !query.getFilters().isEmpty())) {
-         collections.addAll(getCollectionsByDocumentsSearch(query));
+         collections.addAll(getCollectionsByDocumentsSearch(query, view, filterByDocs));
       }
 
       if (query.getDocumentIds() != null && !query.getDocumentIds().isEmpty()) {
@@ -76,13 +105,29 @@ public class SearchFacade extends AbstractFacade {
       }
 
       if (collectionQueryIsNotEmpty(query) || isEmptyQuery(query)) {
-         collections.addAll(getCollectionsByCollectionSearch(query));
+         collections.addAll(getCollectionsByCollectionSearch(query, view));
       }
 
-      return collections
-            .stream()
-            .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ, query))
-            .collect(Collectors.toList());
+      return collections;
+   }
+
+   private java.util.Collection<Collection> getCollectionsByDocumentsSearch(final Query query, final View view, final boolean filterByDocs) {
+      java.util.Collection<Collection> searchedCollections = getCollections(query, view).values();
+
+      if (filterByDocs) {
+         List<Collection> matchedCollections = new ArrayList<>();
+
+         for (Collection collection : searchedCollections) {
+            long documentCount = dataDao.getDataCount(collection.getId(), createSearchQuery(query, view));
+            if (documentCount > 0) {
+               matchedCollections.add(collection);
+            }
+         }
+
+         return matchedCollections;
+      }
+
+      return searchedCollections;
    }
 
    public List<Document> searchDocuments(final Query query) {
@@ -94,7 +139,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       if (!isOnlyDocumentsIdsQuery(query) || isEmptyQuery(query)) {
-         documents.addAll(searchDocumentsByQuery(query));
+         documents.addAll(searchDocumentsByQuery(query, null));
       }
 
       return documents
@@ -145,15 +190,15 @@ public class SearchFacade extends AbstractFacade {
       return new ArrayList<>(documentsMap.values());
    }
 
-   private List<Document> searchDocumentsByQuery(Query query) {
+   private List<Document> searchDocumentsByQuery(Query query, final View userView) {
       Set<String> collectionIdsFromFilters = collectionIdsFromFilters(parseAttributeFilters(query.getFilters()));
-      SearchQuery collectionQuery = createCollectionQuery(query, collectionIdsFromFilters);
+      SearchQuery collectionQuery = createCollectionQuery(query, collectionIdsFromFilters, userView);
       Map<String, Collection> collections = getCollections(collectionQuery);
 
       Map<String, DataDocument> dataDocuments = new HashMap<>();
 
       for (Collection collection : collections.values()) {
-         SearchQuery usedSearchQuery = collectionIdsFromFilters.contains(collection.getId()) ? createSearchQuery(query) : createSearchQueryWithoutFilters(query);
+         SearchQuery usedSearchQuery = collectionIdsFromFilters.contains(collection.getId()) ? createSearchQuery(query, userView) : createSearchQueryWithoutFilters(query, userView);
          Map<String, DataDocument> foundDocuments = getDataDocuments(collection.getId(), usedSearchQuery);
          dataDocuments.putAll(foundDocuments);
       }
@@ -167,40 +212,26 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<View> searchViews(Query query) {
-      return getViewsByFulltext(query);
+      return getViewsByFulltext(query, null);
    }
 
-   private List<Collection> getCollectionsByCollectionSearch(Query query) {
-      SearchQuery searchQuery = createSearchQuery(query);
+   private List<Collection> getCollectionsByCollectionSearch(Query query, final View userView) {
+      SearchQuery searchQuery = createSearchQuery(query, userView);
 
       return collectionDao.getCollections(searchQuery).stream()
                           .map(this::mapResource)
                           .collect(Collectors.toList());
    }
 
-   private List<Collection> getCollectionsByDocumentsSearch(Query query) {
-      java.util.Collection<Collection> searchedCollections = getCollections(query).values();
-      List<Collection> matchedCollections = new ArrayList<>();
-
-      for (Collection collection : searchedCollections) {
-         long documentCount = dataDao.getDataCount(collection.getId(), createSearchQuery(query));
-         if (documentCount > 0) {
-            matchedCollections.add(collection);
-         }
-      }
-
-      return matchedCollections;
-   }
-
-   private List<View> getViewsByFulltext(Query query) {
-      SearchQuery searchQuery = createSearchQuery(query);
+   private List<View> getViewsByFulltext(Query query, final View userView) {
+      SearchQuery searchQuery = createSearchQuery(query, userView);
       return viewDao.getViews(searchQuery).stream()
                     .map(this::mapResource)
                     .collect(Collectors.toList());
    }
 
-   private Map<String, Collection> getCollections(Query query) {
-      SearchQuery collectionQuery = createCollectionQuery(query);
+   private Map<String, Collection> getCollections(Query query, final View userView) {
+      SearchQuery collectionQuery = createCollectionQuery(query, userView);
       return getCollections(collectionQuery);
    }
 
@@ -222,40 +253,40 @@ public class SearchFacade extends AbstractFacade {
       return new ArrayList<>();
    }
 
-   private SearchQuery createCollectionQuery(Query query) {
+   private SearchQuery createCollectionQuery(Query query, final View userView) {
       Set<AttributeFilter> filters = parseAttributeFilters(query.getFilters());
       Set<String> collectionIdsFromFilters = collectionIdsFromFilters(filters);
 
-      return createCollectionQuery(query, collectionIdsFromFilters);
+      return createCollectionQuery(query, collectionIdsFromFilters, userView);
    }
 
-   private SearchQuery createCollectionQuery(Query query, Set<String> additionalCollectionIds) {
-      return createCollectionSearchQueryBuilder(query, additionalCollectionIds)
+   private SearchQuery createCollectionQuery(Query query, Set<String> additionalCollectionIds, final View userView) {
+      return createCollectionSearchQueryBuilder(query, additionalCollectionIds, userView)
             .build();
    }
 
-   private SearchQuery createSearchQuery(Query query) {
+   private SearchQuery createSearchQuery(Query query, final View userView) {
       Set<AttributeFilter> filters = parseAttributeFilters(query.getFilters());
       Set<String> collectionIdsFromFilters = collectionIdsFromFilters(filters);
 
-      return createSearchQueryBuilder(query, collectionIdsFromFilters)
+      return createSearchQueryBuilder(query, collectionIdsFromFilters, userView)
             .filters(filters)
             .build();
    }
 
-   private SearchQuery createSearchQueryWithoutFilters(Query query) {
-      return createSearchQueryBuilder(query, new HashSet<>()).build();
+   private SearchQuery createSearchQueryWithoutFilters(Query query, final View userView) {
+      return createSearchQueryBuilder(query, new HashSet<>(), userView).build();
    }
 
-   private SearchQuery.Builder createSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
-      return createCollectionSearchQueryBuilder(query, additionalCollectionIds)
+   private SearchQuery.Builder createSearchQueryBuilder(Query query, Set<String> additionalCollectionIds, final View userView) {
+      return createCollectionSearchQueryBuilder(query, additionalCollectionIds, userView)
             .documentIds(query.getDocumentIds())
             .fulltext(query.getFulltext())
             .page(query.getPage())
             .pageSize(query.getPageSize());
    }
 
-   private SearchQuery.Builder createCollectionSearchQueryBuilder(Query query, Set<String> additionalCollectionIds) {
+   private SearchQuery.Builder createCollectionSearchQueryBuilder(Query query, Set<String> additionalCollectionIds, final View userView) {
       final View view = permissionsChecker.getActiveView();
       final String currentUserId = authenticatedUser.getCurrentUserId();
       final Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
@@ -264,6 +295,10 @@ public class SearchFacade extends AbstractFacade {
       users.add(currentUserId);
       if (view != null) {
          users.add(view.getAuthorId());
+      }
+
+      if (userView != null) {
+         users.add(userView.getAuthorId());
       }
 
       Set<String> collectionIds = query.getCollectionIds() != null ? new HashSet<>(query.getCollectionIds()) : new HashSet<>();

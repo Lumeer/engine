@@ -42,6 +42,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.model.SimplePermission;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -98,6 +99,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String VIEWS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/views";
    private static final String VIEWS_URL = SERVER_URL + VIEWS_PATH;
    private static final String PERMISSIONS_URL = VIEWS_URL + "/" + CODE + "/permissions";
+   private static final String VIEWS_COLLECTIONS_URL = VIEWS_URL + "/all/collections";
 
    static {
       QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
@@ -117,6 +119,9 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private CollectionDao collectionDao;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -402,6 +407,50 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
+   }
+
+   @Test
+   public void testGetViewsCollections() {
+      final String NON_EXISTING_USER = "non_existing_user";
+      final String VIEW_CODE = "MY_COOL_CODE";
+      final String COLLECTION_NAME = "kolekce1";
+      final String COLLECTION_ICON = "fa-eye";
+      final String COLLECTION_COLOR = "#abcdea";
+
+      // create collection under a different user
+      JsonPermissions collectionPermissions = new JsonPermissions();
+      Permission userPermission = new SimplePermission(NON_EXISTING_USER, Collection.ROLES);
+      collectionPermissions.updateUserPermissions(userPermission);
+
+      Collection collection = collectionFacade.createCollection(
+            new JsonCollection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.emptySet()));
+
+      // create a view under a different user
+      View view = createView(VIEW_CODE);
+      ((JsonView) view).setAuthorId(NON_EXISTING_USER);
+      ((JsonView) view).setQuery(new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
+      view.getPermissions().clearUserPermissions();
+      view.getPermissions().updateUserPermissions(new SimplePermission(NON_EXISTING_USER, View.ROLES), new SimplePermission(this.user.getId(), Collections.emptySet()));
+      viewDao.updateView(view.getId(), view);
+
+      // share the view and make sure we can see it now
+      Permissions viewPermissions = new JsonPermissions();
+      viewPermissions.updateUserPermissions(new SimplePermission(NON_EXISTING_USER, View.ROLES));
+      viewPermissions.updateUserPermissions(new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+      view.setPermissions(viewPermissions);
+      viewDao.updateView(view.getId(), view);
+
+      Response response = client.target(VIEWS_COLLECTIONS_URL)
+            .request(MediaType.APPLICATION_JSON)
+            .buildGet().invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+      Set<JsonCollection> collections = response.readEntity(new GenericType<Set<JsonCollection>>() {});
+
+      assertThat(collections).hasSize(1).hasOnlyOneElementSatisfying(c ->
+            assertThat(c.getId()).isEqualTo(collection.getId()));
    }
 
 }

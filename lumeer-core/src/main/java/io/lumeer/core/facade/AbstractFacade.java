@@ -90,4 +90,13 @@ abstract class AbstractFacade {
                         .pageSize(pagination.getPageSize())
                         .build();
    }
+
+   protected SearchQuery createQuery() {
+      String user = authenticatedUser.getCurrentUserId();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+
+      return SearchQuery.createBuilder(user)
+                        .groups(groups)
+                        .build();
+   }
 }

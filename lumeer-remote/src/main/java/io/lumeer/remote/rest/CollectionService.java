@@ -28,6 +28,7 @@ import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.ViewFacade;
 
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +64,9 @@ public class CollectionService extends AbstractService {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private ViewFacade viewFacade;
 
    @PostConstruct
    public void init() {
@@ -110,17 +114,25 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   public List<JsonCollection> getCollections(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
+   public List<JsonCollection> getCollections(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize, @QueryParam("fromViews") Boolean includeViewCollections) {
       Pagination pagination = new Pagination(page, pageSize);
 
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      return collectionFacade.getCollections(pagination).stream()
+      List<JsonCollection> collections = collectionFacade.getCollections(pagination).stream()
                              .map(coll -> {
                                 JsonCollection collection = JsonCollection.convert(coll);
                                 collection.setFavorite(favoriteCollectionIds.contains(collection.getId()));
                                 return collection;
                              })
                              .collect(Collectors.toList());
+
+      if (includeViewCollections != null && includeViewCollections) {
+         collections.addAll(viewFacade.getViewsCollections().stream()
+                                      .map(JsonCollection::convert)
+                                      .collect(Collectors.toList()));
+      }
+
+      return collections;
    }
 
    @GET
