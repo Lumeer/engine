@@ -42,6 +42,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.model.SimplePermission;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -118,6 +119,9 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private CollectionDao collectionDao;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -438,7 +442,6 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       viewDao.updateView(view.getId(), view);
 
       Response response = client.target(VIEWS_COLLECTIONS_URL)
-            .queryParam("viewCodes", view.getCode())
             .request(MediaType.APPLICATION_JSON)
             .buildGet().invoke();
 
@@ -446,9 +449,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       Set<JsonCollection> collections = response.readEntity(new GenericType<Set<JsonCollection>>() {});
 
-      System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@");
-
-      collections.forEach(System.out::println);
+      assertThat(collections).hasSize(1).hasOnlyOneElementSatisfying(c ->
+            assertThat(c.getId()).isEqualTo(collection.getId()));
    }
 
 }

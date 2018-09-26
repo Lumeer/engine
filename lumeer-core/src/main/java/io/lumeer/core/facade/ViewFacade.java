@@ -18,14 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
@@ -40,6 +32,14 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.query.SearchQuery;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 
 @RequestScoped
 public class ViewFacade extends AbstractFacade {

@@ -89,8 +89,6 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Set<Collection> getQueryCollections(final Query query, final View view) {
-      System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$čč qjurijuju " + query.toString());
-
       Set<Collection> collections = new HashSet<>();
 
       if (query.getLinkTypeIds() != null && query.getLinkTypeIds().size() > 0) {
@@ -110,11 +108,7 @@ public class SearchFacade extends AbstractFacade {
          collections.addAll(getCollectionsByCollectionSearch(query, view));
       }
 
-      collections.forEach(System.out::println);
-
-      return collections.stream()
-            .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ, view.getCode(), query))
-            .collect(Collectors.toSet());
+      return collections;
    }
 
    public List<Document> searchDocuments(final Query query) {
