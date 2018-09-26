@@ -18,6 +18,15 @@
  */
 package io.lumeer.core.facade;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -30,12 +39,6 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.query.SearchQuery;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-
 @RequestScoped
 public class ViewFacade extends AbstractFacade {
 
@@ -47,6 +50,9 @@ public class ViewFacade extends AbstractFacade {
 
    @Inject
    private CollectionDao collectionDao;
+
+   @Inject
+   private SearchFacade searchFacade;
 
    public View createView(View view) {
       if (view.getQuery().getCollectionIds() != null) {
@@ -89,9 +95,15 @@ public class ViewFacade extends AbstractFacade {
       return mapResource(view);
    }
 
-   public List<View> getViews(Pagination pagination) {
-      SearchQuery searchQuery = createPaginationQuery(pagination);
+   public List<View> getViews() {
+      return getViews(createQuery());
+   }
 
+   public List<View> getViews(Pagination pagination) {
+      return getViews(createPaginationQuery(pagination));
+   }
+
+   private List<View> getViews(SearchQuery searchQuery) {
       return viewDao.getViews(searchQuery).stream()
                     .filter(view -> permissionsChecker.hasRole(view, Role.READ))
                     .map(this::mapResource)
@@ -152,4 +164,13 @@ public class ViewFacade extends AbstractFacade {
       return CodeGenerator.generate(existingCodes, viewName);
    }
 
+   public List<Collection> getViewsCollections() {
+      final Set<Collection> collections = new HashSet<>();
+
+      getViews().forEach(view -> {
+         collections.addAll(searchFacade.searchCollectionsByView(view));
+      });
+
+      return new ArrayList<>(collections);
+   }
 }

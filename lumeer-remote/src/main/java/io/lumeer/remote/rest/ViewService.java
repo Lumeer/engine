@@ -18,20 +18,6 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonView;
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Pagination;
-import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.View;
-import io.lumeer.core.facade.SearchFacade;
-import io.lumeer.core.facade.ViewFacade;
-
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +36,16 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import io.lumeer.api.dto.JsonCollection;
+import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Pagination;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.View;
+import io.lumeer.core.facade.ViewFacade;
+
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -64,9 +60,6 @@ public class ViewService extends AbstractService {
 
    @Inject
    private ViewFacade viewFacade;
-
-   @Inject
-   private SearchFacade searchFacade;
 
    @PostConstruct
    public void init() {
@@ -153,17 +146,9 @@ public class ViewService extends AbstractService {
    @GET
    @Path("all/collections")
    public List<JsonCollection> getViewsCollections(@QueryParam("viewCodes") String viewCodes) {
-      final Set<Collection> collections = new HashSet<>();
-
       System.out.println("@@@@@@@@@@@@########### " + viewCodes);
 
-      Arrays.stream(viewCodes.split(","))
-            .map(viewFacade::getViewByCode)
-            .forEach(view -> {
-               collections.addAll(searchFacade.searchCollectionsByView(view));
-            });
-
-      return collections.stream()
+      return viewFacade.getViewsCollections().stream()
             .map(JsonCollection::convert)
             .collect(Collectors.toList());
    }
