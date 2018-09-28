@@ -21,6 +21,7 @@ package io.lumeer.api.model;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.time.ZonedDateTime;
+import javax.xml.crypto.Data;
 
 public interface Document {
 
@@ -55,5 +56,9 @@ public interface Document {
    DataDocument getData();
 
    void setData(DataDocument data);
+
+   DataDocument getMetaData();
+
+   void setMetaData(final DataDocument metaData);
 
 }

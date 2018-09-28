@@ -117,6 +117,13 @@ public class DocumentFacade extends AbstractFacade {
       return updatedDocument;
    }
 
+   public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+
+      return updateDocument(documentDao.getDocumentById(documentId), metaData);
+   }
+
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
@@ -137,13 +144,31 @@ public class DocumentFacade extends AbstractFacade {
       return updatedDocument;
    }
 
-   private Document updateDocument(Collection collection, String documentId) {
-      Document document = documentDao.getDocumentById(documentId);
+   public Document patchDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
+      final Document document = documentDao.getDocumentById(documentId);
+      metaData.forEach((key, value) -> document.getMetaData().put(key, value));
+
+      return updateDocument(document, metaData);
+   }
+
+   private Document updateDocument(final Collection collection, final String documentId) {
+      final Document document = documentDao.getDocumentById(documentId);
       document.setCollectionId(collection.getId());
+
+      return updateDocument(document, null);
+   }
+
+   private Document updateDocument(final Document document, final DataDocument metaData) {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
       document.setDataVersion(document.getDataVersion() + 1);
+
+      if (metaData != null) {
+         document.setMetaData(metaData);
+      }
 
       return documentDao.updateDocument(document.getId(), document);
    }
