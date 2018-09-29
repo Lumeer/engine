@@ -121,7 +121,10 @@ public class DocumentFacade extends AbstractFacade {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
-      return updateDocument(documentDao.getDocumentById(documentId), metaData);
+      final Document document = documentDao.getDocumentById(documentId);
+      document.setMetaData(metaData);
+
+      return updateDocument(document);
    }
 
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
@@ -149,26 +152,25 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       final Document document = documentDao.getDocumentById(documentId);
+      if (document.getMetaData() == null) {
+         document.setMetaData(new DataDocument());
+      }
       metaData.forEach((key, value) -> document.getMetaData().put(key, value));
 
-      return updateDocument(document, metaData);
+      return updateDocument(document);
    }
 
    private Document updateDocument(final Collection collection, final String documentId) {
       final Document document = documentDao.getDocumentById(documentId);
       document.setCollectionId(collection.getId());
 
-      return updateDocument(document, null);
+      return updateDocument(document);
    }
 
-   private Document updateDocument(final Document document, final DataDocument metaData) {
+   private Document updateDocument(final Document document) {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
       document.setDataVersion(document.getDataVersion() + 1);
-
-      if (metaData != null) {
-         document.setMetaData(metaData);
-      }
 
       return documentDao.updateDocument(document.getId(), document);
    }
