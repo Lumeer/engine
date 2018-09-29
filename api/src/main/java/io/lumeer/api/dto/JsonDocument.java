@@ -57,12 +57,6 @@ public class JsonDocument implements Document {
       this.data = data;
    }
 
-   @JsonCreator
-   public JsonDocument(@JsonProperty("data") final DataDocument data, @JsonProperty("metaData") final DataDocument metaData) {
-      this.data = data;
-      this.metaData = metaData;
-   }
-
    public JsonDocument(final Document document) {
       this.id = document.getId();
       this.collectionId = document.getCollectionId();
