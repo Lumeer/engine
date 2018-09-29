@@ -341,4 +341,72 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
    }
+
+   @Test
+   public void testUpdateMetaData() {
+      Document doc = createDocument();
+
+      assertThat(doc.getMetaData()).isNull();
+      doc.setMetaData(new DataDocument("testKey", "testValue"));
+
+      Entity entity = Entity.json(doc.getMetaData());
+
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+            .request(MediaType.APPLICATION_JSON)
+            .buildPut(entity).invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      Document storedDocument = documentDao.getDocumentById(doc.getId());
+      assertThat(storedDocument.getMetaData()).isNotNull().hasSize(1).containsOnlyKeys("testKey").containsValue("testValue");
+
+      doc.setMetaData(new DataDocument("testKey2", "testValue2"));
+
+      entity = Entity.json(doc.getMetaData());
+
+      response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+            .request(MediaType.APPLICATION_JSON)
+            .buildPut(entity).invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      storedDocument = documentDao.getDocumentById(doc.getId());
+      assertThat(storedDocument.getMetaData()).isNotNull().hasSize(1).containsOnlyKeys("testKey2").containsValue("testValue2");
+   }
+
+   @Test
+   public void testPatchMetaData() {
+      Document doc = createDocument();
+
+      assertThat(doc.getMetaData()).isNull();
+      doc.setMetaData(new DataDocument("testKey", "testValue"));
+
+      Entity entity = Entity.json(doc.getMetaData());
+
+      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+            .request(MediaType.APPLICATION_JSON)
+            .build("PATCH", entity).invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      Document storedDocument = documentDao.getDocumentById(doc.getId());
+      assertThat(storedDocument.getMetaData()).isNotNull().hasSize(1).containsOnlyKeys("testKey").containsValue("testValue");
+
+      doc.setMetaData(new DataDocument("testKey2", "testValue2"));
+
+      entity = Entity.json(doc.getMetaData());
+
+      response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+            .request(MediaType.APPLICATION_JSON)
+            .build("PATCH", entity).invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      storedDocument = documentDao.getDocumentById(doc.getId());
+      assertThat(storedDocument.getMetaData()).isNotNull().hasSize(2).containsOnlyKeys("testKey", "testKey2").containsValues("testValue", "testValue2");
+   }
 }

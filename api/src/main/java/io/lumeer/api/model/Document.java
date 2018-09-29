@@ -56,4 +56,8 @@ public interface Document {
 
    void setData(DataDocument data);
 
+   DataDocument getMetaData();
+
+   void setMetaData(final DataDocument metaData);
+
 }

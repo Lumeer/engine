@@ -94,6 +94,28 @@ public class DocumentService extends AbstractService {
       return returnDocument;
    }
 
+   @PUT
+   @Path("{documentId}/meta")
+   public JsonDocument updateDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
+      Document storedDocument = documentFacade.updateDocumentMetaData(collectionId, documentId, metaData);
+
+      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
+      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
+
+      return returnDocument;
+   }
+
+   @PATCH
+   @Path("{documentId}/meta")
+   public JsonDocument patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
+      Document storedDocument = documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
+
+      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
+      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
+
+      return returnDocument;
+   }
+
    @DELETE
    @Path("{documentId}")
    public Response deleteDocument(@PathParam("documentId") String documentId) {

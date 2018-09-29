@@ -48,6 +48,7 @@ public class JsonDocument implements Document {
    private String updatedBy;
    private Integer dataVersion;
    private DataDocument data;
+   private DataDocument metaData;
 
    private boolean favorite;
 
@@ -65,6 +66,7 @@ public class JsonDocument implements Document {
       this.updatedBy = document.getUpdatedBy();
       this.dataVersion = document.getDataVersion();
       this.data = document.getData();
+      this.metaData = document.getMetaData();
    }
 
    @Override
@@ -145,6 +147,16 @@ public class JsonDocument implements Document {
    @Override
    public void setData(final DataDocument data) {
       this.data = data;
+   }
+
+   @Override
+   public DataDocument getMetaData() {
+      return metaData;
+   }
+
+   @Override
+   public void setMetaData(final DataDocument metaData) {
+      this.metaData = metaData;
    }
 
    public boolean isFavorite() {

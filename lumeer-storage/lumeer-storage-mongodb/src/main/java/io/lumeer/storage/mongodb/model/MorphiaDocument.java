@@ -45,6 +45,7 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    public static final String CREATED_BY = "createdBy";
    public static final String UPDATED_BY = "updatedBy";
    public static final String DATA_VERSION = "dataVersion";
+   public static final String META_DATA = "metaData";
 
    @Property(COLLECTION_ID)
    private String collectionId;
@@ -67,6 +68,9 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    @Transient
    private DataDocument data;
 
+   @Property(META_DATA)
+   private DataDocument metaData;
+
    public MorphiaDocument() {
    }
 
@@ -84,6 +88,7 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
       this.updatedBy = document.getUpdatedBy();
       this.dataVersion = document.getDataVersion();
       this.data = document.getData();
+      this.metaData = document.getMetaData();
    }
 
    @Override
@@ -157,6 +162,16 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
    }
 
    @Override
+   public DataDocument getMetaData() {
+      return metaData;
+   }
+
+   @Override
+   public void setMetaData(final DataDocument metaData) {
+      this.metaData = metaData;
+   }
+
+   @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;
@@ -186,6 +201,7 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
             ", updatedBy='" + updatedBy + '\'' +
             ", dataVersion=" + dataVersion +
             ", data=" + data +
+            ", metaData=" + metaData +
             '}';
    }
 
@@ -195,7 +211,8 @@ public class MorphiaDocument extends MorphiaEntity implements Document {
             .append(CREATION_DATE, creationDate)
             .append(UPDATED_BY, updatedBy)
             .append(UPDATE_DATE, updateDate)
-            .append(DATA_VERSION, dataVersion);
+            .append(DATA_VERSION, dataVersion)
+            .append(META_DATA, metaData);
       return new org.bson.Document(dataDocument);
    }
 
