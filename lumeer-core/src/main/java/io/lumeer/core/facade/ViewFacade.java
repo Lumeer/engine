@@ -81,6 +81,7 @@ public class ViewFacade extends AbstractFacade {
       permissionsChecker.checkRole(storedView, Role.MANAGE);
 
       keepStoredPermissions(view, storedView.getPermissions());
+      view.setAuthorId(storedView.getAuthorId());
       View updatedView = viewDao.updateView(storedView.getId(), view);
 
       return mapResource(updatedView);
