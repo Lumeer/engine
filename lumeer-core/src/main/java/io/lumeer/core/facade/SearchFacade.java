@@ -331,4 +331,25 @@ public class SearchFacade extends AbstractFacade {
             : Collections.emptySet();
    }
 
+   private Set<Document> getChildDocuments(final Set<Document> rootDocuments) {
+      return getChildDocumentsBfs(new HashSet<>(), rootDocuments);
+   }
+
+   private Set<Document> getChildDocumentsBfs(final Set<Document> result, final Set<Document> rootDocuments) {
+
+      // find all document where parentId == one of root documents
+      // add root documents to result when not exist there
+      // add results to rootDocuments
+      // repeat while there were any results
+
+      List<Document> nextLevel = documentDao.getDocumentsByParentIds(rootDocuments.stream().map(Document::getId).collect(Collectors.toSet()));
+      result.addAll(rootDocuments.stream().filter(d -> !result.contains(d)).collect(Collectors.toSet()));
+
+      if (nextLevel.size() > 0) {
+         getChildDocumentsBfs(result, new HashSet<>(nextLevel));
+      }
+
+      return result;
+   }
+
 }

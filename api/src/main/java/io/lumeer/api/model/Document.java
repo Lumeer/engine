@@ -24,6 +24,8 @@ import java.time.ZonedDateTime;
 
 public interface Document {
 
+   String META_PARENT_ID = "parentId";
+
    String getId();
 
    void setId(String id);

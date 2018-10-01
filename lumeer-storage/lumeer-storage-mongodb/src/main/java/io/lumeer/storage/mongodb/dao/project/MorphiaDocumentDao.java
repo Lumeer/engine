@@ -118,6 +118,17 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
       return new ArrayList<>(documents);
    }
 
+   @Override
+   public List<Document> getDocumentsByParentIds(java.util.Collection<String> parentIds) {
+      List<MorphiaDocument> documents = datastore.createQuery(databaseCollection(), MorphiaDocument.class)
+            .disableValidation()
+            .field(MorphiaDocument.META_DATA + "." + Document.META_PARENT_ID).in(parentIds)
+            .asList();
+
+      return new ArrayList<>(documents);
+   }
+
+
    private String databaseCollection(Project project) {
       return PREFIX + project.getId();
    }
