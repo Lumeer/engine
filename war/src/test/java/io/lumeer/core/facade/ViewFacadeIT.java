@@ -334,7 +334,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       View view = createView(CODE2);
       ((JsonView) view).setAuthorId(NON_EXISTING_USER);
       ((JsonView) view).setQuery(new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
-      viewFacade.updateView(view.getCode(), view);
+      viewDao.updateView(view.getId(), view);
 
       viewFacade.updateUserPermissions(view.getCode(), new SimplePermission(NON_EXISTING_USER, View.ROLES), new SimplePermission(this.user.getId(), Collections.emptySet()));
 
