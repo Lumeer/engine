@@ -181,7 +181,7 @@ public class ViewFacade extends AbstractFacade {
       final Set<Collection> collections = new HashSet<>();
 
       getViews().forEach(view -> {
-         collections.addAll(searchFacade.searchCollectionsByView(view));
+         collections.addAll(searchFacade.searchCollectionsByView(view, false));
       });
 
       return new ArrayList<>(collections);
@@ -203,7 +203,7 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public Map<String, Set<Role>> getViewAuthorRights(final View view) {
-      return searchFacade.searchCollectionsByView(view).stream()
+      return searchFacade.searchCollectionsByView(view, true).stream()
             .collect(Collectors.toMap(c -> c.getId(), c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
    }
 }
