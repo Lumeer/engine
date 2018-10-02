@@ -80,12 +80,18 @@ public class SearchFacade extends AbstractFacade {
       return new ArrayList<>(collections);
    }
 
-   public List<Collection> searchCollectionsByView(final View view) {
-      return new ArrayList<>(getQueryCollections(view.getQuery(), view, false));
+   public List<Collection> searchCollectionsByView(final View view, final boolean allRights) {
+      java.util.Collection<Collection> collections = getQueryCollections(view.getQuery(), view, false);
+
+      if (allRights) {
+         return new ArrayList<>(collections);
+      } else {
+         return collections.stream().map(this::mapResource).collect(Collectors.toList());
+      }
    }
 
    private Set<Collection> getQueryCollections(final Query query) {
-      return getQueryCollections(query, permissionsChecker.getActiveView(), true);
+      return getQueryCollections(query, permissionsChecker.getActiveView(), true).stream().map(this::mapResource).collect(Collectors.toSet());
    }
 
    private Set<Collection> getQueryCollections(final Query query, final View view, final boolean filterByDocs) {
@@ -218,9 +224,7 @@ public class SearchFacade extends AbstractFacade {
    private List<Collection> getCollectionsByCollectionSearch(Query query, final View userView) {
       SearchQuery searchQuery = createSearchQuery(query, userView);
 
-      return collectionDao.getCollections(searchQuery).stream()
-                          .map(this::mapResource)
-                          .collect(Collectors.toList());
+      return collectionDao.getCollections(searchQuery);
    }
 
    private List<View> getViewsByFulltext(Query query, final View userView) {
