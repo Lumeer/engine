@@ -207,7 +207,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public void addFavoriteDocument(String collectionId, String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.WRITE);
+      permissionsChecker.checkRole(collection, Role.READ);
 
       String projectId = getCurrentProject().getId();
       String userId = getCurrentUser().getId();
@@ -216,7 +216,7 @@ public class DocumentFacade extends AbstractFacade {
 
    public void removeFavoriteDocument(String collectionId, String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.WRITE);
+      permissionsChecker.checkRole(collection, Role.READ);
 
       String userId = getCurrentUser().getId();
       favoriteItemDao.removeFavoriteDocument(userId, documentId);

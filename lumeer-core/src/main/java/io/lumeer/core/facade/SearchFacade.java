@@ -320,12 +320,14 @@ public class SearchFacade extends AbstractFacade {
    private Set<AttributeFilter> parseAttributeFilters(Set<String> filters) {
       return filters != null ? filters.stream()
                                       .map(FilterParser::parse)
+                                      .filter(f -> f != null)
                                       .collect(Collectors.toSet())
             : Collections.emptySet();
    }
 
    private Set<String> collectionIdsFromFilters(Set<AttributeFilter> filters) {
       return filters != null ? filters.stream()
+                                      .filter(filter -> filter.getCollectionId() != null)
                                       .map(AttributeFilter::getCollectionId)
                                       .collect(Collectors.toSet())
             : Collections.emptySet();

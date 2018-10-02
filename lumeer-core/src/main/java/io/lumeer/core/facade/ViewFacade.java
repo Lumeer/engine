@@ -36,6 +36,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -81,6 +82,7 @@ public class ViewFacade extends AbstractFacade {
       permissionsChecker.checkRole(storedView, Role.MANAGE);
 
       keepStoredPermissions(view, storedView.getPermissions());
+      view.setAuthorId(storedView.getAuthorId());
       View updatedView = viewDao.updateView(storedView.getId(), view);
 
       return mapResource(updatedView);
@@ -94,8 +96,10 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public View getViewByCode(final String code) {
-      View view = viewDao.getViewByCode(code);
+      final View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.READ);
+
+      view.setAuthorRights(getViewAuthorRights(view));
 
       return mapResource(view);
    }
@@ -111,6 +115,10 @@ public class ViewFacade extends AbstractFacade {
    private List<View> getViews(SearchQuery searchQuery) {
       return viewDao.getViews(searchQuery).stream()
                     .filter(view -> permissionsChecker.hasRole(view, Role.READ))
+                    .map(view -> {
+                       view.setAuthorRights(getViewAuthorRights(view));
+                       return view;
+                    })
                     .map(this::mapResource)
                     .collect(Collectors.toList());
    }
@@ -192,5 +200,10 @@ public class ViewFacade extends AbstractFacade {
                 ).forEach(linkTypes::add));
 
       return new ArrayList<>(linkTypes);
+   }
+
+   public Map<String, Set<Role>> getViewAuthorRights(final View view) {
+      return searchFacade.searchCollectionsByView(view).stream()
+            .collect(Collectors.toMap(c -> c.getId(), c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
    }
 }
