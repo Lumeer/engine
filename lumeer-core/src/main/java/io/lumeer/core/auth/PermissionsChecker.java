@@ -256,7 +256,14 @@ public class PermissionsChecker {
       return getActualRoles(resource, userId);
    }
 
-   private Set<Role> getActualRoles(final Resource resource, final String userId) {
+   /**
+    * Returns all roles assigned to the specified user (whether direct or gained through group membership).
+    *
+    * @param resource
+    *       any resource with defined permissions
+    * @return set of actual roles
+    */
+   public Set<Role> getActualRoles(final Resource resource, final String userId) {
       Set<String> groups = getUserGroups(resource);
 
       Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);

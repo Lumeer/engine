@@ -179,7 +179,10 @@ public class MorphiaCollectionDao extends ProjectScopedDao implements Collection
 
    private Query<MorphiaCollection> createAdvancedQuery(Query<MorphiaCollection> mongoQuery, SearchQuery searchQuery) {
       if (searchQuery.isFulltextQuery()) {
-         mongoQuery.search(searchQuery.getFulltext());
+         mongoQuery.or(
+               mongoQuery.criteria(MorphiaCollection.CODE).containsIgnoreCase(searchQuery.getFulltext()),
+               mongoQuery.criteria(MorphiaCollection.NAME).containsIgnoreCase(searchQuery.getFulltext()));
+         //mongoQuery.search(searchQuery.getFulltext());
       }
       if (searchQuery.isCollectionIdsQuery()) {
          Set<ObjectId> collectionIds = searchQuery.getCollectionIds() != null ? searchQuery.getCollectionIds().stream()

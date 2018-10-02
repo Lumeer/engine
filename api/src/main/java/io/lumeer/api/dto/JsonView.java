@@ -20,12 +20,15 @@ package io.lumeer.api.dto;
 
 import io.lumeer.api.dto.common.JsonResource;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JsonView extends JsonResource implements View {
@@ -39,6 +42,7 @@ public class JsonView extends JsonResource implements View {
    private String perspective;
    private Object config;
    private String authorId;
+   private Map<String, Set<Role>> authorRights;
 
    public JsonView() {
    }
@@ -108,6 +112,17 @@ public class JsonView extends JsonResource implements View {
    }
 
    @Override
+   public Map<String, Set<Role>> getAuthorRights() {
+      return authorRights;
+   }
+
+   @Override
+   public void setAuthorRights(final Map<String, Set<Role>> authorRights) {
+      this.authorRights = authorRights;
+   }
+
+
+   @Override
    public String toString() {
       return "JsonView{" +
             "id='" + id + '\'' +
@@ -119,6 +134,7 @@ public class JsonView extends JsonResource implements View {
             ", query=" + query +
             ", perspective='" + perspective + '\'' +
             ", authorId='" + authorId + '\'' +
+            ", authorRights='" + authorRights + '\'' +
             '}';
    }
 

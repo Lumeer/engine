@@ -19,6 +19,7 @@
 package io.lumeer.storage.mongodb.model;
 
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.mongodb.model.common.MorphiaResource;
 import io.lumeer.storage.mongodb.model.embedded.MorphiaQuery;
@@ -30,7 +31,11 @@ import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.IndexOptions;
 import org.mongodb.morphia.annotations.Indexes;
 import org.mongodb.morphia.annotations.Property;
+import org.mongodb.morphia.annotations.Transient;
 import org.mongodb.morphia.utils.IndexType;
+
+import java.util.Map;
+import java.util.Set;
 
 @Entity(noClassnameStored = true)
 @Indexes({
@@ -60,6 +65,9 @@ public class MorphiaView extends MorphiaResource implements View {
    @Property(AUTHOR_ID)
    private String authorId;
 
+   @Transient
+   private Map<String, Set<Role>> authorRights;
+
    public MorphiaView() {
    }
 
@@ -70,6 +78,7 @@ public class MorphiaView extends MorphiaResource implements View {
       this.perspective = view.getPerspective();
       this.config = view.getConfig();
       this.authorId = view.getAuthorId();
+      this.authorRights = view.getAuthorRights();
    }
 
    @Override
@@ -109,6 +118,16 @@ public class MorphiaView extends MorphiaResource implements View {
    }
 
    @Override
+   public Map<String, Set<Role>> getAuthorRights() {
+      return authorRights;
+   }
+
+   @Override
+   public void setAuthorRights(final Map<String, Set<Role>> authorRights) {
+      this.authorRights = authorRights;
+   }
+
+   @Override
    public String toString() {
       return "MongoView{" +
             "id='" + getId() + '\'' +
@@ -120,6 +139,7 @@ public class MorphiaView extends MorphiaResource implements View {
             ", query=" + query +
             ", perspective='" + perspective + '\'' +
             ", authorId='" + authorId + '\'' +
+            ", authorRights='" + authorRights + '\'' +
             '}';
    }
 }

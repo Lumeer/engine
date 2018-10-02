@@ -58,6 +58,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -102,7 +103,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String VIEWS_COLLECTIONS_URL = VIEWS_URL + "/all/collections";
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new JsonQuery(new HashSet<>(), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject
@@ -167,6 +168,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
       QUERY.getCollectionIds().clear();
       QUERY.getCollectionIds().add(collection.getId());
+
+      QUERY.getFilters().add(collection.getId() + ":testAttribute:= 42");
    }
 
    private View prepareView(String code) {
@@ -285,6 +288,35 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
+      assertions.assertAll();
+   }
+
+   @Test
+   public void testGetViewWithAuthorRights() {
+      final String USER = "NON_EXISTING_AUTHOR";
+      JsonPermission permission = new JsonPermission(USER, new HashSet<>(Arrays.asList(Role.WRITE.toString())));
+      Collection collection = collectionFacade.createCollection(
+            new JsonCollection("cdefg", "abcefg random", ICON, COLOR, new JsonPermissions(new HashSet<>(Arrays.asList(permission)), Collections.emptySet())));
+      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(USER, Collections.singleton(Role.WRITE)));
+      JsonQuery query = new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet());
+
+      View view = prepareView(CODE + "3");
+      ((JsonView) view).setQuery(query);
+      view.getPermissions().updateUserPermissions(userPermission);
+      view.getPermissions().updateGroupPermissions(groupPermission);
+      view.setAuthorId("NON_EXISTING_AUTHOR");
+      view.getPermissions().updateUserPermissions(permission);
+      viewDao.createView(view);
+
+      Response response = client.target(VIEWS_URL).path(CODE + "3")
+            .request(MediaType.APPLICATION_JSON)
+            .buildGet().invoke();
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      View returnedView = response.readEntity(JsonView.class);
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), new HashSet<>(Arrays.asList(Role.WRITE))));
       assertions.assertAll();
    }
 

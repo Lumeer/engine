@@ -20,6 +20,7 @@ package io.lumeer.api.model;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public interface View extends Resource {
@@ -41,4 +42,7 @@ public interface View extends Resource {
 
    void setAuthorId(final String authorId);
 
+   Map<String, Set<Role>> getAuthorRights();
+
+   void setAuthorRights(final Map<String, Set<Role>> authorRights);
 }
