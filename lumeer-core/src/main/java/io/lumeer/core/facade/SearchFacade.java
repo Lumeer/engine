@@ -148,7 +148,9 @@ public class SearchFacade extends AbstractFacade {
          documents.addAll(searchDocumentsByQuery(query, null));
       }
 
-      return documents
+      final Set<Document> documentsWithChildren = getChildDocuments(documents);
+
+      return documentsWithChildren
             .stream()
             .filter(document ->
                   permissionsChecker.hasRoleWithView(
