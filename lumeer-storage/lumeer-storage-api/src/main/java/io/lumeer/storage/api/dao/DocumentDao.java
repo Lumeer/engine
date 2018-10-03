@@ -21,6 +21,7 @@ package io.lumeer.storage.api.dao;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface DocumentDao {
@@ -42,6 +43,8 @@ public interface DocumentDao {
    Document getDocumentById(String id);
 
    List<Document> getDocumentsByIds(String... ids);
+
+   List<Document> getDocumentsByParentIds(Collection<String> parentIds);
 
    void setProject(Project project);
 

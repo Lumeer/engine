@@ -46,6 +46,7 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 
+import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
@@ -295,6 +296,47 @@ public class SearchFacadeIT extends IntegrationTestBase {
       assertThat(collections).extracting(Collection::getId).isEmpty();
    }
 
+   @Test
+   public void testChildDocuments() {
+      final Document a0 = createDocument(collectionIds.get(0), "a0");
+      final Document b1 = createDocument(collectionIds.get(0), "b1", a0.getId());
+      final Document b2 = createDocument(collectionIds.get(0), "b2", a0.getId());
+      final Document c1 = createDocument(collectionIds.get(0), "c1", b1.getId());
+      final Document c2 = createDocument(collectionIds.get(0), "c2", b1.getId());
+      final Document c3 = createDocument(collectionIds.get(0), "c3", b1.getId());
+      final Document d1 = createDocument(collectionIds.get(0), "d1", b2.getId());
+      final Document d2 = createDocument(collectionIds.get(0), "d2", b2.getId());
+      final Document d3 = createDocument(collectionIds.get(0), "d3", b2.getId());
+      final Document e1 = createDocument(collectionIds.get(0), "e1", c2.getId());
+      final Document e2 = createDocument(collectionIds.get(0), "e2", c2.getId());
+
+      List<Document> documents = searchFacade.searchDocuments(new JsonQuery(Collections.emptySet(), Collections.emptySet(), Collections.singleton(a0.getId())));
+      documents.forEach(System.out::println);
+
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(
+            documents.stream().filter(d -> d.getMetaData() == null || d.getMetaData().get(Document.META_PARENT_ID) == null).count())
+            .isEqualTo(1);
+      assertions.assertThat(documents).hasSize(11);
+      assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
+            .containsExactlyInAnyOrder("a0", "b1", "b2", "c1", "c2", "c3", "d1", "d2", "d3", "e1", "e2");
+      assertions.assertAll();
+
+      documents = searchFacade.searchDocuments(new JsonQuery(Collections.emptySet(), Collections.emptySet(), Collections.singleton(b2.getId())));
+      assertions = new SoftAssertions();
+      assertions.assertThat(documents).hasSize(4);
+      assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
+            .containsExactlyInAnyOrder("b2", "d1", "d2", "d3");
+      assertions.assertAll();
+
+      documents = searchFacade.searchDocuments(new JsonQuery(Collections.emptySet(), Collections.emptySet(), Collections.singleton(b1.getId())));
+      assertions = new SoftAssertions();
+      assertions.assertThat(documents).hasSize(6);
+      assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
+            .containsExactlyInAnyOrder("b1", "c1", "c2", "c3", "e1", "e2");
+      assertions.assertAll();
+   }
+
    private JsonQuery attributeFilterQuery(String collectionId, String operator, String value) {
       String filter = collectionId + ":" + DOCUMENT_KEY + ":" + operator + " " + value;
       return new JsonQuery(Collections.singleton(filter), null, null, null, null, null, null);
@@ -324,5 +366,11 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       storedDocument.setData(storedData);
       return storedDocument;
+   }
+
+   private Document createDocument(final String collectionId, final String value, final String parentId) {
+      final Document doc = createDocument(collectionId, value);
+      doc.setMetaData(new DataDocument(Document.META_PARENT_ID, parentId));
+      return documentDao.updateDocument(doc.getId(), doc);
    }
 }
