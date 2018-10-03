@@ -29,6 +29,7 @@ import io.lumeer.storage.mongodb.exception.WriteFailedException;
 import io.lumeer.storage.mongodb.model.MorphiaDocument;
 
 import com.mongodb.WriteResult;
+import com.mongodb.client.model.Indexes;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.query.Query;
 
@@ -47,6 +48,7 @@ public class MorphiaDocumentDao extends ProjectScopedDao implements DocumentDao 
    public void createDocumentsRepository(final Project project) {
       database.createCollection(databaseCollection(project));
       datastore.ensureIndexes(databaseCollection(project), MorphiaDocument.class);
+      database.getCollection(databaseCollection(project)).createIndex(Indexes.ascending(MorphiaDocument.META_DATA + "." + Document.META_PARENT_ID));
    }
 
    @Override

@@ -35,8 +35,7 @@ import java.util.Date;
 
 @Entity(noClassnameStored = true)
 @Indexes({
-      @Index(fields = @Field(MorphiaDocument.COLLECTION_ID)),
-      @Index(fields = @Field(MorphiaDocument.META_DATA + "." + Document.META_PARENT_ID))
+      @Index(fields = @Field(MorphiaDocument.COLLECTION_ID))
 })
 public class MorphiaDocument extends MorphiaEntity implements Document {
 
