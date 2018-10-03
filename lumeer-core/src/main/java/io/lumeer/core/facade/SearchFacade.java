@@ -351,7 +351,10 @@ public class SearchFacade extends AbstractFacade {
       // repeat while there were any results
 
       List<Document> nextLevel = documentDao.getDocumentsByParentIds(rootDocuments.stream().map(Document::getId).collect(Collectors.toSet()));
-      result.addAll(rootDocuments.stream().filter(d -> !result.contains(d)).collect(Collectors.toSet()));
+      result.addAll(rootDocuments.stream().filter(d -> !result.contains(d)).map(document -> {
+         document.setData(dataDao.getData(document.getCollectionId(), document.getId()));
+         return document;
+      }).collect(Collectors.toSet()));
 
       if (nextLevel.size() > 0) {
          getChildDocumentsBfs(result, new HashSet<>(nextLevel));
