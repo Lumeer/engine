@@ -266,19 +266,7 @@ public class PermissionsChecker {
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {
-      Set<String> groups;
-
-      if (userId.equals(authenticatedUser.getCurrentUserId())) {
-         groups = getUserGroups(resource);
-      } else {
-         Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
-         if (!organizationOptional.isPresent()){
-            throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-         }
-         Organization organization = organizationOptional.get();
-
-         groups = userDao.getUserById(userId).getGroups().get(organization.getId());
-      }
+      Set<String> groups = userId.equals(authenticatedUser.getCurrentUserId()) ? getUserGroups(resource) : getUserGroups(resource, userId);
 
       Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
@@ -290,6 +278,20 @@ public class PermissionsChecker {
          return Collections.emptySet();
       }
       return authenticatedUserGroups.getCurrentUserGroups();
+   }
+
+   private Set<String> getUserGroups(final Resource resource, final String userId) {
+      if (resource instanceof Organization) {
+         return Collections.emptySet();
+      }
+
+      Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
+      if (!organizationOptional.isPresent()){
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      Organization organization = organizationOptional.get();
+
+      return userDao.getUserById(userId).getGroups().get(organization.getId());
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
