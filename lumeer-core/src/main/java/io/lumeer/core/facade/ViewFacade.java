@@ -73,6 +73,7 @@ public class ViewFacade extends AbstractFacade {
 
       Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
+      view.setAuthorRights(getViewAuthorRights(view));
 
       return viewDao.createView(view);
    }
@@ -84,6 +85,7 @@ public class ViewFacade extends AbstractFacade {
       keepStoredPermissions(view, storedView.getPermissions());
       view.setAuthorId(storedView.getAuthorId());
       View updatedView = viewDao.updateView(storedView.getId(), view);
+      updatedView.setAuthorRights(getViewAuthorRights(updatedView));
 
       return mapResource(updatedView);
    }

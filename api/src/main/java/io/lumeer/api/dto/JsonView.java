@@ -73,6 +73,7 @@ public class JsonView extends JsonResource implements View {
       this.perspective = view.getPerspective();
       this.config = view.getConfig();
       this.authorId = view.getAuthorId();
+      this.authorRights = view.getAuthorRights();
    }
 
    @Override
