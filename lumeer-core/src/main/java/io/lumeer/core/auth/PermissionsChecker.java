@@ -28,6 +28,7 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.NoPermissionException;
@@ -39,11 +40,13 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -264,9 +267,9 @@ public class PermissionsChecker {
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {
-      Set<String> groups = getUserGroups(resource);
+      final Set<String> groups = userId.equals(authenticatedUser.getCurrentUserId()) ? getUserGroups(resource) : getUserGroups(resource, userId);
 
-      Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
+      final Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
       return actualRoles;
    }
@@ -276,6 +279,22 @@ public class PermissionsChecker {
          return Collections.emptySet();
       }
       return authenticatedUserGroups.getCurrentUserGroups();
+   }
+
+   private Set<String> getUserGroups(final Resource resource, final String userId) {
+      if (resource instanceof Organization) {
+         return Collections.emptySet();
+      }
+
+      final Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
+      if (!organizationOptional.isPresent()){
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      final Organization organization = organizationOptional.get();
+      final User user = userDao.getUserById(userId);
+
+
+      return user != null ? user.getGroups().get(organization.getId()) : Collections.EMPTY_SET;
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {

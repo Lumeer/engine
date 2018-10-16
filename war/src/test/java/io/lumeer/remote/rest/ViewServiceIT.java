@@ -293,7 +293,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetViewWithAuthorRights() {
-      final String USER = "NON_EXISTING_AUTHOR";
+      final String USER = "aaaaa4444400000000111112"; // non-existing author
       JsonPermission permission = new JsonPermission(USER, new HashSet<>(Arrays.asList(Role.WRITE.toString())));
       Collection collection = collectionFacade.createCollection(
             new JsonCollection("cdefg", "abcefg random", ICON, COLOR, new JsonPermissions(new HashSet<>(Arrays.asList(permission)), Collections.emptySet())));
@@ -304,7 +304,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       ((JsonView) view).setQuery(query);
       view.getPermissions().updateUserPermissions(userPermission);
       view.getPermissions().updateGroupPermissions(groupPermission);
-      view.setAuthorId("NON_EXISTING_AUTHOR");
+      view.setAuthorId(USER);
       view.getPermissions().updateUserPermissions(permission);
       viewDao.createView(view);
 
@@ -443,7 +443,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetViewsCollections() {
-      final String NON_EXISTING_USER = "non_existing_user";
+      final String NON_EXISTING_USER = "aaaaa4444400000000111114"; // non-existing user
       final String VIEW_CODE = "MY_COOL_CODE";
       final String COLLECTION_NAME = "kolekce1";
       final String COLLECTION_ICON = "fa-eye";
