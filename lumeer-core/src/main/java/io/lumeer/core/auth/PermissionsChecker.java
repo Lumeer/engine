@@ -28,6 +28,7 @@ import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.NoPermissionException;
@@ -266,9 +267,9 @@ public class PermissionsChecker {
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {
-      Set<String> groups = userId.equals(authenticatedUser.getCurrentUserId()) ? getUserGroups(resource) : getUserGroups(resource, userId);
+      final Set<String> groups = userId.equals(authenticatedUser.getCurrentUserId()) ? getUserGroups(resource) : getUserGroups(resource, userId);
 
-      Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
+      final Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
       return actualRoles;
    }
@@ -285,13 +286,15 @@ public class PermissionsChecker {
          return Collections.emptySet();
       }
 
-      Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
+      final Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
       if (!organizationOptional.isPresent()){
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
-      Organization organization = organizationOptional.get();
+      final Organization organization = organizationOptional.get();
+      final User user = userDao.getUserById(userId);
 
-      return userDao.getUserById(userId).getGroups().get(organization.getId());
+
+      return user != null ? user.getGroups().get(organization.getId()) : Collections.EMPTY_SET;
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {

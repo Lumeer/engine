@@ -308,7 +308,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCollectionAccessViaView() {
-      final String NON_EXISTING_USER = "non_existing_user";
+      final String NON_EXISTING_USER = "aaaaa4444400000000111111"; // non-existing user
       final String COLLECTION_NAME = "kolekce1";
       final String COLLECTION_ICON = "fa-eye";
       final String COLLECTION_COLOR = "#abcdea";
