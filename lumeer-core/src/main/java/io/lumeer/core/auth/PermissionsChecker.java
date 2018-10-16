@@ -39,11 +39,13 @@ import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -264,7 +266,7 @@ public class PermissionsChecker {
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {
-      Set<String> groups = getUserGroups(resource);
+      Set<String> groups = userId.equals(authenticatedUser.getCurrentUserId()) ? getUserGroups(resource) : getUserGroups(resource, userId);
 
       Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
@@ -276,6 +278,20 @@ public class PermissionsChecker {
          return Collections.emptySet();
       }
       return authenticatedUserGroups.getCurrentUserGroups();
+   }
+
+   private Set<String> getUserGroups(final Resource resource, final String userId) {
+      if (resource instanceof Organization) {
+         return Collections.emptySet();
+      }
+
+      Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
+      if (!organizationOptional.isPresent()){
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      Organization organization = organizationOptional.get();
+
+      return userDao.getUserById(userId).getGroups().get(organization.getId());
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
