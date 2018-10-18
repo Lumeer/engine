@@ -189,7 +189,7 @@
                   <deployer/>
                   <configuration>
                      <properties>
-                        <cargo.jvmargs>-Xmx1g -Xms1g</cargo.jvmargs>
+                        <cargo.jvmargs>-Xmx1g -Xms1g --add-modules=java.se</cargo.jvmargs>
                      </properties>
                      <users>
                         <user>
