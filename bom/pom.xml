@@ -120,7 +120,7 @@
       <version.arquillian>1.4.0.Final</version.arquillian>
       <version.arquillian-container>2.1.1.Final</version.arquillian-container>
       <version.shrinkwrap>3.1.3</version.shrinkwrap>
-      <version.wildfly>13.0.0.Final</version.wildfly>
+      <version.wildfly>14.0.1.Final</version.wildfly>
       <version.javassist>3.20.0-GA</version.javassist>
       <version.amq>5.14.0</version.amq>
       <version.arquillian-jacoco>1.0.0.Alpha8</version.arquillian-jacoco>
@@ -388,7 +388,7 @@
 
          <dependency>
             <groupId>org.wildfly.bom</groupId>
-            <artifactId>wildfly-javaee7-with-tools</artifactId>
+            <artifactId>wildfly-javaee8-with-tools</artifactId>
             <version>${version.wildfly}</version>
             <type>pom</type>
             <scope>import</scope>
