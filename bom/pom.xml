@@ -90,7 +90,7 @@
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.cli>1.4</version.commons.cli>
       <version.hdrhistogram>2.1.10</version.hdrhistogram>
-      <version.vertx>3.5.3</version.vertx>
+      <version.vertx>3.5.4</version.vertx>
       <version.jackson>2.9.6</version.jackson>
       <version.guava>26.0-jre</version.guava>
       <version.byteman>4.0.4</version.byteman>
