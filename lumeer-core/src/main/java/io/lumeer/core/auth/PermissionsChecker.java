@@ -267,7 +267,7 @@ public class PermissionsChecker {
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {
-      final Set<String> groups = userId.equals(authenticatedUser.getCurrentUserId()) ? getUserGroups(resource) : getUserGroups(resource, userId);
+      final Set<String> groups = authenticatedUser.getCurrentUserId().equals(userId) ? getUserGroups(resource) : getUserGroups(resource, userId);
 
       final Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));

@@ -3,4 +3,4 @@ script: ./travis.sh
 sudo: required
 dist: trusty
 jdk:
-  - oraclejdk10
+  - oraclejdk11
