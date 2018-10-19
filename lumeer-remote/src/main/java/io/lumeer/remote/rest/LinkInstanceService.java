@@ -22,6 +22,7 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.core.facade.LinkInstanceFacade;
+import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -78,6 +79,7 @@ public class LinkInstanceService extends AbstractService {
 
    @POST
    @Path("search")
+   @QueryProcessor
    public List<LinkInstance> getLinkInstances(JsonQuery query) {
       return linkInstanceFacade.getLinkInstances(query);
    }

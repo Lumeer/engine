@@ -23,6 +23,7 @@ import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.core.facade.ViewFacade;
+import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -84,6 +85,7 @@ public class LinkTypeService extends AbstractService {
 
    @POST
    @Path("search")
+   @QueryProcessor
    public List<LinkType> getLinkTypes(JsonQuery query) {
       return linkTypeFacade.getLinkTypes(query);
    }
