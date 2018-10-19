@@ -43,6 +43,11 @@
          <artifactId>jboss-servlet-api_4.0_spec</artifactId>
          <scope>provided</scope>
       </dependency>
+      <dependency>
+         <groupId>javax.interceptor</groupId>
+         <artifactId>javax.interceptor-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
    </dependencies>
 
 </project>

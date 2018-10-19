@@ -28,6 +28,7 @@ import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
+import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.List;
 import java.util.Set;
@@ -87,6 +88,7 @@ public class SearchService extends AbstractService {
 
    @POST
    @Path("collections")
+   @QueryProcessor
    public List<JsonCollection> searchCollections(JsonQuery query) {
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
       return searchFacade.searchCollections(query).stream()
@@ -100,6 +102,7 @@ public class SearchService extends AbstractService {
 
    @POST
    @Path("documents")
+   @QueryProcessor
    public List<JsonDocument> searchDocuments(JsonQuery query) {
       Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
       return searchFacade.searchDocuments(query).stream()
@@ -114,6 +117,7 @@ public class SearchService extends AbstractService {
 
    @POST
    @Path("views")
+   @QueryProcessor
    public List<JsonView> searchViews(JsonQuery query) {
       return searchFacade.searchViews(query).stream()
                          .map(JsonView::convert)
