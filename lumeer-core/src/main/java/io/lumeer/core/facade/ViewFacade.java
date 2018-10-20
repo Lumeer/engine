@@ -101,6 +101,13 @@ public class ViewFacade extends AbstractFacade {
       final View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.READ);
 
+      if (view.getAuthorId() == null || "".equals(view.getAuthorId())) {
+         if (permissionsChecker.hasRole(view, Role.MANAGE)) {
+            view.setAuthorId(authenticatedUser.getCurrentUserId());
+            viewDao.updateView(view.getId(), view);
+         }
+      }
+
       view.setAuthorRights(getViewAuthorRights(view));
 
       return mapResource(view);

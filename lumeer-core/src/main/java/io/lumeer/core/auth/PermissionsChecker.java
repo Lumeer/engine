@@ -282,7 +282,7 @@ public class PermissionsChecker {
    }
 
    private Set<String> getUserGroups(final Resource resource, final String userId) {
-      if (resource instanceof Organization) {
+      if (resource instanceof Organization || userId == null || "".equals(userId)) {
          return Collections.emptySet();
       }
 
