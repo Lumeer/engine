@@ -88,17 +88,6 @@ public class MorphiaViewDao extends ProjectScopedDao implements ViewDao {
       return view;
    }
 
-   public View getViewById(final String id) {
-      View view = datastore.createQuery(databaseCollection(), MorphiaView.class)
-            .disableValidation()
-            .field(MorphiaView.ID).equal(id)
-            .get();
-      if (view == null) {
-         throw new ResourceNotFoundException(ResourceType.VIEW);
-      }
-      return view;
-   }
-
    public List<View> getViews(SearchQuery query) {
       Query<MorphiaView> viewQuery = createViewSearchQuery(query);
       FindOptions findOptions = createFindOptions(query);
