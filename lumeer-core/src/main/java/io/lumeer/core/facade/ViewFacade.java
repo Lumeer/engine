@@ -101,16 +101,21 @@ public class ViewFacade extends AbstractFacade {
       final View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.READ);
 
-      if (view.getAuthorId() == null || "".equals(view.getAuthorId())) {
-         if (permissionsChecker.hasRole(view, Role.MANAGE)) {
-            view.setAuthorId(authenticatedUser.getCurrentUserId());
-            viewDao.updateView(view.getId(), view);
-         }
-      }
-
+      checkAuthorId(view);
       view.setAuthorRights(getViewAuthorRights(view));
 
       return mapResource(view);
+   }
+
+   private View checkAuthorId(final View view) {
+      if (view.getAuthorId() == null || "".equals(view.getAuthorId())) {
+         if (permissionsChecker.hasRole(view, Role.MANAGE)) {
+            view.setAuthorId(authenticatedUser.getCurrentUserId());
+            return viewDao.updateView(view.getId(), view);
+         }
+      }
+
+      return view;
    }
 
    public List<View> getViews() {
@@ -124,6 +129,7 @@ public class ViewFacade extends AbstractFacade {
    private List<View> getViews(SearchQuery searchQuery) {
       return viewDao.getViews(searchQuery).stream()
                     .filter(view -> permissionsChecker.hasRole(view, Role.READ))
+                    .map(this::checkAuthorId)
                     .map(view -> {
                        view.setAuthorRights(getViewAuthorRights(view));
                        return view;
