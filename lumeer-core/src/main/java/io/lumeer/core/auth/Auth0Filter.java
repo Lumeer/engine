@@ -116,7 +116,7 @@ public class Auth0Filter implements Filter {
          return;
       }
 
-      if (!req.getServletPath().startsWith("/rest/paymentNotify")) {
+      if (!req.getPathInfo().startsWith("/paymentNotify/")) {
          final String accessToken = getAccessToken(req);
 
          // we do not have the token at all, or we failed to obtain verifier
@@ -200,7 +200,11 @@ public class Auth0Filter implements Filter {
 
       }
 
-      filterChain.doFilter(servletRequest, servletResponse);
+      try {
+         filterChain.doFilter(servletRequest, servletResponse);
+      } catch (Exception e) {
+         res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+      }
    }
 
    private void parseViewId(final HttpServletRequest req) {
