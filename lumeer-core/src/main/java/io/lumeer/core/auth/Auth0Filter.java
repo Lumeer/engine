@@ -203,7 +203,7 @@ public class Auth0Filter implements Filter {
       try {
          filterChain.doFilter(servletRequest, servletResponse);
       } catch (Exception e) {
-         ((HttpServletResponse) servletResponse).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+         res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
       }
    }
 
