@@ -1,6 +1,6 @@
 language: java
+install: true
 script: ./travis.sh
-sudo: required
-dist: trusty
+dist: xenial
 jdk:
   - oraclejdk11
