@@ -50,6 +50,9 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String MAILCHIMP_LIST_CS = "mailchimp_list_cs";
    public static final String MAILCHIMP_LIST_EN = "mailchimp_list_en";
 
+   public static final String FRESHDESK_DOMAIN = "freshdesk_domain";
+   public static final String FRESHDESK_APIKEY = "freshdesk_apikey";
+
    public DefaultConfigurationProducer() {
       defaultConfiguration = new HashMap<>();
 
