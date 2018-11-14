@@ -23,28 +23,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonDocument;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -124,9 +117,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -134,8 +127,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -144,14 +137,14 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Group group = new Group(GROUP);
       this.group = groupDao.createGroup(group);
 
-      userPermission = new SimplePermission(this.user.getId(), Collection.ROLES);
-      groupPermission = new SimplePermission(this.group.getId(), Collections.singleton(Role.READ));
+      userPermission = Permission.buildWithRoles(this.user.getId(), Collection.ROLES);
+      groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(Role.READ));
 
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode(PROJECT_CODE);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Role.toStringRoles(Project.ROLES)));
+      Permissions projectPermissions = new Permissions ();
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Role.toStringRoles(Project.ROLES)));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -165,7 +158,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    }
 
    private Collection prepareCollection(String code, String name) {
-      return new JsonCollection(code, name, ICON, COLOR, null);
+      return new Collection(code, name, ICON, COLOR, null);
    }
 
    private Collection createCollection(String code) {
@@ -273,7 +266,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
 
-      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       final Attribute createdAttribute = collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, attribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -291,11 +284,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateCollectionAttributeUpdate() {
-      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
-      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, updatedAttribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -313,7 +306,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteCollectionAttribute() {
-      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
@@ -338,7 +331,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      SimplePermission userPermission = new SimplePermission(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       collectionFacade.updateUserPermissions(collectionId, userPermission);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -363,7 +356,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      SimplePermission groupPermission = new SimplePermission(group.getId(), new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      Permission groupPermission = Permission.buildWithRoles(group.getId(), new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
       collectionFacade.updateGroupPermissions(collectionId, groupPermission);
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -446,7 +439,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collection = collectionFacade.getCollection(collection.getId());
       assertThat(collection.getDefaultAttributeId()).isNull();
 
-      JsonAttribute attribute = new JsonAttribute("a1");
+      Attribute attribute = new Attribute("a1");
       Attribute created =  new ArrayList<Attribute>(collectionFacade.createCollectionAttributes(collection.getId(), Collections.singletonList(attribute))).get(0);
 
       collectionFacade.setDefaultAttribute(collection.getId(), created.getId());
@@ -460,9 +453,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       assertThat(collectionFacade.getDocumentsCountInAllCollections()).isEqualTo(0);
 
-      documentFacade.createDocument(collection.getId(), new JsonDocument(new DataDocument("pepa", "zdepa")));
-      documentFacade.createDocument(collection.getId(), new JsonDocument(new DataDocument("tonda", "fonda")));
-      documentFacade.createDocument(collection.getId(), new JsonDocument(new DataDocument("franta", "pajta")));
+      documentFacade.createDocument(collection.getId(), new Document(new DataDocument("pepa", "zdepa")));
+      documentFacade.createDocument(collection.getId(), new Document(new DataDocument("tonda", "fonda")));
+      documentFacade.createDocument(collection.getId(), new Document(new DataDocument("franta", "pajta")));
 
       assertThat(collectionFacade.getDocumentsCountInAllCollections()).isEqualTo(3);
    }

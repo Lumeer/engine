@@ -18,16 +18,55 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.model.common.Resource;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public interface Project extends Resource {
+public class Project extends Resource {
 
-   Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
+   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
+
+   private int collectionsCount;
+
+   public Project() {
+   }
+
+   @JsonCreator
+   public Project(
+         @JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PERMISSIONS) final Permissions permissions) {
+      super(code, name, icon, color, description, permissions);
+   }
 
    @Override
-   default ResourceType getType() {
+   public String toString() {
+      return "JsonProject{" +
+            "code='" + code + '\'' +
+            ", name='" + name + '\'' +
+            ", icon='" + icon + '\'' +
+            ", color='" + color + '\'' +
+            ", permissions=" + permissions +
+            '}';
+   }
+
+   public ResourceType getType() {
       return ResourceType.PROJECT;
+   }
+
+   public int getCollectionsCount() {
+      return collectionsCount;
+   }
+
+   public void setCollectionsCount(final int collectionsCount) {
+      this.collectionsCount = collectionsCount;
    }
 }

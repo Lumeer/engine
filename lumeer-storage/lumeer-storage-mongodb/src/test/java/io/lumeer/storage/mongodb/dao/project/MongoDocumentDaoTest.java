@@ -21,7 +21,6 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -42,9 +41,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.flapdoodle.embed.mongo.config.Storage;
-
-public class MorphiaDocumentDaoTest extends MongoDbTestBase {
+public class MongoDocumentDaoTest extends MongoDbTestBase {
 
    private static final String PROJECT_ID = "596e3b86d412bc5a3caaa22a";
 
@@ -77,21 +74,21 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
       documentDao.createDocumentsRepository(project);
    }
 
-   private JsonDocument prepareDocument() {
-      JsonDocument document = new JsonDocument(COLLECTION_ID, CREATION_DATE, null, CREATED_BY, null, DATA_VERSION, new DataDocument());
+   private Document prepareDocument() {
+      Document document = new Document(COLLECTION_ID, CREATION_DATE, null, CREATED_BY, null, DATA_VERSION, new DataDocument());
       document.setData(new DataDocument("something", "that should not be stored"));
       return document;
    }
 
-   private JsonDocument createDocument() {
-      JsonDocument document = prepareDocument();
+   private Document createDocument() {
+      Document document = prepareDocument();
       documentDao.databaseCollection().insertOne(document);
       return document;
    }
 
    @Test
    public void testCreateDocument() {
-      JsonDocument document = prepareDocument();
+      Document document = prepareDocument();
       String id = documentDao.createDocument(document).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
@@ -113,19 +110,19 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateDocumentExisting() {
-      JsonDocument document = createDocument();
+      Document document = createDocument();
       assertThatThrownBy(() -> documentDao.createDocument(document))
             .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testCreateDocumentMultiple() {
-      JsonDocument document = prepareDocument();
+      Document document = prepareDocument();
       String id = documentDao.createDocument(document).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      JsonDocument document2 = prepareDocument();
+      Document document2 = prepareDocument();
       String id2 = documentDao.createDocument(document2).getId();
       assertThat(id2).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id2)).isTrue();
@@ -135,7 +132,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateDocument() {
-      JsonDocument document = createDocument();
+      Document document = createDocument();
       String id = document.getId();
 
       ZonedDateTime updateDate = ZonedDateTime.now().withNano(0);
@@ -162,7 +159,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
    @Test
    @Ignore("Stored anyway with the current implementation")
    public void testUpdateDocumentNotExisting() {
-      JsonDocument document = prepareDocument();
+      Document document = prepareDocument();
       assertThatThrownBy(() -> documentDao.updateDocument(DOCUMENT_ID, document))
             .isInstanceOf(StorageException.class);
    }
@@ -188,7 +185,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
       createDocument();
       createDocument();
 
-      List<JsonDocument> documents = documentDao.databaseCollection().find().into(new ArrayList<>());
+      List<Document> documents = documentDao.databaseCollection().find().into(new ArrayList<>());
       assertThat(documents).isNotEmpty();
 
       documentDao.deleteDocuments(COLLECTION_ID);
@@ -201,7 +198,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
    public void testDeleteDocumentsEmpty() {
       documentDao.deleteDocuments(COLLECTION_ID);
 
-      List<JsonDocument> documents = documentDao.databaseCollection().find().into(new ArrayList<>());
+      List<Document> documents = documentDao.databaseCollection().find().into(new ArrayList<>());
       assertThat(documents).isEmpty();
    }
 

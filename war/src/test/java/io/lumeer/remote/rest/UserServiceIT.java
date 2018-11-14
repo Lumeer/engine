@@ -2,9 +2,9 @@ package io.lumeer.remote.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -55,16 +55,16 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
-      JsonOrganization organization1 = new JsonOrganization();
+      Organization organization1 = new Organization();
       organization1.setCode("LMR");
-      organization1.setPermissions(new JsonPermissions());
-      organization1.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.setPermissions(new Permissions());
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organizationId1 = organizationDao.createOrganization(organization1).getId();
 
-      JsonOrganization organization2 = new JsonOrganization();
+      Organization organization2 = new Organization();
       organization2.setCode("MRL");
-      organization2.setPermissions(new JsonPermissions());
-      organization2.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization2.setPermissions(new Permissions());
+      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
    }
 
@@ -153,7 +153,7 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
    }
 
    private User createUser(String organizationId, String user) {
-      return userDao.createUser(prepareUser( organizationId, user));
+      return userDao.createUser(prepareUser(organizationId, user));
    }
 
    private User getUser(String organizationId, String user) {
@@ -164,7 +164,7 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
    private User prepareUser(String organizationId, String user) {
       User u = new User(user);
       u.setName(user);
-      u.setGroups(Collections.singletonMap(organizationId,GROUPS));
+      u.setGroups(Collections.singletonMap(organizationId, GROUPS));
       return u;
    }
 

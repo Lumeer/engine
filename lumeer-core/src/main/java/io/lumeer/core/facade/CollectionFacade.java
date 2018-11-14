@@ -29,7 +29,6 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -185,7 +184,7 @@ public class CollectionFacade extends AbstractFacade {
       return la.longValue();
    }
 
-   public java.util.Collection<? extends Attribute> createCollectionAttributes(String collectionId, java.util.Collection<? extends Attribute> attributes) {
+   public java.util.Collection<Attribute> createCollectionAttributes(String collectionId, java.util.Collection<Attribute> attributes) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
@@ -319,7 +318,7 @@ public class CollectionFacade extends AbstractFacade {
 
       collection.setLastAttributeNum(0);
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Collection.ROLES);
+      Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
 
       return collectionDao.createCollection(collection);

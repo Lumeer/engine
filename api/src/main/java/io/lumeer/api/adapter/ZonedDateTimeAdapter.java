@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.lumeer.api.dto.adapter;
+package io.lumeer.api.adapter;
 
 import java.time.Instant;
 import java.time.ZoneOffset;

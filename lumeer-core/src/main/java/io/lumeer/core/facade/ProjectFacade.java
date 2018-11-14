@@ -27,7 +27,6 @@ import io.lumeer.api.model.Role;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoPermissionException;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -78,7 +77,7 @@ public class ProjectFacade extends AbstractFacade {
       checkOrganizationWriteRole();
       checkProjectCreate(project);
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Project.ROLES);
+      Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
 
       Project storedProject = projectDao.createProject(project);

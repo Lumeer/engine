@@ -19,7 +19,6 @@
 package io.lumeer.api;
 
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Project;
 
 import java.util.Optional;

@@ -21,11 +21,9 @@ package io.lumeer.storage.mongodb.dao.system;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -56,19 +54,19 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    private static final String NAME = "Testing organization";
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
-   private static final JsonPermissions PERMISSIONS;
-   private static final JsonPermission GROUP_PERMISSION;
+   private static final Permissions PERMISSIONS;
+   private static final Permission GROUP_PERMISSION;
 
    private static final String NOT_EXISTING_CODE = "NOT_EXISTING_CODE";
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
    static {
-      PERMISSIONS = new JsonPermissions();
+      PERMISSIONS = new Permissions();
 
-      JsonPermission userPermission = new JsonPermission(USER, Organization.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      Permission userPermission = new Permission(USER, Organization.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
       PERMISSIONS.updateUserPermissions(userPermission);
 
-      GROUP_PERMISSION = new JsonPermission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
 
@@ -82,13 +80,13 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       organizationDao.createOrganizationsRepository();
    }
 
-   private JsonOrganization prepareOrganization(String code) {
-      JsonOrganization organization = new JsonOrganization();
+   private Organization prepareOrganization(String code) {
+      Organization organization = new Organization();
       organization.setCode(code);
       organization.setName(NAME);
       organization.setColor(COLOR);
       organization.setIcon(ICON);
-      organization.setPermissions(new JsonPermissions(PERMISSIONS));
+      organization.setPermissions(new Permissions(PERMISSIONS));
       return organization;
    }
 
@@ -114,7 +112,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateOrganizationExistingCode() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       organizationDao.databaseCollection().insertOne(organization);
 
       Organization organization2 = prepareOrganization(CODE1);
@@ -124,7 +122,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetOrganizationByCode() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       organizationDao.databaseCollection().insertOne(organization);
 
       Organization storedOrganization = organizationDao.getOrganizationByCode(CODE1);
@@ -155,10 +153,10 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetOrganizations() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       organizationDao.databaseCollection().insertOne(organization);
 
-      JsonOrganization organization2 = prepareOrganization(CODE2);
+      Organization organization2 = prepareOrganization(CODE2);
       organizationDao.databaseCollection().insertOne(organization2);
 
       DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
@@ -168,13 +166,13 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetOrganizationsNoReadRole() {
-      JsonOrganization organization = prepareOrganization(CODE1);
-      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      Organization organization = prepareOrganization(CODE1);
+      Permission userPermission = new Permission(USER2, Collections.singleton(Role.CLONE.toString()));
       organization.getPermissions().updateUserPermissions(userPermission);
       organizationDao.databaseCollection().insertOne(organization);
 
-      JsonOrganization organization2 = prepareOrganization(CODE2);
-      Permission groupPermission = new JsonPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Organization organization2 = prepareOrganization(CODE2);
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       organization2.getPermissions().updateGroupPermissions(groupPermission);
       organizationDao.databaseCollection().insertOne(organization2);
 
@@ -185,10 +183,10 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetOrganizationsGroupRole() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       organizationDao.databaseCollection().insertOne(organization);
 
-      JsonOrganization organization2 = prepareOrganization(CODE2);
+      Organization organization2 = prepareOrganization(CODE2);
       organizationDao.databaseCollection().insertOne(organization2);
 
       DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
@@ -198,7 +196,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteOrganization() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       organizationDao.databaseCollection().insertOne(organization);
       assertThat(organization.getId()).isNotNull();
 
@@ -216,21 +214,21 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateOrganizationCode() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       String id = organizationDao.createOrganization(organization).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
-      JsonOrganization organization2 = prepareOrganization(CODE2);
+      Organization organization2 = prepareOrganization(CODE2);
       organizationDao.updateOrganization(id, organization2);
 
-      JsonOrganization storedOrganization = organizationDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      Organization storedOrganization = organizationDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedOrganization).isNotNull();
       assertThat(storedOrganization.getCode()).isEqualTo(CODE2);
    }
 
    @Test
    public void testUpdateOrganizationPermissions() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       String id = organizationDao.createOrganization(organization).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
@@ -238,7 +236,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
       organization.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       organizationDao.updateOrganization(id, organization);
 
-      JsonOrganization storedOrganization = organizationDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      Organization storedOrganization = organizationDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedOrganization).isNotNull();
       assertThat(storedOrganization.getPermissions().getUserPermissions()).isEmpty();
       assertThat(storedOrganization.getPermissions().getGroupPermissions()).containsExactly(GROUP_PERMISSION);
@@ -246,10 +244,10 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateOrganizationExistingCode() {
-      JsonOrganization organization = prepareOrganization(CODE1);
+      Organization organization = prepareOrganization(CODE1);
       organizationDao.databaseCollection().insertOne(organization);
 
-      JsonOrganization organization2 = prepareOrganization(CODE2);
+      Organization organization2 = prepareOrganization(CODE2);
       organizationDao.databaseCollection().insertOne(organization2);
 
       organization2.setCode(CODE1);

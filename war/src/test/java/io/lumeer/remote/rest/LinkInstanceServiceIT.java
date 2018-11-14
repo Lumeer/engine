@@ -21,25 +21,20 @@ package io.lumeer.remote.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonDocument;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
-import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.DocumentFacade;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -89,12 +84,12 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
    private static final String NAME2 = "Whuaaaa";
    private static final String ATTRIBUTE1_NAME = "Maxi";
    private static final String ATTRIBUTE2_NAME = "Light";
-   private static final List<JsonAttribute> ATTRIBUTES;
+   private static final List<Attribute> ATTRIBUTES;
    private static final Map<String, Object> DATA;
 
    static {
-      JsonAttribute attribute1 = new JsonAttribute(ATTRIBUTE1_NAME);
-      JsonAttribute attribute2 = new JsonAttribute(ATTRIBUTE2_NAME);
+      Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
+      Attribute attribute2 = new Attribute(ATTRIBUTE2_NAME);
       ATTRIBUTES = Arrays.asList(attribute1, attribute2);
 
       DATA = Collections.singletonMap("entry", "value");
@@ -135,9 +130,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
    @Before
    public void configureLinkInstances() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -145,14 +140,14 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(createdUser.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      JsonProject project = new JsonProject();
-      project.setPermissions(new JsonPermissions());
+      Project project = new Project();
+      project.setPermissions(new Permissions());
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
 
@@ -161,19 +156,19 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkInstanceDao.setProject(storedProject);
       documentDao.setProject(storedProject);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      Permission userProjectPermission = new SimplePermission(createdUser.getId(), Project.ROLES);
+      Permissions projectPermissions = new Permissions();
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Project.ROLES);
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
-      JsonPermissions collectionPermissions = new JsonPermissions();
-      collectionPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-      JsonCollection jsonCollection = new JsonCollection("col1", "col1", "icon", "color", collectionPermissions);
+      Permissions collectionPermissions = new Permissions();
+      collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      Collection jsonCollection = new Collection("col1", "col1", "icon", "color", collectionPermissions);
       jsonCollection.setDocumentsCount(0);
       String collection1 = collectionDao.createCollection(jsonCollection).getId();
 
-      JsonCollection jsonCollection2 = new JsonCollection("col2", "col2", "icon", "color", collectionPermissions);
+      Collection jsonCollection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
       jsonCollection.setDocumentsCount(0);
       String collection2 = collectionDao.createCollection(jsonCollection2).getId();
 
@@ -280,7 +275,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      JsonQuery jsonQuery1 = new JsonQuery(null, null, Collections.singleton(documentIdsColl1.get(0)));
+      Query jsonQuery1 = new Query(null, null, Collections.singleton(documentIdsColl1.get(0)));
       Entity entity1 = Entity.json(jsonQuery1);
       Response response = client.target(LINK_INSTANCES_URL).path("search")
                                 .request(MediaType.APPLICATION_JSON)
@@ -293,7 +288,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
 
-      JsonQuery jsonQuery2 = new JsonQuery(null, null, Collections.singleton(documentIdsColl2.get(1)));
+      Query jsonQuery2 = new Query(null, null, Collections.singleton(documentIdsColl2.get(1)));
       Entity entity2 = Entity.json(jsonQuery2);
       response = client.target(LINK_INSTANCES_URL).path("search")
                        .request(MediaType.APPLICATION_JSON)
@@ -326,7 +321,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      JsonQuery jsonQuery1 = new JsonQuery(null, new HashSet<>(Arrays.asList(linkTypeId1, linkTypeId2)), null);
+      Query jsonQuery1 = new Query(null, new HashSet<>(Arrays.asList(linkTypeId1, linkTypeId2)), null);
       Entity entity1 = Entity.json(jsonQuery1);
       Response response = client.target(LINK_INSTANCES_URL).path("search")
                                 .request(MediaType.APPLICATION_JSON)
@@ -339,7 +334,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
 
-      JsonQuery jsonQuery2 = new JsonQuery(null, Collections.singleton(linkTypeId1), null);
+      Query jsonQuery2 = new Query(null, Collections.singleton(linkTypeId1), null);
       Entity entity2 = Entity.json(jsonQuery2);
       response = client.target(LINK_INSTANCES_URL).path("search")
                        .request(MediaType.APPLICATION_JSON)
@@ -362,7 +357,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
             .append(KEY1, VALUE1)
             .append(KEY2, VALUE2);
 
-      return new JsonDocument(data);
+      return new Document(data);
    }
 
    private Document createDocument(String collectionId) {

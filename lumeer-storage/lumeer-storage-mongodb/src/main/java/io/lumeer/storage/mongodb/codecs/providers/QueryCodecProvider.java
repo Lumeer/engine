@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.model.Query;
 import io.lumeer.storage.mongodb.codecs.QueryCodec;
 
 import org.bson.codecs.Codec;
@@ -30,7 +30,7 @@ public class QueryCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == JsonQuery.class) {
+      if (clazz == Query.class) {
          return (Codec<T>) new QueryCodec(registry);
       }
 

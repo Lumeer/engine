@@ -18,12 +18,12 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonDocument;
-import io.lumeer.api.dto.JsonQuery;
-import io.lumeer.api.dto.JsonSuggestions;
-import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Suggestions;
 import io.lumeer.api.model.SuggestionType;
+import io.lumeer.api.model.View;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.SearchFacade;
@@ -32,7 +32,6 @@ import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -77,9 +76,9 @@ public class SearchService extends AbstractService {
 
    @GET
    @Path("suggestions")
-   public JsonSuggestions getSuggestions(@QueryParam("text") String text, @QueryParam("type") String type) {
+   public Suggestions getSuggestions(@QueryParam("text") String text, @QueryParam("type") String type) {
       if (text == null || text.isEmpty()) {
-         return JsonSuggestions.emptySuggestions();
+         return Suggestions.emptySuggestions();
       }
 
       SuggestionType suggestionType = parseSuggestionType(type);
@@ -89,39 +88,29 @@ public class SearchService extends AbstractService {
    @POST
    @Path("collections")
    @QueryProcessor
-   public List<JsonCollection> searchCollections(JsonQuery query) {
+   public List<Collection> searchCollections(Query query) {
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      return searchFacade.searchCollections(query).stream()
-                         .map(coll -> {
-                            JsonCollection collection = JsonCollection.convert(coll);
-                            collection.setFavorite(favoriteCollectionIds.contains(collection.getId()));
-                            return collection;
-                         })
-                         .collect(Collectors.toList());
+      List<Collection> collections = searchFacade.searchCollections(query);
+      collections.forEach(coll -> coll.setFavorite(favoriteCollectionIds.contains(coll.getId())));
+      return collections;
    }
 
    @POST
    @Path("documents")
    @QueryProcessor
-   public List<JsonDocument> searchDocuments(JsonQuery query) {
+   public List<Document> searchDocuments(Query query) {
       Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
-      return searchFacade.searchDocuments(query).stream()
-                         .map(doc -> {
-                            JsonDocument document = JsonDocument.convert(doc);
-                            document.setFavorite(favoriteDocumentIds.contains(document.getId()));
-                            return document;
-                         })
-                         .collect(Collectors.toList());
+      List<Document> documents = searchFacade.searchDocuments(query);
+      documents.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
+      return documents;
 
    }
 
    @POST
    @Path("views")
    @QueryProcessor
-   public List<JsonView> searchViews(JsonQuery query) {
-      return searchFacade.searchViews(query).stream()
-                         .map(JsonView::convert)
-                         .collect(Collectors.toList());
+   public List<View> searchViews(Query query) {
+      return searchFacade.searchViews(query);
 
    }
 

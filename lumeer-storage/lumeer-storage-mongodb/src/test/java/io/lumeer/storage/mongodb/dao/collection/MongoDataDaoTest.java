@@ -20,11 +20,9 @@ package io.lumeer.storage.mongodb.dao.collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -59,7 +57,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
 
    @Before
    public void initDataDao() {
-      Collection col = new JsonCollection("", "", "", "", new JsonPermissions());
+      Collection col = new Collection("", "", "", "", new Permissions());
       col.setId(COLLECTION_ID);
       col.setAttributes(Collections.EMPTY_SET);
       col.setLastAttributeNum(0);
@@ -85,8 +83,8 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    private String createDocument(String key, String value) {
       Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
       final String id = key; // use the same document id for simplicity in tests
-      if (!collection.getAttributes().stream().anyMatch(attr -> attr.getName().equals(key))) {
-         collection.createAttribute(new JsonAttribute(id, key, Collections.emptySet(), 1));
+      if (collection.getAttributes().stream().noneMatch(attr -> attr.getName().equals(key))) {
+         collection.createAttribute(new Attribute(id, key, Collections.emptySet(), 1));
          collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
          collectionDao.updateCollection(COLLECTION_ID, collection);
       } else {

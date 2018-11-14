@@ -18,7 +18,7 @@
  */
 package io.lumeer.api.model;
 
-import io.lumeer.api.dto.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.view.UserViews;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import java.time.ZonedDateTime;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

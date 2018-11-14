@@ -19,9 +19,9 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
-import io.lumeer.api.dto.common.JsonResource;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.common.SimpleResource;
 
 import org.bson.BsonReader;
 import org.bson.BsonValue;
@@ -32,48 +32,48 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-public class ProjectCodec extends ResourceCodec implements CollectibleCodec<JsonProject> {
+public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Project> {
 
    public ProjectCodec(final CodecRegistry registry) {
       super(registry);
    }
 
    @Override
-   public JsonProject decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public Project decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
-      JsonResource resource = decodeResource(bson);
+      SimpleResource resource = decodeResource(bson);
 
-      JsonProject project = new JsonProject(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), (JsonPermissions) resource.getPermissions());
+      Project project = new Project(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions());
       project.setId(resource.getId());
       return project;
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonProject project, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final Project project, final EncoderContext encoderContext) {
       Document bson = encodeResource(project);
 
       documentCodec.encode(writer, bson, encoderContext);
    }
 
    @Override
-   public Class<JsonProject> getEncoderClass() {
-      return JsonProject.class;
+   public Class<Project> getEncoderClass() {
+      return Project.class;
    }
 
    @Override
-   public JsonProject generateIdIfAbsentFromDocument(final JsonProject jsonProject) {
-      JsonResource resource = generateIdIfAbsentFromDocument((JsonResource) jsonProject);
+   public Project generateIdIfAbsentFromDocument(final Project jsonProject) {
+      Resource resource = generateIdIfAbsentFromDocument((Resource) jsonProject);
       jsonProject.setId(resource.getId());
       return jsonProject;
    }
 
    @Override
-   public boolean documentHasId(final JsonProject jsonProject) {
-      return documentHasId((JsonResource) jsonProject);
+   public boolean documentHasId(final Project jsonProject) {
+      return documentHasId((Resource) jsonProject);
    }
 
    @Override
-   public BsonValue getDocumentId(final JsonProject jsonProject) {
-      return getDocumentId((JsonResource) jsonProject);
+   public BsonValue getDocumentId(final Project jsonProject) {
+      return getDocumentId((Resource) jsonProject);
    }
 }

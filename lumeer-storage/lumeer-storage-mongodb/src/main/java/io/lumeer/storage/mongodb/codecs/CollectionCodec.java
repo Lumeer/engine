@@ -19,10 +19,10 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.common.JsonResource;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.common.SimpleResource;
 
 import org.bson.BsonReader;
 import org.bson.BsonValue;
@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CollectionCodec extends ResourceCodec implements CollectibleCodec<JsonCollection> {
+public class CollectionCodec extends ResourceCodec implements CollectibleCodec<Collection> {
 
    public static final String ATTRIBUTES = "attributes";
    public static final String DOCUMENTS_COUNT = "docCount";
@@ -54,60 +54,66 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<J
    }
 
    @Override
-   public JsonCollection decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public Collection decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
-      JsonResource resource = decodeResource(bson);
+      SimpleResource resource = decodeResource(bson);
 
-      Set<JsonAttribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
-                                                                                               .map(AttributeCodec::convertFromDocument)
-                                                                                               .collect(Collectors.toSet());
+      Set<Attribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
+                                                                                           .map(AttributeCodec::convertFromDocument)
+                                                                                           .collect(Collectors.toSet());
 
       Integer documentsCount = bson.getInteger(DOCUMENTS_COUNT);
       Integer lastAttributeNum = bson.getInteger(LAST_ATTRIBUTE_NUM);
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
       String defaultAttributeId = bson.getString(DEFAULT_ATTRIBUTE_ID);
 
-      JsonCollection collection = new JsonCollection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), (JsonPermissions) resource.getPermissions(), attributes);
+      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), attributes);
       collection.setId(resource.getId());
       collection.setDocumentsCount(documentsCount);
-      collection.setLastTimeUsed(ZonedDateTime.ofInstant(lastTimeUsed.toInstant(), ZoneOffset.UTC));
+      if (lastTimeUsed != null) {
+         collection.setLastTimeUsed(ZonedDateTime.ofInstant(lastTimeUsed.toInstant(), ZoneOffset.UTC));
+      }
       collection.setDefaultAttributeId(defaultAttributeId);
       collection.setLastAttributeNum(lastAttributeNum);
+      collection.setAttributes(attributes);
 
       return collection;
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonCollection collection, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final Collection collection, final EncoderContext encoderContext) {
       Document bson = encodeResource(collection)
             .append(DOCUMENTS_COUNT, collection.getDocumentsCount())
             .append(DEFAULT_ATTRIBUTE_ID, collection.getDefaultAttributeId())
-            .append(LAST_TIME_USED, Date.from(collection.getLastTimeUsed().toInstant()))
             .append(LAST_ATTRIBUTE_NUM, collection.getLastAttributeNum())
             .append(ATTRIBUTES, collection.getAttributes());
+
+      if (collection.getLastTimeUsed() != null) {
+         bson.append(LAST_TIME_USED, Date.from(collection.getLastTimeUsed().toInstant()));
+      }
 
       documentCodec.encode(writer, bson, encoderContext);
    }
 
    @Override
-   public Class<JsonCollection> getEncoderClass() {
-      return JsonCollection.class;
+   public Class<Collection> getEncoderClass() {
+      return Collection.class;
    }
 
    @Override
-   public JsonCollection generateIdIfAbsentFromDocument(final JsonCollection jsonCollection) {
-      JsonResource resource = generateIdIfAbsentFromDocument((JsonResource) jsonCollection);
+   public Collection generateIdIfAbsentFromDocument(final Collection jsonCollection) {
+      Resource resource = generateIdIfAbsentFromDocument((Resource) jsonCollection);
       jsonCollection.setId(resource.getId());
       return jsonCollection;
    }
 
    @Override
-   public boolean documentHasId(final JsonCollection jsonCollection) {
-      return documentHasId((JsonResource) jsonCollection);
+   public boolean documentHasId(final Collection jsonCollection) {
+      return documentHasId((Resource) jsonCollection);
    }
 
    @Override
-   public BsonValue getDocumentId(final JsonCollection jsonCollection) {
-      return getDocumentId((JsonResource) jsonCollection);
+   public BsonValue getDocumentId(final Collection jsonCollection) {
+      return getDocumentId((Resource) jsonCollection);
    }
 }

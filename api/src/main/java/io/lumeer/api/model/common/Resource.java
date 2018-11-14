@@ -16,16 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.dto.common;
+package io.lumeer.api.model.common;
 
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class JsonResource implements Resource {
+public abstract class Resource {
 
    public static final String CODE = "code";
    public static final String NAME = "name";
@@ -43,21 +41,21 @@ public class JsonResource implements Resource {
    protected String description;
    protected boolean nonRemovable;
 
-   protected JsonPermissions permissions;
+   protected Permissions permissions;
 
-   protected JsonResource() {
+   protected Resource() {
    }
 
-   public JsonResource(final String code, final String name, final String icon, final String color, String description, final JsonPermissions permissions) {
+   public Resource(final String code, final String name, final String icon, final String color, String description, final Permissions permissions) {
       this.code = code;
       this.name = name;
       this.icon = icon;
       this.color = color;
       this.description = description;
-      this.permissions = permissions != null ? permissions : new JsonPermissions();
+      this.permissions = permissions != null ? permissions : new Permissions();
    }
 
-   protected JsonResource(final Resource resource) {
+   protected Resource(final Resource resource) {
       this.id = resource.getId();
       this.code = resource.getCode();
       this.name = resource.getName();
@@ -65,72 +63,58 @@ public class JsonResource implements Resource {
       this.color = resource.getColor();
       this.description = resource.getDescription();
       this.nonRemovable = resource.isNonRemovable();
-      this.permissions = new JsonPermissions(resource.getPermissions());
+      this.permissions = new Permissions(resource.getPermissions());
    }
 
-   @Override
-   public ResourceType getType() {
-      return null;
-   }
+   @JsonIgnore
+   public abstract ResourceType getType();
 
-   @Override
    public String getId() {
       return id;
    }
 
-   @Override
    public void setId(final String id) {
       this.id = id;
    }
 
-   @Override
    public String getCode() {
       return code;
    }
 
-   @Override
    public void setCode(final String code) {
       this.code = code;
    }
 
-   @Override
    public String getName() {
       return name;
    }
 
-   @Override
    public String getIcon() {
       return icon;
    }
 
-   @Override
    public String getDescription() {
       return description;
    }
 
-   @Override
    public String getColor() {
       return color;
    }
 
-   @Override
    public boolean isNonRemovable() {
       return nonRemovable;
    }
 
-   @Override
    public void setNonRemovable(final boolean nonRemovable) {
       this.nonRemovable = nonRemovable;
    }
 
-   @Override
    public Permissions getPermissions() {
       return permissions;
    }
 
-   @Override
    public void setPermissions(final Permissions permissions) {
-      this.permissions = JsonPermissions.convert(permissions);
+      this.permissions = new Permissions(permissions);
    }
 
    public void setName(final String name) {

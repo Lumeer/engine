@@ -19,8 +19,6 @@
 package io.lumeer.core.auth;
 
 import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -28,7 +26,6 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.Colors;
 import io.lumeer.core.util.Icons;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -183,9 +180,9 @@ public class AuthenticatedUser implements Serializable {
 
    private Organization createDemoOrganization(User user) {
       String code = generateOrganizationCode(user.getEmail());
-      Permission userPermission = new SimplePermission(user.getId(), Organization.ROLES);
+      Permission userPermission = Permission.buildWithRoles(user.getId(), Organization.ROLES);
 
-      Organization organization = new JsonOrganization(code, "Lumeer demo", getDemoIcon(), getDemoColor(), null, null);
+      Organization organization = new Organization(code, "Lumeer demo", getDemoIcon(), getDemoColor(), null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.setNonRemovable(true);
 
@@ -194,8 +191,8 @@ public class AuthenticatedUser implements Serializable {
 
    private Project createDemoProject(final User user) {
       final String code = generateProjectCode();
-      final Permission userPermission = new SimplePermission(user.getId(), Project.ROLES);
-      Project project = new JsonProject(code, "Project", getDemoIcon(), getDemoColor(), null, null);
+      final Permission userPermission = Permission.buildWithRoles(user.getId(), Project.ROLES);
+      Project project = new Project(code, "Project", getDemoIcon(), getDemoColor(), null, null);
       project.getPermissions().updateUserPermissions(userPermission);
       project.setNonRemovable(true);
 

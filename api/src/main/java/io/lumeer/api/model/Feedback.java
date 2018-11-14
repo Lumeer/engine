@@ -19,7 +19,7 @@
 
 package io.lumeer.api.model;
 
-import io.lumeer.api.dto.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

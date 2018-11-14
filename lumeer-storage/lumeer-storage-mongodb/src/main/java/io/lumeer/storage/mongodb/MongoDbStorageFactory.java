@@ -16,37 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.storage.mongodb;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.DataStorageFactory;
+import io.lumeer.engine.api.data.StorageConnection;
 
-public interface Resource {
+import java.util.List;
+import javax.enterprise.context.ApplicationScoped;
 
-   @JsonIgnore
-   ResourceType getType();
+@ApplicationScoped
+public class MongoDbStorageFactory implements DataStorageFactory {
 
-   String getId();
-
-   void setId(String id);
-
-   String getCode();
-
-   void setCode(String code);
-
-   String getDescription();
-
-   String getName();
-
-   String getIcon();
-
-   String getColor();
-
-   boolean isNonRemovable();
-
-   void setNonRemovable(boolean nonRemovable);
-
-   Permissions getPermissions();
-
-   void setPermissions(Permissions permissions);
-
+   @Override
+   public DataStorage getStorage(final List<StorageConnection> connections, final String database, final Boolean useSsl) {
+      final DataStorage storage = new MongoDbStorage();
+      storage.connect(connections, database, useSsl);
+      return storage;
+   }
 }

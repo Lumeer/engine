@@ -2,11 +2,10 @@ package io.lumeer.remote.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -56,10 +55,10 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
-      JsonOrganization organization1 = new JsonOrganization();
+      Organization organization1 = new Organization();
       organization1.setCode("LMR");
-      organization1.setPermissions(new JsonPermissions());
-      organization1.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.setPermissions(new Permissions());
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organization = organizationDao.createOrganization(organization1);
 
       groupDao.createGroupsRepository(organization);

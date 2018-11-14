@@ -20,9 +20,6 @@ package io.lumeer.remote.rest.permissions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -77,7 +74,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationNoRole() {
       String name = "TestGetOrganizationNoRole";
       String code = "TestGetOrganizationNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
 
@@ -90,9 +87,9 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationReadRole() {
       String name = "TestGetOrganizationReadRole";
       String code = "TestGetOrganizationReadRole_id";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
-      Permission newPermission = new JsonPermission(userId, Role.toStringRoles(Collections.singleton(Role.READ)));
+      Permission newPermission = new Permission(userId, Role.toStringRoles(Collections.singleton(Role.READ)));
       organizationFacade.updateUserPermissions(code, newPermission);
       Set<Permission> perm = organizationDao.getOrganizationByCode(code).getPermissions().getUserPermissions();
       LumeerAssertions.assertPermissions(perm, newPermission);
@@ -117,11 +114,11 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       List<String> codes = Arrays.asList(code1, code2, code3, code4);
 
       for (int i = 0; i < codes.size(); i++) {
-         organizationFacade.createOrganization(new JsonOrganization(codes.get(i), names.get(i), "a", "b", null, null));
+         organizationFacade.createOrganization(new Organization(codes.get(i), names.get(i), "a", "b", null, null));
          if (i % 2 == 0) {
             organizationFacade.removeUserPermission(codes.get(i), userId);
          } else {
-            organizationFacade.updateUserPermissions(codes.get(i), new JsonPermission(userId, Role.toStringRoles(Collections.singleton(Role.READ))));
+            organizationFacade.updateUserPermissions(codes.get(i), new Permission(userId, Role.toStringRoles(Collections.singleton(Role.READ))));
          }
       }
 
@@ -139,10 +136,10 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String name = "TestUpdateOrganizationNoRole";
       String code = "TestUpdateOrganizationNoRole_id";
       String newName = "NewTestUpdateOrganizationNoRole";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
-      Organization newOrganization = new JsonOrganization(code, newName, "c", "d", null, null);
+      Organization newOrganization = new Organization(code, newName, "c", "d", null, null);
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code)
@@ -158,17 +155,17 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String name = "TestUpdateOrganizationManageRole";
       String code = "TestUpdateOrganizationManageRole_code";
       String newName = "NewTestUpdateOrganizationManageRole";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      organizationFacade.updateUserPermissions(code, new Permission(userId, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code)
                                 .request(MediaType.APPLICATION_JSON)
-                                .buildPut(Entity.json(new JsonOrganization(code, newName, "c", "d", null, null)))
+                                .buildPut(Entity.json(new Organization(code, newName, "c", "d", null, null)))
                                 .invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      Organization org = response.readEntity(JsonOrganization.class);
+      Organization org = response.readEntity(Organization.class);
       assertThat(org.getName()).isEqualTo(newName);
       assertThat(org.getCode()).isEqualTo(code);
 
@@ -178,7 +175,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationPermissionsNoRole() {
       String name = "testGetOrganizationPermissionsNoRole";
       String code = "testGetOrganizationPermissionsNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
 
@@ -194,9 +191,9 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationPermissionsManageRole() {
       String name = "testGetOrganizationPermissionsManageRole";
       String code = "testGetOrganizationPermissionsManageRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      organizationFacade.updateUserPermissions(code, new Permission(userId, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions")
@@ -210,10 +207,10 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateUserPermissionNoRole() {
       String name = "testUpdateUserPermissionNoRole";
       String code = "testUpdateUserPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
-      Permission[] newPermission = {new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
+      Permission[] newPermission = { new Permission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users")
@@ -227,10 +224,10 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateUserPermissionManageRole() {
       String name = "testUpdateUserPermissionNoRole";
       String code = "testUpdateUserPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
-      Permission[] newPermission = {new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
+      organizationFacade.updateUserPermissions(code, new Permission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      Permission[] newPermission = { new Permission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users")
@@ -244,7 +241,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveUserPermissionNoRole() {
       String name = "testRemoveUserPermissionNoRole";
       String code = "testRemoveUserPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
 
@@ -260,9 +257,9 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveUserPermissionManageRole() {
       String name = "testRemoveUserPermissionNoRole";
       String code = "testRemoveUserPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      organizationFacade.updateUserPermissions(code, new Permission(userId, Role.toStringRoles(new HashSet<Role>(Arrays.asList(Role.READ, Role.MANAGE)))));
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/users/" + userId)
@@ -276,11 +273,11 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateGroupPermissionNoRole() {
       String name = "testUpdateGroupPermissionNoRole";
       String code = "testUpdateGroupPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
       String group = "testGroup1";
-      Permission[] newPermission = {new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
+      Permission[] newPermission = { new Permission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups")
@@ -294,11 +291,11 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateGroupPermissionManageRole() {
       String name = "testUpdateGroupPermissionNoRole";
       String code = "testUpdateGroupPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      organizationFacade.updateUserPermissions(code, new Permission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String group = "testGroup2";
-      Permission[] newPermission = {new JsonPermission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE))))};
+      Permission[] newPermission = { new Permission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/permissions/groups")
@@ -312,7 +309,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveGroupPermissionNoRole() {
       String name = "testRemoveGroupPermissionNoRole";
       String code = "testRemoveGroupPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
       String group = "testGroup3";
@@ -329,9 +326,9 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveGroupPermissionManageRole() {
       String name = "testRemoveGroupPermissionNoRole";
       String code = "testRemoveGroupPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(code, new JsonPermission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      organizationFacade.updateUserPermissions(code, new Permission(userId, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
       String group = "testGroup3";
 
       Response response = client.target(TARGET_URI)
@@ -346,12 +343,12 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testCreateProjectInOrganizationNoRole() {
       String name = "testRemoveGroupPermissionNoRole";
       String code = "testRemoveGroupPermissionNoRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(code, userId);
       String projectCode = "proj1";
       String projectName = "proj1_code";
-      Project project = new JsonProject(projectCode, projectName, "a", "b", null, null);
+      Project project = new Project(projectCode, projectName, "a", "b", null, null);
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/projects")
@@ -365,11 +362,11 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testCreateProjectInOrganizationManageRole() {
       String name = "testCreateProjectInOrganizationManageRole";
       String code = "testCreateProjectInOrganizationManageRole_code";
-      Organization organization = new JsonOrganization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null);
       organizationFacade.createOrganization(organization);
       String projectCode = "proj2";
       String projectName = "proj2_code";
-      Project project = new JsonProject(projectCode, projectName, "a", "b", null, null);
+      Project project = new Project(projectCode, projectName, "a", "b", null, null);
 
       Response response = client.target(TARGET_URI)
                                 .path(PATH_PREFIX + code + "/projects")

@@ -21,16 +21,13 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -38,7 +35,6 @@ import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
-import com.mongodb.DuplicateKeyException;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -66,13 +62,13 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String NAME = "Test collection";
    private static final String COLOR = "#0000ff";
    private static final String ICON = "fa-eye";
-   private static final Set<JsonAttribute> ATTRIBUTES;
+   private static final Set<Attribute> ATTRIBUTES;
    private static final Integer DOCUMENTS_COUNT = 0;
    private static final ZonedDateTime LAST_TIME_USED = ZonedDateTime.now().withNano(0);
 
-   private static final JsonPermissions PERMISSIONS = new JsonPermissions();
-   private static final JsonPermission USER_PERMISSION;
-   private static final JsonPermission GROUP_PERMISSION;
+   private static final Permissions PERMISSIONS = new Permissions();
+   private static final Permission USER_PERMISSION;
+   private static final Permission GROUP_PERMISSION;
 
    private static final String USER2 = "testUser2";
    private static final String GROUP2 = "testGroup2";
@@ -88,23 +84,23 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String NAME_FULLTEXT2 = "Fulltext name 2";
    private static final String NAME_SUGGESTION = "TESTING suggestions";
 
-   private static final Set<JsonAttribute> ATTRIBUTES_FULLTEXT;
+   private static final Set<Attribute> ATTRIBUTES_FULLTEXT;
 
    private static final String ATTRIBUTE1_NAME = "suggestion";
    private static final String ATTRIBUTE2_NAME = "fulltext";
 
    static {
-      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE1_NAME);
+      Attribute attribute = new Attribute(ATTRIBUTE1_NAME);
       ATTRIBUTES = Collections.singleton(attribute);
 
-      USER_PERMISSION = new JsonPermission(USER, Collection.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      USER_PERMISSION = new Permission(USER, Collection.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      GROUP_PERMISSION = new JsonPermission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
 
-      JsonAttribute attribute1 = new JsonAttribute(ATTRIBUTE1_NAME);
-      JsonAttribute attribute2 = new JsonAttribute(ATTRIBUTE2_NAME);
+      Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
+      Attribute attribute2 = new Attribute(ATTRIBUTE2_NAME);
       ATTRIBUTES_FULLTEXT = new HashSet<>(Arrays.asList(attribute1, attribute2));
    }
 
@@ -122,35 +118,35 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       collectionDao.createCollectionsRepository(project);
    }
 
-   private JsonCollection prepareCollection(String code, String name) {
-      JsonCollection collection = new JsonCollection(code, name, ICON, COLOR, "", new JsonPermissions(PERMISSIONS), ATTRIBUTES);
+   private Collection prepareCollection(String code, String name) {
+      Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES);
       collection.setDocumentsCount(DOCUMENTS_COUNT);
       collection.setLastTimeUsed(LAST_TIME_USED);
       return collection;
    }
 
-   private JsonCollection createCollection(String code, String name) {
-      JsonCollection collection = prepareCollection(code, name);
+   private Collection createCollection(String code, String name) {
+      Collection collection = prepareCollection(code, name);
       collectionDao.databaseCollection().insertOne(collection);
       return collection;
    }
 
-   private JsonCollection createCollection(String code, String name, Set<JsonAttribute> attributes) {
-      JsonCollection collection = prepareCollection(code, name);
-      collection.setAttributess(attributes);
+   private Collection createCollection(String code, String name, Set<Attribute> attributes) {
+      Collection collection = prepareCollection(code, name);
+      collection.setAttributes(attributes);
       collectionDao.databaseCollection().insertOne(collection);
       return collection;
    }
 
    @Test
    public void testCreateCollection() {
-      JsonCollection collection = prepareCollection(CODE, NAME);
+      Collection collection = prepareCollection(CODE, NAME);
 
       String id = collectionDao.createCollection(collection).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      JsonCollection storedCollection = collectionDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      Collection storedCollection = collectionDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedCollection).isNotNull();
       assertThat(storedCollection.getCode()).isEqualTo(CODE);
       assertThat(storedCollection.getName()).isEqualTo(NAME);
@@ -166,7 +162,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    public void testCreateCollectionExistingCode() {
       createCollection(CODE, NAME);
 
-      JsonCollection collection = prepareCollection(CODE, NAME2);
+      Collection collection = prepareCollection(CODE, NAME2);
       assertThatThrownBy(() -> collectionDao.createCollection(collection))
             .isInstanceOf(StorageException.class);
    }
@@ -175,7 +171,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    public void testCreateCollectionExistingName() {
       createCollection(CODE, NAME);
 
-      JsonCollection collection = prepareCollection(CODE2, NAME);
+      Collection collection = prepareCollection(CODE2, NAME);
       assertThatThrownBy(() -> collectionDao.createCollection(collection))
             .isInstanceOf(StorageException.class);
    }
@@ -184,7 +180,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    public void testUpdateCollection() {
       String id = createCollection(CODE, NAME).getId();
 
-      JsonCollection collection = prepareCollection(CODE2, NAME);
+      Collection collection = prepareCollection(CODE2, NAME);
       Collection updatedCollection = collectionDao.updateCollection(id, collection);
       assertThat(updatedCollection).isNotNull();
       assertThat(updatedCollection.getCode()).isEqualTo(CODE2);
@@ -197,7 +193,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    @Test
    @Ignore("Stored anyway with the current implementation")
    public void testUpdateCollectionNotExisting() {
-      JsonCollection collection = prepareCollection(CODE, NAME);
+      Collection collection = prepareCollection(CODE, NAME);
       assertThatThrownBy(() -> collectionDao.updateCollection(COLLECTION_ID, collection))
             .isInstanceOf(StorageException.class);
    }
@@ -235,10 +231,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollections() {
-      JsonCollection collection = prepareCollection(CODE, NAME);
+      Collection collection = prepareCollection(CODE, NAME);
       collectionDao.databaseCollection().insertOne(collection);
 
-      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      Collection collection2 = prepareCollection(CODE2, NAME2);
       collectionDao.databaseCollection().insertOne(collection2);
 
       SearchQuery query = SearchQuery.createBuilder(USER).build();
@@ -248,16 +244,16 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsByIds() {
-      JsonCollection collection = prepareCollection(CODE, NAME);
+      Collection collection = prepareCollection(CODE, NAME);
       String id = collectionDao.createCollection(collection).getId();
 
-      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      Collection collection2 = prepareCollection(CODE2, NAME2);
       String id2 = collectionDao.createCollection(collection2).getId();
 
-      JsonCollection collection3 = prepareCollection(CODE3, NAME3);
+      Collection collection3 = prepareCollection(CODE3, NAME3);
       String id3 = collectionDao.createCollection(collection3).getId();
 
-      JsonCollection collection4 = prepareCollection(CODE4, NAME4);
+      Collection collection4 = prepareCollection(CODE4, NAME4);
       String id4 = collectionDao.createCollection(collection4).getId();
 
       List<Collection> collections = collectionDao.getCollectionsByIds(Arrays.asList(id, id3));
@@ -269,13 +265,13 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsNoReadRole() {
-      JsonCollection collection = prepareCollection(CODE, NAME);
-      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      Collection collection = prepareCollection(CODE, NAME);
+      Permission userPermission = new Permission(USER2, Collections.singleton(Role.CLONE.toString()));
       collection.getPermissions().updateUserPermissions(userPermission);
       collectionDao.databaseCollection().insertOne(collection);
 
-      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
-      Permission groupPermission = new JsonPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Collection collection2 = prepareCollection(CODE2, NAME2);
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       collection2.getPermissions().updateGroupPermissions(groupPermission);
       collectionDao.databaseCollection().insertOne(collection2);
 
@@ -286,10 +282,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsGroupsRole() {
-      JsonCollection collection = prepareCollection(CODE, NAME);
+      Collection collection = prepareCollection(CODE, NAME);
       collectionDao.databaseCollection().insertOne(collection);
 
-      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      Collection collection2 = prepareCollection(CODE2, NAME2);
       collectionDao.databaseCollection().insertOne(collection2);
 
       SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
@@ -312,16 +308,16 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsByCollectionIds() {
-      JsonCollection collection = prepareCollection(CODE, NAME);
+      Collection collection = prepareCollection(CODE, NAME);
       collection.getPermissions().removeUserPermission(USER);
-      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.READ.toString()));
+      Permission userPermission = new Permission(USER2, Collections.singleton(Role.READ.toString()));
       collection.getPermissions().updateUserPermissions(userPermission);
       collectionDao.databaseCollection().insertOne(collection);
 
-      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      Collection collection2 = prepareCollection(CODE2, NAME2);
       collectionDao.databaseCollection().insertOne(collection2);
 
-      JsonCollection collection3 = prepareCollection(CODE3, NAME3);
+      Collection collection3 = prepareCollection(CODE3, NAME3);
       collectionDao.databaseCollection().insertOne(collection3);
 
       SearchQuery query = SearchQuery.createBuilder(USER)

@@ -21,24 +21,18 @@ package io.lumeer.core.facade;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonDocument;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -107,9 +101,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureCollection() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -117,17 +111,17 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode(PROJECT_CODE);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -136,9 +130,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       collectionDao.setProject(storedProject);
       collectionDao.createCollectionsRepository(storedProject);
 
-      JsonPermissions collectionPermissions = new JsonPermissions();
-      collectionPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-      JsonCollection jsonCollection = new JsonCollection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+      Permissions collectionPermissions = new Permissions();
+      collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       jsonCollection.setDocumentsCount(0);
       jsonCollection.setLastAttributeNum(0);
       collection = collectionDao.createCollection(jsonCollection);
@@ -149,7 +143,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
             .append(KEY1, VALUE1)
             .append(KEY2, VALUE2);
 
-      return new JsonDocument(data);
+      return new Document(data);
    }
 
    private Document createDocument() {

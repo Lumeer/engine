@@ -20,12 +20,10 @@ package io.lumeer.storage.mongodb.dao.system;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.permissionsFilter;
 
-import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -37,7 +35,6 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -80,9 +77,8 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
    @Override
    public Organization createOrganization(final Organization organization) {
       try {
-         JsonOrganization jsonOrganization = new JsonOrganization(organization);
-         databaseCollection().insertOne(jsonOrganization);
-         return jsonOrganization;
+         databaseCollection().insertOne(organization);
+         return organization;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create organization: " + organization, ex);
       }
@@ -99,7 +95,7 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
    }
 
    private Organization getOrganizationByFilter(Bson filter) {
-      MongoCursor<JsonOrganization> mongoCursor = databaseCollection().find(filter).iterator();
+      MongoCursor<Organization> mongoCursor = databaseCollection().find(filter).iterator();
       if (!mongoCursor.hasNext()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
@@ -117,7 +113,7 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
    @Override
    public List<Organization> getOrganizations(final DatabaseQuery query) {
       Bson filter = organizationsSearchFilter(query);
-      FindIterable<JsonOrganization> iterable = databaseCollection().find(filter);
+      FindIterable<Organization> iterable = databaseCollection().find(filter);
       addPaginationToQuery(iterable, query);
 
       return iterable.into(new ArrayList<>());
@@ -137,11 +133,10 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
 
    @Override
    public Organization updateOrganization(final String organizationId, final Organization organization) {
-      JsonOrganization jsonOrganization = new JsonOrganization(organization);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         JsonOrganization updatedOrganization = databaseCollection().findOneAndReplace(idFilter(organizationId), jsonOrganization, options);
+         Organization updatedOrganization = databaseCollection().findOneAndReplace(idFilter(organizationId), organization, options);
          if (updatedOrganization == null) {
             throw new StorageException("Organization '" + organizationId + "' has not been updated.");
          }
@@ -155,7 +150,7 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
       return COLLECTION_NAME;
    }
 
-   MongoCollection<JsonOrganization> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), JsonOrganization.class);
+   MongoCollection<Organization> databaseCollection() {
+      return database.getCollection(databaseCollectionName(), Organization.class);
    }
 }

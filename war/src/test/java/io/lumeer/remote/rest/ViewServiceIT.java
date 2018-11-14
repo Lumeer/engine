@@ -22,33 +22,24 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
-import io.lumeer.api.dto.JsonQuery;
-import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.CollectionFacade;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
@@ -83,7 +74,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String NAME = "Test view";
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
-   private static final JsonQuery QUERY;
+   private static final Query QUERY;
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
@@ -103,7 +94,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String VIEWS_COLLECTIONS_URL = VIEWS_URL + "/all/collections";
 
    static {
-      QUERY = new JsonQuery(new HashSet<>(), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new Query(new HashSet<>(), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject
@@ -132,29 +123,29 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
-      groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
+      userPermission = Permission.buildWithRoles(this.user.getId(), USER_ROLES);
+      groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
 
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new MorphiaPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
       projectDao.setOrganization(storedOrganization);
 
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode(PROJECT_CODE);
-      project.setPermissions(new MorphiaPermissions());
+      project.setPermissions(new Permissions());
       Project storedProject = projectDao.createProject(project);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      Permission userProjectPermission = new SimplePermission(this.user.getId(), Project.ROLES);
+      Permissions projectPermissions = new Permissions();
+      Permission userProjectPermission = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -164,8 +155,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       viewDao.setProject(storedProject);
 
       Collection collection = collectionFacade.createCollection(
-            new JsonCollection("abc", "abc random", ICON, COLOR, projectPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+            new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
       QUERY.getCollectionIds().clear();
       QUERY.getCollectionIds().add(collection.getId());
 
@@ -173,7 +164,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    }
 
    private View prepareView(String code) {
-      return new JsonView(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE, CONFIG, this.user.getId());
+      return new View(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE, CONFIG, this.user.getId());
    }
 
    private View createView(String code) {
@@ -194,7 +185,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      View returnedView = response.readEntity(JsonView.class);
+      View returnedView = response.readEntity(View.class);
       assertThat(returnedView).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -223,7 +214,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      View returnedView = response.readEntity(JsonView.class);
+      View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedView.getCode()).isEqualTo(CODE2);
       assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
@@ -277,7 +268,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      View returnedView = response.readEntity(JsonView.class);
+      View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedView.getCode()).isEqualTo(CODE);
       assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
@@ -294,14 +285,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    @Test
    public void testGetViewWithAuthorRights() {
       final String USER = "aaaaa4444400000000111112"; // non-existing author
-      JsonPermission permission = new JsonPermission(USER, new HashSet<>(Arrays.asList(Role.WRITE.toString())));
+      Permission permission = new Permission(USER, new HashSet<>(Arrays.asList(Role.WRITE.toString())));
       Collection collection = collectionFacade.createCollection(
-            new JsonCollection("cdefg", "abcefg random", ICON, COLOR, new JsonPermissions(new HashSet<>(Arrays.asList(permission)), Collections.emptySet())));
-      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(USER, Collections.singleton(Role.WRITE)));
-      JsonQuery query = new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet());
+            new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Arrays.asList(permission)), Collections.emptySet())));
+      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(USER, Collections.singleton(Role.WRITE)));
+      Query query = new Query(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet());
 
       View view = prepareView(CODE + "3");
-      ((JsonView) view).setQuery(query);
+      view.setQuery(query);
       view.getPermissions().updateUserPermissions(userPermission);
       view.getPermissions().updateGroupPermissions(groupPermission);
       view.setAuthorId(USER);
@@ -309,12 +300,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       viewDao.createView(view);
 
       Response response = client.target(VIEWS_URL).path(CODE + "3")
-            .request(MediaType.APPLICATION_JSON)
-            .buildGet().invoke();
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildGet().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      View returnedView = response.readEntity(JsonView.class);
+      View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), new HashSet<>(Arrays.asList(Role.WRITE))));
       assertions.assertAll();
@@ -331,9 +322,9 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonView> views = response.readEntity(new GenericType<List<JsonView>>() {
+      List<View> views = response.readEntity(new GenericType<List<View>>() {
       });
-      assertThat(views).extracting(Resource::getCode).containsOnly(CODE, CODE2);
+      assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
 
       Permissions permissions1 = views.get(0).getPermissions();
       assertThat(permissions1.getUserPermissions()).containsOnly(userPermission);
@@ -356,7 +347,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Permissions permissions = response.readEntity(JsonPermissions.class);
+      Permissions permissions = response.readEntity(Permissions.class);
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
@@ -365,7 +356,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       createView(CODE);
 
-      SimplePermission[] userPermission = {new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("users")
@@ -374,7 +365,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission[0]);
@@ -405,7 +396,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createView(CODE);
 
-      SimplePermission[] groupPermission = {new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("groups")
@@ -414,7 +405,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);
@@ -450,36 +441,37 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       final String COLLECTION_COLOR = "#abcdea";
 
       // create collection under a different user
-      JsonPermissions collectionPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(NON_EXISTING_USER, Collection.ROLES);
+      Permissions collectionPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(NON_EXISTING_USER, Collection.ROLES);
       collectionPermissions.updateUserPermissions(userPermission);
 
       Collection collection = collectionFacade.createCollection(
-            new JsonCollection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.emptySet()));
+            new Collection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
 
       // create a view under a different user
       View view = createView(VIEW_CODE);
-      ((JsonView) view).setAuthorId(NON_EXISTING_USER);
-      ((JsonView) view).setQuery(new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
+      view.setAuthorId(NON_EXISTING_USER);
+      view.setQuery(new Query(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
       view.getPermissions().clearUserPermissions();
-      view.getPermissions().updateUserPermissions(new SimplePermission(NON_EXISTING_USER, View.ROLES), new SimplePermission(this.user.getId(), Collections.emptySet()));
+      view.getPermissions().updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
       viewDao.updateView(view.getId(), view);
 
       // share the view and make sure we can see it now
-      Permissions viewPermissions = new JsonPermissions();
-      viewPermissions.updateUserPermissions(new SimplePermission(NON_EXISTING_USER, View.ROLES));
-      viewPermissions.updateUserPermissions(new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+      Permissions viewPermissions = new Permissions();
+      viewPermissions.updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES));
+      viewPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
       view.setPermissions(viewPermissions);
       viewDao.updateView(view.getId(), view);
 
       Response response = client.target(VIEWS_COLLECTIONS_URL)
-            .request(MediaType.APPLICATION_JSON)
-            .buildGet().invoke();
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildGet().invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      Set<JsonCollection> collections = response.readEntity(new GenericType<Set<JsonCollection>>() {});
+      Set<Collection> collections = response.readEntity(new GenericType<Set<Collection>>() {
+      });
 
       assertThat(collections).hasSize(1).hasOnlyOneElementSatisfying(c ->
             assertThat(c.getId()).isEqualTo(collection.getId()));

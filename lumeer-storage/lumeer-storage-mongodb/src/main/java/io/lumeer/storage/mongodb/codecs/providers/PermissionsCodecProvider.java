@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
 
 import org.bson.codecs.Codec;
@@ -30,7 +30,7 @@ public class PermissionsCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == JsonPermissions.class) {
+      if (clazz == Permissions.class) {
          return (Codec<T>) new PermissionsCodec(registry);
       }
 

@@ -21,7 +21,6 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.exception.StorageException;

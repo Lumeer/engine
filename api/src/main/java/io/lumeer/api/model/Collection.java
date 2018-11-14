@@ -18,51 +18,149 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.AttributeUtil;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public interface Collection extends Resource {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Collection extends Resource {
 
-   Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.SHARE, Role.READ));
+   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.SHARE, Role.READ));
 
-   String ATTRIBUTE_PREFIX = "a";
+   public static String ATTRIBUTE_PREFIX = "a";
+
+   private static final String ATTRIBUTES = "attributes";
+
+   private Set<Attribute> attributes;
+   private Integer documentsCount;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime lastTimeUsed;
+   private String defaultAttributeId;
+   private Integer lastAttributeNum;
+   private boolean favorite;
+
+   public Collection(final String code, final String name, final String icon, final String color, final Permissions permissions) {
+      this(code, name, icon, color, "", permissions, new LinkedHashSet<>());
+   }
+
+   @JsonCreator
+   public Collection(
+         @JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes) {
+      super(code, name, icon, color, description, permissions);
+
+      this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
+      this.documentsCount = 0;
+      this.lastAttributeNum = 0;
+   }
 
    @Override
-   default ResourceType getType() {
+   public ResourceType getType() {
       return ResourceType.COLLECTION;
    }
 
-   Set<Attribute> getAttributes();
+   public Set<Attribute> getAttributes() {
+      return Collections.unmodifiableSet(attributes);
+   }
 
-   void setAttributes(Set<Attribute> attributes);
+   public void setAttributes(final Set<Attribute> attributes) {
+      this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
+   }
 
-   void setName(String name);
+   public void createAttribute(final Attribute attribute) {
+      attributes.add(attribute);
+   }
 
-   void createAttribute(Attribute attribute);
+   public void updateAttribute(final String attributeId, final Attribute attribute) {
+      Optional<Attribute> oldAttribute = attributes.stream().filter(attr -> attribute.getId().equals(attribute.getId())).findFirst();
+      attributes.removeIf(a -> a.getId().equals(attributeId));
+      attributes.add(attribute);
 
-   void updateAttribute(String attributeId, Attribute attribute);
+      if (oldAttribute.isPresent() && !oldAttribute.get().getName().equals(attribute.getName())) {
+         AttributeUtil.renameChildAttributes(attributes, oldAttribute.get().getName(), attribute.getName());
+      }
+   }
 
-   void deleteAttribute(String attributeId);
+   public void deleteAttribute(final String attributeId) {
+      Optional<Attribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
+   }
 
-   Integer getDocumentsCount();
+   public Integer getDocumentsCount() {
+      return documentsCount;
+   }
 
-   void setDocumentsCount(Integer documentsCount);
+   public void setDocumentsCount(final Integer documentsCount) {
+      this.documentsCount = documentsCount;
+   }
 
-   ZonedDateTime getLastTimeUsed();
+   public ZonedDateTime getLastTimeUsed() {
+      return lastTimeUsed;
+   }
 
-   void setLastTimeUsed(ZonedDateTime lastTimeUsed);
+   public void setLastTimeUsed(final ZonedDateTime lastTimeUsed) {
+      this.lastTimeUsed = lastTimeUsed;
+   }
+
+   public boolean isFavorite() {
+      return favorite;
+   }
+
+   public void setFavorite(final boolean favorite) {
+      this.favorite = favorite;
+   }
 
    @JsonIgnore
-   Integer getLastAttributeNum();
+   public Integer getLastAttributeNum() {
+      return lastAttributeNum;
+   }
 
-   void setLastAttributeNum(final Integer lastAttributeNum);
+   public void setLastAttributeNum(final Integer lastAttributeNum) {
+      this.lastAttributeNum = lastAttributeNum;
+   }
 
-   String getDefaultAttributeId();
+   public String getDefaultAttributeId() {
+      return this.defaultAttributeId;
+   }
 
-   void setDefaultAttributeId(String attributeId);
+   public void setDefaultAttributeId(final String attributeId) {
+      this.defaultAttributeId = attributeId;
+   }
+
+   @Override
+   public String toString() {
+      return "JsonCollection{" +
+            "id='" + id + '\'' +
+            ", code='" + code + '\'' +
+            ", name='" + name + '\'' +
+            ", icon='" + icon + '\'' +
+            ", color='" + color + '\'' +
+            ", permissions=" + permissions +
+            ", attributes=" + attributes +
+            ", documentsCount=" + documentsCount +
+            ", defaultAttributeId=" + defaultAttributeId +
+            ", lastTimeUsed=" + lastTimeUsed +
+            '}';
+   }
 
 }

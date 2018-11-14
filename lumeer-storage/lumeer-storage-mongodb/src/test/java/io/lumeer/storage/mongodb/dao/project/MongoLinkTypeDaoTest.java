@@ -21,8 +21,7 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.exception.StorageException;
@@ -49,7 +48,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    private static final String COLLECTION_ID2 = "Engine";
    private static final String ATTRIBUTE1_NAME = "Maxi";
    private static final String ATTRIBUTE2_NAME = "Light";
-   private static final List<JsonAttribute> ATTRIBUTES;
+   private static final List<Attribute> ATTRIBUTES;
 
    private static final String NAME2 = "Linking";
    private static final String NAME3 = "Spoiler";
@@ -61,8 +60,8 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    private static final String USER = "user";
 
    static {
-      JsonAttribute attribute1 = new JsonAttribute(ATTRIBUTE1_NAME);
-      JsonAttribute attribute2 = new JsonAttribute(ATTRIBUTE2_NAME);
+      Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
+      Attribute attribute2 = new Attribute(ATTRIBUTE2_NAME);
       ATTRIBUTES = Arrays.asList(attribute1, attribute2);
    }
 

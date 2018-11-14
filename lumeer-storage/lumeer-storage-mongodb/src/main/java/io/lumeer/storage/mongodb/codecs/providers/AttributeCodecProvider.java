@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.dto.JsonAttribute;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.storage.mongodb.codecs.AttributeCodec;
 
 import org.bson.codecs.Codec;
@@ -30,7 +30,7 @@ public class AttributeCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == JsonAttribute.class) {
+      if (clazz == Attribute.class) {
          return (Codec<T>) new AttributeCodec(registry);
       }
 

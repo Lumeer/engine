@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonAttribute;
+import io.lumeer.api.model.Attribute;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -32,7 +32,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.HashSet;
 import java.util.List;
 
-public class AttributeCodec implements Codec<JsonAttribute> {
+public class AttributeCodec implements Codec<Attribute> {
 
    public static final String ID = "id";
    public static final String NAME = "name";
@@ -46,23 +46,23 @@ public class AttributeCodec implements Codec<JsonAttribute> {
    }
 
    @Override
-   public JsonAttribute decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public Attribute decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
       return AttributeCodec.convertFromDocument(bson);
    }
 
-   public static JsonAttribute convertFromDocument(final Document document) {
+   public static Attribute convertFromDocument(final Document document) {
       String id = document.getString(ID);
       String name = document.getString(NAME);
       List<String> constraints = document.get(CONSTRAINTS, List.class);
       Integer usageCount = document.getInteger(USAGE_COUNT);
 
-      return new JsonAttribute(id, name, new HashSet<>(constraints), usageCount);
+      return new Attribute(id, name, new HashSet<>(constraints), usageCount);
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonAttribute value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final Attribute value, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(ID, value.getId())
             .append(NAME, value.getName())
@@ -73,8 +73,8 @@ public class AttributeCodec implements Codec<JsonAttribute> {
    }
 
    @Override
-   public Class<JsonAttribute> getEncoderClass() {
-      return JsonAttribute.class;
+   public Class<Attribute> getEncoderClass() {
+      return Attribute.class;
    }
 }
 

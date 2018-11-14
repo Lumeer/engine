@@ -21,11 +21,10 @@ package io.lumeer.storage.mongodb.dao.organization;
 import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -81,9 +80,8 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
    @Override
    public Project createProject(final Project project) {
       try {
-         JsonProject jsonProject = new JsonProject(project);
-         databaseCollection().insertOne(jsonProject);
-         return jsonProject;
+         databaseCollection().insertOne(project);
+         return project;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create project: " + project, ex);
       }
@@ -100,7 +98,7 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
    }
 
    private Project getProjectByFilter(Bson filter) {
-      MongoCursor<JsonProject> mongoCursor = databaseCollection().find(filter).iterator();
+      MongoCursor<Project> mongoCursor = databaseCollection().find(filter).iterator();
       if (!mongoCursor.hasNext()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
@@ -110,7 +108,7 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
    @Override
    public List<Project> getProjects(final DatabaseQuery query) {
       Bson filter = organizationsSearchFilter(query);
-      FindIterable<JsonProject> iterable = databaseCollection().find(filter);
+      FindIterable<Project> iterable = databaseCollection().find(filter);
       addPaginationToQuery(iterable, query);
 
       return iterable.into(new ArrayList<>());
@@ -135,11 +133,10 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
 
    @Override
    public Project updateProject(final String projectId, final Project project) {
-      JsonProject jsonProject = new JsonProject(project);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         JsonProject updatedProject = databaseCollection().findOneAndReplace(idFilter(projectId), jsonProject, options);
+         Project updatedProject = databaseCollection().findOneAndReplace(idFilter(projectId), project, options);
          if (updatedProject == null) {
             throw new StorageException("Project '" + projectId + "' has not been updated.");
          }
@@ -160,8 +157,8 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
       return PREFIX + organization.getId();
    }
 
-   MongoCollection<JsonProject> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), JsonProject.class);
+   MongoCollection<Project> databaseCollection() {
+      return database.getCollection(databaseCollectionName(), Project.class);
    }
 
 }

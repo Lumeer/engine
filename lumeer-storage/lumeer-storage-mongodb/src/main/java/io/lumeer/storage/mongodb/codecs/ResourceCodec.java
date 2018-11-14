@@ -19,18 +19,14 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.common.JsonResource;
+import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.common.SimpleResource;
 
 import org.bson.BsonObjectId;
-import org.bson.BsonReader;
 import org.bson.BsonValue;
-import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.bson.codecs.CollectibleCodec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
@@ -45,27 +41,26 @@ public abstract class ResourceCodec {
    public static final String PERMISSIONS = "permissions";
 
    protected final Codec<Document> documentCodec;
-   protected Document decodedBson;
 
    protected ResourceCodec(final CodecRegistry registry) {
       this.documentCodec = registry.get(Document.class);
    }
 
-   protected JsonResource decodeResource(final Document bson) {
+   protected SimpleResource decodeResource(final Document bson) {
       String id = bson.getObjectId(ID).toHexString();
       String code = bson.getString(CODE);
       String name = bson.getString(NAME);
       String icon = bson.getString(ICON);
       String color = bson.getString(COLOR);
       String description = bson.getString(DESCRIPTION);
-      JsonPermissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class)); // TODO try to use better approach
+      Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class)); // TODO try to use better approach
 
-      JsonResource view = new JsonResource(code, name, icon, color, description, permissions);
+      SimpleResource view = new SimpleResource(code, name, icon, color, description, permissions);
       view.setId(id);
       return view;
    }
 
-   protected Document encodeResource(JsonResource value) {
+   protected Document encodeResource(Resource value) {
       Document bson = value.getId() != null ? new Document(ID, new ObjectId(value.getId())) : new Document();
       bson.append(CODE, value.getCode())
           .append(NAME, value.getName())
@@ -77,18 +72,18 @@ public abstract class ResourceCodec {
       return bson;
    }
 
-   protected JsonResource generateIdIfAbsentFromDocument(final JsonResource document) {
+   protected Resource generateIdIfAbsentFromDocument(final Resource document) {
       if (!documentHasId(document)) {
          document.setId(new ObjectId().toHexString());
       }
       return document;
    }
 
-   protected boolean documentHasId(final JsonResource document) {
+   protected boolean documentHasId(final Resource document) {
       return document.getId() != null;
    }
 
-   protected BsonValue getDocumentId(final JsonResource document) {
+   protected BsonValue getDocumentId(final Resource document) {
       if (!documentHasId(document)) {
          throw new IllegalStateException("The document does not contain an id");
       }

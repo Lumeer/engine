@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.dto.JsonOrganization;
+import io.lumeer.api.model.Organization;
 import io.lumeer.storage.mongodb.codecs.OrganizationCodec;
 
 import org.bson.codecs.Codec;
@@ -30,7 +30,7 @@ public class OrganizationCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == JsonOrganization.class) {
+      if (clazz == Organization.class) {
          return (Codec<T>) new OrganizationCodec(registry);
       }
 

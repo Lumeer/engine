@@ -19,10 +19,10 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonQuery;
-import io.lumeer.api.dto.JsonView;
-import io.lumeer.api.dto.common.JsonResource;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.common.SimpleResource;
 
 import org.bson.BsonReader;
 import org.bson.BsonValue;
@@ -33,7 +33,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-public class ViewCodec extends ResourceCodec implements CollectibleCodec<JsonView> {
+public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
 
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
@@ -45,22 +45,22 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<JsonVie
    }
 
    @Override
-   public JsonView decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public View decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
-      JsonResource resource = decodeResource(bson);
+      SimpleResource resource = decodeResource(bson);
 
-      JsonQuery query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
+      Query query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
       String perspective = bson.getString(PERSPECTIVE);
       Object config = bson.get(CONFIG);
       String authorId = bson.getString(AUTHOR_ID);
 
-      JsonView view = new JsonView(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), (JsonPermissions) resource.getPermissions(), query, perspective, config, authorId);
+      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), query, perspective, config, authorId);
       view.setId(resource.getId());
       return view;
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonView value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final View value, final EncoderContext encoderContext) {
       Document bson = encodeResource(value)
             .append(QUERY, value.getQuery())
             .append(PERSPECTIVE, value.getPerspective())
@@ -71,24 +71,24 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<JsonVie
    }
 
    @Override
-   public Class<JsonView> getEncoderClass() {
-      return JsonView.class;
+   public Class<View> getEncoderClass() {
+      return View.class;
    }
 
    @Override
-   public JsonView generateIdIfAbsentFromDocument(final JsonView jsonView) {
-      JsonResource resource = generateIdIfAbsentFromDocument((JsonResource) jsonView);
+   public View generateIdIfAbsentFromDocument(final View jsonView) {
+      Resource resource = generateIdIfAbsentFromDocument((Resource) jsonView);
       jsonView.setId(resource.getId());
       return jsonView;
    }
 
    @Override
-   public boolean documentHasId(final JsonView jsonView) {
-      return documentHasId((JsonResource) jsonView);
+   public boolean documentHasId(final View jsonView) {
+      return documentHasId((Resource) jsonView);
    }
 
    @Override
-   public BsonValue getDocumentId(final JsonView jsonView) {
-      return getDocumentId((JsonResource) jsonView);
+   public BsonValue getDocumentId(final View jsonView) {
+      return getDocumentId((Resource) jsonView);
    }
 }

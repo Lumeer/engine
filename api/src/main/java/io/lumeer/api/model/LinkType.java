@@ -19,8 +19,6 @@
 
 package io.lumeer.api.model;
 
-import io.lumeer.api.dto.JsonAttribute;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -37,13 +35,13 @@ public class LinkType {
    private String id;
    private String name;
    private List<String> collectionIds;
-   private List<JsonAttribute> attributes;
+   private List<Attribute> attributes;
 
    @JsonCreator
    public LinkType(@JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
-         @JsonProperty(ATTRIBUTES) final List<JsonAttribute> attributes) {
+         @JsonProperty(ATTRIBUTES) final List<Attribute> attributes) {
       this.id = id;
       this.name = name;
       this.collectionIds = collectionIds;
@@ -74,11 +72,11 @@ public class LinkType {
       this.collectionIds = collectionIds;
    }
 
-   public List<JsonAttribute> getAttributes() {
+   public List<Attribute> getAttributes() {
       return Collections.unmodifiableList(attributes);
    }
 
-   public void setAttributes(List<JsonAttribute> attributes) {
+   public void setAttributes(List<Attribute> attributes) {
       this.attributes = attributes;
    }
 

@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.api.model.Permission;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PermissionCodec implements Codec<JsonPermission> {
+public class PermissionCodec implements Codec<Permission> {
 
    public static final String ID = "id";
    public static final String ROLES = "roles";
@@ -45,21 +45,21 @@ public class PermissionCodec implements Codec<JsonPermission> {
    }
 
    @Override
-   public JsonPermission decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public Permission decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document document = documentCodec.decode(reader, decoderContext);
 
       return PermissionCodec.convertFromDocument(document);
    }
 
-   public static JsonPermission convertFromDocument(Document bson) {
+   public static Permission convertFromDocument(Document bson) {
       String name = bson.getString(ID);
       Set<String> roles = new HashSet<String>(bson.get(ROLES, List.class));
 
-      return new JsonPermission(name, roles);
+      return new Permission(name, roles);
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonPermission value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final Permission value, final EncoderContext encoderContext) {
       Document document = new Document(ID, value.getId())
             .append(ROLES, value.getRoles());
 
@@ -67,8 +67,8 @@ public class PermissionCodec implements Codec<JsonPermission> {
    }
 
    @Override
-   public Class<JsonPermission> getEncoderClass() {
-      return JsonPermission.class;
+   public Class<Permission> getEncoderClass() {
+      return Permission.class;
    }
 
 }

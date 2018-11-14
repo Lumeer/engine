@@ -19,14 +19,13 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonDocument;
+import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
@@ -38,7 +37,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
-public class DocumentCodec implements CollectibleCodec<JsonDocument> {
+public class DocumentCodec implements CollectibleCodec<Document> {
 
    public static final String ID = "_id";
    public static final String COLLECTION_ID = "collectionId";
@@ -49,15 +48,15 @@ public class DocumentCodec implements CollectibleCodec<JsonDocument> {
    public static final String DATA_VERSION = "dataVersion";
    public static final String META_DATA = "metaData";
 
-   private final Codec<Document> documentCodec;
+   private final Codec<org.bson.Document> documentCodec;
 
    public DocumentCodec(final CodecRegistry registry) {
-      this.documentCodec = registry.get(Document.class);
+      this.documentCodec = registry.get(org.bson.Document.class);
    }
 
    @Override
-   public JsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
-      Document bson = documentCodec.decode(reader, decoderContext);
+   public Document decode(final BsonReader reader, final DecoderContext decoderContext) {
+      org.bson.Document bson = documentCodec.decode(reader, decoderContext);
 
       String id = bson.getObjectId(ID).toHexString();
       String collectionId = bson.getString(COLLECTION_ID);
@@ -68,16 +67,16 @@ public class DocumentCodec implements CollectibleCodec<JsonDocument> {
       ZonedDateTime updatedZonedDate = updateDate != null ? ZonedDateTime.ofInstant(updateDate.toInstant(), ZoneOffset.UTC) : null;
       String updatedBy = bson.getString(UPDATED_BY);
       Integer version = bson.getInteger(DATA_VERSION);
-      Document metaData = bson.get(META_DATA, Document.class);
-      
-      JsonDocument document = new JsonDocument(collectionId, creationZonedDate, updatedZonedDate, createdBy, updatedBy, version, new DataDocument(metaData));
+      org.bson.Document metaData = bson.get(META_DATA, org.bson.Document.class);
+
+      Document document = new Document(collectionId, creationZonedDate, updatedZonedDate, createdBy, updatedBy, version, new DataDocument(metaData));
       document.setId(id);
       return document;
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonDocument document, final EncoderContext encoderContext) {
-      Document bson = document.getId() != null ? new Document(ID, new ObjectId(document.getId())) : new Document();
+   public void encode(final BsonWriter writer, final Document document, final EncoderContext encoderContext) {
+      org.bson.Document bson = document.getId() != null ? new org.bson.Document(ID, new ObjectId(document.getId())) : new org.bson.Document();
       bson.append(COLLECTION_ID, document.getCollectionId())
           .append(CREATED_BY, document.getCreatedBy())
           .append(UPDATED_BY, document.getUpdatedBy())
@@ -95,12 +94,12 @@ public class DocumentCodec implements CollectibleCodec<JsonDocument> {
    }
 
    @Override
-   public Class<JsonDocument> getEncoderClass() {
-      return JsonDocument.class;
+   public Class<Document> getEncoderClass() {
+      return Document.class;
    }
 
    @Override
-   public JsonDocument generateIdIfAbsentFromDocument(final JsonDocument document) {
+   public Document generateIdIfAbsentFromDocument(final Document document) {
       if (!documentHasId(document)) {
          document.setId(new ObjectId().toHexString());
       }
@@ -108,12 +107,12 @@ public class DocumentCodec implements CollectibleCodec<JsonDocument> {
    }
 
    @Override
-   public boolean documentHasId(final JsonDocument document) {
+   public boolean documentHasId(final Document document) {
       return document.getId() != null;
    }
 
    @Override
-   public BsonValue getDocumentId(final JsonDocument document) {
+   public BsonValue getDocumentId(final Document document) {
       if (!documentHasId(document)) {
          throw new IllegalStateException("The document does not contain an id");
       }

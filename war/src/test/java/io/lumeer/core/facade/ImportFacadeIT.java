@@ -20,22 +20,17 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ImportedCollection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -92,9 +87,9 @@ public class ImportFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -102,17 +97,17 @@ public class ImportFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode(PROJECT_CODE);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -297,7 +292,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
    }
 
    private ImportedCollection createImportObject(String data) {
-      return new ImportedCollection(new JsonCollection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, new JsonPermissions()), data);
+      return new ImportedCollection(new Collection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, new Permissions()), data);
    }
 
 }

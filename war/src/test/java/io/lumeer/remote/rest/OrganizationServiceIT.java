@@ -22,22 +22,17 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentGatewayFacade;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -110,8 +105,8 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
-      groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
+      userPermission = Permission.buildWithRoles(this.user.getId(), USER_ROLES);
+      groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
    }
 
    @Test
@@ -125,9 +120,9 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonOrganization> organizations = response.readEntity(new GenericType<List<JsonOrganization>>() {
+      List<Organization> organizations = response.readEntity(new GenericType<List<Organization>>() {
       });
-      assertThat(organizations).extracting(Resource::getCode).containsOnly(CODE1, CODE2);
+      assertThat(organizations).extracting(Organization::getCode).containsOnly(CODE1, CODE2);
 
       Permissions permissions1 = organizations.get(0).getPermissions();
       assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
@@ -141,13 +136,13 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Organization createOrganization(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
 
       return organizationFacade.createOrganization(organization);
    }
 
    private void createOrganizationWithSpecificPermissions(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.getPermissions().updateGroupPermissions(groupPermission);
       organizationDao.createOrganization(organization);
@@ -163,7 +158,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Organization returnedOrganization = response.readEntity(JsonOrganization.class);
+      Organization returnedOrganization = response.readEntity(Organization.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedOrganization.getCode()).isEqualTo(CODE1);
       assertions.assertThat(returnedOrganization.getName()).isEqualTo(NAME);
@@ -191,7 +186,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(CODE1, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(organization);
 
       Response response = client.target(ORGANIZATION_URL)
@@ -201,7 +196,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Organization returnedOrganization = response.readEntity(JsonOrganization.class);
+      Organization returnedOrganization = response.readEntity(Organization.class);
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedOrganization.getCode()).isEqualTo(CODE1);
@@ -217,7 +212,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateOrganization() {
       createOrganization(CODE1);
 
-      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR, null, null);
+      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(updatedOrganization);
 
       Response response = client.target(ORGANIZATION_URL).path(CODE1)
@@ -226,7 +221,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Organization returnedOrganization = response.readEntity(JsonOrganization.class);
+      Organization returnedOrganization = response.readEntity(Organization.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedOrganization.getCode()).isEqualTo(CODE2);
       assertions.assertThat(returnedOrganization.getName()).isEqualTo(NAME);
@@ -259,7 +254,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Permissions permissions = response.readEntity(JsonPermissions.class);
+      Permissions permissions = response.readEntity(Permissions.class);
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
@@ -268,7 +263,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       createOrganizationWithSpecificPermissions(CODE1);
 
-      SimplePermission[] userPermission = {new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
+      Permission[] userPermission = {Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("users")
@@ -277,7 +272,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission[0]);
@@ -308,7 +303,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createOrganizationWithSpecificPermissions(CODE1);
 
-      SimplePermission[] groupPermission = {new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
+      Permission[] groupPermission = {Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("groups")
@@ -317,7 +312,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);

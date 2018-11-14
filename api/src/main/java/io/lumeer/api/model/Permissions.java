@@ -18,26 +18,117 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public interface Permissions {
+public class Permissions {
 
-   Set<Permission> getUserPermissions();
+   public static final String USER_PERMISSIONS = "users";
+   public static final String GROUP_PERMISSIONS = "groups";
 
-   void updateUserPermissions(Permission... userPermissions);
+   @JsonProperty(USER_PERMISSIONS)
+   private final Set<Permission> userPermissions;
 
-   void removeUserPermission(String userId);
+   @JsonProperty(GROUP_PERMISSIONS)
+   private final Set<Permission> groupPermissions;
 
-   Set<Permission> getGroupPermissions();
+   public Permissions() {
+      this(new HashSet<>(), new HashSet<>());
+   }
 
-   void updateGroupPermissions(Permission... groupPermissions);
+   public Permissions(Permissions permissions) {
+      this(permissions.getUserPermissions(), permissions.getGroupPermissions());
+   }
 
-   void removeGroupPermission(String groupId);
+   @JsonCreator
+   public Permissions(@JsonProperty(USER_PERMISSIONS) final Set<Permission> userPermissions,
+         @JsonProperty(GROUP_PERMISSIONS) final Set<Permission> groupPermissions) {
+      this.userPermissions = userPermissions != null ? new HashSet<>(userPermissions) : new HashSet<>();
+      this.groupPermissions = groupPermissions != null ? new HashSet<>(groupPermissions) : new HashSet<>();
+   }
 
-   void clearUserPermissions();
+   public Set<Permission> getUserPermissions() {
+      return Collections.unmodifiableSet(userPermissions);
+   }
 
-   void clearGroupPermissions();
+   public void updateUserPermissions(final Permission... newUserPermissions) {
+      Arrays.stream(newUserPermissions)
+            .map(Permission::new)
+            .forEach(userPermission -> {
+               userPermissions.remove(userPermission);
+               userPermissions.add(userPermission);
+            });
+   }
 
-   void clear();
+   public void removeUserPermission(final String userId) {
+      userPermissions.removeIf(userRoles -> userRoles.getId().equals(userId));
+   }
+
+   public Set<Permission> getGroupPermissions() {
+      return Collections.unmodifiableSet(groupPermissions);
+   }
+
+   public void updateGroupPermissions(final Permission... newGroupPermissions) {
+      Arrays.stream(newGroupPermissions)
+            .map(Permission::new)
+            .forEach(groupPermission -> {
+               groupPermissions.remove(groupPermission);
+               groupPermissions.add(groupPermission);
+            });
+   }
+
+   public void removeGroupPermission(final String groupId) {
+      groupPermissions.removeIf(groupRoles -> groupRoles.getId().equals(groupId));
+   }
+
+   public void clearUserPermissions() {
+      userPermissions.clear();
+   }
+
+   public void clearGroupPermissions() {
+      groupPermissions.clear();
+   }
+
+   public void clear() {
+      clearUserPermissions();
+      clearGroupPermissions();
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof Permissions)) {
+         return false;
+      }
+
+      final Permissions that = (Permissions) o;
+
+      if (userPermissions != null ? !userPermissions.equals(that.getUserPermissions()) : that.getUserPermissions() != null) {
+         return false;
+      }
+      return groupPermissions != null ? groupPermissions.equals(that.getGroupPermissions()) : that.getGroupPermissions() == null;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = userPermissions != null ? userPermissions.hashCode() : 0;
+      result = 31 * result + (groupPermissions != null ? groupPermissions.hashCode() : 0);
+      return result;
+   }
+
+   @Override
+   public String toString() {
+      return "JsonPermissions{" +
+            "users=" + userPermissions +
+            ", groups=" + groupPermissions +
+            '}';
+   }
 
 }

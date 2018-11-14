@@ -18,7 +18,7 @@
  */
 package io.lumeer.remote.rest.interceptor;
 
-import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.model.Query;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
@@ -52,7 +52,7 @@ public class QueryProcessorInterceptor {
       }
    }
 
-   private void processQuery(final JsonQuery query) {
+   private void processQuery(final Query query) {
       if (query.getFilters() != null && query.getFilters().size() > 0) {
          final Set<String> newFilters = query.getFilters().stream().map(this::processFilter).collect(Collectors.toSet());
          query.getFilters().clear();
@@ -65,8 +65,8 @@ public class QueryProcessorInterceptor {
       Object[] params = context.getParameters();
 
       for (final Object param: params) {
-         if (param instanceof JsonQuery) {
-            processQuery((JsonQuery) param);
+         if (param instanceof Query) {
+            processQuery((Query) param);
          }
       }
 

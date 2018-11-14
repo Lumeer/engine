@@ -18,10 +18,6 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Pagination;
@@ -33,7 +29,6 @@ import io.lumeer.core.facade.ViewFacade;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -74,24 +69,18 @@ public class CollectionService extends AbstractService {
    }
 
    @POST
-   public Collection createCollection(JsonCollection collection) {
+   public Collection createCollection(Collection collection) {
       Collection storedCollection = collectionFacade.createCollection(collection);
-
-      JsonCollection returnCollection = JsonCollection.convert(storedCollection);
-      returnCollection.setFavorite(false);
-
-      return returnCollection;
+      storedCollection.setFavorite(false);
+      return storedCollection;
    }
 
    @PUT
    @Path("{collectionId}")
-   public Collection updateCollection(@PathParam("collectionId") String collectionId, JsonCollection collection) {
+   public Collection updateCollection(@PathParam("collectionId") String collectionId, Collection collection) {
       Collection storedCollection = collectionFacade.updateCollection(collectionId, collection);
-
-      JsonCollection returnCollection = JsonCollection.convert(storedCollection);
-      returnCollection.setFavorite(collectionFacade.isFavorite(returnCollection.getId()));
-
-      return returnCollection;
+      storedCollection.setFavorite(collectionFacade.isFavorite(storedCollection.getId()));
+      return storedCollection;
    }
 
    @DELETE
@@ -104,32 +93,22 @@ public class CollectionService extends AbstractService {
 
    @GET
    @Path("{collectionId}")
-   public JsonCollection getCollection(@PathParam("collectionId") String collectionId) {
+   public Collection getCollection(@PathParam("collectionId") String collectionId) {
       Collection collection = collectionFacade.getCollection(collectionId);
-
-      JsonCollection returnCollection = JsonCollection.convert(collection);
-      returnCollection.setFavorite(collectionFacade.isFavorite(returnCollection.getId()));
-
-      return returnCollection;
+      collection.setFavorite(collectionFacade.isFavorite(collection.getId()));
+      return collection;
    }
 
    @GET
-   public List<JsonCollection> getCollections(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize, @QueryParam("fromViews") Boolean includeViewCollections) {
+   public List<Collection> getCollections(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize, @QueryParam("fromViews") Boolean includeViewCollections) {
       Pagination pagination = new Pagination(page, pageSize);
 
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      List<JsonCollection> collections = collectionFacade.getCollections(pagination).stream()
-                             .map(coll -> {
-                                JsonCollection collection = JsonCollection.convert(coll);
-                                collection.setFavorite(favoriteCollectionIds.contains(collection.getId()));
-                                return collection;
-                             })
-                             .collect(Collectors.toList());
+      List<Collection> collections = collectionFacade.getCollections(pagination);
+      collections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
 
       if (includeViewCollections != null && includeViewCollections) {
-         collections.addAll(viewFacade.getViewsCollections().stream()
-                                      .map(JsonCollection::convert)
-                                      .collect(Collectors.toList()));
+         collections.addAll(viewFacade.getViewsCollections());
       }
 
       return collections;
@@ -144,9 +123,8 @@ public class CollectionService extends AbstractService {
    @GET
    @Deprecated
    @Path("{collectionId}/attributes")
-   public Set<JsonAttribute> getCollectionAttributes(@PathParam("collectionId") String collectionId) {
-      Set<Attribute> attributes = getCollection(collectionId).getAttributes();
-      return JsonAttribute.convert(attributes);
+   public Set<Attribute> getCollectionAttributes(@PathParam("collectionId") String collectionId) {
+      return getCollection(collectionId).getAttributes();
    }
 
    @PUT
@@ -159,18 +137,14 @@ public class CollectionService extends AbstractService {
 
    @POST
    @Path("{collectionId}/attributes")
-   public Set<JsonAttribute> createCollectionAttributes(@PathParam("collectionId") String collectionId, List<JsonAttribute> attributes) {
-      Set<Attribute> storedAttributes = new HashSet<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
-
-      return JsonAttribute.convert(storedAttributes);
+   public Set<Attribute> createCollectionAttributes(@PathParam("collectionId") String collectionId, List<Attribute> attributes) {
+      return new HashSet<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 
    @PUT
    @Path("{collectionId}/attributes/{attributeId}")
-   public JsonAttribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId, JsonAttribute attribute) {
-      Attribute storedAttribute = collectionFacade.updateCollectionAttribute(collectionId, attributeId, attribute);
-
-      return JsonAttribute.convert(storedAttribute);
+   public Attribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId, Attribute attribute) {
+      return collectionFacade.updateCollectionAttribute(collectionId, attributeId, attribute);
    }
 
    @DELETE
@@ -187,16 +161,14 @@ public class CollectionService extends AbstractService {
 
    @GET
    @Path("{collectionId}/permissions")
-   public JsonPermissions getCollectionPermissions(@PathParam("collectionId") String collectionId) {
-      Permissions permissions = collectionFacade.getCollectionPermissions(collectionId);
-      return JsonPermissions.convert(permissions);
+   public Permissions getCollectionPermissions(@PathParam("collectionId") String collectionId) {
+      return collectionFacade.getCollectionPermissions(collectionId);
    }
 
    @PUT
    @Path("{collectionId}/permissions/users")
-   public Set<JsonPermission> updateUserPermission(@PathParam("collectionId") String collectionId, JsonPermission... userPermission) {
-      Set<Permission> storedUserPermissions = collectionFacade.updateUserPermissions(collectionId, userPermission);
-      return JsonPermission.convert(storedUserPermissions);
+   public Set<Permission> updateUserPermission(@PathParam("collectionId") String collectionId, Permission... userPermission) {
+      return collectionFacade.updateUserPermissions(collectionId, userPermission);
    }
 
    @DELETE
@@ -209,9 +181,8 @@ public class CollectionService extends AbstractService {
 
    @PUT
    @Path("{collectionId}/permissions/groups")
-   public Set<JsonPermission> updateGroupPermission(@PathParam("collectionId") String collectionId, JsonPermission... groupPermission) {
-      Set<Permission> storedGroupPermissions = collectionFacade.updateGroupPermissions(collectionId, groupPermission);
-      return JsonPermission.convert(storedGroupPermissions);
+   public Set<Permission> updateGroupPermission(@PathParam("collectionId") String collectionId, Permission... groupPermission) {
+      return collectionFacade.updateGroupPermissions(collectionId, groupPermission);
    }
 
    @DELETE

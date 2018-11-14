@@ -22,20 +22,15 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -95,24 +90,24 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "TORG";
 
    private Project createProject(String code) {
-      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(userPermissions);
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    private Project createProjectWithReadOnlyPermissions(final String code) {
-      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(userReadonlyPermissions, userStrangerPermissions);
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    private Project createProjectWithStrangerPermissions(final String code) {
-      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(
             userPermissions,
-            new SimplePermission(this.stranger.getId(), Collections.singleton(Role.MANAGE)));
+            Permission.buildWithRoles(stranger.getId(), Collections.singleton(Role.MANAGE)));
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
@@ -122,15 +117,15 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       this.user = userDao.createUser(new User(USER));
       this.stranger = userDao.createUser(new User(STRANGER_USER));
 
-      userPermissions = new SimplePermission(this.user.getId(), Project.ROLES);
-      userReadonlyPermissions = new SimplePermission(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermissions = new SimplePermission(this.stranger.getId(), Collections.singleton(Role.MANAGE));
-      groupPermissions = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+      userPermissions = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
+      userReadonlyPermissions =Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
+      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(Role.MANAGE));
+      groupPermissions = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
 
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
-      organization.getPermissions().updateUserPermissions(new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization.setPermissions(new Permissions());
+      organization.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -177,7 +172,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateProject() {
-      Project project = new JsonProject(CODE1, NAME, ICON, COLOR, null, null);
+      Project project = new Project(CODE1, NAME, ICON, COLOR, null, null);
 
       Project returnedProject = projectFacade.createProject(project);
       assertThat(returnedProject).isNotNull();
@@ -200,7 +195,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateProject() {
       String id = createProject(CODE1).getId();
 
-      Project updatedProject = new JsonProject(CODE2, NAME, ICON, COLOR, null, null);
+      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null);
       updatedProject.getPermissions().removeUserPermission(this.user.getId());
 
       projectFacade.updateProject(CODE1, updatedProject);
@@ -238,7 +233,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       createProject(CODE1);
 
-      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       projectFacade.updateUserPermissions(CODE1, userPermission);
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
@@ -263,7 +258,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createProject(CODE1);
 
-      SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
       projectFacade.updateGroupPermissions(CODE1, groupPermission);
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();

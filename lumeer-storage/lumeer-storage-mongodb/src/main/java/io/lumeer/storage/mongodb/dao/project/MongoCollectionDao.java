@@ -4,11 +4,10 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.permissionsFilter;
 
-import io.lumeer.api.dto.JsonCollection;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -66,9 +65,8 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    @Override
    public Collection createCollection(final Collection collection) {
       try {
-         JsonCollection jsonCollection = new JsonCollection(collection);
-         databaseCollection().insertOne(jsonCollection);
-         return jsonCollection;
+         databaseCollection().insertOne(collection);
+         return collection;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create collection: " + collection, ex);
       }
@@ -76,11 +74,10 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
 
    @Override
    public Collection updateCollection(final String id, final Collection collection) {
-      JsonCollection jsonCollection = new JsonCollection(collection);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         JsonCollection updatedCollection = databaseCollection().findOneAndReplace(idFilter(id), jsonCollection, options);
+         Collection updatedCollection = databaseCollection().findOneAndReplace(idFilter(id), collection, options);
          if (updatedCollection == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }
@@ -109,7 +106,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    private Collection getCollectionByFilter(Bson filter) {
-      MongoCursor<JsonCollection> mongoCursor = databaseCollection().find(filter).iterator();
+      MongoCursor<Collection> mongoCursor = databaseCollection().find(filter).iterator();
       if (!mongoCursor.hasNext()) {
          throw new ResourceNotFoundException(ResourceType.COLLECTION);
       }
@@ -155,7 +152,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    private List<Collection> searchCollectionsByFilter(Bson filter, DatabaseQuery query) {
-      FindIterable<JsonCollection> iterable = databaseCollection().find(filter);
+      FindIterable<Collection> iterable = databaseCollection().find(filter);
       addPaginationToQuery(iterable, query);
 
       return iterable.into(new ArrayList<>());
@@ -230,7 +227,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       return databaseCollectionName(getProject().get());
    }
 
-   MongoCollection<JsonCollection> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), JsonCollection.class);
+   MongoCollection<Collection> databaseCollection() {
+      return database.getCollection(databaseCollectionName(), Collection.class);
    }
 }

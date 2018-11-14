@@ -21,7 +21,6 @@ package io.lumeer.core.auth;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 

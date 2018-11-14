@@ -18,8 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
@@ -163,7 +161,7 @@ public class ImportFacade extends AbstractFacade {
    }
 
    private List<Attribute> createAttributes(String collectionId, String[] headers) {
-      List<Attribute> attributes = Arrays.stream(headers).map(header -> new JsonAttribute(header, header, Collections.emptySet(), 0)).collect(Collectors.toList());
+      List<Attribute> attributes = Arrays.stream(headers).map(header -> new Attribute(header, header, Collections.emptySet(), 0)).collect(Collectors.toList());
       return new ArrayList<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 
@@ -198,6 +196,6 @@ public class ImportFacade extends AbstractFacade {
          }
       }
 
-      return new JsonDocument(d);
+      return new Document(d);
    }
 }

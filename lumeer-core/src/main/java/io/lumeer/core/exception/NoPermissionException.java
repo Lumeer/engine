@@ -19,7 +19,7 @@
 package io.lumeer.core.exception;
 
 import io.lumeer.api.exception.LumeerException;
-import io.lumeer.api.model.Resource;
+import io.lumeer.api.model.common.Resource;
 
 public class NoPermissionException extends LumeerException {
 

@@ -22,19 +22,13 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -100,13 +94,13 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
-      groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
+      userPermission = Permission.buildWithRoles(this.user.getId(), USER_ROLES);
+      groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
 
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
-      organization.getPermissions().updateUserPermissions(new JsonPermission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization.setPermissions(new Permissions());
+      organization.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -114,7 +108,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Project createProject(String code) {
-      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null);
       project.getPermissions().updateUserPermissions(userPermission);
       project.getPermissions().updateGroupPermissions(groupPermission);
       return projectDao.createProject(project);
@@ -131,9 +125,9 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonProject> projects = response.readEntity(new GenericType<List<JsonProject>>() {
+      List<Project> projects = response.readEntity(new GenericType<List<Project>>() {
       });
-      assertThat(projects).extracting(Resource::getCode).containsOnly(CODE1, CODE2);
+      assertThat(projects).extracting(Project::getCode).containsOnly(CODE1, CODE2);
 
       Project project1 = projects.get(0);
       assertThat(project1.getName()).isEqualTo(NAME);
@@ -164,7 +158,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Project returnedProject = response.readEntity(JsonProject.class);
+      Project returnedProject = response.readEntity(Project.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedProject.getCode()).isEqualTo(CODE1);
       assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
@@ -193,7 +187,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    @Test
    public void testCreateProject() {
 
-      Project project = new JsonProject(CODE1, NAME, ICON, COLOR, null, null);
+      Project project = new Project(CODE1, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(project);
 
       Response response = client.target(PROJECT_URL)
@@ -203,7 +197,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Project returnedProject = response.readEntity(JsonProject.class);
+      Project returnedProject = response.readEntity(Project.class);
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedProject.getCode()).isEqualTo(CODE1);
@@ -219,7 +213,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateProject() {
       createProject(CODE1);
 
-      Project updatedProject = new JsonProject(CODE2, NAME, ICON, COLOR, null, null);
+      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(updatedProject);
 
       Response response = client.target(PROJECT_URL).path(CODE1)
@@ -228,7 +222,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Project returnedProject = response.readEntity(JsonProject.class);
+      Project returnedProject = response.readEntity(Project.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedProject.getCode()).isEqualTo(CODE2);
       assertions.assertThat(returnedProject.getName()).isEqualTo(NAME);
@@ -261,7 +255,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Permissions permissions = response.readEntity(JsonPermissions.class);
+      Permissions permissions = response.readEntity(Permissions.class);
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
@@ -270,7 +264,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       createProject(CODE1);
 
-      SimplePermission[] userPermission = {new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("users")
@@ -279,7 +273,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission[0]);
@@ -310,7 +304,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createProject(CODE1);
 
-      SimplePermission[] groupPermission = {new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(PERMISSIONS_URL).path("groups")
@@ -319,7 +313,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);
@@ -347,7 +341,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Response createProjectViaRest(final String code) {
-      Project project = new JsonProject(code, NAME, ICON, COLOR, null, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(project);
       return client.target(PROJECT_URL).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
    }

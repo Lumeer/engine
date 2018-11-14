@@ -21,11 +21,9 @@ package io.lumeer.storage.mongodb.dao.organization;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
@@ -61,15 +59,15 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
    private static final String NAME = "Testing project";
    private static final String COLOR = "#cccccc";
    private static final String ICON = "fa-search";
-   private static final JsonPermissions PERMISSIONS;
-   private static final JsonPermission GROUP_PERMISSION;
+   private static final Permissions PERMISSIONS;
+   private static final Permission GROUP_PERMISSION;
 
    static {
-      JsonPermission userPermission = new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      Permission userPermission = new Permission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
 
-      GROUP_PERMISSION = new JsonPermission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
 
-      PERMISSIONS = new JsonPermissions();
+      PERMISSIONS = new Permissions();
       PERMISSIONS.updateUserPermissions(userPermission);
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
@@ -88,13 +86,13 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
       projectDao.createProjectsRepository(organization);
    }
 
-   private JsonProject prepareProject(String code) {
-      JsonProject project = new JsonProject();
+   private Project prepareProject(String code) {
+      Project project = new Project();
       project.setCode(code);
       project.setName(NAME);
       project.setColor(COLOR);
       project.setIcon(ICON);
-      project.setPermissions(new JsonPermissions(PERMISSIONS));
+      project.setPermissions(new Permissions(PERMISSIONS));
       return project;
    }
 
@@ -106,7 +104,7 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      Project storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedProject).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -120,7 +118,7 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateProjectExistingCode() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       projectDao.databaseCollection().insertOne(project);
 
       Project project2 = prepareProject(CODE1);
@@ -130,10 +128,10 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjectByCode() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       projectDao.databaseCollection().insertOne(project);
 
-      JsonProject storedProject = (JsonProject) projectDao.getProjectByCode(CODE1);
+      Project storedProject = projectDao.getProjectByCode(CODE1);
       assertThat(storedProject).isNotNull();
       assertThat(storedProject.getId()).isNotNull().isNotEmpty();
 
@@ -155,10 +153,10 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjects() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       projectDao.databaseCollection().insertOne(project);
 
-      JsonProject project2 = prepareProject(CODE2);
+      Project project2 = prepareProject(CODE2);
       projectDao.databaseCollection().insertOne(project2);
 
       DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
@@ -168,13 +166,13 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjectsNoReadRole() {
-      JsonProject project = prepareProject(CODE1);
-      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      Project project = prepareProject(CODE1);
+      Permission userPermission = new Permission(USER2, Collections.singleton(Role.CLONE.toString()));
       project.getPermissions().updateUserPermissions(userPermission);
       projectDao.databaseCollection().insertOne(project);
 
-      JsonProject project2 = prepareProject(CODE2);
-      Permission groupPermission = new JsonPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Project project2 = prepareProject(CODE2);
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       project2.getPermissions().updateGroupPermissions(groupPermission);
       projectDao.databaseCollection().insertOne(project2);
 
@@ -185,10 +183,10 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjectsGroupRole() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       projectDao.databaseCollection().insertOne(project);
 
-      JsonProject project2 = prepareProject(CODE2);
+      Project project2 = prepareProject(CODE2);
       projectDao.databaseCollection().insertOne(project2);
 
       DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
@@ -198,13 +196,13 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteProject() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       projectDao.databaseCollection().insertOne(project);
       assertThat(project.getId()).isNotNull();
 
       projectDao.deleteProject(project.getId());
 
-      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(project.getId())).first();
+      Project storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(project.getId())).first();
       assertThat(storedProject).isNull();
    }
 
@@ -216,21 +214,21 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateProjectCode() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       String id = projectDao.createProject(project).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
       project.setCode(CODE2);
       projectDao.updateProject(id, project);
 
-      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      Project storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedProject).isNotNull();
       assertThat(storedProject.getCode()).isEqualTo(CODE2);
    }
 
    @Test
    public void testUpdateProjectPermissions() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       String id = projectDao.createProject(project).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
@@ -238,7 +236,7 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
       project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       projectDao.updateProject(id, project);
 
-      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
+      Project storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedProject).isNotNull();
       assertThat(storedProject.getPermissions().getUserPermissions()).isEmpty();
       assertThat(storedProject.getPermissions().getGroupPermissions()).containsExactly(GROUP_PERMISSION);
@@ -246,10 +244,10 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateProjectExistingCode() {
-      JsonProject project = prepareProject(CODE1);
+      Project project = prepareProject(CODE1);
       projectDao.databaseCollection().insertOne(project);
 
-      JsonProject project2 = prepareProject(CODE2);
+      Project project2 = prepareProject(CODE2);
       projectDao.databaseCollection().insertOne(project2);
 
       project2.setCode(CODE1);

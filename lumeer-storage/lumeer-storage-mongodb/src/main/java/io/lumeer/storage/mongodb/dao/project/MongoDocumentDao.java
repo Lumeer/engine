@@ -20,7 +20,6 @@ package io.lumeer.storage.mongodb.dao.project;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
-import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -70,9 +69,8 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    @Override
    public Document createDocument(final Document document) {
       try {
-         JsonDocument jsonDocument = new JsonDocument(document);
-         databaseCollection().insertOne(jsonDocument);
-         return jsonDocument;
+         databaseCollection().insertOne(document);
+         return document;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create document: " + document, ex);
       }
@@ -80,7 +78,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public List<Document> createDocuments(final List<Document> documents) {
-      List<JsonDocument> jsonDocuments = documents.stream().map(JsonDocument::new).collect(Collectors.toList());
+      List<Document> jsonDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
       databaseCollection().insertMany(jsonDocuments);
 
       return new ArrayList<>(jsonDocuments);
@@ -88,11 +86,10 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public Document updateDocument(final String id, final Document document) {
-      JsonDocument jsonDocument = new JsonDocument(document);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         JsonDocument updatedDocument = databaseCollection().findOneAndReplace(idFilter(id), jsonDocument, options);
+         Document updatedDocument = databaseCollection().findOneAndReplace(idFilter(id), document, options);
          if (updatedDocument == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }
@@ -119,7 +116,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    @Override
    public Document getDocumentById(final String id) {
       Bson filter = idFilter(id);
-      JsonDocument document = databaseCollection().find(filter).first();
+      Document document = databaseCollection().find(filter).first();
       if (document == null) {
          throw new ResourceNotFoundException(ResourceType.DOCUMENT);
       }
@@ -155,7 +152,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
       return databaseCollectionName(getProject().get());
    }
 
-   MongoCollection<JsonDocument> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), JsonDocument.class);
+   MongoCollection<Document> databaseCollection() {
+      return database.getCollection(databaseCollectionName(), Document.class);
    }
 }
