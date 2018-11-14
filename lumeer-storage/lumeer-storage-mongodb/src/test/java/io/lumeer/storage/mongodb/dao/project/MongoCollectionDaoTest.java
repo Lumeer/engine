@@ -21,6 +21,10 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonAttribute;
+import io.lumeer.api.dto.JsonCollection;
+import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Permission;
@@ -32,10 +36,7 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.model.MorphiaCollection;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaAttribute;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.DuplicateKeyException;
 import org.bson.types.ObjectId;
@@ -52,7 +53,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class MorphiaCollectionDaoTest extends MongoDbTestBase {
+public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    private static final String PROJECT_ID = "596e3b86d412bc5a3caaa22a";
 
@@ -65,13 +66,13 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    private static final String NAME = "Test collection";
    private static final String COLOR = "#0000ff";
    private static final String ICON = "fa-eye";
-   private static final Set<Attribute> ATTRIBUTES;
+   private static final Set<JsonAttribute> ATTRIBUTES;
    private static final Integer DOCUMENTS_COUNT = 0;
    private static final ZonedDateTime LAST_TIME_USED = ZonedDateTime.now().withNano(0);
 
-   private static final MorphiaPermissions PERMISSIONS = new MorphiaPermissions();
-   private static final MorphiaPermission USER_PERMISSION;
-   private static final MorphiaPermission GROUP_PERMISSION;
+   private static final JsonPermissions PERMISSIONS = new JsonPermissions();
+   private static final JsonPermission USER_PERMISSION;
+   private static final JsonPermission GROUP_PERMISSION;
 
    private static final String USER2 = "testUser2";
    private static final String GROUP2 = "testGroup2";
@@ -87,79 +88,69 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    private static final String NAME_FULLTEXT2 = "Fulltext name 2";
    private static final String NAME_SUGGESTION = "TESTING suggestions";
 
-   private static final Set<Attribute> ATTRIBUTES_FULLTEXT;
+   private static final Set<JsonAttribute> ATTRIBUTES_FULLTEXT;
 
    private static final String ATTRIBUTE1_NAME = "suggestion";
    private static final String ATTRIBUTE2_NAME = "fulltext";
 
    static {
-      Attribute attribute = new MorphiaAttribute();
-      attribute.setName(ATTRIBUTE1_NAME);
+      JsonAttribute attribute = new JsonAttribute(ATTRIBUTE1_NAME);
       ATTRIBUTES = Collections.singleton(attribute);
 
-      USER_PERMISSION = new MorphiaPermission(USER, Collection.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      USER_PERMISSION = new JsonPermission(USER, Collection.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      GROUP_PERMISSION = new MorphiaPermission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new JsonPermission(GROUP, Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
 
-      Attribute attribute1 = new MorphiaAttribute();
-      attribute1.setName(ATTRIBUTE1_NAME);
-      Attribute attribute2 = new MorphiaAttribute();
-      attribute2.setName(ATTRIBUTE2_NAME);
+      JsonAttribute attribute1 = new JsonAttribute(ATTRIBUTE1_NAME);
+      JsonAttribute attribute2 = new JsonAttribute(ATTRIBUTE2_NAME);
       ATTRIBUTES_FULLTEXT = new HashSet<>(Arrays.asList(attribute1, attribute2));
    }
 
-   private MorphiaCollectionDao collectionDao;
+   private MongoCollectionDao collectionDao;
 
    @Before
    public void initCollectionDao() {
       Project project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);
 
-      collectionDao = new MorphiaCollectionDao();
+      collectionDao = new MongoCollectionDao();
       collectionDao.setDatabase(database);
-      collectionDao.setDatastore(datastore);
 
       collectionDao.setProject(project);
       collectionDao.createCollectionsRepository(project);
    }
 
-   private MorphiaCollection prepareCollection(String code, String name) {
-      MorphiaCollection collection = new MorphiaCollection();
-      collection.setCode(code);
-      collection.setName(name);
-      collection.setColor(COLOR);
-      collection.setIcon(ICON);
-      collection.setPermissions(new MorphiaPermissions(PERMISSIONS));
-      collection.setAttributes(ATTRIBUTES);
+   private JsonCollection prepareCollection(String code, String name) {
+      JsonCollection collection = new JsonCollection(code, name, ICON, COLOR, "", new JsonPermissions(PERMISSIONS), ATTRIBUTES);
       collection.setDocumentsCount(DOCUMENTS_COUNT);
       collection.setLastTimeUsed(LAST_TIME_USED);
       return collection;
    }
 
-   private MorphiaCollection createCollection(String code, String name) {
-      MorphiaCollection collection = prepareCollection(code, name);
-      datastore.insert(collectionDao.databaseCollection(), collection);
+   private JsonCollection createCollection(String code, String name) {
+      JsonCollection collection = prepareCollection(code, name);
+      collectionDao.databaseCollection().insertOne(collection);
       return collection;
    }
 
-   private MorphiaCollection createCollection(String code, String name, Set<Attribute> attributes) {
-      MorphiaCollection collection = prepareCollection(code, name);
-      collection.setAttributes(attributes);
-      datastore.insert(collectionDao.databaseCollection(), collection);
+   private JsonCollection createCollection(String code, String name, Set<JsonAttribute> attributes) {
+      JsonCollection collection = prepareCollection(code, name);
+      collection.setAttributess(attributes);
+      collectionDao.databaseCollection().insertOne(collection);
       return collection;
    }
 
    @Test
    public void testCreateCollection() {
-      MorphiaCollection collection = prepareCollection(CODE, NAME);
+      JsonCollection collection = prepareCollection(CODE, NAME);
 
       String id = collectionDao.createCollection(collection).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      MorphiaCollection storedCollection = datastore.get(collectionDao.databaseCollection(), MorphiaCollection.class, new ObjectId(id));
+      JsonCollection storedCollection = collectionDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedCollection).isNotNull();
       assertThat(storedCollection.getCode()).isEqualTo(CODE);
       assertThat(storedCollection.getName()).isEqualTo(NAME);
@@ -175,30 +166,30 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    public void testCreateCollectionExistingCode() {
       createCollection(CODE, NAME);
 
-      MorphiaCollection collection = prepareCollection(CODE, NAME2);
+      JsonCollection collection = prepareCollection(CODE, NAME2);
       assertThatThrownBy(() -> collectionDao.createCollection(collection))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testCreateCollectionExistingName() {
       createCollection(CODE, NAME);
 
-      MorphiaCollection collection = prepareCollection(CODE2, NAME);
+      JsonCollection collection = prepareCollection(CODE2, NAME);
       assertThatThrownBy(() -> collectionDao.createCollection(collection))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testUpdateCollection() {
       String id = createCollection(CODE, NAME).getId();
 
-      MorphiaCollection collection = prepareCollection(CODE2, NAME);
+      JsonCollection collection = prepareCollection(CODE2, NAME);
       Collection updatedCollection = collectionDao.updateCollection(id, collection);
       assertThat(updatedCollection).isNotNull();
       assertThat(updatedCollection.getCode()).isEqualTo(CODE2);
 
-      Collection storedCollection = datastore.get(collectionDao.databaseCollection(), MorphiaCollection.class, new ObjectId(id));
+      Collection storedCollection = collectionDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedCollection).isNotNull();
       assertThat(updatedCollection).isEqualTo(storedCollection);
    }
@@ -206,7 +197,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
    @Test
    @Ignore("Stored anyway with the current implementation")
    public void testUpdateCollectionNotExisting() {
-      MorphiaCollection collection = prepareCollection(CODE, NAME);
+      JsonCollection collection = prepareCollection(CODE, NAME);
       assertThatThrownBy(() -> collectionDao.updateCollection(COLLECTION_ID, collection))
             .isInstanceOf(StorageException.class);
    }
@@ -217,7 +208,7 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
       collectionDao.deleteCollection(id);
 
-      Collection storedCollection = datastore.get(collectionDao.databaseCollection(), MorphiaCollection.class, new ObjectId(id));
+      Collection storedCollection = collectionDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedCollection).isNull();
    }
 
@@ -244,11 +235,11 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollections() {
-      MorphiaCollection collection = prepareCollection(CODE, NAME);
-      datastore.save(collectionDao.databaseCollection(), collection);
+      JsonCollection collection = prepareCollection(CODE, NAME);
+      collectionDao.databaseCollection().insertOne(collection);
 
-      MorphiaCollection collection2 = prepareCollection(CODE2, NAME2);
-      datastore.save(collectionDao.databaseCollection(), collection2);
+      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      collectionDao.databaseCollection().insertOne(collection2);
 
       SearchQuery query = SearchQuery.createBuilder(USER).build();
       List<Collection> views = collectionDao.getCollections(query);
@@ -257,16 +248,16 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsByIds() {
-      MorphiaCollection collection = prepareCollection(CODE, NAME);
+      JsonCollection collection = prepareCollection(CODE, NAME);
       String id = collectionDao.createCollection(collection).getId();
 
-      MorphiaCollection collection2 = prepareCollection(CODE2, NAME2);
+      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
       String id2 = collectionDao.createCollection(collection2).getId();
 
-      MorphiaCollection collection3 = prepareCollection(CODE3, NAME3);
+      JsonCollection collection3 = prepareCollection(CODE3, NAME3);
       String id3 = collectionDao.createCollection(collection3).getId();
 
-      MorphiaCollection collection4 = prepareCollection(CODE4, NAME4);
+      JsonCollection collection4 = prepareCollection(CODE4, NAME4);
       String id4 = collectionDao.createCollection(collection4).getId();
 
       List<Collection> collections = collectionDao.getCollectionsByIds(Arrays.asList(id, id3));
@@ -278,15 +269,15 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsNoReadRole() {
-      MorphiaCollection collection = prepareCollection(CODE, NAME);
-      Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      JsonCollection collection = prepareCollection(CODE, NAME);
+      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.CLONE.toString()));
       collection.getPermissions().updateUserPermissions(userPermission);
-      datastore.save(collectionDao.databaseCollection(), collection);
+      collectionDao.databaseCollection().insertOne(collection);
 
-      MorphiaCollection collection2 = prepareCollection(CODE2, NAME2);
-      Permission groupPermission = new MorphiaPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      Permission groupPermission = new JsonPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       collection2.getPermissions().updateGroupPermissions(groupPermission);
-      datastore.save(collectionDao.databaseCollection(), collection2);
+      collectionDao.databaseCollection().insertOne(collection2);
 
       SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP2)).build();
       List<Collection> collections = collectionDao.getCollections(query);
@@ -295,11 +286,11 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsGroupsRole() {
-      MorphiaCollection collection = prepareCollection(CODE, NAME);
-      datastore.save(collectionDao.databaseCollection(), collection);
+      JsonCollection collection = prepareCollection(CODE, NAME);
+      collectionDao.databaseCollection().insertOne(collection);
 
-      MorphiaCollection collection2 = prepareCollection(CODE2, NAME2);
-      datastore.save(collectionDao.databaseCollection(), collection2);
+      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      collectionDao.databaseCollection().insertOne(collection2);
 
       SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
       List<Collection> collections = collectionDao.getCollections(query);
@@ -321,17 +312,17 @@ public class MorphiaCollectionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetCollectionsByCollectionIds() {
-      MorphiaCollection collection = prepareCollection(CODE, NAME);
+      JsonCollection collection = prepareCollection(CODE, NAME);
       collection.getPermissions().removeUserPermission(USER);
-      Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.READ.toString()));
+      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.READ.toString()));
       collection.getPermissions().updateUserPermissions(userPermission);
-      datastore.save(collectionDao.databaseCollection(), collection);
+      collectionDao.databaseCollection().insertOne(collection);
 
-      MorphiaCollection collection2 = prepareCollection(CODE2, NAME2);
-      datastore.save(collectionDao.databaseCollection(), collection2);
+      JsonCollection collection2 = prepareCollection(CODE2, NAME2);
+      collectionDao.databaseCollection().insertOne(collection2);
 
-      MorphiaCollection collection3 = prepareCollection(CODE3, NAME3);
-      datastore.save(collectionDao.databaseCollection(), collection3);
+      JsonCollection collection3 = prepareCollection(CODE3, NAME3);
+      collectionDao.databaseCollection().insertOne(collection3);
 
       SearchQuery query = SearchQuery.createBuilder(USER)
                                      .collectionIds(new HashSet<>(Arrays.asList(collection.getId(), collection3.getId())))

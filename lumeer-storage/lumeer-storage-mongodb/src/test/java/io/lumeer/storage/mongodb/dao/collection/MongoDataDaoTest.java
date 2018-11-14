@@ -21,19 +21,19 @@ package io.lumeer.storage.mongodb.dao.collection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.dto.JsonAttribute;
+import io.lumeer.api.dto.JsonCollection;
+import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.model.MorphiaCollection;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -59,7 +59,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
 
    @Before
    public void initDataDao() {
-      Collection col = new MorphiaCollection();
+      Collection col = new JsonCollection("", "", "", "", new JsonPermissions());
       col.setId(COLLECTION_ID);
       col.setAttributes(Collections.EMPTY_SET);
       col.setLastAttributeNum(0);
@@ -69,7 +69,6 @@ public class MongoDataDaoTest extends MongoDbTestBase {
 
       dataDao = new MongoDataDao();
       dataDao.setDatabase(database);
-      dataDao.setDatastore(datastore);
       dataDao.setCollectionDao(collectionDao);
 
       dataDao.createDataRepository(COLLECTION_ID);

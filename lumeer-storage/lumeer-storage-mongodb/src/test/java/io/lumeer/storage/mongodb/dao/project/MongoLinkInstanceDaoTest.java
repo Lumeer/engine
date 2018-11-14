@@ -74,7 +74,6 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
       linkInstanceDao = new MongoLinkInstanceDao();
       linkInstanceDao.setDatabase(database);
-      linkInstanceDao.setDatastore(datastore);
 
       linkInstanceDao.setProject(project);
       linkInstanceDao.createLinkInstanceRepository(project);

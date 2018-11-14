@@ -21,20 +21,20 @@ package io.lumeer.storage.mongodb.dao.organization;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.api.dto.JsonPermissions;
+import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.exception.WriteFailedException;
-import io.lumeer.storage.mongodb.model.MorphiaProject;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
-import com.mongodb.DuplicateKeyException;
 import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
 import org.junit.Before;
@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MorphiaProjectDaoTest extends MongoDbTestBase {
+public class MongoProjectDaoTest extends MongoDbTestBase {
 
    private static final String ORGANIZATION_ID = "596e3b86d412bc5a3caaa22a";
 
@@ -61,45 +61,40 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
    private static final String NAME = "Testing project";
    private static final String COLOR = "#cccccc";
    private static final String ICON = "fa-search";
-   private static final MorphiaPermissions PERMISSIONS;
-
-   private static final MorphiaPermission GROUP_PERMISSION = new MorphiaPermission();
+   private static final JsonPermissions PERMISSIONS;
+   private static final JsonPermission GROUP_PERMISSION;
 
    static {
-      MorphiaPermission userPermission = new MorphiaPermission();
-      userPermission.setId(USER);
-      userPermission.setRoles(Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      JsonPermission userPermission = new JsonPermission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
 
-      PERMISSIONS = new MorphiaPermissions();
+      GROUP_PERMISSION = new JsonPermission(GROUP, Collections.singleton(Role.READ.toString()));
+
+      PERMISSIONS = new JsonPermissions();
       PERMISSIONS.updateUserPermissions(userPermission);
-
-      GROUP_PERMISSION.setId(GROUP);
-      GROUP_PERMISSION.setRoles(Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
 
-   private MorphiaProjectDao projectDao;
+   private MongoProjectDao projectDao;
 
    @Before
    public void initProjectDao() {
       Organization organization = Mockito.mock(Organization.class);
       Mockito.when(organization.getId()).thenReturn(ORGANIZATION_ID);
 
-      projectDao = new MorphiaProjectDao();
+      projectDao = new MongoProjectDao();
       projectDao.setDatabase(database);
-      projectDao.setDatastore(datastore);
 
       projectDao.setOrganization(organization);
-      projectDao.ensureIndexes();
+      projectDao.createProjectsRepository(organization);
    }
 
-   private MorphiaProject prepareProject(String code) {
-      MorphiaProject project = new MorphiaProject();
+   private JsonProject prepareProject(String code) {
+      JsonProject project = new JsonProject();
       project.setCode(code);
       project.setName(NAME);
       project.setColor(COLOR);
       project.setIcon(ICON);
-      project.setPermissions(new MorphiaPermissions(PERMISSIONS));
+      project.setPermissions(new JsonPermissions(PERMISSIONS));
       return project;
    }
 
@@ -111,7 +106,7 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      MorphiaProject storedProject = datastore.get(projectDao.databaseCollection(), MorphiaProject.class, new ObjectId(id));
+      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedProject).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -125,20 +120,20 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateProjectExistingCode() {
-      Project project = prepareProject(CODE1);
-      datastore.save(projectDao.databaseCollection(), project);
+      JsonProject project = prepareProject(CODE1);
+      projectDao.databaseCollection().insertOne(project);
 
       Project project2 = prepareProject(CODE1);
       assertThatThrownBy(() -> projectDao.createProject(project2))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testGetProjectByCode() {
-      MorphiaProject project = prepareProject(CODE1);
-      datastore.save(projectDao.databaseCollection(), project);
+      JsonProject project = prepareProject(CODE1);
+      projectDao.databaseCollection().insertOne(project);
 
-      MorphiaProject storedProject = (MorphiaProject) projectDao.getProjectByCode(CODE1);
+      JsonProject storedProject = (JsonProject) projectDao.getProjectByCode(CODE1);
       assertThat(storedProject).isNotNull();
       assertThat(storedProject.getId()).isNotNull().isNotEmpty();
 
@@ -160,28 +155,28 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjects() {
-      MorphiaProject project = prepareProject(CODE1);
-      datastore.save(projectDao.databaseCollection(), project);
+      JsonProject project = prepareProject(CODE1);
+      projectDao.databaseCollection().insertOne(project);
 
-      MorphiaProject project2 = prepareProject(CODE2);
-      datastore.save(projectDao.databaseCollection(), project2);
+      JsonProject project2 = prepareProject(CODE2);
+      projectDao.databaseCollection().insertOne(project2);
 
       DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
-      List<MorphiaProject> projects = (List<MorphiaProject>)(List<?>) projectDao.getProjects(query);
+      List<Project> projects = projectDao.getProjects(query);
       assertThat(projects).extracting(Project::getCode).containsOnly(CODE1, CODE2);
    }
 
    @Test
    public void testGetProjectsNoReadRole() {
-      MorphiaProject project = prepareProject(CODE1);
-      Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      JsonProject project = prepareProject(CODE1);
+      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.CLONE.toString()));
       project.getPermissions().updateUserPermissions(userPermission);
-      datastore.save(projectDao.databaseCollection(), project);
+      projectDao.databaseCollection().insertOne(project);
 
-      MorphiaProject project2 = prepareProject(CODE2);
-      Permission groupPermission = new MorphiaPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      JsonProject project2 = prepareProject(CODE2);
+      Permission groupPermission = new JsonPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       project2.getPermissions().updateGroupPermissions(groupPermission);
-      datastore.save(projectDao.databaseCollection(), project2);
+      projectDao.databaseCollection().insertOne(project2);
 
       DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP2)).build();
       List<Project> projects = projectDao.getProjects(query);
@@ -190,11 +185,11 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetProjectsGroupRole() {
-      MorphiaProject project = prepareProject(CODE1);
-      datastore.save(projectDao.databaseCollection(), project);
+      JsonProject project = prepareProject(CODE1);
+      projectDao.databaseCollection().insertOne(project);
 
-      MorphiaProject project2 = prepareProject(CODE2);
-      datastore.save(projectDao.databaseCollection(), project2);
+      JsonProject project2 = prepareProject(CODE2);
+      projectDao.databaseCollection().insertOne(project2);
 
       DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
       List<Project> projects = projectDao.getProjects(query);
@@ -203,47 +198,47 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteProject() {
-      MorphiaProject project = prepareProject(CODE1);
-      datastore.save(projectDao.databaseCollection(), project);
+      JsonProject project = prepareProject(CODE1);
+      projectDao.databaseCollection().insertOne(project);
       assertThat(project.getId()).isNotNull();
 
       projectDao.deleteProject(project.getId());
 
-      Project storedProject = datastore.get(projectDao.databaseCollection(), MorphiaProject.class, new ObjectId(project.getId()));
+      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(project.getId())).first();
       assertThat(storedProject).isNull();
    }
 
    @Test
    public void testDeleteProjectNotExisting() {
       assertThatThrownBy(() -> projectDao.deleteProject(NOT_EXISTING_ID))
-            .isInstanceOf(WriteFailedException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testUpdateProjectCode() {
-      MorphiaProject project = prepareProject(CODE1);
-      String id = datastore.save(projectDao.databaseCollection(), project).getId().toString();
+      JsonProject project = prepareProject(CODE1);
+      String id = projectDao.createProject(project).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
       project.setCode(CODE2);
       projectDao.updateProject(id, project);
 
-      MorphiaProject storedProject = datastore.get(projectDao.databaseCollection(), MorphiaProject.class, new ObjectId(id));
+      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedProject).isNotNull();
       assertThat(storedProject.getCode()).isEqualTo(CODE2);
    }
 
    @Test
    public void testUpdateProjectPermissions() {
-      MorphiaProject project = prepareProject(CODE1);
-      String id = datastore.save(projectDao.databaseCollection(), project).getId().toString();
+      JsonProject project = prepareProject(CODE1);
+      String id = projectDao.createProject(project).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
       project.getPermissions().removeUserPermission(USER);
       project.getPermissions().updateGroupPermissions(GROUP_PERMISSION);
       projectDao.updateProject(id, project);
 
-      MorphiaProject storedProject = datastore.get(projectDao.databaseCollection(), MorphiaProject.class, new ObjectId(id));
+      JsonProject storedProject = projectDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedProject).isNotNull();
       assertThat(storedProject.getPermissions().getUserPermissions()).isEmpty();
       assertThat(storedProject.getPermissions().getGroupPermissions()).containsExactly(GROUP_PERMISSION);
@@ -251,15 +246,15 @@ public class MorphiaProjectDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateProjectExistingCode() {
-      MorphiaProject project = prepareProject(CODE1);
-      datastore.save(projectDao.databaseCollection(), project);
+      JsonProject project = prepareProject(CODE1);
+      projectDao.databaseCollection().insertOne(project);
 
-      MorphiaProject project2 = prepareProject(CODE2);
-      datastore.save(projectDao.databaseCollection(), project2);
+      JsonProject project2 = prepareProject(CODE2);
+      projectDao.databaseCollection().insertOne(project2);
 
       project2.setCode(CODE1);
       assertThatThrownBy(() -> projectDao.updateProject(project2.getId(), project2))
-            .isInstanceOf(DuplicateKeyException.class);
+            .isInstanceOf(StorageException.class);
    }
 
 }

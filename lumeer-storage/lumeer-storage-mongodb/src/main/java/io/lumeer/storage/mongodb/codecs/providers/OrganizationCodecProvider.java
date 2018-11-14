@@ -16,35 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.model.common;
 
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Version;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-public abstract class MorphiaEntity {
+import io.lumeer.api.dto.JsonOrganization;
+import io.lumeer.storage.mongodb.codecs.OrganizationCodec;
 
-   public static final String ID = "_id";
-   public static final String VERSION = "version";
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-   @Id
-   protected ObjectId id;
+public class OrganizationCodecProvider implements CodecProvider {
 
-   @Version(VERSION)
-   private Long version;
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == JsonOrganization.class) {
+         return (Codec<T>) new OrganizationCodec(registry);
+      }
 
-   protected MorphiaEntity() {
+      return null;
    }
 
-   protected MorphiaEntity(final String id) {
-      this.id = id != null ? new ObjectId(id) : null;
-   }
-
-   public String getId() {
-      return id != null ? id.toHexString() : null;
-   }
-
-   public void setId(final String id) {
-      this.id = new ObjectId(id);
-   }
 }

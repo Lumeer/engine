@@ -16,23 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.exception;
 
-import io.lumeer.storage.api.exception.StorageException;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import com.mongodb.WriteResult;
+import io.lumeer.api.dto.JsonProject;
+import io.lumeer.storage.mongodb.codecs.ProjectCodec;
 
-public class WriteFailedException extends StorageException {
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-   private final WriteResult writeResult;
+public class ProjectCodecProvider implements CodecProvider {
 
-   public WriteFailedException(final WriteResult writeResult) {
-      super(writeResult.toString());
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == JsonProject.class) {
+         return (Codec<T>) new ProjectCodec(registry);
+      }
 
-      this.writeResult = writeResult;
+      return null;
    }
 
-   public WriteResult getWriteResult() {
-      return writeResult;
-   }
 }

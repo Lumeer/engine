@@ -91,6 +91,10 @@ public class JsonCollection extends JsonResource implements Collection {
       this.attributes = JsonAttribute.convert(attributes);
    }
 
+   public void setAttributess(final Set<JsonAttribute> attributes) {
+      this.attributes = attributes;
+   }
+
    @Override
    public void createAttribute(final Attribute attribute) {
       attributes.add(JsonAttribute.convert(attribute));

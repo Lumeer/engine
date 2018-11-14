@@ -94,9 +94,9 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         View updatedView = databaseCollection().findOneAndReplace(idFilter(id), jsonView, options);
+         JsonView updatedView = databaseCollection().findOneAndReplace(idFilter(id), jsonView, options);
          if (updatedView == null) {
-            throw new StorageException("View '" + view.getId() + "' has not been updated.");
+            throw new StorageException("View '" + id + "' has not been updated.");
          }
          return updatedView;
       } catch (MongoException ex) {
@@ -134,7 +134,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    @Override
    public List<View> getViews(final SuggestionQuery query) {
       FindIterable<JsonView> findIterable = databaseCollection().find(suggestionsFilter(query));
-      addPaginationToSuggestionQuery(findIterable, query);
+      addPaginationToQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
 

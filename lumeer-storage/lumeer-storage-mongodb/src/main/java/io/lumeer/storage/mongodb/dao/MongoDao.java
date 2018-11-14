@@ -18,60 +18,20 @@
  */
 package io.lumeer.storage.mongodb.dao;
 
-import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.mongodb.model.MorphiaView;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
-import org.mongodb.morphia.AdvancedDatastore;
-import org.mongodb.morphia.query.Criteria;
-import org.mongodb.morphia.query.FindOptions;
-import org.mongodb.morphia.query.Query;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public abstract class MongoDao {
 
    protected MongoDatabase database;
-   protected AdvancedDatastore datastore;
 
    public void setDatabase(final MongoDatabase database) {
       this.database = database;
    }
 
-   public void setDatastore(final AdvancedDatastore datastore) {
-      this.datastore = datastore;
-   }
-
-   protected <T> Criteria[] createPermissionsCriteria(Query<T> mongoQuery, DatabaseQuery databaseQuery) {
-      List<Criteria> criteria = new ArrayList<>();
-      databaseQuery.getUsers().forEach(user -> criteria.add(createUserCriteria(mongoQuery, user)));
-      databaseQuery.getGroups().forEach(group -> criteria.add(createGroupCriteria(mongoQuery, group)));
-      return criteria.toArray(new Criteria[] {});
-   }
-
-   private <T> Criteria createUserCriteria(Query<T> query, String user) {
-      return query.criteria(MorphiaView.PERMISSIONS + "." + MorphiaPermissions.USER_ROLES)
-                  .elemMatch(createPermissionQuery(user));
-   }
-
-   private <T> Criteria createGroupCriteria(Query<T> query, String group) {
-      return query.criteria(MorphiaView.PERMISSIONS + "." + MorphiaPermissions.GROUP_ROLES)
-                  .elemMatch(createPermissionQuery(group));
-   }
-
-   private Query<MorphiaPermission> createPermissionQuery(String name) {
-      return datastore.createQuery(MorphiaPermission.class)
-                      .filter(MorphiaPermission.ID, name)
-                      .field(MorphiaPermission.ROLES).in(Collections.singleton(Role.READ.toString()));
-   }
-
-   public <T> void addPaginationToSuggestionQuery(FindIterable<T> findIterable, DatabaseQuery query) {
+   public <T> void addPaginationToQuery(FindIterable<T> findIterable, DatabaseQuery query) {
       Integer page = query.getPage();
       Integer pageSize = query.getPageSize();
 
@@ -79,19 +39,6 @@ public abstract class MongoDao {
          findIterable.skip(page * pageSize)
                      .limit(pageSize);
       }
-   }
-
-   protected static FindOptions createFindOptions(DatabaseQuery query) {
-      FindOptions findOptions = new FindOptions();
-      Integer page = query.getPage();
-      Integer pageSize = query.getPageSize();
-
-      if (page != null && pageSize != null) {
-         findOptions.skip(page * pageSize)
-                    .limit(pageSize);
-      }
-
-      return findOptions;
    }
 
 }

@@ -25,7 +25,6 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.mongodb.dao.MongoDao;
 
 import com.mongodb.client.MongoDatabase;
-import org.mongodb.morphia.AdvancedDatastore;
 
 import java.util.Optional;
 import javax.annotation.PostConstruct;
@@ -45,7 +44,6 @@ public abstract class OrganizationScopedDao extends MongoDao {
    @PostConstruct
    public void init() {
       this.database = (MongoDatabase) dataStorage.getDatabase();
-      this.datastore = (AdvancedDatastore) dataStorage.getDataStore();
 
       if (selectedWorkspace.getOrganization().isPresent()) {
          this.organization = selectedWorkspace.getOrganization().get();

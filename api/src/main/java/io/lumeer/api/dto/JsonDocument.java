@@ -69,6 +69,16 @@ public class JsonDocument implements Document {
       this.metaData = document.getMetaData();
    }
 
+   public JsonDocument(final String collectionId, final ZonedDateTime creationDate, final ZonedDateTime updateDate, final String createdBy, final String updatedBy, final Integer dataVersion, final DataDocument metaData) {
+      this.collectionId = collectionId;
+      this.creationDate = creationDate;
+      this.updateDate = updateDate;
+      this.createdBy = createdBy;
+      this.updatedBy = updatedBy;
+      this.dataVersion = dataVersion;
+      this.metaData = metaData;
+   }
+
    @Override
    public String getId() {
       return id;

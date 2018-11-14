@@ -11,7 +11,6 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
-import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
@@ -105,7 +104,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    @Override
    public List<LinkType> getLinkTypes(final SuggestionQuery query) {
       FindIterable<LinkType> findIterable = databaseCollection().find(linkTypesSuggestionFilter(query));
-      addPaginationToSuggestionQuery(findIterable, query);
+      addPaginationToQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
 

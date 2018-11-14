@@ -21,16 +21,16 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.exception.WriteFailedException;
-import io.lumeer.storage.mongodb.model.MorphiaDocument;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
-import com.mongodb.DuplicateKeyException;
 import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
 import org.junit.Before;
@@ -39,7 +39,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
+
+import de.flapdoodle.embed.mongo.config.Storage;
 
 public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
@@ -60,45 +63,40 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
    private static final String UPDATED_BY = USER2;
    private static final int DATA_VERSION2 = 2;
 
-   private MorphiaDocumentDao documentDao;
+   private MongoDocumentDao documentDao;
 
    @Before
    public void initDocumentDao() {
       Project project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);
 
-      documentDao = new MorphiaDocumentDao();
+      documentDao = new MongoDocumentDao();
       documentDao.setDatabase(database);
-      documentDao.setDatastore(datastore);
 
       documentDao.setProject(project);
       documentDao.createDocumentsRepository(project);
    }
 
-   private MorphiaDocument prepareDocument() {
-      MorphiaDocument document = new MorphiaDocument();
-      document.setCollectionId(COLLECTION_ID);
-      document.setCreationDate(CREATION_DATE);
-      document.setCreatedBy(CREATED_BY);
-      document.setDataVersion(DATA_VERSION);
+   private JsonDocument prepareDocument() {
+      JsonDocument document = new JsonDocument(COLLECTION_ID, CREATION_DATE, null, CREATED_BY, null, DATA_VERSION, new DataDocument());
       document.setData(new DataDocument("something", "that should not be stored"));
       return document;
    }
 
-   private MorphiaDocument createDocument() {
-      MorphiaDocument document = prepareDocument();
-      datastore.save(documentDao.databaseCollection(), document);
+   private JsonDocument createDocument() {
+      JsonDocument document = prepareDocument();
+      documentDao.databaseCollection().insertOne(document);
       return document;
    }
 
    @Test
    public void testCreateDocument() {
-      MorphiaDocument document = prepareDocument();
+      JsonDocument document = prepareDocument();
       String id = documentDao.createDocument(document).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      Document storedDocument = datastore.get(documentDao.databaseCollection(), MorphiaDocument.class, new ObjectId(id));
+      Document storedDocument = documentDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedDocument).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -115,19 +113,19 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateDocumentExisting() {
-      MorphiaDocument document = createDocument();
+      JsonDocument document = createDocument();
       assertThatThrownBy(() -> documentDao.createDocument(document))
-            .isInstanceOf(DuplicateKeyException.class); // TODO change this to our own exception
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
    public void testCreateDocumentMultiple() {
-      Document document = prepareDocument();
+      JsonDocument document = prepareDocument();
       String id = documentDao.createDocument(document).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
 
-      Document document2 = new MorphiaDocument();
+      JsonDocument document2 = prepareDocument();
       String id2 = documentDao.createDocument(document2).getId();
       assertThat(id2).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id2)).isTrue();
@@ -137,7 +135,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateDocument() {
-      MorphiaDocument document = createDocument();
+      JsonDocument document = createDocument();
       String id = document.getId();
 
       ZonedDateTime updateDate = ZonedDateTime.now().withNano(0);
@@ -147,7 +145,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
       documentDao.updateDocument(document.getId(), document);
 
-      Document storedDocument = datastore.get(documentDao.databaseCollection(), MorphiaDocument.class, new ObjectId(id));
+      Document storedDocument = documentDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedDocument).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -164,9 +162,9 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
    @Test
    @Ignore("Stored anyway with the current implementation")
    public void testUpdateDocumentNotExisting() {
-      MorphiaDocument document = prepareDocument();
+      JsonDocument document = prepareDocument();
       assertThatThrownBy(() -> documentDao.updateDocument(DOCUMENT_ID, document))
-            .isInstanceOf(WriteFailedException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
@@ -175,14 +173,14 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
 
       documentDao.deleteDocument(id);
 
-      Document storedDocument = datastore.get(documentDao.databaseCollection(), MorphiaDocument.class, new ObjectId(id));
+      Document storedDocument = documentDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedDocument).isNull();
    }
 
    @Test
    public void testDeleteDocumentNotExisting() {
       assertThatThrownBy(() -> documentDao.deleteDocument(DOCUMENT_ID))
-            .isInstanceOf(WriteFailedException.class);
+            .isInstanceOf(StorageException.class);
    }
 
    @Test
@@ -190,12 +188,12 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
       createDocument();
       createDocument();
 
-      List<MorphiaDocument> documents = datastore.find(documentDao.databaseCollection(), MorphiaDocument.class).asList();
+      List<JsonDocument> documents = documentDao.databaseCollection().find().into(new ArrayList<>());
       assertThat(documents).isNotEmpty();
 
       documentDao.deleteDocuments(COLLECTION_ID);
 
-      documents = datastore.find(documentDao.databaseCollection(), MorphiaDocument.class).asList();
+      documents = documentDao.databaseCollection().find().into(new ArrayList<>());
       assertThat(documents).isEmpty();
    }
 
@@ -203,7 +201,7 @@ public class MorphiaDocumentDaoTest extends MongoDbTestBase {
    public void testDeleteDocumentsEmpty() {
       documentDao.deleteDocuments(COLLECTION_ID);
 
-      List<MorphiaDocument> documents = datastore.find(documentDao.databaseCollection(), MorphiaDocument.class).asList();
+      List<JsonDocument> documents = documentDao.databaseCollection().find().into(new ArrayList<>());
       assertThat(documents).isEmpty();
    }
 

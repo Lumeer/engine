@@ -16,27 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.system;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.storage.mongodb.dao.MongoDao;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import com.mongodb.client.MongoDatabase;
-import org.mongodb.morphia.AdvancedDatastore;
+import io.lumeer.api.dto.JsonCollection;
+import io.lumeer.storage.mongodb.codecs.CollectionCodec;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-public abstract class SystemScopedDao extends MongoDao {
+public class CollectionCodecProvider implements CodecProvider {
 
-   @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == JsonCollection.class) {
+         return (Codec<T>) new CollectionCodec(registry);
+      }
 
-   @PostConstruct
-   public void init() {
-      this.database = (MongoDatabase) dataStorage.getDatabase();
+      return null;
    }
 
 }

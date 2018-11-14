@@ -22,73 +22,50 @@ package io.lumeer.storage.mongodb.codecs;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.dto.common.JsonResource;
 
-import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
-import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.ObjectId;
 
-public class ViewCodec implements CollectibleCodec<JsonView> {
+public class ViewCodec extends ResourceCodec implements CollectibleCodec<JsonView> {
 
-   public static final String ID = "_id";
-   public static final String CODE = "code";
-   public static final String NAME = "name";
-   public static final String ICON = "icon";
-   public static final String COLOR = "color";
-   public static final String DESCRIPTION = "description";
-   public static final String PERMISSIONS = "permissions";
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
    public static final String AUTHOR_ID = "authorId";
 
-   private final Codec<Document> documentCodec;
-
    public ViewCodec(final CodecRegistry registry) {
-      this.documentCodec = registry.get(Document.class);
+      super(registry);
    }
 
    @Override
    public JsonView decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
+      JsonResource resource = decodeResource(bson);
 
-      String id = bson.getObjectId(ID).toHexString();
-      String code = bson.getString(CODE);
-      String name = bson.getString(NAME);
-      String icon = bson.getString(ICON);
-      String color = bson.getString(COLOR);
-      String description = bson.getString(DESCRIPTION);
-      JsonPermissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class)); // TODO try to use better approach
       JsonQuery query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
       String perspective = bson.getString(PERSPECTIVE);
       Object config = bson.get(CONFIG);
       String authorId = bson.getString(AUTHOR_ID);
 
-      JsonView view = new JsonView(code, name, icon, color, description, permissions, query, perspective, config, authorId);
-      view.setId(id);
+      JsonView view = new JsonView(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), (JsonPermissions) resource.getPermissions(), query, perspective, config, authorId);
+      view.setId(resource.getId());
       return view;
    }
 
    @Override
    public void encode(final BsonWriter writer, final JsonView value, final EncoderContext encoderContext) {
-      Document bson = value.getId() != null ? new Document(ID, new ObjectId(value.getId())) : new Document();
-      bson.append(CODE, value.getCode())
-          .append(NAME, value.getName())
-          .append(ICON, value.getIcon())
-          .append(COLOR, value.getColor())
-          .append(DESCRIPTION, value.getDescription())
-          .append(PERMISSIONS, value.getPermissions())
-          .append(QUERY, value.getQuery())
-          .append(PERSPECTIVE, value.getPerspective())
-          .append(CONFIG, value.getConfig())
-          .append(AUTHOR_ID, value.getAuthorId());
+      Document bson = encodeResource(value)
+            .append(QUERY, value.getQuery())
+            .append(PERSPECTIVE, value.getPerspective())
+            .append(CONFIG, value.getConfig())
+            .append(AUTHOR_ID, value.getAuthorId());
 
       documentCodec.encode(writer, bson, encoderContext);
    }
@@ -99,24 +76,19 @@ public class ViewCodec implements CollectibleCodec<JsonView> {
    }
 
    @Override
-   public JsonView generateIdIfAbsentFromDocument(final JsonView document) {
-      if (!documentHasId(document)) {
-         document.setId(new ObjectId().toHexString());
-      }
-      return document;
+   public JsonView generateIdIfAbsentFromDocument(final JsonView jsonView) {
+      JsonResource resource = generateIdIfAbsentFromDocument((JsonResource) jsonView);
+      jsonView.setId(resource.getId());
+      return jsonView;
    }
 
    @Override
-   public boolean documentHasId(final JsonView document) {
-      return document.getId() != null;
+   public boolean documentHasId(final JsonView jsonView) {
+      return documentHasId((JsonResource) jsonView);
    }
 
    @Override
-   public BsonValue getDocumentId(final JsonView document) {
-      if (!documentHasId(document)) {
-         throw new IllegalStateException("The document does not contain an id");
-      }
-
-      return new BsonObjectId(new ObjectId(document.getId()));
+   public BsonValue getDocumentId(final JsonView jsonView) {
+      return getDocumentId((JsonResource) jsonView);
    }
 }

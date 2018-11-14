@@ -36,7 +36,6 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
 
       dao = new MongoFavoriteItemDao();
       dao.setDatabase(database);
-      dao.setDatastore(datastore);
 
       dao.setOrganization(organization);
       dao.createRepositories(organization);

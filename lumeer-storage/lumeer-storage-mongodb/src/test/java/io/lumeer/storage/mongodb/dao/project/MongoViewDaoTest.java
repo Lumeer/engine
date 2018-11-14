@@ -21,6 +21,8 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.dto.JsonPermission;
+import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.dto.JsonQuery;
 import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Permission;
@@ -32,8 +34,6 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.bson.types.ObjectId;
@@ -64,9 +64,9 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
-   private static final MorphiaPermissions PERMISSIONS = new MorphiaPermissions();
-   private static final MorphiaPermission USER_PERMISSION;
-   private static final MorphiaPermission GROUP_PERMISSION;
+   private static final JsonPermissions PERMISSIONS = new JsonPermissions();
+   private static final JsonPermission USER_PERMISSION;
+   private static final JsonPermission GROUP_PERMISSION;
 
    private static final String CODE2 = "TVIEW2";
    private static final String NAME2 = "Testing fulltext view";
@@ -79,10 +79,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
    static {
-      USER_PERMISSION = new MorphiaPermission(USER, View.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      USER_PERMISSION = new JsonPermission(USER, View.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      GROUP_PERMISSION = new MorphiaPermission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new JsonPermission(GROUP, Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
 
@@ -97,7 +97,6 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
       viewDao = new MongoViewDao();
       viewDao.setDatabase(database);
-      viewDao.setDatastore(datastore);
 
       viewDao.setProject(project);
       viewDao.createViewsRepository(project);
@@ -110,7 +109,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       view.setName(NAME);
       view.setColor(COLOR);
       view.setIcon(ICON);
-      view.setPermissions(new MorphiaPermissions(PERMISSIONS));
+      view.setPermissions(new JsonPermissions(PERMISSIONS));
       view.setQuery(QUERY);
       view.setPerspective(PERSPECTIVE);
       view.setConfig(CONFIG);
@@ -299,14 +298,14 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    @Test
    public void testGetViewsNoReadRole() {
       JsonView view = prepareView();
-      Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      Permission userPermission = new JsonPermission(USER2, Collections.singleton(Role.CLONE.toString()));
       view.getPermissions().updateUserPermissions(userPermission);
       viewDao.databaseCollection().insertOne(view);
 
       JsonView view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      Permission groupPermission = new MorphiaPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Permission groupPermission = new JsonPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       view2.getPermissions().updateGroupPermissions(groupPermission);
       viewDao.databaseCollection().insertOne(view2);
 

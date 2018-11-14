@@ -21,10 +21,11 @@ package io.lumeer.api.dto.common;
 import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Resource;
+import io.lumeer.api.model.ResourceType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public abstract class JsonResource implements Resource {
+public class JsonResource implements Resource {
 
    public static final String CODE = "code";
    public static final String NAME = "name";
@@ -47,7 +48,7 @@ public abstract class JsonResource implements Resource {
    protected JsonResource() {
    }
 
-   protected JsonResource(final String code, final String name, final String icon, final String color, String description, final JsonPermissions permissions) {
+   public JsonResource(final String code, final String name, final String icon, final String color, String description, final JsonPermissions permissions) {
       this.code = code;
       this.name = name;
       this.icon = icon;
@@ -65,6 +66,11 @@ public abstract class JsonResource implements Resource {
       this.description = resource.getDescription();
       this.nonRemovable = resource.isNonRemovable();
       this.permissions = new JsonPermissions(resource.getPermissions());
+   }
+
+   @Override
+   public ResourceType getType() {
+      return null;
    }
 
    @Override
