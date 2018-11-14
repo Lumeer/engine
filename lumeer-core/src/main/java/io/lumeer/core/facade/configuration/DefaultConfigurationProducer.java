@@ -45,6 +45,11 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String GOPAY_CLIENT_ID = "gopay_client_id";
    public static final String GOPAY_CLIENT_CREDENTIALS = "gopay_client_credentials";
 
+   public static final String MAILCHIMP_APIKEY = "mailchimp_apikey";
+   public static final String MAILCHIMP_SUBDOMAIN = "mailchimp_subdomain";
+   public static final String MAILCHIMP_LIST_CS = "mailchimp_list_cs";
+   public static final String MAILCHIMP_LIST_EN = "mailchimp_list_en";
+
    public DefaultConfigurationProducer() {
       defaultConfiguration = new HashMap<>();
 
