@@ -264,7 +264,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    @Test
    public void testGetAllCollections() {
       createCollection(CODE);
-      createCollection(CODE2);
+      createCollection(CODE2, NAME2);
 
       Response response = client.target(COLLECTIONS_URL)
                                 .request(MediaType.APPLICATION_JSON)
