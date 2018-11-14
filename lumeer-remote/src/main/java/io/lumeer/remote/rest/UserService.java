@@ -91,7 +91,7 @@ public class UserService extends AbstractService {
    @Path("current")
    @JsonView(UserViews.FullView.class)
    public User patchCurrentUser(User user) {
-      return userFacade.patchCurrentUser(user);
+      return userFacade.patchCurrentUser(user, getFirstUrlPathPart());
    }
 
    @PUT

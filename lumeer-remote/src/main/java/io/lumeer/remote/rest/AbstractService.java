@@ -45,4 +45,17 @@ abstract class AbstractService {
       String parentPath = fullPath.replaceFirst(regex, "");
       return UriBuilder.fromUri(parentPath).build();
    }
+
+   protected String getRequestUrl() {
+      return request.getRequestURL().toString();
+   }
+
+   protected String getFirstUrlPathPart() {
+      String url = getRequestUrl();
+      url = url.substring(url.indexOf("://") + 3);
+      url = url.substring(url.indexOf("/") + 1);
+      url = url.substring(0, url.indexOf("/"));
+
+      return url;
+   }
 }
