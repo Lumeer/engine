@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import static java.util.Map.entry;
 
+import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
@@ -76,6 +77,9 @@ public class PaymentFacade extends AbstractFacade {
 
    @Inject
    private FreshdeskFacade freshdeskFacade;
+
+   @Inject
+   private CompanyContactFacade companyContactFacade;
 
    private Payment currentPayment = null;
 
@@ -210,7 +214,8 @@ public class PaymentFacade extends AbstractFacade {
       final Payment result = paymentDao.updatePayment(organization, payment);
 
       freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "Payment status updated for organization " + organizationCode,
-            "Payment in amount of " + payment.getCurrency() + " " + payment.getAmount() + " is in state " + payment.getState().name());
+            "Payment in amount of " + payment.getCurrency() + " " + payment.getAmount() + " is in state " + payment.getState().name() +
+                  ". Invoice might need to be prepared for " + companyContactFacade.getCompanyContact(organization));
 
       return result;
    }

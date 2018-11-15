@@ -24,13 +24,8 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -56,7 +51,7 @@ public class FreshdeskFacade {
    private static String FRESHDESK_DOMAIN;
    private static String FRESHDESK_APIKEY;
 
-   private Set<String> limitsExceeded = new ConcurrentHashMap<String, String>().keySet();
+   private List<String> limitsExceeded = new ArrayList<>();
 
    @PostConstruct
    public void init() {
@@ -94,7 +89,10 @@ public class FreshdeskFacade {
 
    public void logLimitsExceeded(final User user, final String resourceName, final String organizationCode) {
       if (FRESHDESK_APIKEY != null && !"".equals(FRESHDESK_APIKEY)) {
-         if (limitsExceeded.add(user.getEmail())) {
+         final String id = user.getEmail() + ":" + resourceName + ":" + organizationCode;
+
+         if (!limitsExceeded.contains(id)) {
+            limitsExceeded.add(id);
             logTicket(user, "Limits exceeded by user " + user.getEmail() + "in organization " + organizationCode,
                   "Limits exceeded on resource: " + resourceName);
          }
