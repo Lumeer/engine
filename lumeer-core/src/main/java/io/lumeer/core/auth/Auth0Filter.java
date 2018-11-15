@@ -116,7 +116,7 @@ public class Auth0Filter implements Filter {
          return;
       }
 
-      if (!req.getPathInfo().startsWith("/paymentNotify/")) {
+      if (req.getPathInfo() == null || !req.getPathInfo().startsWith("/paymentNotify/")) {
          final String accessToken = getAccessToken(req);
 
          // we do not have the token at all, or we failed to obtain verifier
