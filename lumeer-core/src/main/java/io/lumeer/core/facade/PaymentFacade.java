@@ -20,11 +20,13 @@ package io.lumeer.core.facade;
 
 import static java.util.Map.entry;
 
+import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -70,6 +72,15 @@ public class PaymentFacade extends AbstractFacade {
    @Inject
    private PaymentGatewayFacade paymentGateway;
 
+   @Inject
+   private AuthenticatedUser authenticatedUser;
+
+   @Inject
+   private FreshdeskFacade freshdeskFacade;
+
+   @Inject
+   private CompanyContactFacade companyContactFacade;
+
    private Payment currentPayment = null;
 
    public Payment createPayment(final Organization organization, final Payment payment, final String notifyUrl, final String returnUrl) {
@@ -78,7 +89,13 @@ public class PaymentFacade extends AbstractFacade {
 
       final Payment establishedPayment = paymentGateway.createPayment(storedPayment, returnUrl, notifyUrl + "/" + storedPayment.getId());
 
-      return paymentDao.updatePayment(organization, storedPayment.getId(), establishedPayment);
+      final Payment result = paymentDao.updatePayment(organization, storedPayment.getId(), establishedPayment);
+
+      freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "New payment for organization " + organization.getCode(),
+            "A new order of Lumeer was placed for " + payment.getUsers() + " users with amount of "
+                  + payment.getCurrency() + " " + payment.getAmount());
+
+      return result;
    }
 
    private Organization getOrganizationUnsafe(final String organizationCode) {
@@ -194,7 +211,13 @@ public class PaymentFacade extends AbstractFacade {
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);
       payment.setState(paymentGateway.getPaymentStatus(payment.getPaymentId()));
 
-      return paymentDao.updatePayment(organization, payment);
+      final Payment result = paymentDao.updatePayment(organization, payment);
+
+      freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "Payment status updated for organization " + organizationCode,
+            "Payment in amount of " + payment.getCurrency() + " " + payment.getAmount() + " is in state " + payment.getState().name() +
+                  ". Invoice might need to be prepared for " + companyContactFacade.getCompanyContact(organization));
+
+      return result;
    }
 
    public Payment getPayment(final Organization organization, final String paymentId) {

@@ -59,6 +59,9 @@ public class UserFacade extends AbstractFacade {
    @Inject
    private MailChimpFacade mailChimpFacade;
 
+   @Inject
+   private FreshdeskFacade freshdeskFacade;
+
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkPermissions(organizationId, Role.MANAGE);
@@ -175,6 +178,8 @@ public class UserFacade extends AbstractFacade {
       User currentUser = authenticatedUser.getCurrentUser();
       feedback.setUserId(currentUser.getId());
       feedback.setCreationTime(ZonedDateTime.now());
+
+      freshdeskFacade.logTicket(currentUser, "User " + currentUser.getEmail() + " sent feedback in app", feedback.getMessage());
 
       return feedbackDao.createFeedback(feedback);
    }

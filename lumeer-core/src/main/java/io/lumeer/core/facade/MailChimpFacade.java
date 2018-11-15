@@ -60,7 +60,6 @@ public class MailChimpFacade {
       MAILCHIMP_SUBDOMAIN = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILCHIMP_SUBDOMAIN)).orElse("");
       MAILCHIMP_LIST_CS = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILCHIMP_LIST_CS)).orElse("");
       MAILCHIMP_LIST_EN = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILCHIMP_LIST_EN)).orElse("");
-
    }
 
    public void setUserSubscription(final User user, final boolean enSite) {
@@ -133,6 +132,8 @@ public class MailChimpFacade {
          return response.readEntity(String.class);
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to communicate with MailChimp:", e);
+      } finally {
+         client.close();
       }
 
       return "";
