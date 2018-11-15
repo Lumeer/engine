@@ -56,6 +56,12 @@ public class UserFacade extends AbstractFacade {
    @Inject
    private FeedbackDao feedbackDao;
 
+   @Inject
+   private MailChimpFacade mailChimpFacade;
+
+   @Inject
+   private FreshdeskFacade freshdeskFacade;
+
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkPermissions(organizationId, Role.MANAGE);
@@ -138,12 +144,12 @@ public class UserFacade extends AbstractFacade {
       return user;
    }
 
-   public User patchCurrentUser(User user) {
+   public User patchCurrentUser(final User user, final String language) {
       User currentUser = authenticatedUser.getCurrentUser();
 
       if (user.hasNewsletter() != null) {
          currentUser.setNewsletter(user.hasNewsletter());
-         // TODO add/remove email address to/from MailChimp
+         mailChimpFacade.setUserSubscription(user, language == null || !"cs".equals(language)); // so that en is default
       }
 
       if (user.hasAgreement() != null && user.hasAgreement()) {
@@ -172,6 +178,8 @@ public class UserFacade extends AbstractFacade {
       User currentUser = authenticatedUser.getCurrentUser();
       feedback.setUserId(currentUser.getId());
       feedback.setCreationTime(ZonedDateTime.now());
+
+      freshdeskFacade.logTicket(currentUser, "User " + currentUser.getEmail() + " sent feedback in app", feedback.getMessage());
 
       return feedbackDao.createFeedback(feedback);
    }

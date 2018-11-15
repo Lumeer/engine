@@ -34,6 +34,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.engine.annotation.UserDataStorage;
@@ -78,6 +79,9 @@ public class PermissionsChecker {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private FreshdeskFacade freshdeskFacade;
 
    private String viewCode = null;
 
@@ -328,12 +332,16 @@ public class PermissionsChecker {
 
       if (resource.getType().equals(ResourceType.PROJECT)) {
          if (limits.getProjects() > 0 && limits.getProjects() <= currentCount) {
+            final Optional<Organization> organization = workspaceKeeper.getOrganization();
+            freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "PROJECT", organization.isPresent() ? organization.get().getCode() : "<empty>");
             throw new ServiceLimitsExceededException(limits.getProjects(), resource);
          }
       }
 
       if (resource.getType().equals(ResourceType.COLLECTION)) {
          if (limits.getFiles() > 0 && limits.getFiles() <= currentCount) {
+            final Optional<Organization> organization = workspaceKeeper.getOrganization();
+            freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "COLLECTION", organization.isPresent() ? organization.get().getCode() : "<empty>");
             throw new ServiceLimitsExceededException(limits.getFiles(), resource);
          }
       }
@@ -354,6 +362,8 @@ public class PermissionsChecker {
       final long documentsCount = countDocuments();
 
       if (limits.getDocuments() > 0 && documentsCount >= limits.getDocuments()) {
+         final Optional<Organization> organization = workspaceKeeper.getOrganization();
+         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getCode() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, document);
       }
    }
@@ -373,6 +383,8 @@ public class PermissionsChecker {
       final long documentsCount = countDocuments();
 
       if (limits.getDocuments() > 0 && documentsCount + documents.size() > limits.getDocuments()) {
+         final Optional<Organization> organization = workspaceKeeper.getOrganization();
+         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getCode() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
       }
    }
@@ -394,9 +406,11 @@ public class PermissionsChecker {
          return;
       }
 
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganizationById(organizationId));
+      final Organization organization = organizationFacade.getOrganizationById(organizationId);
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(organization);
 
       if (limits.getUsers() > 0 && limits.getUsers() <= currentCount) {
+         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "USER", organization.getCode());
          throw new ServiceLimitsExceededException(limits.getUsers());
       }
    }

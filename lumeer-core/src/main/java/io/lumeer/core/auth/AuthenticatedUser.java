@@ -26,6 +26,8 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
+import io.lumeer.core.facade.FreshdeskFacade;
+import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.Colors;
 import io.lumeer.core.util.Icons;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -75,6 +77,9 @@ public class AuthenticatedUser implements Serializable {
 
    @Inject
    private SelectedWorkspace selectedWorkspace;
+
+   @Inject
+   private FreshdeskFacade freshdeskFacade;
 
    private AuthUserInfo authUserInfo = new AuthUserInfo();
 
@@ -176,6 +181,9 @@ public class AuthenticatedUser implements Serializable {
       Project project = createDemoProject(user);
 
       user.setDefaultWorkspace(new DefaultWorkspace(organization.getId(), project.getId()));
+
+      freshdeskFacade.logTicket(user, "A new user " + user.getEmail() + "logged for the first time in the system",
+            "Organization " + organization.getCode() + " and project " + project.getCode() + " were created for them.");
    }
 
    private Organization createDemoOrganization(User user) {
