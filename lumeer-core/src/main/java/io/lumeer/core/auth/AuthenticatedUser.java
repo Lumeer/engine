@@ -27,7 +27,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.facade.FreshdeskFacade;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.Colors;
 import io.lumeer.core.util.Icons;
 import io.lumeer.storage.api.dao.OrganizationDao;
