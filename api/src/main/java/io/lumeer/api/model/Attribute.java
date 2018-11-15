@@ -18,22 +18,106 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public interface Attribute {
+public class Attribute {
 
-   String getName();
+   public static final String ID = "id";
+   public static final String NAME = "name";
+   public static final String CONSTRAINTS = "constraints";
+   public static final String USAGE_COUNT = "usageCount";
 
-   void setName(String name);
+   private String id;
+   private String name;
+   private Set<String> constraints;
+   private Integer usageCount;
 
-   String getId();
+   public Attribute(final String id) {
+      this.id = id;
+      this.name = id;
+      this.constraints = Collections.emptySet();
+      this.usageCount = 0;
+   }
 
-   void setId(String id);
+   public Attribute(Attribute attribute) {
+      this.id = attribute.getId();
+      this.name = attribute.getName();
+      this.constraints = new HashSet<>(attribute.getConstraints());
+      this.usageCount = attribute.getUsageCount();
+   }
 
-   Set<String> getConstraints();
+   @JsonCreator
+   public Attribute(
+         @JsonProperty(ID) final String id,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(CONSTRAINTS) final Set<String> constraints,
+         @JsonProperty(USAGE_COUNT) final Integer usageCount) {
+      this.name = name;
+      this.id = id;
+      this.constraints = constraints;
+      this.usageCount = usageCount;
+   }
 
-   Integer getUsageCount();
+   public String getName() {
+      return name;
+   }
 
-   void setUsageCount(Integer usageCount);
+   public void setName(final String name) {
+      this.name = name;
+   }
+
+   public String getId() {
+      return id;
+   }
+
+   public void setId(final String id) {
+      this.id = id;
+   }
+
+   public Set<String> getConstraints() {
+      return constraints;
+   }
+
+   public Integer getUsageCount() {
+      return usageCount != null ? usageCount : 0;
+   }
+
+   public void setUsageCount(final Integer usageCount) {
+      this.usageCount = usageCount;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof Attribute)) {
+         return false;
+      }
+
+      final Attribute that = (Attribute) o;
+
+      return getId() != null ? getId().equals(that.getId()) : that.getId() == null;
+   }
+
+   @Override
+   public int hashCode() {
+      return getId() != null ? getId().hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "JsonAttribute{" +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            ", constraints=" + constraints +
+            ", usageCount=" + usageCount +
+            '}';
+   }
 
 }

@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.model.Query;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class QueryCodec implements Codec<JsonQuery> {
+public class QueryCodec implements Codec<Query> {
 
    public static final String FILTERS = "filters";
    public static final String COLLECTION_IDS = "collection_ids";
@@ -52,15 +52,15 @@ public class QueryCodec implements Codec<JsonQuery> {
    }
 
    @Override
-   public JsonQuery decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public Query decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document document = documentCodec.decode(reader, decoderContext);
 
       return QueryCodec.convertFromDocument(document);
    }
 
-   public static JsonQuery convertFromDocument(Document bson) {
+   public static Query convertFromDocument(Document bson) {
       if (bson == null) {
-         return new JsonQuery();
+         return new Query();
       }
 
       Set<String> filters = convertToSet(bson.get(FILTERS, List.class));
@@ -71,7 +71,7 @@ public class QueryCodec implements Codec<JsonQuery> {
       Integer page = bson.getInteger(PAGE);
       Integer pageSize = bson.getInteger(PAGE_SIZE);
 
-      return new JsonQuery(filters, collectionIds, linkTypeIds, documentIds, fulltext, page, pageSize);
+      return new Query(filters, collectionIds, linkTypeIds, documentIds, fulltext, page, pageSize);
    }
 
    private static Set<String> convertToSet(List list) {
@@ -79,7 +79,7 @@ public class QueryCodec implements Codec<JsonQuery> {
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonQuery value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final Query value, final EncoderContext encoderContext) {
       Document document = new Document()
             .append(FILTERS, new ArrayList<>(value.getFilters()))
             .append(COLLECTION_IDS, new ArrayList<>(value.getCollectionIds()))
@@ -93,8 +93,8 @@ public class QueryCodec implements Codec<JsonQuery> {
    }
 
    @Override
-   public Class<JsonQuery> getEncoderClass() {
-      return JsonQuery.class;
+   public Class<Query> getEncoderClass() {
+      return Query.class;
    }
 
 }

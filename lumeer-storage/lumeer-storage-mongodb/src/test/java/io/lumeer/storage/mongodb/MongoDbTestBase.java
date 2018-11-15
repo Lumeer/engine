@@ -21,29 +21,20 @@ package io.lumeer.storage.mongodb;
 import static io.lumeer.storage.mongodb.EmbeddedMongoDb.*;
 
 import io.lumeer.engine.api.data.StorageConnection;
-import io.lumeer.storage.mongodb.model.MorphiaView;
 
 import com.mongodb.client.MongoDatabase;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.mongodb.morphia.AdvancedDatastore;
-import org.mongodb.morphia.Morphia;
 
 public abstract class MongoDbTestBase {
 
-   private static Morphia morphia = new Morphia().mapPackage(MorphiaView.class.getPackage().getName());
    private static EmbeddedMongoDb embeddedMongoDb;
-
-   static {
-      morphia.getMapper().getOptions().setStoreEmpties(true);
-   }
 
    protected MongoDbStorage mongoDbStorage;
 
    protected MongoDatabase database;
-   protected AdvancedDatastore datastore;
 
    @BeforeClass
    public static void startEmbeddedMongoDb() {
@@ -60,12 +51,9 @@ public abstract class MongoDbTestBase {
 
    @Before
    public void connectMongoDbStorage() {
-      mongoDbStorage = new MongoDbStorage(morphia);
+      mongoDbStorage = new MongoDbStorage();
       mongoDbStorage.connect(new StorageConnection(HOST, PORT, USER, PASSWORD), NAME, SSL);
-
       database = mongoDbStorage.getDatabase();
-      datastore = mongoDbStorage.getDataStore();
-
       database.drop();
    }
 

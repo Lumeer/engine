@@ -22,15 +22,13 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -87,10 +85,10 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       User user2 = new User(STRANGER_USER);
       this.strangerUser = userDao.createUser(user2);
 
-      userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
-      userReadonlyPermission = new SimplePermission(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermission = new SimplePermission(this.strangerUser.getId(), Collections.singleton(Role.MANAGE));
-      groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+      userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
+      userReadonlyPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
+      userStrangerPermission = Permission.buildWithRoles(this.strangerUser.getId(), Collections.singleton(Role.MANAGE));
+      groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
    }
 
    @Test
@@ -103,14 +101,14 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    }
 
    private String createOrganization(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.getPermissions().updateGroupPermissions(groupPermission);
       return organizationDao.createOrganization(organization).getId();
    }
 
    private void createOrganizationWithReadOnlyPermissions(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(
             userReadonlyPermission,
             userStrangerPermission);
@@ -119,7 +117,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    }
 
    private void createOrganizationWithStrangerPermissions(final String code) {
-      Organization organization = new JsonOrganization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(
             userPermission,
             userStrangerPermission);
@@ -162,7 +160,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = new JsonOrganization(CODE1, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(CODE1, NAME, ICON, COLOR, null, null);
 
       Organization createdOrganization = organizationFacade.createOrganization(organization);
       assertThat(createdOrganization).isNotNull();
@@ -185,7 +183,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateOrganization() {
       String id = createOrganization(CODE1);
 
-      Organization updatedOrganization = new JsonOrganization(CODE2, NAME, ICON, COLOR, null, null);
+      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null);
 
       organizationFacade.updateOrganization(CODE1, updatedOrganization);
 
@@ -223,7 +221,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       createOrganization(CODE1);
 
-      SimplePermission userPermission = new SimplePermission(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       organizationFacade.updateUserPermissions(CODE1, userPermission);
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
@@ -248,7 +246,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createOrganization(CODE1);
 
-      SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
       organizationFacade.updateGroupPermissions(CODE1, groupPermission);
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();

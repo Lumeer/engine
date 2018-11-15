@@ -26,7 +26,6 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.core.auth.PermissionsChecker;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -71,7 +70,7 @@ public class ViewFacade extends AbstractFacade {
          view.setCode(this.generateViewCode(view.getName()));
       }
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), View.ROLES);
+      Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
       view.setAuthorRights(getViewAuthorRights(view));
 

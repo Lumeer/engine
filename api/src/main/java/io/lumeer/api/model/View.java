@@ -18,31 +18,111 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.model.common.Resource;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public interface View extends Resource {
+public class View extends Resource {
 
-   Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.CLONE, Role.READ, Role.SHARE, Role.WRITE));
+   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.CLONE, Role.READ, Role.SHARE, Role.WRITE));
 
-   @Override
-   default ResourceType getType() {
+   public static final String QUERY = "query";
+   public static final String PERSPECTIVE = "perspective";
+   public static final String CONFIG = "config";
+   public static final String AUTHOR_ID = "authorId";
+
+   private Query query;
+   private String perspective;
+   private Object config;
+   private String authorId;
+   private Map<String, Set<Role>> authorRights;
+
+   public View() {
+   }
+
+   @JsonCreator
+   public View(@JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty(QUERY) final Query query,
+         @JsonProperty(PERSPECTIVE) final String perspective,
+         @JsonProperty(CONFIG) final Object config,
+         @JsonProperty(AUTHOR_ID) final String authorId) {
+      super(code, name, icon, color, description, permissions);
+
+      this.query = query;
+      this.perspective = perspective;
+      this.config = config;
+      this.authorId = authorId;
+   }
+
+   public ResourceType getType() {
       return ResourceType.VIEW;
    }
 
-   Query getQuery();
+   public Query getQuery() {
+      return query;
+   }
 
-   String getPerspective();
+   public String getPerspective() {
+      return perspective;
+   }
 
-   Object getConfig();
+   public Object getConfig() {
+      return config;
+   }
 
-   String getAuthorId();
+   public String getAuthorId() {
+      return authorId;
+   }
 
-   void setAuthorId(final String authorId);
+   public void setQuery(final Query query) {
+      this.query = query;
+   }
 
-   Map<String, Set<Role>> getAuthorRights();
+   public void setPerspective(final String perspective) {
+      this.perspective = perspective;
+   }
 
-   void setAuthorRights(final Map<String, Set<Role>> authorRights);
+   public void setConfig(final Object config) {
+      this.config = config;
+   }
+
+   public void setAuthorId(final String authorId) {
+      this.authorId = authorId;
+   }
+
+   public Map<String, Set<Role>> getAuthorRights() {
+      return authorRights;
+   }
+
+   public void setAuthorRights(final Map<String, Set<Role>> authorRights) {
+      this.authorRights = authorRights;
+   }
+
+   @Override
+   public String toString() {
+      return "JsonView{" +
+            "id='" + id + '\'' +
+            ", code='" + code + '\'' +
+            ", name='" + name + '\'' +
+            ", icon='" + icon + '\'' +
+            ", color='" + color + '\'' +
+            ", permissions=" + permissions +
+            ", query=" + query +
+            ", perspective='" + perspective + '\'' +
+            ", authorId='" + authorId + '\'' +
+            ", authorRights='" + authorRights + '\'' +
+            '}';
+   }
+
 }

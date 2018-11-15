@@ -18,10 +18,7 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
@@ -31,7 +28,6 @@ import io.lumeer.core.facade.ViewFacade;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -68,20 +64,14 @@ public class ViewService extends AbstractService {
    }
 
    @POST
-   public Response createView(JsonView view) {
-      View storedView = viewFacade.createView(view);
-
-      JsonView jsonView = new JsonView(storedView);
-      return Response.ok(jsonView).build();
+   public View createView(View view) {
+      return viewFacade.createView(view);
    }
 
    @PUT
    @Path("{viewCode}")
-   public Response updateView(@PathParam("viewCode") String code, JsonView view) {
-      View storedView = viewFacade.updateView(code, view);
-
-      JsonView jsonView = new JsonView(storedView);
-      return Response.ok(jsonView).build();
+   public View updateView(@PathParam("viewCode") String code, View view) {
+      return viewFacade.updateView(code, view);
    }
 
    @DELETE
@@ -94,31 +84,27 @@ public class ViewService extends AbstractService {
 
    @GET
    @Path("{viewCode}")
-   public JsonView getView(@PathParam("viewCode") String code) {
-      View view = viewFacade.getViewByCode(code);
-      return JsonView.convert(view);
+   public View getView(@PathParam("viewCode") String code) {
+      return viewFacade.getViewByCode(code);
    }
 
    @GET
-   public List<JsonView> getViews(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
+   public List<View> getViews(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
       Pagination pagination = new Pagination(page, pageSize);
 
-      List<View> views = viewFacade.getViews(pagination);
-      return JsonView.convert(views);
+      return viewFacade.getViews(pagination);
    }
 
    @GET
    @Path("{viewCode}/permissions")
-   public JsonPermissions getViewPermissions(@PathParam("viewCode") String code) {
-      Permissions permissions = viewFacade.getViewPermissions(code);
-      return JsonPermissions.convert(permissions);
+   public Permissions getViewPermissions(@PathParam("viewCode") String code) {
+      return viewFacade.getViewPermissions(code);
    }
 
    @PUT
    @Path("{viewCode}/permissions/users")
-   public Set<JsonPermission> updateUserPermission(@PathParam("viewCode") String code, JsonPermission... userPermission) {
-      Set<Permission> storedUserPermissions = viewFacade.updateUserPermissions(code, userPermission);
-      return JsonPermission.convert(storedUserPermissions);
+   public Set<Permission> updateUserPermission(@PathParam("viewCode") String code, Permission... userPermission) {
+      return viewFacade.updateUserPermissions(code, userPermission);
    }
 
    @DELETE
@@ -131,9 +117,8 @@ public class ViewService extends AbstractService {
 
    @PUT
    @Path("{viewCode}/permissions/groups")
-   public Set<JsonPermission> updateGroupPermission(@PathParam("viewCode") String code, JsonPermission... groupPermission) {
-      Set<Permission> storedGroupPermissions = viewFacade.updateGroupPermissions(code, groupPermission);
-      return JsonPermission.convert(storedGroupPermissions);
+   public Set<Permission> updateGroupPermission(@PathParam("viewCode") String code, Permission... groupPermission) {
+      return viewFacade.updateGroupPermissions(code, groupPermission);
    }
 
    @DELETE
@@ -146,10 +131,8 @@ public class ViewService extends AbstractService {
 
    @GET
    @Path("all/collections")
-   public List<JsonCollection> getViewsCollections() {
-      return viewFacade.getViewsCollections().stream()
-            .map(JsonCollection::convert)
-            .collect(Collectors.toList());
+   public List<Collection> getViewsCollections() {
+      return viewFacade.getViewsCollections();
    }
 
    @GET

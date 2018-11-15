@@ -20,7 +20,7 @@ package io.lumeer.core.facade.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.Config;
+import io.lumeer.api.model.Config;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;

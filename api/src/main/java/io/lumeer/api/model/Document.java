@@ -18,48 +18,144 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.ZonedDateTime;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public interface Document {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Document {
 
-   String META_PARENT_ID = "parentId";
+   public static String META_PARENT_ID = "parentId";
 
-   String getId();
+   private String id;
 
-   void setId(String id);
+   private String collectionId;
 
-   String getCollectionId();
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime creationDate;
 
-   void setCollectionId(String collectionId);
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime updateDate;
 
-   ZonedDateTime getCreationDate();
+   private String createdBy;
+   private String updatedBy;
+   private Integer dataVersion;
+   private DataDocument data;
+   private DataDocument metaData;
 
-   void setCreationDate(ZonedDateTime creationDate);
+   private boolean favorite;
 
-   ZonedDateTime getUpdateDate();
+   @JsonCreator
+   public Document(@JsonProperty("data") final DataDocument data) {
+      this.data = data;
+   }
 
-   void setUpdateDate(ZonedDateTime updateDate);
+   public Document(final Document document) {
+      this.id = document.getId();
+      this.collectionId = document.getCollectionId();
+      this.creationDate = document.getCreationDate();
+      this.updateDate = document.getUpdateDate();
+      this.createdBy = document.getCreatedBy();
+      this.updatedBy = document.getUpdatedBy();
+      this.dataVersion = document.getDataVersion();
+      this.data = document.getData();
+      this.metaData = document.getMetaData();
+   }
 
-   String getCreatedBy();
+   public Document(final String collectionId, final ZonedDateTime creationDate, final ZonedDateTime updateDate, final String createdBy, final String updatedBy, final Integer dataVersion, final DataDocument metaData) {
+      this.collectionId = collectionId;
+      this.creationDate = creationDate;
+      this.updateDate = updateDate;
+      this.createdBy = createdBy;
+      this.updatedBy = updatedBy;
+      this.dataVersion = dataVersion;
+      this.metaData = metaData;
+   }
 
-   void setCreatedBy(String createdBy);
+   public String getId() {
+      return id;
+   }
 
-   String getUpdatedBy();
+   public void setId(final String id) {
+      this.id = id;
+   }
 
-   void setUpdatedBy(String updatedBy);
+   public String getCollectionId() {
+      return collectionId;
+   }
 
-   Integer getDataVersion();
+   public void setCollectionId(final String collectionId) {
+      this.collectionId = collectionId;
+   }
 
-   void setDataVersion(Integer dataVersion);
+   public ZonedDateTime getCreationDate() {
+      return creationDate;
+   }
 
-   DataDocument getData();
+   public void setCreationDate(final ZonedDateTime creationDate) {
+      this.creationDate = creationDate;
+   }
 
-   void setData(DataDocument data);
+   public ZonedDateTime getUpdateDate() {
+      return updateDate;
+   }
 
-   DataDocument getMetaData();
+   public void setUpdateDate(final ZonedDateTime updateDate) {
+      this.updateDate = updateDate;
+   }
 
-   void setMetaData(final DataDocument metaData);
+   public String getCreatedBy() {
+      return createdBy;
+   }
+
+   public void setCreatedBy(final String createdBy) {
+      this.createdBy = createdBy;
+   }
+
+   public String getUpdatedBy() {
+      return updatedBy;
+   }
+
+   public void setUpdatedBy(final String updatedBy) {
+      this.updatedBy = updatedBy;
+   }
+
+   public Integer getDataVersion() {
+      return dataVersion;
+   }
+
+   public void setDataVersion(final Integer dataVersion) {
+      this.dataVersion = dataVersion;
+   }
+
+   public DataDocument getData() {
+      return data;
+   }
+
+   public void setData(final DataDocument data) {
+      this.data = data;
+   }
+
+   public DataDocument getMetaData() {
+      return metaData;
+   }
+
+   public void setMetaData(final DataDocument metaData) {
+      this.metaData = metaData;
+   }
+
+   public boolean isFavorite() {
+      return favorite;
+   }
+
+   public void setFavorite(final boolean favorite) {
+      this.favorite = favorite;
+   }
 
 }

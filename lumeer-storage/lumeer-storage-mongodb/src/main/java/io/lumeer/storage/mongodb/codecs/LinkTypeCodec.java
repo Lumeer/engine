@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonAttribute;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 
 import org.bson.BsonObjectId;
@@ -58,9 +58,9 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       String id = bson.getObjectId(ID).toHexString();
       String name = bson.getString(NAME);
       List<String> collectionCodes = bson.get(COLLECTION_IDS, List.class);
-      List<JsonAttribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
-                                                                                                .map(AttributeCodec::convertFromDocument)
-                                                                                                .collect(Collectors.toList());
+      List<Attribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
+                                                                                            .map(AttributeCodec::convertFromDocument)
+                                                                                            .collect(Collectors.toList());
 
       return new LinkType(id, name, collectionCodes, attributes);
    }

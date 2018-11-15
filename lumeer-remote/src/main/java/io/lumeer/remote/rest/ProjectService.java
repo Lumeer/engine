@@ -18,14 +18,10 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.ProjectFacade;
 
 import java.util.List;
@@ -65,22 +61,18 @@ public class ProjectService extends AbstractService {
    }
 
    @POST
-   public JsonProject createProject(JsonProject project) {
+   public Project createProject(Project project) {
       Project storedProject = projectFacade.createProject(project);
-
-      JsonProject returnedProject = JsonProject.convert(storedProject);
-      returnedProject.setCollectionsCount(0);
-      return returnedProject;
+      storedProject.setCollectionsCount(0);
+      return storedProject;
    }
 
    @PUT
    @Path("{projectCode}")
-   public JsonProject updateProject(@PathParam("projectCode") String projectCode, JsonProject project) {
+   public Project updateProject(@PathParam("projectCode") String projectCode, Project project) {
       Project storedProject = projectFacade.updateProject(projectCode, project);
-
-      JsonProject returnedProject = JsonProject.convert(storedProject);
-      returnedProject.setCollectionsCount(projectFacade.getCollectionsCount(returnedProject));
-      return returnedProject;
+      storedProject.setCollectionsCount(projectFacade.getCollectionsCount(storedProject));
+      return storedProject;
    }
 
    @DELETE
@@ -93,22 +85,17 @@ public class ProjectService extends AbstractService {
 
    @GET
    @Path("{projectCode}")
-   public JsonProject getProject(@PathParam("projectCode") String projectCode) {
+   public Project getProject(@PathParam("projectCode") String projectCode) {
       Project project = projectFacade.getProject(projectCode);
-
-      JsonProject returnedProject = JsonProject.convert(project);
-      returnedProject.setCollectionsCount(projectFacade.getCollectionsCount(returnedProject));
-      return returnedProject;
+      project.setCollectionsCount(projectFacade.getCollectionsCount(project));
+      return project;
    }
 
    @GET
-   public List<JsonProject> getProjects() {
+   public List<Project> getProjects() {
       List<Project> projects = projectFacade.getProjects();
-
-      List<JsonProject> returnedProjects = JsonProject.convert(projects);
-      returnedProjects.forEach(project -> project.setCollectionsCount(projectFacade.getCollectionsCount(project)));
-
-      return returnedProjects;
+      projects.forEach(project -> project.setCollectionsCount(projectFacade.getCollectionsCount(project)));
+      return projects;
    }
 
    @GET
@@ -119,16 +106,14 @@ public class ProjectService extends AbstractService {
 
    @GET
    @Path("{projectCode}/permissions")
-   public JsonPermissions getProjectPermissions(@PathParam("projectCode") String projectCode) {
-      Permissions permissions = projectFacade.getProjectPermissions(projectCode);
-      return JsonPermissions.convert(permissions);
+   public Permissions getProjectPermissions(@PathParam("projectCode") String projectCode) {
+      return projectFacade.getProjectPermissions(projectCode);
    }
 
    @PUT
    @Path("{projectCode}/permissions/users")
-   public Set<JsonPermission> updateUserPermission(@PathParam("projectCode") String projectCode, JsonPermission... userPermission) {
-      Set<Permission> storedUserPermissions = projectFacade.updateUserPermissions(projectCode, userPermission);
-      return JsonPermission.convert(storedUserPermissions);
+   public Set<Permission> updateUserPermission(@PathParam("projectCode") String projectCode, Permission... userPermission) {
+      return projectFacade.updateUserPermissions(projectCode, userPermission);
    }
 
    @DELETE
@@ -141,9 +126,8 @@ public class ProjectService extends AbstractService {
 
    @PUT
    @Path("{projectCode}/permissions/groups")
-   public Set<JsonPermission> updateGroupPermission(@PathParam("projectCode") String projectCode, JsonPermission... groupPermission) {
-      Set<Permission> storedGroupPermissions = projectFacade.updateGroupPermissions(projectCode, groupPermission);
-      return JsonPermission.convert(storedGroupPermissions);
+   public Set<Permission> updateGroupPermission(@PathParam("projectCode") String projectCode, Permission... groupPermission) {
+      return projectFacade.updateGroupPermissions(projectCode, groupPermission);
    }
 
    @DELETE

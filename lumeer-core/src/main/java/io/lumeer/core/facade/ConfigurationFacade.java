@@ -18,7 +18,7 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.dto.Config;
+import io.lumeer.api.model.Config;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.configuration.ConfigurationManipulator;

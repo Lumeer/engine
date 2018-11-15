@@ -21,14 +21,13 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.Set;
@@ -53,7 +52,7 @@ abstract class AbstractFacade {
 
    protected <T extends Resource> T keepOnlyActualUserRoles(final T resource) {
       Set<Role> roles = permissionsChecker.getActualRoles(resource);
-      Permission permission = new SimplePermission(authenticatedUser.getCurrentUserId(), roles);
+      Permission permission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), roles);
 
       resource.getPermissions().clear();
       resource.getPermissions().updateUserPermissions(permission);

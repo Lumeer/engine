@@ -22,24 +22,17 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -96,7 +89,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";
 
-   private static final JsonAttribute ATTRIBUTE = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+   private static final Attribute ATTRIBUTE = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
 
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String COLLECTIONS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
@@ -116,9 +109,9 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    @Before
    public void configureProject() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -126,20 +119,20 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      userPermission = new SimplePermission(this.user.getId(), USER_ROLES);
-      groupPermission = new SimplePermission(GROUP, GROUP_ROLES);
+      userPermission = Permission.buildWithRoles(this.user.getId(), USER_ROLES);
+      groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
 
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode(PROJECT_CODE);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -152,7 +145,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Collection prepareCollection(String code, String name) {
-      return new JsonCollection(code, name, ICON, COLOR, null);
+      return new Collection(code, name, ICON, COLOR, null);
    }
 
    private Collection createCollection(String code) {
@@ -178,7 +171,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      JsonCollection returnedCollection = response.readEntity(JsonCollection.class);
+      Collection returnedCollection = response.readEntity(Collection.class);
       assertThat(returnedCollection).isNotNull();
       assertThat(returnedCollection.getId()).isNotNull();
 
@@ -209,7 +202,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Collection returnedCollection = response.readEntity(JsonCollection.class);
+      Collection returnedCollection = response.readEntity(Collection.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedCollection.getCode()).isEqualTo(CODE2);
       assertions.assertThat(returnedCollection.getName()).isEqualTo(NAME);
@@ -257,7 +250,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Collection returnedCollection = response.readEntity(JsonCollection.class);
+      Collection returnedCollection = response.readEntity(Collection.class);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(returnedCollection.getCode()).isEqualTo(CODE);
       assertions.assertThat(returnedCollection.getName()).isEqualTo(NAME);
@@ -271,7 +264,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    @Test
    public void testGetAllCollections() {
       createCollection(CODE);
-      createCollection(CODE2);
+      createCollection(CODE2, NAME2);
 
       Response response = client.target(COLLECTIONS_URL)
                                 .request(MediaType.APPLICATION_JSON)
@@ -279,7 +272,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonCollection> collections = response.readEntity(new GenericType<List<JsonCollection>>() {
+      List<Collection> collections = response.readEntity(new GenericType<List<Collection>>() {
       });
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE, CODE2);
 
@@ -321,11 +314,11 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonAttribute> attributes = response.readEntity(new GenericType<List<JsonAttribute>>() {
+      List<Attribute> attributes = response.readEntity(new GenericType<List<Attribute>>() {
       });
       assertThat(attributes).hasSize(1);
 
-      JsonAttribute attribute = attributes.get(0);
+      Attribute attribute = attributes.get(0);
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(attribute.getId()).isEqualTo(ATTRIBUTE_ID);
       assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME);
@@ -339,7 +332,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      JsonAttribute updatedAttribute = new JsonAttribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
       Entity entity = Entity.json(updatedAttribute);
 
       Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_ID)
@@ -348,7 +341,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      JsonAttribute attribute = response.readEntity(new GenericType<JsonAttribute>() {
+      Attribute attribute = response.readEntity(new GenericType<Attribute>() {
       });
 
       SoftAssertions assertions = new SoftAssertions();
@@ -397,7 +390,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Permissions permissions = response.readEntity(JsonPermissions.class);
+      Permissions permissions = response.readEntity(Permissions.class);
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
    }
@@ -406,7 +399,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      SimplePermission[] userPermission = {new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
+      Permission[] userPermission = {Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("users")
@@ -415,7 +408,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission[0]);
@@ -445,7 +438,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      SimplePermission[] groupPermission = {new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
+      Permission[] groupPermission = {Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(COLLECTIONS_URL).path(collectionId).path("permissions").path("groups")
@@ -454,7 +447,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<JsonPermission> returnedPermissions = response.readEntity(new GenericType<Set<JsonPermission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);

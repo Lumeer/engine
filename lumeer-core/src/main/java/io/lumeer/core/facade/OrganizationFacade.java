@@ -26,7 +26,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -72,7 +71,7 @@ public class OrganizationFacade extends AbstractFacade {
    public Organization createOrganization(final Organization organization) {
       checkSystemPermission();
 
-      Permission defaultUserPermission = new SimplePermission(authenticatedUser.getCurrentUserId(), Organization.ROLES);
+      Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
 
       Organization storedOrganization = organizationDao.createOrganization(organization);

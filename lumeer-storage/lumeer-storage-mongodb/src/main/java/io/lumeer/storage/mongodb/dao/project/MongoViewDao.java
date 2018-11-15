@@ -21,11 +21,10 @@ package io.lumeer.storage.mongodb.dao.project;
 import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
-import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -80,9 +79,8 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    @Override
    public View createView(final View view) {
       try {
-         JsonView jsonView = new JsonView(view);
-         databaseCollection().insertOne(jsonView);
-         return jsonView;
+         databaseCollection().insertOne(view);
+         return view;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create view: " + view, ex);
       }
@@ -90,13 +88,12 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public View updateView(final String id, final View view) {
-      JsonView jsonView = new JsonView(view);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         View updatedView = databaseCollection().findOneAndReplace(idFilter(id), jsonView, options);
+         View updatedView = databaseCollection().findOneAndReplace(idFilter(id), view, options);
          if (updatedView == null) {
-            throw new StorageException("View '" + view.getId() + "' has not been updated.");
+            throw new StorageException("View '" + id + "' has not been updated.");
          }
          return updatedView;
       } catch (MongoException ex) {
@@ -114,7 +111,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public View getViewByCode(final String code) {
-      MongoCursor<JsonView> mongoCursor = databaseCollection().find(codeFilter(code)).iterator();
+      MongoCursor<View> mongoCursor = databaseCollection().find(codeFilter(code)).iterator();
       if (!mongoCursor.hasNext()) {
          throw new ResourceNotFoundException(ResourceType.VIEW);
       }
@@ -123,7 +120,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public List<View> getViews(SearchQuery query) {
-      FindIterable<JsonView> findIterable = databaseCollection().find(MongoViewDao.viewSearchFilter(query));
+      FindIterable<View> findIterable = databaseCollection().find(MongoViewDao.viewSearchFilter(query));
       if (query.hasPagination()) {
          findIterable.skip(query.getPage() * query.getPageSize())
                      .limit(query.getPageSize());
@@ -133,8 +130,8 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public List<View> getViews(final SuggestionQuery query) {
-      FindIterable<JsonView> findIterable = databaseCollection().find(suggestionsFilter(query));
-      addPaginationToSuggestionQuery(findIterable, query);
+      FindIterable<View> findIterable = databaseCollection().find(suggestionsFilter(query));
+      addPaginationToQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
 
@@ -175,7 +172,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       return databaseCollectionName(getProject().get());
    }
 
-   MongoCollection<JsonView> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), JsonView.class);
+   MongoCollection<View> databaseCollection() {
+      return database.getCollection(databaseCollectionName(), View.class);
    }
 }

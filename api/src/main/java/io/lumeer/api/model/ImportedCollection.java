@@ -18,8 +18,6 @@
  */
 package io.lumeer.api.model;
 
-import io.lumeer.api.dto.JsonCollection;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -34,7 +32,7 @@ public class ImportedCollection {
    private String data;
 
    @JsonCreator
-   public ImportedCollection(@JsonProperty(COLLECTION) final JsonCollection collection,
+   public ImportedCollection(@JsonProperty(COLLECTION) final Collection collection,
          @JsonProperty(DATA) final String data) {
       this.collection = collection;
       this.data = data;

@@ -55,7 +55,7 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
 
    @PostConstruct
    public void checkRepository() {
-      if (database.getCollection(COLLECTION_NAME) == null) {
+      if (!database.listCollectionNames().into(new ArrayList<>()).contains(databaseCollectionName())) {
          createUsersRepository();
       }
    }

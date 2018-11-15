@@ -20,7 +20,6 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.JsonOrganization;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ServiceLimits;
@@ -183,7 +182,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    }
 
    private Organization createOrganization() {
-      Organization organization = new JsonOrganization(CODE, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(CODE, NAME, ICON, COLOR, null, null);
       return organizationFacade.createOrganization(organization);
    }
 

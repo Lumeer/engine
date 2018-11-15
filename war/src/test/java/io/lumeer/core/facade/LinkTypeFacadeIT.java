@@ -21,22 +21,18 @@ package io.lumeer.core.facade;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonAttribute;
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
-import io.lumeer.api.dto.JsonQuery;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -75,11 +71,11 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    private static final String NAME2 = "Whuaaaa";
    private static final String ATTRIBUTE1_NAME = "Maxi";
    private static final String ATTRIBUTE2_NAME = "Light";
-   private static final List<JsonAttribute> ATTRIBUTES;
+   private static final List<Attribute> ATTRIBUTES;
 
    static {
-      JsonAttribute attribute1 = new JsonAttribute(ATTRIBUTE1_NAME);
-      JsonAttribute attribute2 = new JsonAttribute(ATTRIBUTE2_NAME);
+      Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
+      Attribute attribute2 = new Attribute(ATTRIBUTE2_NAME);
       ATTRIBUTES = Arrays.asList(attribute1, attribute2);
    }
 
@@ -108,9 +104,9 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureLinkTypes() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -118,19 +114,19 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(createdUser.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      JsonProject project = new JsonProject();
-      project.setPermissions(new JsonPermissions());
+      Project project = new Project();
+      project.setPermissions(new Permissions());
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      Permission userProjectPermission = new SimplePermission(createdUser.getId(), Project.ROLES);
+      Permissions projectPermissions = new Permissions();
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Project.ROLES);
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -142,9 +138,9 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       collectionIds.clear();
 
       for (String name : COLLECTION_NAMES) {
-         JsonPermissions collectionPermissions = new JsonPermissions();
-         collectionPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-         JsonCollection jsonCollection = new JsonCollection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+         Permissions collectionPermissions = new Permissions();
+         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+         Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
          jsonCollection.setDocumentsCount(0);
          collectionIds.add(collectionDao.createCollection(jsonCollection).getId());
       }
@@ -210,12 +206,12 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       linkType4.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(0)));
       String id4 = linkTypeFacade.createLinkType(linkType4).getId();
 
-      JsonQuery jsonQuery = new JsonQuery(Collections.singleton(collectionIds.get(0)), null, null);
-      List<LinkType> linkTypes = linkTypeFacade.getLinkTypes(jsonQuery);
+      Query query = new Query(Collections.singleton(collectionIds.get(0)), null, null);
+      List<LinkType> linkTypes = linkTypeFacade.getLinkTypes(query);
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
 
-      JsonQuery jsonQuery2 = new JsonQuery(null, new HashSet<>(Arrays.asList(id1, id3)), null);
-      linkTypes = linkTypeFacade.getLinkTypes(jsonQuery2);
+      Query query2 = new Query(null, new HashSet<>(Arrays.asList(id1, id3)), null);
+      linkTypes = linkTypeFacade.getLinkTypes(query2);
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
 
    }

@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.View;
 import io.lumeer.storage.mongodb.codecs.ViewCodec;
 
 import org.bson.codecs.Codec;
@@ -30,7 +30,7 @@ public class ViewCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == JsonView.class) {
+      if (clazz == View.class) {
          return (Codec<T>) new ViewCodec(registry);
       }
 

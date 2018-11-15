@@ -20,24 +20,19 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
-import io.lumeer.api.dto.JsonQuery;
-import io.lumeer.api.dto.JsonView;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -80,13 +75,13 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
-   private static final JsonQuery QUERY;
+   private static final Query QUERY;
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new Query(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject
@@ -115,9 +110,9 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configure() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization ();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -126,11 +121,11 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       final User createdUser = userDao.createUser(user);
       this.user = createdUser;
 
-      userPermission = new SimplePermission(createdUser.getId(), View.ROLES);
-      groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+      userPermission = Permission.buildWithRoles(createdUser.getId(), View.ROLES);
+      groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
 
-      JsonProject project = new JsonProject();
-      project.setPermissions(new JsonPermissions());
+      Project project = new Project();
+      project.setPermissions(new Permissions());
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
 
@@ -148,15 +143,15 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       collectionIds.clear();
 
       for (String name : COLLECTION_NAMES) {
-         JsonPermissions collectionPermissions = new JsonPermissions();
-         collectionPermissions.updateUserPermissions(new JsonPermission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-         JsonCollection jsonCollection = new JsonCollection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+         Permissions collectionPermissions = new Permissions();
+         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+         Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
          jsonCollection.setDocumentsCount(0);
          collectionIds.add(collectionDao.createCollection(jsonCollection).getId());
       }
 
       for (String name : COLLECTION_NAMES_NO_RIGHTS) {
-         JsonCollection jsonCollection = new JsonCollection(name, name, COLLECTION_ICON, COLLECTION_COLOR, new JsonPermissions());
+         Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, new Permissions());
          jsonCollection.setDocumentsCount(0);
          collectionIdsNoRights.add(collectionDao.createCollection(jsonCollection).getId());
       }
@@ -218,17 +213,17 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       String vId5 = createView("VIEW").getId();
       createView("something");
 
-      List<JsonView> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
-      assertThat(views).extracting(JsonView::getId).containsOnly(vId1, vId2, vId5);
+      List<View> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
+      assertThat(views).extracting(View::getId).containsOnly(vId1, vId2, vId5);
 
       views = suggestionFacade.suggest("vie", SuggestionType.VIEW).getViews();
-      assertThat(views).extracting(JsonView::getId).containsOnly(vId1, vId2, vId3, vId5);
+      assertThat(views).extracting(View::getId).containsOnly(vId1, vId2, vId3, vId5);
 
       views = suggestionFacade.suggest("viewko", SuggestionType.VIEW).getViews();
-      assertThat(views).extracting(JsonView::getId).isEmpty();
+      assertThat(views).extracting(View::getId).isEmpty();
 
       views = suggestionFacade.suggest("ano", SuggestionType.VIEW).getViews();
-      assertThat(views).extracting(JsonView::getId).containsOnly(vId3, vId4);
+      assertThat(views).extracting(View::getId).containsOnly(vId3, vId4);
    }
 
    @Test
@@ -240,14 +235,14 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       String vId5 = createView("VIEW").getId();
       createView("something");
 
-      List<JsonView> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
-      assertThat(views).extracting(JsonView::getId).containsOnly(vId2, vId5);
+      List<View> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
+      assertThat(views).extracting(View::getId).containsOnly(vId2, vId5);
 
       views = suggestionFacade.suggest("vie", SuggestionType.VIEW).getViews();
-      assertThat(views).extracting(JsonView::getId).containsOnly(vId2, vId5);
+      assertThat(views).extracting(View::getId).containsOnly(vId2, vId5);
 
       views = suggestionFacade.suggest("ano", SuggestionType.VIEW).getViews();
-      assertThat(views).extracting(JsonView::getId).isEmpty();
+      assertThat(views).extracting(View::getId).isEmpty();
    }
 
    @Test
@@ -255,7 +250,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       for (int i = 0; i < 20; i++) {
          createView("someviewwwww" + i);
       }
-      List<JsonView> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
+      List<View> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
       assertThat(views).hasSize(SUGGESTIONS_LIMIT);
    }
 
@@ -264,7 +259,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    }
 
    private View prepareView(String name) {
-      return new JsonView(name, name, null, null, null, null, QUERY, PERSPECTIVE, CONFIG, this.user.getId());
+      return new View(name, name, null, null, null, null, QUERY, PERSPECTIVE, CONFIG, this.user.getId());
    }
 
    private View createView(String name) {

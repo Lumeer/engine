@@ -20,7 +20,7 @@ package io.lumeer.core.exception;
 
 import io.lumeer.api.exception.LumeerException;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Resource;
+import io.lumeer.api.model.common.Resource;
 
 /**
  * Used when user tries to create more resources than allowed.

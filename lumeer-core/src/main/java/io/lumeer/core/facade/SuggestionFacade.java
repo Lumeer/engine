@@ -18,9 +18,9 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.dto.JsonSuggestions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Suggestions;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.api.model.View;
@@ -56,34 +56,34 @@ public class SuggestionFacade extends AbstractFacade {
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
-   public JsonSuggestions suggest(String text, SuggestionType type) {
+   public Suggestions suggest(String text, SuggestionType type) {
       switch (type) {
          case ALL:
             return suggestAll(text, SUGGESTIONS_LIMIT);
          case ATTRIBUTE:
             List<Collection> attributes = suggestAttributes(text, SUGGESTIONS_LIMIT);
-            return JsonSuggestions.attributeSuggestions(attributes);
+            return Suggestions.attributeSuggestions(attributes);
          case COLLECTION:
             List<Collection> collections = suggestCollections(text, SUGGESTIONS_LIMIT);
-            return JsonSuggestions.collectionSuggestions(collections);
+            return Suggestions.collectionSuggestions(collections);
          case LINK:
             List<LinkType> linkTypes = suggestLinkTypes(text, SUGGESTIONS_LIMIT);
-            return JsonSuggestions.linkSuggestions(linkTypes);
+            return Suggestions.linkSuggestions(linkTypes);
          case VIEW:
             List<View> views = suggestViews(text, SUGGESTIONS_LIMIT);
-            return JsonSuggestions.viewSuggestions(views);
+            return Suggestions.viewSuggestions(views);
          default:
             throw new IllegalArgumentException("Unknown suggestion type: " + type);
       }
    }
 
-   private JsonSuggestions suggestAll(String text, int limit) {
+   private Suggestions suggestAll(String text, int limit) {
       List<Collection> attributes = suggestAttributes(text, limit / TYPES_COUNT);
       List<Collection> collections = suggestCollections(text, limit / TYPES_COUNT);
       List<View> views = suggestViews(text, limit / TYPES_COUNT);
       List<LinkType> linkTypes = suggestLinkTypes(text, limit / TYPES_COUNT);
 
-      return new JsonSuggestions(attributes, collections, views, linkTypes);
+      return new Suggestions(attributes, collections, views, linkTypes);
    }
 
    private List<Collection> suggestAttributes(String text, int limit) {

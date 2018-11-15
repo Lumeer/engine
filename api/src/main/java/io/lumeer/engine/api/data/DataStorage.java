@@ -489,5 +489,4 @@ public interface DataStorage extends Serializable {
 
    Object getDatabase();
 
-   Object getDataStore();
 }

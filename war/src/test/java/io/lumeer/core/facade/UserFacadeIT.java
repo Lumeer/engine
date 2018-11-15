@@ -20,13 +20,11 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.*;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -96,29 +94,29 @@ public class UserFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
-      JsonOrganization organization1 = new JsonOrganization();
+      Organization organization1 = new Organization();
       organization1.setCode("LMR");
-      organization1.setPermissions(new JsonPermissions());
-      organization1.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.setPermissions(new Permissions());
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organization = organizationDao.createOrganization(organization1);
       organizationId1 = organization.getId();
 
-      JsonOrganization organization2 = new JsonOrganization();
+      Organization organization2 = new Organization();
       organization2.setCode("MRL");
-      organization2.setPermissions(new JsonPermissions());
-      organization2.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization2.setPermissions(new Permissions());
+      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
 
-      JsonOrganization organization3 = new JsonOrganization();
+      Organization organization3 = new Organization();
       organization3.setCode("RML");
-      organization3.setPermissions(new JsonPermissions());
+      organization3.setPermissions(new Permissions());
       organizationIdNotPermission = organizationDao.createOrganization(organization3).getId();
 
       projectDao.setOrganization(organization);
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode("Lalala");
-      project.setPermissions(new JsonPermissions());
-      project.getPermissions().updateUserPermissions(new JsonPermission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      project.setPermissions(new Permissions());
+      project.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       this.project = projectDao.createProject(project);
    }
 

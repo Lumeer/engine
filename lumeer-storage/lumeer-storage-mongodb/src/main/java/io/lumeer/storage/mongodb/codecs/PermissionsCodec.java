@@ -19,8 +19,8 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class PermissionsCodec implements Codec<JsonPermissions> {
+public class PermissionsCodec implements Codec<Permissions> {
 
    public static final String USER_ROLES = "users";
    public static final String GROUP_ROLES = "groups";
@@ -46,15 +46,15 @@ public class PermissionsCodec implements Codec<JsonPermissions> {
    }
 
    @Override
-   public JsonPermissions decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public Permissions decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document document = documentCodec.decode(reader, decoderContext);
 
       return PermissionsCodec.convertFromDocument(document);
    }
 
-   public static JsonPermissions convertFromDocument(final Document document) {
+   public static Permissions convertFromDocument(final Document document) {
       if (document == null) {
-         return new JsonPermissions();
+         return new Permissions();
       }
 
       Permission[] userPermissions = new ArrayList<Document>(document.get(USER_ROLES, List.class)).stream()
@@ -64,14 +64,14 @@ public class PermissionsCodec implements Codec<JsonPermissions> {
                                                                                                     .map(PermissionCodec::convertFromDocument)
                                                                                                     .toArray(Permission[]::new);
 
-      JsonPermissions permissions = new JsonPermissions();
+      Permissions permissions = new Permissions();
       permissions.updateUserPermissions(userPermissions);
       permissions.updateGroupPermissions(groupPermissions);
       return permissions;
    }
 
    @Override
-   public void encode(final BsonWriter writer, final JsonPermissions value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final Permissions value, final EncoderContext encoderContext) {
       Set<Permission> userPermissions = value.getUserPermissions();
       Set<Permission> groupPermissions = value.getGroupPermissions();
       Document bson = new Document(USER_ROLES, userPermissions).append(GROUP_ROLES, groupPermissions);
@@ -80,8 +80,8 @@ public class PermissionsCodec implements Codec<JsonPermissions> {
    }
 
    @Override
-   public Class<JsonPermissions> getEncoderClass() {
-      return JsonPermissions.class;
+   public Class<Permissions> getEncoderClass() {
+      return Permissions.class;
    }
 
 }

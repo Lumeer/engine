@@ -21,35 +21,28 @@ package io.lumeer.core.facade;
 import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.*;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
-import io.lumeer.api.dto.JsonQuery;
-import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Resource;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoPermissionException;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
@@ -74,7 +67,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String NAME = "Test view";
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
-   private static final JsonQuery QUERY;
+   private static final Query QUERY;
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
@@ -87,7 +80,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "TORG";
 
    static {
-      QUERY = new JsonQuery(Collections.singleton("testAttribute=42"), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
+      QUERY = new Query(Collections.singleton("testAttribute=42"), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
    }
 
    @Inject
@@ -116,9 +109,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new MorphiaPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -127,22 +120,22 @@ public class ViewFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      this.userPermission = new SimplePermission(this.user.getId(), View.ROLES);
-      this.groupPermission = new SimplePermission(GROUP, Collections.singleton(Role.READ));
+      this.userPermission = Permission.buildWithRoles(this.user.getId(), View.ROLES);
+      this.groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
 
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode(PROJECT_CODE);
-      project.setPermissions(new MorphiaPermissions());
+      project.setPermissions(new Permissions());
       Project storedProject = projectDao.createProject(project);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      Permission userProjectPermission = new SimplePermission(this.user.getId(), Project.ROLES);
+      Permissions projectPermissions = new Permissions();
+      Permission userProjectPermission = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -150,14 +143,14 @@ public class ViewFacadeIT extends IntegrationTestBase {
       viewDao.setProject(storedProject);
 
       Collection collection = collectionFacade.createCollection(
-            new JsonCollection("abc", "abc random", ICON, COLOR, projectPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+            new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
       QUERY.getCollectionIds().clear();
       QUERY.getCollectionIds().add(collection.getId());
    }
 
    private View prepareView(String code) {
-      return new JsonView(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE.toString(), CONFIG, this.user.getId());
+      return new View(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE.toString(), CONFIG, this.user.getId());
    }
 
    private View createView(String code) {
@@ -260,7 +253,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       createView(CODE);
 
-      SimplePermission userPermission = new SimplePermission(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       viewFacade.updateUserPermissions(CODE, userPermission);
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
@@ -285,7 +278,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createView(CODE);
 
-      SimplePermission groupPermission = new SimplePermission(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
       viewFacade.updateGroupPermissions(CODE, groupPermission);
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
@@ -314,13 +307,13 @@ public class ViewFacadeIT extends IntegrationTestBase {
       final String COLLECTION_COLOR = "#abcdea";
 
       // create collection under a different user
-      JsonPermissions collectionPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(NON_EXISTING_USER, Collection.ROLES);
+      Permissions collectionPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(NON_EXISTING_USER, Collection.ROLES);
       collectionPermissions.updateUserPermissions(userPermission);
 
       Collection collection = collectionFacade.createCollection(
-            new JsonCollection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), new SimplePermission(this.user.getId(), Collections.emptySet()));
+            new Collection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
+      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
 
       // we are not able to read the collection now
       try {
@@ -332,11 +325,11 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       // create a view under a different user
       View view = createView(CODE2);
-      ((JsonView) view).setAuthorId(NON_EXISTING_USER);
-      ((JsonView) view).setQuery(new JsonQuery(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
+      view.setAuthorId(NON_EXISTING_USER);
+      view.setQuery(new Query(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
       viewDao.updateView(view.getId(), view);
 
-      viewFacade.updateUserPermissions(view.getCode(), new SimplePermission(NON_EXISTING_USER, View.ROLES), new SimplePermission(this.user.getId(), Collections.emptySet()));
+      viewFacade.updateUserPermissions(view.getCode(), Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
 
       try {
          viewFacade.getViewByCode(CODE2);
@@ -346,16 +339,16 @@ public class ViewFacadeIT extends IntegrationTestBase {
       }
 
       try {
-         viewFacade.updateUserPermissions(view.getCode(), new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+         viewFacade.updateUserPermissions(view.getCode(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
          fail("Can manage view without manage rights");
       } catch (Exception e) {
          assertThat(e).isInstanceOf(NoPermissionException.class);
       }
 
       // share the view and make sure we can see it now
-      Permissions viewPermissions = new JsonPermissions();
-      viewPermissions.updateUserPermissions(new SimplePermission(NON_EXISTING_USER, View.ROLES));
-      viewPermissions.updateUserPermissions(new SimplePermission(this.user.getId(), Collections.singleton(Role.READ)));
+      Permissions viewPermissions = new Permissions();
+      viewPermissions.updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES));
+      viewPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
       view.setPermissions(viewPermissions);
       viewDao.updateView(view.getId(), view); // since we lost manage rights, we can only do it directly
       permissionsChecker.invalidateCache(view);

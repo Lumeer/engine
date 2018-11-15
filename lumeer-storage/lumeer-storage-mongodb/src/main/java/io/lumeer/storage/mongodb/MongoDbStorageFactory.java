@@ -21,30 +21,17 @@ package io.lumeer.storage.mongodb;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 import io.lumeer.engine.api.data.StorageConnection;
-import io.lumeer.storage.mongodb.model.MorphiaView;
-
-import org.mongodb.morphia.Morphia;
 
 import java.util.List;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MongoDbStorageFactory implements DataStorageFactory {
 
-   private Morphia morphia;
-
-   @PostConstruct
-   public void init() {
-      morphia = new Morphia().mapPackage(MorphiaView.class.getPackage().getName());
-      morphia.getMapper().getOptions().setStoreEmpties(true);
-   }
-
    @Override
    public DataStorage getStorage(final List<StorageConnection> connections, final String database, final Boolean useSsl) {
-      final DataStorage storage = new MongoDbStorage(morphia);
+      final DataStorage storage = new MongoDbStorage();
       storage.connect(connections, database, useSsl);
-
       return storage;
    }
 }

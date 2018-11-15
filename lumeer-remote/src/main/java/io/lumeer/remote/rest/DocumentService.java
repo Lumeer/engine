@@ -18,7 +18,6 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.dto.JsonDocument;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.core.facade.DocumentFacade;
@@ -66,54 +65,40 @@ public class DocumentService extends AbstractService {
    }
 
    @POST
-   public JsonDocument createDocument(JsonDocument document) {
-      Document storedDocument = documentFacade.createDocument(collectionId, document);
-
-      return JsonDocument.convert(storedDocument);
+   public Document createDocument(Document document) {
+      return documentFacade.createDocument(collectionId, document);
    }
 
    @PUT
    @Path("{documentId}/data")
-   public JsonDocument updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
+   public Document updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.updateDocumentData(collectionId, documentId, data);
-
-      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
-      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
-
-      return returnDocument;
+      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      return storedDocument;
    }
 
    @PATCH
    @Path("{documentId}/data")
-   public JsonDocument patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
+   public Document patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.patchDocumentData(collectionId, documentId, data);
-
-      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
-      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
-
-      return returnDocument;
+      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      return storedDocument;
    }
 
    @PUT
    @Path("{documentId}/meta")
-   public JsonDocument updateDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
+   public Document updateDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.updateDocumentMetaData(collectionId, documentId, metaData);
-
-      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
-      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
-
-      return returnDocument;
+      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      return storedDocument;
    }
 
    @PATCH
    @Path("{documentId}/meta")
-   public JsonDocument patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
+   public Document patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
-
-      JsonDocument returnDocument = JsonDocument.convert(storedDocument);
-      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
-
-      return returnDocument;
+      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      return storedDocument;
    }
 
    @DELETE
@@ -126,25 +111,22 @@ public class DocumentService extends AbstractService {
 
    @GET
    @Path("{documentId}")
-   public JsonDocument getDocument(@PathParam("documentId") String documentId) {
+   public Document getDocument(@PathParam("documentId") String documentId) {
       Document document = documentFacade.getDocument(collectionId, documentId);
-      JsonDocument returnDocument = JsonDocument.convert(document);
-      returnDocument.setFavorite(documentFacade.isFavorite(returnDocument.getId()));
-
-      return returnDocument;
+      document.setFavorite(documentFacade.isFavorite(document.getId()));
+      return document;
    }
 
    @GET
-   public List<JsonDocument> getDocuments(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
+   public List<Document> getDocuments(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
       Pagination pagination = new Pagination(page, pageSize);
 
       List<Document> documents = documentFacade.getDocuments(collectionId, pagination);
-      List<JsonDocument> returnDocuments = JsonDocument.convert(documents);
 
       Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
-      returnDocuments.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
+      documents.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
 
-      return returnDocuments;
+      return documents;
    }
 
    @POST

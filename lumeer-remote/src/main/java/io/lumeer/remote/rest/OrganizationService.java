@@ -18,9 +18,6 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
 import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
@@ -65,18 +62,14 @@ public class OrganizationService extends AbstractService {
    private CompanyContactFacade companyContactFacade;
 
    @POST
-   public JsonOrganization createOrganization(JsonOrganization organization) {
-      Organization storedOrganization = organizationFacade.createOrganization(organization);
-
-      return JsonOrganization.convert(storedOrganization);
+   public Organization createOrganization(Organization organization) {
+      return organizationFacade.createOrganization(organization);
    }
 
    @PUT
    @Path("{organizationCode}")
-   public JsonOrganization updateOrganization(@PathParam("organizationCode") String organizationCode, JsonOrganization organization) {
-      Organization storedOrganization = organizationFacade.updateOrganization(organizationCode, organization);
-
-      return JsonOrganization.convert(storedOrganization);
+   public Organization updateOrganization(@PathParam("organizationCode") String organizationCode, Organization organization) {
+      return organizationFacade.updateOrganization(organizationCode, organization);
    }
 
    @DELETE
@@ -89,15 +82,13 @@ public class OrganizationService extends AbstractService {
 
    @GET
    @Path("{organizationCode}")
-   public JsonOrganization getOrganization(@PathParam("organizationCode") String organizationCode) {
-      Organization organization = organizationFacade.getOrganization(organizationCode);
-      return JsonOrganization.convert(organization);
+   public Organization getOrganization(@PathParam("organizationCode") String organizationCode) {
+      return organizationFacade.getOrganization(organizationCode);
    }
 
    @GET
-   public List<JsonOrganization> getOrganizations() {
-      List<Organization> organizations = organizationFacade.getOrganizations();
-      return JsonOrganization.convert(organizations);
+   public List<Organization> getOrganizations() {
+      return organizationFacade.getOrganizations();
    }
 
    @GET
@@ -108,16 +99,14 @@ public class OrganizationService extends AbstractService {
 
    @GET
    @Path("{organizationCode}/permissions")
-   public JsonPermissions getOrganizationPermissions(@PathParam("organizationCode") String organizationCode) {
-      Permissions permissions = organizationFacade.getOrganizationPermissions(organizationCode);
-      return JsonPermissions.convert(permissions);
+   public Permissions getOrganizationPermissions(@PathParam("organizationCode") String organizationCode) {
+      return organizationFacade.getOrganizationPermissions(organizationCode);
    }
 
    @PUT
    @Path("{organizationCode}/permissions/users")
-   public Set<JsonPermission> updateUserPermission(@PathParam("organizationCode") String organizationCode, JsonPermission... userPermission) {
-      Set<Permission> storedUserPermissions = organizationFacade.updateUserPermissions(organizationCode, userPermission);
-      return JsonPermission.convert(storedUserPermissions);
+   public Set<Permission> updateUserPermission(@PathParam("organizationCode") String organizationCode, Permission... userPermission) {
+      return organizationFacade.updateUserPermissions(organizationCode, userPermission);
    }
 
    @DELETE
@@ -130,9 +119,8 @@ public class OrganizationService extends AbstractService {
 
    @PUT
    @Path("{organizationCode}/permissions/groups")
-   public Set<JsonPermission> updateGroupPermission(@PathParam("organizationCode") String organizationCode, JsonPermission... groupPermission) {
-      Set<Permission> storedGroupPermissions = organizationFacade.updateGroupPermissions(organizationCode, groupPermission);
-      return JsonPermission.convert(storedGroupPermissions);
+   public Set<Permission> updateGroupPermission(@PathParam("organizationCode") String organizationCode, Permission... groupPermission) {
+      return organizationFacade.updateGroupPermissions(organizationCode, groupPermission);
    }
 
    @DELETE

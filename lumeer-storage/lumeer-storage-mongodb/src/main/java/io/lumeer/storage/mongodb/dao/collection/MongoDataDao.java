@@ -40,15 +40,12 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.TextSearchOptions;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -145,7 +142,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    public List<DataDocument> getData(final String collectionId, final SearchQuery query) {
       final MongoCollection<Document> collection = dataCollection(collectionId);
       final FindIterable<Document> mongoIterable = collection.find(createFilter(collectionId, query));
-      addPaginationToSuggestionQuery(mongoIterable, query);
+      addPaginationToQuery(mongoIterable, query);
       final List<DataDocument> foundDocuments = MongoUtils.convertIterableToList(mongoIterable);
 
       return foundDocuments;

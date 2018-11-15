@@ -21,22 +21,15 @@ package io.lumeer.remote.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonCollection;
-import io.lumeer.api.dto.JsonDocument;
-import io.lumeer.api.dto.JsonOrganization;
-import io.lumeer.api.dto.JsonPermission;
-import io.lumeer.api.dto.JsonPermissions;
-import io.lumeer.api.dto.JsonProject;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.DocumentFacade;
-import io.lumeer.core.model.SimplePermission;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -56,7 +49,6 @@ import org.junit.runner.RunWith;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -109,9 +101,9 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
    @Before
    public void configureCollection() {
-      JsonOrganization organization = new JsonOrganization();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new JsonPermissions());
+      organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
@@ -119,26 +111,26 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
-      JsonPermissions organizationPermissions = new JsonPermissions();
-      Permission userPermission = new SimplePermission(this.user.getId(), Organization.ROLES);
+      Permissions organizationPermissions = new Permissions();
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
-      JsonProject project = new JsonProject();
+      Project project = new Project();
       project.setCode(PROJECT_CODE);
 
-      JsonPermissions projectPermissions = new JsonPermissions();
-      projectPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
       collectionDao.setProject(storedProject);
       collectionDao.createCollectionsRepository(storedProject);
 
-      JsonPermissions collectionPermissions = new JsonPermissions();
-      collectionPermissions.updateUserPermissions(new JsonPermission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-      JsonCollection jsonCollection = new JsonCollection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+      Permissions collectionPermissions = new Permissions();
+      collectionPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));
+      Collection jsonCollection = new Collection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection = collectionDao.createCollection(jsonCollection);
 
       documentDao.setProject(storedProject);
@@ -149,7 +141,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
             .append(KEY1, VALUE1)
             .append(KEY2, VALUE2);
 
-      return new JsonDocument(data);
+      return new Document(data);
    }
 
    private Document createDocument() {
@@ -179,7 +171,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      JsonDocument returnedDocument = response.readEntity(JsonDocument.class);
+      Document returnedDocument = response.readEntity(Document.class);
       assertThat(returnedDocument).isNotNull();
 
       String id = returnedDocument.getId();
@@ -307,7 +299,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      JsonDocument document = response.readEntity(JsonDocument.class);
+      Document document = response.readEntity(Document.class);
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(document.getId()).isEqualTo(id);
@@ -337,7 +329,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<JsonDocument> documents = response.readEntity(new GenericType<List<JsonDocument>>() {
+      List<Document> documents = response.readEntity(new GenericType<List<Document>>() {
       });
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
    }
@@ -352,8 +344,8 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(doc.getMetaData());
 
       Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
-            .request(MediaType.APPLICATION_JSON)
-            .buildPut(entity).invoke();
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildPut(entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -366,8 +358,8 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       entity = Entity.json(doc.getMetaData());
 
       response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
-            .request(MediaType.APPLICATION_JSON)
-            .buildPut(entity).invoke();
+                       .request(MediaType.APPLICATION_JSON)
+                       .buildPut(entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -386,8 +378,8 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(doc.getMetaData());
 
       Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
-            .request(MediaType.APPLICATION_JSON)
-            .build("PATCH", entity).invoke();
+                                .request(MediaType.APPLICATION_JSON)
+                                .build("PATCH", entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -400,8 +392,8 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       entity = Entity.json(doc.getMetaData());
 
       response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
-            .request(MediaType.APPLICATION_JSON)
-            .build("PATCH", entity).invoke();
+                       .request(MediaType.APPLICATION_JSON)
+                       .build("PATCH", entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);

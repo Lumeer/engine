@@ -21,10 +21,10 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.dto.JsonQuery;
-import io.lumeer.api.dto.JsonView;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -32,8 +32,6 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermission;
-import io.lumeer.storage.mongodb.model.embedded.MorphiaPermissions;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.bson.types.ObjectId;
@@ -60,13 +58,13 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    private static final String NAME = "Test view";
    private static final String COLOR = "#000000";
    private static final String ICON = "fa-eye";
-   private static final JsonQuery QUERY = new JsonQuery();
+   private static final Query QUERY = new Query();
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
-   private static final MorphiaPermissions PERMISSIONS = new MorphiaPermissions();
-   private static final MorphiaPermission USER_PERMISSION;
-   private static final MorphiaPermission GROUP_PERMISSION;
+   private static final Permissions PERMISSIONS = new Permissions();
+   private static final Permission USER_PERMISSION;
+   private static final Permission GROUP_PERMISSION;
 
    private static final String CODE2 = "TVIEW2";
    private static final String NAME2 = "Testing fulltext view";
@@ -79,10 +77,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
    static {
-      USER_PERMISSION = new MorphiaPermission(USER, View.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      USER_PERMISSION = new Permission(USER, View.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      GROUP_PERMISSION = new MorphiaPermission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
 
@@ -97,35 +95,34 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
       viewDao = new MongoViewDao();
       viewDao.setDatabase(database);
-      viewDao.setDatastore(datastore);
 
       viewDao.setProject(project);
       viewDao.createViewsRepository(project);
       assertThat(database.listCollectionNames()).contains(viewDao.databaseCollectionName());
    }
 
-   private JsonView prepareView() {
-      JsonView view = new JsonView();
+   private View prepareView() {
+      View view = new View();
       view.setCode(CODE);
       view.setName(NAME);
       view.setColor(COLOR);
       view.setIcon(ICON);
-      view.setPermissions(new MorphiaPermissions(PERMISSIONS));
+      view.setPermissions(new Permissions(PERMISSIONS));
       view.setQuery(QUERY);
       view.setPerspective(PERSPECTIVE);
       view.setConfig(CONFIG);
       return view;
    }
 
-   private JsonView createView(String code, String name) {
+   private View createView(String code, String name) {
       return createView(code, name, null);
    }
 
-   private JsonView createView(String code, String name, Set<String> collections) {
-      JsonView jsonView = prepareView();
+   private View createView(String code, String name, Set<String> collections) {
+      View jsonView = prepareView();
       jsonView.setCode(code);
       jsonView.setName(name);
-      jsonView.setQuery(new JsonQuery(collections, null, null));
+      jsonView.setQuery(new Query(collections, null, null));
 
       viewDao.databaseCollection().insertOne(jsonView);
       return jsonView;
@@ -139,7 +136,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateView() {
-      JsonView view = prepareView();
+      View view = prepareView();
 
       String id = viewDao.createView(view).getId();
       assertThat(id).isNotNull().isNotEmpty();
@@ -159,10 +156,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateViewExistingCode() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setName(NAME2);
       assertThatThrownBy(() -> viewDao.createView(view2))
             .isInstanceOf(StorageException.class);
@@ -170,10 +167,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testCreateViewExistingName() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setCode(CODE2);
       assertThatThrownBy(() -> viewDao.createView(view2))
             .isInstanceOf(StorageException.class);
@@ -181,7 +178,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateViewCode() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
       String id = view.getId();
       assertThat(id).isNotNull().isNotEmpty();
@@ -196,7 +193,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateViewPermissions() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
       String id = view.getId();
       assertThat(id).isNotNull().isNotEmpty();
@@ -213,10 +210,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateViewExistingCode() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);
@@ -228,10 +225,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testUpdateViewExistingName() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);
@@ -249,7 +246,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteView() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
       assertThat(view.getId()).isNotNull();
 
@@ -267,7 +264,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViewByCode() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
       View storedView = viewDao.getViewByCode(CODE);
@@ -283,10 +280,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViews() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);
@@ -298,15 +295,15 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViewsNoReadRole() {
-      JsonView view = prepareView();
-      Permission userPermission = new MorphiaPermission(USER2, Collections.singleton(Role.CLONE.toString()));
+      View view = prepareView();
+      Permission userPermission = new Permission(USER2, Collections.singleton(Role.CLONE.toString()));
       view.getPermissions().updateUserPermissions(userPermission);
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      Permission groupPermission = new MorphiaPermission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(Role.SHARE.toString()));
       view2.getPermissions().updateGroupPermissions(groupPermission);
       viewDao.databaseCollection().insertOne(view2);
 
@@ -317,10 +314,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViewsGroupRole() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);
@@ -332,10 +329,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testGetViewsPagination() {
-      JsonView view = prepareView();
+      View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
 
-      JsonView view2 = prepareView();
+      View view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);

@@ -18,17 +18,48 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.model.common.Resource;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public interface Organization extends Resource {
+public class Organization extends Resource {
 
-   Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
+   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
+
+   public Organization() {
+   }
+
+   @JsonCreator
+   public Organization(
+         @JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PERMISSIONS) final Permissions permissions) {
+      super(code, name, icon, color, description, permissions);
+   }
 
    @Override
-   default ResourceType getType() {
+   public ResourceType getType() {
       return ResourceType.ORGANIZATION;
+   }
+
+   @Override
+   public String toString() {
+      return "JsonOrganization{" +
+            "id='" + id + '\'' +
+            ", code='" + code + '\'' +
+            ", name='" + name + '\'' +
+            ", icon='" + icon + '\'' +
+            ", color='" + color + '\'' +
+            ", permissions=" + permissions +
+            '}';
    }
 
 }
