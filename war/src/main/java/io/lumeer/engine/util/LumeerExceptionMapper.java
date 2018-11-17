@@ -18,12 +18,13 @@
  */
 package io.lumeer.engine.util;
 
+import io.lumeer.api.exception.LumeerException;
+import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.exception.PaymentGatewayException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
@@ -35,7 +36,6 @@ import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.engine.api.exception.InvalidQueryException;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
-import io.lumeer.api.exception.LumeerException;
 import io.lumeer.engine.api.exception.NullParameterException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
@@ -43,6 +43,7 @@ import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -77,7 +78,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
       }
 
       // 403 - FORBIDDEN
-      if (e instanceof NoPermissionException || e instanceof NoSystemPermissionException) {
+      if (e instanceof NoPermissionException || e instanceof NoSystemPermissionException || e instanceof AccessForbiddenException) {
          return Response.status(Response.Status.FORBIDDEN).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
