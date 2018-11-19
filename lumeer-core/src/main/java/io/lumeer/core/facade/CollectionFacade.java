@@ -299,12 +299,16 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Set<String> getUsersIdsWithAccess(final String collectionId) {
+      return getUsersIdsWithAccess(collectionDao.getCollectionById(collectionId));
+   }
+
+   public Set<String> getUsersIdsWithAccess(final Collection collection) {
       final Set<String> result = new HashSet<>();
 
-      result.addAll(getCollection(collectionId).getPermissions().getUserPermissions().stream().map(Permission::getId).collect(Collectors.toSet()));
+      result.addAll(collection.getPermissions().getUserPermissions().stream().map(Permission::getId).collect(Collectors.toSet()));
 
       viewDao.getViewsByLinkTypeIds(
-            linkTypeDao.getLinkTypesByCollectionId(collectionId)
+            linkTypeDao.getLinkTypesByCollectionId(collection.getId())
                        .stream()
                        .map(LinkType::getId)
                        .collect(Collectors.toList()))
@@ -315,7 +319,7 @@ public class CollectionFacade extends AbstractFacade {
                 result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
              });
 
-      viewDao.getViewsByCollectionIds(Collections.singletonList(collectionId)).stream()
+      viewDao.getViewsByCollectionIds(Collections.singletonList(collection.getId())).stream()
             .map(Resource::getPermissions)
             .map(Permissions::getUserPermissions)
             .forEach(permissions -> {

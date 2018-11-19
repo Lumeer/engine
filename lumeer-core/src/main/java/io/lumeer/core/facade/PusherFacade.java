@@ -227,7 +227,7 @@ public class PusherFacade {
       } else if (resource instanceof Collection) {
          sendResourceNotificationByUsers(
                resource,
-               collectionFacade.getUsersIdsWithAccess(resource.getId()),
+               collectionFacade.getUsersIdsWithAccess((Collection) resource),
                event);
       }
    }
