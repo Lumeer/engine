@@ -314,6 +314,14 @@ public class CollectionFacade extends AbstractFacade {
              .forEach(permissions -> {
                 result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
              });
+
+      viewDao.getViewsByCollectionIds(Collections.singletonList(collectionId)).stream()
+            .map(Resource::getPermissions)
+            .map(Permissions::getUserPermissions)
+            .forEach(permissions -> {
+               result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
+            });
+
       // TODO: Handle user groups as well
 
       return result;

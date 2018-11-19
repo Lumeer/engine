@@ -46,6 +46,8 @@ public interface ViewDao {
 
    List<View> getViewsByLinkTypeIds(final List<String> linkTypeIds);
 
+   List<View> getViewsByCollectionIds(final List<String> collectionIds);
+
    void setProject(final Project project);
 
    Set<String> getAllViewCodes();
