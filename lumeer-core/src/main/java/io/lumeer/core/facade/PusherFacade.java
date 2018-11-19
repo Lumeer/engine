@@ -124,66 +124,90 @@ public class PusherFacade {
    }
 
    public void createResource(@Observes final CreateResource createResource) {
-      processResource(createResource.getResource(), CREATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         processResource(createResource.getResource(), CREATE_EVENT_SUFFIX);
+      }
    }
 
    public void updateResource(@Observes final UpdateResource updateResource) {
-      processResource(updateResource.getResource(), UPDATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         processResource(updateResource.getResource(), UPDATE_EVENT_SUFFIX);
+      }
    }
 
    public void removeResource(@Observes final RemoveResource removeResource) {
-      processResource(removeResource.getResource(), REMOVE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         processResource(removeResource.getResource(), REMOVE_EVENT_SUFFIX);
+      }
    }
 
    public void createDocument(@Observes final CreateDocument createDocument) {
-      sendResourceNotificationByUsers(createDocument.getDocument(),
-            collectionFacade.getUsersIdsWithAccess(createDocument.getDocument().getCollectionId()),
-            CREATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByUsers(createDocument.getDocument(),
+               collectionFacade.getUsersIdsWithAccess(createDocument.getDocument().getCollectionId()),
+               CREATE_EVENT_SUFFIX);
+      }
    }
 
    public void updateDocument(@Observes final UpdateDocument updateDocument) {
-      sendResourceNotificationByUsers(updateDocument.getDocument(),
-            collectionFacade.getUsersIdsWithAccess(updateDocument.getDocument().getCollectionId()),
-            UPDATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByUsers(updateDocument.getDocument(),
+               collectionFacade.getUsersIdsWithAccess(updateDocument.getDocument().getCollectionId()),
+               UPDATE_EVENT_SUFFIX);
+      }
    }
 
    public void removeDocument(@Observes final RemoveDocument removeDocument) {
-      sendResourceNotificationByUsers(removeDocument.getDocument(),
-            collectionFacade.getUsersIdsWithAccess(removeDocument.getDocument().getCollectionId()),
-            REMOVE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByUsers(removeDocument.getDocument(),
+               collectionFacade.getUsersIdsWithAccess(removeDocument.getDocument().getCollectionId()),
+               REMOVE_EVENT_SUFFIX);
+      }
    }
 
    public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {
-      sendResourceNotificationByLinkType(createLinkInstance.getLinkInstance(),
-            createLinkInstance.getLinkInstance().getLinkTypeId(),
-            CREATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByLinkType(createLinkInstance.getLinkInstance(),
+               createLinkInstance.getLinkInstance().getLinkTypeId(),
+               CREATE_EVENT_SUFFIX);
+      }
    }
 
    public void updateLinkInstance(@Observes final UpdateLinkInstance updateLinkInstance) {
-      sendResourceNotificationByLinkType(updateLinkInstance.getLinkInstance(),
-            updateLinkInstance.getLinkInstance().getLinkTypeId(),
-            UPDATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByLinkType(updateLinkInstance.getLinkInstance(),
+               updateLinkInstance.getLinkInstance().getLinkTypeId(),
+               UPDATE_EVENT_SUFFIX);
+      }
    }
 
    public void removeLinkInstance(@Observes final RemoveLinkInstance removeLinkInstance) {
-      sendResourceNotificationByLinkType(removeLinkInstance.getLinkInstance(),
-            removeLinkInstance.getLinkInstance().getLinkTypeId(),
-            REMOVE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByLinkType(removeLinkInstance.getLinkInstance(),
+               removeLinkInstance.getLinkInstance().getLinkTypeId(),
+               REMOVE_EVENT_SUFFIX);
+      }
    }
 
    public void createLinkType(@Observes final CreateLinkType createLinkType) {
-      sendResourceNotificationByLinkType(createLinkType.getLinkType(),
-            CREATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByLinkType(createLinkType.getLinkType(),
+               CREATE_EVENT_SUFFIX);
+      }
    }
 
    public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
-      sendResourceNotificationByLinkType(updateLinkType.getLinkType(),
-            UPDATE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByLinkType(updateLinkType.getLinkType(),
+               UPDATE_EVENT_SUFFIX);
+      }
    }
 
    public void removeLinkType(@Observes final RemoveLinkType removeLinkType) {
-      sendResourceNotificationByLinkType(removeLinkType.getLinkType(),
-            REMOVE_EVENT_SUFFIX);
+      if (isEnabled()) {
+         sendResourceNotificationByLinkType(removeLinkType.getLinkType(),
+               REMOVE_EVENT_SUFFIX);
+      }
    }
 
    private void processResource(final Resource resource, final String event) {
@@ -270,15 +294,19 @@ public class PusherFacade {
    }
 
    private void sendNotification(final String userId, final String event, final Object message) {
-      if (pusher != null && authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId)) {
+      if (isEnabled() && authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId)) {
          pusher.trigger(PRIVATE_CHANNEL_PREFIX + userId, message.getClass().getSimpleName() + event, message);
       }
    }
 
    private void sendNotificationsBatch(List<Event> notifications) {
-      if (pusher != null && notifications != null && notifications.size() > 0) {
+      if (isEnabled() && notifications != null && notifications.size() > 0) {
          pusher.trigger(notifications);
       }
+   }
+
+   private boolean isEnabled() {
+      return pusher != null;
    }
 
    private <T extends Resource> T filterUserRoles(final String userId, final T resource) {
