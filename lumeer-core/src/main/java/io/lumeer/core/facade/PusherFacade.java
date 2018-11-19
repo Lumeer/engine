@@ -28,6 +28,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -90,7 +91,7 @@ public class PusherFacade {
    private LinkTypeFacade linkTypeFacade;
 
    @Inject
-   private DocumentFacade documentFacade;
+   private WorkspaceKeeper workspaceKeeper;
 
    @PostConstruct
    public void init() {
@@ -187,11 +188,17 @@ public class PusherFacade {
 
    private void processResource(final Resource resource, final String event) {
       if (resource instanceof Organization
-            || resource instanceof Project
             || resource instanceof View) {
          sendResourceNotification(
                resource,
-               REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(resource.getId()) : resource,
+               REMOVE_EVENT_SUFFIX.equals(event) ?
+                     new ResourceId(resource instanceof View ? resource.getCode() : resource.getId()) : resource,
+               event);
+      } else if (resource instanceof Project) {
+         sendResourceNotification(
+               resource,
+               REMOVE_EVENT_SUFFIX.equals(event) ?
+                     new ResourceId(resource.getId()) : new ResourceWithParent(resource, workspaceKeeper.getOrganization().get().getId()),
                event);
       } else if (resource instanceof Collection) {
          sendResourceNotificationByUsers(
@@ -295,6 +302,24 @@ public class PusherFacade {
 
       public String getId() {
          return id;
+      }
+   }
+
+   public static final class ResourceWithParent {
+      private final Resource resource;
+      private final String parentId;
+
+      public ResourceWithParent(final Resource resource, final String parentId) {
+         this.resource = resource;
+         this.parentId = parentId;
+      }
+
+      public Resource getResource() {
+         return resource;
+      }
+
+      public String getParentId() {
+         return parentId;
       }
    }
 }
