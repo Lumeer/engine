@@ -20,17 +20,15 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.AccessForbiddenException;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.facade.PusherFacade;
 
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.context.RequestScoped;
@@ -52,13 +50,8 @@ public class PusherService extends AbstractService {
 
    private Logger log = Logger.getLogger(PusherService.class.getName());
 
-   private static String PUSHER_APP_ID;
-   private static String PUSHER_KEY;
-   private static String PUSHER_SECRET;
-   private static String PUSHER_CLUSTER;
-
    @Inject
-   private DefaultConfigurationProducer defaultConfigurationProducer;
+   private PusherFacade pusherFacade;
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -79,30 +72,22 @@ public class PusherService extends AbstractService {
       }
    }
 
-   @PostConstruct
-   public void init() {
-      PUSHER_APP_ID = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_APP_ID)).orElse("");
-      PUSHER_KEY = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_KEY)).orElse("");
-      PUSHER_SECRET = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_SECRET)).orElse("");
-      PUSHER_CLUSTER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
-   }
-
    @POST
    @Path("/")
    public Response authenticateClient(@FormParam("socket_id") final String socketId, @FormParam("channel_name") final String channelName) {
       String auth = null;
 
-      if (PUSHER_SECRET != null && !"".equals(PUSHER_SECRET) &&
+      if (pusherFacade.getPusherSecret() != null && !"".equals(pusherFacade.getPusherSecret()) &&
             channelName != null && channelName.startsWith("private-") &&
             channelName.substring(8).equals(authenticatedUser.getCurrentUserId())) {
-         auth = sign(socketId + ":" + channelName, PUSHER_SECRET);
+         auth = sign(socketId + ":" + channelName, pusherFacade.getPusherSecret());
       }
 
       if (auth == null) {
-         throw new AccessForbiddenException("User is not authorize to join this channel.");
+         throw new AccessForbiddenException("User is not authorized to join this channel.");
       }
 
-      return Response.ok(new PusherAuthResponse(PUSHER_KEY + ":" + auth)).build();
+      return Response.ok(new PusherAuthResponse(pusherFacade.getPusherKey() + ":" + auth)).build();
    }
 
    private String sign(final String input, final String secret) {

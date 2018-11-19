@@ -46,6 +46,22 @@ public class Organization extends Resource {
    }
 
    @Override
+   public Organization copy() {
+      final Organization o = new Organization();
+
+      o.id = this.id;
+      o.code = this.code;
+      o.name = this.name;
+      o.icon = this.icon;
+      o.color = this.color;
+      o.description = this.description;
+      o.nonRemovable = this.nonRemovable;
+      o.permissions = new Permissions(this.getPermissions());
+
+      return o;
+   }
+
+   @Override
    public ResourceType getType() {
       return ResourceType.ORGANIZATION;
    }

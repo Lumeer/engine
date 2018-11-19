@@ -5,6 +5,12 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.event.CreateLinkInstance;
+import io.lumeer.engine.api.event.CreateLinkType;
+import io.lumeer.engine.api.event.RemoveLinkInstance;
+import io.lumeer.engine.api.event.RemoveLinkType;
+import io.lumeer.engine.api.event.UpdateLinkInstance;
+import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -26,11 +32,22 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstanceDao {
 
    private static final String PREFIX = "linkinstances_p-";
+
+   @Inject
+   private Event<CreateLinkInstance> createLinkInstanceEvent;
+
+   @Inject
+   private Event<UpdateLinkInstance> updateLinkInstanceEvent;
+
+   @Inject
+   private Event<RemoveLinkInstance> removeLinkInstanceEvent;
 
    @Override
    public void createLinkInstanceRepository(Project project) {
@@ -49,6 +66,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
       try {
          databaseCollection().insertOne(linkInstance);
+         createLinkInstanceEvent.fire(new CreateLinkInstance(linkInstance));
          return linkInstance;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create link instance: " + linkInstance, ex);
@@ -63,6 +81,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
          if(updatedLinkInstance == null){
             throw new StorageException("Link instance '" + id + "' has not been updated.");
          }
+         updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstance));
          return updatedLinkInstance;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update link instance: " + linkInstance, ex);
@@ -71,10 +90,11 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
 
    @Override
    public void deleteLinkInstance(final String id) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(id));
-      if(result.getDeletedCount() != 1){
+      LinkInstance linkInstance = databaseCollection().findOneAndDelete(idFilter(id));
+      if(linkInstance == null) {
          throw new StorageException("Link instance '" + id + "' has not been deleted.");
       }
+      removeLinkInstanceEvent.fire(new RemoveLinkInstance(linkInstance));
    }
 
    @Override

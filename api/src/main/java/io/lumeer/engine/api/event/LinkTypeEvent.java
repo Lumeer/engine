@@ -18,22 +18,20 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkType;
 
 /**
- * CDI event that carries information about manipulation with a {@link Document}.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public abstract class DocumentEvent {
+public abstract class LinkTypeEvent {
 
-   private Document document;
+   private final LinkType linkType;
 
-   public DocumentEvent(final Document document) {
-      this.document = document;
+   public LinkTypeEvent(final LinkType linkType) {
+      this.linkType = linkType;
    }
 
-   public Document getDocument() {
-      return document;
+   public LinkType getLinkType() {
+      return linkType;
    }
 }

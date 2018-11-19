@@ -111,7 +111,7 @@ public class DocumentFacade extends AbstractFacade {
       // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
 
-      Document updatedDocument = updateDocument(collection, documentId);
+      Document updatedDocument = updateDocument(collection, documentId, data);
       updatedDocument.setData(updatedData);
 
       return updatedDocument;
@@ -141,7 +141,9 @@ public class DocumentFacade extends AbstractFacade {
       // TODO archive the old document
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
 
-      Document updatedDocument = updateDocument(collection, documentId);
+      DataDocument newData = new DataDocument(oldData);
+      newData.putAll(data);
+      Document updatedDocument = updateDocument(collection, documentId, newData);
       updatedDocument.setData(patchedData);
 
       return updatedDocument;
@@ -160,9 +162,10 @@ public class DocumentFacade extends AbstractFacade {
       return updateDocument(document);
    }
 
-   private Document updateDocument(final Collection collection, final String documentId) {
+   private Document updateDocument(final Collection collection, final String documentId, final DataDocument data) {
       final Document document = documentDao.getDocumentById(documentId);
       document.setCollectionId(collection.getId());
+      document.setData(data);
 
       return updateDocument(document);
    }

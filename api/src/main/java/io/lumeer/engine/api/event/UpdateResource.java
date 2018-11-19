@@ -18,16 +18,14 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.api.model.common.Resource;
 
 /**
- * CDI event that is fired when a document is dropped.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class DropDocument extends DocumentEvent {
+public class UpdateResource extends ResourceEvent {
 
-   public DropDocument(final String collectionCode, final DataDocument document) {
-      super(collectionCode, document);
+   public UpdateResource(final Resource resource) {
+      super(resource);
    }
 }

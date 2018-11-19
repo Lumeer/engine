@@ -1,0 +1,300 @@
+/*
+ * Lumeer: Modern Data Definition and Processing Platform
+ *
+ * Copyright (C) since 2017 Answer Institute, s.r.o. and/or its affiliates.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package io.lumeer.core.facade;
+
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.CreateLinkInstance;
+import io.lumeer.engine.api.event.CreateLinkType;
+import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.RemoveLinkInstance;
+import io.lumeer.engine.api.event.RemoveLinkType;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.UpdateDocument;
+import io.lumeer.engine.api.event.UpdateLinkInstance;
+import io.lumeer.engine.api.event.UpdateLinkType;
+import io.lumeer.engine.api.event.UpdateResource;
+
+import com.pusher.rest.Pusher;
+import com.pusher.rest.data.Event;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+@ApplicationScoped
+public class PusherFacade {
+
+   public static final String PRIVATE_CHANNEL_PREFIX = "private-";
+   public static final String UPDATE_EVENT_SUFFIX = ":update";
+   public static final String CREATE_EVENT_SUFFIX = ":create";
+   public static final String REMOVE_EVENT_SUFFIX = ":remove";
+
+   private String PUSHER_APP_ID;
+   private String PUSHER_KEY;
+   private String PUSHER_SECRET;
+   private String PUSHER_CLUSTER;
+
+   private Pusher pusher = null;
+
+   @Inject
+   private DefaultConfigurationProducer defaultConfigurationProducer;
+
+   @Inject
+   private AuthenticatedUser authenticatedUser;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private LinkTypeFacade linkTypeFacade;
+
+   @Inject
+   private DocumentFacade documentFacade;
+
+   @PostConstruct
+   public void init() {
+      PUSHER_APP_ID = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_APP_ID)).orElse("");
+      PUSHER_KEY = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_KEY)).orElse("");
+      PUSHER_SECRET = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_SECRET)).orElse("");
+      PUSHER_CLUSTER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
+
+      if (PUSHER_SECRET != null && !"".equals(PUSHER_SECRET)) {
+         pusher = new Pusher(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET);
+         pusher.setCluster(PUSHER_CLUSTER);
+         pusher.setEncrypted(true);
+      }
+   }
+
+   public String getPusherAppId() {
+      return PUSHER_APP_ID;
+   }
+
+   public String getPusherKey() {
+      return PUSHER_KEY;
+   }
+
+   public String getPusherSecret() {
+      return PUSHER_SECRET;
+   }
+
+   public String getPusherCluster() {
+      return PUSHER_CLUSTER;
+   }
+
+   public void createResource(@Observes final CreateResource createResource) {
+      processResource(createResource.getResource(), CREATE_EVENT_SUFFIX);
+   }
+
+   public void updateResource(@Observes final UpdateResource updateResource) {
+      processResource(updateResource.getResource(), UPDATE_EVENT_SUFFIX);
+   }
+
+   public void removeResource(@Observes final RemoveResource removeResource) {
+      processResource(removeResource.getResource(), REMOVE_EVENT_SUFFIX);
+   }
+
+   public void createDocument(@Observes final CreateDocument createDocument) {
+      sendResourceNotificationByUsers(createDocument.getDocument(),
+            collectionFacade.getUsersIdsWithAccess(createDocument.getDocument().getCollectionId()),
+            CREATE_EVENT_SUFFIX);
+   }
+
+   public void updateDocument(@Observes final UpdateDocument updateDocument) {
+      sendResourceNotificationByUsers(updateDocument.getDocument(),
+            collectionFacade.getUsersIdsWithAccess(updateDocument.getDocument().getCollectionId()),
+            UPDATE_EVENT_SUFFIX);
+   }
+
+   public void removeDocument(@Observes final RemoveDocument removeDocument) {
+      sendResourceNotificationByUsers(removeDocument.getDocument(),
+            collectionFacade.getUsersIdsWithAccess(removeDocument.getDocument().getCollectionId()),
+            REMOVE_EVENT_SUFFIX);
+   }
+
+   public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {
+      sendResourceNotificationByLinkType(createLinkInstance.getLinkInstance(),
+            createLinkInstance.getLinkInstance().getLinkTypeId(),
+            CREATE_EVENT_SUFFIX);
+   }
+
+   public void updateLinkInstance(@Observes final UpdateLinkInstance updateLinkInstance) {
+      sendResourceNotificationByLinkType(updateLinkInstance.getLinkInstance(),
+            updateLinkInstance.getLinkInstance().getLinkTypeId(),
+            UPDATE_EVENT_SUFFIX);
+   }
+
+   public void removeLinkInstance(@Observes final RemoveLinkInstance removeLinkInstance) {
+      sendResourceNotificationByLinkType(removeLinkInstance.getLinkInstance(),
+            removeLinkInstance.getLinkInstance().getLinkTypeId(),
+            REMOVE_EVENT_SUFFIX);
+   }
+
+   public void createLinkType(@Observes final CreateLinkType createLinkType) {
+      sendResourceNotificationByLinkType(createLinkType.getLinkType(),
+            CREATE_EVENT_SUFFIX);
+   }
+
+   public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
+      sendResourceNotificationByLinkType(updateLinkType.getLinkType(),
+            UPDATE_EVENT_SUFFIX);
+   }
+
+   public void removeLinkType(@Observes final RemoveLinkType removeLinkType) {
+      sendResourceNotificationByLinkType(removeLinkType.getLinkType(),
+            REMOVE_EVENT_SUFFIX);
+   }
+
+   private void processResource(final Resource resource, final String event) {
+      if (resource instanceof Organization
+            || resource instanceof Project
+            || resource instanceof View) {
+         sendResourceNotification(
+               resource,
+               REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(resource.getId()) : resource,
+               event);
+      } else if (resource instanceof Collection) {
+         sendResourceNotificationByUsers(
+               resource,
+               collectionFacade.getUsersIdsWithAccess(resource.getId()),
+               event);
+      }
+   }
+
+   private void sendResourceNotification(final Resource resource, final Object message, final String event) {
+      sendNotificationsBatch(resource.getPermissions().getUserPermissions().stream()
+                                     .filter(permission -> authenticatedUser.getCurrentUserId() != null
+                                           && !authenticatedUser.getCurrentUserId().equals(permission.getId())
+                                           && permission.getRoles().size() > 0)
+                                     .map(permission ->
+                                           new Event(
+                                                 PRIVATE_CHANNEL_PREFIX + permission.getId(),
+                                                 resource.getClass().getSimpleName() + event,
+                                                 message instanceof Resource ? filterUserRoles(permission.getId(), (Resource) message) : message))
+                                     .collect(Collectors.toList()));
+   }
+
+   private void sendResourceNotificationByUsers(final Resource resource, final Set<String> userIds, final String event) {
+      sendNotificationsBatch(userIds.stream()
+                                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
+                                    .map(userId ->
+                                          new Event(
+                                                PRIVATE_CHANNEL_PREFIX + userId,
+                                                resource.getClass().getSimpleName() + event,
+                                                filterUserRoles(userId, resource)))
+                                    .collect(Collectors.toList()));
+   }
+
+   private void sendResourceNotificationByUsers(final Document resource, final Set<String> userIds, final String event) {
+      sendNotificationsBatch(userIds.stream()
+                                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
+                                    .map(userId ->
+            new Event(
+                  PRIVATE_CHANNEL_PREFIX + userId,
+                  resource.getClass().getSimpleName() + event,
+                  resource))
+                                    .collect(Collectors.toList()));
+   }
+
+   private void sendResourceNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
+      linkTypeFacade.getLinkTypeCollections(linkTypeId).stream().map(collectionFacade::getUsersIdsWithAccess)
+                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
+                    .forEach(userIds ->
+            sendNotificationsBatch(userIds.stream().map(userId ->
+                  new Event(
+                        PRIVATE_CHANNEL_PREFIX + userId,
+                        LinkInstance.class.getSimpleName() + event,
+                        linkInstance))
+                                          .collect(Collectors.toList()))
+      );
+   }
+
+   private void sendResourceNotificationByLinkType(final LinkType linkType, final String event) {
+      linkType.getCollectionIds().stream().map(collectionFacade::getUsersIdsWithAccess)
+              .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
+              .forEach(userIds ->
+            sendNotificationsBatch(userIds.stream().map(userId ->
+                  new Event(
+                        PRIVATE_CHANNEL_PREFIX + userId,
+                        LinkInstance.class.getSimpleName() + event,
+                        linkType))
+                                          .collect(Collectors.toList()))
+      );
+   }
+
+   private void sendNotification(final String userId, final String event, final Object message) {
+      if (pusher != null && authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId)) {
+         pusher.trigger(PRIVATE_CHANNEL_PREFIX + userId, message.getClass().getSimpleName() + event, message);
+      }
+   }
+
+   private void sendNotificationsBatch(List<Event> notifications) {
+      if (pusher != null && notifications != null && notifications.size() > 0) {
+         pusher.trigger(notifications);
+      }
+   }
+
+   private <T extends Resource> T filterUserRoles(final String userId, final T resource) {
+      final T copy = resource.copy();
+
+      Set<Role> roles = permissionsChecker.getActualRoles(copy, userId);
+      Permission permission = Permission.buildWithRoles(userId, roles);
+
+      copy.getPermissions().clear();
+      copy.getPermissions().updateUserPermissions(permission);
+
+      return copy;
+   }
+
+   public static final class ResourceId {
+      private final String id;
+
+      public ResourceId(final String id) {
+         this.id = id;
+      }
+
+      public String getId() {
+         return id;
+      }
+   }
+}

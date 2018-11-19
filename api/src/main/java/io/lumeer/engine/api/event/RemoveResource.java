@@ -18,22 +18,14 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.common.Resource;
 
 /**
- * CDI event that carries information about manipulation with a {@link Document}.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public abstract class DocumentEvent {
+public class RemoveResource extends ResourceEvent {
 
-   private Document document;
-
-   public DocumentEvent(final Document document) {
-      this.document = document;
-   }
-
-   public Document getDocument() {
-      return document;
+   public RemoveResource(final Resource resource) {
+      super(resource);
    }
 }

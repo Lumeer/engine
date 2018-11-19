@@ -28,6 +28,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -36,10 +37,13 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,6 +72,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private FavoriteItemDao favoriteItemDao;
+
+   @Inject
+   private ViewDao viewDao;
 
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
@@ -289,6 +296,27 @@ public class CollectionFacade extends AbstractFacade {
 
       collection.getPermissions().removeGroupPermission(groupId);
       collectionDao.updateCollection(collection.getId(), collection);
+   }
+
+   public Set<String> getUsersIdsWithAccess(final String collectionId) {
+      final Set<String> result = new HashSet<>();
+
+      result.addAll(getCollection(collectionId).getPermissions().getUserPermissions().stream().map(Permission::getId).collect(Collectors.toSet()));
+
+      viewDao.getViewsByLinkTypeIds(
+            linkTypeDao.getLinkTypesByCollectionId(collectionId)
+                       .stream()
+                       .map(LinkType::getId)
+                       .collect(Collectors.toList()))
+             .stream()
+             .map(Resource::getPermissions)
+             .map(Permissions::getUserPermissions)
+             .forEach(permissions -> {
+                result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
+             });
+      // TODO: Handle user groups as well
+
+      return result;
    }
 
    private void checkProjectWriteRole() {

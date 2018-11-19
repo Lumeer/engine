@@ -21,19 +21,13 @@ package io.lumeer.engine.api.event;
 import io.lumeer.api.model.Document;
 
 /**
- * CDI event that carries information about manipulation with a {@link Document}.
+ * CDI event that is fired when a document is removed.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public abstract class DocumentEvent {
+public class RemoveDocument extends DocumentEvent {
 
-   private Document document;
-
-   public DocumentEvent(final Document document) {
-      this.document = document;
-   }
-
-   public Document getDocument() {
-      return document;
+   public RemoveDocument(final Document document) {
+      super(document);
    }
 }

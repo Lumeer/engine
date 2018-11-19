@@ -1,13 +1,14 @@
 package io.lumeer.storage.mongodb.dao.project;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.permissionsFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -28,8 +29,6 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
-
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -40,11 +39,23 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoCollectionDao extends ProjectScopedDao implements CollectionDao {
 
    private static final String PREFIX = "collections_p-";
+
+
+   @Inject
+   private Event<CreateResource> createResourceEvent;
+
+   @Inject
+   private Event<UpdateResource> updateResourceEvent;
+
+   @Inject
+   private Event<RemoveResource> removeResourceEvent;
 
    @Override
    public void createCollectionsRepository(final Project project) {
@@ -66,6 +77,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    public Collection createCollection(final Collection collection) {
       try {
          databaseCollection().insertOne(collection);
+         createResourceEvent.fire(new CreateResource(collection));
          return collection;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create collection: " + collection, ex);
@@ -81,6 +93,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
          if (updatedCollection == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }
+         updateResourceEvent.fire(new UpdateResource(updatedCollection));
          return updatedCollection;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update collection: " + collection, ex);
@@ -89,10 +102,11 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
 
    @Override
    public void deleteCollection(final String id) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(id));
-      if (result.getDeletedCount() != 1) {
+      final Collection collection = databaseCollection().findOneAndDelete(idFilter(id));
+      if (collection == null) {
          throw new StorageException("Collection '" + id + "' has not been deleted.");
       }
+      removeResourceEvent.fire(new RemoveResource(collection));
    }
 
    @Override

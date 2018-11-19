@@ -28,6 +28,16 @@ public class SimpleResource extends Resource {
    }
 
    @Override
+   public SimpleResource copy() {
+      final SimpleResource o = new SimpleResource(this.code, this.name, this.icon, this.color, this.description, new Permissions(this.getPermissions()));
+
+      o.id = this.id;
+      o.nonRemovable = this.nonRemovable;
+
+      return o;
+   }
+
+   @Override
    public ResourceType getType() {
       return null;
    }
