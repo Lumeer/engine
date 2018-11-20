@@ -35,15 +35,18 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
+import io.lumeer.engine.api.event.CreateOrUpdatePayment;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
+import io.lumeer.engine.api.event.UpdateServiceLimits;
 
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -101,6 +104,9 @@ public class PusherFacade {
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
 
    @PostConstruct
    public void init() {
@@ -235,6 +241,35 @@ public class PusherFacade {
       }
    }
 
+   public void updateCompanyContact(@Observes final UpdateCompanyContact updateCompanyContact) {
+      if (isEnabled()) {
+         sendNotificationByUsers(
+               updateCompanyContact.getCompanyContact(),
+               organizationFacade.getOrganizationManagers(
+                     organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId())),
+               UPDATE_EVENT_SUFFIX);
+      }
+   }
+
+   public void updateServiceLimits(@Observes final UpdateServiceLimits updateServiceLimits) {
+      if (isEnabled()) {
+         sendNotificationByUsers(
+               updateServiceLimits.getServiceLimits(),
+               organizationFacade.getOrganizationManagers(updateServiceLimits.getOrganization()),
+               UPDATE_EVENT_SUFFIX);
+      }
+   }
+
+   public void createOrUpdatePayment(@Observes final CreateOrUpdatePayment createOrUpdatePayment) {
+      if (isEnabled()) {
+         sendNotificationByUsers(
+               createOrUpdatePayment.getPayment(),
+               organizationFacade.getOrganizationManagers(createOrUpdatePayment.getOrganization()),
+               UPDATE_EVENT_SUFFIX);
+      }
+   }
+
+
    private void processResource(final Resource resource, final String event) {
       if (resource instanceof Organization
             || resource instanceof View) {
@@ -282,6 +317,10 @@ public class PusherFacade {
    }
 
    private void sendResourceNotificationByUsers(final Document resource, final Set<String> userIds, final String event) {
+      sendNotificationByUsers(resource, userIds, event);
+   }
+
+   private void sendNotificationByUsers(final Object resource, final Set<String> userIds, final String event) {
       sendNotificationsBatch(userIds.stream()
                                     .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
                                     .map(userId ->

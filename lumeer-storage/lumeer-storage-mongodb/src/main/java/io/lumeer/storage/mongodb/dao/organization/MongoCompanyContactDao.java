@@ -20,6 +20,7 @@ package io.lumeer.storage.mongodb.dao.organization;
 
 import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
+import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.CompanyContactCodec;
@@ -36,6 +37,8 @@ import org.bson.Document;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -44,6 +47,9 @@ import javax.enterprise.context.ApplicationScoped;
 public class MongoCompanyContactDao extends SystemScopedDao implements CompanyContactDao {
 
    public static final String COMPANY_CONTACT_COLLECTION = "companyContact";
+
+   @Inject
+   private Event<UpdateCompanyContact> updateCompanyContactEvent;
 
    @PostConstruct
    public void initCollection() {
@@ -60,7 +66,10 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
       final FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.AFTER);
       try {
          companyContact.setOrganizationId(organization.getId());
-         return databaseCollection().findOneAndReplace(MongoFilters.companyOrganizationIdFilter(organization.getId()), companyContact, options);
+         final CompanyContact updatedCompanyContact = databaseCollection().findOneAndReplace(MongoFilters.companyOrganizationIdFilter(organization.getId()), companyContact, options);
+         updateCompanyContactEvent.fire(new UpdateCompanyContact(updatedCompanyContact));
+
+         return updatedCompanyContact;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update company contact " + companyContact, ex);
       }
