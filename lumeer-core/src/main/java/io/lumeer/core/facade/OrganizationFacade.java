@@ -194,6 +194,7 @@ public class OrganizationFacade extends AbstractFacade {
                          .filter(permission -> permission.getRoles().contains(Role.MANAGE))
                          .map(permission -> permission.getId())
                          .collect(Collectors.toSet());
+      // TODO merge with managers from permission groups
    }
 
    private void createOrganizationInUser(final String organizationId) {
