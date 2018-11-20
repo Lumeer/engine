@@ -45,7 +45,11 @@ import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 
+import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import org.marvec.pusher.Pusher;
 import org.marvec.pusher.data.Event;
 
@@ -78,7 +82,7 @@ public class PusherFacade {
 
    private Pusher pusher = null;
 
-   private ObjectMapper mapper = new ObjectMapper();
+   private ObjectMapper mapper;
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
@@ -109,6 +113,13 @@ public class PusherFacade {
          pusher = new Pusher(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET);
          pusher.setCluster(PUSHER_CLUSTER);
          pusher.setEncrypted(true);
+
+         mapper = new ObjectMapper();
+         AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
+         AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
+         AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
+         mapper.setAnnotationIntrospector(pair);
+
          pusher.setDataMarshaller(o -> {
             StringWriter sw = new StringWriter();
             try {
@@ -274,10 +285,10 @@ public class PusherFacade {
       sendNotificationsBatch(userIds.stream()
                                     .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
                                     .map(userId ->
-            new Event(
-                  PRIVATE_CHANNEL_PREFIX + userId,
-                  resource.getClass().getSimpleName() + event,
-                  resource))
+                                          new Event(
+                                                PRIVATE_CHANNEL_PREFIX + userId,
+                                                resource.getClass().getSimpleName() + event,
+                                                resource))
                                     .collect(Collectors.toList()));
    }
 
@@ -285,26 +296,26 @@ public class PusherFacade {
       linkTypeFacade.getLinkTypeCollections(linkTypeId).stream().map(collectionFacade::getUsersIdsWithAccess)
                     .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
                     .forEach(userIds ->
-            sendNotificationsBatch(userIds.stream().map(userId ->
-                  new Event(
-                        PRIVATE_CHANNEL_PREFIX + userId,
-                        LinkInstance.class.getSimpleName() + event,
-                        linkInstance))
-                                          .collect(Collectors.toList()))
-      );
+                          sendNotificationsBatch(userIds.stream().map(userId ->
+                                new Event(
+                                      PRIVATE_CHANNEL_PREFIX + userId,
+                                      LinkInstance.class.getSimpleName() + event,
+                                      linkInstance))
+                                                        .collect(Collectors.toList()))
+                    );
    }
 
    private void sendResourceNotificationByLinkType(final LinkType linkType, final String event) {
       linkType.getCollectionIds().stream().map(collectionFacade::getUsersIdsWithAccess)
               .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
               .forEach(userIds ->
-            sendNotificationsBatch(userIds.stream().map(userId ->
-                  new Event(
-                        PRIVATE_CHANNEL_PREFIX + userId,
-                        LinkInstance.class.getSimpleName() + event,
-                        linkType))
-                                          .collect(Collectors.toList()))
-      );
+                    sendNotificationsBatch(userIds.stream().map(userId ->
+                          new Event(
+                                PRIVATE_CHANNEL_PREFIX + userId,
+                                LinkInstance.class.getSimpleName() + event,
+                                linkType))
+                                                  .collect(Collectors.toList()))
+              );
    }
 
    private void sendNotification(final String userId, final String event, final Object message) {
