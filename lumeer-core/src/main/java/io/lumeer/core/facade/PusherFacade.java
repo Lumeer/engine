@@ -254,7 +254,7 @@ public class PusherFacade {
    public void updateServiceLimits(@Observes final UpdateServiceLimits updateServiceLimits) {
       if (isEnabled()) {
          sendNotificationByUsers(
-               updateServiceLimits.getServiceLimits(),
+               new EntityWithOrganizationId(updateServiceLimits.getOrganization().getId(), updateServiceLimits.getServiceLimits()),
                organizationFacade.getOrganizationManagers(updateServiceLimits.getOrganization()),
                UPDATE_EVENT_SUFFIX);
       }
@@ -263,7 +263,7 @@ public class PusherFacade {
    public void createOrUpdatePayment(@Observes final CreateOrUpdatePayment createOrUpdatePayment) {
       if (isEnabled()) {
          sendNotificationByUsers(
-               createOrUpdatePayment.getPayment(),
+               new EntityWithOrganizationId(createOrUpdatePayment.getOrganization().getId(), createOrUpdatePayment.getPayment()),
                organizationFacade.getOrganizationManagers(createOrUpdatePayment.getOrganization()),
                UPDATE_EVENT_SUFFIX);
       }
@@ -412,6 +412,24 @@ public class PusherFacade {
 
       public String getParentId() {
          return parentId;
+      }
+   }
+
+   public static final class EntityWithOrganizationId {
+      private final String organizationId;
+      private final Object entity;
+
+      public EntityWithOrganizationId(final String organizationId, final Object entity) {
+         this.organizationId = organizationId;
+         this.entity = entity;
+      }
+
+      public String getOrganizationId() {
+         return organizationId;
+      }
+
+      public Object getEntity() {
+         return entity;
       }
    }
 }
