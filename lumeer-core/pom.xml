@@ -118,8 +118,8 @@
          <artifactId>json-simple</artifactId>
       </dependency>
       <dependency>
-         <groupId>com.pusher</groupId>
-         <artifactId>pusher-http-java</artifactId>
+         <groupId>org.marvec</groupId>
+         <artifactId>pusher</artifactId>
       </dependency>
 
    </dependencies>

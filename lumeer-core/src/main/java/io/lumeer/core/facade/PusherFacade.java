@@ -45,9 +45,12 @@ import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 
-import com.pusher.rest.Pusher;
-import com.pusher.rest.data.Event;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.marvec.pusher.Pusher;
+import org.marvec.pusher.data.Event;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -74,6 +77,8 @@ public class PusherFacade {
    private String PUSHER_CLUSTER;
 
    private Pusher pusher = null;
+
+   private ObjectMapper mapper = new ObjectMapper();
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
@@ -104,6 +109,15 @@ public class PusherFacade {
          pusher = new Pusher(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET);
          pusher.setCluster(PUSHER_CLUSTER);
          pusher.setEncrypted(true);
+         pusher.setDataMarshaller(o -> {
+            StringWriter sw = new StringWriter();
+            try {
+               mapper.writeValue(sw, o);
+               return sw.toString();
+            } catch (IOException e) {
+               return null;
+            }
+         });
       }
    }
 
