@@ -148,6 +148,11 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
 
    @Override
    public Project updateProject(final String projectId, final Project project) {
+      return updateProject(projectId, project, null);
+   }
+
+   @Override
+   public Project updateProject(final String projectId, final Project project, final Project originalProject) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
@@ -155,6 +160,8 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
          if (updatedProject == null) {
             throw new StorageException("Project '" + projectId + "' has not been updated.");
          }
+
+         checkRemovedPermissions(originalProject, updatedProject);
          updateResourceEvent.fire(new UpdateResource(updatedProject));
          return updatedProject;
       } catch (MongoException ex) {

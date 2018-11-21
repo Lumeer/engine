@@ -16,25 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.system;
+package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.storage.mongodb.dao.MongoDao;
+import io.lumeer.api.model.common.Resource;
 
-import com.mongodb.client.MongoDatabase;
+import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public class RemoveResourcePermissions extends ResourceEvent {
 
-public abstract class SystemScopedDao extends MongoDao {
+   private Set<String> removedUsers;
 
-   @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
+   public RemoveResourcePermissions(final Resource resource, final Set<String> removedUsers) {
+      super(resource);
+      this.removedUsers = removedUsers;
+   }
 
-   @PostConstruct
-   public void init() {
-      this.database = (MongoDatabase) dataStorage.getDatabase();
+   public Set<String> getRemovedUsers() {
+      return removedUsers;
    }
 }

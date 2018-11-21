@@ -41,6 +41,7 @@ import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.RemoveResourcePermissions;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
@@ -169,6 +170,14 @@ public class PusherFacade {
    public void removeResource(@Observes final RemoveResource removeResource) {
       if (isEnabled()) {
          processResource(removeResource.getResource(), REMOVE_EVENT_SUFFIX);
+      }
+   }
+
+   public void removeResourcePermissions(@Observes final RemoveResourcePermissions removeResourcePermissions) {
+      if (isEnabled()) {
+         sendNotificationByUsers(removeResourcePermissions.getResource(),
+               removeResourcePermissions.getRemovedUsers(),
+               REMOVE_EVENT_SUFFIX);
       }
    }
 

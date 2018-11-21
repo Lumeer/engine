@@ -148,6 +148,11 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
 
    @Override
    public Organization updateOrganization(final String organizationId, final Organization organization) {
+      return updateOrganization(organizationId, organization, null);
+   }
+
+   @Override
+   public Organization updateOrganization(final String organizationId, final Organization organization, final Organization originalOrganization) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
@@ -155,6 +160,8 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
          if (updatedOrganization == null) {
             throw new StorageException("Organization '" + organizationId + "' has not been updated.");
          }
+
+         checkRemovedPermissions(originalOrganization, updatedOrganization);
          updateResourceEvent.fire(new UpdateResource(updatedOrganization));
          return updatedOrganization;
       } catch (MongoException ex) {

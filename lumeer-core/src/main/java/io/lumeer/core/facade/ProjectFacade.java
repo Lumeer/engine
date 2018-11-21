@@ -150,8 +150,9 @@ public class ProjectFacade extends AbstractFacade {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
+      final Project originalProject = project.copy();
       project.getPermissions().updateUserPermissions(userPermissions);
-      projectDao.updateProject(project.getId(), project);
+      projectDao.updateProject(project.getId(), project, originalProject);
       workspaceCache.updateProject(projectCode, project);
 
       return project.getPermissions().getUserPermissions();

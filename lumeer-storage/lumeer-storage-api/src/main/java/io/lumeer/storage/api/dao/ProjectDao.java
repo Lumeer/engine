@@ -49,4 +49,6 @@ public interface ProjectDao {
 
    Project updateProject(String projectId, Project project);
 
+   Project updateProject(String projectId, Project project, Project originalProject);
+
 }
