@@ -11,7 +11,6 @@ import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
 
@@ -28,7 +27,9 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -105,8 +106,8 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public void deleteLinkTypes(final SearchQuery query) {
-      databaseCollection().deleteMany(linkTypesFilter(query));
+   public void deleteLinkTypesByCollectionId(final String collectionId) {
+      databaseCollection().deleteMany(collectionIdFilter(collectionId));
    }
 
    @Override
@@ -119,8 +120,20 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public List<LinkType> getLinkTypes(final SearchQuery query) {
-      return databaseCollection().find(linkTypesFilter(query)).into(new ArrayList<>());
+   public List<LinkType> getAllLinkTypes() {
+      return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkType> getLinkTypesByCollectionId(final String collectionId) {
+      return databaseCollection().find(collectionIdFilter(collectionId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkType> getLinkTypesByIds(final Set<String> ids) {
+      List<ObjectId> objectIds = ids.stream().map(ObjectId::new).collect(Collectors.toList());
+      Bson filter = Filters.in(LinkTypeCodec.ID, objectIds);
+      return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override
@@ -142,18 +155,8 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
       return Filters.regex(LinkTypeCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
    }
 
-   private Bson linkTypesFilter(final SearchQuery query) {
-      List<Bson> filters = new ArrayList<>();
-      if (query.isLinkTypeIdsQuery()) {
-         List<ObjectId> ids = query.getLinkTypeIds().stream().filter(ObjectId::isValid).map(ObjectId::new).collect(Collectors.toList());
-         if (!ids.isEmpty()) {
-            filters.add(Filters.in(LinkTypeCodec.ID, ids));
-         }
-      }
-      if (query.isCollectionIdsQuery()) {
-         filters.add(Filters.in(LinkTypeCodec.COLLECTION_IDS, query.getCollectionIds()));
-      }
-      return filters.size() > 0 ? Filters.and(filters) : new Document();
+   private Bson collectionIdFilter(String collectionId) {
+      return Filters.in(LinkTypeCodec.COLLECTION_IDS, Collections.singletonList(collectionId));
    }
 
    private String databaseCollectionName(Project project) {

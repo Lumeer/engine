@@ -23,8 +23,10 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -38,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -129,10 +132,7 @@ public class ViewFacade extends AbstractFacade {
       return viewDao.getViews(searchQuery).stream()
                     .filter(view -> permissionsChecker.hasRole(view, Role.READ))
                     .map(this::checkAuthorId)
-                    .map(view -> {
-                       view.setAuthorRights(getViewAuthorRights(view));
-                       return view;
-                    })
+                    .peek(view -> view.setAuthorRights(getViewAuthorRights(view)))
                     .map(this::mapResource)
                     .collect(Collectors.toList());
    }
@@ -195,30 +195,21 @@ public class ViewFacade extends AbstractFacade {
    public List<Collection> getViewsCollections() {
       final Set<Collection> collections = new HashSet<>();
 
-      getViews().forEach(view -> {
-         collections.addAll(searchFacade.searchCollectionsByView(view, false));
-      });
+      getViews().forEach(view -> collections.addAll(searchFacade.searchCollectionsByView(view, false)));
 
       return new ArrayList<>(collections);
    }
 
    public List<LinkType> getViewsLinkTypes() {
-      final Set<LinkType> linkTypes = new HashSet<>();
+      Set<String> linkTypesIds = getViews().stream().map(view -> view.getQuery().getLinkTypeIds())
+                                           .flatMap(java.util.Collection::stream)
+                                           .collect(Collectors.toSet());
 
-      getViews().forEach(view ->
-            view.getQuery().getLinkTypeIds().stream()
-                .map(linkTypeDao::getLinkType)
-                .filter(linkType -> linkType.getCollectionIds().stream()
-                     .allMatch(collectionId ->
-                           permissionsChecker.hasRoleWithView(
-                                 collectionDao.getCollectionById(collectionId), Role.READ, Role.READ, view.getCode()))
-                ).forEach(linkTypes::add));
-
-      return new ArrayList<>(linkTypes);
+      return linkTypeDao.getLinkTypesByIds(linkTypesIds);
    }
 
    public Map<String, Set<Role>> getViewAuthorRights(final View view) {
       return searchFacade.searchCollectionsByView(view, true).stream()
-            .collect(Collectors.toMap(c -> c.getId(), c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
+                         .collect(Collectors.toMap(Resource::getId, c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
    }
 }

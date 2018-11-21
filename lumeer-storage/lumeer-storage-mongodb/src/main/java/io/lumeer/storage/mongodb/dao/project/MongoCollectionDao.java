@@ -145,6 +145,12 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       return searchCollectionsByFilter(filter, query);
    }
 
+   @Override
+   public List<Collection> getCollections(final DatabaseQuery query) {
+      Bson filter = MongoFilters.permissionsFilter(query);
+      return searchCollectionsByFilter(filter, query);
+   }
+
    private Bson collectionSearchQuery(SearchQuery query) {
       return query.isBasicQuery() ? createSimpleSearchQuery(query) : createAdvancedSearchQuery(query);
    }

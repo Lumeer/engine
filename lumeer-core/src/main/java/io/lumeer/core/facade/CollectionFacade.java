@@ -41,7 +41,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.SearchQuery;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -120,11 +119,10 @@ public class CollectionFacade extends AbstractFacade {
       documentDao.deleteDocuments(collectionId);
       dataDao.deleteDataRepository(collectionId);
 
-      SearchQuery queryLinkTypes = createQueryForLinkTypes(collectionId);
-      List<LinkType> linkTypes = linkTypeDao.getLinkTypes(queryLinkTypes);
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByCollectionId(collectionId);
       if (!linkTypes.isEmpty()) {
-         linkTypeDao.deleteLinkTypes(queryLinkTypes);
-         linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(linkTypes));
+         linkTypeDao.deleteLinkTypesByCollectionId(collectionId);
+         linkInstanceDao.deleteLinkInstancesByLinkTypesIds(linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet()));
       }
 
       favoriteItemDao.removeFavoriteCollectionFromUsers(getCurrentProject().getId(), collectionId);
@@ -210,7 +208,7 @@ public class CollectionFacade extends AbstractFacade {
 
    private Integer getFreeAttributeNum(final Collection collection) {
       final AtomicInteger last = new AtomicInteger(Math.max(1, collection.getLastAttributeNum()));
-      while (collection.getAttributes().stream().filter(attribute -> attribute.getId().equals(Collection.ATTRIBUTE_PREFIX + last.get())).count() > 0) {
+      while (collection.getAttributes().stream().anyMatch(attribute -> attribute.getId().equals(Collection.ATTRIBUTE_PREFIX + last.get()))) {
          last.incrementAndGet();
       }
 
@@ -320,11 +318,11 @@ public class CollectionFacade extends AbstractFacade {
              });
 
       viewDao.getViewsByCollectionIds(Collections.singletonList(collection.getId())).stream()
-            .map(Resource::getPermissions)
-            .map(Permissions::getUserPermissions)
-            .forEach(permissions -> {
-               result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
-            });
+             .map(Resource::getPermissions)
+             .map(Permissions::getUserPermissions)
+             .forEach(permissions -> {
+                result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
+             });
 
       // TODO: Handle user groups as well
 
@@ -367,24 +365,6 @@ public class CollectionFacade extends AbstractFacade {
    private String generateCollectionCode(String collectionName) {
       Set<String> existingCodes = collectionDao.getAllCollectionCodes();
       return CodeGenerator.generate(existingCodes, collectionName);
-   }
-
-   private SearchQuery createQueryForLinkTypes(String collectionId) {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      return SearchQuery.createBuilder(user).groups(groups)
-                        .collectionIds(Collections.singleton(collectionId))
-                        .build();
-   }
-
-   private SearchQuery createQueryForLinkInstances(List<LinkType> linkTypes) {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      return SearchQuery.createBuilder(user).groups(groups)
-                        .linkTypeIds(linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet()))
-                        .build();
    }
 
 }

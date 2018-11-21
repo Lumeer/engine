@@ -20,7 +20,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Query2;
 import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
@@ -80,7 +80,7 @@ public class LinkInstanceService extends AbstractService {
    @POST
    @Path("search")
    @QueryProcessor
-   public List<LinkInstance> getLinkInstances(Query query) {
+   public List<LinkInstance> getLinkInstances(Query2 query) {
       return linkInstanceFacade.getLinkInstances(query);
    }
 

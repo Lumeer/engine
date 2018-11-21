@@ -31,12 +31,14 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.StorageException;
 
 import org.jboss.arquillian.junit.Arquillian;
@@ -47,7 +49,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -87,6 +88,8 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
    private static final String LINK_TYPES_URL = SERVER_URL + LINK_TYPES_PATH;
 
    private List<String> collectionIds = new ArrayList<>();
+   private String collectionIdNoPerm;
+   private String linkTypeIdFromView;
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -102,6 +105,9 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private ViewDao viewDao;
 
    @Before
    public void configureLinkTypes() {
@@ -134,16 +140,28 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       collectionDao.setProject(storedProject);
       linkTypeDao.setProject(storedProject);
+      viewDao.setProject(storedProject);
 
       collectionIds.clear();
 
+      Permissions userPermissions = new Permissions();
+      userPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+
       for (String name : COLLECTION_NAMES) {
-         Permissions collectionPermissions = new Permissions();
-         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-         Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-         jsonCollection.setDocumentsCount(0);
-         collectionIds.add(collectionDao.createCollection(jsonCollection).getId());
+         Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, userPermissions);
+         collection.setDocumentsCount(0);
+         collectionIds.add(collectionDao.createCollection(collection).getId());
       }
+
+      Collection collection = new Collection("noPerm", "noPerm", COLLECTION_ICON, COLLECTION_COLOR, new Permissions());
+      collectionIdNoPerm = collectionDao.createCollection(collection).getId();
+
+      LinkType linkType = prepareLinkType();
+      linkType.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(1)));
+      linkTypeIdFromView = linkTypeDao.createLinkType(linkType).getId();
+
+      View view = new View("code", "name", "", "", "", userPermissions, new Query(Collections.singleton(collectionIds.get(0)), Collections.singleton(linkTypeIdFromView), Collections.emptySet()), "perspective", "", createdUser.getId());
+      viewDao.createView(view);
    }
 
    @Test
@@ -215,11 +233,11 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   public void testGetLinkTypesByCollectionIds() {
+   public void testGetLinkTypes() {
       String id1 = linkTypeDao.createLinkType(prepareLinkType()).getId();
 
       LinkType linkType2 = prepareLinkType();
-      linkType2.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
+      linkType2.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(2)));
       linkTypeDao.createLinkType(linkType2);
 
       LinkType linkType3 = prepareLinkType();
@@ -230,11 +248,9 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       linkType4.setCollectionIds(Arrays.asList(collectionIds.get(0), collectionIds.get(2)));
       String id4 = linkTypeDao.createLinkType(linkType4).getId();
 
-      Query jsonQuery = new Query(Collections.singleton(collectionIds.get(0)), null, null);
-      Entity entity = Entity.json(jsonQuery);
-      Response response = client.target(LINK_TYPES_URL).path("search")
+      Response response = client.target(LINK_TYPES_URL)
                                 .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity).invoke();
+                                .buildGet().invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -243,36 +259,18 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3, id4));
 
-   }
-
-   @Test
-   public void testGetLinkTypesByIds() {
-      String id1 = linkTypeDao.createLinkType(prepareLinkType()).getId();
-
-      LinkType linkType2 = prepareLinkType();
-      linkType2.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
-      linkTypeDao.createLinkType(linkType2);
-
-      LinkType linkType3 = prepareLinkType();
-      linkType3.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(0)));
-      String id3 = linkTypeDao.createLinkType(linkType3).getId();
-
-      LinkType linkType4 = prepareLinkType();
-      linkType4.setCollectionIds(Arrays.asList(collectionIds.get(0), collectionIds.get(2)));
-      linkTypeDao.createLinkType(linkType4);
-
-      Query jsonQuery = new Query(null, new HashSet<>(Arrays.asList(id1, id3)), null);
-      Entity entity = Entity.json(jsonQuery);
-      Response response = client.target(LINK_TYPES_URL).path("search")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity).invoke();
+      // test fromViews
+      response = client.target(LINK_TYPES_URL)
+                       .queryParam("fromViews", true)
+                       .request(MediaType.APPLICATION_JSON)
+                       .buildGet().invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<LinkType> linkTypes = response.readEntity(new GenericType<List<LinkType>>() {
+      linkTypes = response.readEntity(new GenericType<List<LinkType>>() {
       });
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
+      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3, id4, linkTypeIdFromView));
 
    }
 

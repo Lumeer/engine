@@ -18,10 +18,14 @@
  */
 package io.lumeer.remote.rest.interceptor;
 
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Query2;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -60,13 +64,32 @@ public class QueryProcessorInterceptor {
       }
    }
 
+   private void processQuery(final Query2 query) {
+      for (QueryStem stem : query.getStems()) {
+         final List<AttributeFilter> newFilters = stem.getFilters().stream().map(this::processFilter).collect(Collectors.toList());
+         stem.getFilters().clear();
+         stem.getFilters().addAll(newFilters);
+      }
+   }
+
+   private AttributeFilter processFilter(final AttributeFilter filter) {
+      if (filter.getValue().equals(USER_EMAIL)) {
+         String userEmail = authenticatedUser.getUserEmail();
+         return new AttributeFilter(filter.getAttributeId(), filter.getOperator(), userEmail);
+      }
+      return filter;
+   }
+
    @AroundInvoke
    public Object processQueries(InvocationContext context) throws Exception {
       Object[] params = context.getParameters();
 
-      for (final Object param: params) {
+      for (final Object param : params) {
          if (param instanceof Query) {
             processQuery((Query) param);
+         }
+         if (param instanceof Query2) {
+            processQuery((Query2) param);
          }
       }
 

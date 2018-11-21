@@ -21,10 +21,10 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 
 import java.util.List;
+import java.util.Set;
 
 public interface LinkTypeDao {
 
@@ -40,11 +40,15 @@ public interface LinkTypeDao {
 
    void deleteLinkType(String id);
 
-   void deleteLinkTypes(SearchQuery query);
+   void deleteLinkTypesByCollectionId(String collectionId);
 
    LinkType getLinkType(String id);
 
-   List<LinkType> getLinkTypes(SearchQuery query);
+   List<LinkType> getAllLinkTypes();
+
+   List<LinkType> getLinkTypesByCollectionId(String collectionId);
+
+   List<LinkType> getLinkTypesByIds(Set<String> ids);
 
    List<LinkType> getLinkTypes(SuggestionQuery query);
 

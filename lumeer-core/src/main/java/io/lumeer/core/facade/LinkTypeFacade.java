@@ -21,16 +21,16 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -72,8 +72,12 @@ public class LinkTypeFacade extends AbstractFacade {
       return linkTypeDao.getLinkType(linkTypeId).getCollectionIds();
    }
 
-   public List<LinkType> getLinkTypes(Query query) {
-      return linkTypeDao.getLinkTypes(createSearchQuery(query));
+   public List<LinkType> getLinkTypes() {
+      List<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
+                                                       .map(Collection::getId).collect(Collectors.toList());
+      return linkTypeDao.getAllLinkTypes().stream()
+                        .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
+                        .collect(Collectors.toList());
    }
 
    public List<LinkType> getLinkTypesByCollectionId(final String collectionId) {
@@ -87,14 +91,12 @@ public class LinkTypeFacade extends AbstractFacade {
       }
    }
 
-   private SearchQuery createSearchQuery(Query query) {
+   private DatabaseQuery createCollectionsQuery() {
       String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
-      return SearchQuery.createBuilder(user).groups(groups)
-                        .collectionIds(query.getCollectionIds())
-                        .linkTypeIds(query.getLinkTypeIds())
-                        .build();
+      return DatabaseQuery.createBuilder(user).groups(groups)
+                          .build();
    }
 
 }

@@ -26,7 +26,6 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -66,9 +65,6 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
-
-   @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
 
    public Document createDocument(String collectionId, Document document) {
       Collection collection = collectionDao.getCollectionById(collectionId);
@@ -193,7 +189,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private void deleteDocumentBasedData(String collectionId, String documentId) {
-      linkInstanceDao.deleteLinkInstances(createQueryForLinkInstances(documentId));
+      linkInstanceDao.deleteLinkInstancesByDocumentsIds(Collections.singleton(documentId));
       favoriteItemDao.removeFavoriteDocumentFromUsers(getCurrentProject().getId(), collectionId, documentId);
    }
 
@@ -293,12 +289,4 @@ public class DocumentFacade extends AbstractFacade {
       return documents;
    }
 
-   private SearchQuery createQueryForLinkInstances(String documentId) {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      return SearchQuery.createBuilder(user).groups(groups)
-                        .documentIds(Collections.singleton(documentId))
-                        .build();
-   }
 }
