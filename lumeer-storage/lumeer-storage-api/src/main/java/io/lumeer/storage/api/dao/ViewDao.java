@@ -36,6 +36,8 @@ public interface ViewDao {
 
    View updateView(String id, View view);
 
+   View updateView(String id, View view, View originalView);
+
    void deleteView(String id);
 
    View getViewByCode(String code);

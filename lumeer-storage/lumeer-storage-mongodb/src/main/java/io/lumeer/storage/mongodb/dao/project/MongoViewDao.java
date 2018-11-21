@@ -103,6 +103,11 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public View updateView(final String id, final View view) {
+      return updateView(id, view, null);
+   }
+
+   @Override
+   public View updateView(final String id, final View view, final View originalView) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
@@ -110,6 +115,8 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
          if (updatedView == null) {
             throw new StorageException("View '" + id + "' has not been updated.");
          }
+
+         checkRemovedPermissions(originalView, updatedView);
          updateResourceEvent.fire(new UpdateResource(updatedView));
          return updatedView;
       } catch (MongoException ex) {

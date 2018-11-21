@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -175,9 +176,15 @@ public class PusherFacade {
 
    public void removeResourcePermissions(@Observes final RemoveResourcePermissions removeResourcePermissions) {
       if (isEnabled()) {
-         sendNotificationByUsers(removeResourcePermissions.getResource(),
-               removeResourcePermissions.getRemovedUsers(),
-               REMOVE_EVENT_SUFFIX);
+         if (removeResourcePermissions.getResource() instanceof View) {
+            sendNotificationOfViewByUsers(removeResourcePermissions.getResource(),
+                  removeResourcePermissions.getRemovedUsers(),
+                  REMOVE_EVENT_SUFFIX);
+         } else {
+            sendNotificationByUsers(removeResourcePermissions.getResource(),
+                  removeResourcePermissions.getRemovedUsers(),
+                  REMOVE_EVENT_SUFFIX);
+         }
       }
    }
 
@@ -278,7 +285,6 @@ public class PusherFacade {
       }
    }
 
-
    private void processResource(final Resource resource, final String event) {
       if (resource instanceof Organization
             || resource instanceof View) {
@@ -325,6 +331,17 @@ public class PusherFacade {
                                     .collect(Collectors.toList()));
    }
 
+   private void sendNotificationOfViewByUsers(final Resource resource, final Set<String> userIds, final String event) {
+      sendNotificationsBatch(userIds.stream()
+                                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
+                                    .map(userId ->
+                                          new Event(
+                                                PRIVATE_CHANNEL_PREFIX + userId,
+                                                resource.getClass().getSimpleName() + event,
+                                                resource instanceof View ? new ResourceId(resource.getCode()) : resource))
+                                    .collect(Collectors.toList()));
+   }
+
    private void sendResourceNotificationByUsers(final Document resource, final Set<String> userIds, final String event) {
       sendNotificationByUsers(resource, userIds, event);
    }
@@ -335,35 +352,45 @@ public class PusherFacade {
                                     .map(userId ->
                                           new Event(
                                                 PRIVATE_CHANNEL_PREFIX + userId,
-                                                resource.getClass().getSimpleName() + event,
+                                                (resource instanceof EntityWithOrganizationId ? ((EntityWithOrganizationId) resource).entity.getClass().getSimpleName() : resource.getClass().getSimpleName()) + event,
                                                 resource))
                                     .collect(Collectors.toList()));
    }
 
    private void sendResourceNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
-      linkTypeFacade.getLinkTypeCollections(linkTypeId).stream().map(collectionFacade::getUsersIdsWithAccess)
-                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
-                    .forEach(userIds ->
-                          sendNotificationsBatch(userIds.stream().map(userId ->
-                                new Event(
-                                      PRIVATE_CHANNEL_PREFIX + userId,
-                                      LinkInstance.class.getSimpleName() + event,
-                                      linkInstance))
-                                                        .collect(Collectors.toList()))
-                    );
+      sendNotificationsBatch(
+            linkTypeFacade
+                  .getLinkTypeCollections(linkTypeId)
+                  .stream()
+                  .map(collectionFacade::getUsersIdsWithAccess) // now we have several sets of user ids
+                  .flatMap(userIds -> Stream.of(userIds.toArray())) // map them to a single set to remove duplicates
+                  .collect(Collectors.toSet())
+                  .stream()
+                  .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
+                  .map(userId ->
+                        new Event(
+                              PRIVATE_CHANNEL_PREFIX + userId,
+                              LinkInstance.class.getSimpleName() + event,
+                              linkInstance))
+                  .collect(Collectors.toList()));
    }
 
    private void sendResourceNotificationByLinkType(final LinkType linkType, final String event) {
-      linkType.getCollectionIds().stream().map(collectionFacade::getUsersIdsWithAccess)
-              .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
-              .forEach(userIds ->
-                    sendNotificationsBatch(userIds.stream().map(userId ->
-                          new Event(
-                                PRIVATE_CHANNEL_PREFIX + userId,
-                                LinkInstance.class.getSimpleName() + event,
-                                linkType))
-                                                  .collect(Collectors.toList()))
-              );
+      sendNotificationsBatch(
+            linkType
+                  .getCollectionIds()
+                  .stream()
+                  .map(collectionFacade::getUsersIdsWithAccess) // now we have several sets of user ids
+                  .flatMap(userIds -> Stream.of(userIds.toArray())) // map them to a single set to remove duplicates
+                  .collect(Collectors.toSet())
+                  .stream()
+                  .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
+                  .map(userId ->
+                        new Event(
+                              PRIVATE_CHANNEL_PREFIX + userId,
+                              LinkType.class.getSimpleName() + event,
+                              linkType))
+                  .collect(Collectors.toList()));
    }
 
    private void sendNotification(final String userId, final String event, final Object message) {
