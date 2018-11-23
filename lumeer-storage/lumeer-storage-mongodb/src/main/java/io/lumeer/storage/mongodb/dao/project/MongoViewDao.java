@@ -94,7 +94,9 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    public View createView(final View view) {
       try {
          databaseCollection().insertOne(view);
-         createResourceEvent.fire(new CreateResource(view));
+         if (createResourceEvent != null) {
+            createResourceEvent.fire(new CreateResource(view));
+         }
          return view;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create view: " + view, ex);
@@ -117,7 +119,9 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
          }
 
          checkRemovedPermissions(originalView, updatedView);
-         updateResourceEvent.fire(new UpdateResource(updatedView));
+         if (updateResourceEvent != null) {
+            updateResourceEvent.fire(new UpdateResource(updatedView));
+         }
          return updatedView;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update view: " + view, ex);
@@ -130,7 +134,9 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       if (view == null) {
          throw new StorageException("View '" + id + "' has not been deleted.");
       }
-      removeResourceEvent.fire(new RemoveResource(view));
+      if (removeResourceEvent != null) {
+         removeResourceEvent.fire(new RemoveResource(view));
+      }
    }
 
    @Override

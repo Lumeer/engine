@@ -66,7 +66,9 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
       try {
          databaseCollection().insertOne(linkInstance);
-         createLinkInstanceEvent.fire(new CreateLinkInstance(linkInstance));
+         if (createLinkInstanceEvent != null) {
+            createLinkInstanceEvent.fire(new CreateLinkInstance(linkInstance));
+         }
          return linkInstance;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create link instance: " + linkInstance, ex);
@@ -81,7 +83,9 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
          if(updatedLinkInstance == null){
             throw new StorageException("Link instance '" + id + "' has not been updated.");
          }
-         updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstance));
+         if (updateLinkInstanceEvent != null) {
+            updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstance));
+         }
          return updatedLinkInstance;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update link instance: " + linkInstance, ex);
@@ -94,7 +98,9 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
       if(linkInstance == null) {
          throw new StorageException("Link instance '" + id + "' has not been deleted.");
       }
-      removeLinkInstanceEvent.fire(new RemoveLinkInstance(linkInstance));
+      if (removeLinkInstanceEvent != null) {
+         removeLinkInstanceEvent.fire(new RemoveLinkInstance(linkInstance));
+      }
    }
 
    @Override

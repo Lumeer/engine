@@ -82,7 +82,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    public Document createDocument(final Document document) {
       try {
          databaseCollection().insertOne(document);
-         createDocumentEvent.fire(new CreateDocument(document));
+         if (createDocumentEvent != null) {
+            createDocumentEvent.fire(new CreateDocument(document));
+         }
          return document;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create document: " + document, ex);
@@ -94,7 +96,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
       List<Document> jsonDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
       databaseCollection().insertMany(jsonDocuments);
 
-      documents.stream().forEach(document -> createDocumentEvent.fire(new CreateDocument(document)));
+      if (createDocumentEvent != null) {
+         documents.stream().forEach(document -> createDocumentEvent.fire(new CreateDocument(document)));
+      }
 
       return new ArrayList<>(jsonDocuments);
    }
@@ -110,7 +114,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
          }
          final Document updatedDocumentWithData = new Document(updatedDocument);
          updatedDocumentWithData.setData(document.getData());
-         updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData));
+         if (updatedDocument != null) {
+            updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData));
+         }
          return updatedDocument;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update document: " + document, ex);
@@ -123,7 +129,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
       if (document == null) {
          throw new StorageException("Document '" + id + "' has not been deleted.");
       }
-      removeDocumentEvent.fire(new RemoveDocument(document));
+      if (removeDocumentEvent != null) {
+         removeDocumentEvent.fire(new RemoveDocument(document));
+      }
    }
 
    @Override

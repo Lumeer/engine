@@ -94,7 +94,9 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
    public Project createProject(final Project project) {
       try {
          databaseCollection().insertOne(project);
-         createResourceEvent.fire(new CreateResource(project));
+         if (createResourceEvent != null) {
+            createResourceEvent.fire(new CreateResource(project));
+         }
          return project;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create project: " + project, ex);
@@ -143,7 +145,9 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
       if (project == null) {
          throw new StorageException("Project '" + projectId + "' has not been deleted.");
       }
-      removeResourceEvent.fire(new RemoveResource(project));
+      if (removeResourceEvent != null) {
+         removeResourceEvent.fire(new RemoveResource(project));
+      }
    }
 
    @Override
@@ -162,7 +166,9 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
          }
 
          checkRemovedPermissions(originalProject, updatedProject);
-         updateResourceEvent.fire(new UpdateResource(updatedProject));
+         if (updateResourceEvent != null) {
+            updateResourceEvent.fire(new UpdateResource(updatedProject));
+         }
          return updatedProject;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update project: " + project, ex);

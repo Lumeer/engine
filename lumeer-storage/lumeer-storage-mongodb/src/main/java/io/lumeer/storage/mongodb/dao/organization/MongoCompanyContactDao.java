@@ -67,7 +67,9 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
       try {
          companyContact.setOrganizationId(organization.getId());
          final CompanyContact updatedCompanyContact = databaseCollection().findOneAndReplace(MongoFilters.companyOrganizationIdFilter(organization.getId()), companyContact, options);
-         updateCompanyContactEvent.fire(new UpdateCompanyContact(updatedCompanyContact));
+         if (updateCompanyContactEvent != null) {
+            updateCompanyContactEvent.fire(new UpdateCompanyContact(updatedCompanyContact));
+         }
 
          return updatedCompanyContact;
       } catch (MongoException ex) {

@@ -62,7 +62,9 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
    public Payment createPayment(final Organization organization, final Payment payment) {
       try {
          databaseCollection(organization).insertOne(payment);
-         createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, payment));
+         if (createOrUpdatePaymentEvent != null) {
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, payment));
+         }
          return payment;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create payment " + payment, ex);
@@ -82,7 +84,9 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + id + "' has not been updated.");
          }
-         createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
+         if (createOrUpdatePaymentEvent != null) {
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
+         }
          return returnedPayment;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update payment " + payment, ex);
@@ -97,7 +101,9 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + payment.getPaymentId() + "' has not been updated.");
          }
-         createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
+         if (createOrUpdatePaymentEvent != null) {
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
+         }
          return returnedPayment;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update payment " + payment, ex);

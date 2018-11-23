@@ -74,7 +74,9 @@ public class WorkspaceKeeper implements SelectedWorkspace {
    public void setServiceLimits(final Organization organization, final ServiceLimits serviceLimits) {
       if (organization != null) {
          workspaceCache.setServiceLimits(organization.getCode(), serviceLimits);
-         updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, serviceLimits));
+         if (updateServiceLimitsEvent != null) {
+            updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, serviceLimits));
+         }
       }
    }
 

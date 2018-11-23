@@ -91,7 +91,9 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
    public Organization createOrganization(final Organization organization) {
       try {
          databaseCollection().insertOne(organization);
-         createResourceEvent.fire(new CreateResource(organization));
+         if (createResourceEvent != null) {
+            createResourceEvent.fire(new CreateResource(organization));
+         }
          return organization;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create organization: " + organization, ex);
@@ -143,7 +145,9 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
       if (organization == null) {
          throw new StorageException("Organization '" + organizationId + "' has not been deleted.");
       }
-      removeResourceEvent.fire(new RemoveResource(organization));
+      if (removeResourceEvent != null) {
+         removeResourceEvent.fire(new RemoveResource(organization));
+      }
    }
 
    @Override
@@ -162,7 +166,9 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
          }
 
          checkRemovedPermissions(originalOrganization, updatedOrganization);
-         updateResourceEvent.fire(new UpdateResource(updatedOrganization));
+         if (updateResourceEvent != null) {
+            updateResourceEvent.fire(new UpdateResource(updatedOrganization));
+         }
          return updatedOrganization;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update organization: " + organization, ex);

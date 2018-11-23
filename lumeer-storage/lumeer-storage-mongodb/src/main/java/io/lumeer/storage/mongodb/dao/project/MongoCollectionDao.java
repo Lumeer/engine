@@ -77,7 +77,9 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    public Collection createCollection(final Collection collection) {
       try {
          databaseCollection().insertOne(collection);
-         createResourceEvent.fire(new CreateResource(collection));
+         if (createResourceEvent != null) {
+            createResourceEvent.fire(new CreateResource(collection));
+         }
          return collection;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create collection: " + collection, ex);
@@ -93,7 +95,9 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
          if (updatedCollection == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }
-         updateResourceEvent.fire(new UpdateResource(updatedCollection));
+         if (updateResourceEvent != null) {
+            updateResourceEvent.fire(new UpdateResource(updatedCollection));
+         }
          return updatedCollection;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update collection: " + collection, ex);
@@ -106,7 +110,9 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       if (collection == null) {
          throw new StorageException("Collection '" + id + "' has not been deleted.");
       }
-      removeResourceEvent.fire(new RemoveResource(collection));
+      if (removeResourceEvent != null) {
+         removeResourceEvent.fire(new RemoveResource(collection));
+      }
    }
 
    @Override

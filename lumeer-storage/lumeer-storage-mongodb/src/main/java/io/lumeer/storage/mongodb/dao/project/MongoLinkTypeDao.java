@@ -67,7 +67,9 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    public LinkType createLinkType(final LinkType linkType) {
       try {
          databaseCollection().insertOne(linkType);
-         createLinkTypeEvent.fire(new CreateLinkType(linkType));
+         if (createLinkTypeEvent != null) {
+            createLinkTypeEvent.fire(new CreateLinkType(linkType));
+         }
          return linkType;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create link type: " + linkType, ex);
@@ -82,7 +84,9 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
          if (updatedLinkType == null) {
             throw new StorageException("Link type '" + id + "' has not been updated.");
          }
-         updateLinkTypeEvent.fire(new UpdateLinkType(updatedLinkType));
+         if (updateLinkTypeEvent != null) {
+            updateLinkTypeEvent.fire(new UpdateLinkType(updatedLinkType));
+         }
          return updatedLinkType;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update link type: " + linkType, ex);
@@ -95,7 +99,9 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
       if (linkType == null) {
          throw new StorageException("Link type '" + id + "' has not been deleted.");
       }
-      removeLinkTypeEvent.fire(new RemoveLinkType(linkType));
+      if (removeLinkTypeEvent != null) {
+         removeLinkTypeEvent.fire(new RemoveLinkType(linkType));
+      }
    }
 
    @Override
