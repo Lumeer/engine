@@ -114,7 +114,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
          }
          final Document updatedDocumentWithData = new Document(updatedDocument);
          updatedDocumentWithData.setData(document.getData());
-         if (updatedDocument != null) {
+         if (updateDocumentEvent != null) {
             updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData));
          }
          return updatedDocument;
