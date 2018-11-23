@@ -24,6 +24,9 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -40,7 +43,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -50,11 +52,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @ApplicationScoped
 public class MongoOrganizationDao extends SystemScopedDao implements OrganizationDao {
 
    public static final String COLLECTION_NAME = "organizations";
+
+   @Inject
+   private Event<CreateResource> createResourceEvent;
+
+   @Inject
+   private Event<UpdateResource> updateResourceEvent;
+
+   @Inject
+   private Event<RemoveResource> removeResourceEvent;
 
    @PostConstruct
    public void checkRepository() {
@@ -78,6 +91,9 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
    public Organization createOrganization(final Organization organization) {
       try {
          databaseCollection().insertOne(organization);
+         if (createResourceEvent != null) {
+            createResourceEvent.fire(new CreateResource(organization));
+         }
          return organization;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create organization: " + organization, ex);
@@ -125,20 +141,33 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
 
    @Override
    public void deleteOrganization(final String organizationId) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(organizationId));
-      if (result.getDeletedCount() != 1) {
+      final Organization organization = databaseCollection().findOneAndDelete(idFilter(organizationId));
+      if (organization == null) {
          throw new StorageException("Organization '" + organizationId + "' has not been deleted.");
+      }
+      if (removeResourceEvent != null) {
+         removeResourceEvent.fire(new RemoveResource(organization));
       }
    }
 
    @Override
    public Organization updateOrganization(final String organizationId, final Organization organization) {
+      return updateOrganization(organizationId, organization, null);
+   }
+
+   @Override
+   public Organization updateOrganization(final String organizationId, final Organization organization, final Organization originalOrganization) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
          Organization updatedOrganization = databaseCollection().findOneAndReplace(idFilter(organizationId), organization, options);
          if (updatedOrganization == null) {
             throw new StorageException("Organization '" + organizationId + "' has not been updated.");
+         }
+
+         checkRemovedPermissions(originalOrganization, updatedOrganization);
+         if (updateResourceEvent != null) {
+            updateResourceEvent.fire(new UpdateResource(updatedOrganization));
          }
          return updatedOrganization;
       } catch (MongoException ex) {

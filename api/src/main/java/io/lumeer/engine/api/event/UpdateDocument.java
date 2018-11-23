@@ -18,16 +18,16 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.api.model.Document;
 
 /**
- * CDI event that is sent when an {@link DataDocument} is updated.
+ * CDI event that is sent when an {@link Document} is updated.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class UpdateDocument extends DocumentEvent {
 
-   public UpdateDocument(final String collectionName, final DataDocument document) {
-      super(collectionName, document);
+   public UpdateDocument(final Document document) {
+      super(document);
    }
 }

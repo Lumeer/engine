@@ -40,4 +40,6 @@ public interface OrganizationDao {
 
    Organization updateOrganization(String organizationId, Organization organization);
 
+   Organization updateOrganization(String organizationId, Organization organization, Organization originalOrganization);
+
 }

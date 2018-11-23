@@ -53,6 +53,11 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String FRESHDESK_DOMAIN = "freshdesk_domain";
    public static final String FRESHDESK_APIKEY = "freshdesk_apikey";
 
+   public static final String PUSHER_APP_ID = "pusher_app_id";
+   public static final String PUSHER_KEY = "pusher_key";
+   public static final String PUSHER_SECRET = "pusher_secret";
+   public static final String PUSHER_CLUSTER = "pusher_cluster";
+
    public DefaultConfigurationProducer() {
       defaultConfiguration = new HashMap<>();
 

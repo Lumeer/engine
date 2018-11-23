@@ -120,6 +120,10 @@
          <scope>provided</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.marvec</groupId>
+         <artifactId>pusher</artifactId>
+      </dependency>
       <!-- Groovy -->
       <dependency>
          <groupId>org.codehaus.groovy</groupId>

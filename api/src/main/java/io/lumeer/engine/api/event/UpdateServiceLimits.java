@@ -16,39 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.query.DatabaseQuery;
+import io.lumeer.api.model.ServiceLimits;
 
-import java.util.List;
-import java.util.Set;
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public class UpdateServiceLimits {
 
-public interface ProjectDao {
+   private final Organization organization;
+   private final ServiceLimits serviceLimits;
 
-   void createProjectsRepository(Organization organization);
+   public UpdateServiceLimits(final Organization organization, final ServiceLimits serviceLimits) {
+      this.organization = organization;
+      this.serviceLimits = serviceLimits;
+   }
 
-   void deleteProjectsRepository(Organization organization);
+   public Organization getOrganization() {
+      return organization;
+   }
 
-   void setOrganization(Organization organization);
-
-   Set<String> getProjectsCodes();
-
-   Project createProject(Project project);
-
-   Project getProjectById(String projectId);
-
-   Project getProjectByCode(String projectCode);
-
-   List<Project> getProjects(DatabaseQuery query);
-
-   long getProjectsCount();
-
-   void deleteProject(String projectId);
-
-   Project updateProject(String projectId, Project project);
-
-   Project updateProject(String projectId, Project project, Project originalProject);
-
+   public ServiceLimits getServiceLimits() {
+      return serviceLimits;
+   }
 }

@@ -75,6 +75,24 @@ public class Collection extends Resource {
    }
 
    @Override
+   public Collection copy() {
+      final Collection o = new Collection(this.code, this.name, this.icon, this.color, new Permissions(this.getPermissions()));
+
+      o.id = this.id;
+      o.description = this.description;
+      o.nonRemovable = this.nonRemovable;
+      o.attributes = new HashSet<>(this.attributes);
+      o.documentsCount = this.documentsCount;
+      o.lastTimeUsed = this.lastTimeUsed;
+      o.defaultAttributeId = this.defaultAttributeId;
+      o.lastAttributeNum = this.lastAttributeNum;
+      o.favorite = this.favorite;
+
+      return o;
+   }
+
+
+   @Override
    public ResourceType getType() {
       return ResourceType.COLLECTION;
    }

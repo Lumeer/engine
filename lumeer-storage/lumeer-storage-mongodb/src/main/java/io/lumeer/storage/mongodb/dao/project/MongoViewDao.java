@@ -25,6 +25,9 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -45,7 +48,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -55,11 +57,22 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    private static final String PREFIX = "views_p-";
+
+   @Inject
+   private Event<CreateResource> createResourceEvent;
+
+   @Inject
+   private Event<UpdateResource> updateResourceEvent;
+
+   @Inject
+   private Event<RemoveResource> removeResourceEvent;
 
    @Override
    public void createViewsRepository(Project project) {
@@ -69,6 +82,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       projectCollection.createIndex(Indexes.ascending(ViewCodec.CODE), new IndexOptions().unique(true));
       projectCollection.createIndex(Indexes.ascending(ViewCodec.NAME), new IndexOptions().unique(true));
       projectCollection.createIndex(Indexes.text(ViewCodec.NAME));
+      projectCollection.createIndex(Indexes.ascending(ViewCodec.QUERY + "." + QueryCodec.LINK_TYPE_IDS));
    }
 
    @Override
@@ -80,6 +94,9 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    public View createView(final View view) {
       try {
          databaseCollection().insertOne(view);
+         if (createResourceEvent != null) {
+            createResourceEvent.fire(new CreateResource(view));
+         }
          return view;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create view: " + view, ex);
@@ -88,12 +105,22 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public View updateView(final String id, final View view) {
+      return updateView(id, view, null);
+   }
+
+   @Override
+   public View updateView(final String id, final View view, final View originalView) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
          View updatedView = databaseCollection().findOneAndReplace(idFilter(id), view, options);
          if (updatedView == null) {
             throw new StorageException("View '" + id + "' has not been updated.");
+         }
+
+         checkRemovedPermissions(originalView, updatedView);
+         if (updateResourceEvent != null) {
+            updateResourceEvent.fire(new UpdateResource(updatedView));
          }
          return updatedView;
       } catch (MongoException ex) {
@@ -103,9 +130,12 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public void deleteView(final String id) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(id));
-      if (result.getDeletedCount() != 1) {
+      final View view = databaseCollection().findOneAndDelete(idFilter(id));
+      if (view == null) {
          throw new StorageException("View '" + id + "' has not been deleted.");
+      }
+      if (removeResourceEvent != null) {
+         removeResourceEvent.fire(new RemoveResource(view));
       }
    }
 
@@ -132,6 +162,22 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    public List<View> getViews(final SuggestionQuery query) {
       FindIterable<View> findIterable = databaseCollection().find(suggestionsFilter(query));
       addPaginationToQuery(findIterable, query);
+      return findIterable.into(new ArrayList<>());
+   }
+
+   @Override
+   public List<View> getViewsByLinkTypeIds(final List<String> linkTypeIds) {
+      FindIterable<View> findIterable = databaseCollection().find(
+            Filters.in(ViewCodec.QUERY + "." + QueryCodec.LINK_TYPE_IDS, linkTypeIds)
+      );
+      return findIterable.into(new ArrayList<>());
+   }
+
+   @Override
+   public List<View> getViewsByCollectionIds(final List<String> collectionIds) {
+      FindIterable<View> findIterable = databaseCollection().find(
+            Filters.in(ViewCodec.QUERY + "." + QueryCodec.COLLECTION_IDS, collectionIds)
+      );
       return findIterable.into(new ArrayList<>());
    }
 

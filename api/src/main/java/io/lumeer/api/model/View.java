@@ -65,6 +65,27 @@ public class View extends Resource {
       this.authorId = authorId;
    }
 
+   @Override
+   public View copy() {
+      final View o = new View();
+
+      o.id = this.id;
+      o.code = this.code;
+      o.name = this.name;
+      o.icon = this.icon;
+      o.color = this.color;
+      o.description = this.description;
+      o.nonRemovable = this.nonRemovable;
+      o.permissions = new Permissions(this.getPermissions());
+      o.query = this.query;
+      o.perspective = this.perspective;
+      o.config = this.config;
+      o.authorId = this.authorId;
+      o.authorRights = this.authorRights;
+
+      return o;
+   }
+
    public ResourceType getType() {
       return ResourceType.VIEW;
    }

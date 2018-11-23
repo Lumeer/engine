@@ -25,6 +25,9 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -41,7 +44,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -50,11 +52,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao {
 
    private static final String PREFIX = "projects_o-";
+
+   @Inject
+   private Event<CreateResource> createResourceEvent;
+
+   @Inject
+   private Event<UpdateResource> updateResourceEvent;
+
+   @Inject
+   private Event<RemoveResource> removeResourceEvent;
 
    @Override
    public void createProjectsRepository(final Organization organization) {
@@ -81,6 +94,9 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
    public Project createProject(final Project project) {
       try {
          databaseCollection().insertOne(project);
+         if (createResourceEvent != null) {
+            createResourceEvent.fire(new CreateResource(project));
+         }
          return project;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create project: " + project, ex);
@@ -125,20 +141,33 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
 
    @Override
    public void deleteProject(final String projectId) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(projectId));
-      if (result.getDeletedCount() != 1) {
+      final Project project = databaseCollection().findOneAndDelete(idFilter(projectId));
+      if (project == null) {
          throw new StorageException("Project '" + projectId + "' has not been deleted.");
+      }
+      if (removeResourceEvent != null) {
+         removeResourceEvent.fire(new RemoveResource(project));
       }
    }
 
    @Override
    public Project updateProject(final String projectId, final Project project) {
+      return updateProject(projectId, project, null);
+   }
+
+   @Override
+   public Project updateProject(final String projectId, final Project project, final Project originalProject) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
          Project updatedProject = databaseCollection().findOneAndReplace(idFilter(projectId), project, options);
          if (updatedProject == null) {
             throw new StorageException("Project '" + projectId + "' has not been updated.");
+         }
+
+         checkRemovedPermissions(originalProject, updatedProject);
+         if (updateResourceEvent != null) {
+            updateResourceEvent.fire(new UpdateResource(updatedProject));
          }
          return updatedProject;
       } catch (MongoException ex) {

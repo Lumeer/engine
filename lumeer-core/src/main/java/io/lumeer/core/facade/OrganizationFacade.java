@@ -155,8 +155,9 @@ public class OrganizationFacade extends AbstractFacade {
    public Set<Permission> updateUserPermissions(final String organizationCode, final Permission... userPermissions) {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
+      final Organization originalOrganization = organization.copy();
       organization.getPermissions().updateUserPermissions(userPermissions);
-      organizationDao.updateOrganization(organization.getId(), organization);
+      organizationDao.updateOrganization(organization.getId(), organization, originalOrganization);
       workspaceCache.updateOrganization(organizationCode, organization);
 
       return organization.getPermissions().getUserPermissions();
@@ -186,6 +187,15 @@ public class OrganizationFacade extends AbstractFacade {
       organization.getPermissions().removeGroupPermission(groupId);
       organizationDao.updateOrganization(organization.getId(), organization);
       workspaceCache.updateOrganization(organizationCode, organization);
+   }
+
+   public Set<String> getOrganizationManagers(final Organization organization) {
+      return organization.getPermissions().getUserPermissions()
+                         .stream()
+                         .filter(permission -> permission.getRoles().contains(Role.MANAGE))
+                         .map(permission -> permission.getId())
+                         .collect(Collectors.toSet());
+      // TODO merge with managers from permission groups
    }
 
    private void createOrganizationInUser(final String organizationId) {

@@ -149,9 +149,10 @@ public class ViewFacade extends AbstractFacade {
       permissionsChecker.checkRole(view, Role.MANAGE);
       permissionsChecker.invalidateCache(view);
 
+      final View originalView = view.copy();
       view.getPermissions().clearUserPermissions();
       view.getPermissions().updateUserPermissions(userPermissions);
-      viewDao.updateView(view.getId(), view);
+      viewDao.updateView(view.getId(), view, originalView);
 
       return view.getPermissions().getUserPermissions();
    }

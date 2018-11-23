@@ -16,25 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.system;
+package io.lumeer.core.exception;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.storage.mongodb.dao.MongoDao;
+import io.lumeer.api.exception.LumeerException;
 
-import com.mongodb.client.MongoDatabase;
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public class AccessForbiddenException extends LumeerException {
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-
-public abstract class SystemScopedDao extends MongoDao {
-
-   @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
-
-   @PostConstruct
-   public void init() {
-      this.database = (MongoDatabase) dataStorage.getDatabase();
+   public AccessForbiddenException(final String cause) {
+      super(cause);
    }
 }

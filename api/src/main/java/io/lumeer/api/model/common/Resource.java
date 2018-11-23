@@ -66,6 +66,8 @@ public abstract class Resource {
       this.permissions = new Permissions(resource.getPermissions());
    }
 
+   public abstract <T extends Resource> T copy();
+
    @JsonIgnore
    public abstract ResourceType getType();
 

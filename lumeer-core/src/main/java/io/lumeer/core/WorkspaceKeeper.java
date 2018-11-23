@@ -23,9 +23,11 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.cache.WorkspaceCache;
+import io.lumeer.engine.api.event.UpdateServiceLimits;
 
 import java.util.Optional;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
@@ -36,6 +38,9 @@ public class WorkspaceKeeper implements SelectedWorkspace {
 
    @Inject
    private WorkspaceCache workspaceCache;
+
+   @Inject
+   private Event<UpdateServiceLimits> updateServiceLimitsEvent;
 
    @Override
    public Optional<Organization> getOrganization() {
@@ -69,6 +74,9 @@ public class WorkspaceKeeper implements SelectedWorkspace {
    public void setServiceLimits(final Organization organization, final ServiceLimits serviceLimits) {
       if (organization != null) {
          workspaceCache.setServiceLimits(organization.getCode(), serviceLimits);
+         if (updateServiceLimitsEvent != null) {
+            updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, serviceLimits));
+         }
       }
    }
 

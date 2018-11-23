@@ -18,29 +18,22 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.api.model.Document;
 
 /**
- * CDI event that carries information about manipulation with a {@link DataDocument}.
+ * CDI event that carries information about manipulation with a {@link Document}.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public abstract class DocumentEvent {
 
-   private String collectionName;
+   private Document document;
 
-   private DataDocument document;
-
-   public DocumentEvent(final String collectionName, final DataDocument document) {
-      this.collectionName = collectionName;
+   public DocumentEvent(final Document document) {
       this.document = document;
    }
 
-   public DataDocument getDocument() {
+   public Document getDocument() {
       return document;
-   }
-
-   public String getCollectionName() {
-      return collectionName;
    }
 }

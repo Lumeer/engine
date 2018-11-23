@@ -16,25 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.system;
+package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.storage.mongodb.dao.MongoDao;
+import io.lumeer.api.model.ResourceType;
 
-import com.mongodb.client.MongoDatabase;
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public class ResourceIdEvent {
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+   private final String resourceId;
+   private final ResourceType resourceType;
 
-public abstract class SystemScopedDao extends MongoDao {
+   public ResourceIdEvent(final String resourceId, final ResourceType resourceType) {
+      this.resourceId = resourceId;
+      this.resourceType = resourceType;
+   }
 
-   @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
+   public String getResourceId() {
+      return resourceId;
+   }
 
-   @PostConstruct
-   public void init() {
-      this.database = (MongoDatabase) dataStorage.getDatabase();
+   public ResourceType getResourceType() {
+      return resourceType;
    }
 }

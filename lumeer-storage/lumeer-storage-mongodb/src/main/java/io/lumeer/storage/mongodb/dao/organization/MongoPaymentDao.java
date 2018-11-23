@@ -23,6 +23,7 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.event.CreateOrUpdatePayment;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -43,6 +44,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -52,10 +55,16 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
 
    private static final String PREFIX = "payments_o-";
 
+   @Inject
+   private Event<CreateOrUpdatePayment> createOrUpdatePaymentEvent;
+
    @Override
    public Payment createPayment(final Organization organization, final Payment payment) {
       try {
          databaseCollection(organization).insertOne(payment);
+         if (createOrUpdatePaymentEvent != null) {
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, payment));
+         }
          return payment;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create payment " + payment, ex);
@@ -75,6 +84,9 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + id + "' has not been updated.");
          }
+         if (createOrUpdatePaymentEvent != null) {
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
+         }
          return returnedPayment;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update payment " + payment, ex);
@@ -88,6 +100,9 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
          final Payment returnedPayment = databaseCollection(organization).findOneAndReplace(paymentIdFilter(payment.getPaymentId()), payment, options);
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + payment.getPaymentId() + "' has not been updated.");
+         }
+         if (createOrUpdatePaymentEvent != null) {
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
          }
          return returnedPayment;
       } catch (MongoException ex) {

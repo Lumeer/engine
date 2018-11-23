@@ -5,6 +5,9 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.event.CreateLinkType;
+import io.lumeer.engine.api.event.RemoveLinkType;
+import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -20,8 +23,6 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
-
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -31,11 +32,22 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
 
    private static final String PREFIX = "linktypes_p-";
+
+   @Inject
+   private Event<CreateLinkType> createLinkTypeEvent;
+
+   @Inject
+   private Event<UpdateLinkType> updateLinkTypeEvent;
+
+   @Inject
+   private Event<RemoveLinkType> removeLinkTypeEvent;
 
    @Override
    public void createLinkTypeRepository(Project project) {
@@ -43,6 +55,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
       projectCollection.createIndex(Indexes.ascending(LinkTypeCodec.NAME), new IndexOptions().unique(false));
+      projectCollection.createIndex(Indexes.ascending(LinkTypeCodec.COLLECTION_IDS));
    }
 
    @Override
@@ -54,6 +67,9 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    public LinkType createLinkType(final LinkType linkType) {
       try {
          databaseCollection().insertOne(linkType);
+         if (createLinkTypeEvent != null) {
+            createLinkTypeEvent.fire(new CreateLinkType(linkType));
+         }
          return linkType;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create link type: " + linkType, ex);
@@ -68,6 +84,9 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
          if (updatedLinkType == null) {
             throw new StorageException("Link type '" + id + "' has not been updated.");
          }
+         if (updateLinkTypeEvent != null) {
+            updateLinkTypeEvent.fire(new UpdateLinkType(updatedLinkType));
+         }
          return updatedLinkType;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update link type: " + linkType, ex);
@@ -76,9 +95,12 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
 
    @Override
    public void deleteLinkType(final String id) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(id));
-      if (result.getDeletedCount() != 1) {
+      LinkType linkType = databaseCollection().findOneAndDelete(idFilter(id));
+      if (linkType == null) {
          throw new StorageException("Link type '" + id + "' has not been deleted.");
+      }
+      if (removeLinkTypeEvent != null) {
+         removeLinkTypeEvent.fire(new RemoveLinkType(linkType));
       }
    }
 
@@ -105,6 +127,14 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    public List<LinkType> getLinkTypes(final SuggestionQuery query) {
       FindIterable<LinkType> findIterable = databaseCollection().find(linkTypesSuggestionFilter(query));
       addPaginationToQuery(findIterable, query);
+      return findIterable.into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkType> getLinkTypesByCollectionId(final String collectionId) {
+      FindIterable<LinkType> findIterable = databaseCollection().find(
+            Filters.elemMatch(LinkTypeCodec.COLLECTION_IDS, Filters.eq(collectionId))
+      );
       return findIterable.into(new ArrayList<>());
    }
 

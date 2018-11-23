@@ -58,6 +58,24 @@ public class Project extends Resource {
             '}';
    }
 
+   @Override
+   public Project copy() {
+      final Project o = new Project();
+
+      o.id = this.id;
+      o.code = this.code;
+      o.name = this.name;
+      o.icon = this.icon;
+      o.color = this.color;
+      o.description = this.description;
+      o.nonRemovable = this.nonRemovable;
+      o.permissions = new Permissions(this.getPermissions());
+      o.collectionsCount = this.collectionsCount;
+
+      return o;
+   }
+
+
    public ResourceType getType() {
       return ResourceType.PROJECT;
    }

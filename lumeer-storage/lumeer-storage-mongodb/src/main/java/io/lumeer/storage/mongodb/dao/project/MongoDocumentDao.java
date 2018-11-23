@@ -23,6 +23,9 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -36,8 +39,6 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
-
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
@@ -47,11 +48,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    private static final String PREFIX = "documents_p-";
+
+   @Inject
+   private Event<CreateDocument> createDocumentEvent;
+
+   @Inject
+   private Event<UpdateDocument> updateDocumentEvent;
+
+   @Inject
+   private Event<RemoveDocument> removeDocumentEvent;
 
    @Override
    public void createDocumentsRepository(final Project project) {
@@ -70,6 +82,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    public Document createDocument(final Document document) {
       try {
          databaseCollection().insertOne(document);
+         if (createDocumentEvent != null) {
+            createDocumentEvent.fire(new CreateDocument(document));
+         }
          return document;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create document: " + document, ex);
@@ -80,6 +95,10 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    public List<Document> createDocuments(final List<Document> documents) {
       List<Document> jsonDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
       databaseCollection().insertMany(jsonDocuments);
+
+      if (createDocumentEvent != null) {
+         documents.stream().forEach(document -> createDocumentEvent.fire(new CreateDocument(document)));
+      }
 
       return new ArrayList<>(jsonDocuments);
    }
@@ -93,6 +112,11 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
          if (updatedDocument == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }
+         final Document updatedDocumentWithData = new Document(updatedDocument);
+         updatedDocumentWithData.setData(document.getData());
+         if (updateDocumentEvent != null) {
+            updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData));
+         }
          return updatedDocument;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update document: " + document, ex);
@@ -101,16 +125,22 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public void deleteDocument(final String id) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(id));
-      if (result.getDeletedCount() != 1) {
+      Document document = databaseCollection().findOneAndDelete(idFilter(id));
+      if (document == null) {
          throw new StorageException("Document '" + id + "' has not been deleted.");
+      }
+      if (removeDocumentEvent != null) {
+         removeDocumentEvent.fire(new RemoveDocument(document));
       }
    }
 
    @Override
    public void deleteDocuments(final String collectionId) {
-      Bson filter = Filters.eq(DocumentCodec.COLLECTION_ID, collectionId);
+      final Bson filter = Filters.eq(DocumentCodec.COLLECTION_ID, collectionId);
+
       databaseCollection().deleteMany(filter);
+
+      // no event is fired here as this method only occurs when the collection is deleted completely
    }
 
    @Override

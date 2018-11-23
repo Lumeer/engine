@@ -16,25 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.system;
+package io.lumeer.engine.api.event;
 
-import io.lumeer.engine.annotation.SystemDataStorage;
-import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.storage.mongodb.dao.MongoDao;
+import io.lumeer.api.model.LinkType;
 
-import com.mongodb.client.MongoDatabase;
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public abstract class LinkTypeEvent {
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+   private final LinkType linkType;
 
-public abstract class SystemScopedDao extends MongoDao {
+   public LinkTypeEvent(final LinkType linkType) {
+      this.linkType = linkType;
+   }
 
-   @Inject
-   @SystemDataStorage
-   private DataStorage dataStorage;
-
-   @PostConstruct
-   public void init() {
-      this.database = (MongoDatabase) dataStorage.getDatabase();
+   public LinkType getLinkType() {
+      return linkType;
    }
 }
