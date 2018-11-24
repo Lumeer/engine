@@ -248,7 +248,7 @@ public class AuthenticatedUser implements Serializable {
    }
 
    private String getDemoIcon() {
-      return Icons.solidIcons.get(rnd.nextInt(Icons.solidIcons.size()));
+      return Icons.getSafeRandomIcon();
    }
 
    private String getDemoColor() {
