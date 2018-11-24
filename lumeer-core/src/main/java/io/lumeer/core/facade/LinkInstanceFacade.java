@@ -76,7 +76,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public List<LinkInstance> getLinkInstances(Query2 query) {
-      return linkInstanceDao.getLinkInstances(createSearchQuery(query));
+      return linkInstanceDao.searchLinkInstances(createSearchQuery(query));
    }
 
    private void checkLinkInstancePermission(java.util.Collection<String> collectionIds) {
@@ -91,8 +91,9 @@ public class LinkInstanceFacade extends AbstractFacade {
       String user = authenticatedUser.getCurrentUserId();
 
       return SearchQuery2.createBuilder(user).groups(groups)
-                         .queryStems(query.getStems())
-                         .fulltexts(query.getFulltexts())
+                         .queryStems(query.getStems(), query.getFulltexts())
+                         .page(query.getPage())
+                         .pageSize(query.getPageSize())
                          .build();
    }
 

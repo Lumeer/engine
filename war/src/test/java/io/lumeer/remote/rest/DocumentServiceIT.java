@@ -318,23 +318,6 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   @Ignore("Works manually but there is unexpected exception in tests")
-   public void testGetAllDocuments() {
-      String id1 = createDocument().getId();
-      String id2 = createDocument().getId();
-
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      List<Document> documents = response.readEntity(new GenericType<List<Document>>() {
-      });
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
-   }
-
-   @Test
    public void testUpdateMetaData() {
       Document doc = createDocument();
 

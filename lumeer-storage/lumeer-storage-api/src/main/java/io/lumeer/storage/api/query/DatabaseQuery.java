@@ -18,6 +18,8 @@
  */
 package io.lumeer.storage.api.query;
 
+import io.lumeer.api.model.Pagination;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -54,6 +56,10 @@ public class DatabaseQuery {
 
    public Integer getPageSize() {
       return pageSize;
+   }
+
+   public Pagination getPagination() {
+      return new Pagination(page, pageSize);
    }
 
    public static Builder createBuilder(String... users) {

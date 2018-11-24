@@ -82,7 +82,7 @@ public class LinkTypeService extends AbstractService {
    }
 
    @GET
-   public List<LinkType> getAllLinkTypes(@QueryParam("fromViews") Boolean includeViewLinkTypes) {
+   public List<LinkType> getLinkTypes(@QueryParam("fromViews") Boolean includeViewLinkTypes) {
       final List<LinkType> linkTypes = linkTypeFacade.getLinkTypes();
 
       if (includeViewLinkTypes != null && includeViewLinkTypes) {

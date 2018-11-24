@@ -18,10 +18,13 @@
  */
 package io.lumeer.storage.api.dao;
 
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.SearchQueryStem;
 
 import java.util.List;
+import java.util.Set;
 
 public interface DataDao {
 
@@ -41,8 +44,12 @@ public interface DataDao {
 
    DataDocument getData(String collectionId, String documentId);
 
-   List<DataDocument> getData(String collectionId, SearchQuery query);
+   List<DataDocument> getData(String collectionId);
 
-   long getDataCount(String collectionId, SearchQuery query);
+   List<DataDocument> getData(String collectionId, Set<String> documentIds);
+
+   List<DataDocument> searchData(SearchQueryStem stem, Pagination pagination, Collection collection);
+
+   List<DataDocument> searchDataByFulltexts(Set<String> fulltexts, Pagination pagination, List<Collection> projectCollections);
 
 }

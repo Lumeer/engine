@@ -21,6 +21,7 @@ package io.lumeer.storage.api.query;
 import io.lumeer.api.model.QueryStem;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
@@ -28,21 +29,15 @@ import javax.annotation.concurrent.Immutable;
 public class SearchQuery2 extends DatabaseQuery {
 
    private final List<SearchQueryStem> stems;
-   private final List<String> fulltexts;
 
    private SearchQuery2(Builder builder) {
       super(builder);
 
       this.stems = builder.stems;
-      this.fulltexts = builder.fulltexts;
    }
 
    public List<SearchQueryStem> getStems() {
       return stems;
-   }
-
-   public List<String> getFulltexts() {
-      return fulltexts;
    }
 
    public static Builder createBuilder(String... users) {
@@ -52,15 +47,9 @@ public class SearchQuery2 extends DatabaseQuery {
    public static class Builder extends DatabaseQuery.Builder<Builder> {
 
       private List<SearchQueryStem> stems;
-      private List<String> fulltexts;
 
       private Builder(final String... users) {
          super(users);
-      }
-
-      public Builder fulltexts(List<String> fulltexts) {
-         this.fulltexts = fulltexts;
-         return this;
       }
 
       public Builder stems(List<SearchQueryStem> stems) {
@@ -68,8 +57,9 @@ public class SearchQuery2 extends DatabaseQuery {
          return this;
       }
 
-      public Builder queryStems(List<QueryStem> stems) {
-         this.stems = stems.stream().map(SearchQueryStem::new).collect(Collectors.toList());
+      public Builder queryStems(List<QueryStem> stems, Set<String> fulltexts) {
+         this.stems = stems.stream()
+                           .map(stem -> new SearchQueryStem(stem, fulltexts)).collect(Collectors.toList());
          return this;
       }
 
@@ -84,7 +74,6 @@ public class SearchQuery2 extends DatabaseQuery {
    public String toString() {
       return "SearchQuery2{" +
             "stems=" + stems +
-            ", fulltexts=" + fulltexts +
             '}';
    }
 }

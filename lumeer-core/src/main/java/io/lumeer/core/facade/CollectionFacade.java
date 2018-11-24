@@ -39,7 +39,7 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -137,7 +137,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public List<Collection> getCollections(Pagination pagination) {
-      SearchQuery searchQuery = createPaginationQuery(pagination);
+      DatabaseQuery searchQuery = createSimplePaginationQuery(pagination);
 
       return collectionDao.getCollections(searchQuery).stream()
                           .map(this::mapResource)

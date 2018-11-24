@@ -28,7 +28,7 @@ import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;
 import javax.inject.Inject;
@@ -79,22 +79,23 @@ abstract class AbstractFacade {
       destinationResource.setNonRemovable(originalResource.isNonRemovable());
    }
 
-   protected SearchQuery createPaginationQuery(Pagination pagination) {
+
+   protected DatabaseQuery createSimplePaginationQuery(Pagination pagination) {
       String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
-      return SearchQuery.createBuilder(user)
+      return DatabaseQuery.createBuilder(user)
                         .groups(groups)
                         .page(pagination.getPage())
                         .pageSize(pagination.getPageSize())
                         .build();
    }
 
-   protected SearchQuery createQuery() {
+   protected DatabaseQuery createSimpleQuery() {
       String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
-      return SearchQuery.createBuilder(user)
+      return DatabaseQuery.createBuilder(user)
                         .groups(groups)
                         .build();
    }

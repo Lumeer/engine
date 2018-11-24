@@ -28,7 +28,6 @@ import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
-import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 
 import java.util.Collections;
@@ -111,7 +110,7 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private List<LinkType> suggestLinkTypes(String text, int limit) {
-      List<Collection> allowedCollections = collectionDao.getCollections(createSimpleSearchQuery());
+      List<Collection> allowedCollections = collectionDao.getCollections(createSimpleQuery());
       if (allowedCollections.isEmpty()) {
          return Collections.emptyList();
       }
@@ -149,11 +148,4 @@ public class SuggestionFacade extends AbstractFacade {
                             .page(0).pageSize(limit);
    }
 
-   private SearchQuery createSimpleSearchQuery() {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      return SearchQuery.createBuilder(user).groups(groups)
-                        .build();
-   }
 }

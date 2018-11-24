@@ -24,23 +24,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class QueryStem {
 
    private final String collectionId;
    private final List<String> linkTypeIds;
-   private final List<String> documentIds;
-   private final List<AttributeFilter> filters;
+   private final Set<String> documentIds;
+   private final Set<AttributeFilter> filters;
 
    @JsonCreator
    public QueryStem(@JsonProperty("collectionId") final String collectionId,
          @JsonProperty("linkTypeIds") final List<String> linkTypeIds,
-         @JsonProperty("documentIds") final List<String> documentIds,
-         @JsonProperty("filters") final List<AttributeFilter> filters) {
+         @JsonProperty("documentIds") final Set<String> documentIds,
+         @JsonProperty("filters") final Set<AttributeFilter> filters) {
       this.collectionId = collectionId;
       this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptyList();
-      this.documentIds = documentIds != null ? documentIds : Collections.emptyList();
-      this.filters = filters != null ? filters : Collections.emptyList();
+      this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
+      this.filters = filters != null ? filters : Collections.emptySet();
    }
 
    public QueryStem(final String collectionId) {
@@ -55,11 +56,11 @@ public class QueryStem {
       return linkTypeIds;
    }
 
-   public List<String> getDocumentIds() {
+   public Set<String> getDocumentIds() {
       return documentIds;
    }
 
-   public List<AttributeFilter> getFilters() {
+   public Set<AttributeFilter> getFilters() {
       return filters;
    }
 

@@ -21,7 +21,6 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
@@ -33,7 +32,6 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.api.query.SearchQuery;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -256,15 +254,6 @@ public class DocumentFacade extends AbstractFacade {
       return document;
    }
 
-   public List<Document> getDocuments(String collectionId, Pagination pagination) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
-
-      Map<String, DataDocument> dataDocuments = getDataDocuments(collection.getId(), pagination);
-
-      return getDocuments(dataDocuments);
-   }
-
    private Project getCurrentProject() {
       if (!workspaceKeeper.getProject().isPresent()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
@@ -274,12 +263,6 @@ public class DocumentFacade extends AbstractFacade {
 
    private User getCurrentUser() {
       return authenticatedUser.getCurrentUser();
-   }
-
-   private Map<String, DataDocument> getDataDocuments(String collectionId, Pagination pagination) {
-      SearchQuery searchQuery = createPaginationQuery(pagination);
-      return dataDao.getData(collectionId, searchQuery).stream()
-                    .collect(Collectors.toMap(DataDocument::getId, Function.identity()));
    }
 
    private List<Document> getDocuments(Map<String, DataDocument> dataDocuments) {

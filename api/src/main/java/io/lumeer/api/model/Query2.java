@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,23 +30,23 @@ import java.util.stream.Collectors;
 public class Query2 {
 
    private final List<QueryStem> stems;
-   private final List<String> fulltexts;
+   private final Set<String> fulltexts;
    private final Integer page;
    private final Integer pageSize;
 
    @JsonCreator
    public Query2(@JsonProperty("stems") final List<QueryStem> stems,
-         @JsonProperty("fulltexts") final List<String> fulltexts,
+         @JsonProperty("fulltexts") final Set<String> fulltexts,
          @JsonProperty("page") final Integer page,
          @JsonProperty("pageSize") final Integer pageSize) {
       this.stems = stems != null ? stems : Collections.emptyList();
-      this.fulltexts = fulltexts != null ? fulltexts : Collections.emptyList();
+      this.fulltexts = fulltexts != null ? fulltexts : Collections.emptySet();
       this.page = page;
       this.pageSize = pageSize;
    }
 
    public Query2(List<QueryStem> stems) {
-      this(stems, Collections.emptyList(), 0, 0);
+      this(stems, Collections.emptySet(), 0, 0);
    }
 
    public Query2(QueryStem stem) {
@@ -58,11 +57,19 @@ public class Query2 {
       this(Collections.emptyList());
    }
 
+   public boolean isEmpty() {
+      return stems.isEmpty() && fulltexts.isEmpty();
+   }
+
+   public boolean containsStems() {
+      return !stems.isEmpty();
+   }
+
    public List<QueryStem> getStems() {
       return stems;
    }
 
-   public List<String> getFulltexts() {
+   public Set<String> getFulltexts() {
       return fulltexts;
    }
 
@@ -72,6 +79,10 @@ public class Query2 {
 
    public Integer getPageSize() {
       return pageSize;
+   }
+
+   public Pagination getPagination() {
+      return new Pagination(page, pageSize);
    }
 
    public Set<String> getCollectionIds() {
@@ -87,21 +98,19 @@ public class Query2 {
                        .collect(Collectors.toSet());
    }
 
-   public Map<String, List<String>> getDocumentsIdsMap() {
-      return getStems().stream()
-                       .collect(Collectors.toMap(QueryStem::getCollectionId, QueryStem::getDocumentIds));
-   }
-
    public Set<String> getDocumentsIds() {
       return getStems().stream()
                        .map(QueryStem::getDocumentIds)
-                       .flatMap(List::stream)
+                       .flatMap(Set::stream)
                        .collect(Collectors.toSet());
    }
 
-   public Map<String, List<AttributeFilter>> getAttributeFiltersMap() {
-      return getStems().stream()
-                       .collect(Collectors.toMap(QueryStem::getCollectionId, QueryStem::getFilters));
+   public boolean isMoreSpecificThan(Query2 query) {
+      return false;
+   }
+
+   public boolean isMoreSpecificThan(Query query) {
+      return false;
    }
 
    @Override

@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public class Attribute {
@@ -42,13 +41,6 @@ public class Attribute {
       this.name = id;
       this.constraints = Collections.emptySet();
       this.usageCount = 0;
-   }
-
-   public Attribute(Attribute attribute) {
-      this.id = attribute.getId();
-      this.name = attribute.getName();
-      this.constraints = new HashSet<>(attribute.getConstraints());
-      this.usageCount = attribute.getUsageCount();
    }
 
    @JsonCreator

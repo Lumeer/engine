@@ -75,7 +75,7 @@ public class QueryProcessorInterceptor {
    private AttributeFilter processFilter(final AttributeFilter filter) {
       if (filter.getValue().equals(USER_EMAIL)) {
          String userEmail = authenticatedUser.getUserEmail();
-         return new AttributeFilter(filter.getAttributeId(), filter.getOperator(), userEmail);
+         return new AttributeFilter(filter.getCollectionId(), filter.getAttributeId(), filter.getOperator(), userEmail);
       }
       return filter;
    }

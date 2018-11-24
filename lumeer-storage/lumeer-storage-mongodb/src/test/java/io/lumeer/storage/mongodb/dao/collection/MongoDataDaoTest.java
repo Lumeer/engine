@@ -22,10 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ConditionType;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
 import com.mongodb.client.MongoCollection;
@@ -47,8 +50,9 @@ public class MongoDataDaoTest extends MongoDbTestBase {
 
    private static final String USER = "notNeeded";
 
-   private static final String KEY1 = "A";
-   private static final String KEY2 = "B";
+   private static final String KEY1 = "fulll";
+   private static final String KEY2 = "txt";
+   private static final String KEY3 = "text";
    private static final String VALUE1 = "firstValue";
    private static final String VALUE2 = "secondValue";
 
@@ -59,7 +63,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    public void initDataDao() {
       Collection col = new Collection("", "", "", "", new Permissions());
       col.setId(COLLECTION_ID);
-      col.setAttributes(Collections.EMPTY_SET);
+      col.setAttributes(Collections.emptySet());
       col.setLastAttributeNum(0);
 
       collectionDao = Mockito.mock(CollectionDao.class);
@@ -67,7 +71,6 @@ public class MongoDataDaoTest extends MongoDbTestBase {
 
       dataDao = new MongoDataDao();
       dataDao.setDatabase(database);
-      dataDao.setCollectionDao(collectionDao);
 
       dataDao.createDataRepository(COLLECTION_ID);
    }
@@ -80,11 +83,10 @@ public class MongoDataDaoTest extends MongoDbTestBase {
       return document.getObjectId("_id").toHexString();
    }
 
-   private String createDocument(String key, String value) {
+   private String createDocument(String key, Object value) {
       Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
-      final String id = key; // use the same document id for simplicity in tests
       if (collection.getAttributes().stream().noneMatch(attr -> attr.getName().equals(key))) {
-         collection.createAttribute(new Attribute(id, key, Collections.emptySet(), 1));
+         collection.createAttribute(new Attribute(key, key, Collections.emptySet(), 1));
          collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
          collectionDao.updateCollection(COLLECTION_ID, collection);
       } else {
@@ -195,90 +197,111 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testGetDataWithPagination() {
+   public void testSearchDataByFullTexts() {
+      Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
+      String id1 = createDocument(KEY1, "lala");
+      String id2 = createDocument(KEY2, "fulltext");
+      String id3 = createDocument(KEY3, "something full");
+      String id4 = createDocument(KEY1, "lmr");
 
+      List<DataDocument> data = dataDao.searchDataByFulltexts(Collections.singleton("full"), null, Collections.singletonList(collection));
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id1, id2, id3, id4);
+
+      data = dataDao.searchDataByFulltexts(new HashSet<>(Arrays.asList("full", "txt")), null, Collections.singletonList(collection));
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id2);
+
+      data = dataDao.searchDataByFulltexts(new HashSet<>(Arrays.asList("lmr", "txt", "lala")), null, Collections.singletonList(collection));
+      assertThat(data).extracting(DataDocument::getId).isEmpty();
    }
 
    @Test
-   public void testGetDataByFulltextAttributeValue() {
-      String id1 = createDocument(KEY1, VALUE1);
-      String id2 = createDocument(KEY1, "fulltext");
-      String id3 = createDocument(KEY1, "something fulltext");
-      String id4 = createDocument(KEY1, VALUE1);
+   public void testSearchDataByFullTextsPagination() {
+      Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
+      String id1 = createDocument(KEY1, "lala");
+      String id2 = createDocument(KEY2, "fulltext");
+      String id3 = createDocument(KEY3, "something full");
+      String id4 = createDocument(KEY1, "lmr");
 
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .fulltext("fulltext")
-                                           .build();
-      List<DataDocument> data = dataDao.getData(COLLECTION_ID, searchQuery);
-      assertThat(data).extracting(DataDocument::getId).containsOnly(id2, id3);
+      Pagination pagination = new Pagination(0, 2);
+      Pagination pagination2 = new Pagination(1, 2);
+
+      List<DataDocument> data = dataDao.searchDataByFulltexts(Collections.singleton("full"), pagination, Collections.singletonList(collection));
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id1, id2);
+
+      data = dataDao.searchDataByFulltexts(Collections.singleton("full"), pagination2, Collections.singletonList(collection));
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id3, id4);
    }
 
    @Test
-   public void testGetDataByDocumenstIds() {
+   public void testSearchDataByDocumenstIds() {
+      Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
       String id1 = createDocument(KEY1, VALUE1);
       String id2 = createDocument(KEY1, VALUE2);
       String id3 = createDocument(KEY1, VALUE1);
       String id4 = createDocument(KEY1, VALUE2);
 
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .documentIds(Collections.singleton(id2))
-                                           .build();
-      List<DataDocument> data = dataDao.getData(COLLECTION_ID, searchQuery);
+      SearchQueryStem stem = SearchQueryStem.createBuilder(COLLECTION_ID)
+                                            .documentIds(Collections.singleton(id2))
+                                            .build();
+
+      List<DataDocument> data = dataDao.searchData(stem, null, collection);
       assertThat(data).extracting(DataDocument::getId).containsOnly(id2);
 
-      searchQuery = SearchQuery.createBuilder(USER)
-                               .documentIds(new HashSet<>(Arrays.asList(id1, id3, id4)))
-                               .build();
-      data = dataDao.getData(COLLECTION_ID, searchQuery);
+      SearchQueryStem stem2 = SearchQueryStem.createBuilder(COLLECTION_ID)
+                                             .documentIds(new HashSet<>(Arrays.asList(id1, id3, id4)))
+                                             .build();
+      data = dataDao.searchData(stem2, null, collection);
       assertThat(data).extracting(DataDocument::getId).containsOnly(id1, id3, id4);
    }
 
    @Test
-   public void testGetDataByFulltextAttributeValueAndDocumentsIds() {
-      String id1 = createDocument(KEY1, VALUE1);
-      String id2 = createDocument(KEY1, "fulltext");
-      String id3 = createDocument(KEY1, "something fulltext");
-      String id4 = createDocument(KEY1, VALUE1);
+   public void testSearchDataByFilters() {
+      Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
+      String id1 = createDocument(KEY1, "4");
+      createDocument(KEY1, "8");
+      createDocument(KEY1, "13");
+      String id4 = createDocument(KEY1, "mama");
 
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .fulltext("fulltext")
-                                           .documentIds(new HashSet<>(Arrays.asList(id1, id2)))
-                                           .build();
-      List<DataDocument> data = dataDao.getData(COLLECTION_ID, searchQuery);
-      assertThat(data).extracting(DataDocument::getId).containsOnly(id2);
+      AttributeFilter filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "4");
+      SearchQueryStem stem = SearchQueryStem.createBuilder(COLLECTION_ID)
+                                            .filters(Collections.singleton(filter))
+                                            .build();
+      List<DataDocument> data = dataDao.searchData(stem, null, collection);
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id1);
+
+      filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "mama");
+      stem = SearchQueryStem.createBuilder(COLLECTION_ID)
+                            .filters(Collections.singleton(filter))
+                            .build();
+      data = dataDao.searchData(stem, null, collection);
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id4);
    }
 
    @Test
-   public void testGetDataByFulltextAttributeName() {
-      String id1 = createDocument(KEY1, VALUE1);
-      String id2 = createDocument("fulltext", VALUE1);
-      String id3 = createDocument(KEY1, VALUE1);
+   public void testSearchDataByAllConditions() {
+      Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
+      String id1 = createDocument(KEY1, "lumeerko");
+      String id2 = createDocument(KEY2, "something lala");
+      String id3 = createDocument(KEY3, "lol nieco");
+      String id4 = createDocument(KEY2, "lumeerko");
 
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .fulltext("fulltext")
-                                           .build();
-      List<DataDocument> data = dataDao.getData(COLLECTION_ID, searchQuery);
-      assertThat(data).extracting(DataDocument::getId).containsOnly(id2);
-   }
+      AttributeFilter filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "lumeerko");
+      SearchQueryStem stem = SearchQueryStem.createBuilder(COLLECTION_ID)
+                                            .filters(Collections.singleton(filter))
+                                            .documentIds(new HashSet<>(Arrays.asList(id1, id2, id3, id4)))
+                                            .fulltexts(Collections.singleton("full"))
+                                            .build();
+      List<DataDocument> data = dataDao.searchData(stem, null, collection);
+      assertThat(data).extracting(DataDocument::getId).containsOnly(id1);
 
-   @Test
-   public void testGetDataByCollectionCodes() {
-
-   }
-
-   @Test
-   public void testGetDataByAllParameters() {
-
-   }
-
-   @Test
-   public void testGetDataCount() {
-      createDocument();
-      createDocument();
-
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER).build();
-      long count = dataDao.getDataCount(COLLECTION_ID, searchQuery);
-      assertThat(count).isEqualTo(2);
+      filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY2, "lumeerko");
+      stem = SearchQueryStem.createBuilder(COLLECTION_ID)
+                            .filters(Collections.singleton(filter))
+                            .documentIds(new HashSet<>(Arrays.asList(id1, id2, id3)))
+                            .fulltexts(new HashSet<>(Arrays.asList("erko", "lumee")))
+                            .build();
+      data = dataDao.searchData(stem, null, collection);
+      assertThat(data).extracting(DataDocument::getId).isEmpty();
    }
 
    private MongoCollection<Document> dataCollection() {

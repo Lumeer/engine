@@ -256,12 +256,12 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
       String id4 = linkInstanceFacade.createLinkInstance(linkInstance4).getId();
 
-      QueryStem stem1 = new QueryStem(collection1Id, null, Collections.singletonList(documentIdsColl1.get(0)), null);
+      QueryStem stem1 = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null);
       Query2 query1 = new Query2(stem1);
       List<LinkInstance> linkInstances = linkInstanceFacade.getLinkInstances(query1);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
 
-      QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singletonList(documentIdsColl2.get(1)), null);
+      QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null);
       Query2 query2 = new Query2(stem2);
       linkInstances = linkInstanceFacade.getLinkInstances(query2);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id3));

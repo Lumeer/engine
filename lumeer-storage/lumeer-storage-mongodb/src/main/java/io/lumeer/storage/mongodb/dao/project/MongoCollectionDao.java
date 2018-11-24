@@ -1,6 +1,7 @@
 package io.lumeer.storage.mongodb.dao.project;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.*;
+import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
@@ -13,7 +14,6 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.AttributeCodec;
@@ -140,41 +140,9 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    @Override
-   public List<Collection> getCollections(final SearchQuery query) {
-      Bson filter = collectionSearchQuery(query);
-      return searchCollectionsByFilter(filter, query);
-   }
-
-   @Override
    public List<Collection> getCollections(final DatabaseQuery query) {
       Bson filter = MongoFilters.permissionsFilter(query);
       return searchCollectionsByFilter(filter, query);
-   }
-
-   private Bson collectionSearchQuery(SearchQuery query) {
-      return query.isBasicQuery() ? createSimpleSearchQuery(query) : createAdvancedSearchQuery(query);
-   }
-
-   private Bson createSimpleSearchQuery(SearchQuery query) {
-      return permissionsFilter(query);
-   }
-
-   private Bson createAdvancedSearchQuery(SearchQuery query) {
-      List<Bson> filters = new ArrayList<>();
-      filters.add(MongoFilters.permissionsFilter(query));
-
-      if (query.isFulltextQuery()) {
-         Bson codeFulltext = Filters.regex(CollectionCodec.CODE, Pattern.compile(query.getFulltext(), Pattern.CASE_INSENSITIVE));
-         Bson nameFulltext = Filters.regex(CollectionCodec.NAME, Pattern.compile(query.getFulltext(), Pattern.CASE_INSENSITIVE));
-         filters.add(Filters.or(codeFulltext, nameFulltext));
-      }
-
-      if (query.isCollectionIdsQuery()) {
-         Set<ObjectId> collectionIds = query.getCollectionIds().stream().map(ObjectId::new).collect(Collectors.toSet());
-         filters.add(Filters.in(CollectionCodec.ID, collectionIds));
-      }
-
-      return Filters.and(filters);
    }
 
    private List<Collection> searchCollectionsByFilter(Bson filter, DatabaseQuery query) {

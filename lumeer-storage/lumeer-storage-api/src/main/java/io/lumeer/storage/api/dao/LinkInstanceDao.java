@@ -46,6 +46,8 @@ public interface LinkInstanceDao {
 
    LinkInstance getLinkInstance(String id);
 
-   List<LinkInstance> getLinkInstances(SearchQuery2 query);
+   List<LinkInstance> getLinkInstancesByDocumentIds(Set<String> documentIds);
+
+   List<LinkInstance> searchLinkInstances(SearchQuery2 query);
 
 }

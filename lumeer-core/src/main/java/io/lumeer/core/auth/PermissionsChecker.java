@@ -23,7 +23,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Query2;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
@@ -238,11 +238,11 @@ public class PermissionsChecker {
    }
 
 
-   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final Query query) {
+   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final Query2 query) {
       return hasRoleWithView(resource, role, viewRole, viewCode, query);
    }
 
-   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final String viewCode, final Query query) {
+   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final String viewCode, final Query2 query) {
       if (!hasRole(resource, role)) { // we do not have direct access
          return getResourceRoleViaView(resource, role, viewRole, viewCode) &&
                (query == null || query.isMoreSpecificThan(viewDao.getViewByCode(viewCode).getQuery()));

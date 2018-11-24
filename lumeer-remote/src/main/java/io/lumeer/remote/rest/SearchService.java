@@ -18,13 +18,10 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Query2;
 import io.lumeer.api.model.Suggestions;
 import io.lumeer.api.model.SuggestionType;
-import io.lumeer.api.model.View;
-import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
@@ -61,9 +58,6 @@ public class SearchService extends AbstractService {
    private SearchFacade searchFacade;
 
    @Inject
-   private CollectionFacade collectionFacade;
-
-   @Inject
    private DocumentFacade documentFacade;
 
    @Inject
@@ -86,31 +80,13 @@ public class SearchService extends AbstractService {
    }
 
    @POST
-   @Path("collections")
-   @QueryProcessor
-   public List<Collection> searchCollections(Query query) {
-      Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      List<Collection> collections = searchFacade.searchCollections(query);
-      collections.forEach(coll -> coll.setFavorite(favoriteCollectionIds.contains(coll.getId())));
-      return collections;
-   }
-
-   @POST
    @Path("documents")
    @QueryProcessor
-   public List<Document> searchDocuments(Query query) {
+   public List<Document> searchDocuments(Query2 query) {
       Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
       List<Document> documents = searchFacade.searchDocuments(query);
       documents.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
       return documents;
-
-   }
-
-   @POST
-   @Path("views")
-   @QueryProcessor
-   public List<View> searchViews(Query query) {
-      return searchFacade.searchViews(query);
 
    }
 

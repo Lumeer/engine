@@ -7,17 +7,24 @@ import java.util.Objects;
 
 public class AttributeFilter {
 
+   private final String collectionId;
    private final String attributeId;
    private final String operator;
    private final String value;
 
    @JsonCreator
-   public AttributeFilter(@JsonProperty("attributeId") final String attributeId,
+   public AttributeFilter(@JsonProperty("collectionId") final String collectionId,
+         @JsonProperty("attributeId") final String attributeId,
          @JsonProperty("operator") final String operator,
          @JsonProperty("value") final String value) {
+      this.collectionId = collectionId;
       this.attributeId = attributeId;
       this.operator = operator;
       this.value = value;
+   }
+
+   public String getCollectionId() {
+      return collectionId;
    }
 
    public String getAttributeId() {
@@ -41,20 +48,22 @@ public class AttributeFilter {
          return false;
       }
       final AttributeFilter that = (AttributeFilter) o;
-      return Objects.equals(getAttributeId(), that.getAttributeId()) &&
+      return Objects.equals(getCollectionId(), that.getCollectionId()) &&
+            Objects.equals(getAttributeId(), that.getAttributeId()) &&
             Objects.equals(getOperator(), that.getOperator()) &&
             Objects.equals(getValue(), that.getValue());
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(getAttributeId(), getOperator(), getValue());
+      return Objects.hash(getCollectionId(), getAttributeId(), getOperator(), getValue());
    }
 
    @Override
    public String toString() {
       return "AttributeFilter{" +
-            "attributeId='" + attributeId + '\'' +
+            "collectionId='" + collectionId + '\'' +
+            ", attributeId='" + attributeId + '\'' +
             ", operator='" + operator + '\'' +
             ", value='" + value + '\'' +
             '}';

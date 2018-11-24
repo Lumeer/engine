@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.dao;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.engine.api.event.RemoveResourcePermissions;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import com.mongodb.client.FindIterable;
@@ -43,8 +44,12 @@ public abstract class MongoDao {
    }
 
    public <T> void addPaginationToQuery(FindIterable<T> findIterable, DatabaseQuery query) {
-      Integer page = query.getPage();
-      Integer pageSize = query.getPageSize();
+      addPaginationToQuery(findIterable, query.getPagination());
+   }
+
+   public <T> void addPaginationToQuery(FindIterable<T> findIterable, Pagination pagination) {
+      Integer page = pagination != null ? pagination.getPage() : null;
+      Integer pageSize = pagination != null ? pagination.getPageSize() : null;
 
       if (page != null && pageSize != null) {
          findIterable.skip(page * pageSize)

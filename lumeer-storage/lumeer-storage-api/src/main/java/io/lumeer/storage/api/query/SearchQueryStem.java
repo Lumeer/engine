@@ -23,33 +23,38 @@ import io.lumeer.api.model.QueryStem;
 import io.lumeer.storage.api.filter.AttributeFilter;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SearchQueryStem {
 
    private final String collectionId;
    private final List<String> linkTypeIds;
-   private final List<String> documentIds;
-   private final List<AttributeFilter> filters;
+   private final Set<String> documentIds;
+   private final Set<AttributeFilter> filters;
+   private final Set<String> fulltexts;
 
-   public SearchQueryStem(QueryStem stem) {
+   public SearchQueryStem(QueryStem stem, Set<String> fulltexts) {
       this.collectionId = stem.getCollectionId();
       this.linkTypeIds = stem.getLinkTypeIds();
       this.documentIds = stem.getDocumentIds();
-      this.filters = stem.getFilters() != null ? stem.getFilters().stream().map(this::convertFilter).collect(Collectors.toList()) : Collections.emptyList();
+      this.filters = stem.getFilters() != null ? stem.getFilters().stream().map(this::convertFilter).collect(Collectors.toSet()) : Collections.emptySet();
+      this.fulltexts = fulltexts;
    }
 
    public SearchQueryStem(Builder builder) {
       this.collectionId = builder.collectionId;
       this.linkTypeIds = builder.linkTypeIds;
-      this.documentIds = builder.documentIds;
+      this.documentIds = builder.documentIds != null && !builder.documentIds.isEmpty() ? builder.documentIds : new HashSet<>();
       this.filters = builder.filters;
+      this.fulltexts = builder.fulltexts;
    }
 
    private AttributeFilter convertFilter(final io.lumeer.api.model.AttributeFilter attr) {
       ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
-      return new AttributeFilter(this.collectionId, conditionType, attr.getAttributeId(), attr.getValue());
+      return new AttributeFilter(attr.getCollectionId(), conditionType, attr.getAttributeId(), attr.getValue());
    }
 
    public String getCollectionId() {
@@ -60,12 +65,16 @@ public class SearchQueryStem {
       return linkTypeIds;
    }
 
-   public List<String> getDocumentIds() {
+   public Set<String> getDocumentIds() {
       return documentIds;
    }
 
-   public List<AttributeFilter> getFilters() {
+   public Set<AttributeFilter> getFilters() {
       return filters;
+   }
+
+   public Set<String> getFulltexts() {
+      return fulltexts;
    }
 
    public boolean containsLinkTypeIdsQuery() {
@@ -80,6 +89,14 @@ public class SearchQueryStem {
       return filters != null && !filters.isEmpty();
    }
 
+   public boolean containsFulltextsQuery() {
+      return fulltexts != null && !fulltexts.isEmpty();
+   }
+
+   public void appendDocumentIds(Set<String> documentIds) {
+      this.documentIds.addAll(documentIds);
+   }
+
    public static Builder createBuilder(String collectionId) {
       return new Builder(collectionId);
    }
@@ -88,8 +105,9 @@ public class SearchQueryStem {
 
       private String collectionId;
       private List<String> linkTypeIds;
-      private List<String> documentIds;
-      private List<AttributeFilter> filters;
+      private Set<String> documentIds;
+      private Set<AttributeFilter> filters;
+      private Set<String> fulltexts;
 
       private Builder(String collectionId) {
          this.collectionId = collectionId;
@@ -100,13 +118,18 @@ public class SearchQueryStem {
          return this;
       }
 
-      public Builder documentIds(List<String> documentIds) {
+      public Builder documentIds(Set<String> documentIds) {
          this.documentIds = documentIds;
          return this;
       }
 
-      public Builder filters(List<AttributeFilter> filters) {
+      public Builder filters(Set<AttributeFilter> filters) {
          this.filters = filters;
+         return this;
+      }
+
+      public Builder fulltexts(Set<String> fulltexts) {
+         this.fulltexts = fulltexts;
          return this;
       }
 
