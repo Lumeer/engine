@@ -46,7 +46,7 @@ public class PaymentFacadeTest {
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            10 * 6 * 8,
+            Math.round(10 * 6 * 8.39),
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2018-10-30T00:00:00.000+0100"),
@@ -56,11 +56,11 @@ public class PaymentFacadeTest {
             "en",
             "EUR",
             "url"
-            )).getAmount()).isEqualTo(10 * 6 * 8);
+            )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            Math.round(10 * 12 * 6.7),
+            Math.round(10 * 12 * 6.99),
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2019-04-30T00:00:00.000+0100"),
@@ -70,11 +70,11 @@ public class PaymentFacadeTest {
             "en",
             "EUR",
             "url"
-      )).getAmount()).isEqualTo(Math.round(10 * 12 * 6.7));
+      )).getAmount()).isEqualTo(Math.round(10 * 12 * 6.99));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            10 * 5 * 8,
+            Math.round(10 * 5 * 8.39),
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2018-10-30T00:00:00.000+0100"),
@@ -84,11 +84,11 @@ public class PaymentFacadeTest {
             "en",
             "EUR",
             "url"
-      )).getAmount()).isEqualTo(10 * 6 * 8);
+      )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            10 * 6 * 8 - 1,
+            Math.round(10 * 6 * 8.39) - 1,
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2018-10-30T00:00:00.000+0100"),
@@ -98,7 +98,7 @@ public class PaymentFacadeTest {
             "en",
             "EUR",
             "url"
-      )).getAmount()).isEqualTo(10 * 6 * 8);
+      )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
    }
 
    private Date getDate(final String date) {
