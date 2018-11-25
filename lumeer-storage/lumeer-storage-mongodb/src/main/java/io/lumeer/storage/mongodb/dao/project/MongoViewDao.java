@@ -33,6 +33,9 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.mongodb.MongoUtils;
+import io.lumeer.storage.mongodb.codecs.QueryCodec;
+import io.lumeer.storage.mongodb.codecs.QueryStemCodec;
 import io.lumeer.storage.mongodb.codecs.ViewCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
@@ -80,7 +83,6 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       projectCollection.createIndex(Indexes.ascending(ViewCodec.CODE), new IndexOptions().unique(true));
       projectCollection.createIndex(Indexes.ascending(ViewCodec.NAME), new IndexOptions().unique(true));
       projectCollection.createIndex(Indexes.text(ViewCodec.NAME));
-      projectCollection.createIndex(Indexes.ascending(ViewCodec.QUERY + "." + QueryCodec.LINK_TYPE_IDS));
    }
 
    @Override
@@ -163,15 +165,15 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    @Override
    public List<View> getViewsByLinkTypeIds(final List<String> linkTypeIds) {
       FindIterable<View> findIterable = databaseCollection().find(
-            Filters.in(ViewCodec.QUERY + "." + QueryCodec.LINK_TYPE_IDS, linkTypeIds)
+            Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.STEMS, QueryStemCodec.LINK_TYPE_IDS), linkTypeIds)
       );
       return findIterable.into(new ArrayList<>());
    }
 
    @Override
-   public List<View> getViewsByCollectionIds(final List<String> collectionIds) {
+   public List<View> getViewsByCollectionId(final String collectionId) {
       FindIterable<View> findIterable = databaseCollection().find(
-            Filters.in(ViewCodec.QUERY + "." + QueryCodec.COLLECTION_IDS, collectionIds)
+            Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.STEMS, QueryStemCodec.COLLECTION_ID), collectionId)
       );
       return findIterable.into(new ArrayList<>());
    }

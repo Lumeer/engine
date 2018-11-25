@@ -29,7 +29,6 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -41,7 +40,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -74,9 +72,6 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private ViewDao viewDao;
-
-   @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
 
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
@@ -317,7 +312,7 @@ public class CollectionFacade extends AbstractFacade {
                 result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
              });
 
-      viewDao.getViewsByCollectionIds(Collections.singletonList(collection.getId())).stream()
+      viewDao.getViewsByCollectionId(collection.getId()).stream()
              .map(Resource::getPermissions)
              .map(Permissions::getUserPermissions)
              .forEach(permissions -> {

@@ -52,6 +52,4 @@ public interface LinkTypeDao {
 
    List<LinkType> getLinkTypes(SuggestionQuery query);
 
-   List<LinkType> getLinkTypesByCollectionId(final String collectionId);
-
 }

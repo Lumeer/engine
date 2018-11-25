@@ -125,11 +125,6 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public List<LinkType> getLinkTypesByCollectionId(final String collectionId) {
-      return databaseCollection().find(collectionIdFilter(collectionId)).into(new ArrayList<>());
-   }
-
-   @Override
    public List<LinkType> getLinkTypesByIds(final Set<String> ids) {
       List<ObjectId> objectIds = ids.stream().map(ObjectId::new).collect(Collectors.toList());
       Bson filter = Filters.in(LinkTypeCodec.ID, objectIds);
