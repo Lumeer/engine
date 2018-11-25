@@ -26,11 +26,11 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
-public class SearchQuery2 extends DatabaseQuery {
+public class SearchQuery extends DatabaseQuery {
 
    private final List<SearchQueryStem> stems;
 
-   private SearchQuery2(Builder builder) {
+   private SearchQuery(Builder builder) {
       super(builder);
 
       this.stems = builder.stems;
@@ -63,16 +63,16 @@ public class SearchQuery2 extends DatabaseQuery {
          return this;
       }
 
-      public SearchQuery2 build() {
+      public SearchQuery build() {
          validate();
 
-         return new SearchQuery2(this);
+         return new SearchQuery(this);
       }
    }
 
    @Override
    public String toString() {
-      return "SearchQuery2{" +
+      return "SearchQuery{" +
             "stems=" + stems +
             '}';
    }

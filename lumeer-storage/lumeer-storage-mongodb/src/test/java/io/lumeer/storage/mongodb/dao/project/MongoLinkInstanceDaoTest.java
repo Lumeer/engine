@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery2;
+import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
@@ -223,12 +223,12 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
       SearchQueryStem stem1 = SearchQueryStem.createBuilder("Collection").documentIds(Collections.singleton(DOCUMENT_ID1)).build();
-      SearchQuery2 query1 = SearchQuery2.createBuilder(USER).stems(Collections.singletonList(stem1)).build();
+      SearchQuery query1 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem1)).build();
       List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(query1);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
 
       SearchQueryStem stem2 = SearchQueryStem.createBuilder("Collection").documentIds(Collections.singleton(DOCUMENT_ID2)).build();
-      SearchQuery2 query2 = SearchQuery2.createBuilder(USER).stems(Collections.singletonList(stem2)).build();
+      SearchQuery query2 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem2)).build();
       linkInstances = linkInstanceDao.searchLinkInstances(query2);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
    }
@@ -250,12 +250,12 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
       SearchQueryStem stem1 = SearchQueryStem.createBuilder("Collection").linkTypeIds(Arrays.asList(LINK_TYPE_ID1, LINK_TYPE_ID2)).build();
-      SearchQuery2 query1 = SearchQuery2.createBuilder(USER).stems(Collections.singletonList(stem1)).build();
+      SearchQuery query1 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem1)).build();
       List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(query1);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
 
       SearchQueryStem stem2 = SearchQueryStem.createBuilder("Collection").linkTypeIds(Collections.singletonList(LINK_TYPE_ID3)).build();
-      SearchQuery2 query2 = SearchQuery2.createBuilder(USER).stems(Collections.singletonList(stem2)).build();
+      SearchQuery query2 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem2)).build();
       linkInstances = linkInstanceDao.searchLinkInstances(query2);
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id4));
    }

@@ -6,15 +6,12 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.event.CreateLinkInstance;
-import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
-import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
-import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery2;
+import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.codecs.LinkInstanceCodec;
 
@@ -26,7 +23,6 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -134,13 +130,13 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public List<LinkInstance> searchLinkInstances(final SearchQuery2 query) {
+   public List<LinkInstance> searchLinkInstances(final SearchQuery query) {
       final FindIterable<LinkInstance> linkInstances = databaseCollection().find(linkInstancesFilter(query));
       addPaginationToQuery(linkInstances, query);
       return linkInstances.into(new ArrayList<>());
    }
 
-   private Bson linkInstancesFilter(final SearchQuery2 query) {
+   private Bson linkInstancesFilter(final SearchQuery query) {
       List<Bson> filters = new ArrayList<>();
       for (SearchQueryStem stem : query.getStems()) {
          List<Bson> stemFilters = new ArrayList<>();

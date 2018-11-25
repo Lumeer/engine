@@ -35,7 +35,7 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SearchQuery2;
+import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
 import java.util.ArrayList;
@@ -80,13 +80,13 @@ public class SearchFacade extends AbstractFacade {
       return linkInstanceDao.searchLinkInstances(buildSearchQuery(query));
    }
 
-   private SearchQuery2 buildSearchQuery(Query query) {
-      return SearchQuery2.createBuilder(authenticatedUser.getCurrentUser().getEmail())
-                         .groups(authenticatedUserGroups.getCurrentUserGroups())
-                         .queryStems(query.getStems(), query.getFulltexts())
-                         .page(query.getPage())
-                         .pageSize(query.getPageSize())
-                         .build();
+   private SearchQuery buildSearchQuery(Query query) {
+      return SearchQuery.createBuilder(authenticatedUser.getCurrentUser().getEmail())
+                        .groups(authenticatedUserGroups.getCurrentUserGroups())
+                        .queryStems(query.getStems(), query.getFulltexts())
+                        .page(query.getPage())
+                        .pageSize(query.getPageSize())
+                        .build();
    }
 
    public List<Document> searchDocuments(final Query query) {
@@ -148,7 +148,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Set<Document> searchDocumentsByStems(Query query, List<Collection> collections) {
-      SearchQuery2 searchQuery = buildSearchQuery(query);
+      SearchQuery searchQuery = buildSearchQuery(query);
 
       Set<String> linkTypeIds = query.getLinkTypeIds();
       List<LinkType> linkTypes = !linkTypeIds.isEmpty() ? linkTypeDao.getLinkTypesByIds(linkTypeIds) : Collections.emptyList();
