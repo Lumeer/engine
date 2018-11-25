@@ -28,6 +28,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
@@ -74,7 +75,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String NAME = "Test view";
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
-   private static final Query QUERY;
+   private Query query;
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
@@ -92,10 +93,6 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String VIEWS_URL = SERVER_URL + VIEWS_PATH;
    private static final String PERMISSIONS_URL = VIEWS_URL + "/" + CODE + "/permissions";
    private static final String VIEWS_COLLECTIONS_URL = VIEWS_URL + "/all/collections";
-
-   static {
-      QUERY = new Query(new HashSet<>(), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
-   }
 
    @Inject
    private OrganizationDao organizationDao;
@@ -157,14 +154,11 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       Collection collection = collectionFacade.createCollection(
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
       collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
-      QUERY.getCollectionIds().clear();
-      QUERY.getCollectionIds().add(collection.getId());
-
-      QUERY.getFilters().add(collection.getId() + ":testAttribute:= 42");
+      query = new Query(new QueryStem(collection.getId()));
    }
 
    private View prepareView(String code) {
-      return new View(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE, CONFIG, this.user.getId());
+      return new View(code, NAME, ICON, COLOR, null, null, query, PERSPECTIVE, CONFIG, this.user.getId());
    }
 
    private View createView(String code) {
@@ -193,7 +187,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
+      assertions.assertThat(returnedView.getQuery()).isEqualTo(query);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
@@ -220,7 +214,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
+      assertions.assertThat(returnedView.getQuery()).isEqualTo(query);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
@@ -235,7 +229,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedView.getName()).isEqualTo(NAME);
       assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedView.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
+      assertions.assertThat(storedView.getQuery()).isEqualTo(query);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
@@ -274,7 +268,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
-      assertions.assertThat(returnedView.getQuery()).isEqualTo(QUERY);
+      assertions.assertThat(returnedView.getQuery()).isEqualTo(query);
       assertions.assertThat(returnedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(returnedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(returnedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
@@ -289,10 +283,9 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       Collection collection = collectionFacade.createCollection(
             new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Arrays.asList(permission)), Collections.emptySet())));
       collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(USER, Collections.singleton(Role.WRITE)));
-      Query query = new Query(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet());
 
       View view = prepareView(CODE + "3");
-      view.setQuery(query);
+      view.setQuery(new Query(new QueryStem(collection.getId())));
       view.getPermissions().updateUserPermissions(userPermission);
       view.getPermissions().updateGroupPermissions(groupPermission);
       view.setAuthorId(USER);
@@ -452,7 +445,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       // create a view under a different user
       View view = createView(VIEW_CODE);
       view.setAuthorId(NON_EXISTING_USER);
-      view.setQuery(new Query(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
+      view.setQuery(new Query(new QueryStem(collection.getId())));
       view.getPermissions().clearUserPermissions();
       view.getPermissions().updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
       viewDao.updateView(view.getId(), view);

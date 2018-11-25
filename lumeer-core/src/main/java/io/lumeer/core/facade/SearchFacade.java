@@ -23,7 +23,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
-import io.lumeer.api.model.Query2;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
@@ -71,9 +71,25 @@ public class SearchFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
+   private ViewFacade viewFacade;
+
+   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
-   public List<Document> searchDocuments(final Query2 query) {
+   public List<LinkInstance> getLinkInstances(Query query) {
+      return linkInstanceDao.searchLinkInstances(buildSearchQuery(query));
+   }
+
+   private SearchQuery2 buildSearchQuery(Query query) {
+      return SearchQuery2.createBuilder(authenticatedUser.getCurrentUser().getEmail())
+                         .groups(authenticatedUserGroups.getCurrentUserGroups())
+                         .queryStems(query.getStems(), query.getFulltexts())
+                         .page(query.getPage())
+                         .pageSize(query.getPageSize())
+                         .build();
+   }
+
+   public List<Document> searchDocuments(final Query query) {
       final List<Collection> collections = getReadCollections();
 
       final Set<Document> documents;
@@ -89,25 +105,30 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<Collection> getReadCollections() {
-      List<String> users = new ArrayList<>();
-      users.add(authenticatedUser.getCurrentUserId());
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+      Set<Collection> userCollections = getUserCollections();
 
       final View view = permissionsChecker.getActiveView();
       if (view != null) {
-         users.add(view.getAuthorId());
+         userCollections.addAll(viewFacade.getViewsCollections(Collections.singletonList(view), true));
       }
 
-      DatabaseQuery query = DatabaseQuery.createBuilder(users.toArray(new String[0]))
+      return new ArrayList<>(userCollections);
+   }
+
+   private Set<Collection> getUserCollections() {
+      String user = authenticatedUser.getCurrentUserId();
+      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+
+      DatabaseQuery query = DatabaseQuery.createBuilder(user)
                                          .groups(groups)
                                          .build();
 
       return collectionDao.getCollections(query).stream()
                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
-                          .collect(Collectors.toList());
+                          .collect(Collectors.toSet());
    }
 
-   private Set<Document> searchDocumentsByEmptyQuery(Query2 query, List<Collection> collections) {
+   private Set<Document> searchDocumentsByEmptyQuery(Query query, List<Collection> collections) {
       List<DataDocument> data = new ArrayList<>();
       for (Collection collection : collections) {
          SearchQueryStem stem = SearchQueryStem.createBuilder(collection.getId()).build();
@@ -126,7 +147,7 @@ public class SearchFacade extends AbstractFacade {
                       .collect(Collectors.toSet());
    }
 
-   private Set<Document> searchDocumentsByStems(Query2 query, List<Collection> collections) {
+   private Set<Document> searchDocumentsByStems(Query query, List<Collection> collections) {
       SearchQuery2 searchQuery = buildSearchQuery(query);
 
       Set<String> linkTypeIds = query.getLinkTypeIds();
@@ -142,20 +163,12 @@ public class SearchFacade extends AbstractFacade {
          if (stem.containsLinkTypeIdsQuery()) {
             data.addAll(searchDocumentsByStemWithLinks(stem, searchQuery.getPagination(), collectionsMap, linkTypes, documents));
          } else {
-            data.addAll(dataDao.searchData(stem, searchQuery.getPagination(), collectionsMap.get(stem.getCollectionId())));
+            SearchQueryStem cleanedStem = cleanStemForBaseCollection(stem, documents);
+            data.addAll(dataDao.searchData(cleanedStem, searchQuery.getPagination(), collectionsMap.get(stem.getCollectionId())));
          }
       }
 
       return convertDataDocumentsToDocuments(data);
-   }
-
-   private SearchQuery2 buildSearchQuery(Query2 query) {
-      return SearchQuery2.createBuilder(authenticatedUser.getCurrentUser().getEmail())
-                         .groups(authenticatedUserGroups.getCurrentUserGroups())
-                         .queryStems(query.getStems(), query.getFulltexts())
-                         .page(query.getPage())
-                         .pageSize(query.getPageSize())
-                         .build();
    }
 
    private List<DataDocument> searchDocumentsByStemWithLinks(SearchQueryStem stem, Pagination pagination, Map<String, Collection> collectionsMap, List<LinkType> linkTypes, List<Document> documents) {
@@ -177,7 +190,15 @@ public class SearchFacade extends AbstractFacade {
                                                      .filter(id -> !lastStageDocumentIds.contains(id))
                                                      .collect(Collectors.toSet());
 
-         currentStageStem.appendDocumentIds(otherDocumentIds);
+         if (currentStageStem.containsDocumentIdsQuery()) {
+            currentStageStem.intersectDocumentIds(otherDocumentIds);
+         } else {
+            currentStageStem.appendDocumentIds(otherDocumentIds);
+         }
+
+         if (!currentStageStem.containsDocumentIdsQuery()) {
+            break; // empty ids after interesction or append represents empty search, so we should break
+         }
 
          List<DataDocument> currentStageData = dataDao.searchData(currentStageStem, pagination, collectionsMap.get(currentStageStem.getCollectionId()));
          if (currentStageData.isEmpty()) {
@@ -210,36 +231,39 @@ public class SearchFacade extends AbstractFacade {
                             .build();
    }
 
-   private List<SearchQueryStem> createStemsPipeline(SearchQueryStem stem, Map<String, Collection> collectionsMap, List<LinkType> linkTypes, List<Document> documents) {
+   private List<SearchQueryStem> createStemsPipeline(SearchQueryStem stem, Map<String, Collection> collectionsMap, List<LinkType> allLinkTypes, List<Document> allDocuments) {
       List<SearchQueryStem> stemsPipeline = new LinkedList<>();
       String lastCollectionId = stem.getCollectionId();
 
+      Set<LinkType> stemLinkTypes = allLinkTypes.stream().filter(lt -> stem.getLinkTypeIds().contains(lt.getId())).collect(Collectors.toSet());
+
       for (int i = 0; i < stem.getLinkTypeIds().size(); i++) {
-         LinkType linkType = findLinkTypeForCollection(linkTypes, lastCollectionId);
+         LinkType linkType = findLinkTypeForCollection(stemLinkTypes, lastCollectionId);
          if (linkType == null) {
             return stemsPipeline; // maximum valid pipeline
          }
 
-         int collectionIdIndex = linkType.getCollectionIds().get(0).equals(lastCollectionId) ? 0 : 1;
+         int collectionIdIndex = linkType.getCollectionIds().get(0).equals(lastCollectionId) ? 1 : 0;
          String currentCollectionId = linkType.getCollectionIds().get(collectionIdIndex);
 
          if (!collectionsMap.containsKey(currentCollectionId)) {
             return stemsPipeline;
          }
 
-         stemsPipeline.add(cleanStemForCollection(stem, documents, currentCollectionId));
+         stemsPipeline.add(cleanStemForCollection(stem, allDocuments, currentCollectionId));
          lastCollectionId = currentCollectionId;
+         stemLinkTypes.remove(linkType);
       }
 
       return stemsPipeline;
    }
 
-   private LinkType findLinkTypeForCollection(List<LinkType> linkTypes, String collectionId) {
+   private LinkType findLinkTypeForCollection(Set<LinkType> linkTypes, String collectionId) {
       Optional<LinkType> linkType = linkTypes.stream().filter(lt -> lt.getCollectionIds().contains(collectionId)).findFirst();
       return linkType.orElse(null);
    }
 
-   private Set<Document> searchDocumentsByFulltexts(Query2 query, List<Collection> collections) {
+   private Set<Document> searchDocumentsByFulltexts(Query query, List<Collection> collections) {
       List<DataDocument> data = dataDao.searchDataByFulltexts(query.getFulltexts(), query.getPagination(), collections);
       return convertDataDocumentsToDocuments(data);
    }

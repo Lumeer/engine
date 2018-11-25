@@ -75,14 +75,10 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
-   private static final Query QUERY;
+   private static final Query QUERY = new Query();
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
-
-   static {
-      QUERY = new Query(Collections.singleton("testAttribute=42"), Collections.singleton("testCollection"), null, null, "test", 0, Integer.MAX_VALUE);
-   }
 
    @Inject
    private SuggestionFacade suggestionFacade;

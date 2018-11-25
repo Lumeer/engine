@@ -26,13 +26,13 @@ public class AttributeFilter {
 
    private final String collectionId;
    private final ConditionType conditionType;
-   private final String attributeName;
+   private final String attributeId;
    private final String value;
 
-   public AttributeFilter(final String collectionId, final ConditionType conditionType, final String attributeName, final String value) {
+   public AttributeFilter(final String collectionId, final ConditionType conditionType, final String attributeId, final String value) {
       this.collectionId = collectionId;
       this.conditionType = conditionType;
-      this.attributeName = attributeName;
+      this.attributeId = attributeId;
       this.value = value;
    }
 
@@ -48,8 +48,8 @@ public class AttributeFilter {
       return value;
    }
 
-   public String getAttributeName() {
-      return attributeName;
+   public String getAttributeId() {
+      return attributeId;
    }
 
    @Override
@@ -64,13 +64,13 @@ public class AttributeFilter {
       return Objects.equals(getCollectionId(), that.getCollectionId()) &&
             getConditionType() == that.getConditionType() &&
             Objects.equals(getValue(), that.getValue()) &&
-            Objects.equals(getAttributeName(), that.getAttributeName());
+            Objects.equals(getAttributeId(), that.getAttributeId());
    }
 
    @Override
    public int hashCode() {
 
-      return Objects.hash(getCollectionId(), getConditionType(), getValue(), getAttributeName());
+      return Objects.hash(getCollectionId(), getConditionType(), getValue(), getAttributeId());
    }
 
    @Override
@@ -79,7 +79,7 @@ public class AttributeFilter {
             "collectionId='" + collectionId + '\'' +
             ", conditionType=" + conditionType +
             ", value='" + value + '\'' +
-            ", attributeName='" + attributeName + '\'' +
+            ", attributeId='" + attributeId + '\'' +
             '}';
    }
 }

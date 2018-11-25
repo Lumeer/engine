@@ -187,10 +187,10 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public List<Collection> getViewsCollections() {
-      return getViewsCollections(getViews());
+      return getViewsCollections(getViews(), true);
    }
 
-   private List<Collection> getViewsCollections(List<View> views) {
+   public List<Collection> getViewsCollections(List<View> views, boolean keepActualRoles) {
       Set<String> collectionIds = views.stream().map(view -> view.getQuery().getCollectionIds())
                                        .flatMap(java.util.Collection::stream)
                                        .collect(Collectors.toSet());
@@ -199,7 +199,7 @@ public class ViewFacade extends AbstractFacade {
                                                                        .collect(Collectors.toSet());
       collectionIds.addAll(collectionIdsFromLinkTypes);
       return collectionDao.getCollectionsByIds(collectionIds).stream()
-                          .map(this::keepOnlyActualUserRoles)
+                          .map(collection -> keepActualRoles ? keepOnlyActualUserRoles(collection) : collection)
                           .collect(Collectors.toList());
    }
 
@@ -221,6 +221,6 @@ public class ViewFacade extends AbstractFacade {
    }
 
    private List<Collection> getCollectionsByView(final View view) {
-      return getViewsCollections(Collections.singletonList(view));
+      return getViewsCollections(Collections.singletonList(view), false);
    }
 }

@@ -20,14 +20,11 @@ package io.lumeer.remote.rest.interceptor;
 
 import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.Query;
-import io.lumeer.api.model.Query2;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -46,25 +43,7 @@ public class QueryProcessorInterceptor {
    @Inject
    private AuthenticatedUser authenticatedUser;
 
-   private String processFilter(final String filter) {
-      final String[] parts = filter.split(":", 3);
-      if (parts.length == 3 && parts[2].contains(USER_EMAIL)) {
-         parts[2] = parts[2].replaceFirst(Pattern.quote(USER_EMAIL), authenticatedUser.getUserEmail());
-         return String.join(":", parts);
-      } else {
-         return filter;
-      }
-   }
-
    private void processQuery(final Query query) {
-      if (query.getFilters() != null && query.getFilters().size() > 0) {
-         final Set<String> newFilters = query.getFilters().stream().map(this::processFilter).collect(Collectors.toSet());
-         query.getFilters().clear();
-         query.getFilters().addAll(newFilters);
-      }
-   }
-
-   private void processQuery(final Query2 query) {
       for (QueryStem stem : query.getStems()) {
          final List<AttributeFilter> newFilters = stem.getFilters().stream().map(this::processFilter).collect(Collectors.toList());
          stem.getFilters().clear();
@@ -87,9 +66,6 @@ public class QueryProcessorInterceptor {
       for (final Object param : params) {
          if (param instanceof Query) {
             processQuery((Query) param);
-         }
-         if (param instanceof Query2) {
-            processQuery((Query2) param);
          }
       }
 

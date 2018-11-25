@@ -30,9 +30,6 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query;
-import io.lumeer.api.model.Query2;
-import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -235,46 +232,6 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
       assertThatThrownBy(() -> linkInstanceDao.getLinkInstance(created.getId()))
             .isInstanceOf(StorageException.class);
-   }
-
-   @Test
-   public void testGetLinkInstances() {
-      String id1 = linkInstanceFacade.createLinkInstance(prepareLinkInstance()).getId();
-
-      LinkInstance linkInstance2 = prepareLinkInstance();
-      linkInstance2.setLinkTypeId(linkTypeId1);
-      linkInstance2.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(2)));
-      String id2 = linkInstanceFacade.createLinkInstance(linkInstance2).getId();
-
-      LinkInstance linkInstance3 = prepareLinkInstance();
-      linkInstance3.setLinkTypeId(linkTypeId1);
-      linkInstance3.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      String id3 = linkInstanceFacade.createLinkInstance(linkInstance3).getId();
-
-      LinkInstance linkInstance4 = prepareLinkInstance();
-      linkInstance4.setLinkTypeId(linkTypeId2);
-      linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      String id4 = linkInstanceFacade.createLinkInstance(linkInstance4).getId();
-
-      QueryStem stem1 = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null);
-      Query2 query1 = new Query2(stem1);
-      List<LinkInstance> linkInstances = linkInstanceFacade.getLinkInstances(query1);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
-
-      QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null);
-      Query2 query2 = new Query2(stem2);
-      linkInstances = linkInstanceFacade.getLinkInstances(query2);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id3));
-
-      QueryStem stem3 = new QueryStem(collection1Id, Arrays.asList(linkTypeId1, linkTypeId2), null, null);
-      Query2 query3 = new Query2(stem3);
-      linkInstances = linkInstanceFacade.getLinkInstances(query3);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
-
-      QueryStem stem4 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null);
-      Query2 query4 = new Query2(stem4);
-      linkInstances = linkInstanceFacade.getLinkInstances(query4);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
    }
 
    private LinkInstance prepareLinkInstance() {

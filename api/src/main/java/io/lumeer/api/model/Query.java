@@ -19,109 +19,61 @@
 package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Query {
 
-   private final Set<String> filters;
-   private final Set<String> collectionIds;
-   private final Set<String> documentIds;
-   private final Set<String> linkTypeIds;
-   private final String fulltext;
+   private final List<QueryStem> stems;
+   private final Set<String> fulltexts;
    private final Integer page;
    private final Integer pageSize;
 
-   public Query() {
-      this.filters = Collections.emptySet();
-      this.collectionIds = Collections.emptySet();
-      this.documentIds = Collections.emptySet();
-      this.linkTypeIds = Collections.emptySet();
-      this.fulltext = "";
-      this.page = null;
-      this.pageSize = null;
-   }
-
-   public Query(String fulltext) {
-      this.fulltext = fulltext;
-
-      this.collectionIds = Collections.emptySet();
-      this.documentIds = Collections.emptySet();
-      this.linkTypeIds = Collections.emptySet();
-      this.filters = Collections.emptySet();
-      this.page = 0;
-      this.pageSize = 0;
-   }
-
-   public Query(Integer page, Integer pageSize) {
-      this.page = page;
-      this.pageSize = pageSize;
-
-      this.collectionIds = Collections.emptySet();
-      this.documentIds = Collections.emptySet();
-      this.linkTypeIds = Collections.emptySet();
-      this.filters = Collections.emptySet();
-      this.fulltext = "";
-   }
-
-   public Query(Set<String> collectionIds, Set<String> linkTypeIds, Set<String> documentIds) {
-      this.collectionIds = collectionIds != null ? collectionIds : Collections.emptySet();
-      this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptySet();
-      this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
-
-      this.filters = Collections.emptySet();
-      this.page = 0;
-      this.pageSize = 0;
-      this.fulltext = "";
-   }
-
-   public Query(Query query) {
-      this.filters = query.getFilters();
-      this.fulltext = query.getFulltext();
-      this.collectionIds = query.getCollectionIds();
-      this.linkTypeIds = query.getLinkTypeIds();
-      this.documentIds = query.getDocumentIds();
-      this.page = query.getPage();
-      this.pageSize = query.getPageSize();
-   }
-
    @JsonCreator
-   public Query(@JsonProperty("filters") final Set<String> filters,
-         @JsonProperty("collectionIds") final Set<String> collectionIds,
-         @JsonProperty("linkTypeIds") final Set<String> linkTypeIds,
-         @JsonProperty("documentIds") final Set<String> documentIds,
-         @JsonProperty("fulltext") final String fulltext,
+   public Query(@JsonProperty("stems") final List<QueryStem> stems,
+         @JsonProperty("fulltexts") final Set<String> fulltexts,
          @JsonProperty("page") final Integer page,
          @JsonProperty("pageSize") final Integer pageSize) {
-      this.filters = filters != null ? filters : Collections.emptySet();
-      this.collectionIds = collectionIds != null ? collectionIds : Collections.emptySet();
-      this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptySet();
-      this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
-      this.fulltext = fulltext;
+      this.stems = stems != null ? stems : Collections.emptyList();
+      this.fulltexts = fulltexts != null ? fulltexts : Collections.emptySet();
       this.page = page;
       this.pageSize = pageSize;
    }
 
-   public Set<String> getFilters() {
-      return filters;
+   public Query(List<QueryStem> stems) {
+      this(stems, Collections.emptySet(), 0, 0);
    }
 
-   public Set<String> getDocumentIds() {
-      return documentIds;
+   public Query(QueryStem stem) {
+      this(Collections.singletonList(stem));
    }
 
-   public Set<String> getLinkTypeIds() {
-      return linkTypeIds;
+   public Query() {
+      this(Collections.emptyList());
    }
 
-   public Set<String> getCollectionIds() {
-      return collectionIds;
+   @JsonIgnore
+   public boolean isEmpty() {
+      return stems.isEmpty() && fulltexts.isEmpty();
    }
 
-   public String getFulltext() {
-      return fulltext;
+   @JsonIgnore
+   public boolean containsStems() {
+      return !stems.isEmpty();
+   }
+
+   public List<QueryStem> getStems() {
+      return stems;
+   }
+
+   public Set<String> getFulltexts() {
+      return fulltexts;
    }
 
    public Integer getPage() {
@@ -132,6 +84,34 @@ public class Query {
       return pageSize;
    }
 
+   @JsonIgnore
+   public Pagination getPagination() {
+      return new Pagination(page, pageSize);
+   }
+
+   @JsonIgnore
+   public Set<String> getCollectionIds() {
+      return getStems().stream().
+            map(QueryStem::getCollectionId)
+                       .collect(Collectors.toSet());
+   }
+
+   @JsonIgnore
+   public Set<String> getLinkTypeIds() {
+      return getStems().stream()
+                       .map(QueryStem::getLinkTypeIds)
+                       .flatMap(List::stream)
+                       .collect(Collectors.toSet());
+   }
+
+   @JsonIgnore
+   public Set<String> getDocumentsIds() {
+      return getStems().stream()
+                       .map(QueryStem::getDocumentIds)
+                       .flatMap(Set::stream)
+                       .collect(Collectors.toSet());
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -140,86 +120,25 @@ public class Query {
       if (!(o instanceof Query)) {
          return false;
       }
-
       final Query query = (Query) o;
-
-      if (getFilters() != null ? !getFilters().equals(query.getFilters()) : query.getFilters() != null) {
-         return false;
-      }
-      if (getCollectionIds() != null ? !getCollectionIds().equals(query.getCollectionIds()) : query.getCollectionIds() != null) {
-         return false;
-      }
-      if (getDocumentIds() != null ? !getDocumentIds().equals(query.getDocumentIds()) : query.getDocumentIds() != null) {
-         return false;
-      }
-      if (getLinkTypeIds() != null ? !getLinkTypeIds().equals(query.getLinkTypeIds()) : query.getLinkTypeIds() != null) {
-         return false;
-      }
-      if (getFulltext() != null ? !getFulltext().equals(query.getFulltext()) : query.getFulltext() != null) {
-         return false;
-      }
-      if (getPage() != null ? !getPage().equals(query.getPage()) : query.getPage() != null) {
-         return false;
-      }
-      return getPageSize() != null ? getPageSize().equals(query.getPageSize()) : query.getPageSize() == null;
+      return Objects.equals(stems, query.stems) &&
+            Objects.equals(fulltexts, query.fulltexts) &&
+            Objects.equals(page, query.page) &&
+            Objects.equals(pageSize, query.pageSize);
    }
 
    @Override
    public int hashCode() {
-      int result = getFilters() != null ? getFilters().hashCode() : 0;
-      result = 31 * result + (getCollectionIds() != null ? getCollectionIds().hashCode() : 0);
-      result = 31 * result + (getDocumentIds() != null ? getDocumentIds().hashCode() : 0);
-      result = 31 * result + (getLinkTypeIds() != null ? getLinkTypeIds().hashCode() : 0);
-      result = 31 * result + (getFulltext() != null ? getFulltext().hashCode() : 0);
-      result = 31 * result + (getPage() != null ? getPage().hashCode() : 0);
-      result = 31 * result + (getPageSize() != null ? getPageSize().hashCode() : 0);
-      return result;
+      return Objects.hash(stems, fulltexts, page, pageSize);
    }
 
    @Override
    public String toString() {
-      return "JsonQuery{" +
-            ", filters=" + filters +
-            ", collectionIds=" + collectionIds +
-            ", documentIds=" + documentIds +
-            ", linkTypeIds=" + linkTypeIds +
-            ", fulltext='" + fulltext + '\'' +
+      return "Query{" +
+            "stems=" + stems +
+            ", fulltexts=" + fulltexts +
             ", page=" + page +
             ", pageSize=" + pageSize +
             '}';
-   }
-
-   public boolean isMoreSpecificThan(Query otherQuery) {
-      if (otherQuery.getCollectionIds() != null && otherQuery.getCollectionIds().size() > 0) {
-         if (getCollectionIds() == null || !getCollectionIds().containsAll(otherQuery.getCollectionIds())) {
-            return false;
-         }
-      }
-
-      if (otherQuery.getDocumentIds() != null && otherQuery.getDocumentIds().size() > 0) {
-         if (getDocumentIds() == null || !getDocumentIds().containsAll(otherQuery.getDocumentIds())) {
-            return false;
-         }
-      }
-
-      if (otherQuery.getLinkTypeIds() != null && otherQuery.getLinkTypeIds().size() > 0) {
-         if (getLinkTypeIds() == null || !getLinkTypeIds().containsAll(otherQuery.getLinkTypeIds())) {
-            return false;
-         }
-      }
-
-      if (otherQuery.getFilters() != null && otherQuery.getFilters().size() > 0) {
-         if (getFilters() == null || !getFilters().containsAll(otherQuery.getFilters())) {
-            return false;
-         }
-      }
-
-      if (otherQuery.getFulltext() != null) {
-         if (getFulltext() == null || !getFulltext().startsWith(otherQuery.getFulltext())) {
-            return false;
-         }
-      }
-
-      return true;
    }
 }

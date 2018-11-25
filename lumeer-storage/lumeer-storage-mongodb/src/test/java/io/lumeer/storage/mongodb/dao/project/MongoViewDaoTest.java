@@ -42,7 +42,6 @@ import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MongoViewDaoTest extends MongoDbTestBase {
@@ -113,14 +112,9 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    }
 
    private View createView(String code, String name) {
-      return createView(code, name, null);
-   }
-
-   private View createView(String code, String name, Set<String> collections) {
       View jsonView = prepareView();
       jsonView.setCode(code);
       jsonView.setName(name);
-      jsonView.setQuery(new Query(collections, null, null));
 
       viewDao.databaseCollection().insertOne(jsonView);
       return jsonView;

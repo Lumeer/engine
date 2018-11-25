@@ -48,7 +48,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -160,7 +159,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       linkType.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(1)));
       linkTypeIdFromView = linkTypeDao.createLinkType(linkType).getId();
 
-      View view = new View("code", "name", "", "", "", userPermissions, new Query(Collections.singleton(collectionIds.get(0)), Collections.singleton(linkTypeIdFromView), Collections.emptySet()), "perspective", "", createdUser.getId());
+      View view = new View("code", "name", "", "", "", userPermissions, new Query(), "perspective", "", createdUser.getId());
       viewDao.createView(view);
    }
 

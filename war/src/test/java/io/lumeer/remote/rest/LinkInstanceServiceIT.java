@@ -30,7 +30,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query2;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -56,7 +56,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -279,7 +278,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
       QueryStem stem = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null);
-      Query2 query = new Query2(stem);
+      Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
       Response response = client.target(LINK_INSTANCES_URL).path("search")
                                 .request(MediaType.APPLICATION_JSON)
@@ -293,7 +292,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
 
       QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null);
-      Query2 query2 = new Query2(stem2);
+      Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
       response = client.target(LINK_INSTANCES_URL).path("search")
                        .request(MediaType.APPLICATION_JSON)
@@ -327,7 +326,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
       QueryStem stem = new QueryStem(collection1Id, Arrays.asList(linkTypeId1, linkTypeId2), null, null);
-      Query2 query = new Query2(stem);
+      Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
       Response response = client.target(LINK_INSTANCES_URL).path("search")
                                 .request(MediaType.APPLICATION_JSON)
@@ -341,7 +340,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
 
       QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null);
-      Query2 query2 = new Query2(stem2);
+      Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
       response = client.target(LINK_INSTANCES_URL).path("search")
                        .request(MediaType.APPLICATION_JSON)

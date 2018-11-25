@@ -19,7 +19,8 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Query2;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Suggestions;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.core.facade.DocumentFacade;
@@ -82,12 +83,18 @@ public class SearchService extends AbstractService {
    @POST
    @Path("documents")
    @QueryProcessor
-   public List<Document> searchDocuments(Query2 query) {
+   public List<Document> searchDocuments(Query query) {
       Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
       List<Document> documents = searchFacade.searchDocuments(query);
       documents.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
       return documents;
+   }
 
+   @POST
+   @Path("linkInstances")
+   @QueryProcessor
+   public List<LinkInstance> getLinkInstances(Query query) {
+      return searchFacade.getLinkInstances(query);
    }
 
    private SuggestionType parseSuggestionType(String type) {

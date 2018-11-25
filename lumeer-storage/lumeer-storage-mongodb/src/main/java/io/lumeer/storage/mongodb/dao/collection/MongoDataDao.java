@@ -185,17 +185,17 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    private Bson attributeFilter(AttributeFilter filter) {
       switch (filter.getConditionType()) {
          case EQUALS:
-            return Filters.eq(filter.getAttributeName(), filter.getValue());
+            return Filters.eq(filter.getAttributeId(), filter.getValue());
          case NOT_EQUALS:
-            return Filters.ne(filter.getAttributeName(), filter.getValue());
+            return Filters.ne(filter.getAttributeId(), filter.getValue());
          case LOWER_THAN:
-            return Filters.lt(filter.getAttributeName(), filter.getValue());
+            return Filters.lt(filter.getAttributeId(), filter.getValue());
          case LOWER_THAN_EQUALS:
-            return Filters.lte(filter.getAttributeName(), filter.getValue());
+            return Filters.lte(filter.getAttributeId(), filter.getValue());
          case GREATER_THAN:
-            return Filters.gt(filter.getAttributeName(), filter.getValue());
+            return Filters.gt(filter.getAttributeId(), filter.getValue());
          case GREATER_THAN_EQUALS:
-            return Filters.gte(filter.getAttributeName(), filter.getValue());
+            return Filters.gte(filter.getAttributeId(), filter.getValue());
       }
       return null;
    }
