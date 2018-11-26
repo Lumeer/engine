@@ -62,8 +62,8 @@ public class FreshdeskFacade {
    public void logTicket(final User user, final String subject, final String body) {
       if (FRESHDESK_APIKEY != null && !"".equals(FRESHDESK_APIKEY)) {
 
-         final String ticket = "{ \"description\": \"" + body.replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r") + "\", "
-               + "\"subject\": \"" + subject.replaceAll("\"", "\\\"").replaceAll("\n", "").replaceAll("\r", "") + "\", "
+         final String ticket = "{ \"description\": \"" + escape(body) + "\", "
+               + "\"subject\": \"" + escape(subject) + "\", "
                + "\"email\": \"" + user.getEmail() + "\", \"name\": \"" + user.getName() + "\", \"priority\": 2, \"status\": 2}";
 
          final Client client = ClientBuilder.newBuilder().build();
@@ -97,5 +97,15 @@ public class FreshdeskFacade {
                   "Limits exceeded on resource: " + resourceName);
          }
       }
+   }
+
+   private String escape(final String content) {
+      return content
+            .replaceAll("\"", "\\\\\"")
+            .replaceAll("\\", "\\\\\\")
+            .replaceAll("\b", "\\\\b")
+            .replaceAll("\f", "\\\\f")
+            .replaceAll("\n", "\\\\n")
+            .replaceAll("\r", "\\\\r");
    }
 }
