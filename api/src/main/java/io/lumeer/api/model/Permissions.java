@@ -125,7 +125,7 @@ public class Permissions {
 
    @Override
    public String toString() {
-      return "JsonPermissions{" +
+      return "Permissions{" +
             "users=" + userPermissions +
             ", groups=" + groupPermissions +
             '}';

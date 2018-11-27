@@ -18,8 +18,8 @@
  */
 package io.lumeer.core.util;
 
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.ConditionType;
-import io.lumeer.storage.api.filter.AttributeFilter;
 
 public class FilterParser {
 
@@ -45,7 +45,7 @@ public class FilterParser {
 
       String value = conditionParts[1].trim();
 
-      return new AttributeFilter(collectionId, conditionType, attributeName, value);
+      return new AttributeFilter(collectionId, condition, attributeName, value);
    }
 
 }

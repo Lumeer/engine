@@ -243,8 +243,7 @@ public class SearchFacade extends AbstractFacade {
             return stemsPipeline; // maximum valid pipeline
          }
 
-         int collectionIdIndex = linkType.getCollectionIds().get(0).equals(lastCollectionId) ? 1 : 0;
-         String currentCollectionId = linkType.getCollectionIds().get(collectionIdIndex);
+         String currentCollectionId = linkType.getCollectionIds().get(1);
 
          if (!collectionsMap.containsKey(currentCollectionId)) {
             return stemsPipeline;
@@ -259,7 +258,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private LinkType findLinkTypeForCollection(Set<LinkType> linkTypes, String collectionId) {
-      Optional<LinkType> linkType = linkTypes.stream().filter(lt -> lt.getCollectionIds().contains(collectionId)).findFirst();
+      Optional<LinkType> linkType = linkTypes.stream().filter(lt -> lt.getCollectionIds().get(0).equals(collectionId)).findFirst();
       return linkType.orElse(null);
    }
 

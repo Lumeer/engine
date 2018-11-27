@@ -130,6 +130,11 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
       return iterable.into(new ArrayList<>());
    }
 
+   @Override
+   public List<Project> getAllProjects() {
+      return databaseCollection().find().into(new ArrayList<>());
+   }
+
    private static Bson organizationsSearchFilter(final DatabaseQuery query) {
       return MongoFilters.permissionsFilter(query);
    }

@@ -104,7 +104,7 @@ public class Attribute {
 
    @Override
    public String toString() {
-      return "JsonAttribute{" +
+      return "Attribute{" +
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             ", constraints=" + constraints +

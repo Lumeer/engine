@@ -135,6 +135,11 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
       return iterable.into(new ArrayList<>());
    }
 
+   @Override
+   public List<Organization> getAllOrganizations() {
+      return databaseCollection().find().into(new ArrayList<>());
+   }
+
    private static Bson organizationsSearchFilter(final DatabaseQuery query) {
       return MongoFilters.permissionsFilter(query);
    }
