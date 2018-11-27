@@ -64,14 +64,12 @@ public class ViewConvertFacade extends AbstractFacade {
 
    private void convertViewsForOrganization(Organization organization) {
       projectDao.setOrganization(organization);
-      System.out.println("convertViewsForOrganization: " + organization.toString());
       List<Project> projects = projectDao.getAllProjects();
       projects.forEach(this::convertViewsForProject);
    }
 
    private void convertViewsForProject(Project project) {
       setProject(project);
-      System.out.println("convertViewsForProject: " + project.toString());
       List<OldView> oldViews = oldViewDao.getOldViews().stream().filter(view -> view.getQuery() != null).collect(Collectors.toList());
       oldViews.forEach(this::convertView);
    }
@@ -107,8 +105,6 @@ public class ViewConvertFacade extends AbstractFacade {
       Query query = new Query(stems, fulltexts, oldQuery.getPage(), oldQuery.getPageSize());
       View view = new View(oldView.getCode(), oldView.getName(), oldView.getIcon(), oldView.getColor(), oldView.getDescription(), oldView.getPermissions(), query, oldView.getPerspective(), oldView.getConfig(), oldView.getAuthorId());
       viewDao.updateView(oldView.getId(), view);
-
-      System.out.println("converting view: " + view.toString());
    }
 
    private List<QueryStem> convertOldQueryDataToStems(Set<String> collectionIds, Set<String> existingCollectionsIds, Map<String, LinkType> linkTypesMap, Map<String, Document> documentMap, List<AttributeFilter> filters) {
@@ -141,18 +137,22 @@ public class ViewConvertFacade extends AbstractFacade {
       String lastCollectionId = collectionId;
       for (int i = 0; i < linkTypes.size(); i++) {
          final String finalLastCollectionId = lastCollectionId;
-         Optional<LinkType> optionalLinkType = linkTypes.stream().filter(lt -> lt.getCollectionIds().get(0).equals(finalLastCollectionId)).findFirst();
+         Optional<LinkType> optionalLinkType = linkTypes.stream().filter(lt -> lt.getCollectionIds().contains(finalLastCollectionId)).findFirst();
          if (!optionalLinkType.isPresent()) {
             return chain;
          }
 
          LinkType linkType = optionalLinkType.get();
 
-         if (!existingCollectionsIds.contains(linkType.getCollectionIds().get(1))) {
+         int collectionIdIndex = linkType.getCollectionIds().get(0).equals(lastCollectionId) ? 1 : 0;
+         String currentCollectionId = linkType.getCollectionIds().get(collectionIdIndex);
+
+         if (!existingCollectionsIds.contains(currentCollectionId)) {
             continue;
          }
          chain.add(linkType);
-         lastCollectionId = linkType.getCollectionIds().get(1);
+         lastCollectionId = currentCollectionId;
+         linkTypes.remove(linkType);
       }
       return chain;
    }

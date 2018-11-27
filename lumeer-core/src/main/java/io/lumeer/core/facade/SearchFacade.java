@@ -246,7 +246,7 @@ public class SearchFacade extends AbstractFacade {
          String currentCollectionId = linkType.getCollectionIds().get(1);
 
          if (!collectionsMap.containsKey(currentCollectionId)) {
-            return stemsPipeline;
+            continue;
          }
 
          stemsPipeline.add(cleanStemForCollection(stem, allDocuments, currentCollectionId));
