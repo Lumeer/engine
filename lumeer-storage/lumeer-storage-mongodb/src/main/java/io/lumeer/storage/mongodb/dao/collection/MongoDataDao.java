@@ -176,7 +176,10 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
       }
 
       if (stem.containsFulltextsQuery()) {
-         filters.add(createFilterForFulltexts(collection, stem.getFulltexts()));
+         Bson fulltextsFilter = createFilterForFulltexts(collection, stem.getFulltexts());
+         if (fulltextsFilter != null) {
+            filters.add(fulltextsFilter);
+         }
       }
 
       return filters.size() > 0 ? Filters.and(filters) : new Document();
@@ -205,9 +208,11 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
       List<DataDocument> documents = new ArrayList<>();
       for (Collection collection : projectCollections) {
          Bson filter = createFilterForFulltexts(collection, fulltexts);
-         FindIterable<Document> iterable = dataCollection(collection.getId()).find(filter);
-         addPaginationToQuery(iterable, pagination);
-         documents.addAll(MongoUtils.convertIterableToList(iterable));
+         if (filter != null) {
+            FindIterable<Document> iterable = dataCollection(collection.getId()).find(filter);
+            addPaginationToQuery(iterable, pagination);
+            documents.addAll(MongoUtils.convertIterableToList(iterable));
+         }
       }
 
       return documents;
@@ -215,9 +220,10 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    private Bson createFilterForFulltexts(Collection collection, Set<String> fulltexts) {
       List<Bson> filters = fulltexts.stream().map(fulltext -> createFilterForFulltext(collection, fulltext))
+                                    .filter(Objects::nonNull)
                                     .collect(Collectors.toList());
 
-      return Filters.and(filters);
+      return filters.size() > 0 ? Filters.and(filters) : null;
    }
 
    private Bson createFilterForFulltext(Collection collection, String fulltext) {
@@ -225,12 +231,18 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
                                                 .filter(attr -> attr.getName().toLowerCase().contains(fulltext.toLowerCase()))
                                                 .collect(Collectors.toList());
 
-      Bson contentFilter = Filters.or(collection.getAttributes().stream()
-                                                .map(attr -> Filters.regex(attr.getId(), Pattern.compile(fulltext, Pattern.CASE_INSENSITIVE)))
-                                                .collect(Collectors.toList()));
+      List<Bson> attrFilters = collection.getAttributes().stream()
+                                         .map(attr -> Filters.regex(attr.getId(), Pattern.compile(fulltext, Pattern.CASE_INSENSITIVE)))
+                                         .collect(Collectors.toList());
+
+      Bson contentFilter = !attrFilters.isEmpty() ? Filters.or(attrFilters) : null;
 
       if (fulltextAttrs.size() > 0) { // we search by presence of the matching attributes
-         return Filters.or(contentFilter, Filters.or(fulltextAttrs.stream().map(attr -> Filters.exists(attr.getId())).collect(Collectors.toList())));
+         Bson attrNamesFilter = Filters.or(fulltextAttrs.stream().map(attr -> Filters.exists(attr.getId())).collect(Collectors.toList()));
+         if (contentFilter != null) {
+            return Filters.or(contentFilter, attrNamesFilter);
+         }
+         return attrNamesFilter;
       }
 
       return contentFilter;

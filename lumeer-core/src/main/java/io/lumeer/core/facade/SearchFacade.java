@@ -92,16 +92,13 @@ public class SearchFacade extends AbstractFacade {
    public List<Document> searchDocuments(final Query query) {
       final List<Collection> collections = getReadCollections();
 
-      final Set<Document> documents;
       if (query.isEmpty()) {
-         documents = searchDocumentsByEmptyQuery(query, collections);
+         return new ArrayList<>(getChildDocuments(searchDocumentsByEmptyQuery(query, collections)));
       } else if (query.containsStems()) {
-         documents = searchDocumentsByStems(query, collections);
+         return new ArrayList<>(searchDocumentsByStems(query, collections));
       } else {
-         documents = searchDocumentsByFulltexts(query, collections);
+         return new ArrayList<>(getChildDocuments(searchDocumentsByFulltexts(query, collections)));
       }
-
-      return new ArrayList<>(getChildDocuments(documents));
    }
 
    private List<Collection> getReadCollections() {
@@ -138,7 +135,7 @@ public class SearchFacade extends AbstractFacade {
       return convertDataDocumentsToDocuments(data);
    }
 
-   private Set<Document> convertDataDocumentsToDocuments(List<DataDocument> data) {
+   private Set<Document> convertDataDocumentsToDocuments(java.util.Collection<DataDocument> data) {
       Set<String> documentIds = data.stream().map(DataDocument::getId).collect(Collectors.toSet());
       List<Document> documents = documentDao.getDocumentsByIds(documentIds.toArray(new String[0]));
       Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
@@ -158,28 +155,35 @@ public class SearchFacade extends AbstractFacade {
 
       Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
 
-      List<DataDocument> data = new ArrayList<>();
+      Set<Document> data = new HashSet<>();
       for (SearchQueryStem stem : searchQuery.getStems()) {
          if (stem.containsLinkTypeIdsQuery()) {
             data.addAll(searchDocumentsByStemWithLinks(stem, searchQuery.getPagination(), collectionsMap, linkTypes, documents));
          } else {
             SearchQueryStem cleanedStem = cleanStemForBaseCollection(stem, documents);
-            data.addAll(dataDao.searchData(cleanedStem, searchQuery.getPagination(), collectionsMap.get(stem.getCollectionId())));
+
+            List<DataDocument> stemData = dataDao.searchData(cleanedStem, searchQuery.getPagination(), collectionsMap.get(stem.getCollectionId()));
+            Set<Document> documentsByData = convertDataDocumentsToDocuments(stemData);
+            data.addAll(getChildDocuments(documentsByData));
          }
       }
 
-      return convertDataDocumentsToDocuments(data);
+      return data;
    }
 
-   private List<DataDocument> searchDocumentsByStemWithLinks(SearchQueryStem stem, Pagination pagination, Map<String, Collection> collectionsMap, List<LinkType> linkTypes, List<Document> documents) {
+   private Set<Document> searchDocumentsByStemWithLinks(SearchQueryStem stem, Pagination pagination, Map<String, Collection> collectionsMap, List<LinkType> linkTypes, List<Document> documents) {
+      if (!collectionsMap.containsKey(stem.getCollectionId())) {
+         return Collections.emptySet();
+      }
+
       SearchQueryStem baseStem = cleanStemForBaseCollection(stem, documents);
       List<SearchQueryStem> stemsPipeline = createStemsPipeline(stem, collectionsMap, linkTypes, documents);
 
-      if (!collectionsMap.containsKey(baseStem.getCollectionId())) {
-         return Collections.emptyList();
-      }
-
       List<DataDocument> data = dataDao.searchData(baseStem, pagination, collectionsMap.get(baseStem.getCollectionId()));
+      // we need to add child documents only for base collection
+      Set<Document> documentsByData = convertDataDocumentsToDocuments(data);
+      documentsByData.addAll(getChildDocuments(documentsByData));
+
       List<DataDocument> lastStageData = data;
 
       for (SearchQueryStem currentStageStem : stemsPipeline) {
@@ -204,11 +208,11 @@ public class SearchFacade extends AbstractFacade {
          if (currentStageData.isEmpty()) {
             break;
          }
-         data.addAll(currentStageData);
+         documentsByData.addAll(convertDataDocumentsToDocuments(currentStageData));
          lastStageData = currentStageData;
       }
 
-      return data;
+      return documentsByData;
    }
 
    private SearchQueryStem cleanStemForBaseCollection(SearchQueryStem stem, List<Document> documents) {
@@ -243,10 +247,11 @@ public class SearchFacade extends AbstractFacade {
             return stemsPipeline; // maximum valid pipeline
          }
 
-         String currentCollectionId = linkType.getCollectionIds().get(1);
+         int collectionIdIndex = linkType.getCollectionIds().get(0).equals(lastCollectionId) ? 1 : 0;
+         String currentCollectionId = linkType.getCollectionIds().get(collectionIdIndex);
 
          if (!collectionsMap.containsKey(currentCollectionId)) {
-            continue;
+            return stemsPipeline;
          }
 
          stemsPipeline.add(cleanStemForCollection(stem, allDocuments, currentCollectionId));
@@ -258,7 +263,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private LinkType findLinkTypeForCollection(Set<LinkType> linkTypes, String collectionId) {
-      Optional<LinkType> linkType = linkTypes.stream().filter(lt -> lt.getCollectionIds().get(0).equals(collectionId)).findFirst();
+      Optional<LinkType> linkType = linkTypes.stream().filter(lt -> lt.getCollectionIds().contains(collectionId)).findFirst();
       return linkType.orElse(null);
    }
 

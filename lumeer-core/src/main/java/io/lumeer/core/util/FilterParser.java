@@ -30,7 +30,7 @@ public class FilterParser {
       }
 
       String collectionId = parts[0].trim();
-      String attributeName = parts[1].trim();
+      String attributeId = parts[1].trim();
       String condition = parts[2].trim();
 
       String[] conditionParts = condition.split(" +", 2); // one or more spaces
@@ -45,7 +45,7 @@ public class FilterParser {
 
       String value = conditionParts[1].trim();
 
-      return new AttributeFilter(collectionId, condition, attributeName, value);
+      return new AttributeFilter(collectionId, attributeId, conditionParts[0].trim().toLowerCase(), value);
    }
 
 }
