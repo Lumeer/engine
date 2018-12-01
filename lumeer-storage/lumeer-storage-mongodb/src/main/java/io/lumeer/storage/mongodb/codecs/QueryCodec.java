@@ -63,12 +63,11 @@ public class QueryCodec implements Codec<Query> {
       }
 
       Set<String> fulltexts = convertToSet(bson.get(FULLTEXTS, List.class));
-      List<Document> stemsList = bson.get(STEMS, List.class);
       List<QueryStem> stems;
-      if (stemsList != null) {
-         stems = stemsList.stream()
-                          .map(QueryStemCodec::convertFromDocument)
-                          .collect(Collectors.toList());
+      if (bson.containsKey(STEMS)) {
+         stems = new ArrayList<Document>(bson.get(STEMS, List.class)).stream()
+                                                             .map(QueryStemCodec::convertFromDocument)
+                                                             .collect(Collectors.toList());
       } else {
          stems = Collections.emptyList();
       }
