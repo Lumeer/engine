@@ -49,7 +49,7 @@ public class Project extends Resource {
 
    @Override
    public String toString() {
-      return "JsonProject{" +
+      return "Project{" +
             "code='" + code + '\'' +
             ", name='" + name + '\'' +
             ", icon='" + icon + '\'' +

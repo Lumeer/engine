@@ -305,16 +305,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetDocuments() {
-      String id1 = createDocument().getId();
-      String id2 = createDocument().getId();
-
-      Pagination pagination = new Pagination(null, null);
-      List<Document> documents = documentFacade.getDocuments(collection.getId(), pagination);
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
-   }
-
-   @Test
    public void testAddFavoriteDocument() {
       List<String> ids = new LinkedList<>();
       for (int i = 0; i < 10; i++) {

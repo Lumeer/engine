@@ -75,7 +75,7 @@ public class Permission {
 
    @Override
    public String toString() {
-      return "JsonPermission{" +
+      return "Permission{" +
             "id='" + id + '\'' +
             ", roles=" + roles +
             '}';

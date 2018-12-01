@@ -21,13 +21,17 @@ package io.lumeer.core.facade;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -37,6 +41,8 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -53,6 +59,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -94,11 +101,17 @@ public class SearchFacadeIT extends IntegrationTestBase {
    private UserDao userDao;
 
    @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
    private WorkspaceKeeper workspaceKeeper;
 
    @Before
    public void configureCollections() {
-      Organization organization = new Organization ();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
@@ -108,7 +121,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
 
-      Project  project = new Project ();
+      Project project = new Project();
       project.setPermissions(new Permissions());
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
@@ -118,6 +131,8 @@ public class SearchFacadeIT extends IntegrationTestBase {
       collectionDao.setProject(storedProject);
       collectionDao.createCollectionsRepository(storedProject);
       documentDao.setProject(storedProject);
+      linkInstanceDao.setProject(project);
+      linkTypeDao.setProject(project);
 
       collectionIds.clear();
 
@@ -130,67 +145,6 @@ public class SearchFacadeIT extends IntegrationTestBase {
          collectionIds.add(collectionId);
          dataDao.createDataRepository(collectionId);
       }
-   }
-
-   @Test
-   public void testSearchCollectionsByEmptyQuery() {
-      List<Collection> collections = searchFacade.searchCollections(new Query());
-      assertThat(collections).extracting(Collection::getId).containsOnlyElementsOf(collectionIds);
-   }
-
-   @Test
-   public void testSearchCollectionsByDocumentsFullText() {
-      createDocument(collectionIds.get(0), "word");
-      createDocument(collectionIds.get(0), "fulltext");
-      createDocument(collectionIds.get(1), "something fulltext");
-      createDocument(collectionIds.get(1), "some other word");
-      createDocument(collectionIds.get(2), "full word");
-
-      List<Collection> collections = searchFacade.searchCollections(new Query("fulltext"));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(1));
-
-      collections = searchFacade.searchCollections(new Query("word"));
-      assertThat(collections).extracting(Collection::getId).containsOnlyElementsOf(collectionIds);
-   }
-
-   @Test
-   public void testSearchCollectionsByDocumentsIds() {
-      String id1 = createDocument(collectionIds.get(0), "doc1").getId();
-      String id2 = createDocument(collectionIds.get(0), "doc2").getId();
-      String id3 = createDocument(collectionIds.get(1), "doc3").getId();
-      String id4 = createDocument(collectionIds.get(1), "doc4").getId();
-      String id5 = createDocument(collectionIds.get(2), "doc5").getId();
-      String id6 = createDocument(collectionIds.get(2), "doc6").getId();
-
-      List<Collection> collections = searchFacade.searchCollections(new Query(null, null, new HashSet<>(Arrays.asList(id1, id2, id3))));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(1));
-
-      collections = searchFacade.searchCollections(new Query(null, null, new HashSet<>(Arrays.asList(id1, id4, id5))));
-      assertThat(collections).extracting(Collection::getId).containsOnlyElementsOf(collectionIds);
-
-      collections = searchFacade.searchCollections(new Query(null, null, new HashSet<>(Arrays.asList(id5, id6))));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(2));
-   }
-
-   @Test
-   public void testSearchCollectionsByCollectionIds() {
-      List<Collection> collections = searchFacade.searchCollections(new Query(new HashSet<>(Arrays.asList(collectionIds.get(0), collectionIds.get(2))), null, null));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(2));
-
-      collections = searchFacade.searchCollections(new Query(Collections.singleton(collectionIds.get(1)), null, null));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(1));
-   }
-
-   @Test
-   public void testSearchCollectionsCombination() {
-      createDocument(collectionIds.get(0), "word").getId();
-      String id2 = createDocument(collectionIds.get(0), "fulltext").getId();
-      String id3 = createDocument(collectionIds.get(1), "something fulltext").getId();
-      createDocument(collectionIds.get(1), "some other word").getId();
-      String id5 = createDocument(collectionIds.get(2), "full word").getId();
-
-      List<Collection> collections = searchFacade.searchCollections(new Query(Collections.singleton(collectionIds.get(0)), null, Collections.singleton(id3)));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0), collectionIds.get(1));
    }
 
    @Test
@@ -207,37 +161,6 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testSearchDocumentsByIds() {
-      String id1 = createDocument(collectionIds.get(0), "doc1").getId();
-      String id2 = createDocument(collectionIds.get(0), "doc2").getId();
-      String id3 = createDocument(collectionIds.get(1), "doc3").getId();
-      String id4 = createDocument(collectionIds.get(1), "doc4").getId();
-      String id5 = createDocument(collectionIds.get(2), "doc5").getId();
-      String id6 = createDocument(collectionIds.get(2), "doc6").getId();
-
-      List<Document> documents = searchFacade.searchDocuments(new Query(null, null, new HashSet<>(Arrays.asList(id1, id4, id6))));
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id4, id6);
-
-      documents = searchFacade.searchDocuments(new Query(null, null, new HashSet<>(Arrays.asList(id2, id3, id4, id5))));
-      assertThat(documents).extracting(Document::getId).containsOnly(id2, id3, id4, id5);
-   }
-
-   @Test
-   public void testSearchDocumentsByFullText() {
-      String id1 = createDocument(collectionIds.get(0), "word").getId();
-      String id2 = createDocument(collectionIds.get(0), "fulltext").getId();
-      String id3 = createDocument(collectionIds.get(1), "something fulltext").getId();
-      String id4 = createDocument(collectionIds.get(1), "some other word").getId();
-      String id5 = createDocument(collectionIds.get(2), "full word").getId();
-
-      List<Document> documents = searchFacade.searchDocuments(new Query("fulltext"));
-      assertThat(documents).extracting(Document::getId).containsOnly(id2, id3);
-
-      documents = searchFacade.searchDocuments(new Query("word"));
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id4, id5);
-   }
-
-   @Test
    public void testSearchDocumentsByCollectionIds() {
       String id1 = createDocument(collectionIds.get(0), "doc1").getId();
       String id2 = createDocument(collectionIds.get(0), "doc2").getId();
@@ -246,49 +169,120 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id5 = createDocument(collectionIds.get(2), "doc5").getId();
       String id6 = createDocument(collectionIds.get(2), "doc6").getId();
 
-      List<Document> documents = searchFacade.searchDocuments(new Query(new HashSet<>(Arrays.asList(collectionIds.get(0), collectionIds.get(2))), null, null));
+      QueryStem stem1 = new QueryStem(collectionIds.get(0));
+      QueryStem stem2 = new QueryStem(collectionIds.get(2));
+      Query query = new Query(Arrays.asList(stem1, stem2));
+
+      List<Document> documents = searchFacade.searchDocuments(query);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id5, id6);
    }
 
    @Test
-   public void testSearchDocumentsByCombination() {
+   public void testSearchDocumentsByIds() {
+      String id1 = createDocument(collectionIds.get(0), "doc1").getId();
+      createDocument(collectionIds.get(0), "doc2");
+      String id3 = createDocument(collectionIds.get(1), "doc3").getId();
+      String id4 = createDocument(collectionIds.get(1), "doc4").getId();
+      createDocument(collectionIds.get(2), "doc5");
+      String id6 = createDocument(collectionIds.get(2), "doc6").getId();
+
+      QueryStem stem1 = new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(id1), Collections.emptySet());
+      QueryStem stem2 = new QueryStem(collectionIds.get(1), Collections.emptyList(), new HashSet<>(Arrays.asList(id3, id4)), Collections.emptySet());
+      QueryStem stem3 = new QueryStem(collectionIds.get(2), Collections.emptyList(), Collections.singleton(id6), Collections.emptySet());
+      Query query = new Query(Arrays.asList(stem1, stem2, stem3));
+
+      List<Document> documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id4, id6);
+   }
+
+   @Test
+   public void testSearchDocumentsByFullTexts() {
       createDocument(collectionIds.get(0), "word");
       createDocument(collectionIds.get(0), "fulltext");
+      String id3 = createDocument(collectionIds.get(1), "something fulltext").getId();
+      String id4 = createDocument(collectionIds.get(1), "some other word").getId();
+      String id5 = createDocument(collectionIds.get(2), "full word").getId();
+
+      Query query = new Query(Collections.emptyList(), new HashSet<>(Collections.singletonList("some")), null, null);
+      List<Document> documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id3, id4);
+
+      query = new Query(Collections.emptyList(), new HashSet<>(Arrays.asList("full", "word")), null, null);
+      documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id5);
+   }
+
+   @Test
+   public void testSearchDocumentsByFiltersAndFulltexts() {
+      createDocument(collectionIds.get(0), "word");
+      String id2 = createDocument(collectionIds.get(0), "lmr").getId();
+      String id3 = createDocument(collectionIds.get(0), "wlmrd").getId();
+      String id4 = createDocument(collectionIds.get(0), "lalamr").getId();
       createDocument(collectionIds.get(1), "something fulltext");
-      createDocument(collectionIds.get(1), "some other word anything");
-      createDocument(collectionIds.get(2), "full word");
-      createDocument(collectionIds.get(2), "anything");
+      String id6 = createDocument(collectionIds.get(1), "lmr").getId();
+      String id7 = createDocument(collectionIds.get(1), "other lmr").getId();
+      String id8 = createDocument(collectionIds.get(2), "full wordmr").getId();
 
-      List<Document> documents = searchFacade.searchDocuments(new Query(null, Collections.singleton(collectionIds.get(0)), null, null, "anything", null, null));
-      assertThat(documents).extracting(Document::getId).isEmpty();
+      Query query = new Query(Collections.emptyList(), new HashSet<>(Collections.singletonList("mr")), null, null);
+      List<Document> documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id2, id3, id4, id6, id7, id8);
+
+      Set<AttributeFilter> filters = Collections.singleton(new AttributeFilter(collectionIds.get(0), DOCUMENT_KEY, "=", "lmr"));
+      QueryStem stem = new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters);
+      query = new Query(Collections.singletonList(stem), new HashSet<>(Collections.singletonList("mr")), null, null);
+      documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id2);
+
+      filters = new HashSet<>(Arrays.asList(new AttributeFilter(collectionIds.get(0), DOCUMENT_KEY, "=", "lmr"),
+            new AttributeFilter(collectionIds.get(1), DOCUMENT_KEY, "=", "other lmr")));
+      List<QueryStem> stems = Arrays.asList(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters),
+            new QueryStem(collectionIds.get(1), Collections.emptyList(), Collections.emptySet(), filters));
+      query = new Query(stems, new HashSet<>(Collections.singletonList("mr")), null, null);
+      documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id2, id7);
    }
 
    @Test
-   public void testSearchDocumentsAttributeStringEquals() {
-      String id1 = createDocument(collectionIds.get(0), "something").getId();
-      String id2 = createDocument(collectionIds.get(0), "something else").getId();
-      String id3 = createDocument(collectionIds.get(0), "Lumiik").getId();
-      createDocument(collectionIds.get(1), "something");
+   public void testSearchDocumentsWithLinks() {
+      String id1 = createDocument(collectionIds.get(0), "lumeer lol").getId();
+      String id2 = createDocument(collectionIds.get(0), "lol").getId();
+      String id3 = createDocument(collectionIds.get(0), "lmr").getId();
+      String id4 = createDocument(collectionIds.get(0), "lalamr").getId();
+      String id5 = createDocument(collectionIds.get(0), "something fulltext").getId();
+      String id6 = createDocument(collectionIds.get(1), "lmr").getId();
+      String id7 = createDocument(collectionIds.get(1), "other lol").getId();
+      String id8 = createDocument(collectionIds.get(1), "o lmr").getId();
+      String id9 = createDocument(collectionIds.get(1), "lumeer").getId();
+      String id10 = createDocument(collectionIds.get(2), "mr").getId();
+      String id11 = createDocument(collectionIds.get(2), "mr lumr").getId();
+      String id12 = createDocument(collectionIds.get(2), "lol").getId();
+      String linkType01Id = linkTypeDao.createLinkType(new LinkType(null, "lmr",
+            Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList())).getId();
+      String linkType12Id = linkTypeDao.createLinkType(new LinkType(null, "lmrr",
+            Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList())).getId();
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id1, id6), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id1, id7), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id2, id8), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id3, id8), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id4, id6), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType12Id, Arrays.asList(id6, id10), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType12Id, Arrays.asList(id6, id11), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType12Id, Arrays.asList(id7, id12), new DataDocument()));
 
-      List<Document> documents = searchFacade.searchDocuments(attributeFilterQuery(collectionIds.get(0), "=", "something"));
-      assertThat(documents).extracting(Document::getId).containsOnly(id1);
+      QueryStem stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), Collections.emptySet(), Collections.emptySet());
+      Query query = new Query(Collections.singletonList(stem), Collections.emptySet(), null, null);
+      List<Document> documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8, id10, id11, id12);
 
-      documents = searchFacade.searchDocuments(attributeFilterQuery(collectionIds.get(0), "!=", "something"));
-      assertThat(documents).extracting(Document::getId).containsOnly(id2, id3);
-   }
+      stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), new HashSet<>(Arrays.asList(id1, id2, id3, id4, id5, id6, id7, id8, id11, id12)), Collections.emptySet());
+      query = new Query(Collections.singletonList(stem), Collections.singleton("lol"), null, null);
+      documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id7, id12);
 
-   @Test
-   public void testSearchCollectionsAttributeStringEquals() {
-      createDocument(collectionIds.get(0), "something");
-      createDocument(collectionIds.get(0), "something else");
-      createDocument(collectionIds.get(0), "Lumiik");
-      createDocument(collectionIds.get(1), "something");
-
-      List<Collection> collections = searchFacade.searchCollections(attributeFilterQuery(collectionIds.get(0), "=", "something"));
-      assertThat(collections).extracting(Collection::getId).containsOnly(collectionIds.get(0));
-
-      collections = searchFacade.searchCollections(attributeFilterQuery(collectionIds.get(1), "!=", "something"));
-      assertThat(collections).extracting(Collection::getId).isEmpty();
+      stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), new HashSet<>(Arrays.asList(id1, id2, id9)), Collections.emptySet());
+      query = new Query(Collections.singletonList(stem), Collections.singleton("lol"), null, null);
+      documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
    }
 
    @Test
@@ -296,45 +290,42 @@ public class SearchFacadeIT extends IntegrationTestBase {
       final Document a0 = createDocument(collectionIds.get(0), "a0");
       final Document b1 = createDocument(collectionIds.get(0), "b1", a0.getId());
       final Document b2 = createDocument(collectionIds.get(0), "b2", a0.getId());
-      final Document c1 = createDocument(collectionIds.get(0), "c1", b1.getId());
+      createDocument(collectionIds.get(0), "c1", b1.getId());
       final Document c2 = createDocument(collectionIds.get(0), "c2", b1.getId());
-      final Document c3 = createDocument(collectionIds.get(0), "c3", b1.getId());
-      final Document d1 = createDocument(collectionIds.get(0), "d1", b2.getId());
-      final Document d2 = createDocument(collectionIds.get(0), "d2", b2.getId());
-      final Document d3 = createDocument(collectionIds.get(0), "d3", b2.getId());
-      final Document e1 = createDocument(collectionIds.get(0), "e1", c2.getId());
-      final Document e2 = createDocument(collectionIds.get(0), "e2", c2.getId());
+      createDocument(collectionIds.get(0), "c3", b1.getId());
+      createDocument(collectionIds.get(0), "d1", b2.getId());
+      createDocument(collectionIds.get(0), "d2", b2.getId());
+      createDocument(collectionIds.get(0), "d3", b2.getId());
+      createDocument(collectionIds.get(0), "e1", c2.getId());
+      createDocument(collectionIds.get(0), "e2", c2.getId());
 
-      List<Document> documents = searchFacade.searchDocuments(new Query(Collections.emptySet(), Collections.emptySet(), Collections.singleton(a0.getId())));
-      documents.forEach(System.out::println);
+      Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptySet()));
+      List<Document> documents = searchFacade.searchDocuments(query);
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(
             documents.stream().filter(d -> d.getMetaData() == null || d.getMetaData().get(Document.META_PARENT_ID) == null).count())
-            .isEqualTo(1);
+                .isEqualTo(1);
       assertions.assertThat(documents).hasSize(11);
       assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
-            .containsExactlyInAnyOrder("a0", "b1", "b2", "c1", "c2", "c3", "d1", "d2", "d3", "e1", "e2");
+                .containsExactlyInAnyOrder("a0", "b1", "b2", "c1", "c2", "c3", "d1", "d2", "d3", "e1", "e2");
       assertions.assertAll();
 
-      documents = searchFacade.searchDocuments(new Query(Collections.emptySet(), Collections.emptySet(), Collections.singleton(b2.getId())));
+      query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b2.getId()), Collections.emptySet()));
+      documents = searchFacade.searchDocuments(query);
       assertions = new SoftAssertions();
       assertions.assertThat(documents).hasSize(4);
       assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
-            .containsExactlyInAnyOrder("b2", "d1", "d2", "d3");
+                .containsExactlyInAnyOrder("b2", "d1", "d2", "d3");
       assertions.assertAll();
 
-      documents = searchFacade.searchDocuments(new Query(Collections.emptySet(), Collections.emptySet(), Collections.singleton(b1.getId())));
+      query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b1.getId()), Collections.emptySet()));
+      documents = searchFacade.searchDocuments(query);
       assertions = new SoftAssertions();
       assertions.assertThat(documents).hasSize(6);
       assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
-            .containsExactlyInAnyOrder("b1", "c1", "c2", "c3", "e1", "e2");
+                .containsExactlyInAnyOrder("b1", "c1", "c2", "c3", "e1", "e2");
       assertions.assertAll();
-   }
-
-   private Query attributeFilterQuery(String collectionId, String operator, String value) {
-      String filter = collectionId + ":" + DOCUMENT_KEY + ":" + operator + " " + value;
-      return new Query(Collections.singleton(filter), null, null, null, null, null, null);
    }
 
    private Document createDocument(String collectionId, Object value) {
@@ -367,5 +358,55 @@ public class SearchFacadeIT extends IntegrationTestBase {
       final Document doc = createDocument(collectionId, value);
       doc.setMetaData(new DataDocument(Document.META_PARENT_ID, parentId));
       return documentDao.updateDocument(doc.getId(), doc);
+   }
+
+   @Test
+   public void testSearchLinkInstances() {
+      LinkType linkType = new LinkType(null, "nm", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
+      String linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
+      LinkType linkType2 = new LinkType(null, "nm2", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
+      String linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
+
+      String id10 = createDocument(collectionIds.get(0), "lumeer").getId();
+      String id11 = createDocument(collectionIds.get(0), "lumeer").getId();
+      String id12 = createDocument(collectionIds.get(0), "lumeer").getId();
+      String id20 = createDocument(collectionIds.get(1), "lumeer").getId();
+      String id21 = createDocument(collectionIds.get(1), "lumeer").getId();
+      String id22 = createDocument(collectionIds.get(1), "lumeer").getId();
+
+      String id1 = linkInstanceDao.createLinkInstance(new LinkInstance(null, linkTypeId1, Arrays.asList(id10, id20), new DataDocument())).getId();
+
+      LinkInstance linkInstance2 = new LinkInstance(null, linkTypeId1, Arrays.asList(id10, id22), new DataDocument());
+      String id2 = linkInstanceDao.createLinkInstance(linkInstance2).getId();
+
+      LinkInstance linkInstance3 = new LinkInstance(null, linkTypeId1, Arrays.asList(id11, id21), new DataDocument());
+      linkInstance3.setLinkTypeId(linkTypeId1);
+      linkInstance3.setDocumentIds(Arrays.asList(id11, id21));
+      String id3 = linkInstanceDao.createLinkInstance(linkInstance3).getId();
+
+      LinkInstance linkInstance4 = new LinkInstance(null, linkTypeId2, Arrays.asList(id10, id20), new DataDocument());
+      linkInstance4.setLinkTypeId(linkTypeId2);
+      linkInstance4.setDocumentIds(Arrays.asList(id10, id20));
+      String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
+
+      QueryStem stem1 = new QueryStem(collectionIds.get(0), null, Collections.singleton(id10), null);
+      Query query1 = new Query(stem1);
+      List<LinkInstance> linkInstances = searchFacade.getLinkInstances(query1);
+      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
+
+      QueryStem stem2 = new QueryStem(collectionIds.get(1), null, Collections.singleton(id21), null);
+      Query query = new Query(stem2);
+      linkInstances = searchFacade.getLinkInstances(query);
+      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id3));
+
+      QueryStem stem3 = new QueryStem(collectionIds.get(0), Arrays.asList(linkTypeId1, linkTypeId2), null, null);
+      Query query3 = new Query(stem3);
+      linkInstances = searchFacade.getLinkInstances(query3);
+      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
+
+      QueryStem stem4 = new QueryStem(collectionIds.get(0), Collections.singletonList(linkTypeId1), null, null);
+      Query query4 = new Query(stem4);
+      linkInstances = searchFacade.getLinkInstances(query4);
+      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
    }
 }

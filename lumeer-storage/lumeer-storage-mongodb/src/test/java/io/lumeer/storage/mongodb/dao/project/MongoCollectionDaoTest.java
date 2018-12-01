@@ -30,7 +30,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
@@ -81,7 +81,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String NAME4 = "Test collection 4";
 
    private static final String NAME_FULLTEXT = "Fulltext name";
-   private static final String NAME_FULLTEXT2 = "Fulltext name 2";
    private static final String NAME_SUGGESTION = "TESTING suggestions";
 
    private static final Set<Attribute> ATTRIBUTES_FULLTEXT;
@@ -237,7 +236,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       Collection collection2 = prepareCollection(CODE2, NAME2);
       collectionDao.databaseCollection().insertOne(collection2);
 
-      SearchQuery query = SearchQuery.createBuilder(USER).build();
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
       List<Collection> views = collectionDao.getCollections(query);
       assertThat(views).extracting(Collection::getCode).containsOnly(CODE, CODE2);
    }
@@ -275,7 +274,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       collection2.getPermissions().updateGroupPermissions(groupPermission);
       collectionDao.databaseCollection().insertOne(collection2);
 
-      SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP2)).build();
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP2)).build();
       List<Collection> collections = collectionDao.getCollections(query);
       assertThat(collections).isEmpty();
    }
@@ -288,7 +287,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       Collection collection2 = prepareCollection(CODE2, NAME2);
       collectionDao.databaseCollection().insertOne(collection2);
 
-      SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
       List<Collection> collections = collectionDao.getCollections(query);
       assertThat(collections).extracting(Collection::getCode).containsOnly(CODE, CODE2);
    }
@@ -299,88 +298,11 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE2, NAME2);
       createCollection(CODE3, NAME3);
 
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
+      DatabaseQuery searchQuery = DatabaseQuery.createBuilder(USER)
                                            .page(1).pageSize(1)
                                            .build();
       List<Collection> collections = collectionDao.getCollections(searchQuery);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2);
-   }
-
-   @Test
-   public void testGetCollectionsByCollectionIds() {
-      Collection collection = prepareCollection(CODE, NAME);
-      collection.getPermissions().removeUserPermission(USER);
-      Permission userPermission = new Permission(USER2, Collections.singleton(Role.READ.toString()));
-      collection.getPermissions().updateUserPermissions(userPermission);
-      collectionDao.databaseCollection().insertOne(collection);
-
-      Collection collection2 = prepareCollection(CODE2, NAME2);
-      collectionDao.databaseCollection().insertOne(collection2);
-
-      Collection collection3 = prepareCollection(CODE3, NAME3);
-      collectionDao.databaseCollection().insertOne(collection3);
-
-      SearchQuery query = SearchQuery.createBuilder(USER)
-                                     .collectionIds(new HashSet<>(Arrays.asList(collection.getId(), collection3.getId())))
-                                     .build();
-      List<Collection> views = collectionDao.getCollections(query);
-      assertThat(views).extracting(Collection::getId).containsOnly(collection3.getId());
-   }
-
-   @Test
-   public void testGetCollectionsByFulltext() {
-      createCollection(CODE, NAME, ATTRIBUTES);
-      createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES);
-      createCollection(CODE3, NAME3, ATTRIBUTES);
-
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .fulltext("fulltext")
-                                           .build();
-      List<Collection> collections = collectionDao.getCollections(searchQuery);
-      assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2, CODE3);
-   }
-
-   @Test
-   @Ignore("Fulltext index on attribute names does not work at the moment")
-   public void testGetCollectionsByFulltextWithAttributes() {
-      createCollection(CODE, NAME, ATTRIBUTES);
-      createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES);
-      createCollection(CODE3, NAME, ATTRIBUTES);
-      createCollection(CODE4, NAME, ATTRIBUTES_FULLTEXT);
-
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .fulltext("fulltext")
-                                           .build();
-      List<Collection> collections = collectionDao.getCollections(searchQuery);
-      assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2, CODE3, CODE4);
-   }
-
-   @Test
-   public void testGetCollectionsByFulltextAndCollectionIds() {
-      String id1 = createCollection(CODE, NAME, ATTRIBUTES).getId();
-      String id2 = createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES).getId();
-      String id3 = createCollection(CODE3, NAME3, ATTRIBUTES).getId();
-      createCollection(CODE4, NAME_FULLTEXT2, ATTRIBUTES);
-
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER)
-                                           .collectionIds(new HashSet<>(Arrays.asList(id1, id2, id3)))
-                                           .fulltext("fulltext")
-                                           .build();
-      List<Collection> collections = collectionDao.getCollections(searchQuery);
-      assertThat(collections).extracting(Resource::getId).containsOnly(id2, id3);
-   }
-
-   @Test
-   public void testGetCollectionsByFulltextDifferentUser() {
-      createCollection(CODE, NAME, ATTRIBUTES);
-      createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES);
-      createCollection(CODE3, NAME3, ATTRIBUTES);
-
-      SearchQuery searchQuery = SearchQuery.createBuilder(USER2)
-                                           .fulltext("fulltext")
-                                           .build();
-      List<Collection> collections = collectionDao.getCollections(searchQuery);
-      assertThat(collections).isEmpty();
    }
 
    @Test

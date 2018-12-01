@@ -38,7 +38,6 @@ import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
-import io.lumeer.storage.api.query.SearchQuery;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -123,7 +122,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
-      List<DataDocument> data = dataDao.getData(collection.getId(), query());
+      List<DataDocument> data = dataDao.getData(collection.getId());
       assertThat(data).isEmpty();
    }
 
@@ -154,8 +153,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
-
-      List<DataDocument> data = dataDao.getData(collection.getId(), query());
+      List<DataDocument> data = dataDao.getData(collection.getId());
       assertThat(data).hasSize(1); // it's because library ignores any leading empty lines
       assertThat(data.get(0).keySet()).containsOnly("_id", PREFIX + 1, PREFIX + 2, PREFIX + 3, PREFIX + 4);
       assertThat(data.get(0).getString(PREFIX + 1)).isEqualTo("a");
@@ -171,19 +169,19 @@ public class ImportFacadeIT extends IntegrationTestBase {
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
-      List<DataDocument> data = dataDao.getData(collection.getId(), query());
+      List<DataDocument> data = dataDao.getData(collection.getId());
       assertThat(data).isEmpty();
    }
 
    @Test
-   public void testImportWithSameHeaderAttributes(){
+   public void testImportWithSameHeaderAttributes() {
       final String correctCsv = "h1;h2;h1;h1\n"
             + "a;b;c;d\n";
       ImportedCollection importedCollection = createImportObject(correctCsv);
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
-      DataDocument document = dataDao.getData(collection.getId(), query()).get(0);
+      DataDocument document = dataDao.getData(collection.getId()).get(0);
       assertThat(document).isNotNull();
 
       assertThat(document.keySet()).containsOnly("_id", PREFIX + 1, PREFIX + 2, PREFIX + 3, PREFIX + 4);
@@ -204,7 +202,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
-      List<DataDocument> data = dataDao.getData(collection.getId(), query());
+      List<DataDocument> data = dataDao.getData(collection.getId());
       assertThat(data).hasSize(4);
 
       int h1Num = 0;
@@ -239,7 +237,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
-      List<DataDocument> data = dataDao.getData(collection.getId(), query());
+      List<DataDocument> data = dataDao.getData(collection.getId());
       assertThat(data).hasSize(3);
 
       int h1Num = 0;
@@ -268,7 +266,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
       assertThat(collection).isNotNull();
 
-      List<DataDocument> data = dataDao.getData(collection.getId(), query());
+      List<DataDocument> data = dataDao.getData(collection.getId());
       assertThat(data).hasSize(3);
 
       int h1Num = 0;
@@ -285,10 +283,6 @@ public class ImportFacadeIT extends IntegrationTestBase {
       assertThat(h1Num).isEqualTo(2);
       assertThat(h2Num).isEqualTo(1);
       assertThat(h3Num).isEqualTo(2);
-   }
-
-   private SearchQuery query() {
-      return SearchQuery.createBuilder(this.user.getId()).build();
    }
 
    private ImportedCollection createImportObject(String data) {

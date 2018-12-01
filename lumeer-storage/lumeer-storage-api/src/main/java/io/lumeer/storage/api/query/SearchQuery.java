@@ -18,73 +18,27 @@
  */
 package io.lumeer.storage.api.query;
 
-import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.api.model.QueryStem;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public class SearchQuery extends DatabaseQuery {
 
-   private final String fulltext;
-   private final Set<String> collectionIds;
-   private final Set<String> linkTypeIds;
-   private final Set<String> documentIds;
-   private final Set<AttributeFilter> filters;
+   private final List<SearchQueryStem> stems;
 
    private SearchQuery(Builder builder) {
       super(builder);
 
-      this.fulltext = builder.fulltext;
-      this.collectionIds = builder.collectionIds;
-      this.linkTypeIds = builder.linkTypeIds;
-      this.documentIds = builder.documentIds;
-      this.filters = builder.filters;
+      this.stems = builder.stems;
    }
 
-   public String getFulltext() {
-      return fulltext;
-   }
-
-   public Set<String> getLinkTypeIds() {
-      return linkTypeIds != null ? Collections.unmodifiableSet(linkTypeIds) : Collections.emptySet();
-   }
-
-   public Set<String> getDocumentIds() {
-      return documentIds != null ? Collections.unmodifiableSet(documentIds) : Collections.emptySet();
-   }
-
-   public Set<String> getCollectionIds() {
-      return collectionIds != null ? Collections.unmodifiableSet(collectionIds) : Collections.emptySet();
-   }
-
-   public Set<AttributeFilter> getFilters() {
-      return filters != null ? Collections.unmodifiableSet(filters) : Collections.emptySet();
-   }
-
-   public boolean isFulltextQuery() {
-      return fulltext != null && !fulltext.isEmpty();
-   }
-
-   public boolean isCollectionIdsQuery() {
-      return collectionIds != null && !collectionIds.isEmpty();
-   }
-
-   public boolean isLinkTypeIdsQuery() {
-      return linkTypeIds != null && !linkTypeIds.isEmpty();
-   }
-
-   public boolean isDocumentIdsQuery() {
-      return documentIds != null && !documentIds.isEmpty();
-   }
-
-   public boolean isFiltersQuery() {
-      return filters != null && !filters.isEmpty();
-   }
-
-   public boolean isBasicQuery() {
-      return !isFulltextQuery()  && !isLinkTypeIdsQuery() && !isDocumentIdsQuery() && !isCollectionIdsQuery();
+   public List<SearchQueryStem> getStems() {
+      return stems != null ? Collections.unmodifiableList(stems) : Collections.emptyList();
    }
 
    public static Builder createBuilder(String... users) {
@@ -93,38 +47,20 @@ public class SearchQuery extends DatabaseQuery {
 
    public static class Builder extends DatabaseQuery.Builder<Builder> {
 
-      private String fulltext;
-      private Set<String> collectionIds;
-      private Set<String> linkTypeIds;
-      private Set<String> documentIds;
-      private Set<AttributeFilter> filters;
+      private List<SearchQueryStem> stems;
 
       private Builder(final String... users) {
          super(users);
       }
 
-      public Builder fulltext(String fulltext) {
-         this.fulltext = fulltext;
+      public Builder stems(List<SearchQueryStem> stems) {
+         this.stems = stems;
          return this;
       }
 
-      public Builder collectionIds(Set<String> collectionIds) {
-         this.collectionIds = collectionIds;
-         return this;
-      }
-
-      public Builder linkTypeIds(Set<String> linkTypeIds) {
-         this.linkTypeIds = linkTypeIds;
-         return this;
-      }
-
-      public Builder documentIds(Set<String> documentIds) {
-         this.documentIds = documentIds;
-         return this;
-      }
-
-      public Builder filters(Set<AttributeFilter> attributeFilters) {
-         this.filters = attributeFilters;
+      public Builder queryStems(List<QueryStem> stems, Set<String> fulltexts) {
+         this.stems = stems.stream()
+                           .map(stem -> new SearchQueryStem(stem, fulltexts)).collect(Collectors.toList());
          return this;
       }
 
@@ -138,11 +74,7 @@ public class SearchQuery extends DatabaseQuery {
    @Override
    public String toString() {
       return "SearchQuery{" +
-            "fulltext='" + fulltext + '\'' +
-            ", collectionIds=" + collectionIds +
-            ", linkTypeIds=" + linkTypeIds +
-            ", documentIds=" + documentIds +
-            ", filters=" + filters +
+            "stems=" + stems +
             '}';
    }
 }

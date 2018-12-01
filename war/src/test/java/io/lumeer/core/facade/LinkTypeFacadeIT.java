@@ -28,7 +28,6 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -49,8 +48,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -80,6 +77,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    }
 
    private List<String> collectionIds = new ArrayList<>();
+   private String collectionIdNoPerm;
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
@@ -140,10 +138,13 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       for (String name : COLLECTION_NAMES) {
          Permissions collectionPermissions = new Permissions();
          collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-         Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-         jsonCollection.setDocumentsCount(0);
-         collectionIds.add(collectionDao.createCollection(jsonCollection).getId());
+         Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+         collection.setDocumentsCount(0);
+         collectionIds.add(collectionDao.createCollection(collection).getId());
       }
+
+      Collection collection = new Collection("noPerm", "noPerm", COLLECTION_ICON, COLLECTION_COLOR, new Permissions());
+      collectionIdNoPerm = collectionDao.createCollection(collection).getId();
    }
 
    @Test
@@ -195,25 +196,19 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       String id1 = linkTypeFacade.createLinkType(prepareLinkType()).getId();
 
       LinkType linkType2 = prepareLinkType();
-      linkType2.setCollectionIds(Arrays.asList(collectionIds.get(0), collectionIds.get(2)));
-      String id2 = linkTypeFacade.createLinkType(linkType2).getId();
+      linkType2.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(2)));
+      linkTypeDao.createLinkType(linkType2);
 
       LinkType linkType3 = prepareLinkType();
       linkType3.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
       String id3 = linkTypeFacade.createLinkType(linkType3).getId();
 
       LinkType linkType4 = prepareLinkType();
-      linkType4.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(0)));
-      String id4 = linkTypeFacade.createLinkType(linkType4).getId();
+      linkType4.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIdNoPerm));
+      linkTypeDao.createLinkType(linkType4);
 
-      Query query = new Query(Collections.singleton(collectionIds.get(0)), null, null);
-      List<LinkType> linkTypes = linkTypeFacade.getLinkTypes(query);
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
-
-      Query query2 = new Query(null, new HashSet<>(Arrays.asList(id1, id3)), null);
-      linkTypes = linkTypeFacade.getLinkTypes(query2);
+      List<LinkType> linkTypes = linkTypeFacade.getLinkTypes();
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
-
    }
 
    private LinkType prepareLinkType() {

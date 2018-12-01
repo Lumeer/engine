@@ -25,7 +25,6 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
 import org.bson.types.ObjectId;
@@ -175,7 +174,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testDeleteLinkTypesByCollections() {
+   public void testDeleteLinkTypesByCollection() {
       linkTypeDao.createLinkType(prepareLinkType());
 
       LinkType linkType2 = prepareLinkType();
@@ -192,38 +191,11 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
 
       assertThat(linkTypeDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(4);
 
-      SearchQuery query1 = SearchQuery.createBuilder(USER).collectionIds((Collections.singleton(COLLECTION_ID2))).build();
-      linkTypeDao.deleteLinkTypes(query1);
+      linkTypeDao.deleteLinkTypesByCollectionId(COLLECTION_ID2);
       assertThat(linkTypeDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(1);
 
-      SearchQuery query2 = SearchQuery.createBuilder(USER).collectionIds((Collections.singleton(COLLECTION_ID3))).build();
-      linkTypeDao.deleteLinkTypes(query2);
+      linkTypeDao.deleteLinkTypesByCollectionId(COLLECTION_ID3);
       assertThat(linkTypeDao.databaseCollection().find().into(new ArrayList<>())).isEmpty();
-
-   }
-
-   @Test
-   public void testDeleteLinkTypesByIds() throws InterruptedException {
-      String id1 = linkTypeDao.createLinkType(prepareLinkType()).getId();
-
-      LinkType linkType2 = prepareLinkType();
-      linkType2.setName(NAME2);
-      String id2 = linkTypeDao.createLinkType(linkType2).getId();
-
-      LinkType linkType3 = prepareLinkType();
-      linkType3.setName(NAME3);
-      String id3 = linkTypeDao.createLinkType(linkType3).getId();
-
-      LinkType linkType4 = prepareLinkType();
-      linkType4.setName(NAME4);
-      String id4 = linkTypeDao.createLinkType(linkType4).getId();
-
-      assertThat(linkTypeDao.databaseCollection().find().into(new ArrayList<>()).size()).isEqualTo(4);
-
-      SearchQuery query = SearchQuery.createBuilder(USER).linkTypeIds(new HashSet<>(Arrays.asList(id1, id4))).build();
-      linkTypeDao.deleteLinkTypes(query);
-      List<LinkType> linkTypes = linkTypeDao.databaseCollection().find().into(new ArrayList<>());
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id2, id3));
    }
 
    @Test
@@ -242,14 +214,11 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       linkType4.setCollectionIds(Arrays.asList(COLLECTION_ID2, COLLECTION_ID3));
       String id4 = linkTypeDao.createLinkType(linkType4).getId();
 
-      SearchQuery query1 = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList(COLLECTION_ID1, COLLECTION_ID2))).build();
-      List<LinkType> linkTypes = linkTypeDao.getLinkTypes(query1);
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3, id4));
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByCollectionId(COLLECTION_ID1);
+      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
 
-      SearchQuery query2 = SearchQuery.createBuilder(USER).collectionIds(Collections.singleton(COLLECTION_ID3)).build();
-      linkTypes = linkTypeDao.getLinkTypes(query2);
+      linkTypes = linkTypeDao.getLinkTypesByCollectionId(COLLECTION_ID3);
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id2, id4));
-
    }
 
    @Test
@@ -268,12 +237,10 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       linkType4.setName(NAME4);
       String id4 = linkTypeDao.createLinkType(linkType4).getId();
 
-      SearchQuery query1 = SearchQuery.createBuilder(USER).linkTypeIds(new HashSet<>(Arrays.asList(id1, id4))).build();
-      List<LinkType> linkTypes = linkTypeDao.getLinkTypes(query1);
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(new HashSet<>(Arrays.asList(id1, id4)));
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id4));
 
-      SearchQuery query2 = SearchQuery.createBuilder(USER).linkTypeIds(Collections.singleton(id2)).build();
-      linkTypes = linkTypeDao.getLinkTypes(query2);
+      linkTypes = linkTypeDao.getLinkTypesByIds(Collections.singleton(id2));
       assertThat(linkTypes).extracting("id").containsOnly(id2);
    }
 

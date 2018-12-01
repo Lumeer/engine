@@ -22,13 +22,10 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
-import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +34,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 @RequestScoped
-public class LinkInstanceFacade  extends AbstractFacade{
+public class LinkInstanceFacade extends AbstractFacade {
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -47,9 +44,6 @@ public class LinkInstanceFacade  extends AbstractFacade{
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
-
-   @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
 
    public LinkInstance createLinkInstance(LinkInstance linkInstance) {
       LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
@@ -75,25 +69,11 @@ public class LinkInstanceFacade  extends AbstractFacade{
       linkInstanceDao.deleteLinkInstance(id);
    }
 
-   public List<LinkInstance> getLinkInstances(Query query) {
-      return linkInstanceDao.getLinkInstances(createSearchQuery(query));
-   }
-
    private void checkLinkInstancePermission(java.util.Collection<String> collectionIds) {
       List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       for (Collection collection : collections) {
          permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
       }
-   }
-
-   private SearchQuery createSearchQuery(Query query) {
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-      String user = authenticatedUser.getCurrentUserId();
-
-      return SearchQuery.createBuilder(user).groups(groups)
-                        .documentIds(query.getDocumentIds())
-                        .linkTypeIds(query.getLinkTypeIds())
-                        .build();
    }
 
 }

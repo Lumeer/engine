@@ -29,7 +29,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
@@ -40,11 +40,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MongoViewDaoTest extends MongoDbTestBase {
@@ -115,14 +112,9 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    }
 
    private View createView(String code, String name) {
-      return createView(code, name, null);
-   }
-
-   private View createView(String code, String name, Set<String> collections) {
       View jsonView = prepareView();
       jsonView.setCode(code);
       jsonView.setName(name);
-      jsonView.setQuery(new Query(collections, null, null));
 
       viewDao.databaseCollection().insertOne(jsonView);
       return jsonView;
@@ -288,7 +280,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);
 
-      SearchQuery query = SearchQuery.createBuilder(USER).build();
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
    }
@@ -307,7 +299,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       view2.getPermissions().updateGroupPermissions(groupPermission);
       viewDao.databaseCollection().insertOne(view2);
 
-      SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP2)).build();
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP2)).build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).isEmpty();
    }
@@ -322,7 +314,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);
 
-      SearchQuery query = SearchQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER2).groups(Collections.singleton(GROUP)).build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
    }
@@ -337,61 +329,9 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       view2.setName(NAME2);
       viewDao.databaseCollection().insertOne(view2);
 
-      SearchQuery query = SearchQuery.createBuilder(USER).page(1).pageSize(1).build();
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER).page(1).pageSize(1).build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE2);
-   }
-
-   @Test
-   public void testGetViewsByFulltext() {
-      createView(CODE, NAME);
-      createView(CODE2, NAME2);
-      createView(CODE3, NAME3);
-
-      SearchQuery query = SearchQuery.createBuilder(USER).fulltext("text").build();
-      List<View> views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).containsOnly(CODE2, CODE3);
-   }
-
-   @Test
-   public void testGetViewsByCollections() {
-      createView(CODE, NAME, new HashSet<>(Arrays.asList("c1", "c2", "c3")));
-      createView(CODE2, NAME2, new HashSet<>(Arrays.asList("c2", "c3", "c4")));
-      createView(CODE3, NAME3, new HashSet<>(Arrays.asList("c1", "c3")));
-
-      SearchQuery query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c1", "c5"))).build();
-      List<View> views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE3);
-
-      query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c2", "c4"))).build();
-      views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
-
-      query = SearchQuery.createBuilder(USER).collectionIds(new HashSet<>(Arrays.asList("c4", "c5", "c6"))).build();
-      views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).containsOnly(CODE2);
-   }
-
-   @Test
-   public void testGetViewsByFulltextAndPagination() {
-      createView(CODE, NAME);
-      createView(CODE2, NAME2);
-      createView(CODE3, NAME3);
-
-      SearchQuery query = SearchQuery.createBuilder(USER).fulltext("text").page(1).pageSize(1).build();
-      List<View> views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).containsOnly(CODE2);
-   }
-
-   @Test
-   public void testGetViewsByFulltextDifferentUser() {
-      createView(CODE, NAME);
-      createView(CODE2, NAME2);
-      createView(CODE3, NAME3);
-
-      SearchQuery query = SearchQuery.createBuilder(USER2).fulltext("text").build();
-      List<View> views = viewDao.getViews(query);
-      assertThat(views).extracting(View::getCode).isEmpty();
    }
 
    @Test

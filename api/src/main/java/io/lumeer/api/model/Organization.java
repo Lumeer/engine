@@ -68,7 +68,7 @@ public class Organization extends Resource {
 
    @Override
    public String toString() {
-      return "JsonOrganization{" +
+      return "Organization{" +
             "id='" + id + '\'' +
             ", code='" + code + '\'' +
             ", name='" + name + '\'' +

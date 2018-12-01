@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.Query;
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.QueryStem;
 
 import org.bson.BsonReader;
@@ -37,40 +37,37 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class QueryCodec implements Codec<Query> {
+public class QueryStemCodec implements Codec<QueryStem> {
 
-   public static final String STEMS = "stems";
-   public static final String FULLTEXTS = "fulltexts";
-   public static final String PAGE = "page";
-   public static final String PAGE_SIZE = "pageSize";
+   public static final String COLLECTION_ID = "collectionId";
+   public static final String LINK_TYPE_IDS = "linkTypeIds";
+   public static final String DOCUMENT_IDS = "documentIds";
+   public static final String FILTERS = "filters";
 
    private final Codec<Document> documentCodec;
 
-   public QueryCodec(final CodecRegistry registry) {
+   public QueryStemCodec(final CodecRegistry registry) {
       this.documentCodec = registry.get(Document.class);
    }
 
    @Override
-   public Query decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public QueryStem decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document document = documentCodec.decode(reader, decoderContext);
 
-      return QueryCodec.convertFromDocument(document);
+      return QueryStemCodec.convertFromDocument(document);
    }
 
-   public static Query convertFromDocument(Document bson) {
-      if (bson == null) {
-         return new Query();
-      }
+   public static QueryStem convertFromDocument(Document bson) {
 
-      Set<String> fulltexts = convertToSet(bson.get(FULLTEXTS, List.class));
-      List<QueryStem> stems = new ArrayList<Document>(bson.get(STEMS, List.class)).stream()
-                                                                                  .map(QueryStemCodec::convertFromDocument)
-                                                                                  .collect(Collectors.toList());
+      String collectionId = bson.getString(COLLECTION_ID);
+      List<String> linkTypeIds = bson.get(LINK_TYPE_IDS, List.class);
+      Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
 
-      Integer page = bson.getInteger(PAGE);
-      Integer pageSize = bson.getInteger(PAGE_SIZE);
+      Set<AttributeFilter> attributes = new ArrayList<Document>(bson.get(FILTERS, List.class)).stream()
+                                                                                              .map(AttributeFilterCodec::convertFromDocument)
+                                                                                              .collect(Collectors.toSet());
 
-      return new Query(stems, fulltexts, page, pageSize);
+      return new QueryStem(collectionId, linkTypeIds, documentIds, attributes);
    }
 
    private static Set<String> convertToSet(List list) {
@@ -78,19 +75,19 @@ public class QueryCodec implements Codec<Query> {
    }
 
    @Override
-   public void encode(final BsonWriter writer, final Query value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final QueryStem value, final EncoderContext encoderContext) {
       Document document = new Document()
-            .append(STEMS, value.getStems())
-            .append(FULLTEXTS, new ArrayList<>(value.getFulltexts()))
-            .append(PAGE, value.getPage())
-            .append(PAGE_SIZE, value.getPageSize());
+            .append(COLLECTION_ID, value.getCollectionId())
+            .append(LINK_TYPE_IDS, value.getLinkTypeIds())
+            .append(DOCUMENT_IDS, new ArrayList<>(value.getDocumentIds()))
+            .append(FILTERS, new ArrayList<>(value.getFilters()));
 
       documentCodec.encode(writer, document, encoderContext);
    }
 
    @Override
-   public Class<Query> getEncoderClass() {
-      return Query.class;
+   public Class<QueryStem> getEncoderClass() {
+      return QueryStem.class;
    }
 
 }

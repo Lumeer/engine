@@ -18,8 +18,8 @@
  */
 package io.lumeer.core.util;
 
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.ConditionType;
-import io.lumeer.storage.api.filter.AttributeFilter;
 
 public class FilterParser {
 
@@ -30,7 +30,7 @@ public class FilterParser {
       }
 
       String collectionId = parts[0].trim();
-      String attributeName = parts[1].trim();
+      String attributeId = parts[1].trim();
       String condition = parts[2].trim();
 
       String[] conditionParts = condition.split(" +", 2); // one or more spaces
@@ -45,7 +45,7 @@ public class FilterParser {
 
       String value = conditionParts[1].trim();
 
-      return new AttributeFilter(collectionId, conditionType, attributeName, value);
+      return new AttributeFilter(collectionId, attributeId, conditionParts[0].trim().toLowerCase(), value);
    }
 
 }

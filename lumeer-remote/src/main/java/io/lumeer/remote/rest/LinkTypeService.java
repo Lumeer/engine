@@ -20,10 +20,8 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Query;
 import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.core.facade.ViewFacade;
-import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -83,16 +81,9 @@ public class LinkTypeService extends AbstractService {
       return Response.ok().link(getParentUri(id), "parent").build();
    }
 
-   @POST
-   @Path("search")
-   @QueryProcessor
-   public List<LinkType> getLinkTypes(Query query) {
-      return linkTypeFacade.getLinkTypes(query);
-   }
-
    @GET
-   public List<LinkType> getAllLinkTypes(@QueryParam("fromViews") Boolean includeViewLinkTypes) {
-      final List<LinkType> linkTypes = linkTypeFacade.getLinkTypes(new Query());
+   public List<LinkType> getLinkTypes(@QueryParam("fromViews") Boolean includeViewLinkTypes) {
+      final List<LinkType> linkTypes = linkTypeFacade.getLinkTypes();
 
       if (includeViewLinkTypes != null && includeViewLinkTypes) {
          linkTypes.addAll(viewFacade.getViewsLinkTypes());

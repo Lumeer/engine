@@ -20,7 +20,7 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SuggestionQuery;
 
 import java.util.List;
@@ -46,7 +46,7 @@ public interface CollectionDao {
 
    List<Collection> getCollectionsByIds(java.util.Collection<String> ids);
 
-   List<Collection> getCollections(SearchQuery query);
+   List<Collection> getCollections(DatabaseQuery query);
 
    List<Collection> getCollections(SuggestionQuery query);
 

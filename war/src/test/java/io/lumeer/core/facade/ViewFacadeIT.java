@@ -28,6 +28,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
@@ -67,7 +68,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String NAME = "Test view";
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
-   private static final Query QUERY;
+   private Query query = new Query();
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
@@ -78,10 +79,6 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String CODE2 = "TVIEW2";
 
    private static final String ORGANIZATION_CODE = "TORG";
-
-   static {
-      QUERY = new Query(Collections.singleton("testAttribute=42"), new HashSet<>(), null, null, "test", 0, Integer.MAX_VALUE);
-   }
 
    @Inject
    private ProjectDao projectDao;
@@ -145,12 +142,11 @@ public class ViewFacadeIT extends IntegrationTestBase {
       Collection collection = collectionFacade.createCollection(
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
       collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
-      QUERY.getCollectionIds().clear();
-      QUERY.getCollectionIds().add(collection.getId());
+      query = new Query(new QueryStem(collection.getId()));
    }
 
    private View prepareView(String code) {
-      return new View(code, NAME, ICON, COLOR, null, null, QUERY, PERSPECTIVE.toString(), CONFIG, this.user.getId());
+      return new View(code, NAME, ICON, COLOR, null, null, query, PERSPECTIVE.toString(), CONFIG, this.user.getId());
    }
 
    private View createView(String code) {
@@ -176,7 +172,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedView.getName()).isEqualTo(NAME);
       assertions.assertThat(storedView.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
+      assertions.assertThat(storedView.getQuery()).isEqualTo(query);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
@@ -221,7 +217,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedView.getName()).isEqualTo(NAME);
       assertions.assertThat(storedView.getColor()).isEqualTo(COLOR);
       assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
-      assertions.assertThat(storedView.getQuery()).isEqualTo(QUERY);
+      assertions.assertThat(storedView.getQuery()).isEqualTo(query);
       assertions.assertThat(storedView.getPerspective()).isEqualTo(PERSPECTIVE);
       assertions.assertThat(storedView.getConfig()).isEqualTo(CONFIG);
       assertions.assertAll();
@@ -326,7 +322,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       // create a view under a different user
       View view = createView(CODE2);
       view.setAuthorId(NON_EXISTING_USER);
-      view.setQuery(new Query(Collections.singleton(collection.getId()), Collections.emptySet(), Collections.emptySet()));
+      view.setQuery(new Query(new QueryStem(collection.getId())));
       viewDao.updateView(view.getId(), view);
 
       viewFacade.updateUserPermissions(view.getCode(), Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));

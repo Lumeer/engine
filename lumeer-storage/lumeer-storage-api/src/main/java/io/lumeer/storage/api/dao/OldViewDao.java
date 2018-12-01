@@ -18,30 +18,15 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.storage.api.query.DatabaseQuery;
+import io.lumeer.api.model.OldView;
+import io.lumeer.api.model.Project;
 
 import java.util.List;
-import java.util.Set;
 
-public interface OrganizationDao {
+public interface OldViewDao {
 
-   Organization createOrganization(Organization organization);
+   List<OldView> getOldViews();
 
-   Organization getOrganizationByCode(String organizationCode);
-
-   Organization getOrganizationById(String organizationId);
-
-   Set<String> getOrganizationsCodes();
-
-   List<Organization> getOrganizations(DatabaseQuery query);
-
-   List<Organization> getAllOrganizations();
-
-   void deleteOrganization(String organizationId);
-
-   Organization updateOrganization(String organizationId, Organization organization);
-
-   Organization updateOrganization(String organizationId, Organization organization, Organization originalOrganization);
+   void setProject(final Project project);
 
 }

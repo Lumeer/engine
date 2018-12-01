@@ -31,6 +31,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -55,7 +56,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -97,12 +97,16 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String LINK_INSTANCES_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/link-instances";
+   private static final String SEARCH_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/search";
    private static final String LINK_INSTANCES_URL = SERVER_URL + LINK_INSTANCES_PATH;
+   private static final String SEARCH_URL = SERVER_URL + SEARCH_PATH;
 
    private List<String> documentIdsColl1 = new ArrayList<>();
    private List<String> documentIdsColl2 = new ArrayList<>();
    private String linkTypeId1;
    private String linkTypeId2;
+   private String collection1Id;
+   private String collection2Id;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
@@ -160,31 +164,31 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Project.ROLES);
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
-      storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
+      projectDao.updateProject(storedProject.getId(), storedProject);
 
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-      Collection jsonCollection = new Collection("col1", "col1", "icon", "color", collectionPermissions);
-      jsonCollection.setDocumentsCount(0);
-      String collection1 = collectionDao.createCollection(jsonCollection).getId();
+      Collection collection1 = new Collection("col1", "col1", "icon", "color", collectionPermissions);
+      collection1.setDocumentsCount(0);
+      collection1Id = collectionDao.createCollection(collection1).getId();
 
-      Collection jsonCollection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
-      jsonCollection.setDocumentsCount(0);
-      String collection2 = collectionDao.createCollection(jsonCollection2).getId();
+      Collection collection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
+      collection2.setDocumentsCount(0);
+      collection2Id = collectionDao.createCollection(collection2).getId();
 
-      LinkType linkType = new LinkType(null, NAME, Arrays.asList(collection1, collection2), ATTRIBUTES);
+      LinkType linkType = new LinkType(null, NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(null, NAME2, Arrays.asList(collection1, collection2), ATTRIBUTES);
+      LinkType linkType2 = new LinkType(null, NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();
       for (int i = 0; i < 3; i++) {
-         documentIdsColl1.add(createDocument(collection1).getId());
+         documentIdsColl1.add(createDocument(collection1Id).getId());
       }
 
       documentIdsColl2.clear();
       for (int i = 0; i < 3; i++) {
-         documentIdsColl2.add(createDocument(collection2).getId());
+         documentIdsColl2.add(createDocument(collection2Id).getId());
       }
 
    }
@@ -275,9 +279,10 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      Query jsonQuery1 = new Query(null, null, Collections.singleton(documentIdsColl1.get(0)));
-      Entity entity1 = Entity.json(jsonQuery1);
-      Response response = client.target(LINK_INSTANCES_URL).path("search")
+      QueryStem stem = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null);
+      Query query = new Query(stem);
+      Entity entity1 = Entity.json(query);
+      Response response = client.target(SEARCH_URL).path("linkInstances")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity1).invoke();
 
@@ -288,9 +293,10 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
 
-      Query jsonQuery2 = new Query(null, null, Collections.singleton(documentIdsColl2.get(1)));
-      Entity entity2 = Entity.json(jsonQuery2);
-      response = client.target(LINK_INSTANCES_URL).path("search")
+      QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null);
+      Query query2 = new Query(stem2);
+      Entity entity2 = Entity.json(query2);
+      response = client.target(SEARCH_URL).path("linkInstances")
                        .request(MediaType.APPLICATION_JSON)
                        .buildPost(entity2).invoke();
 
@@ -321,9 +327,10 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      Query jsonQuery1 = new Query(null, new HashSet<>(Arrays.asList(linkTypeId1, linkTypeId2)), null);
-      Entity entity1 = Entity.json(jsonQuery1);
-      Response response = client.target(LINK_INSTANCES_URL).path("search")
+      QueryStem stem = new QueryStem(collection1Id, Arrays.asList(linkTypeId1, linkTypeId2), null, null);
+      Query query = new Query(stem);
+      Entity entity1 = Entity.json(query);
+      Response response = client.target(SEARCH_URL).path("linkInstances")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity1).invoke();
 
@@ -334,9 +341,10 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
 
-      Query jsonQuery2 = new Query(null, Collections.singleton(linkTypeId1), null);
-      Entity entity2 = Entity.json(jsonQuery2);
-      response = client.target(LINK_INSTANCES_URL).path("search")
+      QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null);
+      Query query2 = new Query(stem2);
+      Entity entity2 = Entity.json(query2);
+      response = client.target(SEARCH_URL).path("linkInstances")
                        .request(MediaType.APPLICATION_JSON)
                        .buildPost(entity2).invoke();
 

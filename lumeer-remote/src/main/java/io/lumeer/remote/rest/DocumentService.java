@@ -19,13 +19,10 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.PATCH;
 
-import java.util.List;
-import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -37,7 +34,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -115,18 +111,6 @@ public class DocumentService extends AbstractService {
       Document document = documentFacade.getDocument(collectionId, documentId);
       document.setFavorite(documentFacade.isFavorite(document.getId()));
       return document;
-   }
-
-   @GET
-   public List<Document> getDocuments(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
-      Pagination pagination = new Pagination(page, pageSize);
-
-      List<Document> documents = documentFacade.getDocuments(collectionId, pagination);
-
-      Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
-      documents.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
-
-      return documents;
    }
 
    @POST

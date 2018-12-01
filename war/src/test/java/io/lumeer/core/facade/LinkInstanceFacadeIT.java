@@ -30,7 +30,6 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -96,6 +95,8 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
    private List<String> documentIdsColl2 = new ArrayList<>();
    private String linkTypeId1;
    private String linkTypeId2;
+   private String collection1Id;
+   private String collection2Id;
 
    @Inject
    private LinkInstanceFacade linkInstanceFacade;
@@ -165,27 +166,27 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-      Collection jsonCollection = new Collection("col1", "col1", "icon", "color", collectionPermissions);
-      jsonCollection.setDocumentsCount(0);
-      String collection1 = collectionDao.createCollection(jsonCollection).getId();
+      Collection collection = new Collection("col1", "col1", "icon", "color", collectionPermissions);
+      collection.setDocumentsCount(0);
+      collection1Id = collectionDao.createCollection(collection).getId();
 
-      Collection jsonCollection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
-      jsonCollection.setDocumentsCount(0);
-      String collection2 = collectionDao.createCollection(jsonCollection2).getId();
+      Collection collection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
+      collection2.setDocumentsCount(0);
+      collection2Id = collectionDao.createCollection(collection2).getId();
 
-      LinkType linkType = new LinkType(null, NAME, Arrays.asList(collection1, collection2), ATTRIBUTES);
+      LinkType linkType = new LinkType(null, NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(null, NAME2, Arrays.asList(collection1, collection2), ATTRIBUTES);
+      LinkType linkType2 = new LinkType(null, NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();
       for (int i = 0; i < 3; i++) {
-         documentIdsColl1.add(createDocument(collection1).getId());
+         documentIdsColl1.add(createDocument(collection1Id).getId());
       }
 
       documentIdsColl2.clear();
       for (int i = 0; i < 3; i++) {
-         documentIdsColl2.add(createDocument(collection2).getId());
+         documentIdsColl2.add(createDocument(collection2Id).getId());
       }
    }
 
@@ -231,42 +232,6 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
       assertThatThrownBy(() -> linkInstanceDao.getLinkInstance(created.getId()))
             .isInstanceOf(StorageException.class);
-   }
-
-   @Test
-   public void testGetLinkInstances() {
-      String id1 = linkInstanceFacade.createLinkInstance(prepareLinkInstance()).getId();
-
-      LinkInstance linkInstance2 = prepareLinkInstance();
-      linkInstance2.setLinkTypeId(linkTypeId1);
-      linkInstance2.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(2)));
-      String id2 = linkInstanceFacade.createLinkInstance(linkInstance2).getId();
-
-      LinkInstance linkInstance3 = prepareLinkInstance();
-      linkInstance3.setLinkTypeId(linkTypeId1);
-      linkInstance3.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      String id3 = linkInstanceFacade.createLinkInstance(linkInstance3).getId();
-
-      LinkInstance linkInstance4 = prepareLinkInstance();
-      linkInstance4.setLinkTypeId(linkTypeId2);
-      linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      String id4 = linkInstanceFacade.createLinkInstance(linkInstance4).getId();
-
-      Query query1 = new Query(null, null, Collections.singleton(documentIdsColl1.get(0)));
-      List<LinkInstance> linkInstances = linkInstanceFacade.getLinkInstances(query1);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
-
-      Query query2 = new Query(null, null, Collections.singleton(documentIdsColl2.get(1)));
-      linkInstances = linkInstanceFacade.getLinkInstances(query2);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id3));
-
-      Query query3 = new Query(null, new HashSet<>(Arrays.asList(linkTypeId1, linkTypeId2)), null);
-      linkInstances = linkInstanceFacade.getLinkInstances(query3);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
-
-      Query query4 = new Query(null, Collections.singleton(linkTypeId1), null);
-      linkInstances = linkInstanceFacade.getLinkInstances(query4);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
    }
 
    private LinkInstance prepareLinkInstance() {

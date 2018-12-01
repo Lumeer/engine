@@ -20,43 +20,34 @@ package io.lumeer.api.model;
 
 import io.lumeer.api.model.common.Resource;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class View extends Resource {
+public class OldView extends Resource {
 
    public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.CLONE, Role.READ, Role.SHARE, Role.WRITE));
 
-   public static final String QUERY = "query";
-   public static final String PERSPECTIVE = "perspective";
-   public static final String CONFIG = "config";
-   public static final String AUTHOR_ID = "authorId";
-
-   private Query query;
+   private OldQuery query;
    private String perspective;
    private Object config;
    private String authorId;
    private Map<String, Set<Role>> authorRights;
 
-   public View() {
+   public OldView() {
    }
 
-   @JsonCreator
-   public View(@JsonProperty(CODE) final String code,
-         @JsonProperty(NAME) final String name,
-         @JsonProperty(ICON) final String icon,
-         @JsonProperty(COLOR) final String color,
-         @JsonProperty(DESCRIPTION) final String description,
-         @JsonProperty(PERMISSIONS) final Permissions permissions,
-         @JsonProperty(QUERY) final Query query,
-         @JsonProperty(PERSPECTIVE) final String perspective,
-         @JsonProperty(CONFIG) final Object config,
-         @JsonProperty(AUTHOR_ID) final String authorId) {
+   public OldView(final String code,
+         final String name,
+         final String icon,
+         final String color,
+         final String description,
+         final Permissions permissions,
+         final OldQuery query,
+         final String perspective,
+         final Object config,
+         final String authorId) {
       super(code, name, icon, color, description, permissions);
 
       this.query = query;
@@ -66,8 +57,8 @@ public class View extends Resource {
    }
 
    @Override
-   public View copy() {
-      final View o = new View();
+   public OldView copy() {
+      final OldView o = new OldView();
 
       o.id = this.id;
       o.code = this.code;
@@ -90,7 +81,7 @@ public class View extends Resource {
       return ResourceType.VIEW;
    }
 
-   public Query getQuery() {
+   public OldQuery getQuery() {
       return query;
    }
 
@@ -106,44 +97,16 @@ public class View extends Resource {
       return authorId;
    }
 
-   public void setQuery(final Query query) {
+   public void setQuery(final OldQuery query) {
       this.query = query;
-   }
-
-   public void setPerspective(final String perspective) {
-      this.perspective = perspective;
    }
 
    public void setConfig(final Object config) {
       this.config = config;
    }
 
-   public void setAuthorId(final String authorId) {
-      this.authorId = authorId;
-   }
-
    public Map<String, Set<Role>> getAuthorRights() {
       return authorRights;
-   }
-
-   public void setAuthorRights(final Map<String, Set<Role>> authorRights) {
-      this.authorRights = authorRights;
-   }
-
-   @Override
-   public String toString() {
-      return "View{" +
-            "id='" + id + '\'' +
-            ", code='" + code + '\'' +
-            ", name='" + name + '\'' +
-            ", icon='" + icon + '\'' +
-            ", color='" + color + '\'' +
-            ", permissions=" + permissions +
-            ", query=" + query +
-            ", perspective='" + perspective + '\'' +
-            ", authorId='" + authorId + '\'' +
-            ", authorRights='" + authorRights + '\'' +
-            '}';
    }
 
 }

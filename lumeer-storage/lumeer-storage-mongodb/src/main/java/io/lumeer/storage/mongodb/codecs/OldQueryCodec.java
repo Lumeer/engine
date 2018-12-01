@@ -19,8 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.Query;
-import io.lumeer.api.model.QueryStem;
+import io.lumeer.api.model.OldQuery;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -35,42 +34,44 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-public class QueryCodec implements Codec<Query> {
+public class OldQueryCodec implements Codec<OldQuery> {
 
-   public static final String STEMS = "stems";
-   public static final String FULLTEXTS = "fulltexts";
+   public static final String FILTERS = "filters";
+   public static final String COLLECTION_IDS = "collection_ids";
+   public static final String DOCUMENT_IDS = "document_ids";
+   public static final String LINK_TYPE_IDS = "link_type_ids";
+   public static final String FULLTEXT = "fulltext";
    public static final String PAGE = "page";
    public static final String PAGE_SIZE = "pageSize";
 
    private final Codec<Document> documentCodec;
 
-   public QueryCodec(final CodecRegistry registry) {
+   public OldQueryCodec(final CodecRegistry registry) {
       this.documentCodec = registry.get(Document.class);
    }
 
    @Override
-   public Query decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public OldQuery decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document document = documentCodec.decode(reader, decoderContext);
 
-      return QueryCodec.convertFromDocument(document);
+      return OldQueryCodec.convertFromDocument(document);
    }
 
-   public static Query convertFromDocument(Document bson) {
-      if (bson == null) {
-         return new Query();
+   public static OldQuery convertFromDocument(Document bson) {
+      if (bson == null || bson.containsKey(QueryCodec.STEMS) || bson.containsKey(QueryCodec.FULLTEXTS)) {
+         return null;
       }
 
-      Set<String> fulltexts = convertToSet(bson.get(FULLTEXTS, List.class));
-      List<QueryStem> stems = new ArrayList<Document>(bson.get(STEMS, List.class)).stream()
-                                                                                  .map(QueryStemCodec::convertFromDocument)
-                                                                                  .collect(Collectors.toList());
-
+      Set<String> filters = convertToSet(bson.get(FILTERS, List.class));
+      Set<String> collectionIds = convertToSet(bson.get(COLLECTION_IDS, List.class));
+      Set<String> linkTypeIds = convertToSet(bson.get(LINK_TYPE_IDS, List.class));
+      Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
+      String fulltext = bson.getString(FULLTEXT);
       Integer page = bson.getInteger(PAGE);
       Integer pageSize = bson.getInteger(PAGE_SIZE);
 
-      return new Query(stems, fulltexts, page, pageSize);
+      return new OldQuery(filters, collectionIds, linkTypeIds, documentIds, fulltext, page, pageSize);
    }
 
    private static Set<String> convertToSet(List list) {
@@ -78,10 +79,13 @@ public class QueryCodec implements Codec<Query> {
    }
 
    @Override
-   public void encode(final BsonWriter writer, final Query value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final OldQuery value, final EncoderContext encoderContext) {
       Document document = new Document()
-            .append(STEMS, value.getStems())
-            .append(FULLTEXTS, new ArrayList<>(value.getFulltexts()))
+            .append(FILTERS, new ArrayList<>(value.getFilters()))
+            .append(COLLECTION_IDS, new ArrayList<>(value.getCollectionIds()))
+            .append(LINK_TYPE_IDS, new ArrayList<>(value.getLinkTypeIds()))
+            .append(DOCUMENT_IDS, new ArrayList<>(value.getDocumentIds()))
+            .append(FULLTEXT, value.getFulltext())
             .append(PAGE, value.getPage())
             .append(PAGE_SIZE, value.getPageSize());
 
@@ -89,8 +93,8 @@ public class QueryCodec implements Codec<Query> {
    }
 
    @Override
-   public Class<Query> getEncoderClass() {
-      return Query.class;
+   public Class<OldQuery> getEncoderClass() {
+      return OldQuery.class;
    }
 
 }

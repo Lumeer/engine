@@ -6,31 +6,30 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.event.CreateLinkInstance;
-import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
-import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
-import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.codecs.LinkInstanceCodec;
 
 import com.mongodb.MongoException;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -78,9 +77,9 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    @Override
    public LinkInstance updateLinkInstance(final String id, final LinkInstance linkInstance) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
-      try{
+      try {
          LinkInstance updatedLinkInstance = databaseCollection().findOneAndReplace(idFilter(id), linkInstance, options);
-         if(updatedLinkInstance == null){
+         if (updatedLinkInstance == null) {
             throw new StorageException("Link instance '" + id + "' has not been updated.");
          }
          if (updateLinkInstanceEvent != null) {
@@ -104,10 +103,16 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public void deleteLinkInstances(final SearchQuery query) {
-      databaseCollection().deleteMany(linkInstancesFilter(query));
+   public void deleteLinkInstancesByLinkTypesIds(final Set<String> linkTypeIds) {
+      Bson filter = Filters.in(LinkInstanceCodec.LINK_TYPE_ID, linkTypeIds);
+      databaseCollection().deleteMany(filter);
    }
 
+   @Override
+   public void deleteLinkInstancesByDocumentsIds(final Set<String> documentsIds) {
+      Bson filter = Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentsIds);
+      databaseCollection().deleteMany(filter);
+   }
 
    @Override
    public LinkInstance getLinkInstance(final String id) {
@@ -119,19 +124,33 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public List<LinkInstance> getLinkInstances(final SearchQuery query) {
-      return databaseCollection().find(linkInstancesFilter(query)).into(new ArrayList<>());
+   public List<LinkInstance> getLinkInstancesByDocumentIds(final Set<String> documentIds) {
+      Bson filter = Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentIds);
+      return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
-   private Bson linkInstancesFilter(final SearchQuery query){
+   @Override
+   public List<LinkInstance> searchLinkInstances(final SearchQuery query) {
+      final FindIterable<LinkInstance> linkInstances = databaseCollection().find(linkInstancesFilter(query));
+      addPaginationToQuery(linkInstances, query);
+      return linkInstances.into(new ArrayList<>());
+   }
+
+   private Bson linkInstancesFilter(final SearchQuery query) {
       List<Bson> filters = new ArrayList<>();
-      if (query.isLinkTypeIdsQuery()) {
-         filters.add(Filters.in(LinkInstanceCodec.LINK_TYPE_ID, query.getLinkTypeIds()));
+      for (SearchQueryStem stem : query.getStems()) {
+         List<Bson> stemFilters = new ArrayList<>();
+         if (stem.containsLinkTypeIdsQuery()) {
+            stemFilters.add(Filters.in(LinkInstanceCodec.LINK_TYPE_ID, stem.getLinkTypeIds()));
+         }
+         if (stem.containsDocumentIdsQuery()) {
+            stemFilters.add(Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, stem.getDocumentIds()));
+         }
+         if (!stemFilters.isEmpty()) {
+            filters.add(Filters.and(stemFilters));
+         }
       }
-      if (query.isDocumentIdsQuery()) {
-         filters.add(Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, query.getDocumentIds()));
-      }
-      return filters.size() > 0 ? Filters.and(filters) : new Document();
+      return filters.size() > 0 ? Filters.or(filters) : new Document();
    }
 
    private String databaseCollectionName(Project project) {

@@ -20,11 +20,8 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.Query;
 import io.lumeer.core.facade.LinkInstanceFacade;
-import io.lumeer.remote.rest.annotation.QueryProcessor;
 
-import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -75,13 +72,6 @@ public class LinkInstanceService extends AbstractService {
       linkInstanceFacade.deleteLinkInstance(id);
 
       return Response.ok().link(getParentUri(id), "parent").build();
-   }
-
-   @POST
-   @Path("search")
-   @QueryProcessor
-   public List<LinkInstance> getLinkInstances(Query query) {
-      return linkInstanceFacade.getLinkInstances(query);
    }
 
 }
