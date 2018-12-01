@@ -194,17 +194,27 @@ public class SearchFacade extends AbstractFacade {
                                                      .filter(id -> !lastStageDocumentIds.contains(id))
                                                      .collect(Collectors.toSet());
 
+         Set<String> currentDocumentsIds = new HashSet<>(currentStageStem.getDocumentIds());
+
+
          if (currentStageStem.containsDocumentIdsQuery()) {
-            currentStageStem.intersectDocumentIds(otherDocumentIds);
+            currentDocumentsIds.retainAll(otherDocumentIds);
          } else {
-            currentStageStem.appendDocumentIds(otherDocumentIds);
+            currentDocumentsIds.addAll(otherDocumentIds);
          }
 
-         if (!currentStageStem.containsDocumentIdsQuery()) {
+         SearchQueryStem modifiedStem = SearchQueryStem.createBuilder(currentStageStem.getCollectionId())
+               .linkTypeIds(currentStageStem.getLinkTypeIds())
+               .documentIds(currentDocumentsIds)
+               .filters(currentStageStem.getFilters())
+               .fulltexts(currentStageStem.getFulltexts())
+               .build();
+
+         if (!modifiedStem.containsDocumentIdsQuery()) {
             break; // empty ids after interesction or append represents empty search, so we should break
          }
 
-         List<DataDocument> currentStageData = dataDao.searchData(currentStageStem, pagination, collectionsMap.get(currentStageStem.getCollectionId()));
+         List<DataDocument> currentStageData = dataDao.searchData(modifiedStem, pagination, collectionsMap.get(modifiedStem.getCollectionId()));
          if (currentStageData.isEmpty()) {
             break;
          }

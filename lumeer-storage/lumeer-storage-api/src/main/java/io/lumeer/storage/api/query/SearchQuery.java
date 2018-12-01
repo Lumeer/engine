@@ -20,6 +20,7 @@ package io.lumeer.storage.api.query;
 
 import io.lumeer.api.model.QueryStem;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ public class SearchQuery extends DatabaseQuery {
    }
 
    public List<SearchQueryStem> getStems() {
-      return stems;
+      return stems != null ? Collections.unmodifiableList(stems) : Collections.emptyList();
    }
 
    public static Builder createBuilder(String... users) {

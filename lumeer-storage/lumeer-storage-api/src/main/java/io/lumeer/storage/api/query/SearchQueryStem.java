@@ -27,7 +27,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.concurrent.Immutable;
 
+@Immutable
 public class SearchQueryStem {
 
    private final String collectionId;
@@ -62,19 +64,19 @@ public class SearchQueryStem {
    }
 
    public List<String> getLinkTypeIds() {
-      return linkTypeIds;
+      return linkTypeIds != null ? Collections.unmodifiableList(linkTypeIds) : Collections.emptyList();
    }
 
    public Set<String> getDocumentIds() {
-      return documentIds;
+      return documentIds != null ? Collections.unmodifiableSet(documentIds) : Collections.emptySet();
    }
 
    public Set<AttributeFilter> getFilters() {
-      return filters;
+      return filters != null ? Collections.unmodifiableSet(filters) : Collections.emptySet();
    }
 
    public Set<String> getFulltexts() {
-      return fulltexts;
+      return fulltexts != null ? Collections.unmodifiableSet(fulltexts) : Collections.emptySet();
    }
 
    public boolean containsLinkTypeIdsQuery() {
