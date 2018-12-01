@@ -95,17 +95,6 @@ public class SearchQueryStem {
       return fulltexts != null && !fulltexts.isEmpty();
    }
 
-   public void appendDocumentIds(Set<String> documentIds) {
-      this.documentIds.addAll(documentIds);
-   }
-
-   public void intersectDocumentIds(Set<String> documentIds) {
-      Set<String> copyCurrentIds = new HashSet<>(this.documentIds);
-      copyCurrentIds.retainAll(documentIds);
-      this.documentIds.clear();
-      this.documentIds.addAll(copyCurrentIds);
-   }
-
    public static Builder createBuilder(String collectionId) {
       return new Builder(collectionId);
    }
