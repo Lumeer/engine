@@ -63,9 +63,14 @@ public class QueryCodec implements Codec<Query> {
       }
 
       Set<String> fulltexts = convertToSet(bson.get(FULLTEXTS, List.class));
-      List<QueryStem> stems = new ArrayList<Document>(bson.get(STEMS, List.class)).stream()
-                                                                                  .map(QueryStemCodec::convertFromDocument)
-                                                                                  .collect(Collectors.toList());
+      List<QueryStem> stems;
+      if (bson.containsKey(STEMS)) {
+         stems = new ArrayList<Document>(bson.get(STEMS, List.class)).stream()
+                                                             .map(QueryStemCodec::convertFromDocument)
+                                                             .collect(Collectors.toList());
+      } else {
+         stems = Collections.emptyList();
+      }
 
       Integer page = bson.getInteger(PAGE);
       Integer pageSize = bson.getInteger(PAGE_SIZE);
