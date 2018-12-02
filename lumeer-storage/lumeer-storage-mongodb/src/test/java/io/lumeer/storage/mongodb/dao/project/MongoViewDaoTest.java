@@ -158,17 +158,6 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testCreateViewExistingName() {
-      View view = prepareView();
-      viewDao.databaseCollection().insertOne(view);
-
-      View view2 = prepareView();
-      view2.setCode(CODE2);
-      assertThatThrownBy(() -> viewDao.createView(view2))
-            .isInstanceOf(StorageException.class);
-   }
-
-   @Test
    public void testUpdateViewCode() {
       View view = prepareView();
       viewDao.databaseCollection().insertOne(view);
@@ -211,21 +200,6 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       viewDao.databaseCollection().insertOne(view2);
 
       view2.setCode(CODE);
-      assertThatThrownBy(() -> viewDao.updateView(view2.getId(), view2))
-            .isInstanceOf(StorageException.class);
-   }
-
-   @Test
-   public void testUpdateViewExistingName() {
-      View view = prepareView();
-      viewDao.databaseCollection().insertOne(view);
-
-      View view2 = prepareView();
-      view2.setCode(CODE2);
-      view2.setName(NAME2);
-      viewDao.databaseCollection().insertOne(view2);
-
-      view2.setName(NAME);
       assertThatThrownBy(() -> viewDao.updateView(view2.getId(), view2))
             .isInstanceOf(StorageException.class);
    }
