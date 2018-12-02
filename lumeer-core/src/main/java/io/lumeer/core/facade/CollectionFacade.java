@@ -168,10 +168,6 @@ public class CollectionFacade extends AbstractFacade {
       return favoriteItemDao.getFavoriteCollectionIds(userId, projectId);
    }
 
-   public Set<String> getCollectionNames() {
-      return collectionDao.getAllCollectionNames();
-   }
-
    public long getDocumentsCountInAllCollections() {
       final LongAdder la = new LongAdder();
       collectionDao.getAllCollectionIds().forEach(id -> {

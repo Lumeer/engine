@@ -81,7 +81,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
       projectCollection.createIndex(Indexes.ascending(ViewCodec.CODE), new IndexOptions().unique(true));
-      projectCollection.createIndex(Indexes.ascending(ViewCodec.NAME), new IndexOptions().unique(true));
+      projectCollection.createIndex(Indexes.ascending(ViewCodec.NAME), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.text(ViewCodec.NAME));
    }
 

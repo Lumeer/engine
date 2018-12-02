@@ -254,14 +254,6 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetCollectionNames() {
-      createCollection(CODE, NAME);
-      createCollection(CODE2, NAME2);
-
-      assertThat(collectionFacade.getCollectionNames()).containsOnly(NAME, NAME2);
-   }
-
-   @Test
    public void testUpdateCollectionAttributeAdd() {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();

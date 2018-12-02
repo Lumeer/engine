@@ -115,12 +115,6 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   @Path("info/names")
-   public Set<String> getCollectionNames() {
-      return collectionFacade.getCollectionNames();
-   }
-
-   @GET
    @Deprecated
    @Path("{collectionId}/attributes")
    public Set<Attribute> getCollectionAttributes(@PathParam("collectionId") String collectionId) {
