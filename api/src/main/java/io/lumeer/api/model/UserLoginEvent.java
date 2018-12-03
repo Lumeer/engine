@@ -20,7 +20,7 @@ package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**
@@ -34,9 +34,9 @@ public class UserLoginEvent {
 
    private String id;
    private String userId;
-   private Date date;
+   private ZonedDateTime date;
 
-   public UserLoginEvent(@JsonProperty(ID) final String id, @JsonProperty(USER_ID) final String userId, @JsonProperty(DATE) final Date date) {
+   public UserLoginEvent(@JsonProperty(ID) final String id, @JsonProperty(USER_ID) final String userId, @JsonProperty(DATE) final ZonedDateTime date) {
       this.id = id;
       this.userId = userId;
       this.date = date;
@@ -44,7 +44,7 @@ public class UserLoginEvent {
 
    public UserLoginEvent(final String userId) {
       this.userId = userId;
-      this.date = new Date();
+      this.date = ZonedDateTime.now();
    }
 
    public String getId() {
@@ -63,11 +63,11 @@ public class UserLoginEvent {
       this.userId = userId;
    }
 
-   public Date getDate() {
+   public ZonedDateTime getDate() {
       return date;
    }
 
-   public void setDate(final Date date) {
+   public void setDate(final ZonedDateTime date) {
       this.date = date;
    }
 
