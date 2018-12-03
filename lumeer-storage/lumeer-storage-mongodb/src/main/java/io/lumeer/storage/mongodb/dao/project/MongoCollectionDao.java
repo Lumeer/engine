@@ -62,7 +62,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       database.createCollection(databaseCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
-      projectCollection.createIndex(Indexes.ascending(CollectionCodec.NAME), new IndexOptions().unique(true));
+      projectCollection.createIndex(Indexes.ascending(CollectionCodec.NAME), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.CODE), new IndexOptions().unique(true));
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.ATTRIBUTES, AttributeCodec.NAME), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.text(CollectionCodec.NAME));

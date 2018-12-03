@@ -64,6 +64,7 @@ public class ViewConvertFacade extends AbstractFacade {
 
    private void convertViewsForOrganization(Organization organization) {
       projectDao.setOrganization(organization);
+      workspaceKeeper.setOrganization(organization.getCode());
       List<Project> projects = projectDao.getAllProjects();
       projects.forEach(this::convertViewsForProject);
    }
@@ -80,6 +81,7 @@ public class ViewConvertFacade extends AbstractFacade {
       collectionDao.setProject(project);
       linkTypeDao.setProject(project);
       documentDao.setProject(project);
+      workspaceKeeper.setProject(project.getCode());
    }
 
    private void convertView(OldView oldView) {

@@ -158,24 +158,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testCreateCollectionExistingCode() {
-      createCollection(CODE, NAME);
-
-      Collection collection = prepareCollection(CODE, NAME2);
-      assertThatThrownBy(() -> collectionDao.createCollection(collection))
-            .isInstanceOf(StorageException.class);
-   }
-
-   @Test
-   public void testCreateCollectionExistingName() {
-      createCollection(CODE, NAME);
-
-      Collection collection = prepareCollection(CODE2, NAME);
-      assertThatThrownBy(() -> collectionDao.createCollection(collection))
-            .isInstanceOf(StorageException.class);
-   }
-
-   @Test
    public void testUpdateCollection() {
       String id = createCollection(CODE, NAME).getId();
 
@@ -190,7 +172,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   @Ignore("Stored anyway with the current implementation")
    public void testUpdateCollectionNotExisting() {
       Collection collection = prepareCollection(CODE, NAME);
       assertThatThrownBy(() -> collectionDao.updateCollection(COLLECTION_ID, collection))

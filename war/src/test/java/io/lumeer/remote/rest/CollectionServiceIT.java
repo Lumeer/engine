@@ -288,22 +288,6 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   public void testGetAllCollectionNames() {
-      createCollection(CODE, NAME);
-      createCollection(CODE2, NAME2);
-
-      Response response = client.target(COLLECTIONS_URL).path("info/names")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      List<String> collections = response.readEntity(new GenericType<List<String>>() {
-      });
-      assertThat(collections).containsOnly(NAME, NAME2);
-   }
-
-   @Test
    public void testGetCollectionAttributes() {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
