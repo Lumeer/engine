@@ -33,6 +33,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 public class UserLoginEventCodec implements CollectibleCodec<UserLoginEvent> {
@@ -75,7 +76,7 @@ public class UserLoginEventCodec implements CollectibleCodec<UserLoginEvent> {
 
       String id = bson.getObjectId(ID).toHexString();
       String userId = bson.getString(USER_ID);
-      Date date = bson.getDate(DATE);
+      ZonedDateTime date = bson.get(DATE, ZonedDateTime.class);
 
       UserLoginEvent userLoginEvent = new UserLoginEvent(id, userId, date);
 
