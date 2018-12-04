@@ -25,7 +25,14 @@ import io.lumeer.api.model.common.Resource;
  */
 public class UpdateResource extends ResourceEvent {
 
-   public UpdateResource(final Resource resource) {
+   private final Resource originalResource;
+
+   public UpdateResource(final Resource resource, final Resource originalResource) {
       super(resource);
+      this.originalResource = originalResource;
+   }
+
+   public Resource getOriginalResource() {
+      return originalResource;
    }
 }

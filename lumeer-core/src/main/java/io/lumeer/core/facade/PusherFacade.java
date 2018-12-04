@@ -37,6 +37,7 @@ import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
 import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
@@ -62,6 +63,8 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
@@ -88,6 +91,8 @@ public class PusherFacade {
    private Pusher pusher = null;
 
    private ObjectMapper mapper;
+
+   private Logger log = Logger.getLogger(PusherFacade.class.getName());
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
@@ -158,130 +163,182 @@ public class PusherFacade {
 
    public void createResource(@Observes final CreateResource createResource) {
       if (isEnabled()) {
-         processResource(createResource.getResource(), CREATE_EVENT_SUFFIX);
+         try {
+            processResource(createResource.getResource(), CREATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void updateResource(@Observes final UpdateResource updateResource) {
       if (isEnabled()) {
-         processResource(updateResource.getResource(), UPDATE_EVENT_SUFFIX);
+         try {
+            processResource(updateResource.getResource(), UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void removeResource(@Observes final RemoveResource removeResource) {
       if (isEnabled()) {
-         processResource(removeResource.getResource(), REMOVE_EVENT_SUFFIX);
+         try {
+            processResource(removeResource.getResource(), REMOVE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void removeResourcePermissions(@Observes final RemoveResourcePermissions removeResourcePermissions) {
       if (isEnabled()) {
-         if (removeResourcePermissions.getResource() instanceof View) {
-            sendNotificationOfViewByUsers(removeResourcePermissions.getResource(),
-                  removeResourcePermissions.getRemovedUsers(),
-                  REMOVE_EVENT_SUFFIX);
-         } else {
-            sendNotificationByUsers(removeResourcePermissions.getResource(),
-                  removeResourcePermissions.getRemovedUsers(),
-                  REMOVE_EVENT_SUFFIX);
+         try {
+            if (removeResourcePermissions.getResource() instanceof View) {
+               sendNotificationOfViewByUsers(removeResourcePermissions.getResource(),
+                     removeResourcePermissions.getRemovedUsers(),
+                     REMOVE_EVENT_SUFFIX);
+            } else {
+               sendNotificationByUsers(removeResourcePermissions.getResource(),
+                     removeResourcePermissions.getRemovedUsers(),
+                     REMOVE_EVENT_SUFFIX);
+            }
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
       }
    }
 
    public void createDocument(@Observes final CreateDocument createDocument) {
-      if (isEnabled()) {
-         sendResourceNotificationByUsers(createDocument.getDocument(),
-               collectionFacade.getUsersIdsWithAccess(createDocument.getDocument().getCollectionId()),
-               CREATE_EVENT_SUFFIX);
-      }
+      documentNotification(createDocument.getDocument(), CREATE_EVENT_SUFFIX, createDocument);
    }
 
    public void updateDocument(@Observes final UpdateDocument updateDocument) {
-      if (isEnabled()) {
-         sendResourceNotificationByUsers(updateDocument.getDocument(),
-               collectionFacade.getUsersIdsWithAccess(updateDocument.getDocument().getCollectionId()),
-               UPDATE_EVENT_SUFFIX);
-      }
+      documentNotification(updateDocument.getDocument(), UPDATE_EVENT_SUFFIX, updateDocument);
    }
 
    public void removeDocument(@Observes final RemoveDocument removeDocument) {
+      documentNotification(removeDocument.getDocument(), REMOVE_EVENT_SUFFIX, removeDocument);
+   }
+
+   private void documentNotification(final Document document, final String eventSuffix, final DocumentEvent documentEvent) {
       if (isEnabled()) {
-         sendResourceNotificationByUsers(removeDocument.getDocument(),
-               collectionFacade.getUsersIdsWithAccess(removeDocument.getDocument().getCollectionId()),
-               REMOVE_EVENT_SUFFIX);
+         try {
+            sendResourceNotificationByUsers(document,
+                  collectionFacade.getUsersIdsWithAccess(document.getCollectionId()),
+                  eventSuffix);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {
       if (isEnabled()) {
-         sendResourceNotificationByLinkType(createLinkInstance.getLinkInstance(),
-               createLinkInstance.getLinkInstance().getLinkTypeId(),
-               CREATE_EVENT_SUFFIX);
+         try {
+            sendResourceNotificationByLinkType(createLinkInstance.getLinkInstance(),
+                  createLinkInstance.getLinkInstance().getLinkTypeId(),
+                  CREATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void updateLinkInstance(@Observes final UpdateLinkInstance updateLinkInstance) {
       if (isEnabled()) {
-         sendResourceNotificationByLinkType(updateLinkInstance.getLinkInstance(),
-               updateLinkInstance.getLinkInstance().getLinkTypeId(),
-               UPDATE_EVENT_SUFFIX);
+         try {
+            sendResourceNotificationByLinkType(updateLinkInstance.getLinkInstance(),
+                  updateLinkInstance.getLinkInstance().getLinkTypeId(),
+                  UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void removeLinkInstance(@Observes final RemoveLinkInstance removeLinkInstance) {
       if (isEnabled()) {
-         sendResourceNotificationByLinkType(removeLinkInstance.getLinkInstance(),
-               removeLinkInstance.getLinkInstance().getLinkTypeId(),
-               REMOVE_EVENT_SUFFIX);
+         try {
+            sendResourceNotificationByLinkType(removeLinkInstance.getLinkInstance(),
+                  removeLinkInstance.getLinkInstance().getLinkTypeId(),
+                  REMOVE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void createLinkType(@Observes final CreateLinkType createLinkType) {
       if (isEnabled()) {
-         sendResourceNotificationByLinkType(createLinkType.getLinkType(),
-               CREATE_EVENT_SUFFIX);
+         try {
+            sendResourceNotificationByLinkType(createLinkType.getLinkType(),
+                  CREATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
       if (isEnabled()) {
-         sendResourceNotificationByLinkType(updateLinkType.getLinkType(),
-               UPDATE_EVENT_SUFFIX);
+         try {
+            sendResourceNotificationByLinkType(updateLinkType.getLinkType(),
+                  UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void removeLinkType(@Observes final RemoveLinkType removeLinkType) {
       if (isEnabled()) {
-         sendResourceNotificationByLinkType(removeLinkType.getLinkType(),
-               REMOVE_EVENT_SUFFIX);
+         try {
+            sendResourceNotificationByLinkType(removeLinkType.getLinkType(),
+                  REMOVE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void updateCompanyContact(@Observes final UpdateCompanyContact updateCompanyContact) {
       if (isEnabled()) {
-         sendNotificationByUsers(
-               updateCompanyContact.getCompanyContact(),
-               organizationFacade.getOrganizationManagers(
-                     organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId())),
-               UPDATE_EVENT_SUFFIX);
+         try {
+            sendNotificationByUsers(
+                  updateCompanyContact.getCompanyContact(),
+                  organizationFacade.getOrganizationManagers(
+                        organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId())),
+                  UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void updateServiceLimits(@Observes final UpdateServiceLimits updateServiceLimits) {
       if (isEnabled()) {
-         sendNotificationByUsers(
-               new EntityWithOrganizationId(updateServiceLimits.getOrganization().getId(), updateServiceLimits.getServiceLimits()),
-               organizationFacade.getOrganizationManagers(updateServiceLimits.getOrganization()),
-               UPDATE_EVENT_SUFFIX);
+         try {
+            sendNotificationByUsers(
+                  new EntityWithOrganizationId(updateServiceLimits.getOrganization().getId(), updateServiceLimits.getServiceLimits()),
+                  organizationFacade.getOrganizationManagers(updateServiceLimits.getOrganization()),
+                  UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 
    public void createOrUpdatePayment(@Observes final CreateOrUpdatePayment createOrUpdatePayment) {
       if (isEnabled()) {
-         sendNotificationByUsers(
-               new EntityWithOrganizationId(createOrUpdatePayment.getOrganization().getId(), createOrUpdatePayment.getPayment()),
-               organizationFacade.getOrganizationManagers(createOrUpdatePayment.getOrganization()),
-               UPDATE_EVENT_SUFFIX);
+         try {
+            sendNotificationByUsers(
+                  new EntityWithOrganizationId(createOrUpdatePayment.getOrganization().getId(), createOrUpdatePayment.getPayment()),
+                  organizationFacade.getOrganizationManagers(createOrUpdatePayment.getOrganization()),
+                  UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
       }
    }
 

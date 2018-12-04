@@ -91,12 +91,13 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Collection updatedCollection = databaseCollection().findOneAndReplace(idFilter(id), collection, options);
+         final Collection storedCollection = databaseCollection().find(idFilter(id)).first();
+         final Collection updatedCollection = databaseCollection().findOneAndReplace(idFilter(id), collection, options);
          if (updatedCollection == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }
          if (updateResourceEvent != null) {
-            updateResourceEvent.fire(new UpdateResource(updatedCollection));
+            updateResourceEvent.fire(new UpdateResource(updatedCollection, storedCollection));
          }
          return updatedCollection;
       } catch (MongoException ex) {

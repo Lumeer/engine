@@ -19,9 +19,7 @@
 package io.lumeer.core.facade;
 
 import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -34,9 +32,10 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
@@ -45,6 +44,7 @@ import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
@@ -114,6 +114,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private UserNotificationFacade userNotificationFacade;
+
+   @Inject
+   private UserNotificationDao userNotificationDao;
 
    @Before
    public void configureProject() {
@@ -321,6 +327,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissions() {
+      String USER2 = "aaa" + user.getId().substring(3);
+
+      var notifications = userNotificationFacade.getNotifications();
+      assertThat(notifications).hasSize(1).allMatch(u -> u.getUserId().equals(user.getId()));
+
       String collectionId = createCollection(CODE).getId();
 
       Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
@@ -330,6 +341,14 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
+
+      userPermission = Permission.buildWithRoles(USER2, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      collectionFacade.updateUserPermissions(collectionId, userPermission);
+
+      notifications = userNotificationDao.getRecentNotifications(USER2);
+      assertThat(notifications).hasSize(1).allMatch(n ->
+            n.getUserId().equals(USER2) &&
+            n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
    }
 
    @Test

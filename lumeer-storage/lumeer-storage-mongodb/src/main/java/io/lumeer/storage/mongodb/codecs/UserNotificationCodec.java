@@ -35,6 +35,7 @@ import org.bson.types.ObjectId;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Date;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -107,11 +108,16 @@ public class UserNotificationCodec implements CollectibleCodec<UserNotification>
    public void encode(final BsonWriter writer, final UserNotification value, final EncoderContext encoderContext) {
       Document bson = value.getId() != null ? new Document(ID, new ObjectId(value.getId())) : new Document();
       bson.append(USER_ID, value.getUserId())
-          .append(CREATED_AT, value.getCreatedAt())
-          .append(FIRST_READ_AT, value.getFirstReadAt())
           .append(READ, value.isRead())
           .append(DATA, value.getData())
           .append(TYPE, value.getType().ordinal());
+
+      if (value.getFirstReadAt() != null) {
+         bson.append(FIRST_READ_AT, new Date(value.getFirstReadAt().toInstant().toEpochMilli()));
+      }
+      if (value.getCreatedAt() != null) {
+         bson.append(CREATED_AT, new Date(value.getCreatedAt().toInstant().toEpochMilli()));
+      }
 
       documentCodec.encode(writer, bson, encoderContext);
    }

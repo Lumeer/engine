@@ -22,6 +22,7 @@ import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
@@ -52,7 +53,8 @@ public class UserNotification {
 
    private DataDocument data;
 
-   public UserNotification() {}
+   public UserNotification() {
+   }
 
    public UserNotification(final String userId, final ZonedDateTime createdAt, final boolean read, final ZonedDateTime firstReadAt, final NotificationType type, final DataDocument data) {
       this.userId = userId;
@@ -119,7 +121,59 @@ public class UserNotification {
       this.data = data;
    }
 
+   @Override
+   public String toString() {
+      return "UserNotification{" +
+            "id='" + id + '\'' +
+            ", userId='" + userId + '\'' +
+            ", createdAt=" + createdAt +
+            ", read=" + read +
+            ", firstReadAt=" + firstReadAt +
+            ", type=" + type +
+            ", data=" + data +
+            '}';
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+      final UserNotification that = (UserNotification) o;
+      return read == that.read &&
+            Objects.equals(id, that.id) &&
+            Objects.equals(userId, that.userId) &&
+            Objects.equals(createdAt, that.createdAt) &&
+            Objects.equals(firstReadAt, that.firstReadAt) &&
+            type == that.type &&
+            Objects.equals(data, that.data);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, userId, createdAt, read, firstReadAt, type, data);
+   }
+
    public enum NotificationType {
       ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED
+   }
+
+   public interface OrganizationShared {
+      String ORGANIZATION_ID = "organizationId";
+   }
+
+   public interface ProjectShared extends OrganizationShared {
+      String PROJECT_ID = "projectId";
+   }
+
+   public interface CollectionShared extends ProjectShared {
+      String COLLECTION_ID = "collectionId";
+   }
+
+   public interface ViewShared extends ProjectShared {
+      String VIEW_ID = "viewId";
    }
 }
