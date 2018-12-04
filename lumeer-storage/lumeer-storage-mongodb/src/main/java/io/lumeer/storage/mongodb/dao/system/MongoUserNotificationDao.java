@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.dao.system;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.UserNotification;
+import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.UserNotificationCodec;
@@ -40,6 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -48,6 +51,9 @@ import javax.enterprise.context.ApplicationScoped;
 public class MongoUserNotificationDao extends SystemScopedDao implements UserNotificationDao {
 
    public static final String COLLECTION_NAME = "userNotifications";
+
+   @Inject
+   private Event<CreateOrUpdateUserNotification> createOrUpdateUserNotificationEvent;
 
    @PostConstruct
    public void initDb() {
@@ -78,7 +84,9 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
          if (returnedNotification == null) {
             throw new StorageException("Notification '" + notification.getId() + "' has not been updated.");
          }
-         // TODO send push notification
+         if (createOrUpdateUserNotificationEvent != null) {
+            createOrUpdateUserNotificationEvent.fire(new CreateOrUpdateUserNotification(returnedNotification));
+         }
          return returnedNotification;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update notification " + notification, ex);
@@ -88,6 +96,11 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
    @Override
    public List<UserNotification> createNotificationsBatch(final List<UserNotification> notifications) {
       databaseCollection().insertMany(notifications);
+
+      if (createOrUpdateUserNotificationEvent != null) {
+         notifications.forEach(notification -> createOrUpdateUserNotificationEvent.fire(new CreateOrUpdateUserNotification(notification)));
+      }
+
       return notifications;
    }
 

@@ -37,6 +37,7 @@ import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
 import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
@@ -336,6 +337,20 @@ public class PusherFacade {
                   new EntityWithOrganizationId(createOrUpdatePayment.getOrganization().getId(), createOrUpdatePayment.getPayment()),
                   organizationFacade.getOrganizationManagers(createOrUpdatePayment.getOrganization()),
                   UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void createUserNotification(@Observes final CreateOrUpdateUserNotification createOrUpdateUserNotification) {
+      if (isEnabled()) {
+         try {
+            sendNotification(
+                  createOrUpdateUserNotification.getUserNotification().getUserId(),
+                  CREATE_EVENT_SUFFIX,
+                  createOrUpdateUserNotification.getUserNotification()
+            );
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
