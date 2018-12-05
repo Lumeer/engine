@@ -26,6 +26,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import org.bson.Document;
 
+import java.util.ArrayList;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
@@ -47,7 +48,7 @@ public class MongoUserLoginDao extends SystemScopedDao implements UserLoginDao {
 
    @Override
    public void createLoginRepository() {
-      if (database.getCollection(COLLECTION_NAME) == null) {
+      if (!database.listCollectionNames().into(new ArrayList<>()).contains(COLLECTION_NAME)) {
          database.createCollection(COLLECTION_NAME);
 
          MongoCollection<Document> groupCollection = database.getCollection(COLLECTION_NAME);

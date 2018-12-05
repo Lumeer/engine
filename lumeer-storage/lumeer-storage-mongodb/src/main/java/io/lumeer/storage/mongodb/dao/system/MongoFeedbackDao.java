@@ -28,6 +28,7 @@ import io.lumeer.storage.api.exception.StorageException;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 
+import java.util.ArrayList;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
@@ -38,7 +39,7 @@ public class MongoFeedbackDao extends SystemScopedDao implements FeedbackDao {
 
    @PostConstruct
    public void checkRepository() {
-      if (database.getCollection(COLLECTION_NAME) == null) {
+      if (!database.listCollectionNames().into(new ArrayList<>()).contains(COLLECTION_NAME)) {
          createFeedbackRepository();
       }
    }

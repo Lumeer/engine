@@ -106,7 +106,7 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
 
    @Override
    public void createUserNotificationsRepository() {
-      if (database.getCollection(COLLECTION_NAME) == null) {
+      if (!database.listCollectionNames().into(new ArrayList<>()).contains(COLLECTION_NAME)) {
          database.createCollection(COLLECTION_NAME);
 
          MongoCollection<Document> userNotificationCollection = database.getCollection(COLLECTION_NAME);
@@ -114,7 +114,7 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
       }
    }
 
-   MongoCollection<UserNotification> databaseCollection() {
+   private MongoCollection<UserNotification> databaseCollection() {
       return database.getCollection(COLLECTION_NAME, UserNotification.class);
    }
 }
