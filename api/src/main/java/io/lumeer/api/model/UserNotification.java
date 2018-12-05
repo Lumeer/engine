@@ -21,6 +21,9 @@ package io.lumeer.api.model;
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -56,7 +59,14 @@ public class UserNotification {
    public UserNotification() {
    }
 
-   public UserNotification(final String userId, final ZonedDateTime createdAt, final boolean read, final ZonedDateTime firstReadAt, final NotificationType type, final DataDocument data) {
+   @JsonCreator
+   public UserNotification(
+         @JsonProperty(USER_ID) final String userId,
+         @JsonProperty(CREATED_AT) final ZonedDateTime createdAt,
+         @JsonProperty(READ) final boolean read,
+         @JsonProperty(FIRST_READ_AT) final ZonedDateTime firstReadAt,
+         @JsonProperty(TYPE) final NotificationType type,
+         @JsonProperty(DATA) final DataDocument data) {
       this.userId = userId;
       this.createdAt = createdAt;
       this.read = read;
