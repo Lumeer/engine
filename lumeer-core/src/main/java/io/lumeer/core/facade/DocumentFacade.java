@@ -220,6 +220,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
+      final Collection originalCollection = collection.copy();
       Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
                                                        .collect(Collectors.toMap(Attribute::getId, Function.identity()));
       Set<String> incrementedAttributeIds = new HashSet<>(attributesIdsToInc);
@@ -239,7 +240,7 @@ public class DocumentFacade extends AbstractFacade {
       collection.setAttributes(new HashSet<>(oldAttributes.values()));
       collection.setLastTimeUsed(ZonedDateTime.now());
       collection.setDocumentsCount(collection.getDocumentsCount() + documentCountDiff);
-      collectionDao.updateCollection(collection.getId(), collection);
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
    public Document getDocument(String collectionId, String documentId) {

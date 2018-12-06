@@ -334,11 +334,11 @@ public class SearchFacadeIT extends IntegrationTestBase {
       if (!collection.getAttributes().stream().anyMatch(attr -> attr.getName().equals(DOCUMENT_KEY))) {
          collection.createAttribute(new Attribute(id, DOCUMENT_KEY, Collections.emptySet(), 1));
          collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
-         collectionDao.updateCollection(collectionId, collection);
+         collectionDao.updateCollection(collectionId, collection, null);
       } else {
          Attribute attr = collection.getAttributes().stream().filter(a -> a.getName().equals(DOCUMENT_KEY)).findFirst().get();
          attr.setUsageCount(attr.getUsageCount() + 1);
-         collectionDao.updateCollection(collectionId, collection);
+         collectionDao.updateCollection(collectionId, collection, null);
       }
 
       Document document = new Document(new DataDocument(id, value));

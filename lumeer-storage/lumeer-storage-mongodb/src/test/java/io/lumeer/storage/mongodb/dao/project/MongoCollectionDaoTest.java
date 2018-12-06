@@ -162,7 +162,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       String id = createCollection(CODE, NAME).getId();
 
       Collection collection = prepareCollection(CODE2, NAME);
-      Collection updatedCollection = collectionDao.updateCollection(id, collection);
+      Collection updatedCollection = collectionDao.updateCollection(id, collection, null);
       assertThat(updatedCollection).isNotNull();
       assertThat(updatedCollection.getCode()).isEqualTo(CODE2);
 
@@ -174,7 +174,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    @Test
    public void testUpdateCollectionNotExisting() {
       Collection collection = prepareCollection(CODE, NAME);
-      assertThatThrownBy(() -> collectionDao.updateCollection(COLLECTION_ID, collection))
+      assertThatThrownBy(() -> collectionDao.updateCollection(COLLECTION_ID, collection, null))
             .isInstanceOf(StorageException.class);
    }
 
