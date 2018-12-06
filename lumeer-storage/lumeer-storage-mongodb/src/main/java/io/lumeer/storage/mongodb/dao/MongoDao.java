@@ -26,7 +26,11 @@ import io.lumeer.storage.api.query.DatabaseQuery;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 
+import org.bson.conversions.Bson;
+
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.event.Event;
@@ -54,6 +58,13 @@ public abstract class MongoDao {
       if (page != null && pageSize != null) {
          findIterable.skip(page * pageSize)
                      .limit(pageSize);
+      }
+   }
+
+   public void addPaginationToAggregates(List<Bson> aggregates, DatabaseQuery query) {
+      if (query.getPage() != null && query.getPageSize() != null) {
+         aggregates.add(Aggregates.skip(query.getPage() * query.getPageSize()));
+         aggregates.add(Aggregates.limit(query.getPageSize()));
       }
    }
 

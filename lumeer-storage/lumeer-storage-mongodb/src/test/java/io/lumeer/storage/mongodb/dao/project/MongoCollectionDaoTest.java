@@ -280,8 +280,8 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE3, NAME3);
 
       DatabaseQuery searchQuery = DatabaseQuery.createBuilder(USER)
-                                           .page(1).pageSize(1)
-                                           .build();
+                                               .page(1).pageSize(1)
+                                               .build();
       List<Collection> collections = collectionDao.getCollections(searchQuery);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2);
    }
@@ -297,6 +297,32 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
                                                        .build();
       List<Collection> collections = collectionDao.getCollections(suggestionQuery);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE, CODE3);
+   }
+
+   @Test
+   public void testGetCollectionsSuggestionsWithPriority() {
+      String id1 = createCollection(CODE, "TEST 1", ATTRIBUTES).getId();
+      String id2 = createCollection(CODE2, "TEST 2", ATTRIBUTES).getId();
+      String id3 = createCollection(CODE3, "TEST 3", ATTRIBUTES).getId();
+      String id4 = createCollection(CODE4, "TEST 4", ATTRIBUTES).getId();
+      String id5 = createCollection("CODE5", "TEST 5", ATTRIBUTES).getId();
+
+      SuggestionQuery suggestionQuery = SuggestionQuery.createBuilder(USER)
+                                                       .text("TEST")
+                                                       .page(0)
+                                                       .pageSize(3)
+                                                       .build();
+      List<Collection> collections = collectionDao.getCollections(suggestionQuery);
+      assertThat(collections).extracting(Resource::getId).containsOnly(id1, id2, id3);
+
+      suggestionQuery = SuggestionQuery.createBuilder(USER)
+                                       .text("TEST")
+                                       .priorityCollectionIds(new HashSet<>(Arrays.asList(id4, id5)))
+                                       .page(0)
+                                       .pageSize(3)
+                                       .build();
+      collections = collectionDao.getCollections(suggestionQuery);
+      assertThat(collections).extracting(Resource::getId).contains(id4, id5);
    }
 
    @Test

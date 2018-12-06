@@ -18,28 +18,42 @@
  */
 package io.lumeer.storage.api.query;
 
-import java.util.List;
+import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public class SuggestionQuery extends DatabaseQuery {
 
    private final String text;
-   private final List<String> collectionIds;
+   private final Set<String> collectionIds;
+   private final Set<String> priorityCollectionIds;
 
    private SuggestionQuery(final Builder builder) {
       super(builder);
 
       this.text = builder.text;
       this.collectionIds = builder.collectionIds;
+      this.priorityCollectionIds = builder.priorityCollectionIds;
    }
 
    public String getText() {
       return text;
    }
 
-   public List<String> getCollectionIds() {
+   public Set<String> getCollectionIds() {
       return collectionIds;
+   }
+
+   public boolean hasCollectionIdsQuery(){
+      return collectionIds != null && !collectionIds.isEmpty();
+   }
+
+   public Set<String> getPriorityCollectionIds() {
+      return priorityCollectionIds;
+   }
+
+   public boolean hasPriorityCollectionIdsQuery(){
+      return priorityCollectionIds != null && !priorityCollectionIds.isEmpty();
    }
 
    public static Builder createBuilder(String user) {
@@ -49,7 +63,8 @@ public class SuggestionQuery extends DatabaseQuery {
    public static class Builder extends DatabaseQuery.Builder<SuggestionQuery.Builder> {
 
       private String text;
-      private List<String> collectionIds;
+      private Set<String> collectionIds;
+      private Set<String> priorityCollectionIds;
 
       private Builder(final String user) {
          super(user);
@@ -60,8 +75,13 @@ public class SuggestionQuery extends DatabaseQuery {
          return this;
       }
 
-      public Builder collectionIds(List<String> collectionIds) {
+      public Builder collectionIds(Set<String> collectionIds) {
          this.collectionIds = collectionIds;
+         return this;
+      }
+
+      public Builder priorityCollectionIds(Set<String> collectionIds) {
+         this.priorityCollectionIds = collectionIds;
          return this;
       }
 

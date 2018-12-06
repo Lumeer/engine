@@ -28,6 +28,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Suggest;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
@@ -163,13 +164,13 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       linkTypeDao.createLinkType(prepareLinkType("nothing", collectionIds.get(1), collectionIds.get(1)));
       linkTypeDao.createLinkType(prepareLinkType("blabla", collectionIds.get(1), collectionIds.get(2)));
 
-      List<LinkType> linkTypes = suggestionFacade.suggest("link", SuggestionType.LINK).getLinkTypes();
+      List<LinkType> linkTypes = suggestionFacade.suggest(new Suggest("link", SuggestionType.LINK)).getLinkTypes();
       assertThat(linkTypes).extracting(LinkType::getId).containsOnly(lId1, lId2, lId4, lId5);
 
-      linkTypes = suggestionFacade.suggest("other", SuggestionType.LINK).getLinkTypes();
+      linkTypes = suggestionFacade.suggest(new Suggest("other", SuggestionType.LINK)).getLinkTypes();
       assertThat(linkTypes).extracting(LinkType::getId).containsOnly(lId3, lId4);
 
-      linkTypes = suggestionFacade.suggest("nothingg", SuggestionType.LINK).getLinkTypes();
+      linkTypes = suggestionFacade.suggest(new Suggest("nothingg", SuggestionType.LINK)).getLinkTypes();
       assertThat(linkTypes).extracting(LinkType::getId).isEmpty();
    }
 
@@ -185,7 +186,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       linkTypeDao.createLinkType(prepareLinkType("lalalink7", collectionIdsNoRights.get(0), collectionIds.get(1)));
       String lId8 = linkTypeDao.createLinkType(prepareLinkType("lalalink8", collectionIds.get(0), collectionIds.get(1))).getId();
 
-      List<LinkType> linkTypes = suggestionFacade.suggest("link", SuggestionType.LINK).getLinkTypes();
+      List<LinkType> linkTypes = suggestionFacade.suggest(new Suggest("link", SuggestionType.LINK)).getLinkTypes();
       assertThat(linkTypes).extracting(LinkType::getId).containsOnly(lId3, lId6, lId8);
    }
 
@@ -195,7 +196,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
          linkTypeDao.createLinkType(prepareLinkType("lalalink" + i, collectionIds.get(0), collectionIds.get(1)));
       }
 
-      List<LinkType> linkTypes = suggestionFacade.suggest("link", SuggestionType.LINK).getLinkTypes();
+      List<LinkType> linkTypes = suggestionFacade.suggest(new Suggest("link", SuggestionType.LINK)).getLinkTypes();
       assertThat(linkTypes).hasSize(SUGGESTIONS_LIMIT);
 
    }
@@ -209,16 +210,16 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       String vId5 = createView("VIEW").getId();
       createView("something");
 
-      List<View> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
+      List<View> views = suggestionFacade.suggest(new Suggest("view", SuggestionType.VIEW)).getViews();
       assertThat(views).extracting(View::getId).containsOnly(vId1, vId2, vId5);
 
-      views = suggestionFacade.suggest("vie", SuggestionType.VIEW).getViews();
+      views = suggestionFacade.suggest(new Suggest("vie", SuggestionType.VIEW)).getViews();
       assertThat(views).extracting(View::getId).containsOnly(vId1, vId2, vId3, vId5);
 
-      views = suggestionFacade.suggest("viewko", SuggestionType.VIEW).getViews();
+      views = suggestionFacade.suggest(new Suggest("viewko", SuggestionType.VIEW)).getViews();
       assertThat(views).extracting(View::getId).isEmpty();
 
-      views = suggestionFacade.suggest("ano", SuggestionType.VIEW).getViews();
+      views = suggestionFacade.suggest(new Suggest("ano", SuggestionType.VIEW)).getViews();
       assertThat(views).extracting(View::getId).containsOnly(vId3, vId4);
    }
 
@@ -231,13 +232,13 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       String vId5 = createView("VIEW").getId();
       createView("something");
 
-      List<View> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
+      List<View> views = suggestionFacade.suggest(new Suggest("view", SuggestionType.VIEW)).getViews();
       assertThat(views).extracting(View::getId).containsOnly(vId2, vId5);
 
-      views = suggestionFacade.suggest("vie", SuggestionType.VIEW).getViews();
+      views = suggestionFacade.suggest(new Suggest("vie", SuggestionType.VIEW)).getViews();
       assertThat(views).extracting(View::getId).containsOnly(vId2, vId5);
 
-      views = suggestionFacade.suggest("ano", SuggestionType.VIEW).getViews();
+      views = suggestionFacade.suggest(new Suggest("ano", SuggestionType.VIEW)).getViews();
       assertThat(views).extracting(View::getId).isEmpty();
    }
 
@@ -246,7 +247,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       for (int i = 0; i < 20; i++) {
          createView("someviewwwww" + i);
       }
-      List<View> views = suggestionFacade.suggest("view", SuggestionType.VIEW).getViews();
+      List<View> views = suggestionFacade.suggest(new Suggest("view", SuggestionType.VIEW)).getViews();
       assertThat(views).hasSize(SUGGESTIONS_LIMIT);
    }
 

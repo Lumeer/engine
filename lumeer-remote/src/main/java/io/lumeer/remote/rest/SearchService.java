@@ -21,8 +21,8 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.Suggest;
 import io.lumeer.api.model.Suggestions;
-import io.lumeer.api.model.SuggestionType;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
@@ -33,14 +33,11 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @RequestScoped
@@ -69,15 +66,14 @@ public class SearchService extends AbstractService {
       workspaceKeeper.setWorkspace(organizationCode, projectCode);
    }
 
-   @GET
+   @POST
    @Path("suggestions")
-   public Suggestions getSuggestions(@QueryParam("text") String text, @QueryParam("type") String type) {
-      if (text == null || text.isEmpty()) {
+   public Suggestions getSuggestions(Suggest suggest) {
+      if (suggest.getText() == null || suggest.getText().isEmpty()) {
          return Suggestions.emptySuggestions();
       }
 
-      SuggestionType suggestionType = parseSuggestionType(type);
-      return suggestionFacade.suggest(text, suggestionType);
+      return suggestionFacade.suggest(suggest);
    }
 
    @POST
@@ -95,18 +91,6 @@ public class SearchService extends AbstractService {
    @QueryProcessor
    public List<LinkInstance> getLinkInstances(Query query) {
       return searchFacade.getLinkInstances(query);
-   }
-
-   private SuggestionType parseSuggestionType(String type) {
-      if (type == null) {
-         return SuggestionType.ALL;
-      }
-
-      try {
-         return SuggestionType.fromString(type);
-      } catch (IllegalArgumentException ex) {
-         throw new BadRequestException("Unknown suggestion type");
-      }
    }
 
 }

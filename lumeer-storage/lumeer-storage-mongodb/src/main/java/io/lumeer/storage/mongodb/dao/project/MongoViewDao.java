@@ -162,6 +162,11 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       return findIterable.into(new ArrayList<>());
    }
 
+   private Bson suggestionsFilter(final SuggestionQuery query) {
+      Bson regex = Filters.regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
+      return Filters.and(regex, MongoFilters.permissionsFilter(query));
+   }
+
    @Override
    public List<View> getViewsByLinkTypeIds(final List<String> linkTypeIds) {
       FindIterable<View> findIterable = databaseCollection().find(
@@ -176,11 +181,6 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
             Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.STEMS, QueryStemCodec.COLLECTION_ID), collectionId)
       );
       return findIterable.into(new ArrayList<>());
-   }
-
-   private Bson suggestionsFilter(final SuggestionQuery query) {
-      Bson regex = Filters.regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
-      return Filters.and(regex, MongoFilters.permissionsFilter(query));
    }
 
    @Override

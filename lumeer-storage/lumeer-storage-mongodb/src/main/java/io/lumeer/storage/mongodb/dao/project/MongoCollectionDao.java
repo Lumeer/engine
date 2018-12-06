@@ -21,20 +21,28 @@ import io.lumeer.storage.mongodb.codecs.CollectionCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
+import com.mongodb.QueryOperators;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,7 +54,6 @@ import javax.inject.Inject;
 public class MongoCollectionDao extends ProjectScopedDao implements CollectionDao {
 
    private static final String PREFIX = "collections_p-";
-
 
    @Inject
    private Event<CreateResource> createResourceEvent;
@@ -154,12 +161,38 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
 
    @Override
    public List<Collection> getCollections(final SuggestionQuery query) {
-      Bson filter = collectionSuggestionQuery(query);
-      return searchCollectionsByFilter(filter, query);
+      List<Bson> aggregates = collectionSuggestionAggregation(query);
+      return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
+   }
+
+   private List<Bson> collectionSuggestionAggregation(SuggestionQuery query) {
+      List<Bson> aggregates = new ArrayList<>();
+
+      aggregates.add(Aggregates.match(collectionSuggestionQuery(query)));
+
+      if (query.hasPriorityCollectionIdsQuery()) {
+         List<ObjectId> ids = query.getPriorityCollectionIds().stream().map(ObjectId::new).collect(Collectors.toList());
+         Document condition = new Document("$cond",
+               new Document("if",
+                     new Document(QueryOperators.IN, Arrays.asList("$" + CollectionCodec.ID, ids))
+               ).append("then", 0)
+                .append("else", 1));
+
+         Bson project = Aggregates.addFields(new Field<>("_collectionPriority", condition));
+         aggregates.add(project);
+
+         Bson sort = Aggregates.sort(Sorts.ascending("_collectionPriority"));
+         aggregates.add(sort);
+      }
+
+      addPaginationToAggregates(aggregates, query);
+
+      return aggregates;
    }
 
    private Bson collectionSuggestionQuery(SuggestionQuery query) {
       List<Bson> filters = new ArrayList<>();
+
       filters.add(MongoFilters.permissionsFilter(query));
       filters.add(Filters.regex(CollectionCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE)));
       return Filters.and(filters);
@@ -212,7 +245,6 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    private String databaseCollectionName(Project project) {
       return PREFIX + project.getId();
    }
-
 
    String databaseCollectionName() {
       if (!getProject().isPresent()) {
