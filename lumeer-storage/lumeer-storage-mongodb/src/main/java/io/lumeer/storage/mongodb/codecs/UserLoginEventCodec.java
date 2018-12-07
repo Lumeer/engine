@@ -33,6 +33,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
@@ -76,9 +77,11 @@ public class UserLoginEventCodec implements CollectibleCodec<UserLoginEvent> {
 
       String id = bson.getObjectId(ID).toHexString();
       String userId = bson.getString(USER_ID);
-      ZonedDateTime date = bson.get(DATE, ZonedDateTime.class);
 
-      UserLoginEvent userLoginEvent = new UserLoginEvent(id, userId, date);
+      Date date = bson.getDate(DATE);
+      ZonedDateTime zonedDate = date != null ? ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC) : null;
+
+      UserLoginEvent userLoginEvent = new UserLoginEvent(id, userId, zonedDate);
 
       return userLoginEvent;
    }
@@ -86,8 +89,11 @@ public class UserLoginEventCodec implements CollectibleCodec<UserLoginEvent> {
    @Override
    public void encode(final BsonWriter bsonWriter, final UserLoginEvent userLoginEvent, final EncoderContext encoderContext) {
       Document bson = userLoginEvent.getId() != null ? new Document(ID, new ObjectId(userLoginEvent.getId())) : new Document();
-      bson.append(USER_ID, userLoginEvent.getUserId())
-          .append(DATE, userLoginEvent.getDate());
+      bson.append(USER_ID, userLoginEvent.getUserId());
+
+      if (userLoginEvent.getDate() != null) {
+         bson.append(DATE, Date.from(userLoginEvent.getDate().toInstant()));
+      }
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }
@@ -97,4 +103,3 @@ public class UserLoginEventCodec implements CollectibleCodec<UserLoginEvent> {
       return UserLoginEvent.class;
    }
 }
-
