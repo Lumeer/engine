@@ -47,7 +47,8 @@ public class MailChimpFacade {
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
 
-   private Logger log = Logger.getLogger(MailChimpFacade.class.getName());
+   @Inject
+   private Logger log;
 
    private static String MAILCHIMP_APIKEY;
    private static String MAILCHIMP_SUBDOMAIN;

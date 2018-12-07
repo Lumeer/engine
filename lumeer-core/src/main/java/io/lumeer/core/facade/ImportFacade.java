@@ -150,6 +150,7 @@ public class ImportFacade extends AbstractFacade {
    }
 
    private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, int documentsCount) {
+      final Collection originalCollection = collection.copy();
       collection.getAttributes().forEach(attr -> {
          int index = Arrays.asList(headersIds).indexOf(attr.getId());
          attr.setUsageCount(counts[index]);
@@ -157,7 +158,7 @@ public class ImportFacade extends AbstractFacade {
 
       collection.setDocumentsCount(documentsCount);
       collection.setLastTimeUsed(ZonedDateTime.now());
-      collectionDao.updateCollection(collection.getId(), collection);
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
    private List<Attribute> createAttributes(String collectionId, String[] headers) {

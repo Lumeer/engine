@@ -172,7 +172,7 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
 
          checkRemovedPermissions(originalOrganization, updatedOrganization);
          if (updateResourceEvent != null) {
-            updateResourceEvent.fire(new UpdateResource(updatedOrganization));
+            updateResourceEvent.fire(new UpdateResource(updatedOrganization, originalOrganization));
          }
          return updatedOrganization;
       } catch (MongoException ex) {

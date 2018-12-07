@@ -16,23 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.event;
+package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.UserNotification;
+
+import java.util.List;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class UpdateResource extends ResourceEvent {
+public interface UserNotificationDao {
 
-   private final Resource originalResource;
+   List<UserNotification> getRecentNotifications(final String userId);
 
-   public UpdateResource(final Resource resource, final Resource originalResource) {
-      super(resource);
-      this.originalResource = originalResource;
-   }
+   UserNotification getNotificationById(final String notificationId);
 
-   public Resource getOriginalResource() {
-      return originalResource;
-   }
+   UserNotification updateNotification(final UserNotification notification);
+
+   List<UserNotification> createNotificationsBatch(final List<UserNotification> notifications);
+
+   void createUserNotificationsRepository();
 }

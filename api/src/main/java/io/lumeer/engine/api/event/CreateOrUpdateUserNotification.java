@@ -18,21 +18,20 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.UserNotification;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class UpdateResource extends ResourceEvent {
+public class CreateOrUpdateUserNotification {
 
-   private final Resource originalResource;
+   private final UserNotification userNotification;
 
-   public UpdateResource(final Resource resource, final Resource originalResource) {
-      super(resource);
-      this.originalResource = originalResource;
+   public CreateOrUpdateUserNotification(final UserNotification userNotification) {
+      this.userNotification = userNotification;
    }
 
-   public Resource getOriginalResource() {
-      return originalResource;
+   public UserNotification getUserNotification() {
+      return userNotification;
    }
 }

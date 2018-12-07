@@ -35,6 +35,7 @@ import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.Document;
 
+import java.util.ArrayList;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
@@ -83,7 +84,7 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
 
    @Override
    public void createCompanyContactRepository() {
-      if (database.getCollection(COMPANY_CONTACT_COLLECTION) == null) {
+      if (!database.listCollectionNames().into(new ArrayList<>()).contains(COMPANY_CONTACT_COLLECTION)) {
          database.createCollection(COMPANY_CONTACT_COLLECTION);
 
          MongoCollection<Document> companyContactCollection = database.getCollection(COMPANY_CONTACT_COLLECTION);

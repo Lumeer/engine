@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -84,12 +85,13 @@ public class CollectionFacade extends AbstractFacade {
       return storedCollection;
    }
 
-   public Collection updateCollection(String collectionId, Collection collection) {
-      Collection storedCollection = collectionDao.getCollectionById(collectionId);
+   public Collection updateCollection(final String collectionId, final Collection collection) {
+      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = storedCollection.copy();
       permissionsChecker.checkRole(storedCollection, Role.MANAGE);
 
       keepUnmodifiableFields(collection, storedCollection);
-      Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection);
+      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection, originalCollection);
       return mapResource(updatedCollection);
    }
 
@@ -180,8 +182,9 @@ public class CollectionFacade extends AbstractFacade {
       return la.longValue();
    }
 
-   public java.util.Collection<Attribute> createCollectionAttributes(String collectionId, java.util.Collection<Attribute> attributes) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
+   public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       for (Attribute attribute : attributes) {
@@ -192,7 +195,7 @@ public class CollectionFacade extends AbstractFacade {
          collection.setLastAttributeNum(freeNum);
       }
 
-      collectionDao.updateCollection(collection.getId(), collection);
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
       return attributes;
    }
@@ -206,37 +209,40 @@ public class CollectionFacade extends AbstractFacade {
       return last.get();
    }
 
-   public Attribute updateCollectionAttribute(String collectionId, String attributeId, Attribute attribute) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
+   public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.updateAttribute(attributeId, attribute);
 
-      collectionDao.updateCollection(collection.getId(), collection);
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
       return attribute;
    }
 
-   public void deleteCollectionAttribute(String collectionId, String attributeId) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
+   public void deleteCollectionAttribute(final String collectionId, final String attributeId) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.deleteAttribute(attributeId);
       if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(attributeId)) {
          collection.setDefaultAttributeId(null);
       }
-      collectionDao.updateCollection(collection.getId(), collection);
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
-   public void setDefaultAttribute(String collectionId, String attributeId) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
+   public void setDefaultAttribute(final String collectionId, final String attributeId) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       boolean containsAttribute = collection.getAttributes().stream()
                                             .anyMatch(attribute -> attribute.getId().equals(attributeId));
       if (containsAttribute) {
          collection.setDefaultAttributeId(attributeId);
-         collectionDao.updateCollection(collection.getId(), collection);
+         collectionDao.updateCollection(collection.getId(), collection, originalCollection);
       }
    }
 
@@ -248,43 +254,46 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Set<Permission> updateUserPermissions(final String collectionId, final Permission... userPermissions) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.MANAGE);
-      permissionsChecker.invalidateCache(collection);
-
-      collection.getPermissions().updateUserPermissions(userPermissions);
-      Collection updatedCollection = collectionDao.updateCollection(collection.getId(), collection);
+      final Collection updatedCollection = collectionTreat(collectionId, collection -> {
+         collection.getPermissions().updateUserPermissions(userPermissions);
+         return collection;
+      });
 
       return updatedCollection.getPermissions().getUserPermissions();
    }
 
    public void removeUserPermission(final String collectionId, final String userId) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.MANAGE);
-      permissionsChecker.invalidateCache(collection);
-
-      collection.getPermissions().removeUserPermission(userId);
-      collectionDao.updateCollection(collection.getId(), collection);
+      collectionTreat(collectionId, collection -> {
+         collection.getPermissions().removeUserPermission(userId);
+         return collection;
+      });
    }
 
    public Set<Permission> updateGroupPermissions(final String collectionId, final Permission... groupPermissions) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.MANAGE);
-      permissionsChecker.invalidateCache(collection);
-
-      collection.getPermissions().updateGroupPermissions(groupPermissions);
-      Collection updatedCollection = collectionDao.updateCollection(collection.getId(), collection);
+      final Collection updatedCollection = collectionTreat(collectionId, collection -> {
+         collection.getPermissions().updateGroupPermissions(groupPermissions);
+         return collection;
+      });
 
       return updatedCollection.getPermissions().getGroupPermissions();
    }
 
    public void removeGroupPermission(final String collectionId, final String groupId) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
+      collectionTreat(collectionId, collection -> {
+         collection.getPermissions().removeGroupPermission(groupId);
+         return collection;
+      });
+   }
+
+   private Collection collectionTreat(final String collectionId, Function<Collection, Collection> handler) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
       permissionsChecker.invalidateCache(collection);
 
-      collection.getPermissions().removeGroupPermission(groupId);
-      collectionDao.updateCollection(collection.getId(), collection);
+      final Collection updatedCollection = handler.apply(collection);
+
+      return collectionDao.updateCollection(updatedCollection.getId(), collection, originalCollection);
    }
 
    public Set<String> getUsersIdsWithAccess(final String collectionId) {

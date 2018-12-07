@@ -172,7 +172,7 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
 
          checkRemovedPermissions(originalProject, updatedProject);
          if (updateResourceEvent != null) {
-            updateResourceEvent.fire(new UpdateResource(updatedProject));
+            updateResourceEvent.fire(new UpdateResource(updatedProject, originalProject));
          }
          return updatedProject;
       } catch (MongoException ex) {

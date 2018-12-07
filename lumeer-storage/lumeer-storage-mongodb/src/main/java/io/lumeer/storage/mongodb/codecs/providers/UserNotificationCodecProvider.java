@@ -16,23 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.event;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.UserNotification;
+import io.lumeer.storage.mongodb.codecs.UserNotificationCodec;
+
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class UpdateResource extends ResourceEvent {
+public class UserNotificationCodecProvider implements CodecProvider {
 
-   private final Resource originalResource;
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == UserNotification.class) {
+         return (Codec<T>) new UserNotificationCodec(registry);
+      }
 
-   public UpdateResource(final Resource resource, final Resource originalResource) {
-      super(resource);
-      this.originalResource = originalResource;
+      return null;
    }
 
-   public Resource getOriginalResource() {
-      return originalResource;
-   }
 }

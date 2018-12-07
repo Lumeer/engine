@@ -36,7 +36,7 @@ public interface CollectionDao {
 
    Collection createCollection(Collection collection);
 
-   Collection updateCollection(String id, Collection collection);
+   Collection updateCollection(String id, Collection collection, Collection originalCollection);
 
    void deleteCollection(String id);
 

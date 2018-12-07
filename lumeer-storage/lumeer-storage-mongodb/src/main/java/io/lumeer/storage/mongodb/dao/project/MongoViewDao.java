@@ -120,7 +120,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
          checkRemovedPermissions(originalView, updatedView);
          if (updateResourceEvent != null) {
-            updateResourceEvent.fire(new UpdateResource(updatedView));
+            updateResourceEvent.fire(new UpdateResource(updatedView, originalView));
          }
          return updatedView;
       } catch (MongoException ex) {

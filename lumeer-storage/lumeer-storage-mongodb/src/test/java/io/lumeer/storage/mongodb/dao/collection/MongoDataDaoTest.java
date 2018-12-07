@@ -88,11 +88,11 @@ public class MongoDataDaoTest extends MongoDbTestBase {
       if (collection.getAttributes().stream().noneMatch(attr -> attr.getName().equals(key))) {
          collection.createAttribute(new Attribute(key, key, Collections.emptySet(), 1));
          collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
-         collectionDao.updateCollection(COLLECTION_ID, collection);
+         collectionDao.updateCollection(COLLECTION_ID, collection, null);
       } else {
          Attribute attr = collection.getAttributes().stream().filter(a -> a.getName().equals(key)).findFirst().get();
          attr.setUsageCount(attr.getUsageCount() + 1);
-         collectionDao.updateCollection(COLLECTION_ID, collection);
+         collectionDao.updateCollection(COLLECTION_ID, collection, null);
       }
 
       Document document = new Document(key, value);

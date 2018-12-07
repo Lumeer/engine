@@ -48,7 +48,8 @@ import javax.ws.rs.core.Response;
 @Path("pusher")
 public class PusherService extends AbstractService {
 
-   private Logger log = Logger.getLogger(PusherService.class.getName());
+   @Inject
+   private Logger log;
 
    @Inject
    private PusherFacade pusherFacade;

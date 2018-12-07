@@ -36,7 +36,7 @@ public class DefaultConfigurationProducer implements Serializable {
 
    private static final String DEFAULT_PROPERTY_FILE = "defaults-dev.properties";
 
-   private Logger log = Logger.getLogger(DefaultConfigurationProducer.class.getName());
+   private static final Logger log = Logger.getLogger(DefaultConfigurationProducer.class.getName());
 
    private Map<String, String> defaultConfiguration = null;
 
