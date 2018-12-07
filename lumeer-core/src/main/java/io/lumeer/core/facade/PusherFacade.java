@@ -93,7 +93,8 @@ public class PusherFacade {
 
    private ObjectMapper mapper;
 
-   private Logger log = Logger.getLogger(PusherFacade.class.getName());
+   @Inject
+   private Logger log;
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;

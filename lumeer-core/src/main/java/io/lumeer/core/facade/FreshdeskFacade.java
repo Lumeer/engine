@@ -46,7 +46,8 @@ public class FreshdeskFacade {
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
 
-   private Logger log = Logger.getLogger(FreshdeskFacade.class.getName());
+   @Inject
+   private Logger log;
 
    private static String FRESHDESK_DOMAIN;
    private static String FRESHDESK_APIKEY;
