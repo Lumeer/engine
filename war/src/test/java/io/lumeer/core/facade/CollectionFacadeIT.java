@@ -255,7 +255,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       createCollection(CODE);
       createCollection(CODE2);
 
-      assertThat(collectionFacade.getCollections(new Pagination(null, null)))
+      assertThat(collectionFacade.getCollections())
             .extracting(Resource::getCode).containsOnly(CODE, CODE2);
    }
 

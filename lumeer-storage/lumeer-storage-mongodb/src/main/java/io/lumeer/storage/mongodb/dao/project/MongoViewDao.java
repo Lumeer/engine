@@ -149,6 +149,11 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    @Override
+   public List<View> getAllViews() {
+      return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
    public List<View> getViews(DatabaseQuery query) {
       FindIterable<View> findIterable = databaseCollection().find(MongoFilters.permissionsFilter(query));
       addPaginationToQuery(findIterable, query);

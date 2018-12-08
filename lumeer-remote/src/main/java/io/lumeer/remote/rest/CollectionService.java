@@ -100,14 +100,12 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   public List<Collection> getCollections(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize, @QueryParam("fromViews") Boolean includeViewCollections) {
-      Pagination pagination = new Pagination(page, pageSize);
-
+   public List<Collection> getCollections(@QueryParam("fromViews") Boolean includeViewCollections) {
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      List<Collection> collections = collectionFacade.getCollections(pagination);
+      List<Collection> collections = collectionFacade.getCollections();
       collections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
 
-      if (includeViewCollections != null && includeViewCollections) {
+      if (includeViewCollections != null && includeViewCollections && !isManager()) {
          collections.addAll(viewFacade.getViewsCollections());
       }
 

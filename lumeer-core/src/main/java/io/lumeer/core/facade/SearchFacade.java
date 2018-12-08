@@ -25,7 +25,6 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
-import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -34,7 +33,6 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.filter.AttributeFilter;
-import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
@@ -71,9 +69,6 @@ public class SearchFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
-   private ViewFacade viewFacade;
-
-   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
    public List<LinkInstance> getLinkInstances(Query query) {
@@ -102,27 +97,9 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<Collection> getReadCollections() {
-      Set<Collection> userCollections = getUserCollections();
-
-      final View view = permissionsChecker.getActiveView();
-      if (view != null) {
-         userCollections.addAll(viewFacade.getViewsCollections(Collections.singletonList(view), true));
-      }
-
-      return new ArrayList<>(userCollections);
-   }
-
-   private Set<Collection> getUserCollections() {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      DatabaseQuery query = DatabaseQuery.createBuilder(user)
-                                         .groups(groups)
-                                         .build();
-
-      return collectionDao.getCollections(query).stream()
+      return collectionDao.getAllCollections().stream()
                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
-                          .collect(Collectors.toSet());
+                          .collect(Collectors.toList());
    }
 
    private Set<Document> searchDocumentsByEmptyQuery(Query query, List<Collection> collections) {
@@ -196,7 +173,6 @@ public class SearchFacade extends AbstractFacade {
 
          Set<String> currentDocumentsIds = new HashSet<>(currentStageStem.getDocumentIds());
 
-
          if (currentStageStem.containsDocumentIdsQuery()) {
             currentDocumentsIds.retainAll(otherDocumentIds);
          } else {
@@ -204,11 +180,11 @@ public class SearchFacade extends AbstractFacade {
          }
 
          SearchQueryStem modifiedStem = SearchQueryStem.createBuilder(currentStageStem.getCollectionId())
-               .linkTypeIds(currentStageStem.getLinkTypeIds())
-               .documentIds(currentDocumentsIds)
-               .filters(currentStageStem.getFilters())
-               .fulltexts(currentStageStem.getFulltexts())
-               .build();
+                                                       .linkTypeIds(currentStageStem.getLinkTypeIds())
+                                                       .documentIds(currentDocumentsIds)
+                                                       .filters(currentStageStem.getFilters())
+                                                       .fulltexts(currentStageStem.getFulltexts())
+                                                       .build();
 
          if (!modifiedStem.containsDocumentIdsQuery()) {
             break; // empty ids after interesction or append represents empty search, so we should break

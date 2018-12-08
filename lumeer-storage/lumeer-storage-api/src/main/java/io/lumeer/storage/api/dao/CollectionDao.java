@@ -46,6 +46,8 @@ public interface CollectionDao {
 
    List<Collection> getCollectionsByIds(java.util.Collection<String> ids);
 
+   List<Collection> getAllCollections();
+
    List<Collection> getCollections(DatabaseQuery query);
 
    List<Collection> getCollections(SearchSuggestionQuery query);

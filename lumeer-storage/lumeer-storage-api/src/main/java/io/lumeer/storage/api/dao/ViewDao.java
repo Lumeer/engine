@@ -42,6 +42,8 @@ public interface ViewDao {
 
    View getViewByCode(String code);
 
+   List<View> getAllViews();
+
    List<View> getViews(DatabaseQuery query);
 
    List<View> getViews(SearchSuggestionQuery query);

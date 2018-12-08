@@ -35,7 +35,6 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.List;
 import java.util.Set;
@@ -118,14 +117,18 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public List<Project> getProjects() {
-      String userId = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+      if (permissionsChecker.isManager()) {
+         return getAllProjects();
+      }
+      return getProjectsByPermissions();
+   }
 
-      DatabaseQuery query = DatabaseQuery.createBuilder(userId)
-                                         .groups(groups)
-                                         .build();
+   private List<Project> getAllProjects() {
+      return projectDao.getAllProjects();
+   }
 
-      return projectDao.getProjects(query).stream()
+   private List<Project> getProjectsByPermissions() {
+      return projectDao.getProjects(createSimpleQuery()).stream()
                        .map(this::mapResource)
                        .collect(Collectors.toList());
    }

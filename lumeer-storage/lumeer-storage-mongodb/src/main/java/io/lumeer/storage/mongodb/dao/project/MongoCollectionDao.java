@@ -31,6 +31,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
 import org.bson.Document;
@@ -144,6 +145,11 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    @Override
+   public List<Collection> getAllCollections() {
+      return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
    public List<Collection> getCollections(final DatabaseQuery query) {
       Bson filter = MongoFilters.permissionsFilter(query);
       return searchCollectionsByFilter(filter, query);
@@ -211,6 +217,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    @Override
    public long getCollectionsCount() {
       return databaseCollection().find()
+                                 .projection(Projections.include(CollectionCodec.ID))
                                  .into(new ArrayList<>())
                                  .size();
    }
@@ -218,6 +225,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    @Override
    public Set<String> getAllCollectionCodes() {
       return databaseCollection().find()
+                                 .projection(Projections.include(CollectionCodec.CODE))
                                  .into(new ArrayList<>())
                                  .stream().map(Resource::getCode)
                                  .collect(Collectors.toSet());
@@ -226,6 +234,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    @Override
    public Set<String> getAllCollectionNames() {
       return databaseCollection().find()
+                                 .projection(Projections.include(CollectionCodec.NAME))
                                  .into(new ArrayList<>())
                                  .stream().map(Resource::getName)
                                  .collect(Collectors.toSet());
@@ -234,6 +243,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    @Override
    public Set<String> getAllCollectionIds() {
       return databaseCollection().find()
+                                 .projection(Projections.include(CollectionCodec.ID))
                                  .into(new ArrayList<>())
                                  .stream().map(Resource::getId)
                                  .collect(Collectors.toSet());

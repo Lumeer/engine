@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -231,7 +230,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       createView(CODE);
       createView(CODE2);
 
-      assertThat(viewFacade.getViews(new Pagination(null, null)))
+      assertThat(viewFacade.getViews())
             .extracting(Resource::getCode).containsOnly(CODE, CODE2);
    }
 

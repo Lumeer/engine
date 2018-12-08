@@ -21,7 +21,6 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -38,7 +37,6 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
-import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.HashSet;
 import java.util.List;
@@ -133,13 +131,22 @@ public class CollectionFacade extends AbstractFacade {
       return mapResource(collection);
    }
 
-   public List<Collection> getCollections(Pagination pagination) {
-      DatabaseQuery searchQuery = createSimplePaginationQuery(pagination);
+   public List<Collection> getCollections() {
+      if (permissionsChecker.isManager()) {
+         return getAllCollections();
+      }
+      return getCollectionsByPermissions();
+   }
 
-      return collectionDao.getCollections(searchQuery).stream()
+   public List<Collection> getCollectionsByPermissions() {
+      return collectionDao.getCollections(createSimpleQuery()).stream()
                           .map(this::mapResource)
                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
                           .collect(Collectors.toList());
+   }
+
+   private List<Collection> getAllCollections() {
+      return collectionDao.getAllCollections();
    }
 
    public void addFavoriteCollection(String collectionId) {
@@ -305,6 +312,10 @@ public class CollectionFacade extends AbstractFacade {
 
       result.addAll(collection.getPermissions().getUserPermissions().stream().map(Permission::getId).collect(Collectors.toSet()));
 
+      if (permissionsChecker.isManager()) {
+         result.add(authenticatedUser.getCurrentUserId());
+      }
+
       viewDao.getViewsByLinkTypeIds(
             linkTypeDao.getLinkTypesByCollectionId(collection.getId())
                        .stream()
@@ -330,11 +341,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private void checkProjectWriteRole() {
-      if (!workspaceKeeper.getProject().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-
-      Project project = workspaceKeeper.getProject().get();
+      Project project = getCurrentProject();
       permissionsChecker.checkRole(project, Role.WRITE);
    }
 

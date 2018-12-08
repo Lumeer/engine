@@ -18,6 +18,10 @@
  */
 package io.lumeer.api.model;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,5 +52,27 @@ public enum Role {
       return roles.stream()
                   .map(Role::fromString)
                   .collect(Collectors.toSet());
+   }
+
+   public static Set<Role> withTransitionRoles(Set<Role> roles) {
+      return roles.stream()
+                  .map(Role::withTransitionRoles)
+                  .flatMap(Collection::stream)
+                  .collect(Collectors.toSet());
+   }
+
+   public static Set<Role> withTransitionRoles(Role role) {
+      if (role == Role.READ) {
+         return Collections.singleton(Role.READ);
+      } else if (role == Role.WRITE) {
+         return new HashSet<>(Arrays.asList(Role.WRITE, Role.READ));
+      } else if (role == Role.MANAGE) {
+         return new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE, Role.SHARE, Role.CLONE));
+      } else if (role == Role.SHARE) {
+         return Collections.singleton(Role.SHARE);
+      } else if (role == Role.CLONE) {
+         return Collections.singleton(Role.CLONE);
+      }
+      return Collections.emptySet();
    }
 }
