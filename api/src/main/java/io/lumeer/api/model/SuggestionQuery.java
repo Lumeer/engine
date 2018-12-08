@@ -6,14 +6,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.Set;
 
-public class Suggest {
+public class SuggestionQuery {
 
    private final String text;
    private final SuggestionType type;
    private final Set<String> priorityCollectionIds;
 
    @JsonCreator
-   public Suggest(@JsonProperty("text") final String text,
+   public SuggestionQuery(@JsonProperty("text") final String text,
          @JsonProperty("type") final String type,
          @JsonProperty("priorityCollectionIds") final Set<String> priorityCollectionIds) {
       this.text = text;
@@ -21,7 +21,7 @@ public class Suggest {
       this.priorityCollectionIds = priorityCollectionIds != null ? priorityCollectionIds : Collections.emptySet();
    }
 
-   public Suggest(final String text, final SuggestionType type) {
+   public SuggestionQuery(final String text, final SuggestionType type) {
       this(text, type.toString(), null);
    }
 

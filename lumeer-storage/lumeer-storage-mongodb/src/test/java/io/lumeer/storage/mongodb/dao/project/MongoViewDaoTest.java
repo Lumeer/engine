@@ -30,7 +30,7 @@ import io.lumeer.api.model.View;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
@@ -314,7 +314,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE2, NAME2);
       createView(CODE3, NAME3);
 
-      SuggestionQuery query = SuggestionQuery.createBuilder(USER).text("test").build();
+      SearchSuggestionQuery query = SearchSuggestionQuery.createBuilder(USER).text("test").build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
    }
@@ -325,7 +325,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE2, NAME2);
       createView(CODE3, NAME3);
 
-      SuggestionQuery query = SuggestionQuery.createBuilder(USER2).text("test").build();
+      SearchSuggestionQuery query = SearchSuggestionQuery.createBuilder(USER2).text("test").build();
       List<View> views = viewDao.getViews(query);
       assertThat(views).extracting(View::getCode).isEmpty();
    }

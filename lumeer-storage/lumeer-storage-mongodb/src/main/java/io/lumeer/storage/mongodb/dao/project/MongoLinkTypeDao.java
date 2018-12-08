@@ -11,7 +11,7 @@ import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
 
 import com.mongodb.BasicDBList;
@@ -31,7 +31,6 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -137,12 +136,12 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public List<LinkType> getLinkTypes(final SuggestionQuery query) {
+   public List<LinkType> getLinkTypes(final SearchSuggestionQuery query) {
       List<Bson> aggregates = linkTypesSuggestionAggregation(query);
       return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
    }
 
-   private List<Bson> linkTypesSuggestionAggregation(SuggestionQuery query) {
+   private List<Bson> linkTypesSuggestionAggregation(SearchSuggestionQuery query) {
       List<Bson> aggregates = new ArrayList<>();
 
       aggregates.add(Aggregates.match(linkTypesSuggestionFilter(query)));
@@ -175,7 +174,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
       return aggregates;
    }
 
-   private Bson linkTypesSuggestionFilter(SuggestionQuery query) {
+   private Bson linkTypesSuggestionFilter(SearchSuggestionQuery query) {
       return Filters.regex(LinkTypeCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
    }
 

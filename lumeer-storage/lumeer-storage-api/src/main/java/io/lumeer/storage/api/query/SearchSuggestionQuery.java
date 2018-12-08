@@ -22,13 +22,13 @@ import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
-public class SuggestionQuery extends DatabaseQuery {
+public class SearchSuggestionQuery extends DatabaseQuery {
 
    private final String text;
    private final Set<String> collectionIds;
    private final Set<String> priorityCollectionIds;
 
-   private SuggestionQuery(final Builder builder) {
+   private SearchSuggestionQuery(final Builder builder) {
       super(builder);
 
       this.text = builder.text;
@@ -60,7 +60,7 @@ public class SuggestionQuery extends DatabaseQuery {
       return new Builder(user);
    }
 
-   public static class Builder extends DatabaseQuery.Builder<SuggestionQuery.Builder> {
+   public static class Builder extends DatabaseQuery.Builder<SearchSuggestionQuery.Builder> {
 
       private String text;
       private Set<String> collectionIds;
@@ -85,10 +85,10 @@ public class SuggestionQuery extends DatabaseQuery {
          return this;
       }
 
-      public SuggestionQuery build() {
+      public SearchSuggestionQuery build() {
          validate();
 
-         return new SuggestionQuery(this);
+         return new SearchSuggestionQuery(this);
       }
    }
 }

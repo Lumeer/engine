@@ -32,7 +32,7 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.QueryCodec;
 import io.lumeer.storage.mongodb.codecs.QueryStemCodec;
@@ -156,13 +156,13 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    @Override
-   public List<View> getViews(final SuggestionQuery query) {
+   public List<View> getViews(final SearchSuggestionQuery query) {
       FindIterable<View> findIterable = databaseCollection().find(suggestionsFilter(query));
       addPaginationToQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
 
-   private Bson suggestionsFilter(final SuggestionQuery query) {
+   private Bson suggestionsFilter(final SearchSuggestionQuery query) {
       Bson regex = Filters.regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
       return Filters.and(regex, MongoFilters.permissionsFilter(query));
    }

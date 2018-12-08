@@ -23,7 +23,7 @@ import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Role;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
 
@@ -104,7 +104,7 @@ public class MongoFilters {
       return Filters.in(PermissionCodec.ROLES, role.toString());
    }
 
-   public static Bson suggestionsFilter(SuggestionQuery query) {
+   public static Bson suggestionsFilter(SearchSuggestionQuery query) {
       return Filters.and(
             Filters.text(query.getText()),
             MongoFilters.permissionsFilter(query)

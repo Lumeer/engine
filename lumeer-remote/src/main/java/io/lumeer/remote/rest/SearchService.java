@@ -21,7 +21,7 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
-import io.lumeer.api.model.Suggest;
+import io.lumeer.api.model.SuggestionQuery;
 import io.lumeer.api.model.Suggestions;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.SearchFacade;
@@ -68,12 +68,12 @@ public class SearchService extends AbstractService {
 
    @POST
    @Path("suggestions")
-   public Suggestions getSuggestions(Suggest suggest) {
-      if (suggest.getText() == null || suggest.getText().isEmpty()) {
+   public Suggestions getSuggestions(SuggestionQuery suggestionQuery) {
+      if (suggestionQuery.getText() == null || suggestionQuery.getText().isEmpty()) {
          return Suggestions.emptySuggestions();
       }
 
-      return suggestionFacade.suggest(suggest);
+      return suggestionFacade.suggest(suggestionQuery);
    }
 
    @POST

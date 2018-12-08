@@ -21,7 +21,7 @@ package io.lumeer.storage.api.dao;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 
 import java.util.List;
 import java.util.Set;
@@ -48,9 +48,9 @@ public interface CollectionDao {
 
    List<Collection> getCollections(DatabaseQuery query);
 
-   List<Collection> getCollections(SuggestionQuery query);
+   List<Collection> getCollections(SearchSuggestionQuery query);
 
-   List<Collection> getCollectionsByAttributes(SuggestionQuery query);
+   List<Collection> getCollectionsByAttributes(SearchSuggestionQuery query);
 
    long getCollectionsCount();
 

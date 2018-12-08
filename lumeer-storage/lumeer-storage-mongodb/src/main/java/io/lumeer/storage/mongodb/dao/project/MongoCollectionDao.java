@@ -14,7 +14,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.AttributeCodec;
 import io.lumeer.storage.mongodb.codecs.CollectionCodec;
@@ -31,7 +31,6 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
-import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
 import org.bson.Document;
@@ -40,9 +39,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -160,12 +157,12 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    @Override
-   public List<Collection> getCollections(final SuggestionQuery query) {
+   public List<Collection> getCollections(final SearchSuggestionQuery query) {
       List<Bson> aggregates = collectionSuggestionAggregation(query);
       return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
    }
 
-   private List<Bson> collectionSuggestionAggregation(SuggestionQuery query) {
+   private List<Bson> collectionSuggestionAggregation(SearchSuggestionQuery query) {
       List<Bson> aggregates = new ArrayList<>();
 
       aggregates.add(Aggregates.match(collectionSuggestionQuery(query)));
@@ -190,7 +187,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       return aggregates;
    }
 
-   private Bson collectionSuggestionQuery(SuggestionQuery query) {
+   private Bson collectionSuggestionQuery(SearchSuggestionQuery query) {
       List<Bson> filters = new ArrayList<>();
 
       filters.add(MongoFilters.permissionsFilter(query));
@@ -199,12 +196,12 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    @Override
-   public List<Collection> getCollectionsByAttributes(final SuggestionQuery query) {
+   public List<Collection> getCollectionsByAttributes(final SearchSuggestionQuery query) {
       Bson filter = attributeSuggestionQuery(query);
       return searchCollectionsByFilter(filter, query);
    }
 
-   private Bson attributeSuggestionQuery(SuggestionQuery query) {
+   private Bson attributeSuggestionQuery(SearchSuggestionQuery query) {
       List<Bson> filters = new ArrayList<>();
       filters.add(MongoFilters.permissionsFilter(query));
       filters.add(Filters.regex(MongoUtils.concatParams(CollectionCodec.ATTRIBUTES, AttributeCodec.NAME), Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE)));

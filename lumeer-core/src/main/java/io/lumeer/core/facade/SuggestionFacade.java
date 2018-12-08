@@ -20,7 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Suggest;
+import io.lumeer.api.model.SuggestionQuery;
 import io.lumeer.api.model.Suggestions;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.View;
@@ -28,7 +28,7 @@ import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -55,83 +55,83 @@ public class SuggestionFacade extends AbstractFacade {
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
-   public Suggestions suggest(Suggest suggest) {
-      switch (suggest.getType()) {
+   public Suggestions suggest(SuggestionQuery suggestionQuery) {
+      switch (suggestionQuery.getType()) {
          case ALL:
-            return suggestAll(suggest);
+            return suggestAll(suggestionQuery);
          case ATTRIBUTE:
-            List<Collection> attributes = suggestAttributes(suggest, SUGGESTIONS_LIMIT);
+            List<Collection> attributes = suggestAttributes(suggestionQuery, SUGGESTIONS_LIMIT);
             return Suggestions.attributeSuggestions(attributes);
          case COLLECTION:
-            List<Collection> collections = suggestCollections(suggest, SUGGESTIONS_LIMIT);
+            List<Collection> collections = suggestCollections(suggestionQuery, SUGGESTIONS_LIMIT);
             return Suggestions.collectionSuggestions(collections);
          case LINK:
-            List<LinkType> linkTypes = suggestLinkTypes(suggest, SUGGESTIONS_LIMIT);
+            List<LinkType> linkTypes = suggestLinkTypes(suggestionQuery, SUGGESTIONS_LIMIT);
             return Suggestions.linkSuggestions(linkTypes);
          case VIEW:
-            List<View> views = suggestViews(suggest, SUGGESTIONS_LIMIT);
+            List<View> views = suggestViews(suggestionQuery, SUGGESTIONS_LIMIT);
             return Suggestions.viewSuggestions(views);
          default:
-            throw new IllegalArgumentException("Unknown suggestion type: " + suggest.getType());
+            throw new IllegalArgumentException("Unknown suggestion type: " + suggestionQuery.getType());
       }
    }
 
-   private Suggestions suggestAll(Suggest suggest) {
+   private Suggestions suggestAll(SuggestionQuery suggestionQuery) {
       int currentLimit = SUGGESTIONS_LIMIT;
       int typesCount = 4;
 
-      List<View> views = shouldSuggestViews(suggest) ? suggestViews(suggest, currentLimit / typesCount) : Collections.emptyList();
+      List<View> views = shouldSuggestViews(suggestionQuery) ? suggestViews(suggestionQuery, currentLimit / typesCount) : Collections.emptyList();
       currentLimit -= views.size();
       typesCount--;
 
-      List<LinkType> linkTypes = suggestLinkTypes(suggest, currentLimit / typesCount);
+      List<LinkType> linkTypes = suggestLinkTypes(suggestionQuery, currentLimit / typesCount);
       currentLimit -= linkTypes.size();
       typesCount--;
 
-      List<Collection> collections = suggestCollections(suggest, currentLimit / typesCount);
+      List<Collection> collections = suggestCollections(suggestionQuery, currentLimit / typesCount);
       currentLimit -= collections.size();
       typesCount--;
 
-      List<Collection> attributes = suggestAttributes(suggest, currentLimit / typesCount);
+      List<Collection> attributes = suggestAttributes(suggestionQuery, currentLimit / typesCount);
 
       return new Suggestions(attributes, collections, views, linkTypes);
    }
 
-   private boolean shouldSuggestViews(Suggest suggest) {
-      return suggest.getPriorityCollectionIds().isEmpty();
+   private boolean shouldSuggestViews(SuggestionQuery suggestionQuery) {
+      return suggestionQuery.getPriorityCollectionIds().isEmpty();
    }
 
-   private List<View> suggestViews(Suggest suggest, int limit) {
-      SuggestionQuery suggestionQuery = createSuggestionQuery(suggest, limit);
-      return viewDao.getViews(suggestionQuery);
+   private List<View> suggestViews(SuggestionQuery suggestionQuery, int limit) {
+      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
+      return viewDao.getViews(searchSuggestionQuery);
    }
 
-   private List<LinkType> suggestLinkTypes(Suggest suggest, int limit) {
+   private List<LinkType> suggestLinkTypes(SuggestionQuery suggestionQuery, int limit) {
       List<Collection> allowedCollections = collectionDao.getCollections(createSimpleQuery());
       if (allowedCollections.isEmpty()) {
          return Collections.emptyList();
       }
 
       Set<String> allowedCollectionIds = allowedCollections.stream().map(Collection::getId).collect(Collectors.toSet());
-      SuggestionQuery suggestionQuery = createSuggestionQueryWithIds(suggest, limit, allowedCollectionIds);
-      return linkTypeDao.getLinkTypes(suggestionQuery);
+      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQueryWithIds(suggestionQuery, limit, allowedCollectionIds);
+      return linkTypeDao.getLinkTypes(searchSuggestionQuery);
    }
 
-   private List<Collection> suggestCollections(Suggest suggest, int limit) {
-      SuggestionQuery suggestionQuery = createSuggestionQuery(suggest, limit);
-      return collectionDao.getCollections(suggestionQuery).stream()
+   private List<Collection> suggestCollections(SuggestionQuery suggestionQuery, int limit) {
+      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
+      return collectionDao.getCollections(searchSuggestionQuery).stream()
                           .peek(collection -> collection.setAttributes(Collections.emptySet())).collect(Collectors.toList());
    }
 
-   private List<Collection> suggestAttributes(Suggest suggest, int limit) {
-      SuggestionQuery suggestionQuery = createSuggestionQuery(suggest, limit);
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(suggestionQuery);
+   private List<Collection> suggestAttributes(SuggestionQuery suggestionQuery, int limit) {
+      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery);
       if (collections.isEmpty()) {
          return Collections.emptyList();
       }
 
       int attributesLimit = (limit / collections.size()) + 1;
-      return keepOnlyMatchingAttributes(collections, suggest.getText(), attributesLimit);
+      return keepOnlyMatchingAttributes(collections, suggestionQuery.getText(), attributesLimit);
    }
 
    private static List<Collection> keepOnlyMatchingAttributes(List<Collection> collections, String text, int attributesLimit) {
@@ -147,25 +147,25 @@ public class SuggestionFacade extends AbstractFacade {
       return new HashSet<>(filteredAttributes.subList(0, Math.min(filteredAttributes.size(), limit)));
    }
 
-   private SuggestionQuery createSuggestionQuery(Suggest suggest, int limit) {
-      return createBuilderForSuggestionQuery(suggest, limit)
+   private SearchSuggestionQuery createSuggestionQuery(SuggestionQuery suggestionQuery, int limit) {
+      return createBuilderForSuggestionQuery(suggestionQuery, limit)
             .build();
    }
 
-   private SuggestionQuery createSuggestionQueryWithIds(Suggest suggest, int limit, Set<String> collectionIds) {
-      return createBuilderForSuggestionQuery(suggest, limit)
+   private SearchSuggestionQuery createSuggestionQueryWithIds(SuggestionQuery suggestionQuery, int limit, Set<String> collectionIds) {
+      return createBuilderForSuggestionQuery(suggestionQuery, limit)
             .collectionIds(collectionIds)
             .build();
    }
 
-   private SuggestionQuery.Builder createBuilderForSuggestionQuery(Suggest suggest, int limit) {
+   private SearchSuggestionQuery.Builder createBuilderForSuggestionQuery(SuggestionQuery suggestionQuery, int limit) {
       String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
-      return SuggestionQuery.createBuilder(user).groups(groups)
-                            .text(suggest.getText())
-                            .priorityCollectionIds(suggest.getPriorityCollectionIds())
-                            .page(0).pageSize(limit);
+      return SearchSuggestionQuery.createBuilder(user).groups(groups)
+                                  .text(suggestionQuery.getText())
+                                  .priorityCollectionIds(suggestionQuery.getPriorityCollectionIds())
+                                  .page(0).pageSize(limit);
    }
 
 }
