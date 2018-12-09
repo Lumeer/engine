@@ -177,13 +177,22 @@ public class UserNotification {
 
    public interface ProjectShared extends OrganizationShared {
       String PROJECT_ID = "projectId";
+      String PROJECT_ICON = "projectIcon";
+      String PROJECT_CODE = "projectCode";
+      String PROJECT_NAME = "projectName";
+      String PROJECT_COLOR = "projectColor";
    }
 
    public interface CollectionShared extends ProjectShared {
       String COLLECTION_ID = "collectionId";
+      String COLLECTION_ICON = "collectionIcon";
+      String COLLECTION_NAME = "collectionName";
+      String COLLECTION_COLOR = "collectionColor";
    }
 
    public interface ViewShared extends ProjectShared {
-      String VIEW_ID = "viewId";
+      String VIEW_CODE = "viewCode";
+      String VIEW_NAME = "viewName";
+      String VIEW_PERSPECTIVE = "viewPerspective";
    }
 }
