@@ -19,8 +19,10 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.UserNotification;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -45,8 +47,7 @@ import javax.inject.Inject;
 @RequestScoped
 public class UserNotificationFacade extends AbstractFacade {
 
-   @Inject
-   private Logger log;
+   private Logger log = Logger.getLogger(UserNotificationFacade.class.getName());
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -87,18 +88,41 @@ public class UserNotificationFacade extends AbstractFacade {
       if (resource.getType() == ResourceType.PROJECT) {
          data.append(UserNotification.ProjectShared.ORGANIZATION_ID, workspaceKeeper.getOrganization().get().getId());
          data.append(UserNotification.ProjectShared.PROJECT_ID, resource.getId());
+         data.append(UserNotification.ProjectShared.PROJECT_CODE, resource.getCode());
+         data.append(UserNotification.ProjectShared.PROJECT_NAME, resource.getName());
+         data.append(UserNotification.ProjectShared.PROJECT_ICON, resource.getIcon());
+         data.append(UserNotification.ProjectShared.PROJECT_COLOR, resource.getColor());
       }
 
       if (resource.getType() == ResourceType.COLLECTION) {
          data.append(UserNotification.CollectionShared.ORGANIZATION_ID, workspaceKeeper.getOrganization().get().getId());
-         data.append(UserNotification.CollectionShared.PROJECT_ID, workspaceKeeper.getProject().get().getId());
+         if (workspaceKeeper.getProject().isPresent()) {
+            final Project project = workspaceKeeper.getProject().get();
+            data.append(UserNotification.CollectionShared.PROJECT_ID, project.getId());
+            data.append(UserNotification.CollectionShared.PROJECT_CODE, project.getCode());
+            data.append(UserNotification.CollectionShared.PROJECT_NAME, project.getName());
+            data.append(UserNotification.CollectionShared.PROJECT_ICON, project.getIcon());
+            data.append(UserNotification.CollectionShared.PROJECT_COLOR, project.getColor());
+         }
          data.append(UserNotification.CollectionShared.COLLECTION_ID, resource.getId());
+         data.append(UserNotification.CollectionShared.COLLECTION_NAME, resource.getName());
+         data.append(UserNotification.CollectionShared.COLLECTION_ICON, resource.getIcon());
+         data.append(UserNotification.CollectionShared.COLLECTION_COLOR, resource.getColor());
       }
 
       if (resource.getType() == ResourceType.VIEW) {
          data.append(UserNotification.ViewShared.ORGANIZATION_ID, workspaceKeeper.getOrganization().get().getId());
-         data.append(UserNotification.ViewShared.PROJECT_ID, workspaceKeeper.getProject().get().getId());
-         data.append(UserNotification.ViewShared.VIEW_ID, resource.getId());
+         if (workspaceKeeper.getProject().isPresent()) {
+            final Project project = workspaceKeeper.getProject().get();
+            data.append(UserNotification.ViewShared.PROJECT_ID, project.getId());
+            data.append(UserNotification.ViewShared.PROJECT_CODE, project.getCode());
+            data.append(UserNotification.ViewShared.PROJECT_NAME, project.getName());
+            data.append(UserNotification.ViewShared.PROJECT_ICON, project.getIcon());
+            data.append(UserNotification.ViewShared.PROJECT_COLOR, project.getColor());
+         }
+         data.append(UserNotification.ViewShared.VIEW_CODE, resource.getCode());
+         data.append(UserNotification.ViewShared.VIEW_PERSPECTIVE, ((View) resource).getPerspective());
+         data.append(UserNotification.ViewShared.VIEW_NAME, resource.getName());
       }
 
       final List<UserNotification> notifications = newUsers.stream().map(p ->
