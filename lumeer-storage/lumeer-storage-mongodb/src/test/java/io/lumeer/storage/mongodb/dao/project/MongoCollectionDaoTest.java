@@ -31,13 +31,12 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.bson.types.ObjectId;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -280,8 +279,8 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE3, NAME3);
 
       DatabaseQuery searchQuery = DatabaseQuery.createBuilder(USER)
-                                           .page(1).pageSize(1)
-                                           .build();
+                                               .page(1).pageSize(1)
+                                               .build();
       List<Collection> collections = collectionDao.getCollections(searchQuery);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2);
    }
@@ -292,11 +291,37 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES);
       createCollection(CODE3, NAME_SUGGESTION, ATTRIBUTES);
 
-      SuggestionQuery suggestionQuery = SuggestionQuery.createBuilder(USER)
-                                                       .text("TEST")
-                                                       .build();
-      List<Collection> collections = collectionDao.getCollections(suggestionQuery);
+      SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER)
+                                                                         .text("TEST")
+                                                                         .build();
+      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE, CODE3);
+   }
+
+   @Test
+   public void testGetCollectionsSuggestionsWithPriority() {
+      String id1 = createCollection(CODE, "TEST 1", ATTRIBUTES).getId();
+      String id2 = createCollection(CODE2, "TEST 2", ATTRIBUTES).getId();
+      String id3 = createCollection(CODE3, "TEST 3", ATTRIBUTES).getId();
+      String id4 = createCollection(CODE4, "TEST 4", ATTRIBUTES).getId();
+      String id5 = createCollection("CODE5", "TEST 5", ATTRIBUTES).getId();
+
+      SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER)
+                                                                         .text("TEST")
+                                                                         .page(0)
+                                                                         .pageSize(3)
+                                                                         .build();
+      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery);
+      assertThat(collections).extracting(Resource::getId).containsOnly(id1, id2, id3);
+
+      searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER)
+                                                   .text("TEST")
+                                                   .priorityCollectionIds(new HashSet<>(Arrays.asList(id4, id5)))
+                                                   .page(0)
+                                                   .pageSize(3)
+                                                   .build();
+      collections = collectionDao.getCollections(searchSuggestionQuery);
+      assertThat(collections).extracting(Resource::getId).contains(id4, id5);
    }
 
    @Test
@@ -305,10 +330,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE2, NAME_FULLTEXT, ATTRIBUTES);
       createCollection(CODE3, NAME_SUGGESTION, ATTRIBUTES);
 
-      SuggestionQuery suggestionQuery = SuggestionQuery.createBuilder(USER2)
-                                                       .text("TEST")
-                                                       .build();
-      List<Collection> collections = collectionDao.getCollections(suggestionQuery);
+      SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER2)
+                                                                         .text("TEST")
+                                                                         .build();
+      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery);
       assertThat(collections).isEmpty();
    }
 
@@ -318,10 +343,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE2, NAME2, ATTRIBUTES);
       createCollection(CODE3, NAME3, ATTRIBUTES_FULLTEXT);
 
-      SuggestionQuery suggestionQuery = SuggestionQuery.createBuilder(USER)
-                                                       .text("sugg")
-                                                       .build();
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(suggestionQuery);
+      SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER)
+                                                                         .text("sugg")
+                                                                         .build();
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2, CODE3);
    }
 
@@ -331,10 +356,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE2, NAME2, ATTRIBUTES);
       createCollection(CODE3, NAME3, ATTRIBUTES_FULLTEXT);
 
-      SuggestionQuery suggestionQuery = SuggestionQuery.createBuilder(USER2)
-                                                       .text("sugg")
-                                                       .build();
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(suggestionQuery);
+      SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER2)
+                                                                         .text("sugg")
+                                                                         .build();
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery);
       assertThat(collections).isEmpty();
    }
 

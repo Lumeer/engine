@@ -11,17 +11,21 @@ import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.MongoException;
-import com.mongodb.client.FindIterable;
+import com.mongodb.QueryOperators;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -132,19 +136,51 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public List<LinkType> getLinkTypes(final SuggestionQuery query) {
-      FindIterable<LinkType> findIterable = databaseCollection().find(linkTypesSuggestionFilter(query));
-      addPaginationToQuery(findIterable, query);
-      return findIterable.into(new ArrayList<>());
+   public List<LinkType> getLinkTypes(final SearchSuggestionQuery query) {
+      List<Bson> aggregates = linkTypesSuggestionAggregation(query);
+      return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
+   }
+
+   private List<Bson> linkTypesSuggestionAggregation(SearchSuggestionQuery query) {
+      List<Bson> aggregates = new ArrayList<>();
+
+      aggregates.add(Aggregates.match(linkTypesSuggestionFilter(query)));
+
+      if (query.hasCollectionIdsQuery()) {
+         BasicDBList subsetList = new BasicDBList();
+         subsetList.add("$" + LinkTypeCodec.COLLECTION_IDS);
+         subsetList.add(new ArrayList<>(query.getCollectionIds()));
+
+         Document isSubset = new Document("$setIsSubset", subsetList);
+
+         aggregates.add(Aggregates.addFields(new Field<>("_isSubset", isSubset)));
+         aggregates.add(Aggregates.match(Filters.eq("_isSubset", true)));
+      }
+
+      if (query.hasPriorityCollectionIdsQuery()) {
+         BasicDBList intersectionList = new BasicDBList();
+         intersectionList.add("$" + LinkTypeCodec.COLLECTION_IDS);
+         intersectionList.add(new ArrayList<>(query.getPriorityCollectionIds()));
+
+         Document intersection = new Document("$setIntersection", intersectionList);
+         Document size = new Document(QueryOperators.SIZE, intersection);
+
+         aggregates.add(Aggregates.addFields(new Field<>("_linkPriority", size)));
+         aggregates.add(Aggregates.sort(Sorts.descending("_linkPriority")));
+      }
+
+      addPaginationToAggregates(aggregates, query);
+
+      return aggregates;
+   }
+
+   private Bson linkTypesSuggestionFilter(SearchSuggestionQuery query) {
+      return Filters.regex(LinkTypeCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
    }
 
    @Override
    public List<LinkType> getLinkTypesByCollectionId(final String collectionId) {
       return databaseCollection().find(collectionIdFilter(collectionId)).into(new ArrayList<>());
-   }
-
-   private Bson linkTypesSuggestionFilter(SuggestionQuery query) {
-      return Filters.regex(LinkTypeCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
    }
 
    private Bson collectionIdFilter(String collectionId) {

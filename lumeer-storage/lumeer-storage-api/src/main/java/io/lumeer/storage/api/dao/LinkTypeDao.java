@@ -21,7 +21,7 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.query.SuggestionQuery;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 
 import java.util.List;
 import java.util.Set;
@@ -50,6 +50,6 @@ public interface LinkTypeDao {
 
    List<LinkType> getLinkTypesByIds(Set<String> ids);
 
-   List<LinkType> getLinkTypes(SuggestionQuery query);
+   List<LinkType> getLinkTypes(SearchSuggestionQuery query);
 
 }

@@ -25,6 +25,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
 import org.bson.types.ObjectId;
@@ -242,6 +243,60 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
 
       linkTypes = linkTypeDao.getLinkTypesByIds(Collections.singleton(id2));
       assertThat(linkTypes).extracting("id").containsOnly(id2);
+   }
+
+   @Test
+   public void testGetLinkTypesBySuggestions() {
+      String id1 = createLinkType("spot", "c1", "c2").getId();
+      String id2 = createLinkType("sport", "c2", "c3").getId();
+      String id3 = createLinkType("porto", "c1", "c3").getId();
+      String id4 = createLinkType("post", "c3", "c4").getId();
+      createLinkType("shop", "c1", "c4");
+      String id6 = createLinkType("point", "c2", "c4").getId();
+
+      SearchSuggestionQuery query = SearchSuggestionQuery.createBuilder(USER)
+                                                         .text("po")
+                                                         .build();
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypes(query);
+      assertThat(linkTypes).extracting(LinkType::getId).containsOnly(id1, id2, id3, id4, id6);
+
+      query = SearchSuggestionQuery.createBuilder(USER)
+                                   .text("po")
+                                   .collectionIds(new HashSet<>(Arrays.asList("c1", "c2", "c4")))
+                                   .build();
+      linkTypes = linkTypeDao.getLinkTypes(query);
+      assertThat(linkTypes).extracting(LinkType::getId).containsOnly(id1, id6);
+   }
+
+   @Test
+   public void testGetLinkTypesBySuggestionsPriority() {
+      String id1 = createLinkType("spot", "c1", "c2").getId();
+      String id2 = createLinkType("spot", "c2", "c3").getId();
+      String id3 = createLinkType("spot", "c1", "c3").getId();
+      String id4 = createLinkType("spot", "c3", "c4").getId();
+      String id5 = createLinkType("spot", "c2", "c4").getId();
+
+      SearchSuggestionQuery query = SearchSuggestionQuery.createBuilder(USER)
+                                                         .text("po")
+                                                         .page(0)
+                                                         .pageSize(3)
+                                                         .build();
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypes(query);
+      assertThat(linkTypes).extracting(LinkType::getId).containsOnly(id1, id2, id3);
+
+      query = SearchSuggestionQuery.createBuilder(USER)
+                                   .text("po")
+                                   .page(0)
+                                   .pageSize(3)
+                                   .priorityCollectionIds(Collections.singleton("c4"))
+                                   .build();
+      linkTypes = linkTypeDao.getLinkTypes(query);
+      assertThat(linkTypes).extracting(LinkType::getId).contains(id4, id5);
+   }
+
+   private LinkType createLinkType(String name, String collId1, String collId2) {
+      LinkType linkType = new LinkType(null, name, Arrays.asList(collId1, collId2), ATTRIBUTES);
+      return linkTypeDao.createLinkType(linkType);
    }
 
    private LinkType prepareLinkType() {
