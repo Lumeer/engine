@@ -56,7 +56,7 @@ public class EmbeddedMongoDb {
    private static IMongodConfig createMongoConfig() {
       try {
          final MongodConfigBuilder builder = new MongodConfigBuilder();
-         builder.version(Version.Main.V3_6).net(new Net(HOST, PORT, Network.localhostIsIPv6()));
+         builder.version(Version.Main.V4_0).net(new Net(HOST, PORT, Network.localhostIsIPv6()));
 
          if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
             builder.withLaunchArgument("--storageEngine", "mmapv1");
