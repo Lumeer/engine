@@ -218,10 +218,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
 
    @Override
    public long getCollectionsCount() {
-      return databaseCollection().find()
-                                 .projection(Projections.include(CollectionCodec.ID))
-                                 .into(new ArrayList<>())
-                                 .size();
+      return databaseCollection().countDocuments();
    }
 
    @Override

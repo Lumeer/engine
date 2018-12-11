@@ -134,8 +134,8 @@ public class PermissionsChecker {
          if (organizationRoles.contains(Role.MANAGE)) {
             return true;
          }
-         Set<Role> projectRoles = getActualRolesInResource(workspaceKeeper.getProject().get(), userId);
          if (workspaceKeeper.getProject().isPresent()) {
+            Set<Role> projectRoles = getActualRolesInResource(workspaceKeeper.getProject().get(), userId);
             return projectRoles.contains(Role.MANAGE) && organizationRoles.contains(Role.READ);
          }
       }
