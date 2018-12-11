@@ -181,7 +181,7 @@ public class AuthenticatedUser implements Serializable {
 
       user.setDefaultWorkspace(new DefaultWorkspace(organization.getId(), project.getId()));
 
-      freshdeskFacade.logTicket(user, "A new user " + user.getEmail() + "logged for the first time in the system",
+      freshdeskFacade.logTicket(user, "A new user " + user.getEmail() + " logged for the first time in the system",
             "Organization " + organization.getCode() + " and project " + project.getCode() + " were created for them.");
    }
 
