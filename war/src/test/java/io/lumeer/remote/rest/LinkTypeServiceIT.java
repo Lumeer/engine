@@ -123,7 +123,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       final User createdUser = userDao.createUser(user);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Organization.ROLES);
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(Role.READ));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -134,7 +134,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Project.ROLES);
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(Role.READ));
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
