@@ -103,7 +103,7 @@ public class FreshdeskFacade {
    private String escape(final String content) {
       return content
             .replaceAll("\"", "\\\\\"")
-            .replaceAll("\\\\", "\\\\\\")
+            .replaceAll("\\\\", "\\\\\\\\")
             .replaceAll("\b", "\\\\b")
             .replaceAll("\f", "\\\\f")
             .replaceAll("\n", "\\\\n")
