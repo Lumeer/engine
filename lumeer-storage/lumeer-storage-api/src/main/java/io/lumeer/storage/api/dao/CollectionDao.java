@@ -50,9 +50,9 @@ public interface CollectionDao {
 
    List<Collection> getCollections(DatabaseQuery query);
 
-   List<Collection> getCollections(SearchSuggestionQuery query);
+   List<Collection> getCollections(SearchSuggestionQuery query, boolean skipPermissions);
 
-   List<Collection> getCollectionsByAttributes(SearchSuggestionQuery query);
+   List<Collection> getCollectionsByAttributes(SearchSuggestionQuery query, boolean skipPermissions);
 
    long getCollectionsCount();
 

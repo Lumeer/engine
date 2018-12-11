@@ -26,7 +26,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -36,6 +35,7 @@ import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
@@ -80,6 +80,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private Permission groupPermission;
    private User user;
    private Group group;
+   private Project project;
+   private Organization organization;
 
    private static final String ATTRIBUTE_ID = "a1";
    private static final String ATTRIBUTE_NAME = "fullname";
@@ -123,23 +125,19 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
-      Organization organization = new Organization();
-      organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new Permissions());
-      Organization storedOrganization = organizationDao.createOrganization(organization);
-
-      projectDao.setOrganization(storedOrganization);
-
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
+      Organization organization = new Organization();
+      organization.setCode(ORGANIZATION_CODE);
       Permissions organizationPermissions = new Permissions();
       userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
-      storedOrganization.setPermissions(organizationPermissions);
-      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+      organization.setPermissions(organizationPermissions);
+      this.organization = organizationDao.createOrganization(organization);
 
-      groupDao.setOrganization(storedOrganization);
+      projectDao.setOrganization(this.organization);
+      groupDao.setOrganization(this.organization);
       Group group = new Group(GROUP);
       this.group = groupDao.createGroup(group);
 
@@ -149,14 +147,14 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Project project = new Project();
       project.setCode(PROJECT_CODE);
 
-      Permissions projectPermissions = new Permissions ();
-      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Role.toStringRoles(Project.ROLES)));
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));
       project.setPermissions(projectPermissions);
-      Project storedProject = projectDao.createProject(project);
+      this.project = projectDao.createProject(project);
 
       workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
 
-      collectionDao.setProject(storedProject);
+      collectionDao.setProject(project);
    }
 
    private Collection prepareCollection(String code) {
@@ -330,7 +328,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       String USER2 = "aaa" + user.getId().substring(3);
 
       var notifications = userNotificationFacade.getNotifications();
-      assertThat(notifications).hasSize(1).allMatch(u -> u.getUserId().equals(user.getId()));
+      assertThat(notifications).isEmpty();
 
       String collectionId = createCollection(CODE).getId();
 
@@ -348,7 +346,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).hasSize(1).allMatch(n ->
             n.getUserId().equals(USER2) &&
-            n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
+                  n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
    }
 
    @Test
@@ -451,7 +449,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertThat(collection.getDefaultAttributeId()).isNull();
 
       Attribute attribute = new Attribute("a1");
-      Attribute created =  new ArrayList<Attribute>(collectionFacade.createCollectionAttributes(collection.getId(), Collections.singletonList(attribute))).get(0);
+      Attribute created = new ArrayList<>(collectionFacade.createCollectionAttributes(collection.getId(), Collections.singletonList(attribute))).get(0);
 
       collectionFacade.setDefaultAttribute(collection.getId(), created.getId());
       collection = collectionFacade.getCollection(collection.getId());
@@ -469,5 +467,29 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       documentFacade.createDocument(collection.getId(), new Document(new DataDocument("franta", "pajta")));
 
       assertThat(collectionFacade.getDocumentsCountInAllCollections()).isEqualTo(3);
+   }
+
+   @Test
+   public void testGetAllCollectionsProjectManager(){
+      collectionDao.createCollection(prepareCollection("CD1"));
+      collectionDao.createCollection(prepareCollection("CD2"));
+
+      assertThat(collectionFacade.getCollections()).hasSize(2);
+
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+      project.setPermissions(projectPermissions);
+      projectDao.updateProject(project.getId(), project);
+      workspaceCache.clear();
+
+      assertThat(collectionFacade.getCollections()).hasSize(2);
+
+      Permissions organizationPermissions = new Permissions();
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(),Collections.singleton(Role.READ)));
+      organization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(organization.getId(), organization);
+      workspaceCache.clear();
+
+      assertThat(collectionFacade.getCollections()).isEmpty();
    }
 }

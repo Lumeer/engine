@@ -46,7 +46,7 @@ public interface ViewDao {
 
    List<View> getViews(DatabaseQuery query);
 
-   List<View> getViews(SearchSuggestionQuery query);
+   List<View> getViews(SearchSuggestionQuery query, boolean skipPermissions);
 
    List<View> getViewsByLinkTypeIds(final List<String> linkTypeIds);
 

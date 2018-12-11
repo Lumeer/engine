@@ -31,6 +31,7 @@ import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -92,7 +93,7 @@ public class MongoFilters {
    private static Bson entityPermissionsFilter(String entityField, String entityName) {
       return Filters.elemMatch(PERMISSIONS + "." + entityField, Filters.and(
             entityNameFilter(entityName),
-            entityRolesFilter(Role.READ)
+            entityRolesFilter(Role.READ, Role.MANAGE)
       ));
    }
 
@@ -100,15 +101,9 @@ public class MongoFilters {
       return Filters.eq(PermissionCodec.ID, name);
    }
 
-   private static Bson entityRolesFilter(Role role) {
-      return Filters.in(PermissionCodec.ROLES, role.toString());
-   }
-
-   public static Bson suggestionsFilter(SearchSuggestionQuery query) {
-      return Filters.and(
-            Filters.text(query.getText()),
-            MongoFilters.permissionsFilter(query)
-      );
+   private static Bson entityRolesFilter(Role ...roles) {
+      List<String> rolesStrings = Arrays.stream(roles).map(Role::toString).collect(Collectors.toList());
+      return Filters.in(PermissionCodec.ROLES, rolesStrings);
    }
 
 }

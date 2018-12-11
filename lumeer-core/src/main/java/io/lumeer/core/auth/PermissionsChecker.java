@@ -114,7 +114,7 @@ public class PermissionsChecker {
          return;
       }
 
-      checkOrganizationAndProject(resource, role);
+      checkOrganizationAndProject(resource, Role.READ);
 
       if (!hasRoleInResource(resource, role)) {
          throw new NoPermissionException(resource);
@@ -130,12 +130,14 @@ public class PermissionsChecker {
 
    private boolean isManager(String userId) {
       if (workspaceKeeper.getOrganization().isPresent()) {
-         if (getActualRolesInResource(workspaceKeeper.getOrganization().get(), userId).contains(Role.MANAGE)) {
+         Set<Role> organizationRoles = getActualRolesInResource(workspaceKeeper.getOrganization().get(), userId);
+         if (organizationRoles.contains(Role.MANAGE)) {
             return true;
          }
-      }
-      if (workspaceKeeper.getProject().isPresent()) {
-         return getActualRolesInResource(workspaceKeeper.getProject().get(), userId).contains(Role.MANAGE);
+         Set<Role> projectRoles = getActualRolesInResource(workspaceKeeper.getProject().get(), userId);
+         if (workspaceKeeper.getProject().isPresent()) {
+            return projectRoles.contains(Role.MANAGE) && organizationRoles.contains(Role.READ);
+         }
       }
       return false;
    }
@@ -157,7 +159,7 @@ public class PermissionsChecker {
          return;
       }
 
-      checkOrganizationAndProject(resource, role);
+      checkOrganizationAndProject(resource, Role.READ);
 
       if (!hasRoleWithView(resource, role, viewRole)) {
          throw new NoPermissionException(resource);

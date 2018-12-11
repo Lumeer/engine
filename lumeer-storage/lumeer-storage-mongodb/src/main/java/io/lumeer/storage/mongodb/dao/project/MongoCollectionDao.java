@@ -163,15 +163,15 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    @Override
-   public List<Collection> getCollections(final SearchSuggestionQuery query) {
-      List<Bson> aggregates = collectionSuggestionAggregation(query);
+   public List<Collection> getCollections(final SearchSuggestionQuery query, final boolean skipPermissions) {
+      List<Bson> aggregates = collectionSuggestionAggregation(query, skipPermissions);
       return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
    }
 
-   private List<Bson> collectionSuggestionAggregation(SearchSuggestionQuery query) {
+   private List<Bson> collectionSuggestionAggregation(SearchSuggestionQuery query, boolean skipPermissions) {
       List<Bson> aggregates = new ArrayList<>();
 
-      aggregates.add(Aggregates.match(collectionSuggestionQuery(query)));
+      aggregates.add(Aggregates.match(collectionSuggestionQuery(query, skipPermissions)));
 
       if (query.hasPriorityCollectionIdsQuery()) {
          List<ObjectId> ids = query.getPriorityCollectionIds().stream().map(ObjectId::new).collect(Collectors.toList());
@@ -193,25 +193,27 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       return aggregates;
    }
 
-   private Bson collectionSuggestionQuery(SearchSuggestionQuery query) {
-      List<Bson> filters = new ArrayList<>();
+   private Bson collectionSuggestionQuery(SearchSuggestionQuery query, boolean skipPermissions) {
+      Bson regex = Filters.regex(CollectionCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
+      if (skipPermissions) {
+         return regex;
+      }
 
-      filters.add(MongoFilters.permissionsFilter(query));
-      filters.add(Filters.regex(CollectionCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE)));
-      return Filters.and(filters);
+      return Filters.and(regex, MongoFilters.permissionsFilter(query));
    }
 
    @Override
-   public List<Collection> getCollectionsByAttributes(final SearchSuggestionQuery query) {
-      Bson filter = attributeSuggestionQuery(query);
+   public List<Collection> getCollectionsByAttributes(final SearchSuggestionQuery query, final boolean skipPermissions) {
+      Bson filter = attributeSuggestionQuery(query, skipPermissions);
       return searchCollectionsByFilter(filter, query);
    }
 
-   private Bson attributeSuggestionQuery(SearchSuggestionQuery query) {
-      List<Bson> filters = new ArrayList<>();
-      filters.add(MongoFilters.permissionsFilter(query));
-      filters.add(Filters.regex(MongoUtils.concatParams(CollectionCodec.ATTRIBUTES, AttributeCodec.NAME), Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE)));
-      return Filters.and(filters);
+   private Bson attributeSuggestionQuery(SearchSuggestionQuery query, boolean skipPermissions) {
+      Bson regex = Filters.regex(MongoUtils.concatParams(CollectionCodec.ATTRIBUTES, AttributeCodec.NAME), Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
+      if (skipPermissions) {
+         return regex;
+      }
+      return Filters.and(regex, MongoFilters.permissionsFilter(query));
    }
 
    @Override

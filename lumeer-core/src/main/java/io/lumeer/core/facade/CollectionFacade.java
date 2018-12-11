@@ -138,7 +138,7 @@ public class CollectionFacade extends AbstractFacade {
       return getCollectionsByPermissions();
    }
 
-   public List<Collection> getCollectionsByPermissions() {
+   private List<Collection> getCollectionsByPermissions() {
       return collectionDao.getCollections(createSimpleQuery()).stream()
                           .map(this::mapResource)
                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))

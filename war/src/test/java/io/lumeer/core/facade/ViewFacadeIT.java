@@ -74,6 +74,8 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
+   private Organization organization;
+   private Project project;
 
    private static final String CODE2 = "TVIEW2";
 
@@ -120,7 +122,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
-      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+      this.organization = organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
       this.userPermission = Permission.buildWithRoles(this.user.getId(), View.ROLES);
       this.groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
@@ -134,9 +136,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
       Permission userProjectPermission = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
-      storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
+      this.project = projectDao.updateProject(storedProject.getId(), storedProject);
 
-      viewDao.setProject(storedProject);
+      viewDao.setProject(this.project);
 
       Collection collection = collectionFacade.createCollection(
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
@@ -310,6 +312,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
             new Collection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
       collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
 
+      removeOrganizationManagePermission();
+      removeProjectManagePermission();
+
       // we are not able to read the collection now
       try {
          collectionFacade.getCollection(collection.getId());
@@ -322,9 +327,11 @@ public class ViewFacadeIT extends IntegrationTestBase {
       View view = createView(CODE2);
       view.setAuthorId(NON_EXISTING_USER);
       view.setQuery(new Query(new QueryStem(collection.getId())));
-      viewDao.updateView(view.getId(), view);
 
-      viewFacade.updateUserPermissions(view.getCode(), Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
+      Permissions permissions = new Permissions();
+      permissions.updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
+      view.setPermissions(permissions);
+      viewDao.updateView(view.getId(), view);
 
       try {
          viewFacade.getViewByCode(CODE2);
@@ -354,5 +361,37 @@ public class ViewFacadeIT extends IntegrationTestBase {
       // access the collection via the view with the current user
       PermissionCheckerUtil.setViewCode(permissionsChecker, view.getCode());
       collectionFacade.getCollection(collection.getId());
+   }
+
+   @Test
+   public void testGetAllViewsProjectManager() {
+      viewDao.createView(prepareView("CD1"));
+      viewDao.createView(prepareView("CD2"));
+
+      assertThat(viewFacade.getViews()).hasSize(2);
+
+      removeProjectManagePermission();
+
+      assertThat(viewFacade.getViews()).hasSize(2);
+
+      removeOrganizationManagePermission();
+
+      assertThat(viewFacade.getViews()).isEmpty();
+   }
+
+   private void removeOrganizationManagePermission() {
+      Permissions organizationPermissions = new Permissions();
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.READ, Role.WRITE))));
+      organization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(organization.getId(), organization);
+      workspaceCache.clear();
+   }
+
+   private void removeProjectManagePermission() {
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.READ, Role.WRITE))));
+      project.setPermissions(projectPermissions);
+      projectDao.updateProject(project.getId(), project);
+      workspaceCache.clear();
    }
 }

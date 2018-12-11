@@ -115,7 +115,7 @@ public class ViewFacade extends AbstractFacade {
 
    public List<View> getViews() {
       if (permissionsChecker.isManager()) {
-         viewDao.getAllViews();
+         return viewDao.getAllViews();
       }
       return getViews(createSimpleQuery());
    }

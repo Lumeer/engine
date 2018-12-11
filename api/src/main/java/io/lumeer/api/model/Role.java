@@ -48,12 +48,6 @@ public enum Role {
                   .collect(Collectors.toSet());
    }
 
-   public static Set<Role> fromStringRoles(Set<String> roles) {
-      return roles.stream()
-                  .map(Role::fromString)
-                  .collect(Collectors.toSet());
-   }
-
    public static Set<Role> withTransitionRoles(Set<Role> roles) {
       return roles.stream()
                   .map(Role::withTransitionRoles)
@@ -62,17 +56,10 @@ public enum Role {
    }
 
    public static Set<Role> withTransitionRoles(Role role) {
-      if (role == Role.READ) {
-         return Collections.singleton(Role.READ);
-      } else if (role == Role.WRITE) {
-         return new HashSet<>(Arrays.asList(Role.WRITE, Role.READ));
-      } else if (role == Role.MANAGE) {
+      if (role == Role.MANAGE) {
          return new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE, Role.SHARE, Role.CLONE));
-      } else if (role == Role.SHARE) {
-         return Collections.singleton(Role.SHARE);
-      } else if (role == Role.CLONE) {
-         return Collections.singleton(Role.CLONE);
       }
-      return Collections.emptySet();
+      return Collections.singleton(role);
    }
+
 }

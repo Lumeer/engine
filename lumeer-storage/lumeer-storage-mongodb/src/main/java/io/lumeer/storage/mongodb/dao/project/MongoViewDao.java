@@ -161,14 +161,17 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    @Override
-   public List<View> getViews(final SearchSuggestionQuery query) {
-      FindIterable<View> findIterable = databaseCollection().find(suggestionsFilter(query));
+   public List<View> getViews(final SearchSuggestionQuery query, boolean skipPermissions) {
+      FindIterable<View> findIterable = databaseCollection().find(suggestionsFilter(query, skipPermissions));
       addPaginationToQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
    }
 
-   private Bson suggestionsFilter(final SearchSuggestionQuery query) {
+   private Bson suggestionsFilter(final SearchSuggestionQuery query, boolean skipPermissions) {
       Bson regex = Filters.regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
+      if (skipPermissions) {
+         return regex;
+      }
       return Filters.and(regex, MongoFilters.permissionsFilter(query));
    }
 

@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
@@ -50,6 +49,10 @@ abstract class AbstractFacade {
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
 
+   protected boolean isManager() {
+      return permissionsChecker.isManager();
+   }
+
    protected <T extends Resource> T keepOnlyActualUserRoles(final T resource) {
       Set<Role> roles = permissionsChecker.getActualRoles(resource);
       Permission permission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), roles);
@@ -79,24 +82,12 @@ abstract class AbstractFacade {
       destinationResource.setNonRemovable(originalResource.isNonRemovable());
    }
 
-
-   protected DatabaseQuery createSimplePaginationQuery(Pagination pagination) {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      return DatabaseQuery.createBuilder(user)
-                        .groups(groups)
-                        .page(pagination.getPage())
-                        .pageSize(pagination.getPageSize())
-                        .build();
-   }
-
    protected DatabaseQuery createSimpleQuery() {
       String user = authenticatedUser.getCurrentUserId();
       Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
 
       return DatabaseQuery.createBuilder(user)
-                        .groups(groups)
-                        .build();
+                          .groups(groups)
+                          .build();
    }
 }

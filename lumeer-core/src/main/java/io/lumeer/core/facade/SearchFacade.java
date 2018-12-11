@@ -76,7 +76,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private SearchQuery buildSearchQuery(Query query) {
-      return SearchQuery.createBuilder(authenticatedUser.getCurrentUser().getEmail())
+      return SearchQuery.createBuilder(authenticatedUser.getCurrentUserId())
                         .groups(authenticatedUserGroups.getCurrentUserGroups())
                         .queryStems(query.getStems(), query.getFulltexts())
                         .page(query.getPage())
