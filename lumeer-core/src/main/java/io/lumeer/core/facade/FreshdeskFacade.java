@@ -94,7 +94,7 @@ public class FreshdeskFacade {
 
          if (!limitsExceeded.contains(id)) {
             limitsExceeded.add(id);
-            logTicket(user, "Limits exceeded by user " + user.getEmail() + "in organization " + organizationCode,
+            logTicket(user, "Limits exceeded by user " + user.getEmail() + " in organization " + organizationCode,
                   "Limits exceeded on resource: " + resourceName);
          }
       }
