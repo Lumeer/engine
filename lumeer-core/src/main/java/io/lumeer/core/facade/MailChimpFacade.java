@@ -64,7 +64,7 @@ public class MailChimpFacade {
    }
 
    public void setUserSubscription(final User user, final boolean enSite) {
-      if (MAILCHIMP_APIKEY != null && !"".equals(MAILCHIMP_APIKEY)) {
+      if (MAILCHIMP_APIKEY != null && !"".equals(MAILCHIMP_APIKEY) && user != null && user.getEmail() != null) {
 
          final String listId = enSite ? MAILCHIMP_LIST_EN : MAILCHIMP_LIST_CS;
          final String userId = md5sum(user.getEmail());

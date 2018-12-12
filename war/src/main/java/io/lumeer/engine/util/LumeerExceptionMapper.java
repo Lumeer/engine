@@ -25,6 +25,7 @@ import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.exception.PaymentGatewayException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.core.facade.SentryFacade;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
 import io.lumeer.engine.api.exception.CollectionAlreadyExistsException;
@@ -62,9 +63,13 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
    @Inject
    private Logger log;
 
+   @Inject
+   private SentryFacade sentryFacade;
+
    @Override
    public Response toResponse(final LumeerException e) {
       log.log(Level.SEVERE, "Exception while serving request: ", e);
+      sentryFacade.reportError(e);
 
       // 400 - BAD REQUEST
       if (e instanceof UserCollectionAlreadyExistsException || e instanceof CollectionAlreadyExistsException ||
