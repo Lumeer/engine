@@ -149,7 +149,7 @@ public class UserFacade extends AbstractFacade {
 
       if (user.hasNewsletter() != null) {
          currentUser.setNewsletter(user.hasNewsletter());
-         mailChimpFacade.setUserSubscription(user, language == null || !"cs".equals(language)); // so that en is default
+         mailChimpFacade.setUserSubscription(currentUser, language == null || !"cs".equals(language)); // so that en is default
       }
 
       if (user.hasAgreement() != null && user.hasAgreement()) {

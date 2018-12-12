@@ -33,7 +33,6 @@ import com.auth0.net.Request;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +42,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -62,6 +63,9 @@ public class Auth0Filter implements Filter {
 
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
    public static final String VIEW_CODE = "view_code";
+
+   @Inject
+   private Logger log;
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -202,7 +206,8 @@ public class Auth0Filter implements Filter {
 
       try {
          filterChain.doFilter(servletRequest, servletResponse);
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
+         log.log(Level.SEVERE, "Unable to serve request: ", e);
          res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
       }
    }
