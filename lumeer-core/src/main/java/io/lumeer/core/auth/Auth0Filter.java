@@ -20,6 +20,7 @@ package io.lumeer.core.auth;
 
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.ConfigurationFacade;
+import io.lumeer.core.facade.SentryFacade;
 
 import com.auth0.SessionUtils;
 import com.auth0.client.auth.AuthAPI;
@@ -75,6 +76,9 @@ public class Auth0Filter implements Filter {
 
    @Inject
    private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private SentryFacade sentryFacade;
 
    private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
    private Map<String, Semaphore> semaphores = new ConcurrentHashMap<>();
@@ -208,6 +212,7 @@ public class Auth0Filter implements Filter {
          filterChain.doFilter(servletRequest, servletResponse);
       } catch (RuntimeException e) {
          log.log(Level.SEVERE, "Unable to serve request: ", e);
+         sentryFacade.reportError(e);
          res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
       }
    }

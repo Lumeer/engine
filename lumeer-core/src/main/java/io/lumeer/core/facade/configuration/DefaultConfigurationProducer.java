@@ -58,6 +58,8 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String PUSHER_SECRET = "pusher_secret";
    public static final String PUSHER_CLUSTER = "pusher_cluster";
 
+   public static final String SENTRY_DSN = "sentry_dsn";
+
    public DefaultConfigurationProducer() {
       defaultConfiguration = new HashMap<>();
 
