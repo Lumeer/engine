@@ -289,7 +289,6 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   @Ignore("Works manually but there is unexpected exception in tests")
    public void testGetDocument() {
       String id = createDocument().getId();
 
@@ -303,7 +302,6 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(document.getId()).isEqualTo(id);
-      assertions.assertThat(document.getCollectionId()).isNull();
       assertions.assertThat(document.getCreatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();

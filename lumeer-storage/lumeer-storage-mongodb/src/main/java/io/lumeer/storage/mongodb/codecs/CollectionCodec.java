@@ -36,6 +36,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -58,9 +59,15 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
       Document bson = documentCodec.decode(reader, decoderContext);
       SimpleResource resource = decodeResource(bson);
 
-      Set<Attribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
-                                                                                           .map(AttributeCodec::convertFromDocument)
-                                                                                           .collect(Collectors.toSet());
+      Set<Attribute> attributes;
+      List attributeList = bson.get(ATTRIBUTES, List.class);
+      if (attributeList != null) {
+         attributes = new ArrayList<Document>(attributeList).stream()
+                                                            .map(AttributeCodec::convertFromDocument)
+                                                            .collect(Collectors.toSet());
+      } else {
+         attributes = Collections.emptySet();
+      }
 
       Integer documentsCount = bson.getInteger(DOCUMENTS_COUNT);
       Integer lastAttributeNum = bson.getInteger(LAST_ATTRIBUTE_NUM);

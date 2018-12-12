@@ -100,7 +100,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
-      organization.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Organization.ROLES));
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);

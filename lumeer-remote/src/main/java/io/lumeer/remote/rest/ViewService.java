@@ -89,10 +89,8 @@ public class ViewService extends AbstractService {
    }
 
    @GET
-   public List<View> getViews(@QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
-      Pagination pagination = new Pagination(page, pageSize);
-
-      return viewFacade.getViews(pagination);
+   public List<View> getViews() {
+      return viewFacade.getViews();
    }
 
    @GET

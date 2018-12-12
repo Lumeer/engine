@@ -20,7 +20,6 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
@@ -115,11 +114,10 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public List<View> getViews() {
+      if (permissionsChecker.isManager()) {
+         return viewDao.getAllViews();
+      }
       return getViews(createSimpleQuery());
-   }
-
-   public List<View> getViews(Pagination pagination) {
-      return getViews(createSimplePaginationQuery((pagination)));
    }
 
    private List<View> getViews(DatabaseQuery databaseQuery) {
@@ -190,7 +188,7 @@ public class ViewFacade extends AbstractFacade {
       return getViewsCollections(getViews(), true);
    }
 
-   public List<Collection> getViewsCollections(List<View> views, boolean keepActualRoles) {
+   private List<Collection> getViewsCollections(List<View> views, boolean keepActualRoles) {
       Set<String> collectionIds = views.stream().map(view -> view.getQuery().getCollectionIds())
                                        .flatMap(java.util.Collection::stream)
                                        .collect(Collectors.toSet());

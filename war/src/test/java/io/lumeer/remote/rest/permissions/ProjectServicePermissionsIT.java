@@ -42,6 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import javax.inject.Inject;
@@ -87,7 +88,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       this.user = userDao.createUser(user);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);

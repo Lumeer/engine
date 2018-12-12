@@ -106,28 +106,60 @@ public class PermissionsChecker {
     *       any resource with defined permissions.
     * @param role
     *       role to be checked.
-    * @throws NoPermissionException when the user does not have the permission.
+    * @throws NoPermissionException
+    *       when the user does not have the permission.
     */
    public void checkRole(Resource resource, Role role) {
-      checkOrganizationAndProject(resource, role);
+      if (isManager()) {
+         return;
+      }
 
-      if (!hasRole(resource, role)) {
+      checkOrganizationAndProject(resource, Role.READ);
+
+      if (!hasRoleInResource(resource, role)) {
          throw new NoPermissionException(resource);
       }
    }
 
    /**
+    * Checks if user is manager in organization or project
+    */
+   public boolean isManager() {
+      return isManager(authenticatedUser.getCurrentUserId());
+   }
+
+   private boolean isManager(String userId) {
+      if (workspaceKeeper.getOrganization().isPresent()) {
+         Set<Role> organizationRoles = getActualRolesInResource(workspaceKeeper.getOrganization().get(), userId);
+         if (organizationRoles.contains(Role.MANAGE)) {
+            return true;
+         }
+         if (workspaceKeeper.getProject().isPresent()) {
+            Set<Role> projectRoles = getActualRolesInResource(workspaceKeeper.getProject().get(), userId);
+            return projectRoles.contains(Role.MANAGE) && organizationRoles.contains(Role.READ);
+         }
+      }
+      return false;
+   }
+
+   /**
     * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
+    *
     * @param resource
     *       any resource with the defined permissions.
     * @param role
     *       role to be checked.
     * @param viewRole
     *       role needed at the view.
-    * @throws NoPermissionException when the user does not have the permission.
+    * @throws NoPermissionException
+    *       when the user does not have the permission.
     */
    public void checkRoleWithView(final Resource resource, final Role role, final Role viewRole) {
-      checkOrganizationAndProject(resource, role);
+      if (isManager()) {
+         return;
+      }
+
+      checkOrganizationAndProject(resource, Role.READ);
 
       if (!hasRoleWithView(resource, role, viewRole)) {
          throw new NoPermissionException(resource);
@@ -136,11 +168,11 @@ public class PermissionsChecker {
 
    private void checkOrganizationAndProject(final Resource resource, final Role role) {
       if (!(resource instanceof Organization) && workspaceKeeper.getOrganization().isPresent()) {
-         if (!hasRole(workspaceKeeper.getOrganization().get(), Role.READ)) {
+         if (!hasRoleInResource(workspaceKeeper.getOrganization().get(), role)) {
             throw new NoPermissionException(resource);
          }
          if (!(resource instanceof Project) && workspaceKeeper.getProject().isPresent()) {
-            if (!hasRole(workspaceKeeper.getProject().get(), Role.READ)) {
+            if (!hasRoleInResource(workspaceKeeper.getProject().get(), role)) {
                throw new NoPermissionException(resource);
             }
          }
@@ -157,17 +189,22 @@ public class PermissionsChecker {
     * @return True if and only if the user has the given role ont he resource.
     */
    public boolean hasRole(Resource resource, Role role) {
+      return isManager() || hasRoleInResource(resource, role);
+   }
+
+   private boolean hasRoleInResource(Resource resource, Role role) {
       return hasRoleCache.computeIfAbsent(resource.getId() + ":" + role.toString(), id -> getActualRoles(resource).contains(role));
    }
 
-   private boolean hasRole(Resource resource, Role role, String userId) {
-      return getActualRoles(resource, userId).contains(role);
+   private boolean hasRoleInResource(Resource resource, Role role, String userId) {
+      return getActualRolesInResource(resource, userId).contains(role);
    }
 
    /**
     * Invalidates a bit of cache when the information changes.
     *
-    * @param resource Resource being updated.
+    * @param resource
+    *       Resource being updated.
     */
    public void invalidateCache(final Resource resource) {
       for (final Role role : Role.values()) {
@@ -178,6 +215,7 @@ public class PermissionsChecker {
    /**
     * Checks whether the current user has the given role on the given resource
     * or the user has access to a view whose author has the given role.
+    *
     * @param resource
     *       any resource with the defined permissions.
     * @param role
@@ -187,31 +225,25 @@ public class PermissionsChecker {
     * @return true if and only if the user has the given role ont he resource.
     */
    public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole) {
-      return hasRoleWithView(resource, role, viewRole, viewCode);
+      return isManager() || hasRoleWithView(resource, role, viewRole, viewCode);
    }
 
-   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final String viewCode) {
-      if (!hasRole(resource, role)) { // we do not have direct access
-         return getResourceRoleViaView(resource, role, viewRole, viewCode);
-      } else { // we have direct access
-         return true;
-      }
+   private boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final String viewCode) {
+      return hasRoleInResource(resource, role) || getResourceRoleViaView(resource, role, viewRole, viewCode);
    }
-
-
 
    private boolean getResourceRoleViaView(final Resource resource, final Role role, final Role viewRole, final String viewCode) {
       if (viewCode != null && !"".equals(viewCode)) { // we might have the access through a view
          final View view = viewDao.getViewByCode(viewCode);
 
          if (view != null) {
-            if (hasRole(view, viewRole)) { // do we have access to the view?
+            if (hasRoleInResource(view, viewRole)) { // do we have access to the view?
                final String authorId = view.getAuthorId();
 
                if (resource instanceof Collection) {
                   if (view.getQuery().getCollectionIds().contains(resource.getId())) { // does the view contain the resource?
                      if (authorId != null && !"".equals(authorId)) {
-                        if (hasRole(resource, role, authorId)) { // has the view author access to the resource?
+                        if (hasRoleInResource(resource, role, authorId)) { // has the view author access to the resource?
                            return true; // grant access
                         }
                      }
@@ -226,6 +258,7 @@ public class PermissionsChecker {
 
    /**
     * Gets the active view provided in view_code HTTP header through REST endpoint.
+    *
     * @return The active View when exists, null otherwise.
     */
    public View getActiveView() {
@@ -256,11 +289,31 @@ public class PermissionsChecker {
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {
+      if (isManager(userId)) {
+         return getAllRoles(resource);
+      }
+      return getActualRolesInResource(resource, userId);
+   }
+
+   private Set<Role> getAllRoles(final Resource resource) {
+      if (resource instanceof Organization) {
+         return Organization.ROLES;
+      } else if (resource instanceof Project) {
+         return Project.ROLES;
+      } else if (resource instanceof Collection) {
+         return Collection.ROLES;
+      } else if (resource instanceof View) {
+         return View.ROLES;
+      }
+      return Collections.emptySet();
+   }
+
+   private Set<Role> getActualRolesInResource(final Resource resource, final String userId) {
       final Set<String> groups = authenticatedUser.getCurrentUserId().equals(userId) ? getUserGroups(resource) : getUserGroups(resource, userId);
 
       final Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
       actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
-      return actualRoles;
+      return Role.withTransitionRoles(actualRoles);
    }
 
    private Set<String> getUserGroups(Resource resource) {
@@ -276,28 +329,27 @@ public class PermissionsChecker {
       }
 
       final Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
-      if (!organizationOptional.isPresent()){
+      if (!organizationOptional.isPresent()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       final Organization organization = organizationOptional.get();
       final User user = userDao.getUserById(userId);
 
-
-      return user != null ? user.getGroups().get(organization.getId()) : Collections.EMPTY_SET;
+      return user != null ? user.getGroups().get(organization.getId()) : Collections.emptySet();
    }
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
       return userRoles.stream()
-            .filter(entity -> entity.getId().equals(userId))
-            .flatMap(entity -> entity.getRoles().stream())
-            .collect(Collectors.toSet());
+                      .filter(entity -> entity.getId().equals(userId))
+                      .flatMap(entity -> entity.getRoles().stream())
+                      .collect(Collectors.toSet());
    }
 
    private Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
       return groupRoles.stream()
-            .filter(entity -> groupIds.contains(entity.getId()))
-            .flatMap(entity -> entity.getRoles().stream())
-            .collect(Collectors.toSet());
+                       .filter(entity -> groupIds.contains(entity.getId()))
+                       .flatMap(entity -> entity.getRoles().stream())
+                       .collect(Collectors.toSet());
    }
 
    /**
@@ -409,7 +461,8 @@ public class PermissionsChecker {
     * we have access to the view and the owner of the view can still execute it. For security reasons, the view code
     * cannot be changed along the way.
     *
-    * @param viewCode code of the view
+    * @param viewCode
+    *       code of the view
     */
    void setViewCode(final String viewCode) {
       if (this.viewCode == null) {
@@ -433,8 +486,10 @@ public class PermissionsChecker {
    /**
     * Checks whether it is possible to delete the given resource.
     *
-    * @param resource Resource to check.
-    * @throws NoPermissionException When it is not possible to delete the resource.
+    * @param resource
+    *       Resource to check.
+    * @throws NoPermissionException
+    *       When it is not possible to delete the resource.
     */
    public void checkCanDelete(Resource resource) {
       if (resource.isNonRemovable()) {

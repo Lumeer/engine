@@ -66,6 +66,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final ZonedDateTime LAST_TIME_USED = ZonedDateTime.now().withNano(0);
 
    private static final Permissions PERMISSIONS = new Permissions();
+   private static final Permissions MANAGE_PERMISSIONS = new Permissions();
    private static final Permission USER_PERMISSION;
    private static final Permission GROUP_PERMISSION;
 
@@ -91,8 +92,11 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       Attribute attribute = new Attribute(ATTRIBUTE1_NAME);
       ATTRIBUTES = Collections.singleton(attribute);
 
-      USER_PERMISSION = new Permission(USER, Collection.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      USER_PERMISSION = Permission.buildWithRoles(USER, Collection.ROLES);
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
+
+      Permission userManagePermission = Permission.buildWithRoles(USER, Collections.singleton(Role.MANAGE));
+      MANAGE_PERMISSIONS.updateUserPermissions(userManagePermission);
 
       GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
@@ -114,6 +118,12 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
       collectionDao.setProject(project);
       collectionDao.createCollectionsRepository(project);
+   }
+
+   private Collection prepareManageCollection(String code, String name) {
+      Collection collection = prepareCollection(code, name);
+      collection.setPermissions(MANAGE_PERMISSIONS);
+      return collection;
    }
 
    private Collection prepareCollection(String code, String name) {
@@ -294,7 +304,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER)
                                                                          .text("TEST")
                                                                          .build();
-      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery);
+      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery, false);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE, CODE3);
    }
 
@@ -311,7 +321,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
                                                                          .page(0)
                                                                          .pageSize(3)
                                                                          .build();
-      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery);
+      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery, false);
       assertThat(collections).extracting(Resource::getId).containsOnly(id1, id2, id3);
 
       searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER)
@@ -320,7 +330,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
                                                    .page(0)
                                                    .pageSize(3)
                                                    .build();
-      collections = collectionDao.getCollections(searchSuggestionQuery);
+      collections = collectionDao.getCollections(searchSuggestionQuery, false);
       assertThat(collections).extracting(Resource::getId).contains(id4, id5);
    }
 
@@ -333,7 +343,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER2)
                                                                          .text("TEST")
                                                                          .build();
-      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery);
+      List<Collection> collections = collectionDao.getCollections(searchSuggestionQuery, false);
       assertThat(collections).isEmpty();
    }
 
@@ -346,7 +356,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER)
                                                                          .text("sugg")
                                                                          .build();
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery);
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery, false);
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE2, CODE3);
    }
 
@@ -359,7 +369,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       SearchSuggestionQuery searchSuggestionQuery = SearchSuggestionQuery.createBuilder(USER2)
                                                                          .text("sugg")
                                                                          .build();
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery);
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery, false);
       assertThat(collections).isEmpty();
    }
 
@@ -383,6 +393,16 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE3, NAME3);
 
       assertThat(collectionDao.getAllCollectionNames()).contains(NAME, NAME2, NAME3);
+   }
+
+   @Test
+   public void testGetCollectionsByManagePermission(){
+      collectionDao.createCollection(prepareManageCollection(CODE, NAME));
+      collectionDao.createCollection(prepareCollection(CODE2, NAME));
+      collectionDao.createCollection(prepareManageCollection(CODE3, NAME));
+
+      DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
+      assertThat(collectionDao.getCollections(query)).extracting(Collection::getCode).containsOnly(CODE, CODE2, CODE3);
    }
 
 }

@@ -86,6 +86,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    private User user;
    private User stranger;
+   private Organization organization;
 
    private static final String ORGANIZATION_CODE = "TORG";
 
@@ -125,10 +126,10 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
-      organization.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
-      Organization storedOrganization = organizationDao.createOrganization(organization);
+      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+      this.organization = organizationDao.createOrganization(organization);
 
-      projectDao.setOrganization(storedOrganization);
+      projectDao.setOrganization(this.organization);
 
       workspaceKeeper.setOrganization(ORGANIZATION_CODE);
    }
@@ -172,6 +173,8 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateProject() {
+      addOrganizationManagePermission();
+
       Project project = new Project(CODE1, NAME, ICON, COLOR, null, null);
 
       Project returnedProject = projectFacade.createProject(project);
@@ -189,6 +192,14 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedProject.getPermissions().getUserPermissions()).containsOnly(userPermissions);
       assertions.assertThat(storedProject.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
+   }
+
+   private void addOrganizationManagePermission() {
+      Permissions organizationPermissions = new Permissions();
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Organization.ROLES));
+      organization.setPermissions(organizationPermissions);
+      organizationDao.updateOrganization(organization.getId(), organization);
+      workspaceCache.clear();
    }
 
    @Test

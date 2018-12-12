@@ -103,11 +103,11 @@ public class SuggestionFacade extends AbstractFacade {
 
    private List<View> suggestViews(SuggestionQuery suggestionQuery, int limit) {
       SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
-      return viewDao.getViews(searchSuggestionQuery);
+      return viewDao.getViews(searchSuggestionQuery, isManager());
    }
 
    private List<LinkType> suggestLinkTypes(SuggestionQuery suggestionQuery, int limit) {
-      List<Collection> allowedCollections = collectionDao.getCollections(createSimpleQuery());
+      List<Collection> allowedCollections = getAllowedCollections();
       if (allowedCollections.isEmpty()) {
          return Collections.emptyList();
       }
@@ -117,15 +117,22 @@ public class SuggestionFacade extends AbstractFacade {
       return linkTypeDao.getLinkTypes(searchSuggestionQuery);
    }
 
+   private List<Collection> getAllowedCollections() {
+      if (isManager()) {
+         return collectionDao.getAllCollections();
+      }
+      return collectionDao.getCollections(createSimpleQuery());
+   }
+
    private List<Collection> suggestCollections(SuggestionQuery suggestionQuery, int limit) {
       SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
-      return collectionDao.getCollections(searchSuggestionQuery).stream()
+      return collectionDao.getCollections(searchSuggestionQuery, isManager()).stream()
                           .peek(collection -> collection.setAttributes(Collections.emptySet())).collect(Collectors.toList());
    }
 
    private List<Collection> suggestAttributes(SuggestionQuery suggestionQuery, int limit) {
       SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery);
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery, isManager());
       if (collections.isEmpty()) {
          return Collections.emptyList();
       }
@@ -159,10 +166,8 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private SearchSuggestionQuery.Builder createBuilderForSuggestionQuery(SuggestionQuery suggestionQuery, int limit) {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      return SearchSuggestionQuery.createBuilder(user).groups(groups)
+      return SearchSuggestionQuery.createBuilder(authenticatedUser.getCurrentUserId())
+                                  .groups(authenticatedUserGroups.getCurrentUserGroups())
                                   .text(suggestionQuery.getText())
                                   .priorityCollectionIds(suggestionQuery.getPriorityCollectionIds())
                                   .page(0).pageSize(limit);

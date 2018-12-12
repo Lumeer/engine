@@ -315,7 +315,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE3, NAME3);
 
       SearchSuggestionQuery query = SearchSuggestionQuery.createBuilder(USER).text("test").build();
-      List<View> views = viewDao.getViews(query);
+      List<View> views = viewDao.getViews(query, false);
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
    }
 
@@ -326,7 +326,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE3, NAME3);
 
       SearchSuggestionQuery query = SearchSuggestionQuery.createBuilder(USER2).text("test").build();
-      List<View> views = viewDao.getViews(query);
+      List<View> views = viewDao.getViews(query, false);
       assertThat(views).extracting(View::getCode).isEmpty();
    }
 

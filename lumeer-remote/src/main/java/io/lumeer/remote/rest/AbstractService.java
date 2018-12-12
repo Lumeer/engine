@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.PermissionsChecker;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -34,6 +35,9 @@ abstract class AbstractService {
 
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    protected URI getResourceUri(String additionalPath) {
       return UriBuilder.fromUri(request.getRequestURL() + "/" + additionalPath).build();
@@ -57,5 +61,9 @@ abstract class AbstractService {
       url = url.substring(0, url.indexOf("/"));
 
       return url;
+   }
+
+   protected boolean isManager() {
+      return permissionsChecker.isManager();
    }
 }
