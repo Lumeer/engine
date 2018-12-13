@@ -18,8 +18,12 @@
  */
 package io.lumeer.storage.mongodb.dao.project;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import static com.mongodb.client.model.Accumulators.*;
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Projections.*;
+import static io.lumeer.storage.mongodb.MongoUtils.*;
+import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -33,7 +37,7 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
-import io.lumeer.storage.mongodb.MongoUtils;
+import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
 import io.lumeer.storage.mongodb.codecs.QueryCodec;
 import io.lumeer.storage.mongodb.codecs.QueryStemCodec;
 import io.lumeer.storage.mongodb.codecs.ViewCodec;
@@ -43,11 +47,10 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
-import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -118,7 +121,6 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
             throw new StorageException("View '" + id + "' has not been updated.");
          }
 
-         checkRemovedPermissions(originalView, updatedView);
          if (updateResourceEvent != null) {
             updateResourceEvent.fire(new UpdateResource(updatedView, originalView));
          }
@@ -167,33 +169,56 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       return findIterable.into(new ArrayList<>());
    }
 
+   @Override
+   public List<View> getViewsPermissionsByCollection(final String collectionId) {
+      List<Bson> aggregates = createCollectionAggregate(collectionId);
+      return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
+   }
+
+   private List<Bson> createCollectionAggregate(final String collectionId) {
+      List<Bson> aggregates = new ArrayList<>();
+
+      aggregates.add(addFields(new Field<>(QueryCodec.STEMS, "$" + concatParams(ViewCodec.QUERY, QueryCodec.STEMS))));
+      aggregates.add(project(include(ViewCodec.PERMISSIONS, QueryCodec.STEMS)));
+      aggregates.add(unwind("$" + QueryCodec.STEMS));
+      aggregates.add(addFields(
+            new Field<>(QueryStemCodec.COLLECTION_ID, "$" + concatParams(QueryCodec.STEMS, QueryStemCodec.COLLECTION_ID)),
+            new Field<>(QueryStemCodec.LINK_TYPE_IDS, "$" + concatParams(QueryCodec.STEMS, QueryStemCodec.LINK_TYPE_IDS))
+      ));
+      aggregates.add(project(include(ViewCodec.PERMISSIONS, QueryStemCodec.COLLECTION_ID, QueryStemCodec.LINK_TYPE_IDS)));
+      aggregates.add(unwind("$" + QueryStemCodec.LINK_TYPE_IDS));
+      aggregates.add(addFields(new Field<>(QueryStemCodec.LINK_TYPE_IDS, new Document("$toObjectId", "$" + QueryStemCodec.LINK_TYPE_IDS))));
+      aggregates.add(lookup(linkTypesCollectionName(), QueryStemCodec.LINK_TYPE_IDS, LinkTypeCodec.ID, "_linkTypes"));
+
+      Bson filter = or(
+            eq(QueryStemCodec.COLLECTION_ID, collectionId),
+            in(concatParams("_linkTypes", LinkTypeCodec.COLLECTION_IDS), collectionId)
+      );
+      aggregates.add(match(filter));
+      aggregates.add(group("$_id", first(ViewCodec.PERMISSIONS, "$" + ViewCodec.PERMISSIONS)));
+      aggregates.add(project(include(ViewCodec.PERMISSIONS)));
+
+      return aggregates;
+   }
+
+   private String linkTypesCollectionName() {
+      if (!getProject().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return MongoLinkTypeDao.PREFIX + getProject().get().getId();
+   }
+
    private Bson suggestionsFilter(final SearchSuggestionQuery query, boolean skipPermissions) {
-      Bson regex = Filters.regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
+      Bson regex = regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
       if (skipPermissions) {
          return regex;
       }
-      return Filters.and(regex, MongoFilters.permissionsFilter(query));
-   }
-
-   @Override
-   public List<View> getViewsByLinkTypeIds(final List<String> linkTypeIds) {
-      FindIterable<View> findIterable = databaseCollection().find(
-            Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.STEMS, QueryStemCodec.LINK_TYPE_IDS), linkTypeIds)
-      );
-      return findIterable.into(new ArrayList<>());
-   }
-
-   @Override
-   public List<View> getViewsByCollectionId(final String collectionId) {
-      FindIterable<View> findIterable = databaseCollection().find(
-            Filters.in(MongoUtils.concatParams(ViewCodec.QUERY, QueryCodec.STEMS, QueryStemCodec.COLLECTION_ID), collectionId)
-      );
-      return findIterable.into(new ArrayList<>());
+      return and(regex, MongoFilters.permissionsFilter(query));
    }
 
    @Override
    public Set<String> getAllViewCodes() {
-      return databaseCollection().find().projection(Projections.include(ViewCodec.CODE)).into(new ArrayList<>())
+      return databaseCollection().find().projection(include(ViewCodec.CODE)).into(new ArrayList<>())
                                  .stream()
                                  .map(Resource::getCode)
                                  .collect(Collectors.toSet());

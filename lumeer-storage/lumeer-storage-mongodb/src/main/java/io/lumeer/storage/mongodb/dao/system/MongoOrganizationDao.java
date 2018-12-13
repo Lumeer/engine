@@ -170,7 +170,6 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
             throw new StorageException("Organization '" + organizationId + "' has not been updated.");
          }
 
-         checkRemovedPermissions(originalOrganization, updatedOrganization);
          if (updateResourceEvent != null) {
             updateResourceEvent.fire(new UpdateResource(updatedOrganization, originalOrganization));
          }

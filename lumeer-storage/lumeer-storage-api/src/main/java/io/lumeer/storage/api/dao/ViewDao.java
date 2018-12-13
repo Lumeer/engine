@@ -48,9 +48,7 @@ public interface ViewDao {
 
    List<View> getViews(SearchSuggestionQuery query, boolean skipPermissions);
 
-   List<View> getViewsByLinkTypeIds(final List<String> linkTypeIds);
-
-   List<View> getViewsByCollectionId(final String collectionId);
+   List<View> getViewsPermissionsByCollection(final String collectionId);
 
    void setProject(final Project project);
 

@@ -68,8 +68,8 @@ public class LinkTypeFacade extends AbstractFacade {
       linkTypeDao.deleteLinkType(id);
    }
 
-   public List<String> getLinkTypeCollections(final String linkTypeId) {
-      return linkTypeDao.getLinkType(linkTypeId).getCollectionIds();
+   public LinkType getLinkType(final String linkTypeId) {
+      return linkTypeDao.getLinkType(linkTypeId);
    }
 
    public List<LinkType> getLinkTypes() {
@@ -78,10 +78,6 @@ public class LinkTypeFacade extends AbstractFacade {
       return linkTypeDao.getAllLinkTypes().stream()
                         .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
                         .collect(Collectors.toList());
-   }
-
-   public List<LinkType> getLinkTypesByCollectionId(final String collectionId) {
-      return linkTypeDao.getLinkTypesByCollectionId(collectionId);
    }
 
    private void checkLinkTypePermission(java.util.Collection<String> collectionIds) {

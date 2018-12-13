@@ -43,7 +43,7 @@ import javax.inject.Inject;
 @RequestScoped
 public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
 
-   private static final String PREFIX = "linktypes_p-";
+   public static final String PREFIX = "linktypes_p-";
 
    @Inject
    private Event<CreateLinkType> createLinkTypeEvent;

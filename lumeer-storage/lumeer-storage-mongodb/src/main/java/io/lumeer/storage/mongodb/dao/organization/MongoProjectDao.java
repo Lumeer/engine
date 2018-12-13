@@ -170,7 +170,6 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
             throw new StorageException("Project '" + projectId + "' has not been updated.");
          }
 
-         checkRemovedPermissions(originalProject, updatedProject);
          if (updateResourceEvent != null) {
             updateResourceEvent.fire(new UpdateResource(updatedProject, originalProject));
          }

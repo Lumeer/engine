@@ -25,6 +25,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
@@ -32,18 +33,17 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.ResourceUtils;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
-import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
-import io.lumeer.engine.api.event.RemoveResourcePermissions;
 import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -51,6 +51,9 @@ import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,13 +65,15 @@ import org.marvec.pusher.data.Event;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -80,10 +85,10 @@ import javax.inject.Inject;
 @ApplicationScoped
 public class PusherFacade {
 
-   public static final String PRIVATE_CHANNEL_PREFIX = "private-";
-   public static final String UPDATE_EVENT_SUFFIX = ":update";
-   public static final String CREATE_EVENT_SUFFIX = ":create";
-   public static final String REMOVE_EVENT_SUFFIX = ":remove";
+   private static final String PRIVATE_CHANNEL_PREFIX = "private-";
+   private static final String UPDATE_EVENT_SUFFIX = ":update";
+   private static final String CREATE_EVENT_SUFFIX = ":create";
+   private static final String REMOVE_EVENT_SUFFIX = ":remove";
 
    private String PUSHER_APP_ID;
    private String PUSHER_KEY;
@@ -108,6 +113,12 @@ public class PusherFacade {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private CollectionDao collectionDao;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
@@ -177,6 +188,7 @@ public class PusherFacade {
    public void updateResource(@Observes final UpdateResource updateResource) {
       if (isEnabled()) {
          try {
+            checkRemovedPermissions(updateResource);
             processResource(updateResource.getResource(), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -194,42 +206,216 @@ public class PusherFacade {
       }
    }
 
-   public void removeResourcePermissions(@Observes final RemoveResourcePermissions removeResourcePermissions) {
-      if (isEnabled()) {
-         try {
-            if (removeResourcePermissions.getResource() instanceof View) {
-               sendNotificationOfViewByUsers(removeResourcePermissions.getResource(),
-                     removeResourcePermissions.getRemovedUsers(),
-                     REMOVE_EVENT_SUFFIX);
-            } else {
-               sendNotificationByUsers(removeResourcePermissions.getResource(),
-                     removeResourcePermissions.getRemovedUsers(),
-                     REMOVE_EVENT_SUFFIX);
-            }
-         } catch (Exception e) {
-            log.log(Level.WARNING, "Unable to send push notification: ", e);
-         }
+   private void checkRemovedPermissions(final UpdateResource updateResource) {
+      Set<String> removedUsers = getRemovedUsersPermissions(updateResource.getOriginalResource(), updateResource.getResource());
+      if (removedUsers.isEmpty()) {
+         return;
+      }
+
+      if (updateResource.getResource() instanceof Project) {
+         removedUsers.removeAll(getOrganizationManagers());
+      } else if (updateResource.getResource() instanceof Collection || updateResource.getResource() instanceof View) {
+         removedUsers.removeAll(getWorkspaceManagers());
+      }
+      removedUsers.remove(authenticatedUser.getCurrentUserId());
+
+      sendNotificationsByUsers(updateResource.getResource(), removedUsers, REMOVE_EVENT_SUFFIX);
+   }
+
+   private Set<String> getRemovedUsersPermissions(final Resource originalResource, final Resource updatedResource) {
+      if (originalResource == null || updatedResource == null) {
+         return Collections.emptySet();
+      }
+      Set<Permission> actualPermissions = originalResource.getPermissions().getUserPermissions();
+      Set<Permission> newPermissions = updatedResource.getPermissions().getUserPermissions();
+      // TODO groups
+
+      Set<String> actualUsers = actualPermissions.stream().map(Permission::getId).collect(Collectors.toSet());
+      actualUsers.removeAll(newPermissions.stream().filter(permission -> permission.getRoles().size() > 0).map(Permission::getId).collect(Collectors.toSet()));
+      return actualUsers;
+   }
+
+   private Set<String> getOrganizationManagers() {
+      return permissionsChecker.getOrganizationManagers();
+   }
+
+   private Set<String> getWorkspaceManagers() {
+      return permissionsChecker.getWorkspaceManagers();
+   }
+
+   private void processResource(final Resource resource, final String event) {
+      if (resource instanceof Organization) {
+         sendOrganizationNotifications((Organization) resource, event);
+      } else if (resource instanceof View) {
+         sendViewNotifications((View) resource, event);
+      } else if (resource instanceof Project) {
+         sendProjectNotifications((Project) resource, event);
+      } else if (resource instanceof Collection) {
+         sendCollectionNotifications((Collection) resource, event);
       }
    }
 
+   private void sendOrganizationNotifications(final Organization organization, final String event) {
+      sendNotificationsByUsers(organization, ResourceUtils.usersAllowedRead(organization), event);
+   }
+
+   private void sendNotificationsByUsers(final Object object, final Set<String> userIds, final String event) {
+      final Set<String> userIdsExceptCurrent = new HashSet<>(userIds);
+      userIdsExceptCurrent.remove(authenticatedUser.getCurrentUserId());
+
+      sendNotificationsBatch(userIdsExceptCurrent.stream()
+                                                 .map(userId -> createEvent(object, event, userId))
+                                                 .collect(Collectors.toList()));
+   }
+
+   private Event createEvent(final Object object, final String event, final String userId) {
+      if (object instanceof Document) {
+         return createEventForDocument((Document) object, event, userId);
+      } else if (object instanceof LinkType) {
+         return createEventForLinkType((LinkType) object, event, userId);
+      } else if (object instanceof LinkInstance) {
+         return createEventForLinkInstance((LinkInstance) object, event, userId);
+      } else if (object instanceof Resource) {
+         return createEventForResource((Resource) object, event, userId);
+      } else if (object instanceof ObjectWithParent) {
+         ObjectWithParent objectWithParent = ((ObjectWithParent) object);
+         if (objectWithParent.object instanceof Resource) {
+            return createEventForNestedResource(objectWithParent, event, userId);
+         } else {
+            return createEventForObjectWithParent(objectWithParent, event, userId);
+         }
+      } else {
+         return createEventForObject(object, event, userId);
+      }
+
+   }
+
+   private Event createEventForDocument(final Document document, final String event, final String userId) {
+      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(document.getId()) : document;
+      return createEventForObject(object, event, userId);
+   }
+
+   private Event createEventForLinkInstance(final LinkInstance linkInstance, final String event, final String userId) {
+      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkInstance.getId()) : linkInstance;
+      return createEventForObject(object, event, userId);
+   }
+
+   private Event createEventForLinkType(final LinkType linkType, final String event, final String userId) {
+      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkType.getId()) : linkType;
+      return createEventForObject(object, event, userId);
+   }
+
+   private Event createEventForResource(final Resource resource, final String event, final String userId) {
+      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? getResourceId(resource) : filterUserRoles(userId, resource);
+      return createEventForObject(object, event, userId);
+   }
+
+   private Event createEventForObject(final Object object, final String event, final String userId) {
+      return new Event(eventChannel(userId), object.getClass().getSimpleName() + event, object);
+   }
+
+   private Event createEventForNestedResource(final ObjectWithParent objectWithParent, final String event, final String userId) {
+      Resource resource = (Resource) objectWithParent.object;
+      if (REMOVE_EVENT_SUFFIX.equals(event)) {
+         return createEventForResource(resource, event, userId);
+      }
+
+      Resource filteredResource = filterUserRoles(userId, resource);
+      ObjectWithParent newObjectWithParent = new ObjectWithParent(filteredResource, objectWithParent.organizationId, objectWithParent.projectId);
+      return createEventForObjectWithParent(newObjectWithParent, event, userId);
+   }
+
+   private Event createEventForObjectWithParent(final ObjectWithParent objectWithParent, final String event, final String userId) {
+      return new Event(eventChannel(userId), objectWithParent.object.getClass().getSimpleName() + event, objectWithParent);
+   }
+
+   private String eventChannel(String userId) {
+      return PRIVATE_CHANNEL_PREFIX + userId;
+   }
+
+   private ResourceId getResourceId(Resource resource) {
+      if (resource instanceof View) {
+         return new ResourceId(resource.getCode());
+      }
+      return new ResourceId(resource.getId());
+   }
+
+   private void sendProjectNotifications(final Project project, final String event) {
+      Set<String> userIds = ResourceUtils.usersAllowedRead(project);
+      userIds.addAll(getOrganizationManagers());
+      sendNotificationsByUsers(new ObjectWithParent(project, getOrganization().getId()), userIds, event);
+   }
+
+   private Organization getOrganization() {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+
+      return workspaceKeeper.getOrganization().get();
+   }
+
+   private void sendViewNotifications(final View view, final String event) {
+      Set<String> userIds = ResourceUtils.usersAllowedRead(view);
+      userIds.addAll(getWorkspaceManagers());
+      ObjectWithParent object = new ObjectWithParent(view, getOrganization().getId(), getProject().getId());
+      sendNotificationsByUsers(object, userIds, event);
+
+      sendViewQueryNotifications(view);
+   }
+
+   private void sendViewQueryNotifications(final View view) {
+      Set<String> userIds = ResourceUtils.usersAllowedRead(view);
+      userIds.removeAll(getWorkspaceManagers());
+
+      List<Event> notifications = new ArrayList<>();
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds());
+
+      Set<String> collectionIds = view.getQuery().getCollectionIds();
+      collectionIds.addAll(linkTypes.stream().map(LinkType::getCollectionIds)
+                                    .flatMap(java.util.Collection::stream).collect(Collectors.toSet()));
+
+      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
+      for (String user : userIds) {
+         notifications.addAll(linkTypes.stream()
+                                       .map(linkType -> createEventForLinkType(linkType, UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
+
+         notifications.addAll(collections.stream()
+                                         .map(collection -> createEventForResource(collection, UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
+      }
+
+      sendNotificationsBatch(notifications);
+   }
+
+   private void sendCollectionNotifications(final Collection collection, final String event) {
+      Set<String> userIds = collectionFacade.getUsersIdsWithAccess(collection);
+      ObjectWithParent object = new ObjectWithParent(collection, getOrganization().getId(), getProject().getId());
+      sendNotificationsByUsers(object, userIds, event);
+   }
+
+   private Project getProject() {
+      if (!workspaceKeeper.getProject().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+
+      return workspaceKeeper.getProject().get();
+   }
+
    public void createDocument(@Observes final CreateDocument createDocument) {
-      documentNotification(createDocument.getDocument(), CREATE_EVENT_SUFFIX, createDocument);
+      documentNotification(createDocument.getDocument(), CREATE_EVENT_SUFFIX);
    }
 
    public void updateDocument(@Observes final UpdateDocument updateDocument) {
-      documentNotification(updateDocument.getDocument(), UPDATE_EVENT_SUFFIX, updateDocument);
+      documentNotification(updateDocument.getDocument(), UPDATE_EVENT_SUFFIX);
    }
 
    public void removeDocument(@Observes final RemoveDocument removeDocument) {
-      documentNotification(removeDocument.getDocument(), REMOVE_EVENT_SUFFIX, removeDocument);
+      documentNotification(removeDocument.getDocument(), REMOVE_EVENT_SUFFIX);
    }
 
-   private void documentNotification(final Document document, final String eventSuffix, final DocumentEvent documentEvent) {
+   private void documentNotification(final Document document, final String eventSuffix) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByUsers(document,
-                  collectionFacade.getUsersIdsWithAccess(document.getCollectionId()),
-                  eventSuffix);
+            sendNotificationsByUsers(document, collectionFacade.getUsersIdsWithAccess(document.getCollectionId()), eventSuffix);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -239,9 +425,7 @@ public class PusherFacade {
    public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(createLinkInstance.getLinkInstance(),
-                  createLinkInstance.getLinkInstance().getLinkTypeId(),
-                  CREATE_EVENT_SUFFIX);
+            sendNotificationByLinkType(createLinkInstance.getLinkInstance(), createLinkInstance.getLinkInstance().getLinkTypeId(), CREATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -251,9 +435,7 @@ public class PusherFacade {
    public void updateLinkInstance(@Observes final UpdateLinkInstance updateLinkInstance) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(updateLinkInstance.getLinkInstance(),
-                  updateLinkInstance.getLinkInstance().getLinkTypeId(),
-                  UPDATE_EVENT_SUFFIX);
+            sendNotificationByLinkType(updateLinkInstance.getLinkInstance(), updateLinkInstance.getLinkInstance().getLinkTypeId(), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -263,9 +445,7 @@ public class PusherFacade {
    public void removeLinkInstance(@Observes final RemoveLinkInstance removeLinkInstance) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(removeLinkInstance.getLinkInstance(),
-                  removeLinkInstance.getLinkInstance().getLinkTypeId(),
-                  REMOVE_EVENT_SUFFIX);
+            sendNotificationByLinkType(removeLinkInstance.getLinkInstance(), removeLinkInstance.getLinkInstance().getLinkTypeId(), REMOVE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -275,8 +455,7 @@ public class PusherFacade {
    public void createLinkType(@Observes final CreateLinkType createLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(createLinkType.getLinkType(),
-                  CREATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(createLinkType.getLinkType(), CREATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -286,8 +465,7 @@ public class PusherFacade {
    public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(updateLinkType.getLinkType(),
-                  UPDATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(updateLinkType.getLinkType(), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -297,8 +475,7 @@ public class PusherFacade {
    public void removeLinkType(@Observes final RemoveLinkType removeLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(removeLinkType.getLinkType(),
-                  REMOVE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(removeLinkType.getLinkType(), REMOVE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -308,11 +485,8 @@ public class PusherFacade {
    public void updateCompanyContact(@Observes final UpdateCompanyContact updateCompanyContact) {
       if (isEnabled()) {
          try {
-            sendNotificationByUsers(
-                  updateCompanyContact.getCompanyContact(),
-                  organizationFacade.getOrganizationManagers(
-                        organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId())),
-                  UPDATE_EVENT_SUFFIX);
+            Set<String> userIds = ResourceUtils.getManagers(organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId()));
+            sendNotificationsByUsers(updateCompanyContact.getCompanyContact(), userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -322,10 +496,9 @@ public class PusherFacade {
    public void updateServiceLimits(@Observes final UpdateServiceLimits updateServiceLimits) {
       if (isEnabled()) {
          try {
-            sendNotificationByUsers(
-                  new EntityWithOrganizationId(updateServiceLimits.getOrganization().getId(), updateServiceLimits.getServiceLimits()),
-                  organizationFacade.getOrganizationManagers(updateServiceLimits.getOrganization()),
-                  UPDATE_EVENT_SUFFIX);
+            ObjectWithParent object = new ObjectWithParent(updateServiceLimits.getServiceLimits(), updateServiceLimits.getOrganization().getId());
+            Set<String> userIds = ResourceUtils.getManagers(updateServiceLimits.getOrganization());
+            sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -335,10 +508,9 @@ public class PusherFacade {
    public void createOrUpdatePayment(@Observes final CreateOrUpdatePayment createOrUpdatePayment) {
       if (isEnabled()) {
          try {
-            sendNotificationByUsers(
-                  new EntityWithOrganizationId(createOrUpdatePayment.getOrganization().getId(), createOrUpdatePayment.getPayment()),
-                  organizationFacade.getOrganizationManagers(createOrUpdatePayment.getOrganization()),
-                  UPDATE_EVENT_SUFFIX);
+            ObjectWithParent object = new ObjectWithParent(createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
+            Set<String> userIds = ResourceUtils.getManagers(createOrUpdatePayment.getOrganization());
+            sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -348,10 +520,8 @@ public class PusherFacade {
    public void createUserNotification(@Observes final CreateOrUpdateUserNotification createOrUpdateUserNotification) {
       if (isEnabled()) {
          try {
-            sendNotification(
-                  createOrUpdateUserNotification.getUserNotification().getUserId(),
-                  CREATE_EVENT_SUFFIX,
-                  createOrUpdateUserNotification.getUserNotification()
+            sendNotification(createOrUpdateUserNotification.getUserNotification().getUserId(),
+                  CREATE_EVENT_SUFFIX, createOrUpdateUserNotification.getUserNotification()
             );
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -364,8 +534,7 @@ public class PusherFacade {
          try {
             sendNotification(
                   removeUserNotification.getUserNotification().getUserId(),
-                  REMOVE_EVENT_SUFFIX,
-                  new ResourceId(removeUserNotification.getUserNotification().getId())
+                  REMOVE_EVENT_SUFFIX, new ResourceId(removeUserNotification.getUserNotification().getId())
             );
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -373,112 +542,27 @@ public class PusherFacade {
       }
    }
 
-   private void processResource(final Resource resource, final String event) {
-      if (resource instanceof Organization
-            || resource instanceof View) {
-         sendResourceNotification(
-               resource,
-               REMOVE_EVENT_SUFFIX.equals(event) ?
-                     new ResourceId(resource instanceof View ? resource.getCode() : resource.getId()) : resource,
-               event);
-      } else if (resource instanceof Project) {
-         sendResourceNotification(
-               resource,
-               REMOVE_EVENT_SUFFIX.equals(event) ?
-                     new ResourceId(resource.getId()) : new ResourceWithParent(resource, workspaceKeeper.getOrganization().get().getId()),
-               event);
-      } else if (resource instanceof Collection) {
-         sendResourceNotificationByUsers(
-               resource,
-               collectionFacade.getUsersIdsWithAccess((Collection) resource),
-               event);
+   private void sendNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
+      Set<String> userIds = getUserIdsForLinkType(linkTypeFacade.getLinkType(linkTypeId));
+      sendNotificationsByUsers(linkInstance, userIds, event);
+   }
+
+   private Set<String> getUserIdsForLinkType(final LinkType linkType) {
+      if (linkType == null) {
+         return Collections.emptySet();
       }
-   }
 
-   private void sendResourceNotification(final Resource resource, final Object message, final String event) {
-      sendNotificationsBatch(resource.getPermissions().getUserPermissions().stream()
-                                     .filter(permission -> authenticatedUser.getCurrentUserId() != null
-                                           && !authenticatedUser.getCurrentUserId().equals(permission.getId())
-                                           && permission.getRoles().size() > 0)
-                                     .map(permission ->
-                                           new Event(
-                                                 PRIVATE_CHANNEL_PREFIX + permission.getId(),
-                                                 resource.getClass().getSimpleName() + event,
-                                                 message instanceof Resource ? filterUserRoles(permission.getId(), (Resource) message) : message))
-                                     .collect(Collectors.toList()));
-   }
-
-   private void sendResourceNotificationByUsers(final Resource resource, final Set<String> userIds, final String event) {
-      sendNotificationsBatch(userIds.stream()
-                                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
-                                    .map(userId ->
-                                          new Event(
-                                                PRIVATE_CHANNEL_PREFIX + userId,
-                                                resource.getClass().getSimpleName() + event,
-                                                filterUserRoles(userId, resource)))
-                                    .collect(Collectors.toList()));
-   }
-
-   private void sendNotificationOfViewByUsers(final Resource resource, final Set<String> userIds, final String event) {
-      sendNotificationsBatch(userIds.stream()
-                                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
-                                    .map(userId ->
-                                          new Event(
-                                                PRIVATE_CHANNEL_PREFIX + userId,
-                                                resource.getClass().getSimpleName() + event,
-                                                resource instanceof View ? new ResourceId(resource.getCode()) : resource))
-                                    .collect(Collectors.toList()));
-   }
-
-   private void sendResourceNotificationByUsers(final Document resource, final Set<String> userIds, final String event) {
-      sendNotificationByUsers(resource, userIds, event);
-   }
-
-   private void sendNotificationByUsers(final Object resource, final Set<String> userIds, final String event) {
-      sendNotificationsBatch(userIds.stream()
-                                    .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
-                                    .map(userId ->
-                                          new Event(
-                                                PRIVATE_CHANNEL_PREFIX + userId,
-                                                (resource instanceof EntityWithOrganizationId ? ((EntityWithOrganizationId) resource).entity.getClass().getSimpleName() : resource.getClass().getSimpleName()) + event,
-                                                resource))
-                                    .collect(Collectors.toList()));
-   }
-
-   private void sendResourceNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
-      sendNotificationsBatch(
-            linkTypeFacade
-                  .getLinkTypeCollections(linkTypeId)
-                  .stream()
-                  .map(collectionFacade::getUsersIdsWithAccess) // now we have several sets of user ids
-                  .flatMap(userIds -> Stream.of(userIds.toArray())) // map them to a single set to remove duplicates
-                  .collect(Collectors.toSet())
-                  .stream()
-                  .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
-                  .map(userId ->
-                        new Event(
-                              PRIVATE_CHANNEL_PREFIX + userId,
-                              LinkInstance.class.getSimpleName() + event,
-                              linkInstance))
-                  .collect(Collectors.toList()));
+      Set<Set<String>> userIdsMaps = linkType
+            .getCollectionIds()
+            .stream()
+            .map(collectionFacade::getUsersIdsWithAccess) // now we have several sets of user ids
+            .collect(Collectors.toSet());
+      return intersection(userIdsMaps);
    }
 
    private void sendResourceNotificationByLinkType(final LinkType linkType, final String event) {
-      sendNotificationsBatch(
-            linkType
-                  .getCollectionIds()
-                  .stream()
-                  .map(collectionFacade::getUsersIdsWithAccess) // now we have several sets of user ids
-                  .flatMap(userIds -> Stream.of(userIds.toArray())) // map them to a single set to remove duplicates
-                  .collect(Collectors.toSet())
-                  .stream()
-                  .filter(userId -> authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId))
-                  .map(userId ->
-                        new Event(
-                              PRIVATE_CHANNEL_PREFIX + userId,
-                              LinkType.class.getSimpleName() + event,
-                              linkType))
-                  .collect(Collectors.toList()));
+      Set<String> userIds = getUserIdsForLinkType(linkType);
+      sendNotificationsByUsers(linkType, userIds, event);
    }
 
    private void sendNotification(final String userId, final String event, final Object message) {
@@ -521,39 +605,40 @@ public class PusherFacade {
       }
    }
 
-   public static final class ResourceWithParent {
-      private final Resource resource;
-      private final String parentId;
-
-      public ResourceWithParent(final Resource resource, final String parentId) {
-         this.resource = resource;
-         this.parentId = parentId;
-      }
-
-      public Resource getResource() {
-         return resource;
-      }
-
-      public String getParentId() {
-         return parentId;
-      }
+   public static Set<String> intersection(Set<Set<String>> sets) {
+      return sets.stream().map(HashSet::new).reduce(
+            (s1, s2) -> {
+               s1.retainAll(s2);
+               return s1;
+            }).orElse(new HashSet<>());
    }
 
-   public static final class EntityWithOrganizationId {
+   public static final class ObjectWithParent {
+      private final Object object;
       private final String organizationId;
-      private final Object entity;
+      private final String projectId;
 
-      public EntityWithOrganizationId(final String organizationId, final Object entity) {
+      public ObjectWithParent(final Object object, final String organizationId) {
+         this(object, organizationId, null);
+      }
+
+      public ObjectWithParent(final Object object, final String organizationId, final String projectId) {
+         this.object = object;
          this.organizationId = organizationId;
-         this.entity = entity;
+         this.projectId = projectId;
+      }
+
+      public Object getObject() {
+         return object;
       }
 
       public String getOrganizationId() {
          return organizationId;
       }
 
-      public Object getEntity() {
-         return entity;
+      public String getProjectId() {
+         return projectId;
       }
    }
+
 }

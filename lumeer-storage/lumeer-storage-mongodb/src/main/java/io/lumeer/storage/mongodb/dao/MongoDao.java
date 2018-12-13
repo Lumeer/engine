@@ -18,9 +18,6 @@
  */
 package io.lumeer.storage.mongodb.dao;
 
-import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.common.Resource;
-import io.lumeer.engine.api.event.RemoveResourcePermissions;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
@@ -31,17 +28,10 @@ import com.mongodb.client.model.Aggregates;
 import org.bson.conversions.Bson;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
 
 public abstract class MongoDao {
 
    protected MongoDatabase database;
-
-   @Inject
-   private Event<RemoveResourcePermissions> removeResourcePermissionsEvent;
 
    public void setDatabase(final MongoDatabase database) {
       this.database = database;
@@ -68,18 +58,4 @@ public abstract class MongoDao {
       }
    }
 
-   public void checkRemovedPermissions(final Resource originalResource, final Resource newResource) {
-      if (originalResource != null) {
-         final Set<String> removedUser = getRemovedPermissions(originalResource.getPermissions().getUserPermissions(), newResource.getPermissions().getUserPermissions());
-         if (removedUser.size() > 0) {
-            removeResourcePermissionsEvent.fire(new RemoveResourcePermissions(newResource, removedUser));
-         }
-      }
-   }
-
-   private Set<String> getRemovedPermissions(final Set<Permission> actualPermissions, final Set<Permission> newPermissions) {
-      Set<String> actualUsers = actualPermissions.stream().map(Permission::getId).collect(Collectors.toSet());
-      actualUsers.removeAll(newPermissions.stream().filter(permission -> permission.getRoles().size() > 0).map(Permission::getId).collect(Collectors.toSet()));
-      return actualUsers;
-   }
 }
