@@ -25,12 +25,14 @@ import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -54,4 +56,14 @@ public class NotificationService extends AbstractService {
    public UserNotification updateNotification(@PathParam("notificationId") String notificationId, UserNotification notification) {
       return userNotificationFacade.updateNotification(notificationId, notification);
    }
+
+   @DELETE
+   @Path("{notificationId}")
+   public Response deleteCollection(@PathParam("notificationId") String notificationId) {
+      userNotificationFacade.deleteNotification(notificationId);
+
+      return Response.ok().build();
+   }
+
+
 }

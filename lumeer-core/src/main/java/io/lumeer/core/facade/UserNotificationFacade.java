@@ -26,6 +26,7 @@ import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.UserNotificationDao;
@@ -60,6 +61,16 @@ public class UserNotificationFacade extends AbstractFacade {
 
    public List<UserNotification> getNotifications() {
       return dao.getRecentNotifications(authenticatedUser.getCurrentUserId());
+   }
+
+   public void deleteNotification(final String notificationId) {
+      final UserNotification userNotification = dao.getNotificationById(notificationId);
+
+      if (authenticatedUser.getCurrentUserId().equals(userNotification.getUserId())) {
+         dao.deleteNotification(userNotification);
+      } else {
+         throw new AccessForbiddenException("Cannot delete user notification that does not belong to current user.");
+      }
    }
 
    public UserNotification updateNotification(final String notificationId, final UserNotification notification) {

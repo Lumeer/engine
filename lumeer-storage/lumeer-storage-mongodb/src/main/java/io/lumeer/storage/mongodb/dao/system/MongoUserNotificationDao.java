@@ -20,8 +20,11 @@ package io.lumeer.storage.mongodb.dao.system;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.UserNotificationCodec;
@@ -54,6 +57,9 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
 
    @Inject
    private Event<CreateOrUpdateUserNotification> createOrUpdateUserNotificationEvent;
+
+   @Inject
+   private Event<RemoveUserNotification> removeUserNotificationEvent;
 
    @PostConstruct
    public void initDb() {
@@ -90,6 +96,17 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
          return returnedNotification;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update notification " + notification, ex);
+      }
+   }
+
+   @Override
+   public void deleteNotification(final UserNotification notification) {
+      final UserNotification userNotification = databaseCollection().findOneAndDelete(idFilter(notification.getId()));
+      if (userNotification == null) {
+         throw new StorageException("User notification '" + notification.getUserId() + "' has not been deleted.");
+      }
+      if (removeUserNotificationEvent != null) {
+         removeUserNotificationEvent.fire(new RemoveUserNotification(userNotification));
       }
    }
 
