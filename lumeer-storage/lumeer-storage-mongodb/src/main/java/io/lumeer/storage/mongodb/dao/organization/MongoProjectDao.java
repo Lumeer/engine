@@ -39,7 +39,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Projections;
@@ -162,10 +162,11 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
 
    @Override
    public Project updateProject(final String projectId, final Project project, final Project originalProject) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Project updatedProject = databaseCollection().findOneAndReplace(idFilter(projectId), project, options);
+         Bson update = new Document("$set", project).append("$inc", new Document(ProjectCodec.VERSION, 1));
+         Project updatedProject = databaseCollection().findOneAndUpdate(idFilter(projectId), update, options);
          if (updatedProject == null) {
             throw new StorageException("Project '" + projectId + "' has not been updated.");
          }

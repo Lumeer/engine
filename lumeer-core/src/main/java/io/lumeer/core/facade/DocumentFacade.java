@@ -167,7 +167,6 @@ public class DocumentFacade extends AbstractFacade {
    private Document updateDocument(final Document document) {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
-      document.setDataVersion(document.getDataVersion() + 1);
 
       return documentDao.updateDocument(document.getId(), document);
    }

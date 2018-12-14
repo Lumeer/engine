@@ -59,6 +59,7 @@ public class CompanyContact {
    private String phone;
    private String ic;
    private String dic;
+   private Integer version;
 
    @JsonCreator
    public CompanyContact(@JsonProperty(ID) final String id,
@@ -204,6 +205,14 @@ public class CompanyContact {
 
    public void setDic(final String dic) {
       this.dic = dic;
+   }
+
+   public Integer getVersion() {
+      return version;
+   }
+
+   public void setVersion(final Integer version) {
+      this.version = version;
    }
 
    @Override

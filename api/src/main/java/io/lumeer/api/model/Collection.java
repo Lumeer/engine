@@ -169,7 +169,7 @@ public class Collection extends Resource {
 
    @Override
    public String toString() {
-      return "JsonCollection{" +
+      return "Collection{" +
             "id='" + id + '\'' +
             ", code='" + code + '\'' +
             ", name='" + name + '\'' +

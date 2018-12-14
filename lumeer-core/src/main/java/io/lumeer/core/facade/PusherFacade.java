@@ -260,12 +260,12 @@ public class PusherFacade {
    }
 
    private void sendNotificationsByUsers(final Object object, final Set<String> userIds, final String event) {
-      final Set<String> userIdsExceptCurrent = new HashSet<>(userIds);
-      userIdsExceptCurrent.remove(authenticatedUser.getCurrentUserId());
+      final Set<String> userIdsWithCurrent = new HashSet<>(userIds);
+      userIdsWithCurrent.add(authenticatedUser.getCurrentUserId());
 
-      sendNotificationsBatch(userIdsExceptCurrent.stream()
-                                                 .map(userId -> createEvent(object, event, userId))
-                                                 .collect(Collectors.toList()));
+      sendNotificationsBatch(userIdsWithCurrent.stream()
+                                               .map(userId -> createEvent(object, event, userId))
+                                               .collect(Collectors.toList()));
    }
 
    private Event createEvent(final Object object, final String event, final String userId) {
@@ -291,17 +291,20 @@ public class PusherFacade {
    }
 
    private Event createEventForDocument(final Document document, final String event, final String userId) {
-      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(document.getId()) : document;
+      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(document.getId())
+            : new ObjectWithParent(document, getOrganization().getId(), getProject().getId());
       return createEventForObject(object, event, userId);
    }
 
    private Event createEventForLinkInstance(final LinkInstance linkInstance, final String event, final String userId) {
-      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkInstance.getId()) : linkInstance;
+      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkInstance.getId())
+            : new ObjectWithParent(linkInstance, getOrganization().getId(), getProject().getId());
       return createEventForObject(object, event, userId);
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String event, final String userId) {
-      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkType.getId()) : linkType;
+      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkType.getId())
+            : new ObjectWithParent(linkType, getOrganization().getId(), getProject().getId());
       return createEventForObject(object, event, userId);
    }
 
@@ -334,10 +337,14 @@ public class PusherFacade {
    }
 
    private ResourceId getResourceId(Resource resource) {
-      if (resource instanceof View) {
-         return new ResourceId(resource.getCode());
+      if (resource instanceof Organization) {
+         return new ResourceId(resource.getId());
+      } else if (resource instanceof Project) {
+         return new ResourceId(resource.getId(), getOrganization().getId());
+      } else if (resource instanceof View) {
+         return new ResourceId(resource.getCode(), getOrganization().getId(), getProject().getId());
       }
-      return new ResourceId(resource.getId());
+      return new ResourceId(resource.getId(), getOrganization().getId(), getProject().getId());
    }
 
    private void sendProjectNotifications(final Project project, final String event) {
@@ -593,24 +600,44 @@ public class PusherFacade {
       return copy;
    }
 
-   public static final class ResourceId {
-      private final String id;
-
-      public ResourceId(final String id) {
-         this.id = id;
-      }
-
-      public String getId() {
-         return id;
-      }
-   }
-
    public static Set<String> intersection(Set<Set<String>> sets) {
       return sets.stream().map(HashSet::new).reduce(
             (s1, s2) -> {
                s1.retainAll(s2);
                return s1;
             }).orElse(new HashSet<>());
+   }
+
+   public static final class ResourceId {
+      private final String id;
+      private final String organizationId;
+      private final String projectId;
+
+      public ResourceId(final String id) {
+         this(id, null, null);
+      }
+
+      public ResourceId(final String id, final String organizationId) {
+         this(id, organizationId, null);
+      }
+
+      public ResourceId(final String id, final String organizationId, final String projectId) {
+         this.id = id;
+         this.organizationId = organizationId;
+         this.projectId = projectId;
+      }
+
+      public String getId() {
+         return id;
+      }
+
+      public String getOrganizationId() {
+         return organizationId;
+      }
+
+      public String getProjectId() {
+         return projectId;
+      }
    }
 
    public static final class ObjectWithParent {

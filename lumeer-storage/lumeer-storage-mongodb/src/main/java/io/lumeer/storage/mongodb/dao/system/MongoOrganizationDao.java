@@ -38,7 +38,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Projections;
@@ -162,10 +162,11 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
 
    @Override
    public Organization updateOrganization(final String organizationId, final Organization organization, final Organization originalOrganization) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Organization updatedOrganization = databaseCollection().findOneAndReplace(idFilter(organizationId), organization, options);
+         Bson update = new Document("$set", organization).append("$inc", new Document(OrganizationCodec.VERSION, 1));
+         Organization updatedOrganization = databaseCollection().findOneAndUpdate(idFilter(organizationId), update, options);
          if (updatedOrganization == null) {
             throw new StorageException("Organization '" + organizationId + "' has not been updated.");
          }

@@ -48,7 +48,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Field;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
@@ -113,10 +113,11 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
 
    @Override
    public View updateView(final String id, final View view, final View originalView) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         View updatedView = databaseCollection().findOneAndReplace(idFilter(id), view, options);
+         Bson update = new Document("$set", view).append("$inc", new Document(ViewCodec.VERSION, 1));
+         View updatedView = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedView == null) {
             throw new StorageException("View '" + id + "' has not been updated.");
          }
