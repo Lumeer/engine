@@ -23,6 +23,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
@@ -35,7 +37,6 @@ import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
@@ -59,7 +60,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -85,7 +85,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    private static final String ATTRIBUTE_ID = "a1";
    private static final String ATTRIBUTE_NAME = "fullname";
-   private static final Set<String> ATTRIBUTE_CONSTRAINTS = Collections.emptySet();
+   private static final Constraint ATTRIBUTE_CONSTRAINT = new Constraint(ConstraintType.Boolean, null);
    private static final Integer ATTRIBUTE_COUNT = 0;
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";
@@ -262,7 +262,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
 
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_COUNT);
       final Attribute createdAttribute = collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, attribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -273,18 +273,18 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedAttribute.getId()).isEqualTo(createdAttribute.getId());
       assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
-      assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(storedAttribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
    }
 
    @Test
    public void testUpdateCollectionAttributeUpdate() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
-      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_COUNT);
       collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, updatedAttribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -295,14 +295,14 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedAttribute.getId()).isEqualTo(ATTRIBUTE_ID);
       assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
-      assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(storedAttribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
    }
 
    @Test
    public void testDeleteCollectionAttribute() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
@@ -470,7 +470,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetAllCollectionsProjectManager(){
+   public void testGetAllCollectionsProjectManager() {
       collectionDao.createCollection(prepareCollection("CD1"));
       collectionDao.createCollection(prepareCollection("CD2"));
 
@@ -485,7 +485,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertThat(collectionFacade.getCollections()).hasSize(2);
 
       Permissions organizationPermissions = new Permissions();
-      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(),Collections.singleton(Role.READ)));
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
       organization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(organization.getId(), organization);
       workspaceCache.clear();
