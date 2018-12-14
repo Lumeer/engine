@@ -88,7 +88,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
       keepUnmodifiableFields(organization, storedOrganization);
-      Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization);
+      Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(updatedOrganization.getCode(), updatedOrganization);
 
       return mapResource(updatedOrganization);
@@ -164,28 +164,31 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public void removeUserPermission(final String organizationCode, final String userId) {
-      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+      final Organization storedOrganization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+      final Organization organization = storedOrganization.copy();
 
       organization.getPermissions().removeUserPermission(userId);
-      organizationDao.updateOrganization(organization.getId(), organization);
+      organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationCode, organization);
    }
 
    public Set<Permission> updateGroupPermissions(final String organizationCode, final Permission... groupPermissions) {
-      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+      final Organization storedOrganization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+      final Organization organization = storedOrganization.copy();
 
       organization.getPermissions().updateGroupPermissions(groupPermissions);
-      organizationDao.updateOrganization(organization.getId(), organization);
+      organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationCode, organization);
 
       return organization.getPermissions().getGroupPermissions();
    }
 
    public void removeGroupPermission(final String organizationCode, final String groupId) {
-      Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+      final Organization storedOrganization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
+      final Organization organization = storedOrganization.copy();
 
       organization.getPermissions().removeGroupPermission(groupId);
-      organizationDao.updateOrganization(organization.getId(), organization);
+      organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationCode, organization);
    }
 

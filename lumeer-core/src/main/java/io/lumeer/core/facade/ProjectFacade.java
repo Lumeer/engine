@@ -177,7 +177,7 @@ public class ProjectFacade extends AbstractFacade {
 
       final Project project = storedProject.copy();
       project.getPermissions().updateGroupPermissions(groupPermissions);
-      projectDao.updateProject(project.getId(), project);
+      projectDao.updateProject(project.getId(), project, storedProject);
       workspaceCache.updateProject(projectCode, project);
 
       return project.getPermissions().getGroupPermissions();
@@ -189,7 +189,7 @@ public class ProjectFacade extends AbstractFacade {
 
       final Project project = storedProject.copy();
       project.getPermissions().removeGroupPermission(groupId);
-      projectDao.updateProject(project.getId(), project);
+      projectDao.updateProject(project.getId(), project, storedProject);
       workspaceCache.updateProject(projectCode, project);
    }
 
