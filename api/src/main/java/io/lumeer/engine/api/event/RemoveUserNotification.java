@@ -16,26 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.UserNotification;
-
-import java.util.List;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public interface UserNotificationDao {
+public class RemoveUserNotification extends CreateOrUpdateUserNotification {
 
-   List<UserNotification> getRecentNotifications(final String userId);
-
-   UserNotification getNotificationById(final String notificationId);
-
-   UserNotification updateNotification(final UserNotification notification);
-
-   void deleteNotification(final UserNotification notification);
-
-   List<UserNotification> createNotificationsBatch(final List<UserNotification> notifications);
-
-   void createUserNotificationsRepository();
+   public RemoveUserNotification(final UserNotification userNotification) {
+      super(userNotification);
+   }
 }

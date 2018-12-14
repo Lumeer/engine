@@ -36,14 +36,15 @@ import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
-import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
+import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.RemoveResourcePermissions;
+import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
@@ -351,6 +352,20 @@ public class PusherFacade {
                   createOrUpdateUserNotification.getUserNotification().getUserId(),
                   CREATE_EVENT_SUFFIX,
                   createOrUpdateUserNotification.getUserNotification()
+            );
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void removeUserNotification(@Observes final RemoveUserNotification removeUserNotification) {
+      if (isEnabled()) {
+         try {
+            sendNotification(
+                  removeUserNotification.getUserNotification().getUserId(),
+                  REMOVE_EVENT_SUFFIX,
+                  new ResourceId(removeUserNotification.getUserNotification().getId())
             );
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
