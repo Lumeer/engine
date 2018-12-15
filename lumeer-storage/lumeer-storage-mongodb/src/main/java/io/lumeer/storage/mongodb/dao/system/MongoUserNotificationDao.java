@@ -37,11 +37,18 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
@@ -72,8 +79,8 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
 
       return databaseCollection()
             .find(idFilter)
-            .limit(500)
             .sort(Sorts.descending(UserNotificationCodec.CREATED_AT))
+            .limit(500)
             .into(new ArrayList<>());
    }
 
@@ -96,6 +103,27 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
          return returnedNotification;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update notification " + notification, ex);
+      }
+   }
+
+   @Override
+   public void updateNotifications(final String searchField, final String searchId, final Map<String, String> updates) {
+      final List<Bson> sets = updates.entrySet().stream().map(e -> Updates.set(e.getKey(), e.getValue())).collect(Collectors.toList());
+      final UpdateResult result = databaseCollection().updateMany(Filters.eq(searchField, searchId), Updates.combine(sets));
+
+      if (result.getModifiedCount() > 0 && createOrUpdateUserNotificationEvent != null) {
+         final List<UserNotification> updatedNotifications = databaseCollection().find(Filters.eq(searchField, searchId)).into(new ArrayList<>());
+         updatedNotifications.stream().forEach(notification -> createOrUpdateUserNotificationEvent.fire(new CreateOrUpdateUserNotification(notification)));
+      }
+   }
+
+   @Override
+   public void removeNotifications(final String searchField, final String searchId) {
+      final List<UserNotification> deletedNotifications = databaseCollection().find(Filters.eq(searchField, searchId)).into(new ArrayList<>());
+      final DeleteResult result = databaseCollection().deleteMany(Filters.eq(searchField, searchId));
+
+      if (deletedNotifications.size() > 0 && removeUserNotificationEvent != null) {
+         deletedNotifications.stream().forEach(notification -> removeUserNotificationEvent.fire(new RemoveUserNotification(notification)));
       }
    }
 
