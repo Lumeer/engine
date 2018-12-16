@@ -29,6 +29,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
+import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.UserNotificationDao;
@@ -97,6 +98,10 @@ public class UserNotificationFacade extends AbstractFacade {
    }
 
    private List<UserNotification> createResourceSharedNotifications(final Resource resource, final Set<Permission> newUsers) {
+      return createResourceSharedNotifications(resource, newUsers.stream().map(Permission::getId).collect(Collectors.toList()));
+   }
+
+   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final List<String> newUsers) {
       // in tests, we do not have the workspace at all times
       if (!workspaceKeeper.getOrganization().isPresent() || !workspaceKeeper.getProject().isPresent()) {
          return Collections.EMPTY_LIST;
@@ -149,8 +154,8 @@ public class UserNotificationFacade extends AbstractFacade {
          data.append(UserNotification.ViewShared.VIEW_NAME, resource.getName());
       }
 
-      final List<UserNotification> notifications = newUsers.stream().map(p ->
-            createNotification(p.getId(), getNotificationTypeByResource(resource), data)
+      final List<UserNotification> notifications = newUsers.stream().map(userId ->
+            createNotification(userId, getNotificationTypeByResource(resource), data)
       ).collect(Collectors.toList());
 
       return dao.createNotificationsBatch(notifications);
@@ -171,6 +176,29 @@ public class UserNotificationFacade extends AbstractFacade {
       }
    }
 
+   private Set<String> getManagers(final Resource resource) {
+      return resource.getType() == ResourceType.ORGANIZATION ? permissionsChecker.getOrganizationManagers() : permissionsChecker.getWorkspaceManagers();
+   }
+
+   /* Managers are handled on resource creation, they may or may not be in the resource permissions.
+      At the beginning, we know they are not there. Later, we can remove all managers from notifications
+      upon resource update because they were already notified. If we did not do that, we would never
+      be able to to tell whether we already sent a notification to the manager.
+    */
+   public void createResource(@Observes final CreateResource createResource) {
+      try {
+         createResourceSharedNotifications(
+               createResource.getResource(),
+               getManagers(createResource.getResource())
+                     .stream()
+                     .filter(userId -> !userId.equals(authenticatedUser.getCurrentUserId()))
+                     .collect(Collectors.toList())
+         );
+      } catch (Exception e) {
+         log.log(Level.WARNING, "Unable to create notification: ", e);
+      }
+   }
+
    public void updateResource(@Observes final UpdateResource updateResource) {
       try {
          final Set<Permission> permissions = new HashSet<>(updateResource.getResource().getPermissions().getUserPermissions());
@@ -179,8 +207,12 @@ public class UserNotificationFacade extends AbstractFacade {
             permissions.removeAll(updateResource.getOriginalResource().getPermissions().getUserPermissions());
          }
 
-         if (permissions.size() > 0) {
-            createResourceSharedNotifications(updateResource.getResource(), permissions);
+         final Set<String> managers = getManagers(updateResource.getResource());
+         final List<String> filteredPermissions = permissions.stream().map(Permission::getId).collect(Collectors.toList());
+         filteredPermissions.removeAll(managers);
+
+         if (filteredPermissions.size() > 0) {
+            createResourceSharedNotifications(updateResource.getResource(), filteredPermissions);
          }
 
          updateExistingNotifications(updateResource.getOriginalResource(), updateResource.getResource());
@@ -224,7 +256,7 @@ public class UserNotificationFacade extends AbstractFacade {
                            UserNotification.DATA + "." + UserNotification.ProjectShared.PROJECT_COLOR, updated.getColor(),
                            UserNotification.DATA + "." + UserNotification.ProjectShared.PROJECT_ICON, updated.getIcon(),
                            UserNotification.DATA + "." + UserNotification.ProjectShared.PROJECT_NAME, updated.getName()
-                           )
+                     )
                );
                break;
             case COLLECTION:
