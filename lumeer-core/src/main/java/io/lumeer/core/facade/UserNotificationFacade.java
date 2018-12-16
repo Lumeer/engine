@@ -208,7 +208,8 @@ public class UserNotificationFacade extends AbstractFacade {
 
    private void updateExistingNotifications(final Resource original, final Resource updated) {
       // we do not carry any detailed information on these types in notifications
-      if (original.getType() == ResourceType.ORGANIZATION || original.getType() == ResourceType.DOCUMENT) {
+      // original is null when we are in tests
+      if (original == null || updated.getType() == ResourceType.ORGANIZATION || updated.getType() == ResourceType.DOCUMENT) {
          return;
       }
 
