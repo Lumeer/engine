@@ -97,6 +97,11 @@ public class UserNotificationFacade extends AbstractFacade {
    }
 
    private List<UserNotification> createResourceSharedNotifications(final Resource resource, final Set<Permission> newUsers) {
+      // in tests, we do not have the workspace at all times
+      if (!workspaceKeeper.getOrganization().isPresent() || !workspaceKeeper.getProject().isPresent()) {
+         return Collections.EMPTY_LIST;
+      }
+
       // TODO check that all newUsers are in resource permissions
       final DataDocument data = new DataDocument();
 

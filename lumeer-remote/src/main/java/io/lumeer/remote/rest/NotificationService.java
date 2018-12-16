@@ -59,7 +59,7 @@ public class NotificationService extends AbstractService {
 
    @DELETE
    @Path("{notificationId}")
-   public Response deleteCollection(@PathParam("notificationId") String notificationId) {
+   public Response deleteNotification(@PathParam("notificationId") String notificationId) {
       userNotificationFacade.deleteNotification(notificationId);
 
       return Response.ok().build();
