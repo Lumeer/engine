@@ -140,10 +140,12 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
 
    @Override
    public List<UserNotification> createNotificationsBatch(final List<UserNotification> notifications) {
-      databaseCollection().insertMany(notifications);
+      if (notifications.size() > 0) {
+         databaseCollection().insertMany(notifications);
 
-      if (createOrUpdateUserNotificationEvent != null) {
-         notifications.forEach(notification -> createOrUpdateUserNotificationEvent.fire(new CreateOrUpdateUserNotification(notification)));
+         if (createOrUpdateUserNotificationEvent != null) {
+            notifications.forEach(notification -> createOrUpdateUserNotificationEvent.fire(new CreateOrUpdateUserNotification(notification)));
+         }
       }
 
       return notifications;
