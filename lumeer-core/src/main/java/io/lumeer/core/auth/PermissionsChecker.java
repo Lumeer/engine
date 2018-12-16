@@ -36,6 +36,7 @@ import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
+import io.lumeer.core.util.ResourceUtils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.UserDao;
@@ -44,6 +45,7 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -495,5 +497,32 @@ public class PermissionsChecker {
       if (resource.isNonRemovable()) {
          throw new NoPermissionException(resource);
       }
+   }
+
+   /**
+    * Get managers of current organization.
+    *
+    * @return Set of user IDs of all managers of the current organization.
+    */
+   public Set<String> getOrganizationManagers() {
+      if (workspaceKeeper.getOrganization().isPresent()) {
+         Organization organization = workspaceKeeper.getOrganization().get();
+         return ResourceUtils.getManagers(organization);
+      }
+      return Collections.emptySet();
+   }
+
+   /**
+    * Get managers in current workspace (both organization and project).
+    *
+    * @return Set of IDs of all managers of current organization and project.
+    */
+   public Set<String> getWorkspaceManagers() {
+      Set<String> userIds = new HashSet<>(getOrganizationManagers());
+      if (workspaceKeeper.getProject().isPresent()) {
+         Project project = workspaceKeeper.getProject().get();
+         userIds.addAll(ResourceUtils.getManagers(project));
+      }
+      return userIds;
    }
 }

@@ -75,6 +75,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private static final String NAME = "Test collection";
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ee00";
+   private static final String COLOR2 = "#987EDC";
 
    private Permission userPermission;
    private Permission groupPermission;
@@ -330,7 +331,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       var notifications = userNotificationFacade.getNotifications();
       assertThat(notifications).isEmpty();
 
-      String collectionId = createCollection(CODE).getId();
+      final Collection collection = createCollection(CODE);
+      final String collectionId = collection.getId();
 
       Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
       collectionFacade.updateUserPermissions(collectionId, userPermission);
@@ -345,8 +347,18 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).hasSize(1).allMatch(n ->
-            n.getUserId().equals(USER2) &&
-                  n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
+            n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR).equals(COLOR)
+                  && n.getUserId().equals(USER2)
+                  && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
+
+      collection.setColor(COLOR2);
+      collectionFacade.updateCollection(collectionId, collection);
+
+      notifications = userNotificationDao.getRecentNotifications(USER2);
+      assertThat(notifications).hasSize(1).allMatch(n ->
+            n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR).equals(COLOR2)
+                  && n.getUserId().equals(USER2)
+                  && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
    }
 
    @Test
