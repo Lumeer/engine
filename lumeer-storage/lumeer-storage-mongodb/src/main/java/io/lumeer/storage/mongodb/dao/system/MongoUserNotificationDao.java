@@ -158,6 +158,10 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
 
          MongoCollection<Document> userNotificationCollection = database.getCollection(COLLECTION_NAME);
          userNotificationCollection.createIndex(Indexes.ascending(UserNotification.USER_ID, UserNotification.CREATED_AT), new IndexOptions().unique(false));
+         userNotificationCollection.createIndex(Indexes.ascending(UserNotification.DATA + "." + UserNotification.OrganizationShared.ORGANIZATION_ID));
+         userNotificationCollection.createIndex(Indexes.ascending(UserNotification.DATA + "." + UserNotification.ProjectShared.PROJECT_ID));
+         userNotificationCollection.createIndex(Indexes.ascending(UserNotification.DATA + "." + UserNotification.CollectionShared.COLLECTION_ID));
+         userNotificationCollection.createIndex(Indexes.ascending(UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_CODE));
       }
    }
 
