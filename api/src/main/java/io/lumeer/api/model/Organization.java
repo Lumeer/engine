@@ -57,6 +57,7 @@ public class Organization extends Resource {
       o.description = this.description;
       o.nonRemovable = this.nonRemovable;
       o.permissions = new Permissions(this.getPermissions());
+      o.version = this.version;
 
       return o;
    }

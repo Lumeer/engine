@@ -87,6 +87,7 @@ public class Collection extends Resource {
       o.defaultAttributeId = this.defaultAttributeId;
       o.lastAttributeNum = this.lastAttributeNum;
       o.favorite = this.favorite;
+      o.version = this.version;
 
       return o;
    }

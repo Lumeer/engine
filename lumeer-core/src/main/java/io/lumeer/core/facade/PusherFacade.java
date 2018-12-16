@@ -32,6 +32,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.ResourceUtils;
 import io.lumeer.engine.api.event.CreateDocument;
@@ -128,6 +129,9 @@ public class PusherFacade {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
 
    @PostConstruct
    public void init() {
@@ -270,11 +274,11 @@ public class PusherFacade {
 
    private Event createEvent(final Object object, final String event, final String userId) {
       if (object instanceof Document) {
-         return createEventForDocument((Document) object, event, userId);
+         return createEventForWorkspaceObject(object, ((Document) object).getId(), event, userId);
       } else if (object instanceof LinkType) {
-         return createEventForLinkType((LinkType) object, event, userId);
+         return createEventForWorkspaceObject(object, ((LinkType) object).getId(), event, userId);
       } else if (object instanceof LinkInstance) {
-         return createEventForLinkInstance((LinkInstance) object, event, userId);
+         return createEventForWorkspaceObject(object, ((LinkInstance) object).getId(), event, userId);
       } else if (object instanceof Resource) {
          return createEventForResource((Resource) object, event, userId);
       } else if (object instanceof ObjectWithParent) {
@@ -290,27 +294,22 @@ public class PusherFacade {
 
    }
 
-   private Event createEventForDocument(final Document document, final String event, final String userId) {
-      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(document.getId())
-            : new ObjectWithParent(document, getOrganization().getId(), getProject().getId());
-      return createEventForObject(object, event, userId);
+   private Event createEventForWorkspaceObject(final Object object, final String id, final String event, final String userId) {
+      if (REMOVE_EVENT_SUFFIX.equals(event)) {
+         return createEventForRemove(object.getClass().getSimpleName(), new ResourceId(id, getOrganization().getId(), getProject().getId()), userId);
+      }
+      return createEventForObjectWithParent(new ObjectWithParent(object, getOrganization().getId(), getProject().getId()), event, userId);
    }
 
-   private Event createEventForLinkInstance(final LinkInstance linkInstance, final String event, final String userId) {
-      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkInstance.getId())
-            : new ObjectWithParent(linkInstance, getOrganization().getId(), getProject().getId());
-      return createEventForObject(object, event, userId);
-   }
-
-   private Event createEventForLinkType(final LinkType linkType, final String event, final String userId) {
-      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? new ResourceId(linkType.getId())
-            : new ObjectWithParent(linkType, getOrganization().getId(), getProject().getId());
-      return createEventForObject(object, event, userId);
+   private Event createEventForRemove(final String className, final ResourceId object, final String userId) {
+      return new Event(eventChannel(userId), className + REMOVE_EVENT_SUFFIX, object);
    }
 
    private Event createEventForResource(final Resource resource, final String event, final String userId) {
-      Object object = REMOVE_EVENT_SUFFIX.equals(event) ? getResourceId(resource) : filterUserRoles(userId, resource);
-      return createEventForObject(object, event, userId);
+      if (REMOVE_EVENT_SUFFIX.equals(event)) {
+         return createEventForRemove(resource.getClass().getSimpleName(), getResourceId(resource), userId);
+      }
+      return createEventForObject(filterUserRoles(userId, resource), event, userId);
    }
 
    private Event createEventForObject(final Object object, final String event, final String userId) {
@@ -320,11 +319,12 @@ public class PusherFacade {
    private Event createEventForNestedResource(final ObjectWithParent objectWithParent, final String event, final String userId) {
       Resource resource = (Resource) objectWithParent.object;
       if (REMOVE_EVENT_SUFFIX.equals(event)) {
-         return createEventForResource(resource, event, userId);
+         return createEventForRemove(resource.getClass().getSimpleName(), getResourceId(resource), userId);
       }
 
       Resource filteredResource = filterUserRoles(userId, resource);
       ObjectWithParent newObjectWithParent = new ObjectWithParent(filteredResource, objectWithParent.organizationId, objectWithParent.projectId);
+      newObjectWithParent.setCorrelationId(objectWithParent.getCorrelationId());
       return createEventForObjectWithParent(newObjectWithParent, event, userId);
    }
 
@@ -384,10 +384,11 @@ public class PusherFacade {
       List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       for (String user : userIds) {
          notifications.addAll(linkTypes.stream()
-                                       .map(linkType -> createEventForLinkType(linkType, UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
+                                       .map(linkType -> createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
 
          notifications.addAll(collections.stream()
-                                         .map(collection -> createEventForResource(collection, UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
+                                         .map(collection -> createEventForObjectWithParent(new ObjectWithParent(collection, getOrganization().getId(), getProject().getId())
+                                               , UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
       }
 
       sendNotificationsBatch(notifications);
@@ -396,6 +397,7 @@ public class PusherFacade {
    private void sendCollectionNotifications(final Collection collection, final String event) {
       Set<String> userIds = collectionFacade.getUsersIdsWithAccess(collection);
       ObjectWithParent object = new ObjectWithParent(collection, getOrganization().getId(), getProject().getId());
+      object.setCorrelationId(requestDataKeeper.getCorrelationId());
       sendNotificationsByUsers(object, userIds, event);
    }
 
@@ -562,7 +564,7 @@ public class PusherFacade {
       Set<Set<String>> userIdsMaps = linkType
             .getCollectionIds()
             .stream()
-            .map(collectionFacade::getUsersIdsWithAccess) // now we have several sets of user ids
+            .map(collectionFacade::getUsersIdsWithAccess)
             .collect(Collectors.toSet());
       return intersection(userIdsMaps);
    }
@@ -590,6 +592,9 @@ public class PusherFacade {
 
    private <T extends Resource> T filterUserRoles(final String userId, final T resource) {
       final T copy = resource.copy();
+      if (permissionsChecker.hasRole(resource, Role.MANAGE, userId)) {
+         return copy;
+      }
 
       Set<Role> roles = permissionsChecker.getActualRoles(copy, userId);
       Permission permission = Permission.buildWithRoles(userId, roles);
@@ -600,7 +605,7 @@ public class PusherFacade {
       return copy;
    }
 
-   public static Set<String> intersection(Set<Set<String>> sets) {
+   private static Set<String> intersection(Set<Set<String>> sets) {
       return sets.stream().map(HashSet::new).reduce(
             (s1, s2) -> {
                s1.retainAll(s2);
@@ -638,12 +643,14 @@ public class PusherFacade {
       public String getProjectId() {
          return projectId;
       }
+
    }
 
    public static final class ObjectWithParent {
       private final Object object;
       private final String organizationId;
       private final String projectId;
+      private String correlationId;
 
       public ObjectWithParent(final Object object, final String organizationId) {
          this(object, organizationId, null);
@@ -666,6 +673,14 @@ public class PusherFacade {
       public String getProjectId() {
          return projectId;
       }
+      public String getCorrelationId() {
+         return correlationId;
+      }
+
+      public void setCorrelationId(final String correlationId) {
+         this.correlationId = correlationId;
+      }
+
    }
 
 }

@@ -66,6 +66,7 @@ public abstract class Resource {
       this.description = resource.getDescription();
       this.nonRemovable = resource.isNonRemovable();
       this.permissions = new Permissions(resource.getPermissions());
+      this.version = resource.getVersion();
    }
 
    public abstract <T extends Resource> T copy();

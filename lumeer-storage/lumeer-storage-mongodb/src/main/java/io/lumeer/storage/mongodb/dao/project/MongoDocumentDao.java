@@ -93,14 +93,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public List<Document> createDocuments(final List<Document> documents) {
-      List<Document> jsonDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
-      databaseCollection().insertMany(jsonDocuments);
-
-      if (createDocumentEvent != null) {
-         documents.stream().forEach(document -> createDocumentEvent.fire(new CreateDocument(document)));
-      }
-
-      return new ArrayList<>(jsonDocuments);
+      List<Document> returnDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
+      databaseCollection().insertMany(returnDocuments);
+      return new ArrayList<>(returnDocuments);
    }
 
    @Override

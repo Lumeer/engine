@@ -69,7 +69,7 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
 
    @Override
    public CompanyContact setCompanyContact(final Organization organization, final CompanyContact companyContact) {
-      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
          companyContact.setOrganizationId(organization.getId());
          Bson filter = companyOrganizationIdFilter(organization.getId());

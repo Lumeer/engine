@@ -16,31 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model.common;
 
-import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.ResourceType;
+package io.lumeer.core.auth;
 
-public class SimpleResource extends Resource {
+import javax.enterprise.context.RequestScoped;
 
-   public SimpleResource(final String code, final String name, final String icon, final String color, String description, final Permissions permissions) {
-      super(code, name, icon, color, description, permissions);
+@RequestScoped
+public class RequestDataKeeper {
+
+   private String correlationId;
+
+   public String getCorrelationId() {
+      return correlationId;
    }
 
-   @Override
-   public SimpleResource copy() {
-      final SimpleResource o = new SimpleResource(this.code, this.name, this.icon, this.color, this.description, new Permissions(this.getPermissions()));
-
-      o.id = this.id;
-      o.nonRemovable = this.nonRemovable;
-      o.version = this.version;
-
-      return o;
+   public void setCorrelationId(final String correlationId) {
+      if (this.correlationId == null) {
+         this.correlationId = correlationId;
+      }
    }
-
-   @Override
-   public ResourceType getType() {
-      return null;
-   }
-
 }

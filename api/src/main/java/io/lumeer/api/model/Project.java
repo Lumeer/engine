@@ -71,6 +71,7 @@ public class Project extends Resource {
       o.nonRemovable = this.nonRemovable;
       o.permissions = new Permissions(this.getPermissions());
       o.collectionsCount = this.collectionsCount;
+      o.version = this.version;
 
       return o;
    }

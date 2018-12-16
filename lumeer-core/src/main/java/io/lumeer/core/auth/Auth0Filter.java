@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -63,7 +64,8 @@ import javax.servlet.http.HttpServletResponse;
 public class Auth0Filter implements Filter {
 
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
-   public static final String VIEW_CODE = "view_code";
+   private static final String VIEW_CODE = "view_code";
+   private static final String CORRELATION_ID = "correlation_id";
 
    @Inject
    private Logger log;
@@ -76,6 +78,9 @@ public class Auth0Filter implements Filter {
 
    @Inject
    private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
 
    @Inject
    private SentryFacade sentryFacade;
@@ -113,6 +118,7 @@ public class Auth0Filter implements Filter {
       addCorsHeaders(req, res);
 
       parseViewId(req);
+      parseRequestData(req);
 
       if (System.getenv("SKIP_SECURITY") != null) {
          filterChain.doFilter(servletRequest, servletResponse);
@@ -220,12 +226,14 @@ public class Auth0Filter implements Filter {
    private void parseViewId(final HttpServletRequest req) {
       final String viewCode = req.getHeader(VIEW_CODE);
 
-      if (viewCode != null) {
-         permissionsChecker.setViewCode(viewCode);
-      } else {
-         // there is no view, by setting it to an empty string, we lock any further view id changes
-         permissionsChecker.setViewCode("");
-      }
+      // there is no view, by setting it to an empty string, we lock any further view id changes
+      permissionsChecker.setViewCode(Objects.requireNonNullElse(viewCode, ""));
+   }
+
+   private void parseRequestData(final HttpServletRequest req) {
+      final String correlationId = req.getHeader(CORRELATION_ID);
+
+      this.requestDataKeeper.setCorrelationId(Objects.requireNonNullElse(correlationId, ""));
    }
 
    @Override
