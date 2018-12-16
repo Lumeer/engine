@@ -110,8 +110,10 @@ public class Collection extends Resource {
    }
 
    public void updateAttribute(final String attributeId, final Attribute attribute) {
-      Optional<Attribute> oldAttribute = attributes.stream().filter(attr -> attribute.getId().equals(attribute.getId())).findFirst();
+      Optional<Attribute> oldAttribute = attributes.stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
       attributes.removeIf(a -> a.getId().equals(attributeId));
+
+      oldAttribute.ifPresent((a) -> attribute.setUsageCount(a.getUsageCount()));
       attributes.add(attribute);
 
       if (oldAttribute.isPresent() && !oldAttribute.get().getName().equals(attribute.getName())) {

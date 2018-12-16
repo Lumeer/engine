@@ -21,25 +21,21 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Collections;
-import java.util.Set;
-
 public class Attribute {
 
    public static final String ID = "id";
    public static final String NAME = "name";
-   public static final String CONSTRAINTS = "constraints";
+   public static final String CONSTRAINT = "constraint";
    public static final String USAGE_COUNT = "usageCount";
 
    private String id;
    private String name;
-   private Set<String> constraints;
+   private Constraint constraint;
    private Integer usageCount;
 
    public Attribute(final String id) {
       this.id = id;
       this.name = id;
-      this.constraints = Collections.emptySet();
       this.usageCount = 0;
    }
 
@@ -47,11 +43,11 @@ public class Attribute {
    public Attribute(
          @JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
-         @JsonProperty(CONSTRAINTS) final Set<String> constraints,
+         @JsonProperty(CONSTRAINT) final Constraint constraint,
          @JsonProperty(USAGE_COUNT) final Integer usageCount) {
       this.name = name;
       this.id = id;
-      this.constraints = constraints;
+      this.constraint = constraint;
       this.usageCount = usageCount;
    }
 
@@ -71,8 +67,8 @@ public class Attribute {
       this.id = id;
    }
 
-   public Set<String> getConstraints() {
-      return constraints;
+   public Constraint getConstraint() {
+      return constraint;
    }
 
    public Integer getUsageCount() {
@@ -107,7 +103,7 @@ public class Attribute {
       return "Attribute{" +
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
-            ", constraints=" + constraints +
+            ", constraint=" + constraint +
             ", usageCount=" + usageCount +
             '}';
    }
