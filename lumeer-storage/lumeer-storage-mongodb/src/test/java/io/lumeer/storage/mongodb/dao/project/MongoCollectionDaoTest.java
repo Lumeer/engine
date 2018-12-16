@@ -23,11 +23,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
@@ -46,7 +49,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class MongoCollectionDaoTest extends MongoDbTestBase {
 
@@ -89,7 +91,8 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String ATTRIBUTE2_NAME = "fulltext";
 
    static {
-      Attribute attribute = new Attribute(ATTRIBUTE1_NAME);
+      Constraint constraint = new Constraint(ConstraintType.Boolean, new DataDocument());
+      Attribute attribute = new Attribute("a1", ATTRIBUTE1_NAME, constraint, 0);
       ATTRIBUTES = Collections.singleton(attribute);
 
       USER_PERMISSION = Permission.buildWithRoles(USER, Collection.ROLES);

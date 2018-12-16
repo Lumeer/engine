@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Constraint;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -29,14 +30,11 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.HashSet;
-import java.util.List;
-
 public class AttributeCodec implements Codec<Attribute> {
 
    public static final String ID = "id";
    public static final String NAME = "name";
-   public static final String CONSTRAINTS = "constraints";
+   public static final String CONSTRAINT = "constraint";
    public static final String USAGE_COUNT = "usageCount";
 
    private final Codec<Document> documentCodec;
@@ -55,10 +53,10 @@ public class AttributeCodec implements Codec<Attribute> {
    public static Attribute convertFromDocument(final Document document) {
       String id = document.getString(ID);
       String name = document.getString(NAME);
-      List<String> constraints = document.get(CONSTRAINTS, List.class);
+      Constraint constraint = ConstraintCodec.convertFromDocument(document.get(CONSTRAINT, Document.class));
       Integer usageCount = document.getInteger(USAGE_COUNT);
 
-      return new Attribute(id, name, new HashSet<>(constraints), usageCount);
+      return new Attribute(id, name, constraint, usageCount);
    }
 
    @Override
@@ -66,7 +64,7 @@ public class AttributeCodec implements Codec<Attribute> {
       Document bson = new Document()
             .append(ID, value.getId())
             .append(NAME, value.getName())
-            .append(CONSTRAINTS, value.getConstraints())
+            .append(CONSTRAINT, value.getConstraint())
             .append(USAGE_COUNT, value.getUsageCount());
 
       documentCodec.encode(writer, bson, encoderContext);

@@ -24,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -33,6 +35,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -84,12 +87,12 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ATTRIBUTE_ID = "a1";
    private static final String ATTRIBUTE_NAME = "fullname";
-   private static final Set<String> ATTRIBUTE_CONSTRAINTS = Collections.emptySet();
+   private static final Constraint ATTRIBUTE_CONSTRAINT = new Constraint(ConstraintType.Boolean, null);
    private static final Integer ATTRIBUTE_COUNT = 0;
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";
 
-   private static final Attribute ATTRIBUTE = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+   private static final Attribute ATTRIBUTE = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_COUNT);
 
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String COLLECTIONS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
@@ -306,7 +309,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(attribute.getId()).isEqualTo(ATTRIBUTE_ID);
       assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME);
-      assertions.assertThat(attribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(attribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
    }
@@ -316,7 +319,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINTS, ATTRIBUTE_COUNT);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_COUNT);
       Entity entity = Entity.json(updatedAttribute);
 
       Response response = client.target(COLLECTIONS_URL).path(collection.getId()).path("attributes").path(ATTRIBUTE_ID)
@@ -331,7 +334,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(attribute.getId()).isEqualTo(ATTRIBUTE_ID);
       assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
-      assertions.assertThat(attribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(attribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
 
@@ -343,7 +346,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions = new SoftAssertions();
       assertions.assertThat(storedAttribute.getId()).isEqualTo(ATTRIBUTE_ID);
       assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
-      assertions.assertThat(storedAttribute.getConstraints()).isEqualTo(ATTRIBUTE_CONSTRAINTS);
+      assertions.assertThat(storedAttribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
    }
