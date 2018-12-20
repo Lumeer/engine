@@ -54,6 +54,7 @@ import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
@@ -70,8 +71,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -123,6 +126,9 @@ public class PusherFacade {
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
+
+   @Inject
+   private ViewDao viewDao;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -192,7 +198,7 @@ public class PusherFacade {
    public void updateResource(@Observes final UpdateResource updateResource) {
       if (isEnabled()) {
          try {
-            checkRemovedPermissions(updateResource);
+            checkPermissionsChange(updateResource);
             processResource(updateResource.getResource(), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -210,33 +216,183 @@ public class PusherFacade {
       }
    }
 
-   private void checkRemovedPermissions(final UpdateResource updateResource) {
-      Set<String> removedUsers = getRemovedUsersPermissions(updateResource.getOriginalResource(), updateResource.getResource());
-      if (removedUsers.isEmpty()) {
-         return;
+   private void checkPermissionsChange(final UpdateResource updateResource) {
+      if (updateResource.getResource() instanceof Organization) {
+         checkOrganizationPermissionsChange((Organization) updateResource.getOriginalResource(), (Organization) updateResource.getResource());
+      } else if (updateResource.getResource() instanceof Project) {
+         checkProjectPermissionsChange((Project) updateResource.getOriginalResource(), (Project) updateResource.getResource());
+      } else if (updateResource.getResource() instanceof Collection) {
+         checkCollectionsPermissionsChange((Collection) updateResource.getOriginalResource(), (Collection) updateResource.getResource());
+      } else if (updateResource.getResource() instanceof View) {
+         checkViewPermissionsChange((View) updateResource.getOriginalResource(), (View) updateResource.getResource());
       }
+   }
 
-      if (updateResource.getResource() instanceof Project) {
-         removedUsers.removeAll(getOrganizationManagers());
-      } else if (updateResource.getResource() instanceof Collection || updateResource.getResource() instanceof View) {
-         removedUsers.removeAll(getWorkspaceManagers());
-      }
+   private void checkOrganizationPermissionsChange(final Organization originalOrganization, final Organization updatedOrganization) {
+      Set<String> removedUsers = getRemovedUsersPermissions(originalOrganization, updatedOrganization);
       removedUsers.remove(authenticatedUser.getCurrentUserId());
-
-      sendNotificationsByUsers(updateResource.getResource(), removedUsers, REMOVE_EVENT_SUFFIX);
+      if (!removedUsers.isEmpty()) {
+         sendNotificationsByUsers(updatedOrganization, removedUsers, REMOVE_EVENT_SUFFIX);
+      }
    }
 
    private Set<String> getRemovedUsersPermissions(final Resource originalResource, final Resource updatedResource) {
-      if (originalResource == null || updatedResource == null) {
+      return getPermissionsDifference(originalResource, updatedResource);
+   }
+
+   private Set<String> getPermissionsDifference(final Resource resource1, final Resource resource2) {
+      if (resource1 == null || resource2 == null) {
          return Collections.emptySet();
       }
-      Set<Permission> actualPermissions = originalResource.getPermissions().getUserPermissions();
-      Set<Permission> newPermissions = updatedResource.getPermissions().getUserPermissions();
+      Set<Permission> permissions1 = resource1.getPermissions().getUserPermissions();
+      Set<Permission> permissions2 = resource2.getPermissions().getUserPermissions();
       // TODO groups
 
-      Set<String> actualUsers = actualPermissions.stream().map(Permission::getId).collect(Collectors.toSet());
-      actualUsers.removeAll(newPermissions.stream().filter(permission -> permission.getRoles().size() > 0).map(Permission::getId).collect(Collectors.toSet()));
-      return actualUsers;
+      Set<String> users = permissions1.stream().filter(ResourceUtils::canReadByPermission).map(Permission::getId).collect(Collectors.toSet());
+      users.removeAll(permissions2.stream().filter(ResourceUtils::canReadByPermission).map(Permission::getId).collect(Collectors.toSet()));
+      return users;
+   }
+
+   private void checkProjectPermissionsChange(final Project originalProject, final Project updatedProject) {
+      Set<String> removedUsers = getRemovedUsersPermissions(originalProject, updatedProject);
+      removedUsers.removeAll(getOrganizationManagers());
+      removedUsers.remove(authenticatedUser.getCurrentUserId());
+      if (!removedUsers.isEmpty()) {
+         sendNotificationsByUsers(updatedProject, removedUsers, REMOVE_EVENT_SUFFIX);
+      }
+   }
+
+   private void checkCollectionsPermissionsChange(final Collection originalCollection, final Collection updatedCollection) {
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByCollectionId(updatedCollection.getId());
+      List<View> views = viewDao.getAllViews();
+
+      List<Event> notifications = new ArrayList<>();
+
+      Set<String> removedUsers = getRemovedUsersPermissions(originalCollection, updatedCollection);
+      removedUsers.removeAll(getWorkspaceManagers());
+      removedUsers.remove(authenticatedUser.getCurrentUserId());
+
+      if (removedUsers.size() > 0) {
+         notifications.addAll(createRemoveCollectionNotification(updatedCollection, removedUsers, views));
+         if (linkTypes.size() > 0) {
+            notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, removedUsers, views));
+         }
+      }
+
+      Set<String> addedUsers = getAddedUsersPermissions(originalCollection, updatedCollection);
+      addedUsers.removeAll(getWorkspaceManagers());
+      addedUsers.remove(authenticatedUser.getCurrentUserId());
+
+      if (addedUsers.size() > 0 && linkTypes.size() > 0) {
+         Map<String, Collection> collectionMapByLinkTypes = getCollectionsMapFromLinkTypes(linkTypes);
+         notifications.addAll(createSendCollectionLinkTypesNotification(linkTypes, addedUsers, views, collectionMapByLinkTypes));
+      }
+
+      if (notifications.size() > 0) {
+         sendNotificationsBatch(notifications);
+      }
+   }
+
+   private Map<String, Collection> getCollectionsMapFromLinkTypes(List<LinkType> linkTypes) {
+      final Set<String> collectionIds = linkTypes.stream().map(LinkType::getCollectionIds)
+                                                 .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+      return collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
+   }
+
+   private List<Event> createRemoveCollectionNotification(final Collection collection, final Set<String> userIds, final List<View> views) {
+      List<Event> notifications = new ArrayList<>();
+
+      for (String user : userIds) { // checks if user has collection in some view
+         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
+         Set<String> collectionIdsInViews = viewsByUser.stream().map(view -> view.getQuery().getCollectionIds())
+                                                       .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+         if (!collectionIdsInViews.contains(collection.getId())) {
+            notifications.add(createEventForResource(collection, REMOVE_EVENT_SUFFIX, user));
+         }
+      }
+
+      return notifications;
+   }
+
+   private List<Event> createRemoveCollectionLinkTypesNotification(final List<LinkType> linkTypes, final Set<String> userIds, final List<View> views) {
+      List<Event> notifications = new ArrayList<>();
+
+      for (String user : userIds) {
+         filterLinkTypesNotInViews(linkTypes, views, user).forEach(linkType -> notifications.add(createEventForRemove(linkType.getClass().getSimpleName(),
+               new ResourceId(linkType.getId(), getOrganization().getId(), getProject().getId()), user)));
+      }
+
+      return notifications;
+   }
+
+   private List<LinkType> filterLinkTypesNotInViews(List<LinkType> linkTypes, List<View> views, String user) {
+      List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
+      Set<String> linkTypeIdsInView = viewsByUser.stream().map(view -> view.getQuery().getLinkTypeIds())
+                                                 .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+
+      return linkTypes.stream().filter(linkType -> !linkTypeIdsInView.contains(linkType.getId())).collect(Collectors.toList());
+   }
+
+   private Set<String> getAddedUsersPermissions(final Resource originalResource, final Resource updatedResource) {
+      return getPermissionsDifference(updatedResource, originalResource);
+   }
+
+   private List<Event> createSendCollectionLinkTypesNotification(final List<LinkType> linkTypes, final Set<String> userIds, final List<View> views, final Map<String, Collection> collectionsMap) {
+      List<Event> notifications = new ArrayList<>();
+
+      for (String user : userIds) {
+         filterLinkTypesNotInViews(linkTypes, views, user).stream()
+                                                          .filter(linkType -> canUserReadLinkType(user, linkType, collectionsMap))
+                                                          .forEach(linkType -> notifications.add(createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)));
+      }
+
+      return notifications;
+   }
+
+   private boolean canUserReadLinkType(String userId, LinkType linkType, Map<String, Collection> collectionsMap) {
+      long count = linkType.getCollectionIds().stream().map(collectionsMap::get)
+                           .filter(collection -> collection == null || !permissionsChecker.hasRole(collection, Role.READ, userId)).count();
+
+      return count == 0;
+   }
+
+   private void checkViewPermissionsChange(final View originalView, final View updatedView) {
+      List<View> views = viewDao.getAllViews();
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(updatedView.getQuery().getLinkTypeIds());
+      List<Collection> collections = new ArrayList<>(getCollectionsMapFromLinkTypes(linkTypes).values());
+
+      List<Event> notifications = new ArrayList<>();
+
+      Set<String> removedUsers = getRemovedUsersPermissions(originalView, updatedView);
+      removedUsers.removeAll(getWorkspaceManagers());
+      removedUsers.remove(authenticatedUser.getCurrentUserId());
+
+      if (removedUsers.size() > 0) {
+         removedUsers.forEach(userId -> notifications.add(createEventForResource(updatedView, REMOVE_EVENT_SUFFIX, userId)));
+         if (collections.size() > 0) {
+            collections.forEach(collection -> notifications.addAll(createRemoveCollectionNotification(collection, removedUsers, views)));
+         }
+         if (linkTypes.size() > 0) {
+            linkTypes.forEach(linkType -> notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, removedUsers, views)));
+         }
+      }
+
+      Set<String> addedUsers = getAddedUsersPermissions(originalView, updatedView);
+      addedUsers.removeAll(getWorkspaceManagers());
+      addedUsers.remove(authenticatedUser.getCurrentUserId());
+
+      for (String user : addedUsers) {
+         notifications.addAll(linkTypes.stream()
+                                       .map(linkType -> createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
+
+         notifications.addAll(collections.stream()
+                                         .map(collection -> createEventForObjectWithParent(new ObjectWithParent(collection, getOrganization().getId(), getProject().getId())
+                                               , UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
+      }
+
+      if (notifications.size() > 0) {
+         sendNotificationsBatch(notifications);
+      }
    }
 
    private Set<String> getOrganizationManagers() {
@@ -264,12 +420,9 @@ public class PusherFacade {
    }
 
    private void sendNotificationsByUsers(final Object object, final Set<String> userIds, final String event) {
-      final Set<String> userIdsWithCurrent = new HashSet<>(userIds);
-      userIdsWithCurrent.add(authenticatedUser.getCurrentUserId());
-
-      sendNotificationsBatch(userIdsWithCurrent.stream()
-                                               .map(userId -> createEvent(object, event, userId))
-                                               .collect(Collectors.toList()));
+      sendNotificationsBatch(userIds.stream()
+                                    .map(userId -> createEvent(object, event, userId))
+                                    .collect(Collectors.toList()));
    }
 
    private Event createEvent(final Object object, final String event, final String userId) {
@@ -366,32 +519,6 @@ public class PusherFacade {
       userIds.addAll(getWorkspaceManagers());
       ObjectWithParent object = new ObjectWithParent(view, getOrganization().getId(), getProject().getId());
       sendNotificationsByUsers(object, userIds, event);
-
-      sendViewQueryNotifications(view);
-   }
-
-   private void sendViewQueryNotifications(final View view) {
-      Set<String> userIds = ResourceUtils.usersAllowedRead(view);
-      userIds.removeAll(getWorkspaceManagers());
-
-      List<Event> notifications = new ArrayList<>();
-      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds());
-
-      Set<String> collectionIds = view.getQuery().getCollectionIds();
-      collectionIds.addAll(linkTypes.stream().map(LinkType::getCollectionIds)
-                                    .flatMap(java.util.Collection::stream).collect(Collectors.toSet()));
-
-      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
-      for (String user : userIds) {
-         notifications.addAll(linkTypes.stream()
-                                       .map(linkType -> createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
-
-         notifications.addAll(collections.stream()
-                                         .map(collection -> createEventForObjectWithParent(new ObjectWithParent(collection, getOrganization().getId(), getProject().getId())
-                                               , UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
-      }
-
-      sendNotificationsBatch(notifications);
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
@@ -673,6 +800,7 @@ public class PusherFacade {
       public String getProjectId() {
          return projectId;
       }
+
       public String getCorrelationId() {
          return correlationId;
       }

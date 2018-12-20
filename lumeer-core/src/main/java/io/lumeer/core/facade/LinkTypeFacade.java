@@ -73,11 +73,16 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public List<LinkType> getLinkTypes() {
+      List<LinkType> allLinkTypes = linkTypeDao.getAllLinkTypes();
+      if (isManager()) {
+         return allLinkTypes;
+      }
+
       List<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
                                                        .map(Collection::getId).collect(Collectors.toList());
-      return linkTypeDao.getAllLinkTypes().stream()
-                        .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
-                        .collect(Collectors.toList());
+      return allLinkTypes.stream()
+                         .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
+                         .collect(Collectors.toList());
    }
 
    private void checkLinkTypePermission(java.util.Collection<String> collectionIds) {
