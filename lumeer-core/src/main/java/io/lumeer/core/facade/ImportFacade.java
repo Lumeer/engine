@@ -35,7 +35,6 @@ import java.io.StringReader;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -184,7 +183,6 @@ public class ImportFacade extends AbstractFacade {
       document.setCollectionId(collectionId);
       document.setCreatedBy(authenticatedUser.getCurrentUserId());
       document.setCreationDate(ZonedDateTime.now());
-      document.setDataVersion(DocumentFacade.INITIAL_VERSION);
    }
 
    private Document createDocumentFromRow(String[] headers, String[] row, int[] counts) {
