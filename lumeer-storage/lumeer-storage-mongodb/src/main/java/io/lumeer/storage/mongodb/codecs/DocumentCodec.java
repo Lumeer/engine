@@ -80,7 +80,6 @@ public class DocumentCodec implements CollectibleCodec<Document> {
       bson.append(COLLECTION_ID, document.getCollectionId())
           .append(CREATED_BY, document.getCreatedBy())
           .append(UPDATED_BY, document.getUpdatedBy())
-          .append(DATA_VERSION, document.getDataVersion())
           .append(META_DATA, document.getMetaData());
 
       if (document.getCreationDate() != null) {

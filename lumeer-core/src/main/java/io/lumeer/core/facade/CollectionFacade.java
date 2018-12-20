@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -29,6 +30,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.core.util.ResourceUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -310,34 +312,30 @@ public class CollectionFacade extends AbstractFacade {
    public Set<String> getUsersIdsWithAccess(final Collection collection) {
       final Set<String> result = new HashSet<>();
 
-      result.addAll(collection.getPermissions().getUserPermissions().stream().map(Permission::getId).collect(Collectors.toSet()));
+      result.addAll(collection.getPermissions().getUserPermissions().stream()
+                              .filter(ResourceUtils::canReadByPermission)
+                              .map(Permission::getId).collect(Collectors.toSet()));
 
-      if (permissionsChecker.isManager()) {
-         result.add(authenticatedUser.getCurrentUserId());
-      }
+      result.addAll(ResourceUtils.getManagers(getCurrentOrganization()));
+      result.addAll(ResourceUtils.getManagers(getCurrentProject()));
 
-      viewDao.getViewsByLinkTypeIds(
-            linkTypeDao.getLinkTypesByCollectionId(collection.getId())
-                       .stream()
-                       .map(LinkType::getId)
-                       .collect(Collectors.toList()))
-             .stream()
+      viewDao.getViewsPermissionsByCollection(collection.getId()).stream()
              .map(Resource::getPermissions)
              .map(Permissions::getUserPermissions)
-             .forEach(permissions -> {
-                result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
-             });
-
-      viewDao.getViewsByCollectionId(collection.getId()).stream()
-             .map(Resource::getPermissions)
-             .map(Permissions::getUserPermissions)
-             .forEach(permissions -> {
-                result.addAll(permissions.stream().map(Permission::getId).collect(Collectors.toList()));
-             });
-
+             .forEach(permissions -> result.addAll(permissions.stream()
+                                                              .filter(ResourceUtils::canReadByPermission)
+                                                              .map(Permission::getId).collect(Collectors.toList()))
+             );
       // TODO: Handle user groups as well
 
       return result;
+   }
+
+   private Organization getCurrentOrganization() {
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      return workspaceKeeper.getOrganization().get();
    }
 
    private void checkProjectWriteRole() {

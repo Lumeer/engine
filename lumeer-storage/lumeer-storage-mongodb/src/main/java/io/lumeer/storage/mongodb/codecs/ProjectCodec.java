@@ -45,6 +45,7 @@ public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Proj
 
       Project project = new Project(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions());
       project.setId(resource.getId());
+      project.setVersion(resource.getVersion());
       return project;
    }
 

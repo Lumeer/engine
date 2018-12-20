@@ -47,8 +47,6 @@ import javax.inject.Inject;
 @RequestScoped
 public class DocumentFacade extends AbstractFacade {
 
-   public static final Integer INITIAL_VERSION = 1;
-
    @Inject
    private CollectionDao collectionDao;
 
@@ -85,7 +83,6 @@ public class DocumentFacade extends AbstractFacade {
       document.setCollectionId(collection.getId());
       document.setCreatedBy(authenticatedUser.getCurrentUserId());
       document.setCreationDate(ZonedDateTime.now());
-      document.setDataVersion(INITIAL_VERSION);
       return documentDao.createDocument(document);
    }
 
@@ -167,7 +164,6 @@ public class DocumentFacade extends AbstractFacade {
    private Document updateDocument(final Document document) {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
-      document.setDataVersion(document.getDataVersion() + 1);
 
       return documentDao.updateDocument(document.getId(), document);
    }

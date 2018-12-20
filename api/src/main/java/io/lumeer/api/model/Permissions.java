@@ -57,12 +57,7 @@ public class Permissions {
    }
 
    public void updateUserPermissions(final Permission... newUserPermissions) {
-      Arrays.stream(newUserPermissions)
-            .map(Permission::new)
-            .forEach(userPermission -> {
-               userPermissions.remove(userPermission);
-               userPermissions.add(userPermission);
-            });
+      updatePermissions(userPermissions, newUserPermissions);
    }
 
    public void removeUserPermission(final String userId) {
@@ -74,11 +69,17 @@ public class Permissions {
    }
 
    public void updateGroupPermissions(final Permission... newGroupPermissions) {
-      Arrays.stream(newGroupPermissions)
+      updatePermissions(groupPermissions, newGroupPermissions);
+   }
+
+   private void updatePermissions(Set<Permission> permissions, final Permission... newPermissions) {
+      Arrays.stream(newPermissions)
             .map(Permission::new)
-            .forEach(groupPermission -> {
-               groupPermissions.remove(groupPermission);
-               groupPermissions.add(groupPermission);
+            .forEach(permission -> {
+               permissions.remove(permission);
+               if (!permission.getRoles().isEmpty()) {
+                  permissions.add(permission);
+               }
             });
    }
 

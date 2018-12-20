@@ -20,13 +20,13 @@ package io.lumeer.core.facade;
 
 import static java.util.Map.entry;
 
-import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 /**
@@ -79,6 +80,9 @@ public class PaymentFacade extends AbstractFacade {
    @Inject
    private CompanyContactFacade companyContactFacade;
 
+   @Inject
+   private Event<UpdateServiceLimits> updateServiceLimitsEvent;
+
    private Payment currentPayment = null;
 
    public Payment createPayment(final Organization organization, final Payment payment, final String notifyUrl, final String returnUrl) {
@@ -93,13 +97,15 @@ public class PaymentFacade extends AbstractFacade {
             "A new order of Lumeer was placed for " + payment.getUsers() + " users with amount of "
                   + payment.getCurrency() + " " + payment.getAmount());
 
+      if (updateServiceLimitsEvent != null) {
+         updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, getCurrentServiceLimits(organization)));
+      }
+
       return result;
    }
 
    private Organization getOrganizationUnsafe(final String organizationCode) {
-      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
-
-      return organization;
+      return organizationDao.getOrganizationByCode(organizationCode);
    }
 
    public List<Payment> getPayments(final Organization organization) {
@@ -214,6 +220,10 @@ public class PaymentFacade extends AbstractFacade {
       freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "Payment status updated for organization " + organizationCode,
             "Payment in amount of " + payment.getCurrency() + " " + payment.getAmount() + " is in state " + payment.getState().name() +
                   ". Invoice might need to be prepared for " + companyContactFacade.getCompanyContact(organization));
+
+      if (updateServiceLimitsEvent != null) {
+         updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, getCurrentServiceLimits(organization)));
+      }
 
       return result;
    }

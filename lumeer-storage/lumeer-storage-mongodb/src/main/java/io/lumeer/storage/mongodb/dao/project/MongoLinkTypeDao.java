@@ -21,7 +21,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
@@ -43,7 +43,7 @@ import javax.inject.Inject;
 @RequestScoped
 public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
 
-   private static final String PREFIX = "linktypes_p-";
+   public static final String PREFIX = "linktypes_p-";
 
    @Inject
    private Event<CreateLinkType> createLinkTypeEvent;
@@ -83,9 +83,10 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
 
    @Override
    public LinkType updateLinkType(final String id, final LinkType linkType) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(false);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false);
       try {
-         LinkType updatedLinkType = databaseCollection().findOneAndReplace(idFilter(id), linkType, options);
+         Bson update = new Document("$set", linkType).append("$inc", new Document(LinkTypeCodec.VERSION, 1));
+         LinkType updatedLinkType = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedLinkType == null) {
             throw new StorageException("Link type '" + id + "' has not been updated.");
          }

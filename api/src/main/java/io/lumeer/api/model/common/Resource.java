@@ -38,6 +38,7 @@ public abstract class Resource {
    protected String name;
    protected String icon;
    protected String color;
+   protected Integer version;
    protected String description;
    protected boolean nonRemovable;
 
@@ -61,9 +62,11 @@ public abstract class Resource {
       this.name = resource.getName();
       this.icon = resource.getIcon();
       this.color = resource.getColor();
+      this.version = resource.getVersion();
       this.description = resource.getDescription();
       this.nonRemovable = resource.isNonRemovable();
       this.permissions = new Permissions(resource.getPermissions());
+      this.version = resource.getVersion();
    }
 
    public abstract <T extends Resource> T copy();
@@ -133,6 +136,14 @@ public abstract class Resource {
 
    public void setDescription(final String description) {
       this.description = description;
+   }
+
+   public Integer getVersion() {
+      return version;
+   }
+
+   public void setVersion(final Integer version) {
+      this.version = version;
    }
 
    @Override

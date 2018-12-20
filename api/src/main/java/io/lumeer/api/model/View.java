@@ -82,6 +82,7 @@ public class View extends Resource {
       o.config = this.config;
       o.authorId = this.authorId;
       o.authorRights = this.authorRights;
+      o.version = this.version;
 
       return o;
    }

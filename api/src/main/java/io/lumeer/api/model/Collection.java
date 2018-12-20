@@ -87,6 +87,7 @@ public class Collection extends Resource {
       o.defaultAttributeId = this.defaultAttributeId;
       o.lastAttributeNum = this.lastAttributeNum;
       o.favorite = this.favorite;
+      o.version = this.version;
 
       return o;
    }
@@ -169,7 +170,7 @@ public class Collection extends Resource {
 
    @Override
    public String toString() {
-      return "JsonCollection{" +
+      return "Collection{" +
             "id='" + id + '\'' +
             ", code='" + code + '\'' +
             ", name='" + name + '\'' +

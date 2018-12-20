@@ -83,6 +83,7 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
       collection.setDefaultAttributeId(defaultAttributeId);
       collection.setLastAttributeNum(lastAttributeNum);
       collection.setAttributes(attributes);
+      collection.setVersion(resource.getVersion());
 
       return collection;
    }

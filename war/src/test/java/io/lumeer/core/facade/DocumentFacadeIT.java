@@ -25,7 +25,6 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -173,7 +172,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
       assertions.assertThat(storedDocument.getUpdateDate()).isNull();
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
 
@@ -210,7 +208,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
+      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
 
@@ -247,7 +245,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
+      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
 
@@ -295,7 +293,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();
       assertions.assertThat(document.getUpdateDate()).isNull();
-      assertions.assertThat(document.getDataVersion()).isEqualTo(1);
       assertions.assertAll();
 
       DataDocument data = document.getData();

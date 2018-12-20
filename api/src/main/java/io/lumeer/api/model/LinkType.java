@@ -34,6 +34,7 @@ public class LinkType {
 
    private String id;
    private String name;
+   private Integer version;
    private List<String> collectionIds;
    private List<Attribute> attributes;
 
@@ -78,6 +79,14 @@ public class LinkType {
 
    public void setAttributes(List<Attribute> attributes) {
       this.attributes = attributes;
+   }
+
+   public Integer getVersion() {
+      return version;
+   }
+
+   public void setVersion(final Integer version) {
+      this.version = version;
    }
 
    @Override

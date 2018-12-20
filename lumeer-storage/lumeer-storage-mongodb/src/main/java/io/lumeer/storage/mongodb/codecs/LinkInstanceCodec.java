@@ -41,6 +41,7 @@ public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
    public static final String ID = "_id";
    public static final String LINK_TYPE_ID = "linkTypeId";
    public static final String DOCUMENTS_IDS = "documentIds";
+   public static final String VERSION = "collectionIds";
    public static final String DATA = "data";
 
    private final Codec<Document> documentCodec;
@@ -57,8 +58,11 @@ public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
       String linkTypeId = bson.getString(LINK_TYPE_ID);
       List<String> documentIds = bson.get(DOCUMENTS_IDS, List.class);
       Map<String, Object> data = bson.get(DATA, Map.class);
+      Integer version = bson.getInteger(VERSION);
 
-      return new LinkInstance(id, linkTypeId, documentIds, data);
+      LinkInstance linkInstance = new LinkInstance(id, linkTypeId, documentIds, data);
+      linkInstance.setVersion(version);
+      return linkInstance;
    }
 
    @Override

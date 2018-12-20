@@ -103,7 +103,6 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isEqualTo(CREATION_DATE);
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
       assertions.assertThat(storedDocument.getUpdateDate()).isNull();
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(DATA_VERSION);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
    }
@@ -136,7 +135,6 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       String id = document.getId();
 
       ZonedDateTime updateDate = ZonedDateTime.now().withNano(0);
-      document.setDataVersion(DATA_VERSION2);
       document.setUpdatedBy(UPDATED_BY);
       document.setUpdateDate(updateDate);
 
@@ -152,12 +150,11 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isEqualTo(CREATION_DATE);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(UPDATED_BY);
       assertions.assertThat(storedDocument.getUpdateDate()).isEqualTo(updateDate);
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(DATA_VERSION2);
+      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertAll();
    }
 
    @Test
-   @Ignore("Stored anyway with the current implementation")
    public void testUpdateDocumentNotExisting() {
       Document document = prepareDocument();
       assertThatThrownBy(() -> documentDao.updateDocument(DOCUMENT_ID, document))
@@ -216,7 +213,6 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       assertions.assertThat(document.getCreationDate()).isEqualTo(CREATION_DATE);
       assertions.assertThat(document.getUpdatedBy()).isNull();
       assertions.assertThat(document.getUpdateDate()).isNull();
-      assertions.assertThat(document.getDataVersion()).isEqualTo(DATA_VERSION);
       assertions.assertAll();
    }
 

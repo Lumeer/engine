@@ -130,7 +130,7 @@ public class PermissionsChecker {
       return isManager(authenticatedUser.getCurrentUserId());
    }
 
-   private boolean isManager(String userId) {
+   public boolean isManager(String userId) {
       if (workspaceKeeper.getOrganization().isPresent()) {
          Set<Role> organizationRoles = getActualRolesInResource(workspaceKeeper.getOrganization().get(), userId);
          if (organizationRoles.contains(Role.MANAGE)) {
@@ -191,7 +191,11 @@ public class PermissionsChecker {
     * @return True if and only if the user has the given role ont he resource.
     */
    public boolean hasRole(Resource resource, Role role) {
-      return isManager() || hasRoleInResource(resource, role);
+      return hasRole(resource, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean hasRole(Resource resource, Role role, String userId){
+      return isManager(userId) || hasRoleInResource(resource, role, userId);
    }
 
    private boolean hasRoleInResource(Resource resource, Role role) {
