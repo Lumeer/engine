@@ -48,6 +48,8 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -113,7 +115,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       final User createdUser = userDao.createUser(user);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Organization.ROLES);
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), new HashSet<>(Collections.singletonList(Role.READ)));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -124,7 +126,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Project.ROLES);
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), new HashSet<>(Collections.singletonList(Role.READ)));
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
