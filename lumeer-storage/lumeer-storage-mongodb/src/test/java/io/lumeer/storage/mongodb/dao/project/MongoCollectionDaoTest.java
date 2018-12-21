@@ -29,6 +29,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -46,8 +47,10 @@ import org.mockito.Mockito;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MongoCollectionDaoTest extends MongoDbTestBase {
@@ -90,6 +93,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String ATTRIBUTE1_NAME = "suggestion";
    private static final String ATTRIBUTE2_NAME = "fulltext";
 
+   private static final String RULE_NAME = "ruleName";
+   private static final String CONFIGURATION_KEY = "testKey";
+   private static final String CONFIGURATION_VALUE = "testValue";
+
    static {
       Constraint constraint = new Constraint(ConstraintType.Boolean, new DataDocument());
       Attribute attribute = new Attribute("a1", ATTRIBUTE1_NAME, constraint, 0);
@@ -130,7 +137,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    }
 
    private Collection prepareCollection(String code, String name) {
-      Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES);
+      Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES, new HashMap<>());
       collection.setDocumentsCount(DOCUMENTS_COUNT);
       collection.setLastTimeUsed(LAST_TIME_USED);
       return collection;
@@ -174,6 +181,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       String id = createCollection(CODE, NAME).getId();
 
       Collection collection = prepareCollection(CODE2, NAME);
+      collection.setRules(Map.of(RULE_NAME, new Rule(Rule.RuleType.AUTO_LINK, new DataDocument(CONFIGURATION_KEY, CONFIGURATION_VALUE))));
       Collection updatedCollection = collectionDao.updateCollection(id, collection, null);
       assertThat(updatedCollection).isNotNull();
       assertThat(updatedCollection.getCode()).isEqualTo(CODE2);
@@ -181,6 +189,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       Collection storedCollection = collectionDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedCollection).isNotNull();
       assertThat(updatedCollection).isEqualTo(storedCollection);
+      assertThat(updatedCollection.getRules()).hasSize(1).hasEntrySatisfying(RULE_NAME, rule -> {
+         assertThat(rule.getType()).isEqualTo(Rule.RuleType.AUTO_LINK);
+         assertThat(rule.getConfiguration()).contains(Map.entry(CONFIGURATION_KEY, CONFIGURATION_VALUE));
+      });
    }
 
    @Test
