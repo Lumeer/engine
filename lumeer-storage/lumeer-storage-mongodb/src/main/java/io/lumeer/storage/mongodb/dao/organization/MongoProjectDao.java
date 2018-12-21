@@ -165,7 +165,7 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Bson update = new Document("$set", project).append("$inc", new Document(ProjectCodec.VERSION, 1));
+         Bson update = new Document("$set", project).append("$inc", new Document(ProjectCodec.VERSION, 1L));
          Project updatedProject = databaseCollection().findOneAndUpdate(idFilter(projectId), update, options);
          if (updatedProject == null) {
             throw new StorageException("Project '" + projectId + "' has not been updated.");

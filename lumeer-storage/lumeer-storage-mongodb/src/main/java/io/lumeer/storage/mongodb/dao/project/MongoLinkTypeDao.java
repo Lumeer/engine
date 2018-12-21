@@ -85,7 +85,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    public LinkType updateLinkType(final String id, final LinkType linkType) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false);
       try {
-         Bson update = new Document("$set", linkType).append("$inc", new Document(LinkTypeCodec.VERSION, 1));
+         Bson update = new Document("$set", linkType).append("$inc", new Document(LinkTypeCodec.VERSION, 1L));
          LinkType updatedLinkType = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedLinkType == null) {
             throw new StorageException("Link type '" + id + "' has not been updated.");

@@ -89,7 +89,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
    private Payment updatePayment(final Organization organization, final Payment payment, final Bson filter) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
       try {
-         Bson update = new Document("$set", payment).append("$inc", new Document(PaymentCodec.VERSION, 1));
+         Bson update = new Document("$set", payment).append("$inc", new Document(PaymentCodec.VERSION, 1L));
          final Payment returnedPayment = databaseCollection(organization).findOneAndUpdate(filter, update, options);
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + payment.getId() + "' has not been updated.");

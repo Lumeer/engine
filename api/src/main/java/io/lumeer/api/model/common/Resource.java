@@ -38,7 +38,7 @@ public abstract class Resource {
    protected String name;
    protected String icon;
    protected String color;
-   protected Integer version;
+   protected long version;
    protected String description;
    protected boolean nonRemovable;
 
@@ -138,11 +138,11 @@ public abstract class Resource {
       this.description = description;
    }
 
-   public Integer getVersion() {
+   public long getVersion() {
       return version;
    }
 
-   public void setVersion(final Integer version) {
+   public void setVersion(final long version) {
       this.version = version;
    }
 

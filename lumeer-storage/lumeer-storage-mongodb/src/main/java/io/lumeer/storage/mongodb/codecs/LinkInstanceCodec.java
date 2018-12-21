@@ -58,10 +58,10 @@ public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
       String linkTypeId = bson.getString(LINK_TYPE_ID);
       List<String> documentIds = bson.get(DOCUMENTS_IDS, List.class);
       Map<String, Object> data = bson.get(DATA, Map.class);
-      Integer version = bson.getInteger(VERSION);
+      Long version = bson.getLong(VERSION);
 
       LinkInstance linkInstance = new LinkInstance(id, linkTypeId, documentIds, data);
-      linkInstance.setVersion(version);
+      linkInstance.setVersion(version == null ? 1 : version);
       return linkInstance;
    }
 

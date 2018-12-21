@@ -105,10 +105,10 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
       String phone = bson.getString(PHONE);
       String ic = bson.getString(IC);
       String dic = bson.getString(DIC);
-      Integer version = bson.getInteger(VERSION);
+      Long version = bson.getLong(VERSION);
 
       CompanyContact companyContact = new CompanyContact(id, organizationId, company, firstName, surname, address1, address2, city, zip, state, country, email, phone, ic, dic);
-      companyContact.setVersion(version);
+      companyContact.setVersion(version == null ? 1 : version);
       return companyContact;
    }
 

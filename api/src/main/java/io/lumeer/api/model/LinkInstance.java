@@ -36,7 +36,7 @@ public class LinkInstance {
    private String id;
    private String linkTypeId;
    private List<String> documentIds;
-   private Integer version;
+   private long version;
    private Map<String, Object> data;
 
    @JsonCreator
@@ -82,11 +82,11 @@ public class LinkInstance {
       this.data = data;
    }
 
-   public Integer getVersion() {
+   public long getVersion() {
       return version;
    }
 
-   public void setVersion(final Integer version) {
+   public void setVersion(final long version) {
       this.version = version;
    }
 

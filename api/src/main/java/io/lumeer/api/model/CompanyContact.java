@@ -59,7 +59,7 @@ public class CompanyContact {
    private String phone;
    private String ic;
    private String dic;
-   private Integer version;
+   private long version;
 
    @JsonCreator
    public CompanyContact(@JsonProperty(ID) final String id,
@@ -207,11 +207,11 @@ public class CompanyContact {
       this.dic = dic;
    }
 
-   public Integer getVersion() {
+   public long getVersion() {
       return version;
    }
 
-   public void setVersion(final Integer version) {
+   public void setVersion(final long version) {
       this.version = version;
    }
 

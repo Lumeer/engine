@@ -165,7 +165,7 @@ public class MongoOrganizationDao extends SystemScopedDao implements Organizatio
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Bson update = new Document("$set", organization).append("$inc", new Document(OrganizationCodec.VERSION, 1));
+         Bson update = new Document("$set", organization).append("$inc", new Document(OrganizationCodec.VERSION, 1L));
          Organization updatedOrganization = databaseCollection().findOneAndUpdate(idFilter(organizationId), update, options);
          if (updatedOrganization == null) {
             throw new StorageException("Organization '" + organizationId + "' has not been updated.");
