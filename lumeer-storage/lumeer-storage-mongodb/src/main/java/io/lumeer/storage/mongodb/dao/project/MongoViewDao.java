@@ -116,7 +116,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Bson update = new Document("$set", view).append("$inc", new Document(ViewCodec.VERSION, 1));
+         Bson update = new Document("$set", view).append("$inc", new Document(ViewCodec.VERSION, 1L));
          View updatedView = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedView == null) {
             throw new StorageException("View '" + id + "' has not been updated.");

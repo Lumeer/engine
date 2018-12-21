@@ -78,7 +78,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    public LinkInstance updateLinkInstance(final String id, final LinkInstance linkInstance) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
       try {
-         Bson update = new Document("$set", linkInstance).append("$inc", new Document(LinkInstanceCodec.VERSION, 1));
+         Bson update = new Document("$set", linkInstance).append("$inc", new Document(LinkInstanceCodec.VERSION, 1L));
          LinkInstance updatedLinkInstance = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedLinkInstance == null) {
             throw new StorageException("Link instance '" + id + "' has not been updated.");

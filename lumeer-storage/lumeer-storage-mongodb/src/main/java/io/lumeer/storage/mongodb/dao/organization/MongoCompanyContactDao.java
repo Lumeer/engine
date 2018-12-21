@@ -73,7 +73,7 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
       try {
          companyContact.setOrganizationId(organization.getId());
          Bson filter = companyOrganizationIdFilter(organization.getId());
-         Bson update = new Document("$set", companyContact).append("$inc", new Document(CompanyContactCodec.VERSION, 1));
+         Bson update = new Document("$set", companyContact).append("$inc", new Document(CompanyContactCodec.VERSION, 1L));
 
          final CompanyContact updatedCompanyContact = databaseCollection().findOneAndUpdate(filter, update, options);
          if (updateCompanyContactEvent != null) {

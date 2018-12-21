@@ -97,7 +97,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Bson update = new Document("$set", collection).append("$inc", new Document(CollectionCodec.VERSION, 1));
+         Bson update = new Document("$set", collection).append("$inc", new Document(CollectionCodec.VERSION, 1L));
          final Collection updatedCollection = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedCollection == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
