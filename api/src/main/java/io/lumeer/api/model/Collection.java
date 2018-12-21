@@ -30,8 +30,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -45,6 +47,8 @@ public class Collection extends Resource {
 
    private static final String ATTRIBUTES = "attributes";
 
+   public static final String RULES = "rules";
+
    private Set<Attribute> attributes;
    private Integer documentsCount;
 
@@ -53,9 +57,10 @@ public class Collection extends Resource {
    private String defaultAttributeId;
    private Integer lastAttributeNum;
    private boolean favorite;
+   private Map<String, Rule> rules;
 
    public Collection(final String code, final String name, final String icon, final String color, final Permissions permissions) {
-      this(code, name, icon, color, "", permissions, new LinkedHashSet<>());
+      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>());
    }
 
    @JsonCreator
@@ -66,12 +71,14 @@ public class Collection extends Resource {
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
-         @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes) {
+         @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes,
+         @JsonProperty(RULES) final Map<String, Rule> rules) {
       super(code, name, icon, color, description, permissions);
 
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
       this.documentsCount = 0;
       this.lastAttributeNum = 0;
+      this.rules = rules;
    }
 
    @Override
@@ -88,6 +95,7 @@ public class Collection extends Resource {
       o.lastAttributeNum = this.lastAttributeNum;
       o.favorite = this.favorite;
       o.version = this.version;
+      o.rules = new HashMap<>(this.rules);
 
       return o;
    }
@@ -168,6 +176,14 @@ public class Collection extends Resource {
       this.defaultAttributeId = attributeId;
    }
 
+   public Map<String, Rule> getRules() {
+      return rules;
+   }
+
+   public void setRules(final Map<String, Rule> rules) {
+      this.rules = rules;
+   }
+
    @Override
    public String toString() {
       return "Collection{" +
@@ -181,6 +197,7 @@ public class Collection extends Resource {
             ", documentsCount=" + documentsCount +
             ", defaultAttributeId=" + defaultAttributeId +
             ", lastTimeUsed=" + lastTimeUsed +
+            ", rules=" + rules +
             '}';
    }
 
