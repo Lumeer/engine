@@ -82,7 +82,7 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
       String gwUrl = bson.getString(GW_URL);
 
       Payment payment = new Payment(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl);
-      payment.setVersion(version == null ? 0 : version);
+      payment.setVersion(version == null ? 1 : version);
       return payment;
    }
 

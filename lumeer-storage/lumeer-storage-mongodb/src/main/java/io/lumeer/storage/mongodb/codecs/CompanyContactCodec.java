@@ -108,7 +108,7 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
       Long version = bson.getLong(VERSION);
 
       CompanyContact companyContact = new CompanyContact(id, organizationId, company, firstName, surname, address1, address2, city, zip, state, country, email, phone, ic, dic);
-      companyContact.setVersion(version == null ? 0 : version);
+      companyContact.setVersion(version == null ? 1 : version);
       return companyContact;
    }
 

@@ -65,7 +65,7 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       Long version = bson.getLong(VERSION);
 
       LinkType linkType =  new LinkType(id, name, collectionCodes, attributes);
-      linkType.setVersion(version == null ? 0 : version);
+      linkType.setVersion(version == null ? 1 : version);
       return linkType;
    }
 
