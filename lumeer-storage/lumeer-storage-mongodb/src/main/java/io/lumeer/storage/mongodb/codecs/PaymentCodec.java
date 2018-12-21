@@ -76,13 +76,13 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
       Payment.PaymentState state = Payment.PaymentState.fromInt(bson.getInteger(STATE));
       Payment.ServiceLevel serviceLevel = Payment.ServiceLevel.fromInt(bson.getInteger(SERVICE_LEVEL));
       int users = bson.getInteger(USERS);
-      Integer version = bson.getInteger(VERSION);
+      Long version = bson.getLong(VERSION);
       String language = bson.getString(LANGUAGE);
       String currency = bson.getString(CURRENCY);
       String gwUrl = bson.getString(GW_URL);
 
       Payment payment = new Payment(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl);
-      payment.setVersion(version);
+      payment.setVersion(version == null ? 0 : version);
       return payment;
    }
 

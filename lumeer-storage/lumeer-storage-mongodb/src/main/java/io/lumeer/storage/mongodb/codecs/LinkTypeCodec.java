@@ -62,10 +62,10 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       List<Attribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
                                                                                             .map(AttributeCodec::convertFromDocument)
                                                                                             .collect(Collectors.toList());
-      Integer version = bson.getInteger(VERSION);
+      Long version = bson.getLong(VERSION);
 
       LinkType linkType =  new LinkType(id, name, collectionCodes, attributes);
-      linkType.setVersion(version);
+      linkType.setVersion(version == null ? 0 : version);
       return linkType;
    }
 
