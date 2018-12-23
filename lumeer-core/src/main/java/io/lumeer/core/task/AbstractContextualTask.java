@@ -16,21 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.task;
+package io.lumeer.core.task;
+
+import io.lumeer.api.model.User;
+import io.lumeer.core.util.PusherClient;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class SearchTask implements Task {
+public abstract class AbstractContextualTask implements ContextualTask {
 
-   private String query;
-
-   public SearchTask(final String query) {
-      this.query = query;
-   }
+   protected User initiator;
+   protected DaoContextSnapshot daoContextSnapshot;
+   protected PusherClient pusherClient;
 
    @Override
-   public void process() {
-      // TBD
+   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient) {
+      this.initiator = initiator;
+      this.daoContextSnapshot = daoContextSnapshot;
+      this.pusherClient = pusherClient;
+
+      return this;
    }
 }

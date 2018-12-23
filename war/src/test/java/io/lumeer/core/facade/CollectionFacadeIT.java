@@ -38,6 +38,9 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.core.task.ContextualTaskFactory;
+import io.lumeer.core.task.ListCollectionsIn10SecondsTask;
+import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -51,6 +54,7 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -123,6 +127,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Inject
    private UserNotificationDao userNotificationDao;
+
+   @Inject
+   private TaskExecutor taskExecutor;
+
+   @Inject
+   private ContextualTaskFactory contextualTaskFactory;
 
    @Before
    public void configureProject() {
@@ -503,5 +513,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       workspaceCache.clear();
 
       assertThat(collectionFacade.getCollections()).isEmpty();
+   }
+
+   @Test
+   @Ignore("This test actually does not test anything, it just demonstrates the usage of tasks.")
+   public void testTaskExecutor() throws InterruptedException {
+      taskExecutor.submitTask(contextualTaskFactory.getInstance(ListCollectionsIn10SecondsTask.class));
+      Thread.sleep(15_000);
    }
 }

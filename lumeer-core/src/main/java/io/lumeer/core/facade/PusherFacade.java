@@ -32,6 +32,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.PusherClient;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
@@ -52,16 +53,8 @@ import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 
-import com.fasterxml.jackson.databind.AnnotationIntrospector;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import org.marvec.pusher.Pusher;
 import org.marvec.pusher.data.Event;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -90,9 +83,7 @@ public class PusherFacade {
    private String PUSHER_SECRET;
    private String PUSHER_CLUSTER;
 
-   private Pusher pusher = null;
-
-   private ObjectMapper mapper;
+   private PusherClient pusherClient = null;
 
    @Inject
    private Logger log;
@@ -126,25 +117,7 @@ public class PusherFacade {
       PUSHER_CLUSTER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
 
       if (PUSHER_SECRET != null && !"".equals(PUSHER_SECRET)) {
-         pusher = new Pusher(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET);
-         pusher.setCluster(PUSHER_CLUSTER);
-         pusher.setEncrypted(true);
-
-         mapper = new ObjectMapper();
-         AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
-         AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
-         AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
-         mapper.setAnnotationIntrospector(pair);
-
-         pusher.setDataMarshaller(o -> {
-            StringWriter sw = new StringWriter();
-            try {
-               mapper.writeValue(sw, o);
-               return sw.toString();
-            } catch (IOException e) {
-               return null;
-            }
-         });
+         pusherClient = new PusherClient(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER);
       }
    }
 
@@ -162,6 +135,10 @@ public class PusherFacade {
 
    public String getPusherCluster() {
       return PUSHER_CLUSTER;
+   }
+
+   public PusherClient getPusherClient() {
+      return pusherClient;
    }
 
    public void createResource(@Observes final CreateResource createResource) {
@@ -483,18 +460,18 @@ public class PusherFacade {
 
    private void sendNotification(final String userId, final String event, final Object message) {
       if (isEnabled() && authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId)) {
-         pusher.trigger(PRIVATE_CHANNEL_PREFIX + userId, message.getClass().getSimpleName() + event, message);
+         pusherClient.trigger(PRIVATE_CHANNEL_PREFIX + userId, message.getClass().getSimpleName() + event, message);
       }
    }
 
    private void sendNotificationsBatch(List<Event> notifications) {
       if (isEnabled() && notifications != null && notifications.size() > 0) {
-         pusher.trigger(notifications);
+         pusherClient.trigger(notifications);
       }
    }
 
    private boolean isEnabled() {
-      return pusher != null;
+      return pusherClient != null;
    }
 
    private <T extends Resource> T filterUserRoles(final String userId, final T resource) {

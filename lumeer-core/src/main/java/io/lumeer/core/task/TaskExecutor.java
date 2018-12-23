@@ -16,16 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.task;
+package io.lumeer.core.task;
 
-import java.io.Serializable;
+import javax.enterprise.concurrent.ManagedExecutorService;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 
 /**
- * A task that can be processed.
+ * Executes tasks in background.
  *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public interface Task extends Serializable {
+@ApplicationScoped
+public class TaskExecutor {
 
-   void process();
+   @Inject
+   private ManagedExecutorService executorService;
+
+   public void submitTask(final Task task) {
+      executorService.submit(() -> {
+         task.process();
+      });
+   }
 }
