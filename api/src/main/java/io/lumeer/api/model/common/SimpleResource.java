@@ -33,6 +33,7 @@ public class SimpleResource extends Resource {
 
       o.id = this.id;
       o.nonRemovable = this.nonRemovable;
+      o.version = this.version;
 
       return o;
    }

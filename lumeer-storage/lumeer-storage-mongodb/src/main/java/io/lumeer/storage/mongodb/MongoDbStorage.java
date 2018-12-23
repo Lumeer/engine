@@ -44,8 +44,6 @@ import io.lumeer.storage.mongodb.codecs.providers.FeedbackCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.GroupCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkInstanceCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkTypeCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.OldQueryCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.OldViewCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.OrganizationCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.PaymentCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.PermissionCodecProvider;
@@ -53,6 +51,7 @@ import io.lumeer.storage.mongodb.codecs.providers.PermissionsCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ProjectCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.QueryCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.QueryStemCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.RuleCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.UserCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.UserLoginEventCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.UserNotificationCodecProvider;
@@ -133,8 +132,8 @@ public class MongoDbStorage implements DataStorage {
             new AttributeCodecProvider(), new LinkInstanceCodecProvider(), new LinkTypeCodecProvider(), new UserCodecProvider(),
             new GroupCodecProvider(), new PaymentCodecProvider(), new CompanyContactCodedProvider(), new UserLoginEventCodecProvider(),
             new FeedbackCodecProvider(), new OrganizationCodecProvider(), new ProjectCodecProvider(), new CollectionCodecProvider(),
-            new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new OldViewCodecProvider(),
-            new OldQueryCodecProvider(), new UserNotificationCodecProvider(), new ConstraintCodecProvider()
+            new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new UserNotificationCodecProvider(),
+            new ConstraintCodecProvider(), new RuleCodecProvider()
       );
       final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 

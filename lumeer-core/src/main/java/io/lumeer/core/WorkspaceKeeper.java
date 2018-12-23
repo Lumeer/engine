@@ -39,9 +39,6 @@ public class WorkspaceKeeper implements SelectedWorkspace {
    @Inject
    private WorkspaceCache workspaceCache;
 
-   @Inject
-   private Event<UpdateServiceLimits> updateServiceLimitsEvent;
-
    @Override
    public Optional<Organization> getOrganization() {
       if (organizationCode == null) {
@@ -74,9 +71,6 @@ public class WorkspaceKeeper implements SelectedWorkspace {
    public void setServiceLimits(final Organization organization, final ServiceLimits serviceLimits) {
       if (organization != null) {
          workspaceCache.setServiceLimits(organization.getCode(), serviceLimits);
-         if (updateServiceLimitsEvent != null) {
-            updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, serviceLimits));
-         }
       }
    }
 

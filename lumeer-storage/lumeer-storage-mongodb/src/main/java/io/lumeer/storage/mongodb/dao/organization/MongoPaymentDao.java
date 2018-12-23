@@ -18,8 +18,6 @@
  */
 package io.lumeer.storage.mongodb.dao.organization;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.*;
-
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
@@ -29,16 +27,18 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.PaymentCodec;
 import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -78,28 +78,21 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
 
    @Override
    public Payment updatePayment(final Organization organization, final String id, final Payment payment) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
-      try {
-         final Payment returnedPayment = databaseCollection(organization).findOneAndReplace(idFilter(id), payment, options);
-         if (returnedPayment == null) {
-            throw new StorageException("Payment '" + id + "' has not been updated.");
-         }
-         if (createOrUpdatePaymentEvent != null) {
-            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
-         }
-         return returnedPayment;
-      } catch (MongoException ex) {
-         throw new StorageException("Cannot update payment " + payment, ex);
-      }
+      return updatePayment(organization, payment, MongoFilters.idFilter(id));
    }
 
    @Override
    public Payment updatePayment(final Organization organization, final Payment payment) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
+      return updatePayment(organization, payment, paymentIdFilter(payment.getPaymentId()));
+   }
+
+   private Payment updatePayment(final Organization organization, final Payment payment, final Bson filter) {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
       try {
-         final Payment returnedPayment = databaseCollection(organization).findOneAndReplace(paymentIdFilter(payment.getPaymentId()), payment, options);
+         Bson update = new Document("$set", payment).append("$inc", new Document(PaymentCodec.VERSION, 1L));
+         final Payment returnedPayment = databaseCollection(organization).findOneAndUpdate(filter, update, options);
          if (returnedPayment == null) {
-            throw new StorageException("Payment '" + payment.getPaymentId() + "' has not been updated.");
+            throw new StorageException("Payment '" + payment.getId() + "' has not been updated.");
          }
          if (createOrUpdatePaymentEvent != null) {
             createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
@@ -117,7 +110,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
 
    @Override
    public Payment getPaymentByDbId(final Organization organization, final String id) {
-      return databaseCollection(organization).find(idFilter(id)).first();
+      return databaseCollection(organization).find(MongoFilters.idFilter(id)).first();
    }
 
    @Override
@@ -132,6 +125,22 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
             .find(Filters.and(paymentStateFilter(Payment.PaymentState.PAID.ordinal()),
                   paymentValidUntilFilter(date), paymentStartFilter(date)))
             .sort(Sorts.descending(PaymentCodec.VALID_UNTIL)).limit(1).first();
+   }
+
+   private Bson paymentIdFilter(final String paymentId) {
+      return Filters.eq(Payment.PAYMENT_ID, paymentId);
+   }
+
+   private Bson paymentStateFilter(final int stateId) {
+      return Filters.eq(Payment.STATE, stateId);
+   }
+
+   private Bson paymentValidUntilFilter(final Date date) {
+      return Filters.gte(Payment.VALID_UNTIL, date);
+   }
+
+   private Bson paymentStartFilter(final Date date) {
+      return Filters.lte(Payment.START, date);
    }
 
    @Override

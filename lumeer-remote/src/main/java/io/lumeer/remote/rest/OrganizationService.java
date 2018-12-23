@@ -27,7 +27,6 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.facade.CompanyContactFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
-import io.lumeer.core.facade.ViewConvertFacade;
 
 import java.util.List;
 import java.util.Map;
@@ -61,9 +60,6 @@ public class OrganizationService extends AbstractService {
 
    @Inject
    private CompanyContactFacade companyContactFacade;
-
-   @Inject
-   private ViewConvertFacade viewConvertFacade;
 
    @POST
    public Organization createOrganization(Organization organization) {
@@ -188,13 +184,6 @@ public class OrganizationService extends AbstractService {
    @Path("{organizationCode}/contact")
    public CompanyContact setCompanyContact(@PathParam("organizationCode") final String organizationCode, final CompanyContact companyContact) {
       return companyContactFacade.setCompanyContact(organizationFacade.getOrganization(organizationCode), companyContact);
-   }
-
-   @GET
-   @Path("convert/views")
-   public Response convertViews() {
-      viewConvertFacade.convertViews();
-      return Response.ok().build();
    }
 
 }

@@ -52,6 +52,7 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
    public static final String PHONE = "phone";
    public static final String IC = "ic";
    public static final String DIC = "dic";
+   public static final String VERSION = "version";
 
    private final Codec<Document> documentCodec;
 
@@ -104,8 +105,11 @@ public class CompanyContactCodec implements CollectibleCodec<CompanyContact> {
       String phone = bson.getString(PHONE);
       String ic = bson.getString(IC);
       String dic = bson.getString(DIC);
+      Long version = bson.getLong(VERSION);
 
-      return new CompanyContact(id, organizationId, company, firstName, surname, address1, address2, city, zip, state, country, email, phone, ic, dic);
+      CompanyContact companyContact = new CompanyContact(id, organizationId, company, firstName, surname, address1, address2, city, zip, state, country, email, phone, ic, dic);
+      companyContact.setVersion(version == null ? 1 : version);
+      return companyContact;
    }
 
    @Override

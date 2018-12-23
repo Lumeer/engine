@@ -149,7 +149,6 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       document.setCollectionId(collection.getId());
       document.setCreatedBy(this.user.getId());
       document.setCreationDate(ZonedDateTime.now());
-      document.setDataVersion(DocumentFacade.INITIAL_VERSION);
       Document storedDocument = documentDao.createDocument(document);
 
       DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), document.getData());
@@ -184,7 +183,6 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       returnedAssertions.assertThat(returnedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
       returnedAssertions.assertThat(returnedDocument.getUpdatedBy()).isNull();
       returnedAssertions.assertThat(returnedDocument.getUpdateDate()).isNull();
-      returnedAssertions.assertThat(returnedDocument.getDataVersion()).isEqualTo(1);
       returnedAssertions.assertThat(returnedDocument.getData()).isEqualTo(document.getData());
       returnedAssertions.assertAll();
 
@@ -198,7 +196,6 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
       assertions.assertThat(storedDocument.getUpdateDate()).isNull();
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
 
@@ -230,7 +227,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
+      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
 
@@ -262,7 +259,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
       assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
-      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(2);
+      assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
       assertions.assertAll();
 
@@ -306,7 +303,6 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();
       assertions.assertThat(document.getUpdateDate()).isNull();
-      assertions.assertThat(document.getDataVersion()).isEqualTo(1);
       assertions.assertAll();
 
       DataDocument data = document.getData();

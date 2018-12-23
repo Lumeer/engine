@@ -29,6 +29,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Projections;
@@ -93,10 +94,11 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
 
    @Override
    public Collection updateCollection(final String id, final Collection collection, final Collection originalCollection) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         final Collection updatedCollection = databaseCollection().findOneAndReplace(idFilter(id), collection, options);
+         Bson update = new Document("$set", collection).append("$inc", new Document(CollectionCodec.VERSION, 1L));
+         final Collection updatedCollection = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedCollection == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }

@@ -19,7 +19,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
@@ -76,9 +76,10 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
 
    @Override
    public LinkInstance updateLinkInstance(final String id, final LinkInstance linkInstance) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
       try {
-         LinkInstance updatedLinkInstance = databaseCollection().findOneAndReplace(idFilter(id), linkInstance, options);
+         Bson update = new Document("$set", linkInstance).append("$inc", new Document(LinkInstanceCodec.VERSION, 1L));
+         LinkInstance updatedLinkInstance = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedLinkInstance == null) {
             throw new StorageException("Link instance '" + id + "' has not been updated.");
          }

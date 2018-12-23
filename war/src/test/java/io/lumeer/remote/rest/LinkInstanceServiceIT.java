@@ -373,7 +373,6 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       document.setCollectionId(collectionId);
       document.setCreatedBy(USER);
       document.setCreationDate(ZonedDateTime.now());
-      document.setDataVersion(DocumentFacade.INITIAL_VERSION);
       Document storedDocument = documentDao.createDocument(document);
 
       DataDocument storedData = dataDao.createData(collectionId, storedDocument.getId(), document.getData());

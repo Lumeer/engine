@@ -69,7 +69,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
       Integer version = bson.getInteger(DATA_VERSION);
       org.bson.Document metaData = bson.get(META_DATA, org.bson.Document.class);
 
-      Document document = new Document(collectionId, creationZonedDate, updatedZonedDate, createdBy, updatedBy, version, new DataDocument(metaData != null ? metaData : new org.bson.Document()));
+      Document document = new Document(collectionId, creationZonedDate, updatedZonedDate, createdBy, updatedBy, version == null ? 1 : version, new DataDocument(metaData != null ? metaData : new org.bson.Document()));
       document.setId(id);
       return document;
    }
@@ -80,7 +80,6 @@ public class DocumentCodec implements CollectibleCodec<Document> {
       bson.append(COLLECTION_ID, document.getCollectionId())
           .append(CREATED_BY, document.getCreatedBy())
           .append(UPDATED_BY, document.getUpdatedBy())
-          .append(DATA_VERSION, document.getDataVersion())
           .append(META_DATA, document.getMetaData());
 
       if (document.getCreationDate() != null) {

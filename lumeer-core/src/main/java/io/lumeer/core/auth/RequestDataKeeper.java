@@ -16,25 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.common.Resource;
+package io.lumeer.core.auth;
 
-import java.util.Set;
+import javax.enterprise.context.RequestScoped;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class RemoveResourcePermissions extends ResourceEvent {
+@RequestScoped
+public class RequestDataKeeper {
 
-   private Set<String> removedUsers;
+   private String correlationId;
 
-   public RemoveResourcePermissions(final Resource resource, final Set<String> removedUsers) {
-      super(resource);
-      this.removedUsers = removedUsers;
+   public String getCorrelationId() {
+      return correlationId;
    }
 
-   public Set<String> getRemovedUsers() {
-      return removedUsers;
+   public void setCorrelationId(final String correlationId) {
+      if (this.correlationId == null) {
+         this.correlationId = correlationId;
+      }
    }
 }

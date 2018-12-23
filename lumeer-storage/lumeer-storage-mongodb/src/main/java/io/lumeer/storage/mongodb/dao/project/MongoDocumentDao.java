@@ -35,7 +35,7 @@ import io.lumeer.storage.mongodb.codecs.DocumentCodec;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
@@ -93,22 +93,18 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public List<Document> createDocuments(final List<Document> documents) {
-      List<Document> jsonDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
-      databaseCollection().insertMany(jsonDocuments);
-
-      if (createDocumentEvent != null) {
-         documents.stream().forEach(document -> createDocumentEvent.fire(new CreateDocument(document)));
-      }
-
-      return new ArrayList<>(jsonDocuments);
+      List<Document> returnDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
+      databaseCollection().insertMany(returnDocuments);
+      return new ArrayList<>(returnDocuments);
    }
 
    @Override
    public Document updateDocument(final String id, final Document document) {
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
-         Document updatedDocument = databaseCollection().findOneAndReplace(idFilter(id), document, options);
+         Bson update = new org.bson.Document("$set", document).append("$inc", new org.bson.Document(DocumentCodec.DATA_VERSION, 1));
+         Document updatedDocument = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedDocument == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }

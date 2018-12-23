@@ -16,25 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.OldQuery;
-import io.lumeer.storage.mongodb.codecs.OldQueryCodec;
+import io.lumeer.api.model.Rule;
+import io.lumeer.storage.mongodb.codecs.RuleCodec;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
-public class OldQueryCodecProvider implements CodecProvider {
+/**
+ * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
+ */
+public class RuleCodecProvider implements CodecProvider {
 
    @Override
-   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == OldQuery.class) {
-         return (Codec<T>) new OldQueryCodec(registry);
+   public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
+      if (aClass == Rule.class) {
+         return (Codec<T>) new RuleCodec(codecRegistry);
       }
 
       return null;
    }
-
 }

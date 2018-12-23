@@ -36,6 +36,7 @@ public abstract class ResourceCodec {
    public static final String CODE = "code";
    public static final String NAME = "name";
    public static final String ICON = "icon";
+   public static final String VERSION = "version";
    public static final String COLOR = "color";
    public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
@@ -52,11 +53,13 @@ public abstract class ResourceCodec {
       String name = bson.getString(NAME);
       String icon = bson.getString(ICON);
       String color = bson.getString(COLOR);
+      Long version = bson.getLong(VERSION);
       String description = bson.getString(DESCRIPTION);
       Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class)); // TODO try to use better approach
 
       SimpleResource view = new SimpleResource(code, name, icon, color, description, permissions);
       view.setId(id);
+      view.setVersion(version == null ? 1 : version);
       return view;
    }
 

@@ -192,15 +192,6 @@ public class OrganizationFacade extends AbstractFacade {
       workspaceCache.updateOrganization(organizationCode, organization);
    }
 
-   public Set<String> getOrganizationManagers(final Organization organization) {
-      return organization.getPermissions().getUserPermissions()
-                         .stream()
-                         .filter(permission -> permission.getRoles().contains(Role.MANAGE))
-                         .map(permission -> permission.getId())
-                         .collect(Collectors.toSet());
-      // TODO merge with managers from permission groups
-   }
-
    private void createOrganizationInUser(final String organizationId) {
       User currentUser = authenticatedUser.getCurrentUser();
 

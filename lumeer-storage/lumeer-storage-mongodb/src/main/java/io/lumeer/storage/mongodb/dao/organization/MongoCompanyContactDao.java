@@ -25,15 +25,16 @@ import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.CompanyContactCodec;
 import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
-import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import javax.annotation.PostConstruct;
@@ -59,15 +60,22 @@ public class MongoCompanyContactDao extends SystemScopedDao implements CompanyCo
 
    @Override
    public CompanyContact getCompanyContact(final Organization organization) {
-      return databaseCollection().find(MongoFilters.companyOrganizationIdFilter(organization.getId())).first();
+      return databaseCollection().find(companyOrganizationIdFilter(organization.getId())).first();
+   }
+
+   private Bson companyOrganizationIdFilter(String organizationId){
+      return Filters.eq(CompanyContact.ORGANIZATION_ID, organizationId);
    }
 
    @Override
    public CompanyContact setCompanyContact(final Organization organization, final CompanyContact companyContact) {
-      final FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
          companyContact.setOrganizationId(organization.getId());
-         final CompanyContact updatedCompanyContact = databaseCollection().findOneAndReplace(MongoFilters.companyOrganizationIdFilter(organization.getId()), companyContact, options);
+         Bson filter = companyOrganizationIdFilter(organization.getId());
+         Bson update = new Document("$set", companyContact).append("$inc", new Document(CompanyContactCodec.VERSION, 1L));
+
+         final CompanyContact updatedCompanyContact = databaseCollection().findOneAndUpdate(filter, update, options);
          if (updateCompanyContactEvent != null) {
             updateCompanyContactEvent.fire(new UpdateCompanyContact(updatedCompanyContact));
          }

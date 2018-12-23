@@ -78,6 +78,7 @@ public class Payment {
    private String language;
    private String currency;
    private String gwUrl;
+   private long version;
 
    @JsonCreator
    public Payment(@JsonProperty(ID) final String id,
@@ -194,6 +195,14 @@ public class Payment {
 
    public void setGwUrl(final String gwUrl) {
       this.gwUrl = gwUrl;
+   }
+
+   public long getVersion() {
+      return version;
+   }
+
+   public void setVersion(final long version) {
+      this.version = version;
    }
 
    @Override

@@ -43,6 +43,7 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
    public static final String ID = "_id";
    public static final String NAME = "name";
    public static final String COLLECTION_IDS = "collectionIds";
+   public static final String VERSION = "version";
    public static final String ATTRIBUTES = "attributes";
 
    private final Codec<Document> documentCodec;
@@ -61,8 +62,11 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       List<Attribute> attributes = new ArrayList<Document>(bson.get(ATTRIBUTES, List.class)).stream()
                                                                                             .map(AttributeCodec::convertFromDocument)
                                                                                             .collect(Collectors.toList());
+      Long version = bson.getLong(VERSION);
 
-      return new LinkType(id, name, collectionCodes, attributes);
+      LinkType linkType =  new LinkType(id, name, collectionCodes, attributes);
+      linkType.setVersion(version == null ? 1 : version);
+      return linkType;
    }
 
    @Override
