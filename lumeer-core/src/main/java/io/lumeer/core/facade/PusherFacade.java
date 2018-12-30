@@ -36,13 +36,16 @@ import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.ResourceUtils;
+import io.lumeer.engine.api.event.AddFavoriteItem;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
@@ -635,6 +638,34 @@ public class PusherFacade {
                   removeUserNotification.getUserNotification().getUserId(),
                   REMOVE_EVENT_SUFFIX, new ResourceId(removeUserNotification.getUserNotification().getId())
             );
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void createAddFavoriteItemNotification(@Observes final AddFavoriteItem addFavoriteItem) {
+      if (isEnabled()) {
+         try {
+            createFavoriteItemNotification(addFavoriteItem, CREATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   private void createFavoriteItemNotification(final FavoriteItem favoriteItem, final String suffix) {
+      ResourceId resourceId = new ResourceId(favoriteItem.getItemId(), getOrganization().getId(), getProject().getId());
+      String resource = favoriteItem.getResourceType().toString();
+      String favoriteItemPrefix = "Favorite" + resource.substring(0, 1).toUpperCase() + resource.substring(1);
+      Event event = new Event(eventChannel(favoriteItem.getUserId()), favoriteItemPrefix + suffix, resourceId);
+      sendNotificationsBatch(Collections.singletonList(event));
+   }
+
+   public void createRemoveFavoriteItemNotification(@Observes final RemoveFavoriteItem removeFavoriteItem) {
+      if (isEnabled()) {
+         try {
+            createFavoriteItemNotification(removeFavoriteItem, REMOVE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
