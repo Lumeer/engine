@@ -77,15 +77,15 @@ public class ConfigurationFacadeIT extends IntegrationTestBase {
 
    @Before
    public void setUp() {
+      User user = new User(USER);
+      final User createdUser = userDao.createUser(user);
+
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-
-      User user = new User(USER);
-      final User createdUser = userDao.createUser(user);
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);

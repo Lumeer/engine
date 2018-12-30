@@ -78,14 +78,14 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Before
    public void configureProject() {
+      User user = new User(AuthenticatedUser.DEFAULT_EMAIL);
+      this.user = userDao.createUser(user);
+
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setName(ORGANIZATION_NAME);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
-
-      User user = new User(AuthenticatedUser.DEFAULT_EMAIL);
-      this.user = userDao.createUser(user);
 
       Permissions organizationPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));

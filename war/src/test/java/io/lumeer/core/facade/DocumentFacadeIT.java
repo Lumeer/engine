@@ -100,15 +100,15 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureCollection() {
+      User user = new User(USER);
+      this.user = userDao.createUser(user);
+
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-
-      User user = new User(USER);
-      this.user = userDao.createUser(user);
 
       Permissions organizationPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
