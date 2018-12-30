@@ -4,6 +4,8 @@ import static com.mongodb.client.model.Filters.*;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.event.AddFavoriteItem;
+import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -19,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoFavoriteItemDao extends OrganizationScopedDao implements FavoriteItemDao {
@@ -30,6 +34,12 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    private static final String USER_ID = "userId";
    private static final String COLLECTION_ID = "collectionId";
    private static final String DOCUMENT_ID = "documentId";
+
+   @Inject
+   private Event<AddFavoriteItem> addFavoriteItemEvent;
+
+   @Inject
+   private Event<RemoveFavoriteItem> removeFavoriteItemEvent;
 
    @Override
    public void createRepositories(final Organization organization) {
@@ -65,6 +75,9 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
             .append(COLLECTION_ID, collectionId);
       try {
          favoriteCollectionsDBCollection().insertOne(document);
+         if (addFavoriteItemEvent != null) {
+            addFavoriteItemEvent.fire(new AddFavoriteItem(userId, collectionId, ResourceType.COLLECTION));
+         }
       } catch (MongoException ex) {
          throw new StorageException("User : " + userId + " has already " + collectionId + " as favorite collection");
       }
@@ -73,11 +86,14 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    @Override
    public void removeFavoriteCollection(final String userId, final String collectionId) {
       Bson filter = and(eq(USER_ID, userId), eq(COLLECTION_ID, collectionId));
-      favoriteCollectionsDBCollection().findOneAndDelete(filter);
+      Document deleted = favoriteCollectionsDBCollection().findOneAndDelete(filter);
+      if (deleted != null && removeFavoriteItemEvent != null) {
+         removeFavoriteItemEvent.fire(new RemoveFavoriteItem(userId, collectionId, ResourceType.COLLECTION));
+      }
    }
 
    @Override
-   public void removeFavoriteCollectionFromUsers(String projectId,final String collectionId) {
+   public void removeFavoriteCollectionFromUsers(String projectId, final String collectionId) {
       Bson filter = and(eq(PROJECT_ID, projectId), eq(COLLECTION_ID, collectionId));
       favoriteCollectionsDBCollection().deleteMany(filter);
    }
@@ -106,6 +122,9 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
             .append(DOCUMENT_ID, documentId);
       try {
          favoriteDocumentsDBCollection().insertOne(document);
+         if (addFavoriteItemEvent != null) {
+            addFavoriteItemEvent.fire(new AddFavoriteItem(userId, documentId, ResourceType.DOCUMENT));
+         }
       } catch (MongoException ex) {
          throw new StorageException("User : " + userId + " has already " + documentId + " as favorite document");
       }
@@ -114,7 +133,10 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    @Override
    public void removeFavoriteDocument(final String userId, final String documentId) {
       Bson filter = and(eq(USER_ID, userId), eq(DOCUMENT_ID, documentId));
-      favoriteDocumentsDBCollection().findOneAndDelete(filter);
+      Document deleted = favoriteDocumentsDBCollection().findOneAndDelete(filter);
+      if (deleted != null && removeFavoriteItemEvent != null) {
+         removeFavoriteItemEvent.fire(new RemoveFavoriteItem(userId, documentId, ResourceType.DOCUMENT));
+      }
    }
 
    @Override
@@ -140,8 +162,8 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
       Bson filter = and(eq(USER_ID, userId), eq(PROJECT_ID, projectId));
       final ArrayList<Document> favoriteDocuments = favoriteDocumentsDBCollection().find(filter).into(new ArrayList<>());
       return favoriteDocuments.stream()
-                                .map(document -> document.getString(DOCUMENT_ID))
-                                .collect(Collectors.toSet());
+                              .map(document -> document.getString(DOCUMENT_ID))
+                              .collect(Collectors.toSet());
    }
 
    String favoriteCollectionsDBName() {
