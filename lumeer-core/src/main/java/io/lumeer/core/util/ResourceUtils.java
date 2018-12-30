@@ -22,6 +22,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,6 +44,27 @@ public class ResourceUtils {
                      .filter(ResourceUtils::canReadByPermission)
                      .map(Permission::getId)
                      .collect(Collectors.toSet());
+   }
+
+   public static Set<String> getAddedPermissions(final Resource originalResource, final Resource updatedResource) {
+      return getPermissionsDifference(updatedResource, originalResource);
+   }
+
+   public static Set<String> getRemovedPermissions(final Resource originalResource, final Resource updatedResource) {
+      return getPermissionsDifference(originalResource, updatedResource);
+   }
+
+   private static Set<String> getPermissionsDifference(final Resource resource1, final Resource resource2) {
+      if (resource1 == null || resource2 == null) {
+         return Collections.emptySet();
+      }
+      Set<Permission> permissions1 = resource1.getPermissions().getUserPermissions();
+      Set<Permission> permissions2 = resource2.getPermissions().getUserPermissions();
+      // TODO groups
+
+      Set<String> users = permissions1.stream().filter(ResourceUtils::canReadByPermission).map(Permission::getId).collect(Collectors.toSet());
+      users.removeAll(permissions2.stream().filter(ResourceUtils::canReadByPermission).map(Permission::getId).collect(Collectors.toSet()));
+      return users;
    }
 
    public static boolean canReadByPermission(Permission permission) {

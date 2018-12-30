@@ -369,6 +369,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
             n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR).equals(COLOR2)
                   && n.getUserId().equals(USER2)
                   && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
+
+      userPermission = Permission.buildWithRoles(USER2, Collections.emptySet());
+      collectionFacade.updateUserPermissions(collectionId, userPermission);
+
+      notifications = userNotificationDao.getRecentNotifications(USER2);
+      assertThat(notifications).isEmpty();
    }
 
    @Test

@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.UserNotification;
@@ -27,8 +26,8 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.AccessForbiddenException;
+import io.lumeer.core.util.ResourceUtils;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.UpdateResource;
@@ -36,7 +35,6 @@ import io.lumeer.storage.api.dao.UserNotificationDao;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +42,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
@@ -65,9 +62,6 @@ public class UserNotificationFacade extends AbstractFacade {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
-   @Inject
-   private Event<CreateOrUpdateUserNotification> createOrUpdateUserNotificationEvent;
-
    public List<UserNotification> getNotifications() {
       return dao.getRecentNotifications(authenticatedUser.getCurrentUserId());
    }
@@ -85,7 +79,7 @@ public class UserNotificationFacade extends AbstractFacade {
    public UserNotification updateNotification(final String notificationId, final UserNotification notification) {
       final UserNotification dbNotification = dao.getNotificationById(notificationId);
 
-      if (dbNotification.getId().equals(notification.getId()) && dbNotification.getUserId().equals(authenticatedUser.getCurrentUserId())) {
+      if (dbNotification.getUserId().equals(authenticatedUser.getCurrentUserId())) {
          if (notification.isRead() && !dbNotification.isRead() && dbNotification.getFirstReadAt() == null) {
             dbNotification.setFirstReadAt(ZonedDateTime.now());
          }
@@ -97,14 +91,10 @@ public class UserNotificationFacade extends AbstractFacade {
       return null;
    }
 
-   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final Set<Permission> newUsers) {
-      return createResourceSharedNotifications(resource, newUsers.stream().map(Permission::getId).collect(Collectors.toList()));
-   }
-
-   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final List<String> newUsers) {
+   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final java.util.Collection<String> newUsers) {
       // in tests, we do not have the workspace at all times
-      if (!workspaceKeeper.getOrganization().isPresent() || !workspaceKeeper.getProject().isPresent()) {
-         return Collections.EMPTY_LIST;
+      if (!workspaceKeeper.getOrganization().isPresent()) {
+         return Collections.emptyList();
       }
 
       // TODO check that all newUsers are in resource permissions
@@ -177,7 +167,12 @@ public class UserNotificationFacade extends AbstractFacade {
    }
 
    private Set<String> getManagers(final Resource resource) {
-      return resource.getType() == ResourceType.ORGANIZATION ? permissionsChecker.getOrganizationManagers() : permissionsChecker.getWorkspaceManagers();
+      if (resource.getType() == ResourceType.ORGANIZATION) {
+         return Collections.emptySet();
+      } else if (resource.getType() == ResourceType.PROJECT) {
+         return permissionsChecker.getOrganizationManagers();
+      }
+      return permissionsChecker.getWorkspaceManagers();
    }
 
    /* Managers are handled on resource creation, they may or may not be in the resource permissions.
@@ -187,13 +182,12 @@ public class UserNotificationFacade extends AbstractFacade {
     */
    public void createResource(@Observes final CreateResource createResource) {
       try {
-         createResourceSharedNotifications(
-               createResource.getResource(),
-               getManagers(createResource.getResource())
-                     .stream()
-                     .filter(userId -> !userId.equals(authenticatedUser.getCurrentUserId()))
-                     .collect(Collectors.toList())
-         );
+         Set<String> managers = getManagers(createResource.getResource());
+         managers.remove(authenticatedUser.getCurrentUserId());
+
+         if (managers.size() > 0) {
+            createResourceSharedNotifications(createResource.getResource(), managers);
+         }
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to create notification: ", e);
       }
@@ -201,18 +195,21 @@ public class UserNotificationFacade extends AbstractFacade {
 
    public void updateResource(@Observes final UpdateResource updateResource) {
       try {
-         final Set<Permission> permissions = new HashSet<>(updateResource.getResource().getPermissions().getUserPermissions());
+         final Set<String> managers = getManagers(updateResource.getResource());
+         final Set<String> removedUsers = ResourceUtils.getRemovedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
+         removedUsers.removeAll(managers);
+         removedUsers.remove(authenticatedUser.getCurrentUserId());
 
-         if (updateResource.getOriginalResource() != null && updateResource.getOriginalResource().getPermissions() != null) {
-            permissions.removeAll(updateResource.getOriginalResource().getPermissions().getUserPermissions());
+         if (removedUsers.size() > 0) {
+            removeNotifications(updateResource.getResource(), removedUsers);
          }
 
-         final Set<String> managers = getManagers(updateResource.getResource());
-         final List<String> filteredPermissions = permissions.stream().map(Permission::getId).collect(Collectors.toList());
-         filteredPermissions.removeAll(managers);
+         final Set<String> addedUsers = ResourceUtils.getAddedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
+         addedUsers.removeAll(managers);
+         addedUsers.remove(authenticatedUser.getCurrentUserId());
 
-         if (filteredPermissions.size() > 0) {
-            createResourceSharedNotifications(updateResource.getResource(), filteredPermissions);
+         if (addedUsers.size() > 0) {
+            createResourceSharedNotifications(updateResource.getResource(), addedUsers);
          }
 
          updateExistingNotifications(updateResource.getOriginalResource(), updateResource.getResource());
@@ -222,18 +219,26 @@ public class UserNotificationFacade extends AbstractFacade {
    }
 
    public void removeResource(@Observes final RemoveResource removedResource) {
-      switch (removedResource.getResource().getType()) {
+      removeNotifications(removedResource.getResource());
+   }
+
+   private void removeNotifications(Resource resource) {
+      removeNotifications(resource, Collections.emptySet());
+   }
+
+   private void removeNotifications(Resource resource, Set<String> users) {
+      switch (resource.getType()) {
          case ORGANIZATION:
-            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.OrganizationShared.ORGANIZATION_ID, removedResource.getResource().getId());
+            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.OrganizationShared.ORGANIZATION_ID, resource.getId(), users);
             break;
          case PROJECT:
-            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.ProjectShared.PROJECT_ID, removedResource.getResource().getId());
+            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.ProjectShared.PROJECT_ID, resource.getId(), users);
             break;
          case COLLECTION:
-            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.CollectionShared.COLLECTION_ID, removedResource.getResource().getId());
+            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.CollectionShared.COLLECTION_ID, resource.getId(), users);
             break;
          case VIEW:
-            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_CODE, removedResource.getResource().getCode());
+            dao.removeNotifications(UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_CODE, resource.getCode(), users);
             break;
       }
    }
@@ -288,7 +293,7 @@ public class UserNotificationFacade extends AbstractFacade {
       boolean commonCheck = ((original.getCode() == null && updated.getCode() == null) || original.getCode().equals(updated.getCode()))
             && original.getColor().equals(updated.getColor())
             && original.getIcon().equals(updated.getIcon())
-            && ((original.getName() == null && updated.getName() == null) || original.equals(updated.getName()))
+            && ((original.getName() == null && updated.getName() == null) || original.getName().equals(updated.getName()))
             && (original.getType() != ResourceType.VIEW || (((View) original).getPerspective().equals(((View) updated).getPerspective())));
 
       return !commonCheck;

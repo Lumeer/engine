@@ -22,6 +22,7 @@ import io.lumeer.api.model.UserNotification;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -36,7 +37,7 @@ public interface UserNotificationDao {
 
    void updateNotifications(final String searchField, final String searchId, final Map<String, String> updates);
 
-   void removeNotifications(final String searchField, final String searchId);
+   void removeNotifications(final String searchField, final String searchId, final Set<String> users);
 
    void deleteNotification(final UserNotification notification);
 

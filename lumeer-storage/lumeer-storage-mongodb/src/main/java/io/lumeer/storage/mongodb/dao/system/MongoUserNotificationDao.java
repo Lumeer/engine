@@ -20,10 +20,8 @@ package io.lumeer.storage.mongodb.dao.system;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
-import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.exception.StorageException;
@@ -37,7 +35,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -45,9 +42,9 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -113,18 +110,28 @@ public class MongoUserNotificationDao extends SystemScopedDao implements UserNot
 
       if (result.getModifiedCount() > 0 && createOrUpdateUserNotificationEvent != null) {
          final List<UserNotification> updatedNotifications = databaseCollection().find(Filters.eq(searchField, searchId)).into(new ArrayList<>());
-         updatedNotifications.stream().forEach(notification -> createOrUpdateUserNotificationEvent.fire(new CreateOrUpdateUserNotification(notification)));
+         updatedNotifications.forEach(notification -> createOrUpdateUserNotificationEvent.fire(new CreateOrUpdateUserNotification(notification)));
       }
    }
 
    @Override
-   public void removeNotifications(final String searchField, final String searchId) {
-      final List<UserNotification> deletedNotifications = databaseCollection().find(Filters.eq(searchField, searchId)).into(new ArrayList<>());
-      final DeleteResult result = databaseCollection().deleteMany(Filters.eq(searchField, searchId));
+   public void removeNotifications(final String searchField, final String searchId, final Set<String> users) {
+      Bson filter = createRemoveNotificationsFilter(searchField, searchId, users);
+      final List<UserNotification> deletedNotifications = databaseCollection().find(filter).into(new ArrayList<>());
+      final DeleteResult result = databaseCollection().deleteMany(filter);
 
-      if (deletedNotifications.size() > 0 && removeUserNotificationEvent != null) {
-         deletedNotifications.stream().forEach(notification -> removeUserNotificationEvent.fire(new RemoveUserNotification(notification)));
+      if (result.getDeletedCount() > 0 && removeUserNotificationEvent != null) {
+         deletedNotifications.forEach(notification -> removeUserNotificationEvent.fire(new RemoveUserNotification(notification)));
       }
+   }
+
+   private Bson createRemoveNotificationsFilter(final String searchField, final String searchId, final Set<String> users) {
+      Bson searchFilter = Filters.eq(searchField, searchId);
+      if (users.isEmpty()) {
+         return searchFilter;
+      }
+      Bson userFilter = Filters.in(UserNotificationCodec.USER_ID, users);
+      return Filters.and(searchFilter, userFilter);
    }
 
    @Override

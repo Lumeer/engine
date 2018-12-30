@@ -107,6 +107,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
+      User user = new User(USER);
+      this.user = userDao.createUser(user);
+
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
@@ -114,9 +117,6 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(storedOrganization);
       workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
-
-      User user = new User(USER);
-      this.user = userDao.createUser(user);
 
       Permissions organizationPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
