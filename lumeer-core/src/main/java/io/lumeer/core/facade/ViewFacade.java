@@ -197,7 +197,7 @@ public class ViewFacade extends AbstractFacade {
                                                                        .collect(Collectors.toSet());
       collectionIds.addAll(collectionIdsFromLinkTypes);
       return collectionDao.getCollectionsByIds(collectionIds).stream()
-                          .map(collection -> keepActualRoles ? keepOnlyActualUserRoles(collection) : collection)
+                          .map(collection -> keepActualRoles ? mapResource(collection) : collection)
                           .collect(Collectors.toList());
    }
 

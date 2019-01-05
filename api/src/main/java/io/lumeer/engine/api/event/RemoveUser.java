@@ -18,26 +18,12 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.User;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class ResourceIdEvent {
+public class RemoveUser extends UserEvent {
 
-   private final String resourceId;
-   private final ResourceType resourceType;
-
-   public ResourceIdEvent(final String resourceId, final ResourceType resourceType) {
-      this.resourceId = resourceId;
-      this.resourceType = resourceType;
+   public RemoveUser(final String organizationId, final User user) {
+      super(organizationId, user);
    }
 
-   public String getResourceId() {
-      return resourceId;
-   }
-
-   public ResourceType getResourceType() {
-      return resourceType;
-   }
 }

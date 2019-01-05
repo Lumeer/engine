@@ -142,14 +142,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    public Permissions getOrganizationPermissions(final String organizationCode) {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
+      permissionsChecker.checkRole(organization, Role.READ);
 
-      if (permissionsChecker.hasRole(organization, Role.MANAGE)) {
-         return organization.getPermissions();
-      } else if (permissionsChecker.hasRole(organization, Role.READ)) { // return only user's own permissions
-         return keepOnlyActualUserRoles(organization).getPermissions();
-      }
-
-      throw new NoPermissionException(organization);
+      return mapResource(organization).getPermissions();
    }
 
    public Set<Permission> updateUserPermissions(final String organizationCode, final Permission... userPermissions) {

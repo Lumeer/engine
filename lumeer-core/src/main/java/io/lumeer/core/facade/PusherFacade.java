@@ -23,16 +23,13 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.UserNotification;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
@@ -42,6 +39,7 @@ import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
+import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.FavoriteItem;
@@ -50,6 +48,7 @@ import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -57,8 +56,10 @@ import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
+import io.lumeer.engine.api.event.UserEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
@@ -66,9 +67,11 @@ import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -84,7 +87,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @ApplicationScoped
-public class PusherFacade {
+public class PusherFacade extends AbstractFacade {
 
    private static final String PRIVATE_CHANNEL_PREFIX = "private-";
    private static final String UPDATE_EVENT_SUFFIX = ":update";
@@ -105,12 +108,6 @@ public class PusherFacade {
    private DefaultConfigurationProducer defaultConfigurationProducer;
 
    @Inject
-   private AuthenticatedUser authenticatedUser;
-
-   @Inject
-   private PermissionsChecker permissionsChecker;
-
-   @Inject
    private CollectionFacade collectionFacade;
 
    @Inject
@@ -126,10 +123,10 @@ public class PusherFacade {
    private ViewDao viewDao;
 
    @Inject
-   private WorkspaceKeeper workspaceKeeper;
+   private OrganizationFacade organizationFacade;
 
    @Inject
-   private OrganizationFacade organizationFacade;
+   private OrganizationDao organizationDao;
 
    @Inject
    private RequestDataKeeper requestDataKeeper;
@@ -700,6 +697,49 @@ public class PusherFacade {
       sendNotificationsByUsers(linkType, userIds, event);
    }
 
+   public void createAddOrUpdateUserNotification(@Observes final CreateOrUpdateUser createOrUpdateUser) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(createOrUpdateUser.getOrganizationId());
+            ObjectWithParent object = new ObjectWithParent(cleanUserFromUserEvent(createOrUpdateUser), organization.getId());
+            Set<String> users = ResourceUtils.usersAllowedRead(organization);
+            List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   private User cleanUserFromUserEvent(UserEvent event){
+      String organizationId = event.getOrganizationId();
+      User user = event.getUser();
+      Map<String, Set<String>> groups = new HashMap<>();
+      groups.put(organizationId, Objects.requireNonNullElse(user.getGroups().get(organizationId), Collections.emptySet()));
+      return new User(user.getId(), user.getName(), user.getEmail(), groups);
+   }
+
+   public void createRemoveUserNotification(@Observes final RemoveUser removeUser) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(removeUser.getOrganizationId());
+            ResourceId resourceId = new ResourceId(removeUser.getUser().getId(), organization.getId());
+            String className = removeUser.getUser().getClass().getSimpleName();
+            Set<String> users = ResourceUtils.usersAllowedRead(organization);
+            List<Event> events = users.stream().map(userId -> createEventForRemove(className, resourceId, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   private void sendNotification(final String userId, final String event, final Object message) {
+      if (isEnabled() && authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId)) {
+         pusherClient.trigger(PRIVATE_CHANNEL_PREFIX + userId, message.getClass().getSimpleName() + event, message);
+      }
+   }
+
    private void sendNotificationsBatch(List<Event> notifications) {
       if (isEnabled() && notifications != null && notifications.size() > 0) {
          pusherClient.trigger(notifications);
@@ -711,18 +751,7 @@ public class PusherFacade {
    }
 
    private <T extends Resource> T filterUserRoles(final String userId, final T resource) {
-      final T copy = resource.copy();
-      if (permissionsChecker.hasRole(resource, Role.MANAGE, userId)) {
-         return copy;
-      }
-
-      Set<Role> roles = permissionsChecker.getActualRoles(copy, userId);
-      Permission permission = Permission.buildWithRoles(userId, roles);
-
-      copy.getPermissions().clear();
-      copy.getPermissions().updateUserPermissions(permission);
-
-      return copy;
+      return this.keepOnlyActualUserRoles(resource.copy(), userId);
    }
 
    private static Set<String> intersection(Set<Set<String>> sets) {

@@ -139,14 +139,9 @@ public class ProjectFacade extends AbstractFacade {
 
    public Permissions getProjectPermissions(final String projectCode) {
       Project project = projectDao.getProjectByCode(projectCode);
+      permissionsChecker.checkRole(project, Role.READ);
 
-      if (permissionsChecker.hasRole(project, Role.MANAGE)) {
-         return project.getPermissions();
-      } else if (permissionsChecker.hasRole(project, Role.READ)) {
-         return keepOnlyActualUserRoles(project).getPermissions();
-      }
-
-      throw new NoPermissionException(project);
+      return mapResource(project).getPermissions();
    }
 
    public Set<Permission> updateUserPermissions(final String projectCode, final Permission... userPermissions) {

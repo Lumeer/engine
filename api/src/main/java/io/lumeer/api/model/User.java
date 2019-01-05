@@ -82,6 +82,13 @@ public class User {
       this.groups = new HashMap<>();
    }
 
+   public User(final String id, final String name, final String email, final Map<String, Set<String>> groups){
+      this.id = id;
+      this.name = name;
+      this.email = email;
+      this.groups = groups;
+   }
+
    @JsonCreator
    public User(@JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,

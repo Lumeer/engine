@@ -25,6 +25,8 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.exception.BadFormatException;
+import io.lumeer.engine.api.event.CreateOrUpdateUser;
+import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
@@ -62,6 +65,12 @@ public class UserFacade extends AbstractFacade {
    @Inject
    private FreshdeskFacade freshdeskFacade;
 
+   @Inject
+   private Event<CreateOrUpdateUser> createOrUpdateUserEvent;
+
+   @Inject
+   private Event<RemoveUser> removeUserEvent;
+
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkPermissions(organizationId, Role.MANAGE);
@@ -70,14 +79,22 @@ public class UserFacade extends AbstractFacade {
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
       if (storedUser == null) {
-         return userDao.createUser(user);
+         return createUserAndSendNotification(organizationId, user);
       }
 
-      User updatedUser = updateStoredUserGroups(storedUser, user);
+      User updatedUser = updateStoredUserGroups(organizationId, storedUser, user);
 
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
+   }
+
+   private User createUserAndSendNotification(String organizationId, User user) {
+      User created = userDao.createUser(user);
+      if (this.createOrUpdateUserEvent != null) {
+         this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, created));
+      }
+      return created;
    }
 
    public User updateUser(String organizationId, String userId, User user) {
@@ -85,14 +102,14 @@ public class UserFacade extends AbstractFacade {
       checkPermissions(organizationId, Role.MANAGE);
 
       User storedUser = userDao.getUserById(userId);
-      User updatedUser = updateStoredUserGroups(storedUser, user);
+      User updatedUser = updateStoredUserGroups(organizationId, storedUser, user);
 
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
 
-   private User updateStoredUserGroups(User storedUser, User user) {
+   private User updateStoredUserGroups(String organizationId, User storedUser, User user) {
       Map<String, Set<String>> groups = storedUser.getGroups();
       if (groups == null) {
          groups = user.getGroups();
@@ -102,15 +119,27 @@ public class UserFacade extends AbstractFacade {
 
       user.setGroups(groups);
 
-      return userDao.updateUser(storedUser.getId(), user);
+      return updateUserAndSendNotification(organizationId, storedUser.getId(), user);
+   }
+
+   private User updateUserAndSendNotification(String organizationId, String userId, User user) {
+      User updated = userDao.updateUser(userId, user);
+      if (createOrUpdateUserEvent != null) {
+         this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, updated));
+      }
+      return updated;
    }
 
    public void deleteUser(String organizationId, String userId) {
       checkPermissions(organizationId, Role.MANAGE);
 
       userDao.deleteUserGroups(organizationId, userId);
-
       User storedUser = userDao.getUserById(userId);
+
+      if (removeUserEvent != null) {
+         removeUserEvent.fire(new RemoveUser(organizationId, storedUser));
+      }
+
       userCache.updateUser(storedUser.getEmail(), storedUser);
    }
 
