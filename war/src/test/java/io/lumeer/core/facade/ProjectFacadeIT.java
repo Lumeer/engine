@@ -106,9 +106,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    private Project createProjectWithStrangerPermissions(final String code) {
       Project project = new Project(code, NAME, ICON, COLOR, null, null);
-      project.getPermissions().updateUserPermissions(
-            userPermissions,
-            Permission.buildWithRoles(stranger.getId(), Collections.singleton(Role.MANAGE)));
+      project.getPermissions().updateUserPermissions(userPermissions, userStrangerPermissions);
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
@@ -120,7 +118,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       userPermissions = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
       userReadonlyPermissions =Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(Role.MANAGE));
+      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(Role.READ));
       groupPermissions = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
 
       Organization organization = new Organization();

@@ -87,7 +87,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
       userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       userReadonlyPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermission = Permission.buildWithRoles(this.strangerUser.getId(), Collections.singleton(Role.MANAGE));
+      userStrangerPermission = Permission.buildWithRoles(this.strangerUser.getId(), Collections.singleton(Role.READ));
       groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
    }
 
