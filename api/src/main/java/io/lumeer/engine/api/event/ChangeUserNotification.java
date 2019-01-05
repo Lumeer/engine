@@ -23,9 +23,15 @@ import io.lumeer.api.model.UserNotification;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class CreateOrUpdateUserNotification extends ChangeUserNotification {
+public abstract class ChangeUserNotification {
 
-   public CreateOrUpdateUserNotification(final UserNotification userNotification) {
-      super(userNotification);
+   private final UserNotification userNotification;
+
+   public ChangeUserNotification(final UserNotification userNotification) {
+      this.userNotification = userNotification;
+   }
+
+   public UserNotification getUserNotification() {
+      return userNotification;
    }
 }

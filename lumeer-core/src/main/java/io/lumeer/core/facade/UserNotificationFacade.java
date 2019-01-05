@@ -92,8 +92,7 @@ public class UserNotificationFacade extends AbstractFacade {
    }
 
    private List<UserNotification> createResourceSharedNotifications(final Resource resource, final java.util.Collection<String> newUsers) {
-      // in tests, we do not have the workspace at all times
-      if (!workspaceKeeper.getOrganization().isPresent()) {
+      if (!workspaceKeeper.getOrganization().isPresent() && resource.getType() != ResourceType.ORGANIZATION) {
          return Collections.emptyList();
       }
 
