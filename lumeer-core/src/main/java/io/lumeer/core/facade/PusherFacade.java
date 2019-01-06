@@ -27,6 +27,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
@@ -243,7 +244,7 @@ public class PusherFacade {
       List<Event> notifications = new ArrayList<>();
 
       if (removedUsers.size() > 0) {
-         notifications.addAll(createRemoveCollectionNotification(updatedCollection, removedUsers, views));
+         notifications.addAll(createRemoveCollectionNotification(updatedCollection, removedUsers, views, linkTypes));
          if (linkTypes.size() > 0) {
             notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, removedUsers, views));
          }
@@ -265,13 +266,18 @@ public class PusherFacade {
       return collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
    }
 
-   private List<Event> createRemoveCollectionNotification(final Collection collection, final Set<String> userIds, final List<View> views) {
+   private List<Event> createRemoveCollectionNotification(final Collection collection, final Set<String> userIds, final List<View> views, final List<LinkType> linkTypes) {
       List<Event> notifications = new ArrayList<>();
 
       for (String user : userIds) { // checks if user has collection in some view
          List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
-         Set<String> collectionIdsInViews = viewsByUser.stream().map(view -> view.getQuery().getCollectionIds())
-                                                       .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+         Set<String> collectionIdsInViews = new HashSet<>();
+         viewsByUser.forEach(view -> {
+            collectionIdsInViews.addAll(view.getQuery().getCollectionIds());
+            List<LinkType> viewLinkTypes = linkTypes.stream().filter(lt -> view.getQuery().getLinkTypeIds().contains(lt.getId())).collect(Collectors.toList());
+            viewLinkTypes.forEach(lt -> collectionIdsInViews.addAll(lt.getCollectionIds()));
+         });
+
          if (!collectionIdsInViews.contains(collection.getId())) {
             notifications.add(createEventForResource(collection, REMOVE_EVENT_SUFFIX, user));
          }
@@ -340,7 +346,7 @@ public class PusherFacade {
       if (removedUsers.size() > 0) {
          removedUsers.forEach(userId -> notifications.add(createEventForResource(updatedView, REMOVE_EVENT_SUFFIX, userId)));
          if (collections.size() > 0) {
-            collections.forEach(collection -> notifications.addAll(createRemoveCollectionNotification(collection, removedUsers, views)));
+            collections.forEach(collection -> notifications.addAll(createRemoveCollectionNotification(collection, removedUsers, views, linkTypes)));
          }
          if (linkTypes.size() > 0) {
             linkTypes.forEach(linkType -> notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, removedUsers, views)));
@@ -622,9 +628,9 @@ public class PusherFacade {
    public void createUserNotification(@Observes final CreateOrUpdateUserNotification createOrUpdateUserNotification) {
       if (isEnabled()) {
          try {
-            sendNotification(createOrUpdateUserNotification.getUserNotification().getUserId(),
-                  CREATE_EVENT_SUFFIX, createOrUpdateUserNotification.getUserNotification()
-            );
+            UserNotification notification = createOrUpdateUserNotification.getUserNotification();
+            Event event = createEventForObject(notification, CREATE_EVENT_SUFFIX, notification.getUserId());
+            sendNotificationsBatch(Collections.singletonList(event));
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -634,10 +640,9 @@ public class PusherFacade {
    public void removeUserNotification(@Observes final RemoveUserNotification removeUserNotification) {
       if (isEnabled()) {
          try {
-            sendNotification(
-                  removeUserNotification.getUserNotification().getUserId(),
-                  REMOVE_EVENT_SUFFIX, new ResourceId(removeUserNotification.getUserNotification().getId())
-            );
+            UserNotification notification = removeUserNotification.getUserNotification();
+            Event event = createEventForRemove(notification.getClass().getSimpleName(), new ResourceId(notification.getId()), notification.getUserId());
+            sendNotificationsBatch(Collections.singletonList(event));
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -693,12 +698,6 @@ public class PusherFacade {
    private void sendResourceNotificationByLinkType(final LinkType linkType, final String event) {
       Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkType, userIds, event);
-   }
-
-   private void sendNotification(final String userId, final String event, final Object message) {
-      if (isEnabled() && authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId)) {
-         pusherClient.trigger(PRIVATE_CHANNEL_PREFIX + userId, message.getClass().getSimpleName() + event, message);
-      }
    }
 
    private void sendNotificationsBatch(List<Event> notifications) {
