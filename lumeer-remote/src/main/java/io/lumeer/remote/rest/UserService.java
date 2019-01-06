@@ -60,12 +60,14 @@ public class UserService extends AbstractService {
 
    @POST
    @Path("organizations/{organizationId}/users")
+   @JsonView(UserViews.DefaultView.class)
    public User createUserInOrganization(@PathParam("organizationId") String organizationId, User user) {
       return userFacade.createUser(organizationId, user);
    }
 
    @PUT
    @Path("organizations/{organizationId}/users/{userId}")
+   @JsonView(UserViews.DefaultView.class)
    public User updateUserInOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId, User user) {
       return userFacade.updateUser(organizationId, userId, user);

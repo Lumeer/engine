@@ -27,6 +27,7 @@ import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
+import io.lumeer.core.util.ResourceUtils;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;
@@ -53,11 +54,18 @@ abstract class AbstractFacade {
       return permissionsChecker.isManager();
    }
 
-   protected <T extends Resource> T keepOnlyActualUserRoles(final T resource) {
-      Set<Role> roles = permissionsChecker.getActualRoles(resource);
-      Permission permission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), roles);
+   protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId) {
+      Set<Role> roles = permissionsChecker.getActualRoles(resource, userId);
+      Permission permission = Permission.buildWithRoles(userId, roles);
+
+      Set<String> managers = permissionsChecker.getWorkspaceManagers();
+      managers.addAll(ResourceUtils.getManagers(resource));
+
+      Permission[] managersUserPermission = resource.getPermissions().getUserPermissions().stream()
+                                                    .filter(perm -> managers.contains(perm.getId())).toArray(Permission[]::new);
 
       resource.getPermissions().clear();
+      resource.getPermissions().updateUserPermissions(managersUserPermission);
       resource.getPermissions().updateUserPermissions(permission);
 
       return resource;
@@ -68,6 +76,10 @@ abstract class AbstractFacade {
          return resource;
       }
       return keepOnlyActualUserRoles(resource);
+   }
+
+   private <T extends Resource> T keepOnlyActualUserRoles(final T resource) {
+      return keepOnlyActualUserRoles(resource, authenticatedUser.getCurrentUserId());
    }
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
