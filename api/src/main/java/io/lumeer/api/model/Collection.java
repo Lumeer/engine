@@ -95,11 +95,10 @@ public class Collection extends Resource {
       o.lastAttributeNum = this.lastAttributeNum;
       o.favorite = this.favorite;
       o.version = this.version;
-      o.rules = new HashMap<>(this.rules);
+      o.rules = this.rules != null ? new HashMap<>(this.rules) : Collections.emptyMap();
 
       return o;
    }
-
 
    @Override
    public ResourceType getType() {
