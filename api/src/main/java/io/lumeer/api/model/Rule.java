@@ -33,8 +33,16 @@ public class Rule {
    public static final String TYPE = "type";
    public static final String CONFIGURATION = "configuration";
 
+   public static final String BLOCKLY_XML = "blocklyXml";
+   public static final String BLOCKLY_JS = "blocklyJs";
+   public static final String AUTO_LINK_COLLECTION1 = "collection1";
+   public static final String AUTO_LINK_ATTRIBUTE1 = "attribute1";
+   public static final String AUTO_LINK_COLLECTION2 = "collection2";
+   public static final String AUTO_LINK_ATTRIBUTE2 = "attribute2";
+   public static final String AUTO_LINK_LINK_TYPE = "linkType";
+
    public enum RuleType {
-      AUTO_LINK
+      AUTO_LINK, BLOCKLY
    }
 
    private RuleType type;

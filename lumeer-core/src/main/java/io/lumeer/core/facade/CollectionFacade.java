@@ -210,7 +210,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Integer getFreeAttributeNum(final Collection collection) {
-      final AtomicInteger last = new AtomicInteger(Math.max(1, collection.getLastAttributeNum()));
+      final AtomicInteger last = new AtomicInteger(Math.max(1, collection.getLastAttributeNum() + 1));
       while (collection.getAttributes().stream().anyMatch(attribute -> attribute.getId().equals(Collection.ATTRIBUTE_PREFIX + last.get()))) {
          last.incrementAndGet();
       }
@@ -234,6 +234,8 @@ public class CollectionFacade extends AbstractFacade {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
+
+      dataDao.deleteAttribute(collectionId, attributeId);
 
       collection.deleteAttribute(attributeId);
       if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(attributeId)) {

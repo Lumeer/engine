@@ -42,6 +42,8 @@ public interface DataDao {
 
    void deleteData(String collectionId, String documentId);
 
+   long deleteAttribute(String collectionId, String attributeId);
+
    DataDocument getData(String collectionId, String documentId);
 
    List<DataDocument> getData(String collectionId);
