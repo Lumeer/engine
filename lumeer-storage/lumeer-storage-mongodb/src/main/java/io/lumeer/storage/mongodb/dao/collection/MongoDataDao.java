@@ -40,6 +40,9 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -121,6 +124,12 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    @Override
    public void deleteData(final String collectionId, final String documentId) {
       dataCollection(collectionId).deleteOne(idFilter(documentId));
+   }
+
+   @Override
+   public long deleteAttribute(final String collectionId, final String attributeId) {
+      final UpdateResult updateResult = dataCollection(collectionId).updateMany(new BsonDocument(), Updates.unset(attributeId));
+      return updateResult.getModifiedCount();
    }
 
    @Override
