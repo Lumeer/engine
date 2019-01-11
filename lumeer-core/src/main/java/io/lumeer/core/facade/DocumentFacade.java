@@ -113,9 +113,11 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       final Document document = documentDao.getDocumentById(documentId);
+      final Document originalDocument = copyDocument(document);
+
       document.setMetaData(metaData);
 
-      return updateDocument(document);
+      return updateDocument(document, originalDocument);
    }
 
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
@@ -145,27 +147,39 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       final Document document = documentDao.getDocumentById(documentId);
+      final Document originalDocument = copyDocument(document);
+
       if (document.getMetaData() == null) {
          document.setMetaData(new DataDocument());
       }
       metaData.forEach((key, value) -> document.getMetaData().put(key, value));
 
-      return updateDocument(document);
+      return updateDocument(document, originalDocument);
+   }
+
+   private Document copyDocument(final Document document) {
+      final Document originalDocument = new Document(document);
+      originalDocument.setMetaData(new DataDocument(originalDocument.getMetaData())); // deep copy of meta-data
+      originalDocument.setData(new DataDocument(originalDocument.getData())); // deep copy of data
+
+      return originalDocument;
    }
 
    private Document updateDocument(final Collection collection, final String documentId, final DataDocument data) {
       final Document document = documentDao.getDocumentById(documentId);
+      final Document originalDocument = copyDocument(document);
+
       document.setCollectionId(collection.getId());
       document.setData(data);
 
-      return updateDocument(document);
+      return updateDocument(document, originalDocument);
    }
 
-   private Document updateDocument(final Document document) {
+   private Document updateDocument(final Document document, final Document originalDocument) {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
 
-      return documentDao.updateDocument(document.getId(), document);
+      return documentDao.updateDocument(document.getId(), document, originalDocument);
    }
 
    public void deleteDocument(String collectionId, String documentId) {

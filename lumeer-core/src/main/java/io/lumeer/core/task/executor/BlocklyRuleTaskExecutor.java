@@ -16,18 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao.context;
+package io.lumeer.core.task.executor;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Project;
-import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.api.model.rule.BlocklyRule;
+import io.lumeer.core.task.RuleTask;
 
 /**
- * Gets a {@link DaoContextSnapshot} based on provided information.
- *
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public interface DaoContextSnapshotFactory {
-   DaoContextSnapshot getInstance();
+public class BlocklyRuleTaskExecutor {
+
+   public static void execute(final RuleTask ruleTask) {
+      final BlocklyRule rule = new BlocklyRule(ruleTask.getRule());
+   }
 }

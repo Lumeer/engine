@@ -31,26 +31,25 @@ import java.util.Objects;
 public class Rule {
 
    public static final String TYPE = "type";
+   public static final String TIMING = "timing";
    public static final String CONFIGURATION = "configuration";
-
-   public static final String BLOCKLY_XML = "blocklyXml";
-   public static final String BLOCKLY_JS = "blocklyJs";
-   public static final String AUTO_LINK_COLLECTION1 = "collection1";
-   public static final String AUTO_LINK_ATTRIBUTE1 = "attribute1";
-   public static final String AUTO_LINK_COLLECTION2 = "collection2";
-   public static final String AUTO_LINK_ATTRIBUTE2 = "attribute2";
-   public static final String AUTO_LINK_LINK_TYPE = "linkType";
 
    public enum RuleType {
       AUTO_LINK, BLOCKLY
    }
 
+   public enum RuleTiming {
+      CREATE, UPDATE, CREATE_UPDATE, DELETE, CREATE_DELETE, UPDATE_DELETE, ALL;
+   }
+
    private RuleType type;
-   private DataDocument configuration;
+   private RuleTiming timing;
+   protected DataDocument configuration;
 
    @JsonCreator
-   public Rule(@JsonProperty(TYPE) final RuleType type, @JsonProperty(CONFIGURATION) final DataDocument configuration) {
+   public Rule(@JsonProperty(TYPE) final RuleType type, @JsonProperty(TIMING) final RuleTiming timing, @JsonProperty(CONFIGURATION) final DataDocument configuration) {
       this.type = type;
+      this.timing = timing;
       this.configuration = configuration;
    }
 
@@ -62,12 +61,13 @@ public class Rule {
       this.type = type;
    }
 
-   public DataDocument getConfiguration() {
-      return configuration;
-   }
-
-   public void setConfiguration(final DataDocument configuration) {
-      this.configuration = configuration;
+   @Override
+   public String toString() {
+      return "Rule{" +
+            "type=" + type +
+            ", timing=" + timing +
+            ", configuration=" + configuration +
+            '}';
    }
 
    @Override
@@ -80,19 +80,29 @@ public class Rule {
       }
       final Rule rule = (Rule) o;
       return type == rule.type &&
+            timing == rule.timing &&
             Objects.equals(configuration, rule.configuration);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(type, configuration);
+      return Objects.hash(type, timing, configuration);
    }
 
-   @Override
-   public String toString() {
-      return "Rule{" +
-            "type=" + type +
-            ", configuration=" + configuration +
-            '}';
+   public RuleTiming getTiming() {
+      return timing;
    }
+
+   public void setTiming(final RuleTiming timing) {
+      this.timing = timing;
+   }
+
+   public DataDocument getConfiguration() {
+      return configuration;
+   }
+
+   public void setConfiguration(final DataDocument configuration) {
+      this.configuration = configuration;
+   }
+
 }

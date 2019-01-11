@@ -99,7 +99,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    }
 
    @Override
-   public Document updateDocument(final String id, final Document document) {
+   public Document updateDocument(final String id, final Document document, final Document originalDocument) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
@@ -111,7 +111,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
          final Document updatedDocumentWithData = new Document(updatedDocument);
          updatedDocumentWithData.setData(document.getData());
          if (updateDocumentEvent != null) {
-            updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData));
+            updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData, originalDocument));
          }
          return updatedDocument;
       } catch (MongoException ex) {

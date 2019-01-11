@@ -356,7 +356,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    private Document createDocument(final String collectionId, final String value, final String parentId) {
       final Document doc = createDocument(collectionId, value);
       doc.setMetaData(new DataDocument(Document.META_PARENT_ID, parentId));
-      return documentDao.updateDocument(doc.getId(), doc);
+      return documentDao.updateDocument(doc.getId(), doc, null);
    }
 
    @Test
