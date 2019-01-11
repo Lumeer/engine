@@ -131,6 +131,23 @@
          <artifactId>sentry</artifactId>
       </dependency>
 
+      <dependency>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>graal-sdk</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>polyglot-tck</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.truffle</groupId>
+         <artifactId>truffle-api</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.js</groupId>
+         <artifactId>js</artifactId>
+      </dependency>
+
    </dependencies>
 
 </project>
