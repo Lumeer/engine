@@ -121,6 +121,8 @@ public class BlocklyRuleTaskExecutor {
             ruleTask.getDaoContextSnapshot().getDataDao()
                     .patchData(change.document.getCollectionId(), change.document.getId(),
                           new DataDocument(change.attrId, change.value.asString()));
+            // TODO: send push notification
+            // TODO: use other types than String for Value
          });
       }
 
@@ -229,6 +231,8 @@ public class BlocklyRuleTaskExecutor {
          rule.setErrorDate(System.currentTimeMillis());
          ruleTask.getCollection().getRules().put(ruleName, rule);
          ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
+
+         // TODO: send push notification
       } catch (IOException ioe) {
          // we tried, cannot do more
       }
@@ -240,5 +244,7 @@ public class BlocklyRuleTaskExecutor {
       rule.setDryRunResult(results);
       ruleTask.getCollection().getRules().put(ruleName, rule);
       ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
+
+      // TODO: send push notification
    }
 }
