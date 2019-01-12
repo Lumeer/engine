@@ -52,12 +52,12 @@ public class RuleProcessingFacade {
          final Collection collection = collectionDao.getCollectionById(updateDocument.getDocument().getCollectionId());
 
          if (collection.getRules() != null && collection.getRules().size() > 0) {
-            collection.getRules().values().stream()
-                      .filter(rule -> rule.getTiming() == Rule.RuleTiming.UPDATE || rule.getTiming() == Rule.RuleTiming.CREATE_UPDATE || rule.getTiming() == Rule.RuleTiming.UPDATE_DELETE || rule.getTiming() == Rule.RuleTiming.ALL)
-                      .forEach(rule -> {
+            collection.getRules().entrySet().stream()
+                      .filter(entry -> entry.getValue().getTiming() == Rule.RuleTiming.UPDATE || entry.getValue().getTiming() == Rule.RuleTiming.CREATE_UPDATE || entry.getValue().getTiming() == Rule.RuleTiming.UPDATE_DELETE || entry.getValue().getTiming() == Rule.RuleTiming.ALL)
+                      .forEach(entry -> {
                          final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
 
-                         ruleTask.setRule(rule, collection, updateDocument.getOriginalDocument(), updateDocument.getDocument());
+                         ruleTask.setRule(entry.getKey(), entry.getValue(), collection, updateDocument.getOriginalDocument(), updateDocument.getDocument());
                          taskExecutor.submitTask(ruleTask);
                       });
          }
@@ -69,12 +69,12 @@ public class RuleProcessingFacade {
          final Collection collection = collectionDao.getCollectionById(createDocument.getDocument().getCollectionId());
 
          if (collection.getRules() != null && collection.getRules().size() > 0) {
-            collection.getRules().values().stream()
-                      .filter(rule -> rule.getTiming() == Rule.RuleTiming.CREATE_UPDATE || rule.getTiming() == Rule.RuleTiming.CREATE || rule.getTiming() == Rule.RuleTiming.CREATE_DELETE || rule.getTiming() == Rule.RuleTiming.ALL)
-                      .forEach(rule -> {
+            collection.getRules().entrySet().stream()
+                      .filter(entry -> entry.getValue().getTiming() == Rule.RuleTiming.CREATE_UPDATE || entry.getValue().getTiming() == Rule.RuleTiming.CREATE || entry.getValue().getTiming() == Rule.RuleTiming.CREATE_DELETE || entry.getValue().getTiming() == Rule.RuleTiming.ALL)
+                      .forEach(entry -> {
                          final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
 
-                         ruleTask.setRule(rule, collection, null, createDocument.getDocument());
+                         ruleTask.setRule(entry.getKey(), entry.getValue(), collection, null, createDocument.getDocument());
                          taskExecutor.submitTask(ruleTask);
                       });
          }
@@ -86,12 +86,12 @@ public class RuleProcessingFacade {
          final Collection collection = collectionDao.getCollectionById(removeDocument.getDocument().getCollectionId());
 
          if (collection.getRules() != null && collection.getRules().size() > 0) {
-            collection.getRules().values().stream()
-                      .filter(rule -> rule.getTiming() == Rule.RuleTiming.DELETE || rule.getTiming() == Rule.RuleTiming.CREATE_DELETE || rule.getTiming() == Rule.RuleTiming.UPDATE_DELETE || rule.getTiming() == Rule.RuleTiming.ALL)
-                      .forEach(rule -> {
+            collection.getRules().entrySet().stream()
+                      .filter(entry -> entry.getValue().getTiming() == Rule.RuleTiming.DELETE || entry.getValue().getTiming() == Rule.RuleTiming.CREATE_DELETE || entry.getValue().getTiming() == Rule.RuleTiming.UPDATE_DELETE || entry.getValue().getTiming() == Rule.RuleTiming.ALL)
+                      .forEach(entry -> {
                          final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
 
-                         ruleTask.setRule(rule, collection, removeDocument.getDocument(), null);
+                         ruleTask.setRule(entry.getKey(), entry.getValue(), collection, removeDocument.getDocument(), null);
                          taskExecutor.submitTask(ruleTask);
                       });
          }

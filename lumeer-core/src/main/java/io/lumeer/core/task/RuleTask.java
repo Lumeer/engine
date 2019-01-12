@@ -34,6 +34,7 @@ public class RuleTask implements ContextualTask {
    private User initiator;
    private DaoContextSnapshot daoContextSnapshot;
    private PusherClient pusherClient;
+   private String ruleName;
    private Rule rule;
    private Collection collection;
    private Document oldDocument;
@@ -48,7 +49,8 @@ public class RuleTask implements ContextualTask {
       return this;
    }
 
-   public void setRule(final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
+   public void setRule(final String ruleName, final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
+      this.ruleName = ruleName;
       this.rule = rule;
       this.collection = collection;
       this.oldDocument = oldDocument;
@@ -58,7 +60,8 @@ public class RuleTask implements ContextualTask {
    @Override
    public void process() {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
-         BlocklyRuleTaskExecutor.execute(this);
+         final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
+         executor.execute();
       }
    }
 
