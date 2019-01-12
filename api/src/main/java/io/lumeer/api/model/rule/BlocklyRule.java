@@ -23,7 +23,7 @@ import io.lumeer.api.model.Rule;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class BlocklyRule extends Rule {
+public class BlocklyRule {
 
    public static final String BLOCKLY_XML = "blocklyXml";
    public static final String BLOCKLY_JS = "blocklyJs";
@@ -32,59 +32,65 @@ public class BlocklyRule extends Rule {
    public static final String BLOCKLY_DRY_RUN = "blocklyDryRun";
    public static final String BLOCKLY_DRY_RUN_RESULT = "blocklyDryRunResult";
 
-   public BlocklyRule(final Rule rule) {
-      super(RuleType.BLOCKLY, rule.getTiming(), rule.getConfiguration());
+   private final Rule rule;
 
-      if (rule.getType() != RuleType.BLOCKLY) {
+   public BlocklyRule(final Rule rule) {
+      this.rule = rule;
+
+      if (rule.getType() != Rule.RuleType.BLOCKLY) {
          throw new IllegalArgumentException("Cannot create Blockly Rule from a rule of type " + rule.getType());
       }
    }
 
+   public Rule getRule() {
+      return rule;
+   }
+
    public String getXml() {
-      return configuration.getString(BLOCKLY_XML);
+      return rule.getConfiguration().getString(BLOCKLY_XML);
    }
 
    public void setXml(final String xml) {
-      configuration.put(BLOCKLY_XML, xml);
+      rule.getConfiguration().put(BLOCKLY_XML, xml);
    }
 
    public String getJs() {
-      return configuration.getString(BLOCKLY_JS);
+      return rule.getConfiguration().getString(BLOCKLY_JS);
    }
 
    public void setJs(final String js) {
-      configuration.put(BLOCKLY_DRY_RUN_RESULT, js);
+      rule.getConfiguration().put(BLOCKLY_JS, js);
    }
 
    public String getError() {
-      return configuration.getString(BLOCKLY_ERROR);
+      return rule.getConfiguration().getString(BLOCKLY_ERROR);
    }
 
    public void setError(final String error) {
-      configuration.put(BLOCKLY_DRY_RUN_RESULT, error);
+      rule.getConfiguration().put(BLOCKLY_ERROR, error);
    }
 
    public long getErrorDate() {
-      return configuration.getLong(BLOCKLY_ERROR_DATE);
+      return rule.getConfiguration().getLong(BLOCKLY_ERROR_DATE);
    }
 
    public void setErrorDate(final long errorDate) {
-      configuration.put(BLOCKLY_DRY_RUN_RESULT, errorDate);
+      rule.getConfiguration().put(BLOCKLY_ERROR_DATE, errorDate);
    }
 
    public boolean isDryRun() {
-      return configuration.getBoolean(BLOCKLY_DRY_RUN);
+      return rule.getConfiguration().getBoolean(BLOCKLY_DRY_RUN);
    }
 
    public void setDryRun(final boolean dryRun) {
-      configuration.put(BLOCKLY_DRY_RUN_RESULT, dryRun);
+      rule.getConfiguration().put(BLOCKLY_DRY_RUN, dryRun);
    }
 
    public String getDryRunResult() {
-      return configuration.getString(BLOCKLY_DRY_RUN_RESULT);
+      return rule.getConfiguration().getString(BLOCKLY_DRY_RUN_RESULT);
    }
 
    public void setDryRunResult(final String dryRunResult) {
-      configuration.put(BLOCKLY_DRY_RUN_RESULT, dryRunResult);
+      rule.getConfiguration().put(BLOCKLY_DRY_RUN_RESULT, dryRunResult);
    }
 }

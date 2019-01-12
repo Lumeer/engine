@@ -160,17 +160,21 @@ public class DocumentFacade extends AbstractFacade {
    private Document copyDocument(final Document document) {
       final Document originalDocument = new Document(document);
       originalDocument.setMetaData(new DataDocument(originalDocument.getMetaData())); // deep copy of meta-data
-      originalDocument.setData(new DataDocument(originalDocument.getData())); // deep copy of data
+
+      if (originalDocument.getData() != null) {
+         originalDocument.setData(new DataDocument(originalDocument.getData())); // deep copy of data
+      }
 
       return originalDocument;
    }
 
    private Document updateDocument(final Collection collection, final String documentId, final DataDocument data) {
       final Document document = documentDao.getDocumentById(documentId);
-      final Document originalDocument = copyDocument(document);
 
       document.setCollectionId(collection.getId());
       document.setData(data);
+
+      final Document originalDocument = copyDocument(document);
 
       return updateDocument(document, originalDocument);
    }

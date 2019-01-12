@@ -65,11 +65,29 @@ public class BlocklyRuleTaskExecutor {
          this.ruleTask = ruleTask;
       }
 
-      void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
-         changes.add(new DocumentChange(d.document, attrId, value));
+      public void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
+         changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
       }
 
-      List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
+      Object convertValue(final Value value) {
+         if (value.isNumber()) {
+            return value.fitsInLong() ? value.asLong() : value.asDouble();
+         } else if (value.isBoolean()) {
+            return value.asBoolean();
+         } else if (value.isNull()) {
+            return null;
+         } else if (value.hasArrayElements()) {
+            final List list = new ArrayList();
+            for (long i = 0; i < value.getArraySize(); i = i + 1) {
+               list.add(convertValue(value.getArrayElement(i)));
+            }
+            return list;
+         } else {
+            return value.asString();
+         }
+      }
+
+      public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
          final SearchQuery query = SearchQuery
                .createBuilder()
                .stems(Arrays.asList(
@@ -86,8 +104,13 @@ public class BlocklyRuleTaskExecutor {
                  .searchLinkInstances(query)
                  .forEach(linkInstance -> {
                     final List<String> documents = linkInstance.getDocumentIds();
-                    documents.remove(d.document.getId());
-                    documentIds.addAll(documents);
+                    if (documents.size() >= 2) {
+                       if (documents.get(0).equals(d.document.getId())) {
+                          documentIds.add(documents.get(1));
+                       } else {
+                          documentIds.add(documents.get(0));
+                       }
+                    }
                  });
 
          // load document data
@@ -105,11 +128,11 @@ public class BlocklyRuleTaskExecutor {
                }).collect(Collectors.toList());
       }
 
-      List<Value> getDocumentAttribute(DocumentBridge d, String attrId) {
-         return Arrays.asList(Value.asValue(d.document.getData().get(attrId)));
+      public Value getDocumentAttribute(DocumentBridge d, String attrId) {
+         return Value.asValue(d.document.getData().get(attrId));
       }
 
-      List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
+      public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
          final List<Value> result = new ArrayList<>();
          docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
 
@@ -120,7 +143,7 @@ public class BlocklyRuleTaskExecutor {
          changes.forEach(change -> {
             ruleTask.getDaoContextSnapshot().getDataDao()
                     .patchData(change.document.getCollectionId(), change.document.getId(),
-                          new DataDocument(change.attrId, change.value.asString()));
+                          new DataDocument(change.attrId, change.value));
             // TODO: send push notification
             // TODO: use other types than String for Value
          });
@@ -128,7 +151,7 @@ public class BlocklyRuleTaskExecutor {
 
       String getChanges() {
          final Map<String, Collection> collections = new HashMap<>();
-         final StringBuilder sb = new StringBuilder();
+         final StringBuilder sb = new StringBuilder("");
 
          changes.forEach(change -> {
             final Collection collection = collections.computeIfAbsent(change.document.getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
@@ -136,7 +159,8 @@ public class BlocklyRuleTaskExecutor {
             sb.append(collection.getName() + "(" + last4(change.document.getId()) + "): ");
             sb.append(collection.getAttributes().stream().filter(a -> a.getId().equals(change.attrId)).map(a -> a.getName()).findFirst().orElse(""));
             sb.append(" = ");
-            sb.append(change.value.asString());
+            sb.append(change.value);
+            sb.append("\n");
          });
 
          return sb.toString();
@@ -153,9 +177,9 @@ public class BlocklyRuleTaskExecutor {
    public static class DocumentChange {
       private final Document document;
       private final String attrId;
-      private final Value value;
+      private final Object value;
 
-      public DocumentChange(final Document document, final String attrId, final Value value) {
+      public DocumentChange(final Document document, final String attrId, final Object value) {
          this.document = document;
          this.attrId = attrId;
          this.value = value;
@@ -169,7 +193,7 @@ public class BlocklyRuleTaskExecutor {
          return attrId;
       }
 
-      public Value getValue() {
+      public Object getValue() {
          return value;
       }
    }
@@ -217,7 +241,11 @@ public class BlocklyRuleTaskExecutor {
       if (!rule.isDryRun()) {
          lumeerBridge.commitChanges();
       } else {
-         writeDryRunResults(lumeerBridge.getChanges());
+         try {
+            writeDryRunResults(lumeerBridge.getChanges());
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
       }
    }
 
@@ -229,7 +257,7 @@ public class BlocklyRuleTaskExecutor {
 
          rule.setError(sw.toString());
          rule.setErrorDate(System.currentTimeMillis());
-         ruleTask.getCollection().getRules().put(ruleName, rule);
+         ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
          ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
 
          // TODO: send push notification
@@ -242,7 +270,7 @@ public class BlocklyRuleTaskExecutor {
       final Collection originalCollection = ruleTask.getCollection().copy();
 
       rule.setDryRunResult(results);
-      ruleTask.getCollection().getRules().put(ruleName, rule);
+      ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
       ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
 
       // TODO: send push notification
