@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.util;
+package io.lumeer.api.util;
 
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Role;

@@ -28,7 +28,7 @@ public class BlocklyRule {
    public static final String BLOCKLY_XML = "blocklyXml";
    public static final String BLOCKLY_JS = "blocklyJs";
    public static final String BLOCKLY_ERROR = "blocklyError";
-   public static final String BLOCKLY_ERROR_DATE = "blocklyErrorDate";
+   public static final String BLOCKLY_RESULT_TIMESTAMP = "blocklyResultTimestamp";
    public static final String BLOCKLY_DRY_RUN = "blocklyDryRun";
    public static final String BLOCKLY_DRY_RUN_RESULT = "blocklyDryRunResult";
 
@@ -70,12 +70,12 @@ public class BlocklyRule {
       rule.getConfiguration().put(BLOCKLY_ERROR, error);
    }
 
-   public long getErrorDate() {
-      return rule.getConfiguration().getLong(BLOCKLY_ERROR_DATE);
+   public long getResultTimestamp() {
+      return rule.getConfiguration().getLong(BLOCKLY_RESULT_TIMESTAMP);
    }
 
-   public void setErrorDate(final long errorDate) {
-      rule.getConfiguration().put(BLOCKLY_ERROR_DATE, errorDate);
+   public void setResultTimestamp(final long timestamp) {
+      rule.getConfiguration().put(BLOCKLY_RESULT_TIMESTAMP, timestamp);
    }
 
    public boolean isDryRun() {
@@ -92,5 +92,12 @@ public class BlocklyRule {
 
    public void setDryRunResult(final String dryRunResult) {
       rule.getConfiguration().put(BLOCKLY_DRY_RUN_RESULT, dryRunResult);
+   }
+
+   @Override
+   public String toString() {
+      return "BlocklyRule{" +
+            "rule=" + rule +
+            '}';
    }
 }

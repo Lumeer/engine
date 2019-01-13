@@ -21,6 +21,7 @@ package io.lumeer.core.task.executor;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.rule.BlocklyRule;
+import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -28,6 +29,7 @@ import io.lumeer.storage.api.query.SearchQueryStem;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
+import org.marvec.pusher.data.Event;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -140,13 +142,34 @@ public class BlocklyRuleTaskExecutor {
       }
 
       void commitChanges() {
+         final Map<String, List<String>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
+
          changes.forEach(change -> {
             ruleTask.getDaoContextSnapshot().getDataDao()
                     .patchData(change.document.getCollectionId(), change.document.getId(),
                           new DataDocument(change.attrId, change.value));
-            // TODO: send push notification
-            // TODO: use other types than String for Value
+            updatedDocuments.computeIfAbsent(change.document.getCollectionId(), key -> new ArrayList<String>())
+                            .add(change.document.getId());
          });
+
+         // send push notification
+         if (ruleTask.getPusherClient() != null) {
+            updatedDocuments.keySet().forEach(collectionId -> {
+               final Set<String> users = ruleTask.getDaoContextSnapshot().getCollectionReaders(collectionId);
+               final List<Document> documents = ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(updatedDocuments.get(collectionId).toArray(new String[updatedDocuments.get(collectionId).size()]));
+               final List<Event> events = new ArrayList<>();
+
+               users.stream()
+                    .forEach(userId ->
+                          documents.forEach(doc -> {
+                                   final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(doc, ruleTask.getDaoContextSnapshot().getOrganizationId(), ruleTask.getDaoContextSnapshot().getProjectId());
+                                   events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, doc.getClass().getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
+                                }
+                          ));
+
+               ruleTask.getPusherClient().trigger(events);
+            });
+         }
       }
 
       String getChanges() {
@@ -196,6 +219,15 @@ public class BlocklyRuleTaskExecutor {
       public Object getValue() {
          return value;
       }
+
+      @Override
+      public String toString() {
+         return "DocumentChange{" +
+               "document=" + document.getId() +
+               ", attrId='" + attrId + '\'' +
+               ", value=" + value +
+               '}';
+      }
    }
 
    public static class DocumentBridge {
@@ -233,32 +265,24 @@ public class BlocklyRuleTaskExecutor {
 
       try {
          context.eval("js", rule.getJs());
+
+         if (!rule.isDryRun()) {
+            lumeerBridge.commitChanges();
+         } else {
+            writeDryRunResults(lumeerBridge.getChanges());
+         }
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to execute Blockly Rule on document change: ", e);
          writeTaskError(e);
       }
-
-      if (!rule.isDryRun()) {
-         lumeerBridge.commitChanges();
-      } else {
-         try {
-            writeDryRunResults(lumeerBridge.getChanges());
-         } catch (Exception e) {
-            e.printStackTrace();
-         }
-      }
    }
 
    private void writeTaskError(final Exception e) {
-      final Collection originalCollection = ruleTask.getCollection().copy();
-
       try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
          e.printStackTrace(pw);
 
          rule.setError(sw.toString());
-         rule.setErrorDate(System.currentTimeMillis());
-         ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
-         ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
+         updateRule();
 
          // TODO: send push notification
       } catch (IOException ioe) {
@@ -267,12 +291,29 @@ public class BlocklyRuleTaskExecutor {
    }
 
    private void writeDryRunResults(final String results) {
+      rule.setDryRunResult(results);
+      updateRule();
+
+      final Set<String> users = ruleTask.getDaoContextSnapshot().getCollectionManagers(ruleTask.getCollection().getId());
+      final List<Event> events = new ArrayList<>();
+
+      if (ruleTask.getPusherClient() != null) {
+         System.out.println("@@@@@@@@@@@@@@@ posílá se a nemělo by");
+         users.stream()
+              .forEach(userId -> {
+                 final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(ruleTask.getCollection(), ruleTask.getDaoContextSnapshot().getOrganizationId(), ruleTask.getDaoContextSnapshot().getProjectId());
+                 events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
+              });
+
+         ruleTask.getPusherClient().trigger(events);
+      }
+   }
+
+   private void updateRule() {
       final Collection originalCollection = ruleTask.getCollection().copy();
 
-      rule.setDryRunResult(results);
+      rule.setResultTimestamp(System.currentTimeMillis());
       ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
       ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
-
-      // TODO: send push notification
    }
 }

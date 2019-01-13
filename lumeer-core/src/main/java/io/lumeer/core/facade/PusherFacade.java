@@ -33,7 +33,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
-import io.lumeer.core.util.ResourceUtils;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
@@ -89,10 +89,10 @@ import javax.inject.Inject;
 @ApplicationScoped
 public class PusherFacade extends AbstractFacade {
 
-   private static final String PRIVATE_CHANNEL_PREFIX = "private-";
-   private static final String UPDATE_EVENT_SUFFIX = ":update";
-   private static final String CREATE_EVENT_SUFFIX = ":create";
-   private static final String REMOVE_EVENT_SUFFIX = ":remove";
+   public static final String PRIVATE_CHANNEL_PREFIX = "private-";
+   public static final String UPDATE_EVENT_SUFFIX = ":update";
+   public static final String CREATE_EVENT_SUFFIX = ":create";
+   public static final String REMOVE_EVENT_SUFFIX = ":remove";
 
    private String PUSHER_APP_ID;
    private String PUSHER_KEY;

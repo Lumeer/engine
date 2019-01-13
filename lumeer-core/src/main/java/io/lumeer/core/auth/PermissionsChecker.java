@@ -36,7 +36,7 @@ import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
-import io.lumeer.core.util.ResourceUtils;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.UserDao;

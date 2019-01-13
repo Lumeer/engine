@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.dao.context;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
@@ -60,6 +61,10 @@ import io.lumeer.storage.mongodb.dao.system.MongoUserNotificationDao;
 import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
 
 import com.mongodb.client.MongoDatabase;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -104,6 +109,14 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       dao.setOrganization(organization);
       dao.setProject(project);
       return dao;
+   }
+
+   public String getOrganizationId() {
+      return organization != null ? organization.getId() : null;
+   }
+
+   public String getProjectId() {
+      return project != null ? project.getId() : null;
    }
 
    @Override
@@ -184,5 +197,43 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    @Override
    public ViewDao getViewDao() {
       return initProjectScopedDao(new MongoViewDao());
+   }
+
+   @Override
+   public Set<String> getCollectionManagers(final String collectionId) {
+      if (organization == null || project == null) {
+         return Collections.emptySet();
+      }
+
+      final Set<String> result = new HashSet<>();
+
+      result.addAll(ResourceUtils.getManagers(organization));
+      result.addAll(ResourceUtils.getManagers(project));
+      result.addAll(ResourceUtils.getManagers(getCollectionDao().getCollectionById(collectionId)));
+
+      getViewDao().getViewsPermissionsByCollection(collectionId).forEach(view ->
+            result.addAll(ResourceUtils.getManagers(view))
+      );
+
+      return result;
+   }
+
+   @Override
+   public Set<String> getCollectionReaders(final String collectionId) {
+      if (organization == null || project == null) {
+         return Collections.emptySet();
+      }
+
+      final Set<String> result = new HashSet<>();
+
+      result.addAll(ResourceUtils.usersAllowedRead(organization));
+      result.addAll(ResourceUtils.usersAllowedRead(project));
+      result.addAll(ResourceUtils.usersAllowedRead(getCollectionDao().getCollectionById(collectionId)));
+
+      getViewDao().getViewsPermissionsByCollection(collectionId).forEach(view ->
+            result.addAll(ResourceUtils.usersAllowedRead(view))
+      );
+
+      return result;
    }
 }
