@@ -23,6 +23,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -71,6 +72,19 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
          return linkInstance;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create link instance: " + linkInstance, ex);
+      }
+   }
+
+   @Override
+   public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances) {
+      try {
+         databaseCollection().insertMany(linkInstances);
+         if (createLinkInstanceEvent != null) {
+            linkInstances.forEach(linkInstance -> createLinkInstanceEvent.fire(new CreateLinkInstance(linkInstance)));
+         }
+         return linkInstances;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot create link instances: " + linkInstances, ex);
       }
    }
 
@@ -135,6 +149,12 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
       final FindIterable<LinkInstance> linkInstances = databaseCollection().find(linkInstancesFilter(query));
       addPaginationToQuery(linkInstances, query);
       return linkInstances.into(new ArrayList<>());
+   }
+
+   @Override
+   public long deleteLinkInstances(final SearchQuery query) {
+      final DeleteResult deleteResult = databaseCollection().deleteMany(linkInstancesFilter(query));
+      return deleteResult.getDeletedCount();
    }
 
    private Bson linkInstancesFilter(final SearchQuery query) {

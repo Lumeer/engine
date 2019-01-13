@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
+import io.lumeer.core.task.executor.AutoLinkRuleTaskExecutor;
 import io.lumeer.core.task.executor.BlocklyRuleTaskExecutor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -61,6 +62,9 @@ public class RuleTask implements ContextualTask {
    public void process() {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
+         executor.execute();
+      } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
+         final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
          executor.execute();
       }
    }

@@ -23,7 +23,7 @@ import io.lumeer.api.model.Rule;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class AutoLinkRule extends Rule {
+public class AutoLinkRule {
 
    public static final String AUTO_LINK_COLLECTION1 = "collection1";
    public static final String AUTO_LINK_ATTRIBUTE1 = "attribute1";
@@ -31,51 +31,53 @@ public class AutoLinkRule extends Rule {
    public static final String AUTO_LINK_ATTRIBUTE2 = "attribute2";
    public static final String AUTO_LINK_LINK_TYPE = "linkType";
 
-   public AutoLinkRule(final Rule rule) {
-      super(RuleType.AUTO_LINK, rule.getTiming(), rule.getConfiguration());
+   private final Rule rule;
 
-      if (rule.getType() != RuleType.BLOCKLY) {
+   public AutoLinkRule(final Rule rule) {
+      this.rule = rule;
+
+      if (rule.getType() != Rule.RuleType.BLOCKLY) {
          throw new IllegalArgumentException("Cannot create AutoLink Rule from a rule of type " + rule.getType());
       }
    }
 
    public String getCollection1() {
-      return configuration.getString(AUTO_LINK_COLLECTION1);
+      return rule.getConfiguration().getString(AUTO_LINK_COLLECTION1);
    }
 
    public void setCollection1(final String collection1) {
-      configuration.put(AUTO_LINK_COLLECTION1, collection1);
+      rule.getConfiguration().put(AUTO_LINK_COLLECTION1, collection1);
    }
 
    public String getAttribute1() {
-      return configuration.getString(AUTO_LINK_ATTRIBUTE1);
+      return rule.getConfiguration().getString(AUTO_LINK_ATTRIBUTE1);
    }
 
    public void setAttribute1(final String attribute1) {
-      configuration.put(AUTO_LINK_ATTRIBUTE1, attribute1);
+      rule.getConfiguration().put(AUTO_LINK_ATTRIBUTE1, attribute1);
    }
 
    public String getCollection2() {
-      return configuration.getString(AUTO_LINK_COLLECTION2);
+      return rule.getConfiguration().getString(AUTO_LINK_COLLECTION2);
    }
 
    public void setCollection2(final String collection2) {
-      configuration.put(AUTO_LINK_COLLECTION2, collection2);
+      rule.getConfiguration().put(AUTO_LINK_COLLECTION2, collection2);
    }
 
    public String getAttribute2() {
-      return configuration.getString(AUTO_LINK_ATTRIBUTE2);
+      return rule.getConfiguration().getString(AUTO_LINK_ATTRIBUTE2);
    }
 
    public void setAttribute2(final String attribute2) {
-      configuration.put(AUTO_LINK_ATTRIBUTE2, attribute2);
+      rule.getConfiguration().put(AUTO_LINK_ATTRIBUTE2, attribute2);
    }
 
    public String getLinkType() {
-      return configuration.getString(AUTO_LINK_LINK_TYPE);
+      return rule.getConfiguration().getString(AUTO_LINK_LINK_TYPE);
    }
 
    public void setLinkType(final String linkType) {
-      configuration.put(AUTO_LINK_LINK_TYPE, linkType);
+      rule.getConfiguration().put(AUTO_LINK_LINK_TYPE, linkType);
    }
 }
