@@ -326,15 +326,15 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
       final Collection c2 = createCollection("ac2", "auto2", Map.of("a0", "C", "a1", "D"));
       final LinkType l = linkTypeFacade.createLinkType(new LinkType(null, "link1", List.of(c1.getId(), c2.getId()), Collections.emptyList()));
 
-      final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", "10")));
-      final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", "20")));
+      final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
+      final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));
 
-      final Document c2d1 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline1").append("a1", "10")));
-      final Document c2d2 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline2").append("a1", "20")));
-      final Document c2d3 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "20")));
-      final Document c2d4 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "30")));
-      final Document c2d5 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "30")));
-      final Document c2d6 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "30")));
+      final Document c2d1 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline1").append("a1", 10)));
+      final Document c2d2 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline2").append("a1", 20)));
+      final Document c2d3 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", 20)));
+      final Document c2d4 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", 30)));
+      final Document c2d5 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", 30)));
+      final Document c2d6 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", 30)));
 
       final AutoLinkRule rule = new AutoLinkRule(new Rule(Rule.RuleType.AUTO_LINK, Rule.RuleTiming.ALL, new DataDocument()));
       rule.setCollection1(c1.getId());
@@ -348,26 +348,26 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
 
       assertThat(getLinksByType(l.getId())).hasSize(0);
 
-      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "11"));
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 11));
       Thread.sleep(1000); // there is no way we can detect the change :-(
       assertThat(getLinksByType(l.getId())).hasSize(0);
 
-      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "10"));
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 10));
       List<LinkInstance> instances = waitForLinksByType(l.getId());
       assertThat(instances).hasSize(1);
       assertThat(instances.get(0).getDocumentIds()).contains(c1d1.getId(), c2d1.getId());
 
-      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "11"));
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 11));
       instances = waitForLinksByType(l.getId());
       assertThat(instances).hasSize(0);
 
-      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "20"));
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 20));
       instances = waitForLinksByType(l.getId());
       assertThat(instances).hasSize(2);
       assertThat(instances.get(0).getDocumentIds()).contains(c1d1.getId()).containsAnyOf(c2d2.getId(), c2d3.getId());
       assertThat(instances.get(1).getDocumentIds()).contains(c1d1.getId()).containsAnyOf(c2d2.getId(), c2d3.getId());
 
-      final Document c1d3 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line3").append("a1", "30")));
+      final Document c1d3 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line3").append("a1", 30)));
       instances = waitForLinksByType(l.getId());
       assertThat(instances).hasSize(5);
 

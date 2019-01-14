@@ -121,7 +121,7 @@ public class AutoLinkRuleTaskExecutor {
 
    private void addLinks(final Document newDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
       final String thisCollection = newDocument.getCollectionId();
-      final String value = newDocument.getData().get(thisAttribute).toString();
+      final Object value = newDocument.getData().get(thisAttribute);
       final SearchQueryStem queryStem = SearchQueryStem
             .createBuilder(thatCollection)
             .filters(Set.of(new AttributeFilter(thatCollection, ConditionType.EQUALS, thatAttribute, value)))
