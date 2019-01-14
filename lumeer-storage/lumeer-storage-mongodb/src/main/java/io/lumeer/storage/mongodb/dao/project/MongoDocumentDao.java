@@ -106,7 +106,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
          Bson update = new org.bson.Document("$set", document).append("$inc", new org.bson.Document(DocumentCodec.DATA_VERSION, 1));
          Document updatedDocument = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedDocument == null) {
-            throw new StorageException("Collection '" + id + "' has not been updated.");
+            throw new StorageException("Document '" + id + "' has not been updated.");
          }
          final Document updatedDocumentWithData = new Document(updatedDocument);
          updatedDocumentWithData.setData(document.getData());

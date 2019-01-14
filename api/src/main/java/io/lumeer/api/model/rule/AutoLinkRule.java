@@ -41,6 +41,10 @@ public class AutoLinkRule {
       }
    }
 
+   public Rule getRule() {
+      return rule;
+   }
+
    public String getCollection1() {
       return rule.getConfiguration().getString(AUTO_LINK_COLLECTION1);
    }

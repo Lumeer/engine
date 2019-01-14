@@ -91,6 +91,7 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
+      final DataDocument originalData = new DataDocument(oldData);
       Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
 
@@ -102,7 +103,7 @@ public class DocumentFacade extends AbstractFacade {
       // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
 
-      Document updatedDocument = updateDocument(collection, documentId, data);
+      Document updatedDocument = updateDocument(collection, documentId, data, originalData);
       updatedDocument.setData(updatedData);
 
       return updatedDocument;
@@ -125,6 +126,7 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
+      DataDocument originalData = new DataDocument(oldData);
 
       Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
@@ -136,7 +138,7 @@ public class DocumentFacade extends AbstractFacade {
 
       DataDocument newData = new DataDocument(oldData);
       newData.putAll(data);
-      Document updatedDocument = updateDocument(collection, documentId, newData);
+      Document updatedDocument = updateDocument(collection, documentId, newData, originalData);
       updatedDocument.setData(patchedData);
 
       return updatedDocument;
@@ -168,13 +170,13 @@ public class DocumentFacade extends AbstractFacade {
       return originalDocument;
    }
 
-   private Document updateDocument(final Collection collection, final String documentId, final DataDocument data) {
+   private Document updateDocument(final Collection collection, final String documentId, final DataDocument data, final DataDocument originalData) {
       final Document document = documentDao.getDocumentById(documentId);
+      final Document originalDocument = copyDocument(document);
+      originalDocument.setData(originalData);
 
       document.setCollectionId(collection.getId());
       document.setData(data);
-
-      final Document originalDocument = copyDocument(document);
 
       return updateDocument(document, originalDocument);
    }

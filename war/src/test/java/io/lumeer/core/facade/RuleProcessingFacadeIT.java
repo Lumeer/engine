@@ -33,6 +33,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -40,9 +41,12 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.query.SearchQuery;
+import io.lumeer.storage.api.query.SearchQueryStem;
 
 import org.graalvm.polyglot.Context;
 import org.jboss.arquillian.junit.Arquillian;
@@ -50,9 +54,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 
@@ -94,6 +100,9 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
 
    @Inject
    private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String STRANGER_USER = "stranger@nowhere.com";
@@ -308,6 +317,91 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
       assertThat(updatedRule.getError()).contains("Thread was interrupted");
       // it should have been interrupted after 3000ms
       assertThat(System.currentTimeMillis() - updatedRule.getResultTimestamp()).isLessThan(5000);
+   }
+
+   @Test
+   public void testAutoLinkRules() throws InterruptedException {
+      final String ruleName = "autoLinkRule";
+      final Collection c1 = createCollection("ac1", "auto1", Map.of("a0", "A", "a1", "B"));
+      final Collection c2 = createCollection("ac2", "auto2", Map.of("a0", "C", "a1", "D"));
+      final LinkType l = linkTypeFacade.createLinkType(new LinkType(null, "link1", List.of(c1.getId(), c2.getId()), Collections.emptyList()));
+
+      final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", "10")));
+      final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", "20")));
+
+      final Document c2d1 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline1").append("a1", "10")));
+      final Document c2d2 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline2").append("a1", "20")));
+      final Document c2d3 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "20")));
+      final Document c2d4 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "30")));
+      final Document c2d5 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "30")));
+      final Document c2d6 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "30")));
+
+      final AutoLinkRule rule = new AutoLinkRule(new Rule(Rule.RuleType.AUTO_LINK, Rule.RuleTiming.ALL, new DataDocument()));
+      rule.setCollection1(c1.getId());
+      rule.setAttribute1("a1");
+      rule.setCollection2(c2.getId());
+      rule.setAttribute2("a1");
+      rule.setLinkType(l.getId());
+
+      c1.getRules().put(ruleName, rule.getRule());
+      collectionFacade.updateCollection(c1.getId(), c1);
+
+      assertThat(getLinksByType(l.getId())).hasSize(0);
+
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "11"));
+      Thread.sleep(1000); // there is no way we can detect the change :-(
+      assertThat(getLinksByType(l.getId())).hasSize(0);
+
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "10"));
+      List<LinkInstance> instances = waitForLinksByType(l.getId());
+      assertThat(instances).hasSize(1);
+      assertThat(instances.get(0).getDocumentIds()).contains(c1d1.getId(), c2d1.getId());
+
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "11"));
+      instances = waitForLinksByType(l.getId());
+      assertThat(instances).hasSize(0);
+
+      documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", "20"));
+      instances = waitForLinksByType(l.getId());
+      assertThat(instances).hasSize(2);
+      assertThat(instances.get(0).getDocumentIds()).contains(c1d1.getId()).containsAnyOf(c2d2.getId(), c2d3.getId());
+      assertThat(instances.get(1).getDocumentIds()).contains(c1d1.getId()).containsAnyOf(c2d2.getId(), c2d3.getId());
+
+      final Document c1d3 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line3").append("a1", "30")));
+      instances = waitForLinksByType(l.getId());
+      assertThat(instances).hasSize(5);
+
+      documentFacade.deleteDocument(c1.getId(), c1d1.getId());
+      instances = waitForLinksByType(l.getId());
+      assertThat(instances).hasSize(3);
+   }
+
+   private List<LinkInstance> getLinksByType(final String linkTypeId) {
+      final SearchQuery query = SearchQuery
+            .createBuilder()
+            .stems(Arrays.asList(
+                  SearchQueryStem
+                        .createBuilder("")
+                        .linkTypeIds(Arrays.asList(linkTypeId))
+                        .build()))
+            .build();
+
+      return linkInstanceDao.searchLinkInstances(query);
+   }
+
+   private List<LinkInstance> waitForLinksByType(final String linkTypeId) throws InterruptedException {
+      List<LinkInstance> instances;
+      int cycles = 10;
+      do {
+         Thread.sleep(500);
+         instances = getLinksByType(linkTypeId);
+      } while (instances.size() == 0 && cycles-- > 0);
+
+      // we might have caught it in the middle, reload once more
+      Thread.sleep(500);
+      instances = getLinksByType(linkTypeId);
+
+      return instances;
    }
 
 }
