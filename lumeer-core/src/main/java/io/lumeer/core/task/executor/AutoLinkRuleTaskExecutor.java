@@ -90,9 +90,9 @@ public class AutoLinkRuleTaskExecutor {
                }
             }
          } else { // one of the docs is null (i.e. new document created or old document deleted
-            if (ruleTask.getOldDocument() != null && ruleTask.getOldDocument().getData().get(thisAttribute) != null) {
-               removeLinks(ruleTask.getOldDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
-            }
+            // when oldDocument is set and the newDocument isn't, the old one was deleted and all links were automatically removed
+
+            // new document was created
             if (ruleTask.getNewDocument() != null && ruleTask.getNewDocument().getData().get(thisAttribute) != null) {
                addLinks(ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
             }
@@ -135,6 +135,7 @@ public class AutoLinkRuleTaskExecutor {
 
       final List<LinkInstance> linkInstances =
             targetDocuments.stream()
+                           .filter(documentId -> !thisCollection.equals(thatCollection) || !documentId.equals(newDocument.getId()))
                            .map(documentId ->
                                  new LinkInstance(null, rule.getLinkType(), Arrays.asList(newDocument.getId(), documentId), new DataDocument()))
                            .collect(Collectors.toList());

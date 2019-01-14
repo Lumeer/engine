@@ -298,7 +298,6 @@ public class BlocklyRuleTaskExecutor {
       final List<Event> events = new ArrayList<>();
 
       if (ruleTask.getPusherClient() != null) {
-         System.out.println("@@@@@@@@@@@@@@@ posílá se a nemělo by");
          users.stream()
               .forEach(userId -> {
                  final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(ruleTask.getCollection(), ruleTask.getDaoContextSnapshot().getOrganizationId(), ruleTask.getDaoContextSnapshot().getProjectId());

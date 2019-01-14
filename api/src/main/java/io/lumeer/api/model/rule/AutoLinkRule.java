@@ -36,7 +36,7 @@ public class AutoLinkRule {
    public AutoLinkRule(final Rule rule) {
       this.rule = rule;
 
-      if (rule.getType() != Rule.RuleType.BLOCKLY) {
+      if (rule.getType() != Rule.RuleType.AUTO_LINK) {
          throw new IllegalArgumentException("Cannot create AutoLink Rule from a rule of type " + rule.getType());
       }
    }
