@@ -101,19 +101,13 @@ public class BlocklyRuleTaskExecutor {
                .build();
 
          // load linked document ids
-         final Set<String> documentIds = new HashSet<>();
-         ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                 .searchLinkInstances(query)
-                 .forEach(linkInstance -> {
-                    final List<String> documents = linkInstance.getDocumentIds();
-                    if (documents.size() >= 2) {
-                       if (documents.get(0).equals(d.document.getId())) {
-                          documentIds.add(documents.get(1));
-                       } else {
-                          documentIds.add(documents.get(0));
-                       }
-                    }
-                 });
+         final Set<String> documentIds = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                  .searchLinkInstances(query)
+                                                  .stream()
+                                                  .map(linkInstance -> linkInstance.getDocumentIds())
+                                                  .flatMap(java.util.Collection::stream)
+                                                  .collect(Collectors.toSet());
+         documentIds.remove(d.document.getId());
 
          // load document data
          final Map<String, DataDocument> data = new HashMap<>();
@@ -123,7 +117,7 @@ public class BlocklyRuleTaskExecutor {
 
          // load document meta data and match them with user data
          return ruleTask.getDaoContextSnapshot().getDocumentDao()
-                        .getDocumentsByIds(documentIds.toArray(new String[documentIds.size()]))
+                        .getDocumentsByIds(documentIds.toArray(new String[0]))
                         .stream().map(document -> {
                   document.setData(data.get(document.getId()));
                   return new DocumentBridge(document);
@@ -156,7 +150,7 @@ public class BlocklyRuleTaskExecutor {
          if (ruleTask.getPusherClient() != null) {
             updatedDocuments.keySet().forEach(collectionId -> {
                final Set<String> users = ruleTask.getDaoContextSnapshot().getCollectionReaders(collectionId);
-               final List<Document> documents = ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(updatedDocuments.get(collectionId).toArray(new String[updatedDocuments.get(collectionId).size()]));
+               final List<Document> documents = ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(updatedDocuments.get(collectionId).toArray(new String[0]));
                final List<Event> events = new ArrayList<>();
 
                users.stream()
