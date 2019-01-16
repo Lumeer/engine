@@ -34,9 +34,11 @@ import com.auth0.net.Request;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -121,6 +123,7 @@ public class Auth0Filter implements Filter {
       parseRequestData(req);
 
       if (System.getenv("SKIP_SECURITY") != null) {
+         fakeUserLogin(req); // try to consume test user from request header
          filterChain.doFilter(servletRequest, servletResponse);
          return;
       }
@@ -155,12 +158,8 @@ public class Auth0Filter implements Filter {
             return;
          }
 
-         // we are safe to go, make sure we have use info
-         AuthenticatedUser.AuthUserInfo authUserInfo = authenticatedUser.getAuthUserInfo();
-         if (authUserInfo.user == null && authUserCache.containsKey(accessToken)) {
-            authUserInfo = authUserCache.get(accessToken);
-            authenticatedUser.setAuthUserInfo(authUserInfo);
-         }
+         // we are safe to go, make sure we have user info
+         final AuthenticatedUser.AuthUserInfo authUserInfo = getAuthenticatedUser(accessToken);
 
          if (!accessToken.equals(authUserInfo.accessToken) || authUserInfo.user == null || authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) {
             final Semaphore s = semaphores.computeIfAbsent(accessToken, key -> new Semaphore(1));
@@ -223,6 +222,15 @@ public class Auth0Filter implements Filter {
       }
    }
 
+   private AuthenticatedUser.AuthUserInfo getAuthenticatedUser(final String accessToken) {
+      AuthenticatedUser.AuthUserInfo authUserInfo = authenticatedUser.getAuthUserInfo();
+      if (authUserInfo.user == null && authUserCache.containsKey(accessToken)) {
+         authUserInfo = authUserCache.get(accessToken);
+         authenticatedUser.setAuthUserInfo(authUserInfo);
+      }
+      return authUserInfo;
+   }
+
    private void parseViewId(final HttpServletRequest req) {
       final String viewCode = req.getHeader(VIEW_CODE);
 
@@ -250,6 +258,24 @@ public class Auth0Filter implements Filter {
       }
 
       return null;
+   }
+
+   private void fakeUserLogin(final HttpServletRequest request) {
+      final String userId = request.getHeader("Test-User");
+      if (userId != null && !"".equals(userId)) {
+         final AuthenticatedUser.AuthUserInfo authUserInfo = getAuthenticatedUser(userId);
+
+         if (authUserInfo.user == null) {
+            final AuthenticatedUser.AuthUserInfo newAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
+            newAuthUserInfo.user = new User(userId, userId, userId, Collections.emptyMap());
+            newAuthUserInfo.user.setAuthIds(Set.of("TEST:" + userId));
+            newAuthUserInfo.accessToken = userId;
+            newAuthUserInfo.lastUpdated = System.currentTimeMillis();
+            authUserCache.put(userId, newAuthUserInfo);
+            authenticatedUser.setAuthUserInfo(newAuthUserInfo);
+            authenticatedUser.checkUser();
+         }
+      }
    }
 
    private User getUserInfo(final String accessToken) throws Auth0Exception {
