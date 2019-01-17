@@ -33,7 +33,6 @@ import io.lumeer.storage.mongodb.util.MongoFilters;
 import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -138,7 +137,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       document.setUpdatedBy(UPDATED_BY);
       document.setUpdateDate(updateDate);
 
-      documentDao.updateDocument(document.getId(), document);
+      documentDao.updateDocument(document.getId(), document, null);
 
       Document storedDocument = documentDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedDocument).isNotNull();
@@ -157,7 +156,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
    @Test
    public void testUpdateDocumentNotExisting() {
       Document document = prepareDocument();
-      assertThatThrownBy(() -> documentDao.updateDocument(DOCUMENT_ID, document))
+      assertThatThrownBy(() -> documentDao.updateDocument(DOCUMENT_ID, document, null))
             .isInstanceOf(StorageException.class);
    }
 

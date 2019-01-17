@@ -3,4 +3,4 @@ install: true
 script: ./travis.sh
 dist: xenial
 jdk:
-  - oraclejdk11
+  - openjdk11

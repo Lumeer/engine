@@ -27,7 +27,7 @@ import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
-import io.lumeer.core.util.ResourceUtils;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;

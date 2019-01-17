@@ -27,7 +27,14 @@ import io.lumeer.api.model.Document;
  */
 public class UpdateDocument extends DocumentEvent {
 
-   public UpdateDocument(final Document document) {
+   private final Document originalDocument;
+
+   public UpdateDocument(final Document document, final Document originalDocument) {
       super(document);
+      this.originalDocument = originalDocument;
+   }
+
+   public Document getOriginalDocument() {
+      return originalDocument;
    }
 }

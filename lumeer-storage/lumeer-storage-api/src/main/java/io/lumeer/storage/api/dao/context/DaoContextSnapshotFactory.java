@@ -30,6 +30,4 @@ import io.lumeer.engine.api.data.DataStorage;
  */
 public interface DaoContextSnapshotFactory {
    DaoContextSnapshot getInstance();
-   //DaoContextSnapshot getInstance(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace);
-   //DaoContextSnapshot getInstance(final DataStorage systemDataStorage, final DataStorage userDataStorage, final Organization organization, final Project project);
 }

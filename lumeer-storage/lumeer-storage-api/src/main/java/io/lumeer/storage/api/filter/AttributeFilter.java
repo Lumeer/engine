@@ -27,9 +27,9 @@ public class AttributeFilter {
    private final String collectionId;
    private final ConditionType conditionType;
    private final String attributeId;
-   private final String value;
+   private final Object value;
 
-   public AttributeFilter(final String collectionId, final ConditionType conditionType, final String attributeId, final String value) {
+   public AttributeFilter(final String collectionId, final ConditionType conditionType, final String attributeId, final Object value) {
       this.collectionId = collectionId;
       this.conditionType = conditionType;
       this.attributeId = attributeId;
@@ -44,7 +44,7 @@ public class AttributeFilter {
       return conditionType;
    }
 
-   public String getValue() {
+   public Object getValue() {
       return value;
    }
 

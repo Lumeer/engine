@@ -35,6 +35,8 @@ import io.lumeer.storage.api.dao.UserLoginDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
+import java.util.Set;
+
 /**
  * Holds contextual information necessary to create any Dao object in the application.
  * This is useful in batch processing tasks and long running tasks that are executed out
@@ -47,20 +49,44 @@ import io.lumeer.storage.api.dao.ViewDao;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface DaoContextSnapshot {
+
+   String getOrganizationId();
+
+   String getProjectId();
+
    OrganizationDao getOrganizationDao();
+
    ProjectDao getProjectDao();
+
    CollectionDao getCollectionDao();
+
    CompanyContactDao getCompanyContactDao();
+
    DataDao getDataDao();
+
    DocumentDao getDocumentDao();
+
    FavoriteItemDao getFavoriteItemDao();
+
    FeedbackDao getFeedbackDao();
+
    GroupDao getGroupDao();
+
    LinkInstanceDao getLinkInstanceDao();
+
    LinkTypeDao getLinkTypeDao();
+
    PaymentDao getPaymentDao();
+
    UserDao getUserDao();
+
    UserLoginDao getUserLoginDao();
+
    UserNotificationDao getUserNotificationDao();
+
    ViewDao getViewDao();
+
+   Set<String> getCollectionManagers(final String collectionId);
+
+   Set<String> getCollectionReaders(final String collectionId);
 }

@@ -26,7 +26,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.AccessForbiddenException;
-import io.lumeer.core.util.ResourceUtils;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.RemoveResource;

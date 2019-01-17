@@ -99,19 +99,19 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    }
 
    @Override
-   public Document updateDocument(final String id, final Document document) {
+   public Document updateDocument(final String id, final Document document, final Document originalDocument) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
          Bson update = new org.bson.Document("$set", document).append("$inc", new org.bson.Document(DocumentCodec.DATA_VERSION, 1));
          Document updatedDocument = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedDocument == null) {
-            throw new StorageException("Collection '" + id + "' has not been updated.");
+            throw new StorageException("Document '" + id + "' has not been updated.");
          }
          final Document updatedDocumentWithData = new Document(updatedDocument);
          updatedDocumentWithData.setData(document.getData());
          if (updateDocumentEvent != null) {
-            updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData));
+            updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData, originalDocument));
          }
          return updatedDocument;
       } catch (MongoException ex) {
