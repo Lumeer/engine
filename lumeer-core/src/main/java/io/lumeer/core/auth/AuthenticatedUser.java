@@ -193,7 +193,16 @@ public class AuthenticatedUser implements Serializable {
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.setNonRemovable(true);
 
-      return organizationDao.createOrganization(organization);
+      try {
+         final Organization result = organizationDao.createOrganization(organization);
+         return result;
+      } catch (Exception e) {
+         if (e.getCause().getMessage().contains("E11000")) {
+            return createDemoOrganization(user);
+         }
+
+         throw e;
+      }
    }
 
    private Project createDemoProject(final User user) {
@@ -229,7 +238,8 @@ public class AuthenticatedUser implements Serializable {
       int num = 2;
       String codeWithSuffix = finalCode;
       while (usedCodes.contains(codeWithSuffix)) {
-         codeWithSuffix = finalCode + num;
+         String numStr = String.valueOf(num);
+         codeWithSuffix = finalCode.substring(0, 7 - numStr.length()) + num;
          num++;
       }
       return codeWithSuffix;
