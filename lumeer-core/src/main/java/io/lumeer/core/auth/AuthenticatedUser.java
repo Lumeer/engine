@@ -239,7 +239,7 @@ public class AuthenticatedUser implements Serializable {
       String codeWithSuffix = finalCode;
       while (usedCodes.contains(codeWithSuffix)) {
          String numStr = String.valueOf(num);
-         codeWithSuffix = finalCode.substring(0, 7 - numStr.length()) + num;
+         codeWithSuffix = finalCode.substring(0, Math.min(7, finalCode.length()) - numStr.length()) + num;
          num++;
       }
       return codeWithSuffix;
