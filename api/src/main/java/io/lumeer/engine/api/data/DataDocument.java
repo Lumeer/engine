@@ -34,8 +34,8 @@ public class DataDocument extends LinkedHashMap<String, Object> {
    /**
     * Name of the document attribute that carries its id.
     */
-   private static final String ID = "_id";
-   private static final String KEY_SEPARATOR = ".";
+   public static final String ID = "_id";
+   public static final String KEY_SEPARATOR = ".";
 
    public DataDocument() {
       super(); // this is done automatically, but looks better than an empty constructor body ;-)
