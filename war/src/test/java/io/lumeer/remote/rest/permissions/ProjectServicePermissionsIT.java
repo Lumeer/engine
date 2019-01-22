@@ -28,8 +28,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -120,7 +121,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectReadRole_code";
       String projectName = "testGetProjectReadRole";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
@@ -149,7 +150,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testUpdateProjectManageRole_code";
       String projectName = "testUpdateProjectManageRole";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
       String newProjectName = "NewName";
       Project newProject = new Project(projectCode, newProjectName, "a", "b", null, null);
 
@@ -179,7 +180,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
          if (i % 2 == 0) {
             projectFacade.removeUserPermission(projectCodes.get(i), this.user.getId());
          } else {
-            projectFacade.updateUserPermissions(projectCodes.get(i), new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ)))));
+            projectFacade.updateUserPermissions(projectCodes.get(i), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
          }
       }
 
@@ -210,7 +211,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "ProjectServiceTestProject_code1";
       String projectName = "ProjectServiceTestProject1";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
             request(MediaType.APPLICATION_JSON).buildDelete().invoke();
@@ -263,7 +264,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsManageRole_code1";
       String projectName = "testGetProjectPermissionsManageRole";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions").
             request(MediaType.APPLICATION_JSON).buildGet().invoke();
@@ -278,7 +279,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       createProject(projectCode, projectName);
       projectFacade.removeUserPermission(projectCode, this.user.getId());
 
-      Permission[] newPermission = { new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE)))) };
+      Permission[] newPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(Role.WRITE)) };
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
@@ -289,9 +290,9 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
-      Permission[] newPermission = { new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE)))) };
+      Permission[] newPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(Role.WRITE)) };
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users").
             request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -314,7 +315,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users/" + this.user.getId()).
             request(MediaType.APPLICATION_JSON).buildDelete().invoke();
@@ -340,7 +341,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
       String group = "testGroup5";
       Permission[] newPermission = { new Permission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE)))) };
 
@@ -367,7 +368,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, new Permission(this.user.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.READ, Role.MANAGE)))));
+      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
       String group = "testGroup7";
 
       Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups/" + group).

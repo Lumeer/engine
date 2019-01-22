@@ -147,7 +147,7 @@ public class OrganizationFacade extends AbstractFacade {
       return mapResource(organization).getPermissions();
    }
 
-   public Set<Permission> updateUserPermissions(final String organizationCode, final Permission... userPermissions) {
+   public Set<Permission> updateUserPermissions(final String organizationCode, final Set<Permission> userPermissions) {
       Organization organization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
 
       final Organization originalOrganization = organization.copy();
@@ -167,7 +167,7 @@ public class OrganizationFacade extends AbstractFacade {
       workspaceCache.updateOrganization(organizationCode, organization);
    }
 
-   public Set<Permission> updateGroupPermissions(final String organizationCode, final Permission... groupPermissions) {
+   public Set<Permission> updateGroupPermissions(final String organizationCode, final Set<Permission> groupPermissions) {
       final Organization storedOrganization = checkRoleAndGetOrganization(organizationCode, Role.MANAGE);
       final Organization organization = storedOrganization.copy();
 

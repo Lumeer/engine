@@ -59,11 +59,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -344,16 +343,16 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       final Collection collection = createCollection(CODE);
       final String collectionId = collection.getId();
 
-      Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
-      collectionFacade.updateUserPermissions(collectionId, userPermission);
+      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(Role.MANAGE, Role.READ));
+      collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
 
-      userPermission = Permission.buildWithRoles(USER2, new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
-      collectionFacade.updateUserPermissions(collectionId, userPermission);
+      userPermission = Permission.buildWithRoles(USER2, Set.of(Role.MANAGE, Role.READ));
+      collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).hasSize(1).allMatch(n ->
@@ -371,7 +370,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
                   && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
 
       userPermission = Permission.buildWithRoles(USER2, Collections.emptySet());
-      collectionFacade.updateUserPermissions(collectionId, userPermission);
+      collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).isEmpty();
@@ -393,8 +392,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission groupPermission = Permission.buildWithRoles(group.getId(), new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
-      collectionFacade.updateGroupPermissions(collectionId, groupPermission);
+      Permission groupPermission = Permission.buildWithRoles(group.getId(), Set.of(Role.SHARE, Role.READ));
+      collectionFacade.updateGroupPermissions(collectionId, Set.of(groupPermission));
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();

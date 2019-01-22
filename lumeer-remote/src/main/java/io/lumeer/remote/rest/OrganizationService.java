@@ -105,7 +105,7 @@ public class OrganizationService extends AbstractService {
 
    @PUT
    @Path("{organizationCode}/permissions/users")
-   public Set<Permission> updateUserPermission(@PathParam("organizationCode") String organizationCode, Permission... userPermission) {
+   public Set<Permission> updateUserPermission(@PathParam("organizationCode") String organizationCode, Set<Permission> userPermission) {
       return organizationFacade.updateUserPermissions(organizationCode, userPermission);
    }
 
@@ -119,7 +119,7 @@ public class OrganizationService extends AbstractService {
 
    @PUT
    @Path("{organizationCode}/permissions/groups")
-   public Set<Permission> updateGroupPermission(@PathParam("organizationCode") String organizationCode, Permission... groupPermission) {
+   public Set<Permission> updateGroupPermission(@PathParam("organizationCode") String organizationCode, Set<Permission> groupPermission) {
       return organizationFacade.updateGroupPermissions(organizationCode, groupPermission);
    }
 

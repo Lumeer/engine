@@ -43,6 +43,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -109,18 +110,18 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    private void createOrganizationWithReadOnlyPermissions(final String code) {
       Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
-      organization.getPermissions().updateUserPermissions(
+      organization.getPermissions().updateUserPermissions(Set.of(
             userReadonlyPermission,
-            userStrangerPermission);
+            userStrangerPermission));
       organization.getPermissions().updateGroupPermissions(groupPermission);
       organizationDao.createOrganization(organization);
    }
 
    private void createOrganizationWithStrangerPermissions(final String code) {
       Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
-      organization.getPermissions().updateUserPermissions(
+      organization.getPermissions().updateUserPermissions(Set.of(
             userPermission,
-            userStrangerPermission);
+            userStrangerPermission));
       organization.getPermissions().updateGroupPermissions(groupPermission);
       organizationDao.createOrganization(organization);
    }
@@ -222,7 +223,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       createOrganization(CODE1);
 
       Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
-      organizationFacade.updateUserPermissions(CODE1, userPermission);
+      organizationFacade.updateUserPermissions(CODE1, Set.of(userPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(permissions).isNotNull();
@@ -247,7 +248,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       createOrganization(CODE1);
 
       Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
-      organizationFacade.updateGroupPermissions(CODE1, groupPermission);
+      organizationFacade.updateGroupPermissions(CODE1, Set.of(groupPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(permissions).isNotNull();

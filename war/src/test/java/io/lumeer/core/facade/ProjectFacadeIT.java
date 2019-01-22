@@ -29,8 +29,8 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -47,6 +47,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -99,14 +100,14 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    private Project createProjectWithReadOnlyPermissions(final String code) {
       Project project = new Project(code, NAME, ICON, COLOR, null, null);
-      project.getPermissions().updateUserPermissions(userReadonlyPermissions, userStrangerPermissions);
+      project.getPermissions().updateUserPermissions(Set.of(userReadonlyPermissions, userStrangerPermissions));
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    private Project createProjectWithStrangerPermissions(final String code) {
       Project project = new Project(code, NAME, ICON, COLOR, null, null);
-      project.getPermissions().updateUserPermissions(userPermissions, userStrangerPermissions);
+      project.getPermissions().updateUserPermissions(Set.of(userPermissions, userStrangerPermissions));
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
@@ -242,8 +243,8 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       createProject(CODE1);
 
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
-      projectFacade.updateUserPermissions(CODE1, userPermission);
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(Role.MANAGE, Role.READ));
+      projectFacade.updateUserPermissions(CODE1, Set.of(userPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
@@ -268,7 +269,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       createProject(CODE1);
 
       Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
-      projectFacade.updateGroupPermissions(CODE1, groupPermission);
+      projectFacade.updateGroupPermissions(CODE1, Set.of(groupPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();

@@ -28,8 +28,11 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class Permission {
 
-   private final String id;
-   private final Set<Role> roles;
+   private String id;
+   private Set<Role> roles;
+
+   private Permission() {
+   }
 
    @JsonCreator
    public Permission(@JsonProperty("id") final String id,
@@ -39,7 +42,11 @@ public class Permission {
    }
 
    public static Permission buildWithRoles(final String id, final Set<Role> roles) {
-      return new Permission(id, roles.stream().map(Role::toString).collect(Collectors.toSet()));
+      Permission p = new Permission();
+      p.id = id;
+      p.roles = roles;
+
+      return p;
    }
 
    public Permission(final Permission permission) {

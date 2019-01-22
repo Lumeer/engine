@@ -26,7 +26,6 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.cache.WorkspaceCache;
-import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -144,7 +143,7 @@ public class ProjectFacade extends AbstractFacade {
       return mapResource(project).getPermissions();
    }
 
-   public Set<Permission> updateUserPermissions(final String projectCode, final Permission... userPermissions) {
+   public Set<Permission> updateUserPermissions(final String projectCode, final Set<Permission> userPermissions) {
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
@@ -166,7 +165,7 @@ public class ProjectFacade extends AbstractFacade {
       workspaceCache.updateProject(projectCode, project);
    }
 
-   public Set<Permission> updateGroupPermissions(final String projectCode, final Permission... groupPermissions) {
+   public Set<Permission> updateGroupPermissions(final String projectCode, final Set<Permission> groupPermissions) {
       final Project storedProject = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(storedProject, Role.MANAGE);
 
