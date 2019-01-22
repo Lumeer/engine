@@ -50,7 +50,7 @@ public interface LinkInstanceDao {
 
    LinkInstance getLinkInstance(String id);
 
-   List<LinkInstance> getLinkInstancesByDocumentIds(Set<String> documentIds);
+   List<LinkInstance> getLinkInstancesByDocumentIds(Set<String> documentIds, String linkTypeId);
 
    List<LinkInstance> searchLinkInstances(SearchQuery query);
 

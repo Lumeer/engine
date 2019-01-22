@@ -139,8 +139,8 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public List<LinkInstance> getLinkInstancesByDocumentIds(final Set<String> documentIds) {
-      Bson filter = Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentIds);
+   public List<LinkInstance> getLinkInstancesByDocumentIds(final Set<String> documentIds, final String linkTypeId) {
+      Bson filter = Filters.and(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId), Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentIds));
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
