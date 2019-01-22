@@ -29,8 +29,8 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -264,7 +264,7 @@ public class CollectionFacade extends AbstractFacade {
       return collection.getPermissions();
    }
 
-   public Set<Permission> updateUserPermissions(final String collectionId, final Permission... userPermissions) {
+   public Set<Permission> updateUserPermissions(final String collectionId, final Set<Permission> userPermissions) {
       final Collection updatedCollection = collectionTreat(collectionId, collection -> {
          collection.getPermissions().updateUserPermissions(userPermissions);
          return collection;
@@ -280,7 +280,7 @@ public class CollectionFacade extends AbstractFacade {
       });
    }
 
-   public Set<Permission> updateGroupPermissions(final String collectionId, final Permission... groupPermissions) {
+   public Set<Permission> updateGroupPermissions(final String collectionId, final Set<Permission> groupPermissions) {
       final Collection updatedCollection = collectionTreat(collectionId, collection -> {
          collection.getPermissions().updateGroupPermissions(groupPermissions);
          return collection;

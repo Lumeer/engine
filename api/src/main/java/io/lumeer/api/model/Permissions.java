@@ -56,7 +56,11 @@ public class Permissions {
       return Collections.unmodifiableSet(userPermissions);
    }
 
-   public void updateUserPermissions(final Permission... newUserPermissions) {
+   public void updateUserPermissions(final Permission newUserPermission) {
+      updateUserPermissions(Set.of(newUserPermission));
+   }
+
+   public void updateUserPermissions(final Set<Permission> newUserPermissions) {
       updatePermissions(userPermissions, newUserPermissions);
    }
 
@@ -68,12 +72,16 @@ public class Permissions {
       return Collections.unmodifiableSet(groupPermissions);
    }
 
-   public void updateGroupPermissions(final Permission... newGroupPermissions) {
+   public void updateGroupPermissions(final Permission newGroupPermission) {
+      updateGroupPermissions(Set.of(newGroupPermission));
+   }
+
+   public void updateGroupPermissions(final Set<Permission> newGroupPermissions) {
       updatePermissions(groupPermissions, newGroupPermissions);
    }
 
-   private void updatePermissions(Set<Permission> permissions, final Permission... newPermissions) {
-      Arrays.stream(newPermissions)
+   private void updatePermissions(Set<Permission> permissions, final Set<Permission> newPermissions) {
+      newPermissions.stream()
             .map(Permission::new)
             .forEach(permission -> {
                permissions.remove(permission);

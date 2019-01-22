@@ -22,15 +22,16 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
-import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 abstract class AbstractFacade {
@@ -61,8 +62,9 @@ abstract class AbstractFacade {
       Set<String> managers = permissionsChecker.getWorkspaceManagers();
       managers.addAll(ResourceUtils.getManagers(resource));
 
-      Permission[] managersUserPermission = resource.getPermissions().getUserPermissions().stream()
-                                                    .filter(perm -> managers.contains(perm.getId())).toArray(Permission[]::new);
+      Set<Permission> managersUserPermission = resource.getPermissions().getUserPermissions().stream()
+                                                       .filter(perm -> managers.contains(perm.getId()))
+                                                       .collect(Collectors.toSet());
 
       resource.getPermissions().clear();
       resource.getPermissions().updateUserPermissions(managersUserPermission);
@@ -84,10 +86,10 @@ abstract class AbstractFacade {
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
       Set<Permission> userPermissions = storedPermissions.getUserPermissions();
-      resource.getPermissions().updateUserPermissions(userPermissions.toArray(new Permission[0]));
+      resource.getPermissions().updateUserPermissions(userPermissions);
 
       Set<Permission> groupPermissions = storedPermissions.getGroupPermissions();
-      resource.getPermissions().updateGroupPermissions(groupPermissions.toArray(new Permission[0]));
+      resource.getPermissions().updateGroupPermissions(groupPermissions);
    }
 
    protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {

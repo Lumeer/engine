@@ -33,6 +33,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PermissionsCodec implements Codec<Permissions> {
 
@@ -57,16 +58,14 @@ public class PermissionsCodec implements Codec<Permissions> {
          return new Permissions();
       }
 
-      Permission[] userPermissions = new ArrayList<Document>(document.get(USER_ROLES, List.class)).stream()
+      Set<Permission> userPermissions = new ArrayList<Document>(document.get(USER_ROLES, List.class)).stream()
                                                                                                   .map(PermissionCodec::convertFromDocument)
-                                                                                                  .toArray(Permission[]::new);
-      Permission[] groupPermissions = new ArrayList<Document>(document.get(GROUP_ROLES, List.class)).stream()
+                                                                                                  .collect(Collectors.toSet());
+      Set<Permission> groupPermissions = new ArrayList<Document>(document.get(GROUP_ROLES, List.class)).stream()
                                                                                                     .map(PermissionCodec::convertFromDocument)
-                                                                                                    .toArray(Permission[]::new);
+                                                                                                    .collect(Collectors.toSet());
 
-      Permissions permissions = new Permissions();
-      permissions.updateUserPermissions(userPermissions);
-      permissions.updateGroupPermissions(groupPermissions);
+      Permissions permissions = new Permissions(userPermissions, groupPermissions);
       return permissions;
    }
 

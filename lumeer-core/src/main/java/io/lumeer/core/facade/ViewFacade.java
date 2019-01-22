@@ -136,7 +136,7 @@ public class ViewFacade extends AbstractFacade {
       return view.getPermissions();
    }
 
-   public Set<Permission> updateUserPermissions(final String code, final Permission... userPermissions) {
+   public Set<Permission> updateUserPermissions(final String code, final Set<Permission> userPermissions) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
       permissionsChecker.invalidateCache(view);
@@ -158,7 +158,7 @@ public class ViewFacade extends AbstractFacade {
       viewDao.updateView(view.getId(), view);
    }
 
-   public Set<Permission> updateGroupPermissions(final String code, final Permission... groupPermissions) {
+   public Set<Permission> updateGroupPermissions(final String code, final Set<Permission> groupPermissions) {
       View view = viewDao.getViewByCode(code);
       permissionsChecker.checkRole(view, Role.MANAGE);
       permissionsChecker.invalidateCache(view);

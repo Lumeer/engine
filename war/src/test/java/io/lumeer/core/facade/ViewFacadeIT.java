@@ -53,6 +53,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -142,7 +143,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       Collection collection = collectionFacade.createCollection(
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
       query = new Query(new QueryStem(collection.getId()));
    }
 
@@ -250,8 +251,8 @@ public class ViewFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       createView(CODE);
 
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
-      viewFacade.updateUserPermissions(CODE, userPermission);
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(Role.MANAGE, Role.READ));
+      viewFacade.updateUserPermissions(CODE, Set.of(userPermission));
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -275,8 +276,8 @@ public class ViewFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       createView(CODE);
 
-      Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
-      viewFacade.updateGroupPermissions(CODE, groupPermission);
+      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(Role.SHARE, Role.READ));
+      viewFacade.updateGroupPermissions(CODE, Set.of(groupPermission));
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -310,7 +311,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       Collection collection = collectionFacade.createCollection(
             new Collection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Collections.emptySet())));
 
       removeOrganizationManagePermission();
       removeProjectManagePermission();
@@ -329,7 +330,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       view.setQuery(new Query(new QueryStem(collection.getId())));
 
       Permissions permissions = new Permissions();
-      permissions.updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
+      permissions.updateUserPermissions(Set.of(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet())));
       view.setPermissions(permissions);
       viewDao.updateView(view.getId(), view);
 
@@ -341,7 +342,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       }
 
       try {
-         viewFacade.updateUserPermissions(view.getCode(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+         viewFacade.updateUserPermissions(view.getCode(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
          fail("Can manage view without manage rights");
       } catch (Exception e) {
          assertThat(e).isInstanceOf(NoPermissionException.class);

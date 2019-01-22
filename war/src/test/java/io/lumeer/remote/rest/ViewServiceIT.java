@@ -153,7 +153,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       Collection collection = collectionFacade.createCollection(
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
       query = new Query(new QueryStem(collection.getId()));
    }
 
@@ -282,7 +282,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       Permission permission = new Permission(USER, new HashSet<>(Arrays.asList(Role.WRITE.toString())));
       Collection collection = collectionFacade.createCollection(
             new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Arrays.asList(permission)), Collections.emptySet())));
-      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(USER, Collections.singleton(Role.WRITE)));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(USER, Set.of(Role.WRITE))));
 
       View view = prepareView(CODE + "3");
       view.setQuery(new Query(new QueryStem(collection.getId())));
@@ -440,14 +440,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       Collection collection = collectionFacade.createCollection(
             new Collection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Collections.emptySet())));
 
       // create a view under a different user
       View view = createView(VIEW_CODE);
       view.setAuthorId(NON_EXISTING_USER);
       view.setQuery(new Query(new QueryStem(collection.getId())));
       view.getPermissions().clearUserPermissions();
-      view.getPermissions().updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet()));
+      view.getPermissions().updateUserPermissions(Set.of(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet())));
       viewDao.updateView(view.getId(), view);
 
       // share the view and make sure we can see it now

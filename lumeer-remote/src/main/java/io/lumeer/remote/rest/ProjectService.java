@@ -112,7 +112,7 @@ public class ProjectService extends AbstractService {
 
    @PUT
    @Path("{projectCode}/permissions/users")
-   public Set<Permission> updateUserPermission(@PathParam("projectCode") String projectCode, Permission... userPermission) {
+   public Set<Permission> updateUserPermission(@PathParam("projectCode") String projectCode, Set<Permission> userPermission) {
       return projectFacade.updateUserPermissions(projectCode, userPermission);
    }
 
@@ -126,7 +126,7 @@ public class ProjectService extends AbstractService {
 
    @PUT
    @Path("{projectCode}/permissions/groups")
-   public Set<Permission> updateGroupPermission(@PathParam("projectCode") String projectCode, Permission... groupPermission) {
+   public Set<Permission> updateGroupPermission(@PathParam("projectCode") String projectCode, Set<Permission> groupPermission) {
       return projectFacade.updateGroupPermissions(projectCode, groupPermission);
    }
 

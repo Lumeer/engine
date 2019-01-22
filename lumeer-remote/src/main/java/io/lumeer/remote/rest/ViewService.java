@@ -20,7 +20,6 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.View;
@@ -39,7 +38,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -101,7 +99,7 @@ public class ViewService extends AbstractService {
 
    @PUT
    @Path("{viewCode}/permissions/users")
-   public Set<Permission> updateUserPermission(@PathParam("viewCode") String code, Permission... userPermission) {
+   public Set<Permission> updateUserPermission(@PathParam("viewCode") String code, Set<Permission> userPermission) {
       return viewFacade.updateUserPermissions(code, userPermission);
    }
 
@@ -115,7 +113,7 @@ public class ViewService extends AbstractService {
 
    @PUT
    @Path("{viewCode}/permissions/groups")
-   public Set<Permission> updateGroupPermission(@PathParam("viewCode") String code, Permission... groupPermission) {
+   public Set<Permission> updateGroupPermission(@PathParam("viewCode") String code, Set<Permission> groupPermission) {
       return viewFacade.updateGroupPermissions(code, groupPermission);
    }
 
