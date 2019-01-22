@@ -51,7 +51,8 @@ import javax.inject.Inject;
 @RequestScoped
 public class UserNotificationFacade extends AbstractFacade {
 
-   private Logger log = Logger.getLogger(UserNotificationFacade.class.getName());
+   @Inject
+   private Logger log;
 
    @Inject
    private AuthenticatedUser authenticatedUser;
