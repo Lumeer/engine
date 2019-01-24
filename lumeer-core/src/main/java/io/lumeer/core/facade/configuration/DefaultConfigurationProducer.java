@@ -60,6 +60,8 @@ public class DefaultConfigurationProducer implements Serializable {
 
    public static final String SENTRY_DSN = "sentry_dsn";
 
+   public static final String LOCALE = "locale";
+
    public DefaultConfigurationProducer() {
       defaultConfiguration = new HashMap<>();
 

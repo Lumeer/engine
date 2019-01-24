@@ -209,7 +209,7 @@ public final class Coders {
 
             final Number n1 = bigNumberFormat.parse(((String) value).trim());
 
-            return n1.toString().equals(n2.toString()) ? n2 : n1;
+            return n1.toString().equals(n2.toString()) && !(n2 instanceof Double) ? n2 : n1;
          } catch (final ParseException pe) {
             return null;
          }

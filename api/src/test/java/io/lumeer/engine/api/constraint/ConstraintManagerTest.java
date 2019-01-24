@@ -26,7 +26,7 @@ public class ConstraintManagerTest {
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
 
-      assertThat(cm.encode("2.34")).isInstanceOf(Double.class);
+      assertThat(cm.encode("2.34")).isInstanceOf(BigDecimal.class);
       assertThat(cm.encode("2")).isInstanceOf(Long.class);
       assertThat(cm.encode("a2")).isInstanceOf(String.class);
 
@@ -172,9 +172,9 @@ public class ConstraintManagerTest {
       assertThat(cm.fix(validBigDecimal)).isEqualTo(validBigDecimal);
 
       Object encoded = cm.encode(cm.fix(validDouble));
-      assertThat(encoded).isInstanceOf(Double.class);
-      assertThat(encoded).isEqualTo(0.02);
-      assertThat(cm.decode(encoded)).isEqualTo(0.02);
+      assertThat(encoded).isInstanceOf(BigDecimal.class);
+      assertThat(encoded).isEqualTo(new BigDecimal("0.02"));
+      assertThat(cm.decode(encoded)).isEqualTo(new BigDecimal("0.02"));
 
       encoded = cm.encode(cm.fix(validLong));
       assertThat(encoded).isInstanceOf(Long.class);

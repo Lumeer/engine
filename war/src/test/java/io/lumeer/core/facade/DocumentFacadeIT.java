@@ -30,8 +30,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -69,8 +69,14 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    private static final String KEY1 = "A";
    private static final String KEY2 = "B";
+   private static final String KEY3 = "C";
+   private static final String KEY4 = "D";
+   private static final String KEY5 = "E";
    private static final String VALUE1 = "firstValue";
    private static final String VALUE2 = "secondValue";
+   private static final String VALUE3 = "34";
+   private static final String VALUE4 = "34.5";
+   private static final String VALUE5 = "34.3E410";
 
    @Inject
    private DocumentFacade documentFacade;
@@ -140,7 +146,10 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    private Document prepareDocument() {
       DataDocument data = new DataDocument()
             .append(KEY1, VALUE1)
-            .append(KEY2, VALUE2);
+            .append(KEY2, VALUE2)
+            .append(KEY3, VALUE3)
+            .append(KEY4, VALUE4)
+            .append(KEY5, VALUE5);
 
       return new Document(data);
    }
@@ -179,6 +188,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(storedData).isNotNull();
       assertThat(storedData).containsEntry(KEY1, VALUE1);
       assertThat(storedData).containsEntry(KEY2, VALUE2);
+      assertThat(storedData.get(KEY3)).isInstanceOf(Long.class);
+      assertThat(storedData.get(KEY4)).isInstanceOf(org.bson.types.Decimal128.class);
+      assertThat(storedData.get(KEY5)).isInstanceOf(org.bson.types.Decimal128.class);
 
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
