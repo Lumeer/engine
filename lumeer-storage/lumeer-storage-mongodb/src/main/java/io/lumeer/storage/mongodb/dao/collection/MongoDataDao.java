@@ -152,7 +152,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    }
 
    private Bson documentIdsFilter(Set<String> documentIds) {
-      List<ObjectId> ids = documentIds.stream().filter(ObjectId::isValid).map(ObjectId::new).collect(Collectors.toList());
+      List<ObjectId> ids = documentIds.stream().filter(key -> key != null && ObjectId.isValid(key)).map(ObjectId::new).collect(Collectors.toList());
       if (!ids.isEmpty()) {
          return Filters.in(ID, ids);
       }
