@@ -20,6 +20,7 @@ package io.lumeer.core.auth;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -37,8 +38,10 @@ import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -76,6 +79,9 @@ public class PermissionsChecker {
    private CollectionFacade collectionFacade;
 
    @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
    private ViewDao viewDao;
 
    @Inject
@@ -85,6 +91,7 @@ public class PermissionsChecker {
    private FreshdeskFacade freshdeskFacade;
 
    private String viewCode = null;
+   private List<LinkType> linkTypes;
 
    @Inject
    @UserDataStorage
@@ -147,8 +154,8 @@ public class PermissionsChecker {
    /**
     * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
     *
-    * @param resource
-    *       any resource with the defined permissions.
+    * @param collection
+    *       collection resource
     * @param role
     *       role to be checked.
     * @param viewRole
@@ -156,15 +163,15 @@ public class PermissionsChecker {
     * @throws NoPermissionException
     *       when the user does not have the permission.
     */
-   public void checkRoleWithView(final Resource resource, final Role role, final Role viewRole) {
+   public void checkRoleWithView(final Collection collection, final Role role, final Role viewRole) {
       if (isManager()) {
          return;
       }
 
-      checkOrganizationAndProject(resource, Role.READ);
+      checkOrganizationAndProject(collection, Role.READ);
 
-      if (!hasRoleWithView(resource, role, viewRole)) {
-         throw new NoPermissionException(resource);
+      if (!hasRoleWithView(collection, role, viewRole)) {
+         throw new NoPermissionException(collection);
       }
    }
 
@@ -194,7 +201,7 @@ public class PermissionsChecker {
       return hasRole(resource, role, authenticatedUser.getCurrentUserId());
    }
 
-   public boolean hasRole(Resource resource, Role role, String userId){
+   public boolean hasRole(Resource resource, Role role, String userId) {
       return isManager(userId) || hasRoleInResource(resource, role, userId);
    }
 
@@ -222,23 +229,23 @@ public class PermissionsChecker {
     * Checks whether the current user has the given role on the given resource
     * or the user has access to a view whose author has the given role.
     *
-    * @param resource
-    *       any resource with the defined permissions.
+    * @param collection
+    *       collection resource
     * @param role
     *       role to be checked.
     * @param viewRole
     *       role needed at the view.
     * @return true if and only if the user has the given role ont he resource.
     */
-   public boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole) {
-      return isManager() || hasRoleWithView(resource, role, viewRole, viewCode);
+   public boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole) {
+      return isManager() || hasRoleWithView(collection, role, viewRole, viewCode);
    }
 
-   private boolean hasRoleWithView(final Resource resource, final Role role, final Role viewRole, final String viewCode) {
-      return hasRoleInResource(resource, role) || getResourceRoleViaView(resource, role, viewRole, viewCode);
+   private boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole, final String viewCode) {
+      return hasRoleInResource(collection, role) || getResourceRoleViaView(collection, role, viewRole, viewCode);
    }
 
-   private boolean getResourceRoleViaView(final Resource resource, final Role role, final Role viewRole, final String viewCode) {
+   private boolean getResourceRoleViaView(final Collection collection, final Role role, final Role viewRole, final String viewCode) {
       if (viewCode != null && !"".equals(viewCode)) { // we might have the access through a view
          final View view = viewDao.getViewByCode(viewCode);
 
@@ -246,12 +253,11 @@ public class PermissionsChecker {
             if (hasRoleInResource(view, viewRole)) { // do we have access to the view?
                final String authorId = view.getAuthorId();
 
-               if (resource instanceof Collection) {
-                  if (view.getQuery().getCollectionIds().contains(resource.getId())) { // does the view contain the resource?
-                     if (authorId != null && !"".equals(authorId)) {
-                        if (hasRoleInResource(resource, role, authorId)) { // has the view author access to the resource?
-                           return true; // grant access
-                        }
+               Set<String> collectionIds = QueryUtils.getQueryCollectionIds(view.getQuery(), getLinkTypes());
+               if (collectionIds.contains(collection.getId())) { // does the view contain the resource?
+                  if (authorId != null && !"".equals(authorId)) {
+                     if (hasRoleInResource(collection, role, authorId)) { // has the view author access to the resource?
+                        return true; // grant access
                      }
                   }
                }
@@ -260,6 +266,13 @@ public class PermissionsChecker {
       }
 
       return false;
+   }
+
+   private List<LinkType> getLinkTypes() {
+      if (this.linkTypes == null) {
+         this.linkTypes = this.linkTypeDao.getAllLinkTypes();
+      }
+      return this.linkTypes;
    }
 
    /**

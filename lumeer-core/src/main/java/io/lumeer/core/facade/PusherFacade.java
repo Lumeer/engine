@@ -34,6 +34,7 @@ import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
@@ -268,12 +269,9 @@ public class PusherFacade extends AbstractFacade {
 
       for (String user : userIds) { // checks if user has collection in some view
          List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
-         Set<String> collectionIdsInViews = new HashSet<>();
-         viewsByUser.forEach(view -> {
-            collectionIdsInViews.addAll(view.getQuery().getCollectionIds());
-            List<LinkType> viewLinkTypes = linkTypes.stream().filter(lt -> view.getQuery().getLinkTypeIds().contains(lt.getId())).collect(Collectors.toList());
-            viewLinkTypes.forEach(lt -> collectionIdsInViews.addAll(lt.getCollectionIds()));
-         });
+         Set<String> collectionIdsInViews = viewsByUser.stream().map(view -> QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes))
+                                                       .flatMap(java.util.Collection::stream)
+                                                       .collect(Collectors.toSet());
 
          if (!collectionIdsInViews.contains(collection.getId())) {
             notifications.add(createEventForResource(collection, REMOVE_EVENT_SUFFIX, user));
@@ -711,7 +709,7 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
-   private User cleanUserFromUserEvent(UserEvent event){
+   private User cleanUserFromUserEvent(UserEvent event) {
       String organizationId = event.getOrganizationId();
       User user = event.getUser();
       Map<String, Set<String>> groups = new HashMap<>();
