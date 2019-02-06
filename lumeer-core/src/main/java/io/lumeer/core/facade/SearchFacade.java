@@ -163,9 +163,12 @@ public class SearchFacade extends AbstractFacade {
 
       List<DataDocument> lastStageData = data;
 
-      for (SearchQueryStem currentStageStem : stemsPipeline) {
+      for (int i = 0; i < stemsPipeline.size(); i++) {
+         String linkTypeId = stem.getLinkTypeIds().get(i);
+         SearchQueryStem currentStageStem =  stemsPipeline.get(i);
+
          Set<String> lastStageDocumentIds = lastStageData.stream().map(DataDocument::getId).collect(Collectors.toSet());
-         List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByDocumentIds(lastStageDocumentIds);
+         List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByDocumentIds(lastStageDocumentIds, linkTypeId);
          Set<String> otherDocumentIds = linkInstances.stream().map(LinkInstance::getDocumentIds)
                                                      .flatMap(List::stream)
                                                      .filter(id -> !lastStageDocumentIds.contains(id))
@@ -179,16 +182,16 @@ public class SearchFacade extends AbstractFacade {
             currentDocumentsIds.addAll(otherDocumentIds);
          }
 
+         if (currentDocumentsIds.isEmpty()) {
+            break; // empty ids after interesction or append represents empty search, so we should break
+         }
+
          SearchQueryStem modifiedStem = SearchQueryStem.createBuilder(currentStageStem.getCollectionId())
                                                        .linkTypeIds(currentStageStem.getLinkTypeIds())
                                                        .documentIds(currentDocumentsIds)
                                                        .filters(currentStageStem.getFilters())
                                                        .fulltexts(currentStageStem.getFulltexts())
                                                        .build();
-
-         if (!modifiedStem.containsDocumentIdsQuery()) {
-            break; // empty ids after interesction or append represents empty search, so we should break
-         }
 
          List<DataDocument> currentStageData = dataDao.searchData(modifiedStem, pagination, collectionsMap.get(modifiedStem.getCollectionId()));
          if (currentStageData.isEmpty()) {
