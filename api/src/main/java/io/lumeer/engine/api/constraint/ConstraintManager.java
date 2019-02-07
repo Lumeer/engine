@@ -18,6 +18,7 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +52,12 @@ public class ConstraintManager {
     * Registry of constraint types.
     */
    private Map<String, ConstraintType> registry = new HashMap<>();
+
+   /**
+    * Pattern used to determine whether the input value is a number.
+    * Initialized upon setting a specific locale.
+    */
+   private Pattern numberMatch;
 
    /**
     * List of all constraint type classes.
@@ -313,6 +321,21 @@ public class ConstraintManager {
    public void setLocale(final Locale locale) {
       this.locale = locale;
       Arrays.asList(CONSTRAINT_CLASSES).forEach(ct -> ct.setLocale(locale));
+      initNumberMatchPatten(locale);
+   }
+
+   /**
+    * Initialize a pattern to determine whether a given input value is a number.
+    *
+    * @param locale
+    *       The currently used locale.
+    */
+   private void initNumberMatchPatten(final Locale locale) {
+      final DecimalFormat df = (DecimalFormat) DecimalFormat.getNumberInstance(locale);
+      final char separator = df.getDecimalFormatSymbols().getDecimalSeparator();
+      final String escapedSeparator = separator == '.' ? "\\." : ",";
+
+      this.numberMatch = Pattern.compile("^[-+]?\\d+(" + escapedSeparator + "\\d+)?([Ee][+-]?\\d+)?$");
    }
 
    /**
@@ -362,8 +385,12 @@ public class ConstraintManager {
             throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
          }
 
-         final Number n = Coders.encodeNumber(locale, value);
-         return n == null ? value : n;
+         if (value instanceof String && numberMatch.matcher((String) value).matches()) {
+            final Number n = Coders.encodeNumber(locale, value);
+            return n == null ? value : n;
+         }
+
+         return value;
       }
 
       // let's simply use the first available constraint and first available type
