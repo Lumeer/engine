@@ -73,7 +73,7 @@ public class UserFacade extends AbstractFacade {
 
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
-      checkPermissions(organizationId, Role.MANAGE);
+      checkOrganizationPermissions(organizationId, Role.MANAGE);
       checkUserCreate(organizationId);
 
       User storedUser = userDao.getUserByEmail(user.getEmail());
@@ -99,7 +99,7 @@ public class UserFacade extends AbstractFacade {
 
    public User updateUser(String organizationId, String userId, User user) {
       checkOrganizationInUser(organizationId, user);
-      checkPermissions(organizationId, Role.MANAGE);
+      checkOrganizationPermissions(organizationId, Role.MANAGE);
 
       User storedUser = userDao.getUserById(userId);
       User updatedUser = updateStoredUserGroups(organizationId, storedUser, user);
@@ -131,7 +131,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    public void deleteUser(String organizationId, String userId) {
-      checkPermissions(organizationId, Role.MANAGE);
+      checkOrganizationPermissions(organizationId, Role.MANAGE);
 
       userDao.deleteUserGroups(organizationId, userId);
       User storedUser = userDao.getUserById(userId);
@@ -144,7 +144,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    public List<User> getUsers(String organizationId) {
-      checkPermissions(organizationId, Role.READ);
+      checkOrganizationPermissions(organizationId, Role.READ);
 
       return userDao.getAllUsers(organizationId).stream()
                     .map(user -> keepOnlyOrganizationGroups(user, organizationId))
@@ -192,9 +192,22 @@ public class UserFacade extends AbstractFacade {
       return updatedUser;
    }
 
-   public void setDefaultWorkspace(DefaultWorkspace defaultWorkspace) {
-      Organization organization = checkPermissions(defaultWorkspace.getOrganizationId(), Role.READ);
-      checkProjectPermissions(organization.getCode(), defaultWorkspace.getProjectId(), Role.READ);
+   public void setDefaultWorkspace(DefaultWorkspace workspace) {
+      Organization organization;
+      if (workspace.getOrganizationId() != null) {
+         organization = checkOrganizationPermissions(workspace.getOrganizationId(), Role.READ);
+      } else {
+         organization = checkOrganizationPermissionsByCode(workspace.getOrganizationCode(), Role.READ);
+      }
+
+      Project project;
+      if (workspace.getProjectId() != null) {
+         project = checkProjectPermissions(organization.getCode(), workspace.getProjectId(), Role.READ);
+      } else {
+         project = checkProjectPermissionsByCode(organization.getCode(), workspace.getProjectCode(), Role.READ);
+      }
+
+      DefaultWorkspace defaultWorkspace = new DefaultWorkspace(organization.getId(), project.getId());
 
       User currentUser = authenticatedUser.getCurrentUser();
       currentUser.setDefaultWorkspace(defaultWorkspace);
@@ -223,17 +236,34 @@ public class UserFacade extends AbstractFacade {
       return user;
    }
 
-   private Organization checkPermissions(final String organizationId, final Role role) {
+   private Organization checkOrganizationPermissions(final String organizationId, final Role role) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
       permissionsChecker.checkRole(organization, role);
 
       return organization;
    }
 
-   private void checkProjectPermissions(final String organizationCode, final String projectId, final Role role) {
+   private Organization checkOrganizationPermissionsByCode(final String organizationCode, final Role role) {
+      Organization organization = organizationDao.getOrganizationByCode(organizationCode);
+      permissionsChecker.checkRole(organization, role);
+
+      return organization;
+   }
+
+   private Project checkProjectPermissions(final String organizationCode, final String projectId, final Role role) {
       workspaceKeeper.setOrganization(organizationCode);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, role);
+
+      return project;
+   }
+
+   private Project checkProjectPermissionsByCode(final String organizationCode, final String projectCode, final Role role) {
+      workspaceKeeper.setOrganization(organizationCode);
+      Project project = projectDao.getProjectByCode(projectCode);
+      permissionsChecker.checkRole(project, role);
+
+      return project;
    }
 
    private void checkOrganizationInUser(String organizationId, User user) {
