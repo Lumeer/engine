@@ -82,7 +82,7 @@ public class BlocklyRule {
       return rule.getConfiguration().getBoolean(BLOCKLY_DRY_RUN);
    }
 
-   public void setDryRun(final boolean dryRun) {
+   public void setDryRun(final Boolean dryRun) {
       rule.getConfiguration().put(BLOCKLY_DRY_RUN, dryRun);
    }
 

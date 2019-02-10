@@ -20,6 +20,8 @@ package io.lumeer.core.task.executor;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.task.RuleTask;
@@ -28,6 +30,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 import org.marvec.pusher.data.Event;
 
@@ -36,6 +39,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,7 +72,12 @@ public class BlocklyRuleTaskExecutor {
       }
 
       public void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
-         changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
+         try {
+            changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
+         } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+         }
       }
 
       Object convertValue(final Value value) {
@@ -90,49 +99,73 @@ public class BlocklyRuleTaskExecutor {
       }
 
       public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
-         final SearchQuery query = SearchQuery
-               .createBuilder()
-               .stems(Arrays.asList(
-                     SearchQueryStem
-                           .createBuilder("")
-                           .linkTypeIds(Arrays.asList(linkTypeId))
-                           .documentIds(Set.of(d.document.getId()))
-                           .build()))
-               .build();
+         try {
+            final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
+            final String otherCollectionId = linkType.getCollectionIds().get(0).equals(ruleTask.getCollection().getId()) ?
+                  linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
 
-         // load linked document ids
-         final Set<String> documentIds = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                                                  .searchLinkInstances(query)
-                                                  .stream()
-                                                  .map(linkInstance -> linkInstance.getDocumentIds())
-                                                  .flatMap(java.util.Collection::stream)
-                                                  .collect(Collectors.toSet());
-         documentIds.remove(d.document.getId());
+            final SearchQuery query = SearchQuery
+                  .createBuilder()
+                  .stems(Arrays.asList(
+                        SearchQueryStem
+                              .createBuilder("")
+                              .linkTypeIds(Arrays.asList(linkTypeId))
+                              .documentIds(Set.of(d.document.getId()))
+                              .build()))
+                  .build();
 
-         // load document data
-         final Map<String, DataDocument> data = new HashMap<>();
-         ruleTask.getDaoContextSnapshot().getDataDao()
-                 .getData(ruleTask.getCollection().getId(), documentIds)
-                 .forEach(dd -> data.put(dd.getId(), dd));
+            // load linked document ids
+            final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                     .searchLinkInstances(query);
 
-         // load document meta data and match them with user data
-         return ruleTask.getDaoContextSnapshot().getDocumentDao()
-                        .getDocumentsByIds(documentIds.toArray(new String[0]))
-                        .stream().map(document -> {
-                  document.setData(data.get(document.getId()));
-                  return new DocumentBridge(document);
-               }).collect(Collectors.toList());
+            if (links.size() > 0) {
+               final Set<String> documentIds = links.stream()
+                                                    .map(linkInstance -> linkInstance.getDocumentIds())
+                                                    .flatMap(java.util.Collection::stream)
+                                                    .collect(Collectors.toSet());
+               documentIds.remove(d.document.getId());
+
+               // load document data
+               final Map<String, DataDocument> data = new HashMap<>();
+               ruleTask.getDaoContextSnapshot().getDataDao()
+                       .getData(otherCollectionId, documentIds)
+                       .forEach(dd -> data.put(dd.getId(), dd));
+
+               // load document meta data and match them with user data
+               return ruleTask.getDaoContextSnapshot().getDocumentDao()
+                              .getDocumentsByIds(documentIds.toArray(new String[0]))
+                              .stream().map(document -> {
+                        document.setData(data.get(document.getId()));
+                        return new DocumentBridge(document);
+                     }).collect(Collectors.toList());
+            } else {
+               return Collections.emptyList();
+            }
+         } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+         }
       }
 
       public Value getDocumentAttribute(DocumentBridge d, String attrId) {
-         return Value.asValue(d.document.getData().get(attrId));
+         try {
+            return Value.asValue(d.document.getData().get(attrId));
+         } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+         }
       }
 
       public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
-         final List<Value> result = new ArrayList<>();
-         docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
+         try {
+            final List<Value> result = new ArrayList<>();
+            docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
 
-         return result;
+            return result;
+         } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+         }
       }
 
       void commitChanges() {
@@ -230,6 +263,13 @@ public class BlocklyRuleTaskExecutor {
       private DocumentBridge(final Document document) {
          this.document = document;
       }
+
+      @Override
+      public String toString() {
+         return "DocumentBridge{" +
+               "document=" + document +
+               '}';
+      }
    }
 
    public BlocklyRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
@@ -243,7 +283,7 @@ public class BlocklyRuleTaskExecutor {
       final DocumentBridge oldDocument = new DocumentBridge(ruleTask.getOldDocument());
       final DocumentBridge newDocument = new DocumentBridge(ruleTask.getNewDocument());
 
-      Context context = Context.create("js");
+      Context context = Context.newBuilder("js").engine(Engine.newBuilder().option("js.experimental-array-prototype", "true").build()).build();
       context.initialize("js");
       context.getPolyglotBindings().putMember("lumeer", lumeerBridge);
       context.getBindings("js").putMember("oldDocument", oldDocument);
