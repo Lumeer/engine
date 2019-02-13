@@ -72,12 +72,7 @@ public class BlocklyRuleTaskExecutor {
       }
 
       public void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
-         try {
-            changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
-         } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-         }
+         changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
       }
 
       Object convertValue(final Value value) {
@@ -99,73 +94,58 @@ public class BlocklyRuleTaskExecutor {
       }
 
       public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
-         try {
-            final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
-            final String otherCollectionId = linkType.getCollectionIds().get(0).equals(ruleTask.getCollection().getId()) ?
-                  linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
+         final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
+         final String otherCollectionId = linkType.getCollectionIds().get(0).equals(ruleTask.getCollection().getId()) ?
+               linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
 
-            final SearchQuery query = SearchQuery
-                  .createBuilder()
-                  .stems(Arrays.asList(
-                        SearchQueryStem
-                              .createBuilder("")
-                              .linkTypeIds(Arrays.asList(linkTypeId))
-                              .documentIds(Set.of(d.document.getId()))
-                              .build()))
-                  .build();
+         final SearchQuery query = SearchQuery
+               .createBuilder()
+               .stems(Arrays.asList(
+                     SearchQueryStem
+                           .createBuilder("")
+                           .linkTypeIds(Arrays.asList(linkTypeId))
+                           .documentIds(Set.of(d.document.getId()))
+                           .build()))
+               .build();
 
-            // load linked document ids
-            final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                                                     .searchLinkInstances(query);
+         // load linked document ids
+         final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                  .searchLinkInstances(query);
 
-            if (links.size() > 0) {
-               final Set<String> documentIds = links.stream()
-                                                    .map(linkInstance -> linkInstance.getDocumentIds())
-                                                    .flatMap(java.util.Collection::stream)
-                                                    .collect(Collectors.toSet());
-               documentIds.remove(d.document.getId());
+         if (links.size() > 0) {
+            final Set<String> documentIds = links.stream()
+                                                 .map(linkInstance -> linkInstance.getDocumentIds())
+                                                 .flatMap(java.util.Collection::stream)
+                                                 .collect(Collectors.toSet());
+            documentIds.remove(d.document.getId());
 
-               // load document data
-               final Map<String, DataDocument> data = new HashMap<>();
-               ruleTask.getDaoContextSnapshot().getDataDao()
-                       .getData(otherCollectionId, documentIds)
-                       .forEach(dd -> data.put(dd.getId(), dd));
+            // load document data
+            final Map<String, DataDocument> data = new HashMap<>();
+            ruleTask.getDaoContextSnapshot().getDataDao()
+                    .getData(otherCollectionId, documentIds)
+                    .forEach(dd -> data.put(dd.getId(), dd));
 
-               // load document meta data and match them with user data
-               return ruleTask.getDaoContextSnapshot().getDocumentDao()
-                              .getDocumentsByIds(documentIds.toArray(new String[0]))
-                              .stream().map(document -> {
-                        document.setData(data.get(document.getId()));
-                        return new DocumentBridge(document);
-                     }).collect(Collectors.toList());
-            } else {
-               return Collections.emptyList();
-            }
-         } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
+            // load document meta data and match them with user data
+            return ruleTask.getDaoContextSnapshot().getDocumentDao()
+                           .getDocumentsByIds(documentIds.toArray(new String[0]))
+                           .stream().map(document -> {
+                     document.setData(data.get(document.getId()));
+                     return new DocumentBridge(document);
+                  }).collect(Collectors.toList());
+         } else {
+            return Collections.emptyList();
          }
       }
 
       public Value getDocumentAttribute(DocumentBridge d, String attrId) {
-         try {
-            return Value.asValue(d.document.getData().get(attrId));
-         } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-         }
+         return Value.asValue(d.document.getData().get(attrId));
       }
 
       public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
-         try {
-            final List<Value> result = new ArrayList<>();
-            docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
+         final List<Value> result = new ArrayList<>();
+         docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
 
-            return result;
-         } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-         }
+         return result;
       }
 
       void commitChanges() {
