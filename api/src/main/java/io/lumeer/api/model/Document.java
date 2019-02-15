@@ -158,4 +158,19 @@ public class Document {
       this.favorite = favorite;
    }
 
+   @Override
+   public String toString() {
+      return "Document{" +
+            "id='" + id + '\'' +
+            ", collectionId='" + collectionId + '\'' +
+            ", creationDate=" + creationDate +
+            ", updateDate=" + updateDate +
+            ", createdBy='" + createdBy + '\'' +
+            ", updatedBy='" + updatedBy + '\'' +
+            ", dataVersion=" + dataVersion +
+            ", data=" + data +
+            ", metaData=" + metaData +
+            ", favorite=" + favorite +
+            '}';
+   }
 }
