@@ -103,7 +103,11 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private void convertDataTypes(final Collection collection, final DataDocument data) {
-      Map<String, Constraint> constraints = collection.getAttributes().stream().collect(Collectors.toMap(attr -> attr.getId(), attr -> attr.getConstraint()));
+      Map<String, Constraint> constraints =
+            collection.getAttributes()
+                      .stream()
+                      .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                      .collect(Collectors.toMap(attr -> attr.getId(), attr -> attr.getConstraint()));
 
       data.keySet().stream().forEach(key -> {
          if (!DataDocument.ID.equals(key)) {
