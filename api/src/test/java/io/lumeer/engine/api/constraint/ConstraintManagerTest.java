@@ -1,17 +1,16 @@
 package io.lumeer.engine.api.constraint;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
 
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -19,10 +18,10 @@ import java.util.Locale;
  */
 public class ConstraintManagerTest {
 
-   final static Locale l = Locale.forLanguageTag("cs_CZ");
+   final static Locale l = Locale.forLanguageTag("en_US");
 
    @Test
-   public void testTypesHandling() throws Exception {
+   public void testTypesHandling() {
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
 
@@ -39,127 +38,23 @@ public class ConstraintManagerTest {
    }
 
    @Test
-   public void testCaseConstraint() throws Exception {
+   public void testDateTimeConstraint() {
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
-      cm.registerConstraint("case:lower");
-
-      final String fixable = "Ahoj";
-      final String ok = "ahoj";
-
-      assertThat(cm.isValid(fixable)).isEqualTo(Constraint.ConstraintResult.FIXABLE);
-      assertThat(cm.isValid(ok)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.fix(fixable)).isEqualTo(ok);
-
-      final Object encoded = cm.encode(cm.fix(fixable));
-      assertThat(encoded).isInstanceOf(String.class);
-      assertThat(encoded).isEqualTo(ok);
-   }
-
-   @Test
-   public void testDateTimeConstraint() throws Exception {
-      final ConstraintManager cm = new ConstraintManager();
-      cm.setLocale(l);
-      cm.registerConstraint("date:yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
       final Date d = new Date(1234567890);
       final String valid = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", l).format(d);
 
-      assertThat(cm.isValid(valid)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.fix(valid)).isEqualTo(valid);
-
-      final Object encoded = cm.encode(cm.fix(valid));
+      final Object encoded = cm.encode(valid, new Constraint(ConstraintType.DateTime, null));
       assertThat(encoded).isInstanceOf(Date.class);
       assertThat(encoded).isEqualTo(d);
-      assertThat(cm.decode(encoded)).isEqualTo(valid);
    }
 
    @Test
-   public void testListTagsConstraint() throws Exception {
+   public void testNumberConstraint() {
+      final Constraint numberConstraint = new Constraint(ConstraintType.Number, null);
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
-      cm.registerConstraint("tags:java,mongodb,jee,angular,lumeer");
-
-      final List<String> l = Arrays.asList("mongodb", "lumeer");
-      final String fixable = "MongoDb, Lumeer";
-      final String valid = "lumeer, mongodb";
-
-      assertThat(cm.isValid(fixable)).isEqualTo(Constraint.ConstraintResult.FIXABLE);
-      assertThat(cm.isValid(valid)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.fix(fixable)).isEqualTo(valid);
-
-      final Object encoded = cm.encode(cm.fix(fixable));
-      assertThat(encoded).isInstanceOf(List.class);
-      assertThat((List) encoded).containsAll(l);
-      assertThat((List) cm.decode(encoded)).isInstanceOf(List.class).containsAll(l);
-   }
-
-   @Test
-   public void testListOneOfConstraint() throws Exception {
-      final ConstraintManager cm = new ConstraintManager();
-      cm.setLocale(l);
-      cm.registerConstraint("oneOf:java,mongodb,jee,angular,lumeer");
-
-      final List<String> l = Arrays.asList("lumeer");
-      final String fixable = "Lumeer";
-      final String valid = "lumeer";
-      final String invalid = "lumeer, mongodb";
-
-      assertThat(cm.isValid(invalid)).isEqualTo(Constraint.ConstraintResult.INVALID);
-      assertThat(cm.isValid(fixable)).isEqualTo(Constraint.ConstraintResult.FIXABLE);
-      assertThat(cm.isValid(valid)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.fix(fixable)).isEqualTo(valid);
-
-      final Object encoded = cm.encode(cm.fix(fixable));
-      assertThat(encoded).isInstanceOf(String.class);
-      assertThat(encoded).isEqualTo(valid);
-      assertThat(cm.decode(encoded)).isEqualTo(valid);
-   }
-
-   @Test
-   public void testMatchesfConstraint() throws Exception {
-      final ConstraintManager cm = new ConstraintManager();
-      cm.setLocale(l);
-      cm.registerConstraint("matches:^abc.*");
-
-      final String valid = "abcdef";
-
-      assertThat(cm.isValid("ABCdef")).isEqualTo(Constraint.ConstraintResult.INVALID);
-      assertThat(cm.isValid("aabcd")).isEqualTo(Constraint.ConstraintResult.INVALID);
-      assertThat(cm.isValid("abc")).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.isValid(valid)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.fix(valid)).isEqualTo(valid);
-
-      final Object encoded = cm.encode(cm.fix(valid));
-      assertThat(encoded).isInstanceOf(String.class);
-      assertThat(encoded).isEqualTo(valid);
-      assertThat(cm.decode(encoded)).isEqualTo(valid);
-   }
-
-   @Test
-   public void testNumberMonetaryConstraint() throws Exception {
-      final ConstraintManager cm = new ConstraintManager();
-      cm.setLocale(l);
-      cm.registerConstraint("isMonetary");
-
-      final NumberFormat nf = NumberFormat.getNumberInstance(l);
-      ((DecimalFormat) nf).setParseBigDecimal(true);
-      final String valid = nf.format(0.02);
-
-      assertThat(cm.isValid(valid)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.fix(valid)).isEqualTo(valid);
-
-      final Object encoded = cm.encode(cm.fix(valid));
-      assertThat(encoded).isInstanceOf(BigDecimal.class);
-      assertThat(encoded).isEqualTo(new BigDecimal(valid));
-      assertThat(cm.decode(encoded)).isEqualTo(new BigDecimal(valid));
-   }
-
-   @Test
-   public void testNumberConstraint() throws Exception {
-      final ConstraintManager cm = new ConstraintManager();
-      cm.setLocale(l);
-      cm.registerConstraint("isNumber");
 
       final NumberFormat nf = NumberFormat.getNumberInstance(l);
       final String validDouble = nf.format(0.02);
@@ -167,68 +62,32 @@ public class ConstraintManagerTest {
       final BigDecimal bd = new BigDecimal(Double.MAX_VALUE).multiply(new BigDecimal(Double.MAX_VALUE));
       final String validBigDecimal = bd.toString();
 
-      assertThat(cm.isValid(validDouble)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.isValid(validLong)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.isValid(validBigDecimal)).isEqualTo(Constraint.ConstraintResult.VALID);
-      assertThat(cm.fix(validDouble)).isEqualTo(validDouble);
-      assertThat(cm.fix(validLong)).isEqualTo(validLong);
-      assertThat(cm.fix(validBigDecimal)).isEqualTo(validBigDecimal);
-
-      Object encoded = cm.encode(cm.fix(validDouble));
+      Object encoded = cm.encode(validDouble, numberConstraint);
       assertThat(encoded).isInstanceOf(BigDecimal.class);
       assertThat(encoded).isEqualTo(new BigDecimal("0.02"));
-      assertThat(cm.decode(encoded)).isEqualTo(new BigDecimal("0.02"));
 
-      encoded = cm.encode(cm.fix(validLong));
+      encoded = cm.encode(validLong, numberConstraint);
       assertThat(encoded).isInstanceOf(Long.class);
       assertThat(encoded).isEqualTo(123L);
-      assertThat(cm.decode(encoded)).isEqualTo(123L);
 
-      encoded = cm.encode(cm.fix(validBigDecimal));
+      encoded = cm.encode(validBigDecimal, numberConstraint);
       assertThat(encoded).isInstanceOf(BigDecimal.class);
       assertThat(encoded).isEqualTo(bd);
-      assertThat(cm.decode(encoded)).isEqualTo(bd);
    }
 
    @Test
-   public void testCompatibleConstraints() throws Exception {
+   public void testBooleanConstraint() {
+      final Constraint booleanConstraint = new Constraint(ConstraintType.Boolean, null);
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
-      cm.registerConstraint("case:lower"); // since now we can do only strings
 
-      assertThatThrownBy(() -> {
-         cm.registerConstraint("date:yyyy/MM/dd HH:mm:ss");
-      }).isInstanceOf(InvalidConstraintException.class).hasMessageContaining("data types");
+      Object encoded = cm.encode("true", booleanConstraint);
+      assertThat(encoded).isEqualTo(Boolean.TRUE);
 
-      assertThatThrownBy(() -> {
-         cm.registerConstraint("tags:a,b,c,d");
-      }).isInstanceOf(InvalidConstraintException.class).hasMessageContaining("data types");
+      encoded = cm.encode("yes", booleanConstraint);
+      assertThat(encoded).isEqualTo("yes");
 
-      assertThatThrownBy(() -> {
-         cm.registerConstraint("isNumber");
-      }).isInstanceOf(InvalidConstraintException.class).hasMessageContaining("data types");
-
-      cm.registerConstraint("oneOf:a,b,c,d");
-      cm.registerConstraint("matches:^abc.*");
-
-      final ConstraintManager cm2 = new ConstraintManager();
-      cm2.setLocale(l);
-      cm2.registerConstraint("date:yyyy/MM/dd HH:mm:ss");
-
-      assertThatThrownBy(() -> {
-         cm2.registerConstraint("tags:a,b,c,d");
-      }).isInstanceOf(InvalidConstraintException.class).hasMessageContaining("data types");
-
-      assertThatThrownBy(() -> {
-         cm2.registerConstraint("isNumber");
-      }).isInstanceOf(InvalidConstraintException.class).hasMessageContaining("data types");
-
-      assertThatThrownBy(() -> {
-         cm2.registerConstraint("oneOf:a,b,c,d");
-      }).isInstanceOf(InvalidConstraintException.class).hasMessageContaining("data types");
-
-      assertThatThrownBy(() -> {
-         cm2.registerConstraint("matches:^abc.*");
-      }).isInstanceOf(InvalidConstraintException.class).hasMessageContaining("data types");
+      encoded = cm.encode("   fAlse    ", booleanConstraint);
+      assertThat(encoded).isEqualTo(Boolean.FALSE);
    }
 }
