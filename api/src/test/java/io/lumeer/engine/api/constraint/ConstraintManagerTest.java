@@ -10,6 +10,9 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
@@ -43,10 +46,23 @@ public class ConstraintManagerTest {
       cm.setLocale(l);
 
       final Date d = new Date(1234567890);
-      final String valid = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", l).format(d);
+      final ZonedDateTime dt = ZonedDateTime.from(d.toInstant().atZone(ZoneId.of("Asia/Kolkata")));
+      final String valid1 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ", l).format(dt);
+      final String valid2 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSO", l).format(dt);
+      final String valid3 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSx", l).format(dt);
+      final String valid4 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", l).format(dt);
 
-      final Object encoded = cm.encode(valid, new Constraint(ConstraintType.DateTime, null));
+      Object encoded = cm.encode(valid1, new Constraint(ConstraintType.DateTime, null));
       assertThat(encoded).isInstanceOf(Date.class);
+      assertThat(((Date) encoded).toInstant()).isEqualTo(d.toInstant());
+
+      encoded = cm.encode(valid2, new Constraint(ConstraintType.DateTime, null));
+      assertThat(((Date) encoded).toInstant()).isEqualTo(d.toInstant());
+
+      encoded = cm.encode(valid3, new Constraint(ConstraintType.DateTime, null));
+      assertThat(encoded).isEqualTo(d);
+
+      encoded = cm.encode(valid4, new Constraint(ConstraintType.DateTime, null));
       assertThat(encoded).isEqualTo(d);
    }
 

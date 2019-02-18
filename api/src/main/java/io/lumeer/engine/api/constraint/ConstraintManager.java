@@ -26,8 +26,16 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -57,6 +65,8 @@ public class ConstraintManager {
       return locale;
    }
 
+   private Set<DateTimeFormatter> formatters;
+
    /**
     * Gets the currently used locale.
     *
@@ -66,6 +76,7 @@ public class ConstraintManager {
    public void setLocale(final Locale locale) {
       this.locale = locale;
       initNumberMatchPatten(locale);
+      initDateTimeFormatters(locale);
    }
 
    /**
@@ -80,6 +91,15 @@ public class ConstraintManager {
       final String escapedSeparator = separator == '.' ? "\\." : ",";
 
       this.numberMatch = Pattern.compile("^[-+]?\\d+(" + escapedSeparator + "\\d+)?([Ee][+-]?\\d+)?$");
+   }
+
+   private void initDateTimeFormatters(final Locale locale) {
+       formatters = Set.of(
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale),
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSO", locale),
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSx", locale),
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", locale)
+       );
    }
 
    /**
@@ -179,11 +199,14 @@ public class ConstraintManager {
             return value;
          }
 
-         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale);
-         try {
-            return df.parse(value.toString().trim());
-         } catch (ParseException e) {
-            return value;
+         DateTimeFormatter dtf;
+         for(final Iterator<DateTimeFormatter> i = formatters.iterator(); i.hasNext(); ) {
+            dtf = i.next();
+            try {
+               return Date.from(ZonedDateTime.from(dtf.parse(value.toString().trim())).toInstant());
+            } catch (DateTimeParseException e) {
+               // no problem, we will try another
+            }
          }
       }
 
