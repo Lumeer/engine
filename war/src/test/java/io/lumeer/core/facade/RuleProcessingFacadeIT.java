@@ -18,7 +18,7 @@
  */
 package io.lumeer.core.facade;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -48,7 +48,6 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
-import org.graalvm.polyglot.Context;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +57,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 
@@ -169,7 +167,7 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
       collection.getPermissions().updateUserPermissions(userPermissions);
       collection.getPermissions().updateGroupPermissions(groupPermissions);
       attributes.entrySet().forEach(e -> {
-         Attribute a = new Attribute(e.getKey(), e.getValue(), null, 0);
+         Attribute a = new Attribute(e.getKey(), e.getValue(), null, null, 0);
          collection.updateAttribute(e.getKey(), a);
       });
       return collectionDao.createCollection(collection);
