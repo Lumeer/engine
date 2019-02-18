@@ -18,7 +18,7 @@
  */
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.Function;
 import io.lumeer.storage.mongodb.codecs.FunctionCodec;
 
 import org.bson.codecs.Codec;
@@ -32,7 +32,7 @@ public class FunctionCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == Constraint.class) {
+      if (clazz == Function.class) {
          return (Codec<T>) new FunctionCodec(registry);
       }
 
