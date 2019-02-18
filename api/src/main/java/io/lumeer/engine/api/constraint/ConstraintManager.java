@@ -18,18 +18,25 @@
  */
 package io.lumeer.engine.api.constraint;
 
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
+
+import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Holds a list of constraints that can be obtained from a list of string configurations.
@@ -44,264 +51,10 @@ public class ConstraintManager {
    private Locale locale;
 
    /**
-    * Configured constraints.
-    */
-   private List<Constraint> constraints = new ArrayList<>();
-
-   /**
-    * Registry of constraint types.
-    */
-   private Map<String, ConstraintType> registry = new HashMap<>();
-
-   /**
     * Pattern used to determine whether the input value is a number.
     * Initialized upon setting a specific locale.
     */
    private Pattern numberMatch;
-
-   /**
-    * List of all constraint type classes.
-    */
-   private static final ConstraintType[] CONSTRAINT_CLASSES = {
-         new NumberConstraintType(), new CaseConstraintType(), new ListConstraintType(), new MatchesConstraintType(), new DateTimeConstraintType()
-   };
-
-   /**
-    * Initializes an empty constraint manager.
-    *
-    * @throws InvalidConstraintException
-    *       When there are multiple constraints asking to be registered with the same configuration prefix.
-    */
-   public ConstraintManager() throws InvalidConstraintException {
-      final List<String> collisions = new ArrayList<>();
-
-      for (final ConstraintType type : CONSTRAINT_CLASSES) {
-         type.getRegisteredPrefixes().forEach(prefix -> {
-            if (registry.containsKey(prefix)) {
-               collisions.add(prefix);
-            } else {
-               registry.put(prefix, type);
-            }
-         });
-      }
-
-      if (collisions.size() > 0) {
-         throw new InvalidConstraintException("Multiple constraint types found for the following configuration prefixes: " + String.join(", ", collisions));
-      }
-   }
-
-   /**
-    * Creates a new manager with the constraints whose configurations are provided.
-    *
-    * @param constraintConfigurations
-    *       Configurations of constraints.
-    * @throws InvalidConstraintException
-    *       When it was not possible to parse constraint configuration.
-    */
-   public ConstraintManager(final List<String> constraintConfigurations) throws InvalidConstraintException {
-      this();
-      constraints = parseConstraints(constraintConfigurations);
-
-      if (!checkConstraintCompatibility(constraints)) {
-         throw new InvalidConstraintException("Incompatible constraints detected. The constraints cannot work with the same data types.");
-      }
-   }
-
-   /**
-    * Registers another constraint.
-    *
-    * @param constraint
-    *       Constraint to be registered.
-    * @throws InvalidConstraintException
-    *       When the new constraint was incompatible with the existing ones.
-    */
-   public void registerConstraint(final Constraint constraint) throws InvalidConstraintException {
-      final List<Constraint> allConstraints = new ArrayList<>(constraints);
-      allConstraints.add(constraint);
-
-      if (checkConstraintCompatibility(allConstraints)) {
-         constraints.add(constraint);
-      } else {
-         throw new InvalidConstraintException("Incompatible constraints detected. The constraints cannot work with the same data types.");
-      }
-   }
-
-   /**
-    * Registers another constraint based on provided constraint configuration.
-    *
-    * @param constraintConfiguration
-    *       The constraint configuration.
-    * @throws InvalidConstraintException
-    *       When it was not possible to parse constraint configuration.
-    *       When the new constraint was incompatible with the existing ones.
-    */
-   public void registerConstraint(final String constraintConfiguration) throws InvalidConstraintException {
-      final List<Constraint> newConstraints = parseConstraints(Collections.singletonList(constraintConfiguration));
-      final List<Constraint> allConstraints = new ArrayList<>(constraints);
-      allConstraints.addAll(newConstraints);
-
-      if (checkConstraintCompatibility(allConstraints)) {
-         constraints.addAll(newConstraints);
-      } else {
-         throw new InvalidConstraintException("Incompatible constraints detected. The constraints cannot work with the same data types.");
-      }
-   }
-
-   /**
-    * Gets list of configurations of current constraints.
-    *
-    * @return The list of configurations of current constraints.
-    */
-   public List<String> getConstraintConfigurations() {
-      return getConstraintConfigurations(constraints);
-   }
-
-   /**
-    * Gets constraint configurations based on the provided constraints.
-    *
-    * @param constraints
-    *       Constraints to get configurations for.
-    * @return The constraint configurations.
-    */
-   public List<String> getConstraintConfigurations(final List<Constraint> constraints) {
-      if (constraints == null) {
-         return Collections.emptyList();
-      }
-
-      return constraints.stream().map(Constraint::getConfigurationString).collect(Collectors.toList());
-   }
-
-   /**
-    * Validates the given value with all constraints.
-    *
-    * @param value
-    *       The value to validate.
-    * @return Validation result.
-    */
-   public Constraint.ConstraintResult isValid(final String value) {
-      Constraint.ConstraintResult result = Constraint.ConstraintResult.VALID;
-
-      for (final Constraint constraint : constraints) {
-         Constraint.ConstraintResult r = constraint.isValid(value);
-
-         // can make the result only worse
-         if (r.ordinal() > result.ordinal()) {
-            result = r;
-         }
-      }
-
-      return result;
-   }
-
-   /**
-    * Tries to fix the value so that all constraints return {@link io.lumeer.engine.api.constraint.Constraint.ConstraintResult#VALID}.
-    *
-    * @param value
-    *       The value to fix.
-    * @return The fixed value or null when it was not possible to fix the value so that all constraint are met.
-    */
-   public String fix(String value) {
-      return tryToFix(new HashSet<>(), value);
-   }
-
-   /**
-    * Internal helper that tries to fix the value.
-    *
-    * @param used
-    *       Constraints that were already tried to fix the value.
-    * @param value
-    *       The value to fix.
-    * @return The fixed value or null when it was not possible to fix the value so that all constraint are met.
-    */
-   private String tryToFix(final Set<Constraint> used, final String value) {
-      for (final Constraint c : constraints) {
-         if (!used.contains(c)) {
-            Constraint.ConstraintResult r = c.isValid(value);
-            if (r == Constraint.ConstraintResult.INVALID) { // no way of moving forward
-               return null;
-            } else if (r == Constraint.ConstraintResult.FIXABLE) { // apply the fix
-               final String fixed = c.fix(value);
-
-               used.add(c);
-
-               if (fixed != null) {
-                  return tryToFix(used, c.fix(value)); // try the next round
-               } else {
-                  return null;
-               }
-            }
-         }
-      }
-
-      return value;
-   }
-
-   /**
-    * Parses constraint configurations.
-    *
-    * @param constraintConfigurations
-    *       Constraint configurations to parse.
-    * @return Newly created constraints.
-    * @throws InvalidConstraintException
-    *       When it was not possible to parse constraint configuration.
-    */
-   public List<Constraint> parseConstraints(final List<String> constraintConfigurations) throws InvalidConstraintException {
-      final Set<Class> encodedTypes = new HashSet<>();
-      final List<Constraint> constraints = new ArrayList<>();
-      final List<String> invalidConfigurations = new ArrayList<>();
-
-      constraintConfigurations.forEach(configuration -> {
-         final String[] config = configuration.split(":");
-
-         if (!registry.containsKey(config[0])) {
-            invalidConfigurations.add(configuration);
-         } else {
-            try {
-               final Constraint c = registry.get(config[0]).parseConstraint(configuration);
-               if (encodedTypes.size() == 0) {
-                  encodedTypes.addAll(c.getEncodedTypes());
-               } else {
-                  encodedTypes.retainAll(c.getEncodedTypes());
-               }
-               constraints.add(c);
-            } catch (InvalidConstraintException e) {
-               invalidConfigurations.add(configuration);
-            }
-         }
-      });
-
-      if (invalidConfigurations.size() > 0) {
-         throw new InvalidConstraintException("The following constraint configurations are not recognized: " + String.join(", ", invalidConfigurations));
-      }
-
-      if (constraints.size() > 0 && encodedTypes.size() == 0) {
-         throw new InvalidConstraintException("Incompatible constraints were found. The constraint do not match on the data types they could use in database.");
-      }
-
-      return constraints;
-   }
-
-   /**
-    * Gets the set of possible constrain prefixes (e.g. lessThan, case, matches...).
-    *
-    * @return The set of possible constrain prefixes.
-    */
-   public Set<String> getRegisteredPrefixes() {
-      return registry.keySet();
-   }
-
-   /**
-    * Get the set of possible parameter values for the given constraint prefix (e.g. for prefix case,
-    * it can be lower, upper).
-    *
-    * @param prefix
-    *       The prefix to return possible parameters for.
-    * @return The set of possible parameter values for the given constraint prefix.
-    */
-   public Set<String> getConstraintParameterSuggestions(final String prefix) {
-      final ConstraintType constraintType = registry.get(prefix);
-      return constraintType == null ? Collections.emptySet() : constraintType.getParameterSuggestions(prefix);
-   }
 
    /**
     * Sets the user's locale.
@@ -312,6 +65,8 @@ public class ConstraintManager {
       return locale;
    }
 
+   private Set<DateTimeFormatter> formatters;
+
    /**
     * Gets the currently used locale.
     *
@@ -320,8 +75,8 @@ public class ConstraintManager {
     */
    public void setLocale(final Locale locale) {
       this.locale = locale;
-      Arrays.asList(CONSTRAINT_CLASSES).forEach(ct -> ct.setLocale(locale));
       initNumberMatchPatten(locale);
+      initDateTimeFormatters(locale);
    }
 
    /**
@@ -338,37 +93,62 @@ public class ConstraintManager {
       this.numberMatch = Pattern.compile("^[-+]?\\d+(" + escapedSeparator + "\\d+)?([Ee][+-]?\\d+)?$");
    }
 
-   /**
-    * Checks whether the given constraints are compatible and can be used at once.
-    * This is checked by their encoding types to see if there is a non-empty intersection.
-    *
-    * @param constraints
-    *       The constrains to check for compatibility.
-    * @return True iff the constraints are compatible.
-    */
-   private static boolean checkConstraintCompatibility(final List<Constraint> constraints) {
-      return constraints.size() == 0 || getCommonTypes(constraints).size() > 0;
+   private void initDateTimeFormatters(final Locale locale) {
+       formatters = Set.of(
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale),
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSO", locale),
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSx", locale),
+             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", locale)
+       );
    }
 
    /**
-    * Gets the intersection of types supported by given constraints.
+    * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
     *
-    * @param constraints
-    *       The list of constraints to check for supported types intersection.
-    * @return The common types among all of the constraints.
+    * @param value
+    *       The value to try to convert to number.
+    * @return The value converted to a number data type or null when the conversion was not possible.
     */
-   private static Set<Class> getCommonTypes(final List<Constraint> constraints) {
-      Set<Class> types = null;
+   private Number encodeNumber(final Locale locale, final Object value) {
+      final DecimalFormat df = (DecimalFormat) DecimalFormat.getNumberInstance(locale);
+      df.setParseBigDecimal(true);
+      final NumberFormat nf = NumberFormat.getNumberInstance(locale);
 
-      for (final Constraint c : constraints) {
-         if (types == null) {
-            types = new HashSet(c.getEncodedTypes());
-         } else {
-            types.retainAll(c.getEncodedTypes());
+      return encodeNumber(nf, df, value);
+   }
+
+   /**
+    * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
+    *
+    * @param numberFormat
+    *       Number format to parse to double or integer.
+    * @param bigNumberFormat
+    *       Number format to parse to big decimal.
+    * @param value
+    *       The value to try to convert to number.
+    * @return The value converted to a number data type or null when the conversion was not possible.
+    */
+   private Number encodeNumber(final NumberFormat numberFormat, final NumberFormat bigNumberFormat, Object value) {
+      if (value instanceof Number) {
+         return (Number) value;
+      } else if (value instanceof String) {
+         try {
+            // figure out whether we need to use BigDecimal
+            final Number n2 = numberFormat.parse(((String) value).trim());
+
+            if (bigNumberFormat == null) {
+               return n2;
+            }
+
+            final Number n1 = bigNumberFormat.parse(((String) value).trim());
+
+            return n1.toString().equals(n2.toString()) && !(n2 instanceof Double) ? n2 : n1;
+         } catch (final ParseException pe) {
+            return null;
          }
       }
 
-      return types;
+      return null;
    }
 
    /**
@@ -379,35 +159,57 @@ public class ConstraintManager {
     * @return The same value with changed data type.
     */
    public Object encode(final Object value) {
-      if (constraints.size() == 0) {
-
-         if (locale == null) {
-            throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
-         }
-
-         if (value instanceof String && numberMatch.matcher((String) value).matches()) {
-            final Number n = Coders.encodeNumber(locale, value);
-            return n == null ? value : n;
-         }
-
-         return value;
+      if (locale == null) {
+         throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
       }
 
-      // let's simply use the first available constraint and first available type
-      return constraints.get(0).encode(value, getCommonTypes(constraints).iterator().next());
-   }
-
-   public Object decode(final Object value) {
-      if (constraints.size() == 0) {
-         if (value != null && !(value instanceof String)) {
-            return value.toString();
-         }
-
-         return value;
+      if (value instanceof String && numberMatch.matcher((String) value).matches()) {
+         final Number n = encodeNumber(locale, value);
+         return n == null ? value : n;
       }
 
-      // use the first constraint available
-      return constraints.get(0).decode(value);
+      return value;
    }
 
+   public Object encode(final Object value, final Constraint constraint) {
+      if (locale == null) {
+         throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
+      }
+
+      if (value == null) {
+         return null;
+      }
+
+      if (constraint == null || constraint.getType() == ConstraintType.Number || constraint.getType() == ConstraintType.Percentage) {
+         return encode(value);
+      }
+
+      if (constraint.getType() == ConstraintType.Boolean) {
+         if (value instanceof Boolean) {
+            return value;
+         } else if (value.toString().trim().equalsIgnoreCase("true")) {
+            return Boolean.TRUE;
+         } else if (value.toString().trim().equalsIgnoreCase("false")) {
+            return Boolean.FALSE;
+         }
+      }
+
+      if (constraint.getType() == ConstraintType.DateTime) {
+         if (value instanceof Date) {
+            return value;
+         }
+
+         DateTimeFormatter dtf;
+         for(final Iterator<DateTimeFormatter> i = formatters.iterator(); i.hasNext(); ) {
+            dtf = i.next();
+            try {
+               return Date.from(ZonedDateTime.from(dtf.parse(value.toString().trim())).toInstant());
+            } catch (DateTimeParseException e) {
+               // no problem, we will try another
+            }
+         }
+      }
+
+      return value;
+   }
 }

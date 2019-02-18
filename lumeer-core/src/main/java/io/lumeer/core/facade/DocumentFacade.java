@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -27,7 +28,6 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.constraint.ConstraintManager;
-import io.lumeer.engine.api.constraint.InvalidConstraintException;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -74,18 +74,13 @@ public class DocumentFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      try {
-         constraintManager = new ConstraintManager();
-         final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
+      constraintManager = new ConstraintManager();
+      final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
 
-         if (locale != null && !"".equals(locale)) {
-            constraintManager.setLocale(Locale.forLanguageTag(locale));
-         } else {
-            constraintManager.setLocale(Locale.getDefault());
-         }
-      } catch (InvalidConstraintException e) {
-         // simply, we won't use the conversions
-         constraintManager = null;
+      if (locale != null && !"".equals(locale)) {
+         constraintManager.setLocale(Locale.forLanguageTag(locale));
+      } else {
+         constraintManager.setLocale(Locale.getDefault());
       }
    }
 
@@ -95,7 +90,7 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkDocumentLimits(document);
 
       DataDocument data = document.getData();
-      convertDataTypes(data);
+      convertDataTypes(collection, data);
 
       Document storedDocument = createDocument(collection, document);
 
@@ -107,10 +102,16 @@ public class DocumentFacade extends AbstractFacade {
       return storedDocument;
    }
 
-   private void convertDataTypes(final DataDocument data) {
+   private void convertDataTypes(final Collection collection, final DataDocument data) {
+      Map<String, Constraint> constraints =
+            collection.getAttributes()
+                      .stream()
+                      .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                      .collect(Collectors.toMap(attr -> attr.getId(), attr -> attr.getConstraint()));
+
       data.keySet().stream().forEach(key -> {
          if (!DataDocument.ID.equals(key)) {
-            data.put(key, constraintManager.encode(data.get(key)));
+            data.put(key, constraintManager.encode(data.get(key), constraints.get(key)));
          }
       });
    }
@@ -126,7 +127,7 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
-      convertDataTypes(data);
+      convertDataTypes(collection, data);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
       final DataDocument originalData = new DataDocument(oldData);
@@ -163,7 +164,7 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
-      convertDataTypes(data);
+      convertDataTypes(collection, data);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
       DataDocument originalData = new DataDocument(oldData);
