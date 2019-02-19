@@ -332,7 +332,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       Collection collection = collectionDao.getCollectionById(collectionId);
       final String id = DOCUMENT_KEY; // use the same document id for simplicity in tests
       if (!collection.getAttributes().stream().anyMatch(attr -> attr.getName().equals(DOCUMENT_KEY))) {
-         collection.createAttribute(new Attribute(id, DOCUMENT_KEY, null, 1));
+         collection.createAttribute(new Attribute(id, DOCUMENT_KEY, null, null, 1));
          collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
          collectionDao.updateCollection(collectionId, collection, null);
       } else {

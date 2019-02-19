@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.Function;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -35,6 +36,7 @@ public class AttributeCodec implements Codec<Attribute> {
    public static final String ID = "id";
    public static final String NAME = "name";
    public static final String CONSTRAINT = "constraint";
+   public static final String FUNCTION = "function";
    public static final String USAGE_COUNT = "usageCount";
 
    private final Codec<Document> documentCodec;
@@ -54,9 +56,10 @@ public class AttributeCodec implements Codec<Attribute> {
       String id = document.getString(ID);
       String name = document.getString(NAME);
       Constraint constraint = ConstraintCodec.convertFromDocument(document.get(CONSTRAINT, Document.class));
+      Function function = FunctionCodec.convertFromDocument(document.get(FUNCTION, Document.class));
       Integer usageCount = document.getInteger(USAGE_COUNT);
 
-      return new Attribute(id, name, constraint, usageCount);
+      return new Attribute(id, name, constraint, function, usageCount);
    }
 
    @Override
@@ -65,6 +68,7 @@ public class AttributeCodec implements Codec<Attribute> {
             .append(ID, value.getId())
             .append(NAME, value.getName())
             .append(CONSTRAINT, value.getConstraint())
+            .append(FUNCTION, value.getFunction())
             .append(USAGE_COUNT, value.getUsageCount());
 
       documentCodec.encode(writer, bson, encoderContext);

@@ -26,11 +26,13 @@ public class Attribute {
    public static final String ID = "id";
    public static final String NAME = "name";
    public static final String CONSTRAINT = "constraint";
+   public static final String FUNCTION = "function";
    public static final String USAGE_COUNT = "usageCount";
 
    private String id;
    private String name;
    private Constraint constraint;
+   private Function function;
    private Integer usageCount;
 
    public Attribute(final String id) {
@@ -44,10 +46,12 @@ public class Attribute {
          @JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
          @JsonProperty(CONSTRAINT) final Constraint constraint,
+         @JsonProperty(FUNCTION) final Function function,
          @JsonProperty(USAGE_COUNT) final Integer usageCount) {
       this.name = name;
       this.id = id;
       this.constraint = constraint;
+      this.function = function;
       this.usageCount = usageCount;
    }
 
@@ -69,6 +73,14 @@ public class Attribute {
 
    public Constraint getConstraint() {
       return constraint;
+   }
+
+   public Function getFunction() {
+      return function;
+   }
+
+   public void setFunction(final Function function) {
+      this.function = function;
    }
 
    public Integer getUsageCount() {
@@ -104,6 +116,7 @@ public class Attribute {
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             ", constraint=" + constraint +
+            ", function=" + function +
             ", usageCount=" + usageCount +
             '}';
    }
