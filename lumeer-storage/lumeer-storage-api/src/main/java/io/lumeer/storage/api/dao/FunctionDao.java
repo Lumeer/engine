@@ -16,26 +16,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.codecs.providers;
+package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.function.Function;
-import io.lumeer.storage.mongodb.codecs.FunctionCodec;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.function.FunctionRow;
 
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
+import java.util.List;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class FunctionCodecProvider implements CodecProvider {
+public interface FunctionDao {
 
-   @Override
-   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == Function.class) {
-         return (Codec<T>) new FunctionCodec(registry);
-      }
+   void createRepository(Project project);
 
-      return null;
-   }
+   void deleteRepository(Project project);
+
+   void createRows(List<FunctionRow> rows);
+
+   List<FunctionRow> searchByCollection(String collectionId, String attributeId);
+
+   List<FunctionRow> searchByAnyCollection(String collectionId, String attributeId);
+
+   List<FunctionRow> searchByDependentCollection(String collectionId, String attributeId);
+
+   List<FunctionRow> searchByDependentLinkType(String linkTypeId, String attributeId);
+
+   void deleteByCollections(String... collectionsIds);
+
+   void deleteByCollection(String collectionsId, String attributeId);
 }

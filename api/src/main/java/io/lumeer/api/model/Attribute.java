@@ -18,6 +18,8 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.model.function.Function;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
