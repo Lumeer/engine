@@ -18,9 +18,12 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.User;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
+
+import java.util.List;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -28,4 +31,21 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 public interface ContextualTask extends Task {
 
    ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient);
+
+   DaoContextSnapshot getDaoContextSnapshot();
+   PusherClient getPusherClient();
+   User getInitiator();
+
+   /**
+    * Send notifications to collection owners (i.e. managers).
+    * @param collection Collection that has been updated.
+    */
+   void sendPushNotifications(final Collection collection);
+
+   /**
+    * Send push notifications to document readers.
+    * @param collectionId Parent collection.
+    * @param documentIds List of document IDs.
+    */
+   void sendPushNotifications(final String collectionId, final List<String> documentIds);
 }

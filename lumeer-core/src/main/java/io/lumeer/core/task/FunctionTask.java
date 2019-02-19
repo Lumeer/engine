@@ -18,43 +18,43 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Function;
-import io.lumeer.api.model.User;
-import io.lumeer.core.util.PusherClient;
-import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
+import io.lumeer.core.task.executor.FunctionTaskExecutor;
 
 import java.util.Set;
 
-public class FunctionTask implements ContextualTask {
+public class FunctionTask extends AbstractContextualTask {
 
-   private User initiator;
-   private DaoContextSnapshot daoContextSnapshot;
-   private PusherClient pusherClient;
-
-   private Function function;
+   private Attribute attribute;
+   private Collection collection;
    private Set<Document> documents;
    private FunctionTask parent;
 
-   public void setFunction(final Function function, final Set<Document> documents, final FunctionTask parent) {
-      this.function = function;
+   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final FunctionTask parent) {
+      this.attribute = attribute;
+      this.collection = collection;
       this.documents = documents;
       this.parent = parent;
    }
 
-   @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient) {
-      this.initiator = initiator;
-      this.daoContextSnapshot = daoContextSnapshot;
-      this.pusherClient = pusherClient;
+   public Function getFunction() {
+      return attribute.getFunction();
+   }
 
-      return this;
+   public Attribute getAttribute() {
+      return attribute;
    }
 
    @Override
    public void process() {
 
-      // TODO
+      documents.forEach(document -> {
+         final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, collection, document);
+         executor.execute();
+      });
 
       if (parent != null) {
          parent.process();

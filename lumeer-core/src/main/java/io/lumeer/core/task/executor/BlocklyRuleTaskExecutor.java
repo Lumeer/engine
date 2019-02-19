@@ -19,37 +19,15 @@
 package io.lumeer.core.task.executor;
 
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.BlocklyRule;
-import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.task.RuleTask;
-import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.storage.api.query.SearchQuery;
-import io.lumeer.storage.api.query.SearchQueryStem;
-
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.Value;
-import org.marvec.pusher.data.Event;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -62,196 +40,6 @@ public class BlocklyRuleTaskExecutor {
    private BlocklyRule rule;
    private RuleTask ruleTask;
 
-   public static class LumeerBridge {
-
-      private RuleTask ruleTask;
-      private Set<DocumentChange> changes = new HashSet<>();
-
-      private LumeerBridge(final RuleTask ruleTask) {
-         this.ruleTask = ruleTask;
-      }
-
-      public void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
-         changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
-      }
-
-      Object convertValue(final Value value) {
-         if (value.isNumber()) {
-            return value.fitsInLong() ? value.asLong() : value.asDouble();
-         } else if (value.isBoolean()) {
-            return value.asBoolean();
-         } else if (value.isNull()) {
-            return null;
-         } else if (value.hasArrayElements()) {
-            final List list = new ArrayList();
-            for (long i = 0; i < value.getArraySize(); i = i + 1) {
-               list.add(convertValue(value.getArrayElement(i)));
-            }
-            return list;
-         } else {
-            return value.asString();
-         }
-      }
-
-      public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
-         final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
-         final String otherCollectionId = linkType.getCollectionIds().get(0).equals(ruleTask.getCollection().getId()) ?
-               linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
-
-         final SearchQuery query = SearchQuery
-               .createBuilder()
-               .stems(Arrays.asList(
-                     SearchQueryStem
-                           .createBuilder("")
-                           .linkTypeIds(Arrays.asList(linkTypeId))
-                           .documentIds(Set.of(d.document.getId()))
-                           .build()))
-               .build();
-
-         // load linked document ids
-         final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                                                  .searchLinkInstances(query);
-
-         if (links.size() > 0) {
-            final Set<String> documentIds = links.stream()
-                                                 .map(linkInstance -> linkInstance.getDocumentIds())
-                                                 .flatMap(java.util.Collection::stream)
-                                                 .collect(Collectors.toSet());
-            documentIds.remove(d.document.getId());
-
-            // load document data
-            final Map<String, DataDocument> data = new HashMap<>();
-            ruleTask.getDaoContextSnapshot().getDataDao()
-                    .getData(otherCollectionId, documentIds)
-                    .forEach(dd -> data.put(dd.getId(), dd));
-
-            // load document meta data and match them with user data
-            return ruleTask.getDaoContextSnapshot().getDocumentDao()
-                           .getDocumentsByIds(documentIds.toArray(new String[0]))
-                           .stream().map(document -> {
-                     document.setData(data.get(document.getId()));
-                     return new DocumentBridge(document);
-                  }).collect(Collectors.toList());
-         } else {
-            return Collections.emptyList();
-         }
-      }
-
-      public Value getDocumentAttribute(DocumentBridge d, String attrId) {
-         return Value.asValue(d.document.getData().get(attrId));
-      }
-
-      public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
-         final List<Value> result = new ArrayList<>();
-         docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
-
-         return result;
-      }
-
-      void commitChanges() {
-         final Map<String, List<String>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
-
-         changes.forEach(change -> {
-            ruleTask.getDaoContextSnapshot().getDataDao()
-                    .patchData(change.document.getCollectionId(), change.document.getId(),
-                          new DataDocument(change.attrId, change.value));
-            updatedDocuments.computeIfAbsent(change.document.getCollectionId(), key -> new ArrayList<String>())
-                            .add(change.document.getId());
-         });
-
-         // send push notification
-         if (ruleTask.getPusherClient() != null) {
-            updatedDocuments.keySet().forEach(collectionId -> {
-               final Set<String> users = ruleTask.getDaoContextSnapshot().getCollectionReaders(collectionId);
-               final List<Document> documents = ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(updatedDocuments.get(collectionId).toArray(new String[0]));
-               final List<Event> events = new ArrayList<>();
-
-               users.stream()
-                    .forEach(userId ->
-                          documents.forEach(doc -> {
-                                   final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(doc, ruleTask.getDaoContextSnapshot().getOrganizationId(), ruleTask.getDaoContextSnapshot().getProjectId());
-                                   events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, doc.getClass().getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
-                                }
-                          ));
-
-               ruleTask.getPusherClient().trigger(events);
-            });
-         }
-      }
-
-      String getChanges() {
-         final Map<String, Collection> collections = new HashMap<>();
-         final StringBuilder sb = new StringBuilder("");
-
-         changes.forEach(change -> {
-            final Collection collection = collections.computeIfAbsent(change.document.getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
-
-            sb.append(collection.getName() + "(" + last4(change.document.getId()) + "): ");
-            sb.append(collection.getAttributes().stream().filter(a -> a.getId().equals(change.attrId)).map(a -> a.getName()).findFirst().orElse(""));
-            sb.append(" = ");
-            sb.append(change.value);
-            sb.append("\n");
-         });
-
-         return sb.toString();
-      }
-
-      private String last4(final String str) {
-         if (str.length() <= 4) {
-            return str;
-         }
-         return str.substring(str.length() - 4);
-      }
-   }
-
-   public static class DocumentChange {
-      private final Document document;
-      private final String attrId;
-      private final Object value;
-
-      public DocumentChange(final Document document, final String attrId, final Object value) {
-         this.document = document;
-         this.attrId = attrId;
-         this.value = value;
-      }
-
-      public Document getDocument() {
-         return document;
-      }
-
-      public String getAttrId() {
-         return attrId;
-      }
-
-      public Object getValue() {
-         return value;
-      }
-
-      @Override
-      public String toString() {
-         return "DocumentChange{" +
-               "document=" + document.getId() +
-               ", attrId='" + attrId + '\'' +
-               ", value=" + value +
-               '}';
-      }
-   }
-
-   public static class DocumentBridge {
-      private Document document;
-
-      private DocumentBridge(final Document document) {
-         this.document = document;
-      }
-
-      @Override
-      public String toString() {
-         return "DocumentBridge{" +
-               "document=" + document +
-               '}';
-      }
-   }
-
    public BlocklyRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
       this.ruleName = ruleName;
       this.rule = new BlocklyRule(ruleTask.getRule());
@@ -259,31 +47,19 @@ public class BlocklyRuleTaskExecutor {
    }
 
    public void execute() {
-      final LumeerBridge lumeerBridge = new LumeerBridge(ruleTask);
-      final DocumentBridge oldDocument = new DocumentBridge(ruleTask.getOldDocument());
-      final DocumentBridge newDocument = new DocumentBridge(ruleTask.getNewDocument());
+      final JsExecutor.DocumentBridge oldDocument = new JsExecutor.DocumentBridge(ruleTask.getOldDocument());
+      final JsExecutor.DocumentBridge newDocument = new JsExecutor.DocumentBridge(ruleTask.getNewDocument());
+      final Map<String, Object> bindings = Map.of("oldDocument", oldDocument, "newDocument", newDocument);
 
-      Context context = Context.newBuilder("js").engine(Engine.newBuilder().option("js.experimental-array-prototype", "true").build()).build();
-      context.initialize("js");
-      context.getPolyglotBindings().putMember("lumeer", lumeerBridge);
-      context.getBindings("js").putMember("oldDocument", oldDocument);
-      context.getBindings("js").putMember("newDocument", newDocument);
-
-      Timer timer = new Timer(true);
-      timer.schedule(new TimerTask() {
-         @Override
-         public void run() {
-            context.close(true);
-         }
-      }, 3000);
+      final JsExecutor jsExecutor = new JsExecutor();
 
       try {
-         context.eval("js", rule.getJs());
+         jsExecutor.execute(bindings, ruleTask, ruleTask.getCollection(), rule.getJs());
 
          if (!rule.isDryRun()) {
-            lumeerBridge.commitChanges();
+            jsExecutor.commitChanges();
          } else {
-            writeDryRunResults(lumeerBridge.getChanges());
+            writeDryRunResults(jsExecutor.getChanges());
          }
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to execute Blockly Rule on document change: ", e);
@@ -298,7 +74,7 @@ public class BlocklyRuleTaskExecutor {
          rule.setError(sw.toString());
          updateRule();
 
-         // TODO: send push notification
+         ruleTask.sendPushNotifications(ruleTask.getCollection());
       } catch (IOException ioe) {
          // we tried, cannot do more
       }
@@ -308,18 +84,7 @@ public class BlocklyRuleTaskExecutor {
       rule.setDryRunResult(results);
       updateRule();
 
-      final Set<String> users = ruleTask.getDaoContextSnapshot().getCollectionManagers(ruleTask.getCollection().getId());
-      final List<Event> events = new ArrayList<>();
-
-      if (ruleTask.getPusherClient() != null) {
-         users.stream()
-              .forEach(userId -> {
-                 final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(ruleTask.getCollection(), ruleTask.getDaoContextSnapshot().getOrganizationId(), ruleTask.getDaoContextSnapshot().getProjectId());
-                 events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
-              });
-
-         ruleTask.getPusherClient().trigger(events);
-      }
+      ruleTask.sendPushNotifications(ruleTask.getCollection());
    }
 
    private void updateRule() {

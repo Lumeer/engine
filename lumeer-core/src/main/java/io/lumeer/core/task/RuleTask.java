@@ -21,34 +21,16 @@ package io.lumeer.core.task;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Rule;
-import io.lumeer.api.model.User;
 import io.lumeer.core.task.executor.AutoLinkRuleTaskExecutor;
 import io.lumeer.core.task.executor.BlocklyRuleTaskExecutor;
-import io.lumeer.core.util.PusherClient;
-import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class RuleTask implements ContextualTask {
+public class RuleTask extends AbstractContextualTask {
 
-   private User initiator;
-   private DaoContextSnapshot daoContextSnapshot;
-   private PusherClient pusherClient;
    private String ruleName;
    private Rule rule;
    private Collection collection;
    private Document oldDocument;
    private Document newDocument;
-
-   @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient) {
-      this.initiator = initiator;
-      this.daoContextSnapshot = daoContextSnapshot;
-      this.pusherClient = pusherClient;
-
-      return this;
-   }
 
    public void setRule(final String ruleName, final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
       this.ruleName = ruleName;
@@ -67,18 +49,6 @@ public class RuleTask implements ContextualTask {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
          executor.execute();
       }
-   }
-
-   public User getInitiator() {
-      return initiator;
-   }
-
-   public DaoContextSnapshot getDaoContextSnapshot() {
-      return daoContextSnapshot;
-   }
-
-   public PusherClient getPusherClient() {
-      return pusherClient;
    }
 
    public Rule getRule() {
