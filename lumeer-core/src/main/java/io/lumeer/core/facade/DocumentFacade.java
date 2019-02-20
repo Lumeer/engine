@@ -159,7 +159,7 @@ public class DocumentFacade extends AbstractFacade {
       for (Attribute attribute : attributes) {
          Object oldValue = oldData.get(attribute.getId());
          Object newValue = newData.get(attribute.getId());
-         if (!Objects.equals(oldValue, newValue)) {
+         if (!Objects.deepEquals(oldValue, newValue)) {
             functionFacade.onDocumentValueChanged(collection.getId(), attribute.getId(), documentId);
          }
       }
