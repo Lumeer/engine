@@ -35,45 +35,90 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public final class FunctionXmlParser {
 
+   private static final String TYPE_ATTRIBUTE = "type";
+   private static final String NAME_ATTRIBUTE = "name";
+   private static final String DOCUMENT_ATTRIBUTE_VALUE = "DOCUMENT";
+   private static final String ATTR_ATTRIBUTE_VALUE = "ATTR";
+   private static final String GET_ATTRIBUTE_VALUE = "get_attribute";
+   private static final String BLOCK_TAG = "block";
+   private static final String FIELD_TAG = "field";
+   private static final String VALUE_TAG = "value";
+   private static final String LINK_SUFFIX = "_link";
+   private static final String VARIABLE_PREFIX = "variables_get_";
+
    private FunctionXmlParser() {}
 
-   public static List<AttributeReference> parseFunctionXml(final String xml) throws ParserConfigurationException, IOException, SAXException {
+   public static List<AttributeReference> parseFunctionXml(final String xml) throws IllegalStateException {
       final List<AttributeReference> attributeReferences = new ArrayList<>();
       final Document doc;
 
-      try (ByteArrayInputStream baos = new ByteArrayInputStream(xml.getBytes("UTF-8"))) {
-         doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(baos);
+      if (xml == null || "".equals(xml)) {
+         return attributeReferences;
       }
 
+      try (ByteArrayInputStream baos = new ByteArrayInputStream(xml.getBytes("UTF-8"))) {
+         doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(baos);
+      } catch (ParserConfigurationException | IOException | SAXException e) {
+         throw new IllegalStateException("Could not parse function xml: ", e);
+      }
+
+
       doc.getDocumentElement().normalize();
-      final NodeList blocks = doc.getElementsByTagName("block");
+      final NodeList blocks = doc.getElementsByTagName(BLOCK_TAG);
 
       nodeListIterator(blocks, Node.ELEMENT_NODE, node -> {
          final Element element = (Element) node;
-         final AttributeReference attributeReference = new AttributeReference();
 
-         if ("get_attribute".equals(element.getAttribute("type"))) {
-            NodeList fields = element.getElementsByTagName("field");
+         if (GET_ATTRIBUTE_VALUE.equals(element.getAttribute(TYPE_ATTRIBUTE))) {
+            final AttributeReference attributeReference = new AttributeReference();
+
+
+            NodeList fields = element.getElementsByTagName(FIELD_TAG);
             nodeListIterator(fields, Node.ELEMENT_NODE, field -> {
                final Element fieldElement = (Element) field;
-               if ("ATTR".equals(fieldElement.getAttribute("name"))) {
-                  attributeReference.setAttributeId(fieldElement.getNodeValue());
+               if (ATTR_ATTRIBUTE_VALUE.equals(fieldElement.getAttribute(NAME_ATTRIBUTE))) {
+                  attributeReference.setAttributeId(fieldElement.getTextContent());
                }
             });
 
-            NodeList values = element.getElementsByTagName("value");
+            NodeList values = element.getElementsByTagName(VALUE_TAG);
             nodeListIterator(values, Node.ELEMENT_NODE, value -> {
                final Element valueElement = (Element) value;
-               if ("DOCUMENT".equals(valueElement.getAttribute("name"))) {
+               if (DOCUMENT_ATTRIBUTE_VALUE.equals(valueElement.getAttribute(NAME_ATTRIBUTE))) {
 
-                  //block(type={linkId}-*_*_link).value(name=DOCUMENT).block(type=”variable_get_{documentId}_document)
-                  //block(type=variables_get_{documentId}_document)
+                  final NodeList childBlocks = element.getElementsByTagName(BLOCK_TAG);
+                  nodeListIterator(childBlocks, Node.ELEMENT_NODE, childBlock -> {
+                     final Element childBlockElement = (Element) childBlock;
+                     final String type = childBlockElement.getAttribute(TYPE_ATTRIBUTE);
 
+                     if (type != null) {
+
+                        if (type.endsWith(LINK_SUFFIX)) {
+                           attributeReference.setLinkTypeId(type.split("-")[0]);
+
+                           NodeList childValues = childBlockElement.getElementsByTagName(VALUE_TAG);
+                           nodeListIterator(childValues, Node.ELEMENT_NODE, childValue -> {
+                              final Element childValueElement = (Element) childValue;
+                              if (DOCUMENT_ATTRIBUTE_VALUE.equals(childValueElement.getAttribute(NAME_ATTRIBUTE))) {
+                                 final NodeList variableBlocks = childValueElement.getElementsByTagName(BLOCK_TAG);
+                                 nodeListIterator(variableBlocks, Node.ELEMENT_NODE, variable -> {
+                                    final String variableType = ((Element) variable).getAttribute(TYPE_ATTRIBUTE);
+                                    if (variableType != null && variableType.startsWith(VARIABLE_PREFIX)) {
+                                       attributeReference.setCollectionId(variableType.split("_")[2]);
+                                    }
+                                 });
+                              }
+                           });
+
+                        } else if (type.startsWith(VARIABLE_PREFIX)) {
+                           attributeReference.setCollectionId(type.split("_")[2]);
+                        }
+                     }
+                  });
                }
             });
+            attributeReferences.add(attributeReference);
          }
-
-         attributeReferences.add(attributeReference);
       });
 
       return attributeReferences;
