@@ -27,6 +27,7 @@ import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
+import io.lumeer.core.util.FunctionXmlParser;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
@@ -64,7 +65,7 @@ public class FunctionFacade extends AbstractFacade {
    private ContextualTaskFactory contextualTaskFactory;
 
    public void onCreateCollectionFunction(Collection collection, Attribute attribute) {
-      List<FunctionRow> functionRows = parseXml(attribute.getFunction().getXml());
+      List<FunctionRow> functionRows = createCollectionRowsFromXml(collection, attribute);
       functionDao.createRows(functionRows);
 
       Set<Document> documents = new HashSet<>(documentDao.getDocumentsByCollection(collection.getId()));
@@ -74,9 +75,10 @@ public class FunctionFacade extends AbstractFacade {
       }
    }
 
-   private List<FunctionRow> parseXml(String xml) {
-      // TODO parse
-      return Collections.emptyList();
+   private List<FunctionRow> createCollectionRowsFromXml(Collection collection, Attribute attribute) {
+      return FunctionXmlParser.parseFunctionXml(attribute.getFunction().getXml()).stream()
+                              .map(reference -> FunctionRow.createForCollection(collection.getId(), attribute.getId(), reference.getCollectionId(), reference.getLinkTypeId(), reference.getAttributeId()))
+                              .collect(Collectors.toList());
    }
 
    public void onUpdateCollectionFunction(Collection collection, Attribute attribute) {
@@ -89,7 +91,7 @@ public class FunctionFacade extends AbstractFacade {
    }
 
    public void onCreateLinkTypeFunction(LinkType linkType, Attribute attribute) {
-      List<FunctionRow> functionRows = parseXml(attribute.getFunction().getXml());
+      List<FunctionRow> functionRows = createLinkRowsFromXml(linkType, attribute);
       functionDao.createRows(functionRows);
 
       Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstancesByLinkType(linkType.getId()));
@@ -97,6 +99,12 @@ public class FunctionFacade extends AbstractFacade {
       if (task != null) {
          task.process();
       }
+   }
+
+   private List<FunctionRow> createLinkRowsFromXml(LinkType linkType, Attribute attribute) {
+      return FunctionXmlParser.parseFunctionXml(attribute.getFunction().getXml()).stream()
+                              .map(reference -> FunctionRow.createForLink(linkType.getId(), attribute.getId(), reference.getCollectionId(), reference.getLinkTypeId(), reference.getAttributeId()))
+                              .collect(Collectors.toList());
    }
 
    public void onUpdateLinkTypeFunction(LinkType linkType, Attribute attribute) {
