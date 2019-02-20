@@ -16,26 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.codecs.providers;
+package io.lumeer.api.model.function;
 
-import io.lumeer.api.model.function.Function;
-import io.lumeer.storage.mongodb.codecs.FunctionCodec;
-
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
-
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class FunctionCodecProvider implements CodecProvider {
-
-   @Override
-   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == Function.class) {
-         return (Codec<T>) new FunctionCodec(registry);
-      }
-
-      return null;
-   }
+public enum FunctionResourceType {
+   LINK,
+   COLLECTION
 }

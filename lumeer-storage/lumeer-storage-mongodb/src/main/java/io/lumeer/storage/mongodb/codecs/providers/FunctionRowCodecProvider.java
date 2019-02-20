@@ -18,22 +18,19 @@
  */
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.function.Function;
-import io.lumeer.storage.mongodb.codecs.FunctionCodec;
+import io.lumeer.api.model.function.FunctionRow;
+import io.lumeer.storage.mongodb.codecs.FunctionRowCodec;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class FunctionCodecProvider implements CodecProvider {
+public class FunctionRowCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == Function.class) {
-         return (Codec<T>) new FunctionCodec(registry);
+      if (clazz == FunctionRow.class) {
+         return (Codec<T>) new FunctionRowCodec(registry);
       }
 
       return null;

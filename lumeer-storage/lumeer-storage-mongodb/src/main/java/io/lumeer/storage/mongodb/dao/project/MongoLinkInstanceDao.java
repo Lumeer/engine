@@ -1,3 +1,21 @@
+/*
+ * Lumeer: Modern Data Definition and Processing Platform
+ *
+ * Copyright (C) since 2017 Answer Institute, s.r.o. and/or its affiliates.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package io.lumeer.storage.mongodb.dao.project;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
@@ -27,10 +45,12 @@ import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -136,6 +156,17 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
          throw new StorageException("Cannot find link instance: " + id);
       }
       return linkInstance;
+   }
+
+   @Override
+   public List<LinkInstance> getLinkInstances(final Set<String> ids) {
+      Bson filter = Filters.in(LinkInstanceCodec.ID, ids.stream().map(ObjectId::new).collect(Collectors.toSet()));
+      return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkInstance> getLinkInstancesByLinkType(final String linkTypeId) {
+      return databaseCollection().find(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId)).into(new ArrayList<>());
    }
 
    @Override

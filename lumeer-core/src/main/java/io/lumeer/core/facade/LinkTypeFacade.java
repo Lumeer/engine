@@ -44,6 +44,9 @@ public class LinkTypeFacade extends AbstractFacade {
    private CollectionDao collectionDao;
 
    @Inject
+   private FunctionFacade functionFacade;
+
+   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
    public LinkType createLinkType(LinkType linkType) {
@@ -66,6 +69,7 @@ public class LinkTypeFacade extends AbstractFacade {
       checkLinkTypePermission(linkType.getCollectionIds());
 
       linkTypeDao.deleteLinkType(id);
+      functionFacade.onDeleteLinkType(id);
    }
 
    public LinkType getLinkType(final String linkTypeId) {

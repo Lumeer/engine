@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -69,6 +70,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
+
+   @Inject
+   private FunctionFacade functionFacade;
 
    private ConstraintManager constraintManager;
 
@@ -145,7 +149,20 @@ public class DocumentFacade extends AbstractFacade {
       Document updatedDocument = updateDocument(collection, documentId, data, originalData);
       updatedDocument.setData(updatedData);
 
+      checkAttributesValueChanges(collection, documentId, originalData, updatedData);
+
       return updatedDocument;
+   }
+
+   private void checkAttributesValueChanges(Collection collection, String documentId, DataDocument oldData, DataDocument newData) {
+      Set<Attribute> attributes = collection.getAttributes();
+      for (Attribute attribute : attributes) {
+         Object oldValue = oldData.get(attribute.getId());
+         Object newValue = newData.get(attribute.getId());
+         if (!Objects.deepEquals(oldValue, newValue)) {
+            functionFacade.onDocumentValueChanged(collection.getId(), attribute.getId(), documentId);
+         }
+      }
    }
 
    public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
@@ -181,6 +198,8 @@ public class DocumentFacade extends AbstractFacade {
       newData.putAll(data);
       Document updatedDocument = updateDocument(collection, documentId, newData, originalData);
       updatedDocument.setData(patchedData);
+
+      checkAttributesValueChanges(collection, documentId, originalData, patchedData);
 
       return updatedDocument;
    }

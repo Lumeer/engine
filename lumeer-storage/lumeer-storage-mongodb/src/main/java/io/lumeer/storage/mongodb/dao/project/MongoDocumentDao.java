@@ -157,6 +157,11 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    }
 
    @Override
+   public List<Document> getDocumentsByCollection(final String collectionId) {
+      return databaseCollection().find(Filters.eq(DocumentCodec.COLLECTION_ID, collectionId)).into(new ArrayList<>());
+   }
+
+   @Override
    public List<Document> getDocumentsByParentIds(final Collection<String> parentIds) {
       Bson filter = parentIdsFilter(parentIds);
       return databaseCollection().find(filter).into(new ArrayList<>());

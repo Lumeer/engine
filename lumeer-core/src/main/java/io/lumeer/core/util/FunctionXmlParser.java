@@ -62,7 +62,6 @@ public final class FunctionXmlParser {
          throw new IllegalStateException("Could not parse function xml: ", e);
       }
 
-
       doc.getDocumentElement().normalize();
       final NodeList blocks = doc.getElementsByTagName(BLOCK_TAG);
 
@@ -71,7 +70,6 @@ public final class FunctionXmlParser {
 
          if (GET_ATTRIBUTE_VALUE.equals(element.getAttribute(TYPE_ATTRIBUTE))) {
             final AttributeReference attributeReference = new AttributeReference();
-
 
             NodeList fields = element.getElementsByTagName(FIELD_TAG);
             nodeListIterator(fields, Node.ELEMENT_NODE, field -> {

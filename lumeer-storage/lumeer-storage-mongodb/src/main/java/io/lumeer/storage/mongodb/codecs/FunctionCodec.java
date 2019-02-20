@@ -18,7 +18,7 @@
  */
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.Function;
+import io.lumeer.api.model.function.Function;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;

@@ -26,7 +26,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.model.Function;
+import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;

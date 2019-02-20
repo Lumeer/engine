@@ -18,36 +18,33 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.function.FunctionResourceType;
+import io.lumeer.api.model.function.FunctionRow;
 
-import java.util.Collection;
 import java.util.List;
 
-public interface DocumentDao {
+public interface FunctionDao {
 
-   void createDocumentsRepository(Project project);
+   void createRepository(Project project);
 
-   void deleteDocumentsRepository(Project project);
-
-   Document createDocument(Document document);
-
-   List<Document> createDocuments(List<Document> documents);
-
-   Document updateDocument(String id, Document document, Document originalDocument);
-
-   void deleteDocument(String id);
-
-   void deleteDocuments(String collectionId);
-
-   Document getDocumentById(String id);
-
-   List<Document> getDocumentsByIds(String... ids);
-
-   List<Document> getDocumentsByCollection(String collectionId);
-
-   List<Document> getDocumentsByParentIds(Collection<String> parentIds);
+   void deleteRepository(Project project);
 
    void setProject(Project project);
 
+   void createRows(List<FunctionRow> rows);
+
+   List<FunctionRow> searchByAnyCollection(String collectionId, String attributeId);
+
+   List<FunctionRow> searchByDependentCollection(String collectionId, String attributeId);
+
+   List<FunctionRow> searchByAnyLinkType(String linkTypeId, String attributeId);
+
+   List<FunctionRow> searchByDependentLinkType(String linkTypeId, String attributeId);
+
+   void deleteByResources(FunctionResourceType type, String... resourceIds);
+
+   void deleteByCollection(String collectionsId, String attributeId);
+
+   void deleteByLinkType(String linkTypeId, String attributeId);
 }
