@@ -45,10 +45,12 @@ import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -154,6 +156,17 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
          throw new StorageException("Cannot find link instance: " + id);
       }
       return linkInstance;
+   }
+
+   @Override
+   public List<LinkInstance> getLinkInstances(final Set<String> ids) {
+      Bson filter = Filters.in(LinkInstanceCodec.ID, ids.stream().map(ObjectId::new).collect(Collectors.toSet()));
+      return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkInstance> getLinkInstancesByLinkType(final String linkTypeId) {
+      return databaseCollection().find(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId)).into(new ArrayList<>());
    }
 
    @Override

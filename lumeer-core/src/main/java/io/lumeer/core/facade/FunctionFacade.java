@@ -18,13 +18,27 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.function.Function;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
+import io.lumeer.core.task.ContextualTaskFactory;
+import io.lumeer.core.task.FunctionTask;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -34,11 +48,30 @@ public class FunctionFacade extends AbstractFacade {
    @Inject
    private FunctionDao functionDao;
 
-   public void onCreateCollectionFunction(String collectionId, String attributeId, Function function) {
-      List<FunctionRow> functionRows = parseXml(function.getXml());
+   @Inject
+   private CollectionDao collectionDao;
 
+   @Inject
+   private DocumentDao documentDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private ContextualTaskFactory contextualTaskFactory;
+
+   public void onCreateCollectionFunction(Collection collection, Attribute attribute) {
+      List<FunctionRow> functionRows = parseXml(attribute.getFunction().getXml());
       functionDao.createRows(functionRows);
-      computeFunctionValues(functionRows);
+
+      Set<Document> documents = new HashSet<>(documentDao.getDocumentsByCollection(collection.getId()));
+      FunctionTask task = createCollectionTask(collection, attribute, documents, new HashSet<>());
+      if (task != null) {
+         task.process();
+      }
    }
 
    private List<FunctionRow> parseXml(String xml) {
@@ -46,31 +79,29 @@ public class FunctionFacade extends AbstractFacade {
       return Collections.emptyList();
    }
 
-
-
-   private void computeFunctionValues(List<FunctionRow> rows){
-      // TODO use rows to create computing chain
-   }
-
-   public void onUpdateCollectionFunction(String collectionId, String attributeId, Function function) {
-      onDeleteCollectionFunction(collectionId, attributeId);
-      onCreateCollectionFunction(collectionId, attributeId, function);
+   public void onUpdateCollectionFunction(Collection collection, Attribute attribute) {
+      onDeleteCollectionFunction(collection.getId(), attribute.getId());
+      onCreateCollectionFunction(collection, attribute);
    }
 
    public void onDeleteCollectionFunction(String collectionId, String attributeId) {
       functionDao.deleteByCollection(collectionId, attributeId);
    }
 
-   public void onCreateLinkTypeFunction(String linkTypeId, String attributeId, Function function) {
-      List<FunctionRow> functionRows = parseXml(function.getXml());
-
+   public void onCreateLinkTypeFunction(LinkType linkType, Attribute attribute) {
+      List<FunctionRow> functionRows = parseXml(attribute.getFunction().getXml());
       functionDao.createRows(functionRows);
-      computeFunctionValues(functionRows);
+
+      Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstancesByLinkType(linkType.getId()));
+      FunctionTask task = createLinkTypeTask(linkType, attribute, linkInstances, new HashSet<>());
+      if (task != null) {
+         task.process();
+      }
    }
 
-   public void onUpdateLinkTypeFunction(String linkTypeId, String attributeId, Function function) {
-      onDeleteLinkTypeFunction(linkTypeId, attributeId);
-      onCreateLinkTypeFunction(linkTypeId, attributeId, function);
+   public void onUpdateLinkTypeFunction(LinkType linkType, Attribute attribute) {
+      onDeleteLinkTypeFunction(linkType.getId(), attribute.getId());
+      onCreateLinkTypeFunction(linkType, attribute);
    }
 
    public void onDeleteLinkTypeFunction(String collectionId, String attributeId) {
@@ -80,13 +111,15 @@ public class FunctionFacade extends AbstractFacade {
    public void onDocumentValueChanged(String collectionId, String attributeId, String documentId) {
       List<FunctionRow> functionRows = functionDao.searchByDependentCollection(collectionId, attributeId);
 
-      computeFunctionValues(functionRows);
+      List<FunctionTask> tasks = createTasksForDependentCollection(functionRows, Collections.singleton(documentId), new HashSet<>());
+      tasks.forEach(FunctionTask::process);
    }
 
    public void onLinkValueChanged(String linkTypeId, String attributeId, String linkInstanceId) {
       List<FunctionRow> functionRows = functionDao.searchByDependentLinkType(linkTypeId, attributeId);
 
-      computeFunctionValues(functionRows);
+      List<FunctionTask> tasks = createTasksForDependentLinkType(functionRows, Collections.singleton(linkInstanceId), new HashSet<>());
+      tasks.forEach(FunctionTask::process);
    }
 
    public void onDeleteColection(String collectionId) {
@@ -116,6 +149,113 @@ public class FunctionFacade extends AbstractFacade {
    private void deleteByRows(FunctionResourceType type, List<FunctionRow> functionRows) {
       String[] resourceIdsToDelete = functionRows.stream().map(FunctionRow::getResourceId).toArray(String[]::new);
       functionDao.deleteByResources(type, resourceIdsToDelete);
+   }
+
+   protected FunctionTask createCollectionTask(Collection collection, Attribute attribute, Set<Document> documents, Set<String> functionResourceIds) {
+      if (documents.isEmpty()) {
+         return null;
+      }
+
+      Set<String> documentIds = documents.stream().map(Document::getId).collect(Collectors.toSet());
+      List<FunctionRow> functionRows = functionDao.searchByDependentCollection(collection.getId(), attribute.getId());
+
+      functionResourceIds.add(functionResourceId(FunctionResourceType.COLLECTION, collection.getId(), attribute.getId()));
+
+      final FunctionTask functionTask = contextualTaskFactory.getInstance(FunctionTask.class);
+      functionTask.setFunctionTask(attribute, collection, documents, createTasksForDependentCollection(functionRows, documentIds, functionResourceIds));
+      return functionTask;
+   }
+
+   private List<FunctionTask> createTasksForDependentCollection(List<FunctionRow> functionRows, Set<String> documentIds, Set<String> functionResourceIds) {
+      if (functionRows.isEmpty() || documentIds.isEmpty()) {
+         return Collections.emptyList();
+      }
+
+      return functionRows.stream().filter(row -> !functionResourceIds.contains(functionResourceId(row.getType(), row.getResourceId(), row.getAttributeId())))
+                         .map(row -> {
+                            if (row.getType() == FunctionResourceType.COLLECTION) {
+                               Collection collection = collectionDao.getCollectionById(row.getResourceId());
+                               Attribute attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
+                               Set<Document> documents = findDocumentsForRow(row, documentIds);
+
+                               return createCollectionTask(collection, attribute, documents, functionResourceIds);
+                            } else if (row.getType() == FunctionResourceType.LINK) {
+                               LinkType linkType = linkTypeDao.getLinkType(row.getResourceId());
+                               Attribute attribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
+                               Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstancesByDocumentIds(documentIds, row.getDependentLinkTypeId()));
+
+                               return createLinkTypeTask(linkType, attribute, linkInstances, functionResourceIds);
+                            }
+                            return null;
+                         }).filter(Objects::nonNull).collect(Collectors.toList());
+   }
+
+   private Set<Document> findDocumentsForRow(FunctionRow row, Set<String> documentIds) {
+      if (row.getResourceId().equals(row.getDependentCollectionId())) {
+         return new HashSet<>(documentDao.getDocumentsByIds(documentIds.toArray(new String[0])));
+      }
+      if (row.getDependentLinkTypeId() != null) {
+         List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByDocumentIds(documentIds, row.getDependentLinkTypeId());
+         Set<String> documentIdsFromLinks = linkInstances.stream().map(LinkInstance::getDocumentIds).flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+         documentIdsFromLinks.removeAll(documentIds);
+         if (!documentIdsFromLinks.isEmpty()) {
+            return new HashSet<>(documentDao.getDocumentsByIds(documentIdsFromLinks.toArray(new String[0])));
+         }
+      }
+      return Collections.emptySet();
+   }
+
+   protected FunctionTask createLinkTypeTask(LinkType linkType, Attribute attribute, Set<LinkInstance> linkInstances, Set<String> functionResourceIds) {
+      if (linkInstances.isEmpty()) {
+         return null;
+      }
+
+      Set<String> linkInstanceIds = linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet());
+      List<FunctionRow> functionRows = functionDao.searchByDependentLinkType(linkType.getId(), attribute.getId());
+
+      functionResourceIds.add(functionResourceId(FunctionResourceType.LINK, linkType.getId(), attribute.getId()));
+
+      final FunctionTask functionTask = contextualTaskFactory.getInstance(FunctionTask.class);
+      functionTask.setFunctionTask(attribute, linkType, linkInstances, createTasksForDependentLinkType(functionRows, linkInstanceIds, functionResourceIds));
+      return functionTask;
+   }
+
+   private List<FunctionTask> createTasksForDependentLinkType(List<FunctionRow> functionRows, Set<String> linkInstanceIds, Set<String> functionResourceIds) {
+      if (functionRows.isEmpty() || linkInstanceIds.isEmpty()) {
+         return Collections.emptyList();
+      }
+
+      return functionRows.stream().filter(row -> !functionResourceIds.contains(functionResourceId(row.getType(), row.getResourceId(), row.getAttributeId())))
+                         .map(row -> {
+                            if (row.getType() == FunctionResourceType.COLLECTION) {
+                               Collection collection = collectionDao.getCollectionById(row.getResourceId());
+                               Attribute attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
+                               Set<Document> documents = findDocumentsForRowByLinkInstances(row, linkInstanceIds);
+
+                               return createCollectionTask(collection, attribute, documents, functionResourceIds);
+                            } else if (row.getType() == FunctionResourceType.LINK) {
+                               LinkType linkType = linkTypeDao.getLinkType(row.getResourceId());
+                               Attribute attribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
+
+                               if (row.getDependentLinkTypeId() == null || row.getDependentLinkTypeId().equals(row.getResourceId())) {
+                                  Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstances(linkInstanceIds));
+
+                                  return createLinkTypeTask(linkType, attribute, linkInstances, functionResourceIds);
+                               }
+                            }
+                            return null;
+                         }).filter(Objects::nonNull).collect(Collectors.toList());
+   }
+
+   private Set<Document> findDocumentsForRowByLinkInstances(FunctionRow row, Set<String> linkInstanceIds) {
+      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkInstanceIds);
+      Set<String> documentIdsFromLinks = linkInstances.stream().map(LinkInstance::getDocumentIds).flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+      List<Document> documentsFromLinks = documentIdsFromLinks.isEmpty() ? Collections.emptyList() : documentDao.getDocumentsByIds(documentIdsFromLinks.toArray(new String[0]));
+      return documentsFromLinks.stream().filter(document -> document.getCollectionId().equals(row.getResourceId())).collect(Collectors.toSet());
+   }
+
+   private String functionResourceId(FunctionResourceType type, String resourceId, String attributeId) {
+      return type.toString() + ":" + resourceId + ":" + attributeId;
    }
 
 }

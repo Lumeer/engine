@@ -44,6 +44,8 @@ public interface DocumentDao {
 
    List<Document> getDocumentsByIds(String... ids);
 
+   List<Document> getDocumentsByCollection(String collectionId);
+
    List<Document> getDocumentsByParentIds(Collection<String> parentIds);
 
    void setProject(Project project);
