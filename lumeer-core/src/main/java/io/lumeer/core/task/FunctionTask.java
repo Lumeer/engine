@@ -21,6 +21,7 @@ package io.lumeer.core.task;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.function.Function;
 import io.lumeer.core.task.executor.FunctionTaskExecutor;
 
 import java.util.Set;
@@ -37,6 +38,10 @@ public class FunctionTask extends AbstractContextualTask {
       this.collection = collection;
       this.documents = documents;
       this.parent = parent;
+   }
+
+   public Function getFunction() {
+      return attribute.getFunction();
    }
 
    public Attribute getAttribute() {
