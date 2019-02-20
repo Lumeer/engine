@@ -64,6 +64,26 @@ public class FunctionTask extends AbstractContextualTask {
       return attribute;
    }
 
+   public Collection getCollection() {
+      return collection;
+   }
+
+   public Set<Document> getDocuments() {
+      return documents;
+   }
+
+   public LinkType getLinkType() {
+      return linkType;
+   }
+
+   public Set<LinkInstance> getLinkInstances() {
+      return linkInstances;
+   }
+
+   public List<FunctionTask> getParents() {
+      return parents;
+   }
+
    @Override
    public void process() {
 

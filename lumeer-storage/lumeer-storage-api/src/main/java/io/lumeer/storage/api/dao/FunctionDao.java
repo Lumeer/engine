@@ -30,6 +30,8 @@ public interface FunctionDao {
 
    void deleteRepository(Project project);
 
+   void setProject(Project project);
+
    void createRows(List<FunctionRow> rows);
 
    List<FunctionRow> searchByAnyCollection(String collectionId, String attributeId);

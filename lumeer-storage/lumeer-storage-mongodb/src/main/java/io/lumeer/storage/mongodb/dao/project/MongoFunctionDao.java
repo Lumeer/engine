@@ -50,7 +50,7 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
       database.createCollection(databaseCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
-      projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.RESOURCE_ID, FunctionRowCodec.ATTRIBUTE_ID), new IndexOptions().unique(false));
+      projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.RESOURCE_ID, FunctionRowCodec.TYPE, FunctionRowCodec.ATTRIBUTE_ID), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.DEPENDENT_COLLECTION_ID, FunctionRowCodec.DEPENDENT_ATTRIBUTE_ID), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.DEPENDENT_LINK_TYPE_ID, FunctionRowCodec.DEPENDENT_ATTRIBUTE_ID), new IndexOptions().unique(false));
    }
