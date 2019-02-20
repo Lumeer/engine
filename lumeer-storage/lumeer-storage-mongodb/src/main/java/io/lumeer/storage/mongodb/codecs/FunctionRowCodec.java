@@ -18,6 +18,7 @@
  */
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 
 import org.bson.BsonReader;
@@ -30,7 +31,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 public class FunctionRowCodec implements Codec<FunctionRow> {
 
-   public static String COLLECTION_ID = "collectionId";
+   public static String RESOURCE_ID = "resourceId";
+   public static String TYPE = "resourceType";
    public static String ATTRIBUTE_ID = "attributeId";
    public static String DEPENDENT_COLLECTION_ID = "dependentCollectionId";
    public static String DEPENDENT_LINK_TYPE_ID = "dependentLinkTypeId";
@@ -46,19 +48,21 @@ public class FunctionRowCodec implements Codec<FunctionRow> {
    public FunctionRow decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
-      String collectionId = bson.getString(COLLECTION_ID);
+      String resourceId = bson.getString(RESOURCE_ID);
+      FunctionResourceType type = FunctionResourceType.valueOf(bson.getString(TYPE));
       String attributeId = bson.getString(ATTRIBUTE_ID);
       String dependentCollectionId = bson.getString(DEPENDENT_COLLECTION_ID);
       String dependentLinkTypeId = bson.getString(DEPENDENT_LINK_TYPE_ID);
       String dependentAttributeId = bson.getString(DEPENDENT_ATTRIBUTE_ID);
 
-      return new FunctionRow(collectionId, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
+      return new FunctionRow(resourceId, type, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
    }
 
    @Override
    public void encode(final BsonWriter writer, final FunctionRow function, final EncoderContext encoderContext) {
       Document bson = new Document()
-            .append(COLLECTION_ID, function.getCollectionId())
+            .append(RESOURCE_ID, function.getResourceId())
+            .append(TYPE, function.getType().toString())
             .append(ATTRIBUTE_ID, function.getAttributeId())
             .append(DEPENDENT_COLLECTION_ID, function.getDependentCollectionId())
             .append(DEPENDENT_LINK_TYPE_ID, function.getDependentLinkTypeId())

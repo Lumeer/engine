@@ -22,6 +22,7 @@ import static com.mongodb.client.model.Filters.*;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -37,6 +38,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
@@ -48,7 +50,7 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
       database.createCollection(databaseCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
-      projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.COLLECTION_ID, FunctionRowCodec.ATTRIBUTE_ID), new IndexOptions().unique(false));
+      projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.RESOURCE_ID, FunctionRowCodec.ATTRIBUTE_ID), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.DEPENDENT_COLLECTION_ID, FunctionRowCodec.DEPENDENT_ATTRIBUTE_ID), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.ascending(FunctionRowCodec.DEPENDENT_LINK_TYPE_ID, FunctionRowCodec.DEPENDENT_ATTRIBUTE_ID), new IndexOptions().unique(false));
    }
@@ -68,18 +70,6 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
    }
 
    @Override
-   public List<FunctionRow> searchByCollection(final String collectionId, final String attributeId) {
-      return databaseCollection().find(collectionFilter(collectionId, attributeId)).into(new ArrayList<>());
-   }
-
-   private Bson collectionFilter(final String collectionId, final String attributeId) {
-      if (attributeId != null) {
-         return and(eq(FunctionRowCodec.COLLECTION_ID, collectionId), eq(FunctionRowCodec.ATTRIBUTE_ID, attributeId));
-      }
-      return eq(FunctionRowCodec.COLLECTION_ID, collectionId);
-   }
-
-   @Override
    public List<FunctionRow> searchByAnyCollection(final String collectionId, final String attributeId) {
       Bson filter = or(
             collectionFilter(collectionId, attributeId),
@@ -88,9 +78,16 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
-   @Override
-   public List<FunctionRow> searchByDependentCollection(final String collectionId, final String attributeId) {
-      return databaseCollection().find(dependentCollectionFilter(collectionId, attributeId)).into(new ArrayList<>());
+   private Bson collectionFilter(final String collectionId, final String attributeId) {
+      return resourceFilter(collectionId, FunctionResourceType.COLLECTION, attributeId);
+   }
+
+   private Bson resourceFilter(final String resourceId, final FunctionResourceType type, final String attributeId){
+      List<Bson> filters = new ArrayList<>(Arrays.asList(eq(FunctionRowCodec.RESOURCE_ID, resourceId), eq(FunctionRowCodec.TYPE, type.toString())));
+      if (attributeId != null) {
+         filters.add(eq(FunctionRowCodec.ATTRIBUTE_ID, attributeId));
+      }
+      return and(filters);
    }
 
    private Bson dependentCollectionFilter(final String collectionId, final String attributeId) {
@@ -101,8 +98,21 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
    }
 
    @Override
-   public List<FunctionRow> searchByDependentLinkType(final String linkTypeId, final String attributeId) {
-      return databaseCollection().find(dependentLinkFilter(linkTypeId, attributeId)).into(new ArrayList<>());
+   public List<FunctionRow> searchByDependentCollection(final String collectionId, final String attributeId) {
+      return databaseCollection().find(dependentCollectionFilter(collectionId, attributeId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<FunctionRow> searchByAnyLinkType(final String linkTypeId, final String attributeId) {
+      Bson filter = or(
+            linkFilter(linkTypeId, attributeId),
+            dependentLinkFilter(linkTypeId, attributeId)
+      );
+      return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   private Bson linkFilter(final String linkTypeId, final String attributeId) {
+      return resourceFilter(linkTypeId, FunctionResourceType.LINK, attributeId);
    }
 
    private Bson dependentLinkFilter(final String linkTypeId, final String attributeId) {
@@ -113,14 +123,24 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
    }
 
    @Override
-   public void deleteByCollections(final String... collectionsIds) {
-      Bson filter = in(FunctionRowCodec.COLLECTION_ID, collectionsIds);
+   public List<FunctionRow> searchByDependentLinkType(final String linkTypeId, final String attributeId) {
+      return databaseCollection().find(dependentLinkFilter(linkTypeId, attributeId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public void deleteByResources(final FunctionResourceType type, final String... resourceIds) {
+      Bson filter = and(in(FunctionRowCodec.RESOURCE_ID, resourceIds), eq(FunctionRowCodec.TYPE, type.toString()));
       databaseCollection().deleteMany(filter);
    }
 
    @Override
    public void deleteByCollection(final String collectionsId, final String attributeId) {
       databaseCollection().deleteMany(collectionFilter(collectionsId, attributeId));
+   }
+
+   @Override
+   public void deleteByLinkType(final String linkTypeId, final String attributeId) {
+      databaseCollection().deleteMany(linkFilter(linkTypeId, attributeId));
    }
 
    private String databaseCollectionName(Project project) {

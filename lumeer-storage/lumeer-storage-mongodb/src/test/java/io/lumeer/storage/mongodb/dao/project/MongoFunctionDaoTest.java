@@ -21,11 +21,10 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
-import io.lumeer.storage.mongodb.codecs.FunctionRowCodec;
 
-import com.mongodb.client.model.Filters;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -63,66 +62,39 @@ public class MongoFunctionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testAddRows() {
-      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
-      FunctionRow row3 = FunctionRow.createForLink(COLLECTION1, ATTRIBUTE1, LINK_TYPE1, ATTRIBUTE2);
-      List<FunctionRow> rows = Arrays.asList(row1, row2, row3);
+      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, LINK_TYPE2, ATTRIBUTE3);
+      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row4 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4);
       functionDao.createRows(rows);
 
-      List<FunctionRow> storedRows = functionDao.databaseCollection().find(Filters.eq(FunctionRowCodec.COLLECTION_ID, COLLECTION1)).into(new ArrayList<>());
-      assertThat(storedRows).hasSize(3);
-      assertThat(storedRows).extracting(FunctionRow::getDependentCollectionId).contains(COLLECTION2, COLLECTION3);
+      List<FunctionRow> storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
+      assertThat(storedRows).hasSize(4);
+      assertThat(storedRows).extracting(FunctionRow::getResourceId).contains(COLLECTION1, LINK_TYPE1);
       assertThat(storedRows).extracting(FunctionRow::getDependentAttributeId).contains(ATTRIBUTE2, ATTRIBUTE3);
-      assertThat(storedRows).extracting(FunctionRow::getDependentLinkTypeId).contains(LINK_TYPE1);
-   }
-
-   @Test
-   public void testSearchByCollection() {
-      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
-      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, ATTRIBUTE3);
-      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, ATTRIBUTE2);
-      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
-      FunctionRow row7 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE2, COLLECTION1, ATTRIBUTE3);
-      List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5, row6, row7);
-      functionDao.createRows(rows);
-
-      List<FunctionRow> storedRows = functionDao.searchByCollection(COLLECTION1, ATTRIBUTE1);
-      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getDependentCollectionId).containsOnly(COLLECTION2, COLLECTION3);
-
-      storedRows = functionDao.searchByCollection(COLLECTION2, ATTRIBUTE1);
-      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getDependentCollectionId).containsOnly(COLLECTION2, COLLECTION2);
-
-      storedRows = functionDao.searchByCollection(COLLECTION3, ATTRIBUTE1);
-      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getDependentCollectionId).containsOnly(COLLECTION1, COLLECTION3);
-
-      storedRows = functionDao.searchByCollection(COLLECTION1, null);
-      assertThat(storedRows).hasSize(3).extracting(FunctionRow::getDependentCollectionId).containsOnly(COLLECTION1, COLLECTION2, COLLECTION3);
-
-      storedRows = functionDao.searchByCollection(COLLECTION3, ATTRIBUTE2);
-      assertThat(storedRows).isEmpty();
+      assertThat(storedRows).extracting(FunctionRow::getDependentLinkTypeId).contains(LINK_TYPE1, LINK_TYPE2);
    }
 
    @Test
    public void testSearchByAnyCollection() {
-      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
-      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, ATTRIBUTE2);
-      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, ATTRIBUTE3);
-      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, ATTRIBUTE1);
-      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
+      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE1);
+      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
       List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5, row6);
       functionDao.createRows(rows);
 
       List<FunctionRow> storedRows = functionDao.searchByAnyCollection(COLLECTION1, ATTRIBUTE1);
-      assertThat(storedRows).hasSize(3).extracting(FunctionRow::getCollectionId).containsOnly(COLLECTION1, COLLECTION1, COLLECTION3);
+      assertThat(storedRows).hasSize(3).extracting(FunctionRow::getResourceId).containsOnly(COLLECTION1, COLLECTION1, COLLECTION3);
 
       storedRows = functionDao.searchByAnyCollection(COLLECTION1, ATTRIBUTE2);
-      assertThat(storedRows).hasSize(1).extracting(FunctionRow::getCollectionId).containsOnly(COLLECTION2);
+      assertThat(storedRows).hasSize(1).extracting(FunctionRow::getResourceId).containsOnly(COLLECTION2);
 
       storedRows = functionDao.searchByAnyCollection(COLLECTION1, null);
-      assertThat(storedRows).hasSize(4).extracting(FunctionRow::getCollectionId).contains(COLLECTION1, COLLECTION2, COLLECTION3);
+      assertThat(storedRows).hasSize(4).extracting(FunctionRow::getResourceId).contains(COLLECTION1, COLLECTION2, COLLECTION3);
 
       storedRows = functionDao.searchByAnyCollection(COLLECTION1, ATTRIBUTE3);
       assertThat(storedRows).isEmpty();
@@ -130,45 +102,65 @@ public class MongoFunctionDaoTest extends MongoDbTestBase {
 
    @Test
    public void testSearchByDependentCollection() {
-      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
-      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, ATTRIBUTE2);
-      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, ATTRIBUTE3);
-      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, ATTRIBUTE1);
-      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
+      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE1);
+      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
       List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5, row6);
       functionDao.createRows(rows);
 
       List<FunctionRow> storedRows = functionDao.searchByDependentCollection(COLLECTION3, ATTRIBUTE3);
-      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getCollectionId).containsOnly(COLLECTION1, COLLECTION3);
+      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getResourceId).containsOnly(COLLECTION1, COLLECTION3);
 
       storedRows = functionDao.searchByDependentCollection(COLLECTION1, ATTRIBUTE1);
-      assertThat(storedRows).hasSize(1).extracting(FunctionRow::getCollectionId).containsOnly(COLLECTION3);
+      assertThat(storedRows).hasSize(1).extracting(FunctionRow::getResourceId).containsOnly(COLLECTION3);
 
       storedRows = functionDao.searchByDependentCollection(COLLECTION2, null);
-      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getCollectionId).containsOnly(COLLECTION1, COLLECTION2);
+      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getResourceId).containsOnly(COLLECTION1, COLLECTION2);
 
       storedRows = functionDao.searchByDependentCollection(COLLECTION2, ATTRIBUTE1);
       assertThat(storedRows).isEmpty();
    }
 
    @Test
-   public void testSearchByLinkType() {
-      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row2 = FunctionRow.createForLink(COLLECTION1, ATTRIBUTE1, LINK_TYPE1, ATTRIBUTE1);
-      FunctionRow row3 = FunctionRow.createForLink(COLLECTION1, ATTRIBUTE1, LINK_TYPE1, ATTRIBUTE2);
-      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, ATTRIBUTE3);
-      FunctionRow row5 = FunctionRow.createForLink(COLLECTION2, ATTRIBUTE1, LINK_TYPE2, ATTRIBUTE2);
-      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, ATTRIBUTE1);
-      FunctionRow row7 = FunctionRow.createForLink(COLLECTION3, ATTRIBUTE1, LINK_TYPE1, ATTRIBUTE2);
+   public void testSearchByAnyLinkType(){
+      FunctionRow row1 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE1, COLLECTION1, null, ATTRIBUTE1);
+      FunctionRow row2 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE2, COLLECTION1, null, ATTRIBUTE2);
+      FunctionRow row3 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE3, COLLECTION2, LINK_TYPE2, ATTRIBUTE1);
+      FunctionRow row4 = FunctionRow.createForLink(LINK_TYPE2, ATTRIBUTE3, COLLECTION1, null, ATTRIBUTE3);
+      FunctionRow row5 = FunctionRow.createForLink(LINK_TYPE2, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE2);
+      List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5);
+      functionDao.createRows(rows);
+
+      List<FunctionRow> storedRows = functionDao.searchByAnyLinkType(LINK_TYPE1, null);
+      assertThat(storedRows).hasSize(4);
+
+      storedRows = functionDao.searchByAnyLinkType(LINK_TYPE1, ATTRIBUTE1);
+      assertThat(storedRows).hasSize(1);
+
+      storedRows = functionDao.searchByAnyLinkType(LINK_TYPE1, "non existing");
+      assertThat(storedRows).isEmpty();
+   }
+
+   @Test
+   public void testSearchByDependentLinkType() {
+      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, "abc", ATTRIBUTE2);
+      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE1);
+      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, "abc", ATTRIBUTE3);
+      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, LINK_TYPE2, ATTRIBUTE2);
+      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, "abc", ATTRIBUTE1);
+      FunctionRow row7 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE2);
       List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5, row6, row7);
       functionDao.createRows(rows);
 
       List<FunctionRow> storedRows = functionDao.searchByDependentLinkType(LINK_TYPE1, ATTRIBUTE2);
-      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getCollectionId).containsOnly(COLLECTION1, COLLECTION3);
+      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getResourceId).containsOnly(COLLECTION1, COLLECTION3);
 
       storedRows = functionDao.searchByDependentLinkType(LINK_TYPE2, ATTRIBUTE2);
-      assertThat(storedRows).hasSize(1).extracting(FunctionRow::getCollectionId).containsOnly(COLLECTION2);
+      assertThat(storedRows).hasSize(1).extracting(FunctionRow::getResourceId).containsOnly(COLLECTION2);
 
       storedRows = functionDao.searchByDependentLinkType(LINK_TYPE1, null);
       assertThat(storedRows).hasSize(3);
@@ -178,48 +170,76 @@ public class MongoFunctionDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   public void testDeleteByCollections() {
-      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
-      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, ATTRIBUTE2);
-      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, ATTRIBUTE3);
-      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, ATTRIBUTE1);
-      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION3, ATTRIBUTE3);
-      List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5, row6);
+   public void testDeleteByResources() {
+      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE1);
+      FunctionRow row6 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row7 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE1, COLLECTION3, null, ATTRIBUTE1);
+      FunctionRow row8 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE1, COLLECTION2, null, ATTRIBUTE1);
+      FunctionRow row9 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE1, COLLECTION1, null, ATTRIBUTE1);
+      List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5, row6, row7, row8, row9);
       functionDao.createRows(rows);
 
       List<FunctionRow> storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
-      assertThat(storedRows).hasSize(6).extracting(FunctionRow::getCollectionId).contains(COLLECTION1, COLLECTION2, COLLECTION3);
+      assertThat(storedRows).hasSize(9).extracting(FunctionRow::getResourceId).contains(COLLECTION1, COLLECTION2, COLLECTION3, LINK_TYPE1);
 
-      functionDao.deleteByCollections(COLLECTION1, COLLECTION3);
+      functionDao.deleteByResources(FunctionResourceType.COLLECTION, COLLECTION1, COLLECTION3);
       storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
-      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getCollectionId).contains(COLLECTION2);
+      assertThat(storedRows).hasSize(5).extracting(FunctionRow::getResourceId).contains(COLLECTION2, LINK_TYPE1);
 
-      functionDao.deleteByCollections(COLLECTION2);
+      functionDao.deleteByResources(FunctionResourceType.COLLECTION, COLLECTION2);
+      storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
+      assertThat(storedRows).hasSize(3).extracting(FunctionRow::getResourceId).contains(LINK_TYPE1);
+
+      functionDao.deleteByResources(FunctionResourceType.LINK, LINK_TYPE1);
       storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
       assertThat(storedRows).isEmpty();
    }
 
    @Test
    public void testDeleteByCollection() {
-      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, ATTRIBUTE2);
-      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE2, COLLECTION3, ATTRIBUTE3);
-      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, ATTRIBUTE2);
-      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE3, COLLECTION2, ATTRIBUTE3);
-      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, ATTRIBUTE1);
+      FunctionRow row1 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row2 = FunctionRow.createForCollection(COLLECTION1, ATTRIBUTE2, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row3 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row4 = FunctionRow.createForCollection(COLLECTION2, ATTRIBUTE3, COLLECTION2, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row5 = FunctionRow.createForCollection(COLLECTION3, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE1);
       List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4, row5);
       functionDao.createRows(rows);
 
       List<FunctionRow> storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
-      assertThat(storedRows).hasSize(5).extracting(FunctionRow::getCollectionId).contains(COLLECTION1, COLLECTION2, COLLECTION3);
+      assertThat(storedRows).hasSize(5).extracting(FunctionRow::getResourceId).contains(COLLECTION1, COLLECTION2, COLLECTION3);
 
       functionDao.deleteByCollection(COLLECTION1, ATTRIBUTE2);
       storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
-      assertThat(storedRows).hasSize(4).extracting(FunctionRow::getCollectionId).contains(COLLECTION1, COLLECTION2, COLLECTION3);
+      assertThat(storedRows).hasSize(4).extracting(FunctionRow::getResourceId).contains(COLLECTION1, COLLECTION2, COLLECTION3);
 
       functionDao.deleteByCollection(COLLECTION1, ATTRIBUTE1);
       storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
-      assertThat(storedRows).hasSize(3).extracting(FunctionRow::getCollectionId).contains(COLLECTION2, COLLECTION3);
+      assertThat(storedRows).hasSize(3).extracting(FunctionRow::getResourceId).contains(COLLECTION2, COLLECTION3);
+   }
+
+   @Test
+   public void testDeleteByLink() {
+      FunctionRow row1 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE1, COLLECTION2, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row2 = FunctionRow.createForLink(LINK_TYPE1, ATTRIBUTE2, COLLECTION3, LINK_TYPE1, ATTRIBUTE3);
+      FunctionRow row3 = FunctionRow.createForLink(LINK_TYPE2, ATTRIBUTE1, COLLECTION1, LINK_TYPE1, ATTRIBUTE2);
+      FunctionRow row4 = FunctionRow.createForLink(LINK_TYPE2, ATTRIBUTE3, COLLECTION2, LINK_TYPE1, ATTRIBUTE3);
+      List<FunctionRow> rows = Arrays.asList(row1, row2, row3, row4);
+      functionDao.createRows(rows);
+
+      List<FunctionRow> storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
+      assertThat(storedRows).hasSize(4).extracting(FunctionRow::getResourceId).contains(LINK_TYPE1, LINK_TYPE2);
+
+      functionDao.deleteByLinkType(LINK_TYPE1, ATTRIBUTE2);
+      storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
+      assertThat(storedRows).hasSize(3).extracting(FunctionRow::getResourceId).contains(LINK_TYPE1, LINK_TYPE2);
+
+      functionDao.deleteByLinkType(LINK_TYPE1, ATTRIBUTE1);
+      storedRows = functionDao.databaseCollection().find().into(new ArrayList<>());
+      assertThat(storedRows).hasSize(2).extracting(FunctionRow::getResourceId).contains(LINK_TYPE2);
    }
 
 }

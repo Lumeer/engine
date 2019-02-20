@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.function.Function;
+import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.storage.api.dao.FunctionDao;
 
@@ -33,7 +34,7 @@ public class FunctionFacade extends AbstractFacade {
    @Inject
    private FunctionDao functionDao;
 
-   public void onCreateFunction(Function function) {
+   public void onCreateCollectionFunction(String collectionId, String attributeId, Function function) {
       List<FunctionRow> functionRows = parseXml(function.getXml());
 
       functionDao.createRows(functionRows);
@@ -45,26 +46,44 @@ public class FunctionFacade extends AbstractFacade {
       return Collections.emptyList();
    }
 
+
+
    private void computeFunctionValues(List<FunctionRow> rows){
       // TODO use rows to create computing chain
    }
 
-   public void onUpdateFunction(String collectionId, String attributeId, Function function) {
-      functionDao.deleteByCollection(collectionId, attributeId);
-      onCreateFunction(function);
+   public void onUpdateCollectionFunction(String collectionId, String attributeId, Function function) {
+      onDeleteCollectionFunction(collectionId, attributeId);
+      onCreateCollectionFunction(collectionId, attributeId, function);
    }
 
-   public void onDeleteFunction(String collectionId, String attributeId) {
+   public void onDeleteCollectionFunction(String collectionId, String attributeId) {
       functionDao.deleteByCollection(collectionId, attributeId);
    }
 
-   public void onDocumentValueChanged(String collectionId, String attributeId) {
+   public void onCreateLinkTypeFunction(String linkTypeId, String attributeId, Function function) {
+      List<FunctionRow> functionRows = parseXml(function.getXml());
+
+      functionDao.createRows(functionRows);
+      computeFunctionValues(functionRows);
+   }
+
+   public void onUpdateLinkTypeFunction(String linkTypeId, String attributeId, Function function) {
+      onDeleteLinkTypeFunction(linkTypeId, attributeId);
+      onCreateLinkTypeFunction(linkTypeId, attributeId, function);
+   }
+
+   public void onDeleteLinkTypeFunction(String collectionId, String attributeId) {
+      functionDao.deleteByLinkType(collectionId, attributeId);
+   }
+
+   public void onDocumentValueChanged(String collectionId, String attributeId, String documentId) {
       List<FunctionRow> functionRows = functionDao.searchByDependentCollection(collectionId, attributeId);
 
       computeFunctionValues(functionRows);
    }
 
-   public void onLinkValueChanged(String linkTypeId, String attributeId) {
+   public void onLinkValueChanged(String linkTypeId, String attributeId, String linkInstanceId) {
       List<FunctionRow> functionRows = functionDao.searchByDependentLinkType(linkTypeId, attributeId);
 
       computeFunctionValues(functionRows);
@@ -73,30 +92,30 @@ public class FunctionFacade extends AbstractFacade {
    public void onDeleteColection(String collectionId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyCollection(collectionId, null);
 
-      deleteByRows(functionRows);
+      deleteByRows(FunctionResourceType.COLLECTION, functionRows);
    }
 
    public void onDeleteLinkType(String linkTypeId) {
-      List<FunctionRow> functionRows = functionDao.searchByDependentLinkType(linkTypeId, null);
+      List<FunctionRow> functionRows = functionDao.searchByAnyLinkType(linkTypeId, null);
 
-      deleteByRows(functionRows);
+      deleteByRows(FunctionResourceType.LINK, functionRows);
    }
 
    public void onDeleteCollectionAttribute(String collectionId, String attributeId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyCollection(collectionId, attributeId);
 
-      deleteByRows(functionRows);
+      deleteByRows(FunctionResourceType.COLLECTION, functionRows);
    }
 
    public void onDeleteLinkAttribute(String linkTypeId, String attributeId) {
-      List<FunctionRow> functionRows = functionDao.searchByDependentLinkType(linkTypeId, attributeId);
+      List<FunctionRow> functionRows = functionDao.searchByAnyLinkType(linkTypeId, attributeId);
 
-      deleteByRows(functionRows);
+      deleteByRows(FunctionResourceType.LINK, functionRows);
    }
 
-   private void deleteByRows(List<FunctionRow> functionRows) {
-      String[] collectionIdsToDelete = functionRows.stream().map(FunctionRow::getCollectionId).toArray(String[]::new);
-      functionDao.deleteByCollections(collectionIdsToDelete);
+   private void deleteByRows(FunctionResourceType type, List<FunctionRow> functionRows) {
+      String[] resourceIdsToDelete = functionRows.stream().map(FunctionRow::getResourceId).toArray(String[]::new);
+      functionDao.deleteByResources(type, resourceIdsToDelete);
    }
 
 }

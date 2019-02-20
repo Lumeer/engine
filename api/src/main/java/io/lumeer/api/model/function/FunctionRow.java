@@ -22,30 +22,36 @@ import java.util.Objects;
 
 public class FunctionRow {
 
-   private String collectionId;
+   private String resourceId;
+   private FunctionResourceType type;
    private String attributeId;
    private String dependentCollectionId;
    private String dependentLinkTypeId;
    private String dependentAttributeId;
 
-   public FunctionRow(final String collectionId, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId) {
-      this.collectionId = collectionId;
+   public static FunctionRow createForCollection(final String resourceId, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId){
+      return new FunctionRow(resourceId, FunctionResourceType.COLLECTION, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
+   }
+
+   public static FunctionRow createForLink(final String resourceId, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId){
+      return new FunctionRow(resourceId, FunctionResourceType.LINK, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
+   }
+
+   public FunctionRow(final String resourceId, final FunctionResourceType type, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId) {
+      this.resourceId = resourceId;
+      this.type = type;
       this.attributeId = attributeId;
       this.dependentCollectionId = dependentCollectionId;
       this.dependentLinkTypeId = dependentLinkTypeId;
       this.dependentAttributeId = dependentAttributeId;
    }
 
-   public static FunctionRow createForCollection(final String collectionId, final String attributeId, final String dependCollectionId, final String dependAttributeId) {
-      return new FunctionRow(collectionId, attributeId, dependCollectionId, null, dependAttributeId);
+   public String getResourceId() {
+      return resourceId;
    }
 
-   public static FunctionRow createForLink(final String collectionId, final String attributeId, final String dependLinkTypeId, final String dependAttributeId) {
-      return new FunctionRow(collectionId, attributeId, null, dependLinkTypeId, dependAttributeId);
-   }
-
-   public String getCollectionId() {
-      return collectionId;
+   public FunctionResourceType getType() {
+      return type;
    }
 
    public String getAttributeId() {
@@ -73,7 +79,8 @@ public class FunctionRow {
          return false;
       }
       final FunctionRow that = (FunctionRow) o;
-      return Objects.equals(getCollectionId(), that.getCollectionId()) &&
+      return Objects.equals(getResourceId(), that.getResourceId()) &&
+            getType() == that.getType() &&
             Objects.equals(getAttributeId(), that.getAttributeId()) &&
             Objects.equals(getDependentCollectionId(), that.getDependentCollectionId()) &&
             Objects.equals(getDependentLinkTypeId(), that.getDependentLinkTypeId()) &&
@@ -82,13 +89,14 @@ public class FunctionRow {
 
    @Override
    public int hashCode() {
-      return Objects.hash(getCollectionId(), getAttributeId(), getDependentCollectionId(), getDependentLinkTypeId(), getDependentAttributeId());
+      return Objects.hash(getResourceId(), getType(), getAttributeId(), getDependentCollectionId(), getDependentLinkTypeId(), getDependentAttributeId());
    }
 
    @Override
    public String toString() {
-      return "FunctionRow{" +
-            "collectionId='" + collectionId + '\'' +
+      return "FunctionRow2{" +
+            "resourceId='" + resourceId + '\'' +
+            ", type=" + type +
             ", attributeId='" + attributeId + '\'' +
             ", dependentCollectionId='" + dependentCollectionId + '\'' +
             ", dependentLinkTypeId='" + dependentLinkTypeId + '\'' +

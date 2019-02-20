@@ -19,6 +19,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 
 import java.util.List;
@@ -31,15 +32,17 @@ public interface FunctionDao {
 
    void createRows(List<FunctionRow> rows);
 
-   List<FunctionRow> searchByCollection(String collectionId, String attributeId);
-
    List<FunctionRow> searchByAnyCollection(String collectionId, String attributeId);
 
    List<FunctionRow> searchByDependentCollection(String collectionId, String attributeId);
 
+   List<FunctionRow> searchByAnyLinkType(String linkTypeId, String attributeId);
+
    List<FunctionRow> searchByDependentLinkType(String linkTypeId, String attributeId);
 
-   void deleteByCollections(String... collectionsIds);
+   void deleteByResources(FunctionResourceType type, String... resourceIds);
 
    void deleteByCollection(String collectionsId, String attributeId);
+
+   void deleteByLinkType(String linkTypeId, String attributeId);
 }
