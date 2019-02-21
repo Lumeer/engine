@@ -342,11 +342,4 @@ public class DocumentFacade extends AbstractFacade {
       return authenticatedUser.getCurrentUser();
    }
 
-   private List<Document> getDocuments(Map<String, DataDocument> dataDocuments) {
-      String[] documentIds = dataDocuments.keySet().toArray(new String[] {});
-      List<Document> documents = documentDao.getDocumentsByIds(documentIds);
-      documents.forEach(document -> document.setData(dataDocuments.get(document.getId())));
-      return documents;
-   }
-
 }

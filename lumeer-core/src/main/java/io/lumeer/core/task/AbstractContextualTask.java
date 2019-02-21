@@ -23,13 +23,18 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.util.PusherClient;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -70,11 +75,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
          final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
          final List<Event> events = new ArrayList<>();
 
-         users.stream()
-              .forEach(userId -> {
-                 final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-                 events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
-              });
+         users.forEach(userId -> {
+            final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+            events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
+         });
 
          getPusherClient().trigger(events);
       }
@@ -84,15 +88,18 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final String collectionId, final List<String> documentIds) {
       final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collectionId);
       final List<Document> documents = getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(documentIds.toArray(new String[0]));
+      final Map<String, DataDocument> dataMap = getDaoContextSnapshot().getDataDao().getData(collectionId, new HashSet<>(documentIds))
+                                                                       .stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
+      documents.forEach(document -> document.setData(dataMap.get(document.getId())));
+
       final List<Event> events = new ArrayList<>();
 
-      users.stream()
-           .forEach(userId ->
-                 documents.forEach(doc -> {
-                          final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(doc, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-                          events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, doc.getClass().getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
-                       }
-                 ));
+      users.forEach(userId ->
+            documents.forEach(doc -> {
+                     final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(doc, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+                     events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, doc.getClass().getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
+                  }
+            ));
 
       getPusherClient().trigger(events);
    }

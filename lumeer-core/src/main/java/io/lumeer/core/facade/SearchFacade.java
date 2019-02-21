@@ -113,8 +113,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Set<Document> convertDataDocumentsToDocuments(java.util.Collection<DataDocument> data) {
-      Set<String> documentIds = data.stream().map(DataDocument::getId).collect(Collectors.toSet());
-      List<Document> documents = documentDao.getDocumentsByIds(documentIds.toArray(new String[0]));
+      List<Document> documents = documentDao.getDocumentsByIds(data.stream().map(DataDocument::getId).distinct().toArray(String[]::new));
       Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
       return documents.stream()
                       .peek(document -> document.setData(dataMap.get(document.getId())))
