@@ -168,7 +168,6 @@ public class JsExecutor {
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
          Map<String, Set<String>> documentIdsByCollection = changes.stream().map(change -> change.document)
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
-         Map<String, DataDocument> dataMap = getDataMapByIdsMap(documentIdsByCollection);
          Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
                                                           .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
          Set<String> collectionsChanged = new HashSet<>();
@@ -176,7 +175,7 @@ public class JsExecutor {
             Document document = change.document;
             Collection collection = collectionsMap.get(document.getCollectionId());
             DataDocument newData = new DataDocument(change.attrId, change.value);
-            DataDocument oldData = dataMap.get(change.document.getId());
+            DataDocument oldData = new DataDocument(document.getData());
 
             convertDataTypes(collection, newData);
 
@@ -215,16 +214,6 @@ public class JsExecutor {
                ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId));
             });
          }
-      }
-
-      private Map<String, DataDocument> getDataMapByIdsMap(Map<String, Set<String>> documentIdsByCollection) {
-         Map<String, DataDocument> dataMap = new HashMap<>();
-         for (Map.Entry<String, Set<String>> entry : documentIdsByCollection.entrySet()) {
-            dataMap.putAll(ruleTask.getDaoContextSnapshot().getDataDao().getData(entry.getKey(), entry.getValue())
-                                   .stream().collect(Collectors.toMap(DataDocument::getId, data -> data)));
-         }
-
-         return dataMap;
       }
 
       private void convertDataTypes(final Collection collection, final DataDocument data) {

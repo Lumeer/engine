@@ -28,7 +28,9 @@ import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.util.FunctionXmlParser;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -37,6 +39,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,6 +59,9 @@ public class FunctionFacade extends AbstractFacade {
    private DocumentDao documentDao;
 
    @Inject
+   private DataDao dataDao;
+
+   @Inject
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
@@ -70,11 +76,18 @@ public class FunctionFacade extends AbstractFacade {
          functionDao.createRows(functionRows);
       }
 
-      Set<Document> documents = new HashSet<>(documentDao.getDocumentsByCollection(collection.getId()));
+      Set<Document> documents = getDocumentsByCollection(collection.getId());
       FunctionTask task = createCollectionTask(collection, attribute, documents);
       if (task != null) {
          task.process();
       }
+   }
+
+   private Set<Document> getDocumentsByCollection(String collectionId) {
+      final List<Document> documentsByCollection = documentDao.getDocumentsByCollection(collectionId);
+      Map<String, DataDocument> data = dataDao.getData(collectionId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
+      return documentsByCollection.stream().peek(document -> document.setData(data.get(document.getId())))
+                                  .collect(Collectors.toSet());
    }
 
    private List<FunctionRow> createCollectionRowsFromXml(Collection collection, Attribute attribute) {
@@ -99,6 +112,7 @@ public class FunctionFacade extends AbstractFacade {
       }
 
       Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstancesByLinkType(linkType.getId()));
+      // TODO set data?
       FunctionTask task = createLinkTypeTask(linkType, attribute, linkInstances);
       if (task != null) {
          task.process();
