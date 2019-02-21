@@ -66,7 +66,9 @@ public class FunctionFacade extends AbstractFacade {
 
    public void onCreateCollectionFunction(Collection collection, Attribute attribute) {
       List<FunctionRow> functionRows = createCollectionRowsFromXml(collection, attribute);
-      functionDao.createRows(functionRows);
+      if (!functionRows.isEmpty()) {
+         functionDao.createRows(functionRows);
+      }
 
       Set<Document> documents = new HashSet<>(documentDao.getDocumentsByCollection(collection.getId()));
       FunctionTask task = createCollectionTask(collection, attribute, documents);
@@ -92,7 +94,9 @@ public class FunctionFacade extends AbstractFacade {
 
    public void onCreateLinkTypeFunction(LinkType linkType, Attribute attribute) {
       List<FunctionRow> functionRows = createLinkRowsFromXml(linkType, attribute);
-      functionDao.createRows(functionRows);
+      if (!functionRows.isEmpty()) {
+         functionDao.createRows(functionRows);
+      }
 
       Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstancesByLinkType(linkType.getId()));
       FunctionTask task = createLinkTypeTask(linkType, attribute, linkInstances);
