@@ -112,7 +112,7 @@ public class FunctionFacade extends AbstractFacade {
       }
 
       Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstancesByLinkType(linkType.getId()));
-      // TODO set data?
+      // TODO set link instance data when implemented
       FunctionTask task = createLinkTypeTask(linkType, attribute, linkInstances);
       if (task != null) {
          task.process();
@@ -210,13 +210,14 @@ public class FunctionFacade extends AbstractFacade {
                             if (row.getType() == FunctionResourceType.COLLECTION) {
                                Collection collection = collectionDao.getCollectionById(row.getResourceId());
                                Attribute attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
-                               Set<Document> documents = findDocumentsForRow(row, documentIds);
+                               Set<Document> documents = setDataForDocuments(collection.getId(), findDocumentsForRow(row, documentIds));
 
                                return createCollectionTaskRecursive(collection, attribute, documents, functionResourceIds);
                             } else if (row.getType() == FunctionResourceType.LINK) {
                                LinkType linkType = linkTypeDao.getLinkType(row.getResourceId());
                                Attribute attribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
                                Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstancesByDocumentIds(documentIds, row.getDependentLinkTypeId()));
+                               // TODO set link instance data when implemented
 
                                return createLinkTypeTaskRecursive(linkType, attribute, linkInstances, functionResourceIds);
                             }
@@ -237,6 +238,15 @@ public class FunctionFacade extends AbstractFacade {
          }
       }
       return Collections.emptySet();
+   }
+
+   private Set<Document> setDataForDocuments(String collectionId, Set<Document> documents) {
+      if (documents.isEmpty()) {
+         return Collections.emptySet();
+      }
+      Map<String, DataDocument> data = dataDao.getData(collectionId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
+      return new HashSet<>(documents).stream().peek(document -> document.setData(data.get(document.getId())))
+                                     .collect(Collectors.toSet());
    }
 
    private FunctionTask createLinkTypeTask(LinkType linkType, Attribute attribute, Set<LinkInstance> linkInstances) {
@@ -272,7 +282,7 @@ public class FunctionFacade extends AbstractFacade {
                             if (row.getType() == FunctionResourceType.COLLECTION) {
                                Collection collection = collectionDao.getCollectionById(row.getResourceId());
                                Attribute attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
-                               Set<Document> documents = findDocumentsForRowByLinkInstances(row, linkInstanceIds);
+                               Set<Document> documents = setDataForDocuments(collection.getId(), findDocumentsForRowByLinkInstances(row, linkInstanceIds));
 
                                return createCollectionTaskRecursive(collection, attribute, documents, functionResourceIds);
                             } else if (row.getType() == FunctionResourceType.LINK) {
@@ -281,6 +291,7 @@ public class FunctionFacade extends AbstractFacade {
 
                                if (row.getDependentLinkTypeId() == null || row.getDependentLinkTypeId().equals(row.getResourceId())) {
                                   Set<LinkInstance> linkInstances = new HashSet<>(linkInstanceDao.getLinkInstances(linkInstanceIds));
+                                  // TODO set link instance data when implemented
 
                                   return createLinkTypeTaskRecursive(linkType, attribute, linkInstances, functionResourceIds);
                                }

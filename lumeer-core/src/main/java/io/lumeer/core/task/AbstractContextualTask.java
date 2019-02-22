@@ -82,15 +82,17 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    @Override
    public void sendPushNotifications(final Collection collection, final List<Document> documents) {
-      final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection.getId());
+      final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
       final List<Event> events = new ArrayList<>();
+      final List<Event> collectionEvents = new ArrayList<>();
 
       users.forEach(userId -> {
          documents.forEach(doc -> events.add(createEventForDocument(doc, userId)));
-         events.add(createEventForCollection(collection, userId));
+         collectionEvents.add(createEventForCollection(collection, userId));
       });
 
       getPusherClient().trigger(events);
+      getPusherClient().trigger(collectionEvents);
    }
 
    private Event createEventForDocument(Document document, String userId) {

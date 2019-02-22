@@ -182,8 +182,6 @@ public class JsExecutor {
             Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
             attributesIdsToAdd.removeAll(oldData.keySet());
 
-            oldData.putAll(newData);
-
             if (attributesIdsToAdd.size() > 0) {
                Optional<Attribute> attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(change.attrId)).findFirst();
                attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
@@ -194,12 +192,13 @@ public class JsExecutor {
             document.setUpdatedBy(ruleTask.getInitiator().getId());
             document.setUpdateDate(ZonedDateTime.now());
 
-            ruleTask.getDaoContextSnapshot().getDataDao()
-                    .patchData(change.document.getCollectionId(), change.document.getId(), newData);
+            DataDocument patchedData = ruleTask.getDaoContextSnapshot().getDataDao()
+                                               .patchData(change.document.getCollectionId(), change.document.getId(), newData);
 
-            final Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
-                                               .updateDocument(document.getId(), document, null);
-            updatedDocument.setData(oldData);
+            Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
+                                                     .updateDocument(document.getId(), document, null);
+
+            updatedDocument.setData(patchedData);
 
             updatedDocuments.computeIfAbsent(change.document.getCollectionId(), key -> new ArrayList<>())
                             .add(updatedDocument);
@@ -210,9 +209,9 @@ public class JsExecutor {
 
          // send push notification
          if (ruleTask.getPusherClient() != null) {
-            updatedDocuments.keySet().forEach(collectionId -> {
-               ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId));
-            });
+            updatedDocuments.keySet().forEach(collectionId ->
+                  ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId))
+            );
          }
       }
 
