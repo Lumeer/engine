@@ -89,6 +89,56 @@ public class FunctionXmlParserTest {
          + "  </block>\n"
          + "</xml>\n";
 
+   private final static String xml2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+         + "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+         + "   <variables>\n"
+         + "      <variable type=\"5c6ea86e9e9ffa355dffe274_document\" id=\"`Y.|2l%)p4/S8:c)OX]W\">thisDocument</variable>\n"
+         + "   </variables>\n"
+         + "   <block type=\"value_container\" id=\"K%pQ5pJt]{RuElJxg-MZ\" deletable=\"false\" x=\"85\" y=\"172\">\n"
+         + "      <value name=\"VALUE\">\n"
+         + "         <block type=\"math_arithmetic\" id=\"OinGgg~N5T=Y4BHF-B(f\">\n"
+         + "            <field name=\"OP\">ADD</field>\n"
+         + "            <value name=\"A\">\n"
+         + "               <shadow type=\"math_number\" id=\"PfIu4{[AQFtuD9V[52_2\">\n"
+         + "                  <field name=\"NUM\">1</field>\n"
+         + "               </shadow>\n"
+         + "               <block type=\"get_attribute\" id=\",V:g_fM0Ws~,ym=`JDb]\">\n"
+         + "                  <field name=\"ATTR\">a2</field>\n"
+         + "                  <value name=\"DOCUMENT\">\n"
+         + "                     <block type=\"variables_get_5c6ea86e9e9ffa355dffe274_document\" id=\"X8wPwMXQ5}?J#60]`zfu\" editable=\"false\">\n"
+         + "                        <field name=\"VAR\" id=\"`Y.|2l%)p4/S8:c)OX]W\" variabletype=\"5c6ea86e9e9ffa355dffe274_document\">thisDocument</field>\n"
+         + "                     </block>\n"
+         + "                  </value>\n"
+         + "               </block>\n"
+         + "            </value>\n"
+         + "            <value name=\"B\">\n"
+         + "               <shadow type=\"math_number\" id=\"`x$#OLP)`rR3L18r/CPM\">\n"
+         + "                  <field name=\"NUM\">1</field>\n"
+         + "               </shadow>\n"
+         + "               <block type=\"math_on_list\" id=\"^yhK,t~Ig3#?lo-|%Zjg\">\n"
+         + "                  <mutation op=\"SUM\" />\n"
+         + "                  <field name=\"OP\">SUM</field>\n"
+         + "                  <value name=\"LIST\">\n"
+         + "                     <block type=\"get_attribute\" id=\"]cm`KH:#OBfV=k(2[5Nw\">\n"
+         + "                        <field name=\"ATTR\">a4</field>\n"
+         + "                        <value name=\"DOCUMENT\">\n"
+         + "                           <block type=\"5c6f3b389e9ffa43fe6a2dcc-5becabd79e9ffa0a690775ea_5c6ea86e9e9ffa355dffe274_link\" id=\"MN[2Ktf)HJaC#/^;EUMD\">\n"
+         + "                              <value name=\"DOCUMENT\">\n"
+         + "                                 <block type=\"variables_get_5c6ea86e9e9ffa355dffe274_document\" id=\"W7sJok~+kMt-AWNh1fGw\" editable=\"false\">\n"
+         + "                                    <field name=\"VAR\" id=\"`Y.|2l%)p4/S8:c)OX]W\" variabletype=\"5c6ea86e9e9ffa355dffe274_document\">thisDocument</field>\n"
+         + "                                 </block>\n"
+         + "                              </value>\n"
+         + "                           </block>\n"
+         + "                        </value>\n"
+         + "                     </block>\n"
+         + "                  </value>\n"
+         + "               </block>\n"
+         + "            </value>\n"
+         + "         </block>\n"
+         + "      </value>\n"
+         + "   </block>\n"
+         + "</xml>";
+
    @Test
    public void parseFunctionXml() {
       List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml);
@@ -99,6 +149,17 @@ public class FunctionXmlParserTest {
             new FunctionXmlParser.AttributeReference("a3", "5c5b3f01b9437f682e35d3b5", null),
             new FunctionXmlParser.AttributeReference("a4", "6c5b3f08b9437f682e35d3b7", "6c5b6a73b9437f682e35d3ba"),
             new FunctionXmlParser.AttributeReference("a2", "5c5b3f08b9437f682e35d3b7", "5c5b6a73b9437f682e35d3ba")
+      );
+   }
+
+   @Test
+   public void parseFunctionXml2() {
+      List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml2);
+
+      assertThat(attributeReferences).hasSize(2);
+      assertThat(attributeReferences).contains(
+            new FunctionXmlParser.AttributeReference("a2", "5c6ea86e9e9ffa355dffe274", null),
+            new FunctionXmlParser.AttributeReference("a4", "5becabd79e9ffa0a690775ea", "5c6f3b389e9ffa43fe6a2dcc")
       );
    }
 }
