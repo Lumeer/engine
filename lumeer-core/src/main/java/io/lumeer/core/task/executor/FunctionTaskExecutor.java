@@ -22,9 +22,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.core.task.FunctionTask;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,22 +54,37 @@ public class FunctionTaskExecutor {
          jsExecutor.commitChanges();
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to execute function: ", e);
-         writeTaskError(e);
+         writeTaskError(e, jsExecutor.getCause());
+         jsExecutor.setErrorInAttribute(document, task.getAttribute().getId());
       }
    }
 
-   private void writeTaskError(final Exception e) {
-      try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
-         e.printStackTrace(pw);
+   private void writeTaskError(final Exception e, final Exception cause) {
+      final StringBuilder sb = new StringBuilder();
+      sb.append(getStackTrace(e, 10));
 
-         task.getFunction().setErrorReport(sw.toString());
-         task.getFunction().setTimestamp(System.currentTimeMillis());
-
-         task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
-
-         task.sendPushNotifications(collection);
-      } catch (IOException ioe) {
-         // we tried, cannot do more
+      if (cause != null) {
+         sb.append("Caused by\n");
+         sb.append(getStackTrace(cause, 10));
       }
+
+      task.getFunction().setErrorReport(sb.toString());
+      task.getFunction().setTimestamp(System.currentTimeMillis());
+
+      task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
+
+      task.sendPushNotifications(collection);
+   }
+
+   private String getStackTrace(final Exception e, int lines) {
+      final StringBuilder sb = new StringBuilder();
+      sb.append(e.toString());
+
+      final StackTraceElement[] trace = e.getStackTrace();
+      for (int i = 0; i < lines && i < trace.length; i++) {
+         sb.append("\tat" + trace[i]);
+      }
+
+      return sb.toString();
    }
 }

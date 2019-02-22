@@ -58,7 +58,7 @@ public class FunctionXmlParserTest {
          + "      <block type=\"get_attribute\" id=\"M*`q@i|N]vM?0t@@}Y0M\">\n"
          + "        <field name=\"ATTR\">a4</field>\n"
          + "        <value name=\"DOCUMENT\">\n"
-         + "          <block type=\"6c5b6a73b9437f682e35d3ba-5c5b3f01b9437f682e35d3b5_5c5b3f08b9437f682e35d3b7_link\" id=\"N:5(]ib+gAzq**Zh9KBE\">\n"
+         + "          <block type=\"6c5b6a73b9437f682e35d3ba-6c5b3f01b9437f682e35d3b5_6c5b3f08b9437f682e35d3b7_link\" id=\"N:5(]ib+gAzq**Zh9KBE\">\n"
          + "            <value name=\"DOCUMENT\">\n"
          + "              <block type=\"variables_get_6c5b3f01b9437f682e35d3b5_document\" id=\"()?mhL#9R}TUWd))pO-z\" editable=\"false\">\n"
          + "                <field name=\"VAR\" id=\"htj,W_{y[i#NwzoQ!U$W\" variabletype=\"6c5b3f01b9437f682e35d3b5_document\">oldDocument</field>\n"
@@ -95,10 +95,10 @@ public class FunctionXmlParserTest {
 
       assertThat(attributeReferences).hasSize(4);
       assertThat(attributeReferences).contains(
-            new FunctionXmlParser.AttributeReference("a1", "5c5b3f01b9437f682e35d3b5", "5c5b6a73b9437f682e35d3ba"),
+            new FunctionXmlParser.AttributeReference("a1", "5c5b3f08b9437f682e35d3b7", "5c5b6a73b9437f682e35d3ba"),
             new FunctionXmlParser.AttributeReference("a3", "5c5b3f01b9437f682e35d3b5", null),
-            new FunctionXmlParser.AttributeReference("a4", "6c5b3f01b9437f682e35d3b5", "6c5b6a73b9437f682e35d3ba"),
-            new FunctionXmlParser.AttributeReference("a2", "5c5b3f01b9437f682e35d3b5", "5c5b6a73b9437f682e35d3ba")
+            new FunctionXmlParser.AttributeReference("a4", "6c5b3f08b9437f682e35d3b7", "6c5b6a73b9437f682e35d3ba"),
+            new FunctionXmlParser.AttributeReference("a2", "5c5b3f08b9437f682e35d3b7", "5c5b6a73b9437f682e35d3ba")
       );
    }
 }

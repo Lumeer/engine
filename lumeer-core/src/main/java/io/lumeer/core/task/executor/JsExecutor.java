@@ -66,6 +66,7 @@ public class JsExecutor {
       private ContextualTask ruleTask;
       private Collection collection;
       private Set<DocumentChange> changes = new HashSet<>();
+      private Exception cause = null;
 
       static {
          constraintManager = new ConstraintManager();
@@ -84,7 +85,12 @@ public class JsExecutor {
       }
 
       public void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
-         changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
+         try {
+            changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
       }
 
       Object convertValue(final Value value) {
@@ -106,58 +112,73 @@ public class JsExecutor {
       }
 
       public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
-         final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
-         final String otherCollectionId = linkType.getCollectionIds().get(0).equals(collection.getId()) ?
-               linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
+         try {
+            final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
+            final String otherCollectionId = linkType.getCollectionIds().get(0).equals(collection.getId()) ?
+                  linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
 
-         final SearchQuery query = SearchQuery
-               .createBuilder()
-               .stems(Collections.singletonList(
-                     SearchQueryStem
-                           .createBuilder("")
-                           .linkTypeIds(Collections.singletonList(linkTypeId))
-                           .documentIds(Set.of(d.document.getId()))
-                           .build()))
-               .build();
+            final SearchQuery query = SearchQuery
+                  .createBuilder()
+                  .stems(Collections.singletonList(
+                        SearchQueryStem
+                              .createBuilder("")
+                              .linkTypeIds(Collections.singletonList(linkTypeId))
+                              .documentIds(Set.of(d.document.getId()))
+                              .build()))
+                  .build();
 
-         // load linked document ids
-         final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                                                  .searchLinkInstances(query);
+            // load linked document ids
+            final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                     .searchLinkInstances(query);
 
-         if (links.size() > 0) {
-            final Set<String> documentIds = links.stream()
-                                                 .map(LinkInstance::getDocumentIds)
-                                                 .flatMap(java.util.Collection::stream)
-                                                 .collect(Collectors.toSet());
-            documentIds.remove(d.document.getId());
+            if (links.size() > 0) {
+               final Set<String> documentIds = links.stream()
+                                                    .map(LinkInstance::getDocumentIds)
+                                                    .flatMap(java.util.Collection::stream)
+                                                    .collect(Collectors.toSet());
+               documentIds.remove(d.document.getId());
 
-            // load document data
-            final Map<String, DataDocument> data = new HashMap<>();
-            ruleTask.getDaoContextSnapshot().getDataDao()
-                    .getData(otherCollectionId, documentIds)
-                    .forEach(dd -> data.put(dd.getId(), dd));
+               // load document data
+               final Map<String, DataDocument> data = new HashMap<>();
+               ruleTask.getDaoContextSnapshot().getDataDao()
+                       .getData(otherCollectionId, documentIds)
+                       .forEach(dd -> data.put(dd.getId(), dd));
 
-            // load document meta data and match them with user data
-            return ruleTask.getDaoContextSnapshot().getDocumentDao()
-                           .getDocumentsByIds(documentIds.toArray(new String[0]))
-                           .stream().map(document -> {
-                     document.setData(data.get(document.getId()));
-                     return new DocumentBridge(document);
-                  }).collect(Collectors.toList());
-         } else {
-            return Collections.emptyList();
+               // load document meta data and match them with user data
+               return ruleTask.getDaoContextSnapshot().getDocumentDao()
+                              .getDocumentsByIds(documentIds.toArray(new String[0]))
+                              .stream().map(document -> {
+                        document.setData(data.get(document.getId()));
+                        return new DocumentBridge(document);
+                     }).collect(Collectors.toList());
+            } else {
+               return Collections.emptyList();
+            }
+         } catch (Exception e) {
+            cause = e;
+            throw e;
          }
       }
 
       public Value getDocumentAttribute(DocumentBridge d, String attrId) {
-         return Value.asValue(d.document.getData().get(attrId));
+         try {
+            return Value.asValue(d.document.getData().get(attrId));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
       }
 
       public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
-         final List<Value> result = new ArrayList<>();
-         docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
+         try {
+            final List<Value> result = new ArrayList<>();
+            docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
 
-         return result;
+            return result;
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
       }
 
       void commitChanges() {
@@ -196,7 +217,7 @@ public class JsExecutor {
                                                .patchData(change.document.getCollectionId(), change.document.getId(), newData);
 
             Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
-                                                     .updateDocument(document.getId(), document, null);
+                                               .updateDocument(document.getId(), document, null);
 
             updatedDocument.setData(patchedData);
 
@@ -330,4 +351,12 @@ public class JsExecutor {
       return lumeerBridge.getChanges();
    }
 
+   public void setErrorInAttribute(final Document document, final String attributeId) {
+      lumeerBridge.changes = Set.of(new DocumentChange(document, attributeId, "ERR!"));
+      lumeerBridge.commitChanges();
+   }
+
+   public Exception getCause() {
+      return lumeerBridge.cause;
+   }
 }
