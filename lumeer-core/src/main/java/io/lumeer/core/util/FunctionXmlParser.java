@@ -27,7 +27,6 @@ import org.xml.sax.SAXException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -80,13 +79,15 @@ public final class FunctionXmlParser {
                }
             });
 
-            for (Node value = element.getFirstChild(); value.getNextSibling() != null; value = value.getNextSibling()) {
-               if (value.getNodeName().equals(VALUE_TAG)) {
+            Node value = element.getFirstChild();
+            while (value != null) {
+               if (value.getNodeType() == Node.ELEMENT_NODE && value.getNodeName().equals(VALUE_TAG)) {
                   final Element valueElement = (Element) value;
                   if (DOCUMENT_ATTRIBUTE_VALUE.equals(valueElement.getAttribute(NAME_ATTRIBUTE))) {
 
-                     for (Node childBlock = value.getFirstChild(); childBlock.getNextSibling() != null; childBlock = childBlock.getNextSibling()) {
-                        if (childBlock.getNodeName().equals(BLOCK_TAG)) {
+                     Node childBlock = value.getFirstChild();
+                     while (childBlock != null) {
+                        if (childBlock.getNodeType() == Node.ELEMENT_NODE && childBlock.getNodeName().equals(BLOCK_TAG)) {
 
                            final Element childBlockElement = (Element) childBlock;
                            final String type = childBlockElement.getAttribute(TYPE_ATTRIBUTE);
@@ -122,9 +123,13 @@ public final class FunctionXmlParser {
                               }
                            }
                         }
+
+                        childBlock = childBlock.getNextSibling();
                      }
                   }
                }
+
+               value = value.getNextSibling();
             }
             attributeReferences.add(attributeReference);
          }
