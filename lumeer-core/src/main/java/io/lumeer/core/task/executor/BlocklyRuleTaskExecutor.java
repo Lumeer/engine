@@ -61,9 +61,18 @@ public class BlocklyRuleTaskExecutor {
          } else {
             writeDryRunResults(jsExecutor.getChanges());
          }
+
+         checkErrorErasure();
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to execute Blockly Rule on document change: ", e);
          writeTaskError(e);
+      }
+   }
+
+   private void checkErrorErasure() {
+      if (rule.getError() != null && rule.getError().length() > 0 && System.currentTimeMillis() - rule.getResultTimestamp() > 3600_000) {
+         rule.setError("");
+         updateRule();
       }
    }
 

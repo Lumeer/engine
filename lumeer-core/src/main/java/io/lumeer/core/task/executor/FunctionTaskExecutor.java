@@ -52,6 +52,7 @@ public class FunctionTaskExecutor {
       try {
          jsExecutor.execute(bindings, task, collection, task.getFunction().getJs());
          jsExecutor.commitChanges();
+         checkErrorErasure();
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to execute function: ", e);
          writeTaskError(e, jsExecutor.getCause());
@@ -59,9 +60,19 @@ public class FunctionTaskExecutor {
       }
    }
 
+   private void checkErrorErasure() {
+      if (task.getFunction().getTimestamp() > 0 && System.currentTimeMillis() - task.getFunction().getTimestamp() > 3600_000) {
+         task.getFunction().setErrorReport("");
+         task.getFunction().setTimestamp(0L);
+
+         task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
+         // we won't send push notifications as this is not important, it gets updated eventually
+      }
+   }
+
    private void writeTaskError(final Exception e, final Exception cause) {
       final StringBuilder sb = new StringBuilder();
-      sb.append(getStackTrace(e, 10));
+      sb.append(getStackTrace(e, 2));
 
       if (cause != null) {
          sb.append("Caused by\n");
