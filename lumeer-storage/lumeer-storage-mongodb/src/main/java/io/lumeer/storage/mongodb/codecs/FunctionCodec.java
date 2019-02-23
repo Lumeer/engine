@@ -37,6 +37,7 @@ public class FunctionCodec implements Codec<Function> {
    public static final String XML = "xml";
    public static final String ERROR_REPORT = "errorReport";
    public static final String TIMESTAMP = "timestamp";
+   public static final String EDITABLE = "editable";
 
    private final Codec<Document> documentCodec;
 
@@ -57,7 +58,8 @@ public class FunctionCodec implements Codec<Function> {
             .append(JS, function.getJs())
             .append(XML, function.getXml())
             .append(ERROR_REPORT, function.getErrorReport())
-            .append(TIMESTAMP, function.getTimestamp());
+            .append(TIMESTAMP, function.getTimestamp())
+            .append(EDITABLE, function.isEditable());
 
       documentCodec.encode(writer, bson, encoderContext);
    }
@@ -76,8 +78,9 @@ public class FunctionCodec implements Codec<Function> {
       String xml = document.getString(XML);
       String errorReport = document.getString(ERROR_REPORT);
       long timestamp = document.getLong(TIMESTAMP);
+      boolean editable = document.getBoolean(EDITABLE, false);
 
-      return new Function(js, xml, errorReport, timestamp);
+      return new Function(js, xml, errorReport, timestamp, editable);
    }
 
 }
