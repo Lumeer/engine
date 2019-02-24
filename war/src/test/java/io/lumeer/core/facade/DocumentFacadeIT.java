@@ -48,6 +48,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
@@ -189,8 +190,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(storedData).containsEntry(KEY1, VALUE1);
       assertThat(storedData).containsEntry(KEY2, VALUE2);
       assertThat(storedData.get(KEY3)).isInstanceOf(Long.class);
-      assertThat(storedData.get(KEY4)).isInstanceOf(org.bson.types.Decimal128.class);
-      assertThat(storedData.get(KEY5)).isInstanceOf(org.bson.types.Decimal128.class);
+      assertThat(storedData.get(KEY4)).isInstanceOf(BigDecimal.class);
+      assertThat(storedData.get(KEY5)).isInstanceOf(BigDecimal.class);
 
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
