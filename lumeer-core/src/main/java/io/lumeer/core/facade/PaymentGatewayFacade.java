@@ -142,7 +142,7 @@ public class PaymentGatewayFacade {
       ensureToken(true);
 
       try {
-         return convertState(connector.paymentStatus(new Long(paymentId)).getState());
+         return convertState(connector.paymentStatus(Long.valueOf(paymentId)).getState());
       } catch (GPClientException e) {
          throw new PaymentGatewayException(e);
       }

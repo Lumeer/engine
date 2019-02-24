@@ -1,4 +1,4 @@
-package io.lumeer.engine.api.constraint;
+package io.lumeer.core.constraint;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +35,7 @@ public class ConstraintManagerTest {
       assertThat(cm.encode("a2")).isInstanceOf(String.class);
 
       final String longNumber = new BigDecimal(Double.MAX_VALUE).multiply(new BigDecimal(Double.MAX_VALUE)).toString();
-      assertThat(cm.encode(longNumber)).isInstanceOf(BigDecimal.class);
+      assertThat(cm.encode(longNumber)).isInstanceOf(String.class);
       assertThat(longNumber).isEqualTo(cm.encode(longNumber).toString());
    }
 
@@ -74,8 +74,10 @@ public class ConstraintManagerTest {
       final NumberFormat nf = NumberFormat.getNumberInstance(l);
       final String validDouble = nf.format(0.02);
       final String validLong = nf.format(123);
+      final BigDecimal bdv = new BigDecimal("123454.434563456345");
+      final String validBigDecimal = bdv.toString();
       final BigDecimal bd = new BigDecimal(Double.MAX_VALUE).multiply(new BigDecimal(Double.MAX_VALUE));
-      final String validBigDecimal = bd.toString();
+      final String unstorableBigDecimal = bd.toString(); // does not fit into Decimal128
 
       Object encoded = cm.encode(validDouble, numberConstraint);
       assertThat(encoded).isInstanceOf(BigDecimal.class);
@@ -87,7 +89,11 @@ public class ConstraintManagerTest {
 
       encoded = cm.encode(validBigDecimal, numberConstraint);
       assertThat(encoded).isInstanceOf(BigDecimal.class);
-      assertThat(encoded).isEqualTo(bd);
+      assertThat(encoded).isEqualTo(bdv);
+
+      encoded = cm.encode(unstorableBigDecimal, numberConstraint);
+      assertThat(encoded).isInstanceOf(String.class);
+      assertThat(encoded).isEqualTo(unstorableBigDecimal);
    }
 
    @Test

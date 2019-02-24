@@ -26,6 +26,8 @@ import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -42,11 +44,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -71,6 +75,23 @@ public class SearchFacade extends AbstractFacade {
    @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   private ConstraintManager constraintManager;
+
+   @PostConstruct
+   public void init() {
+      constraintManager = new ConstraintManager();
+      final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
+
+      if (locale != null && !"".equals(locale)) {
+         constraintManager.setLocale(Locale.forLanguageTag(locale));
+      } else {
+         constraintManager.setLocale(Locale.getDefault());
+      }
+   }
+
    public List<LinkInstance> getLinkInstances(Query query) {
       return linkInstanceDao.searchLinkInstances(buildSearchQuery(query));
    }
@@ -86,14 +107,22 @@ public class SearchFacade extends AbstractFacade {
 
    public List<Document> searchDocuments(final Query query) {
       final List<Collection> collections = getReadCollections();
+      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(collection -> collection.getId(), collection -> collection));
+      final List<Document> result;
 
       if (query.isEmpty()) {
-         return new ArrayList<>(getChildDocuments(searchDocumentsByEmptyQuery(query, collections)));
+         result = new ArrayList<>(getChildDocuments(searchDocumentsByEmptyQuery(query, collections)));
       } else if (query.containsStems()) {
-         return new ArrayList<>(searchDocumentsByStems(query, collections));
+         result = new ArrayList<>(searchDocumentsByStems(query, collections));
       } else {
-         return new ArrayList<>(getChildDocuments(searchDocumentsByFulltexts(query, collections)));
+         result = new ArrayList<>(getChildDocuments(searchDocumentsByFulltexts(query, collections)));
       }
+
+      result.forEach(document -> {
+         constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData());
+      });
+
+      return result;
    }
 
    private List<Collection> getReadCollections() {
