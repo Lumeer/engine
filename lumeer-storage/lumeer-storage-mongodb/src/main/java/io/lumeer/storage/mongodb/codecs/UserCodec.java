@@ -56,6 +56,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String AGREEMENT = "agreement";
    public static final String AGREEMENT_DATE = "agreementDate";
    public static final String NEWSLETTER = "newsletter";
+   public static final String WIZARD_DISMISSED = "wizard";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -114,8 +115,9 @@ public class UserCodec implements CollectibleCodec<User> {
          agreementDate = ZonedDateTime.ofInstant(bson.getDate(AGREEMENT_DATE).toInstant(), ZoneOffset.UTC);
       }
       Boolean newsletter = bson.getBoolean(NEWSLETTER);
+      Boolean wizardDismissed = bson.getBoolean(WIZARD_DISMISSED);
 
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter);
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed);
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
 
@@ -146,6 +148,7 @@ public class UserCodec implements CollectibleCodec<User> {
          bson.append(AGREEMENT_DATE, new Date(user.getAgreementDate().toInstant().toEpochMilli()));
       }
       bson.append(NEWSLETTER, user.hasNewsletter());
+      bson.append(WIZARD_DISMISSED, user.getWizardDismissed());
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }

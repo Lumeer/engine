@@ -46,6 +46,7 @@ public class User {
    public static final String AGREEMENT = "agreement";
    public static final String AGREEMENT_DATE = "agreementDate";
    public static final String NEWSLETTER = "newsletter";
+   public static final String WIZARD_DISMISSED = "wizard";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -75,6 +76,9 @@ public class User {
    @JsonView(UserViews.FullView.class)
    private Boolean newsletter;
 
+   @JsonView(UserViews.FullView.class)
+   private Boolean wizardDismissed;
+
    private List<String> wishes;
 
    public User(final String email) {
@@ -97,7 +101,8 @@ public class User {
          @JsonProperty(WISHES) final List<String> wishes,
          @JsonProperty(AGREEMENT) final Boolean agreement,
          @JsonProperty(AGREEMENT_DATE) final ZonedDateTime agreementDate,
-         @JsonProperty(NEWSLETTER) final Boolean newsletter) {
+         @JsonProperty(NEWSLETTER) final Boolean newsletter,
+         @JsonProperty(WIZARD_DISMISSED) final Boolean wizardDismissed) {
       this.id = id;
       this.name = name;
       this.email = email;
@@ -106,6 +111,7 @@ public class User {
       this.agreement = agreement;
       this.agreementDate = agreementDate;
       this.newsletter = newsletter;
+      this.wizardDismissed = wizardDismissed;
    }
 
    public String getId() {
@@ -188,6 +194,31 @@ public class User {
       this.newsletter = newsletter;
    }
 
+   public Boolean getWizardDismissed() {
+      return wizardDismissed;
+   }
+
+   public void setWizardDismissed(final Boolean wizardDismissed) {
+      this.wizardDismissed = wizardDismissed;
+   }
+
+   @Override
+   public String toString() {
+      return "User{" +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            ", email='" + email + '\'' +
+            ", authIds=" + authIds +
+            ", groups=" + groups +
+            ", defaultWorkspace=" + defaultWorkspace +
+            ", agreement=" + agreement +
+            ", agreementDate=" + agreementDate +
+            ", newsletter=" + newsletter +
+            ", wizardDismissed=" + wizardDismissed +
+            ", wishes=" + wishes +
+            '}';
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -197,28 +228,22 @@ public class User {
          return false;
       }
       final User user = (User) o;
-      return Objects.equals(id, user.id);
+      return Objects.equals(id, user.id) &&
+            Objects.equals(name, user.name) &&
+            Objects.equals(email, user.email) &&
+            Objects.equals(authIds, user.authIds) &&
+            Objects.equals(groups, user.groups) &&
+            Objects.equals(defaultWorkspace, user.defaultWorkspace) &&
+            Objects.equals(agreement, user.agreement) &&
+            Objects.equals(agreementDate, user.agreementDate) &&
+            Objects.equals(newsletter, user.newsletter) &&
+            Objects.equals(wizardDismissed, user.wizardDismissed) &&
+            Objects.equals(wishes, user.wishes);
    }
 
    @Override
    public int hashCode() {
-
-      return Objects.hash(id);
+      return Objects.hash(id, name, email, authIds, groups, defaultWorkspace, agreement, agreementDate, newsletter, wizardDismissed, wishes);
    }
 
-   @Override
-   public String toString() {
-      return "User{" +
-            "id='" + id + '\'' +
-            ", name='" + name + '\'' +
-            ", email='" + email + '\'' +
-            ", authId='" + authIds + '\'' +
-            ", groups=" + groups +
-            ", defaultWorkspace=" + defaultWorkspace +
-            ", agreement=" + agreement +
-            ", agreementDate=" + agreementDate +
-            ", newsletter=" + newsletter +
-            ", wishes=" + wishes +
-            '}';
-   }
 }
