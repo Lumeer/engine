@@ -16,17 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.constraint;
+package io.lumeer.core.constraint;
 
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.engine.api.data.DataDocument;
 
-import java.text.DateFormat;
+import org.bson.types.Decimal128;
+
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -35,8 +39,11 @@ import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Holds a list of constraints that can be obtained from a list of string configurations.
@@ -67,6 +74,10 @@ public class ConstraintManager {
 
    private Set<DateTimeFormatter> formatters;
 
+   private DateTimeFormatter dateDecoder;
+
+   private static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
+
    /**
     * Gets the currently used locale.
     *
@@ -94,12 +105,13 @@ public class ConstraintManager {
    }
 
    private void initDateTimeFormatters(final Locale locale) {
-       formatters = Set.of(
-             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale),
-             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSO", locale),
-             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSx", locale),
-             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", locale)
-       );
+      dateDecoder = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale);
+      formatters = Set.of(
+            dateDecoder,
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSO", locale),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSx", locale),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", locale)
+      );
    }
 
    /**
@@ -141,6 +153,17 @@ public class ConstraintManager {
             }
 
             final Number n1 = bigNumberFormat.parse(((String) value).trim());
+
+            if (n1 instanceof BigDecimal) {
+               try {
+                  new Decimal128((BigDecimal) n1); // are we able to fit into Decimal128?
+               } catch (NumberFormatException nfe) {
+                  if (n2 instanceof Double && Double.isInfinite((Double) n2)) {
+                     return null;
+                  }
+                  return n2;
+               }
+            }
 
             return n1.toString().equals(n2.toString()) && !(n2 instanceof Double) ? n2 : n1;
          } catch (final ParseException pe) {
@@ -200,7 +223,7 @@ public class ConstraintManager {
          }
 
          DateTimeFormatter dtf;
-         for(final Iterator<DateTimeFormatter> i = formatters.iterator(); i.hasNext(); ) {
+         for (final Iterator<DateTimeFormatter> i = formatters.iterator(); i.hasNext(); ) {
             dtf = i.next();
             try {
                return Date.from(ZonedDateTime.from(dtf.parse(value.toString().trim())).toInstant());
@@ -211,5 +234,50 @@ public class ConstraintManager {
       }
 
       return value;
+   }
+
+   public Object decode(final Object value, final Constraint constraint) {
+      if (value != null) {
+         if (value instanceof Date) {
+            final ZonedDateTime dt = ZonedDateTime.from(((Date) value).toInstant().atZone(utcZone));
+            try {
+               return dateDecoder.format(dt);
+            } catch (DateTimeException dte) {
+               return value;
+            }
+         }
+
+         if (value instanceof BigDecimal) {
+            return value.toString();
+         }
+      }
+
+      return value;
+   }
+
+   private Map<String, Constraint> getConstraints(final Collection collection) {
+      final Map<String, Constraint> constraints =
+            collection.getAttributes()
+                      .stream()
+                      .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                      .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
+
+      return constraints;
+   }
+
+   public void encodeDataTypes(final Collection collection, final DataDocument data) {
+      processData(data, getConstraints(collection), this::encode);
+   }
+
+   public void decodeDataTypes(final Collection collection, final DataDocument data) {
+      processData(data, getConstraints(collection), this::decode);
+   }
+
+   private void processData(final DataDocument data, final Map<String, Constraint> constraints, final BiFunction<Object, Constraint, Object> processor) {
+      data.keySet().forEach(key -> {
+         if (!DataDocument.ID.equals(key)) {
+            data.put(key, processor.apply(data.get(key), constraints.get(key)));
+         }
+      });
    }
 }

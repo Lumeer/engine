@@ -23,13 +23,12 @@ import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
-import io.lumeer.engine.api.constraint.ConstraintManager;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
@@ -198,7 +197,7 @@ public class JsExecutor {
             DataDocument newData = new DataDocument(change.attrId, change.value);
             DataDocument oldData = new DataDocument(document.getData());
 
-            convertDataTypes(collection, newData);
+            constraintManager.encodeDataTypes(collection, newData);
 
             Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
             attributesIdsToAdd.removeAll(oldData.keySet());
@@ -219,6 +218,7 @@ public class JsExecutor {
             Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
                                                .updateDocument(document.getId(), document, null);
 
+            constraintManager.decodeDataTypes(collection, patchedData);
             updatedDocument.setData(patchedData);
 
             updatedDocuments.computeIfAbsent(change.document.getCollectionId(), key -> new ArrayList<>())
@@ -237,17 +237,7 @@ public class JsExecutor {
       }
 
       private void convertDataTypes(final Collection collection, final DataDocument data) {
-         Map<String, Constraint> constraints =
-               collection.getAttributes()
-                         .stream()
-                         .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
-                         .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
-
-         data.keySet().forEach(key -> {
-            if (!DataDocument.ID.equals(key)) {
-               data.put(key, constraintManager.encode(data.get(key), constraints.get(key)));
-            }
-         });
+         constraintManager.encodeDataTypes(collection, data);
       }
 
       String getChanges() {

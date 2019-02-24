@@ -55,6 +55,11 @@
          <artifactId>jboss-concurrency-api_1.0_spec</artifactId>
       </dependency>
 
+      <dependency>
+         <groupId>org.mongodb</groupId>
+         <artifactId>mongo-java-driver</artifactId>
+      </dependency>
+
       <!-- Testing -->
       <dependency>
          <groupId>org.mockito</groupId>

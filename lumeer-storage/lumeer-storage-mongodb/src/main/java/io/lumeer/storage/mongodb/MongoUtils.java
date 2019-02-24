@@ -25,6 +25,7 @@ import com.mongodb.client.MongoIterable;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -80,6 +81,8 @@ public class MongoUtils {
                   convertNestedAndListDocuments(d);
                }
             }
+         } else if (value instanceof Decimal128) {
+            dataDocument.replace(key, ((Decimal128) value).bigDecimalValue());
          }
       }
    }
