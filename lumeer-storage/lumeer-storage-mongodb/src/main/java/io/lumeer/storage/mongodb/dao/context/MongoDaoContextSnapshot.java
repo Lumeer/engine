@@ -19,6 +19,7 @@
 package io.lumeer.storage.mongodb.dao.context;
 
 import io.lumeer.api.SelectedWorkspace;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.util.ResourceUtils;
@@ -224,13 +225,18 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
          return Collections.emptySet();
       }
 
+      return getCollectionReaders(getCollectionDao().getCollectionById(collectionId));
+   }
+
+   @Override
+   public Set<String> getCollectionReaders(final Collection collection) {
       final Set<String> result = new HashSet<>();
 
       result.addAll(ResourceUtils.usersAllowedRead(organization));
       result.addAll(ResourceUtils.usersAllowedRead(project));
-      result.addAll(ResourceUtils.usersAllowedRead(getCollectionDao().getCollectionById(collectionId)));
+      result.addAll(ResourceUtils.usersAllowedRead(collection));
 
-      getViewDao().getViewsPermissionsByCollection(collectionId).forEach(view ->
+      getViewDao().getViewsPermissionsByCollection(collection.getId()).forEach(view ->
             result.addAll(ResourceUtils.usersAllowedRead(view))
       );
 

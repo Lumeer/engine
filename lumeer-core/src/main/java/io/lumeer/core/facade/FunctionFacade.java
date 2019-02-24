@@ -28,7 +28,9 @@ import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.util.FunctionXmlParser;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -37,6 +39,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,6 +57,9 @@ public class FunctionFacade extends AbstractFacade {
 
    @Inject
    private DocumentDao documentDao;
+
+   @Inject
+   private DataDao dataDao;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
@@ -75,6 +81,13 @@ public class FunctionFacade extends AbstractFacade {
       if (task != null) {
          task.process();
       }
+   }
+
+   private Set<Document> getDocumentsByCollection(String collectionId) {
+      final List<Document> documentsByCollection = documentDao.getDocumentsByCollection(collectionId);
+      Map<String, DataDocument> data = dataDao.getData(collectionId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
+      return documentsByCollection.stream().peek(document -> document.setData(data.get(document.getId())))
+                                  .collect(Collectors.toSet());
    }
 
    private List<FunctionRow> createCollectionRowsFromXml(Collection collection, Attribute attribute) {
@@ -123,14 +136,16 @@ public class FunctionFacade extends AbstractFacade {
    public void onDocumentValueChanged(String collectionId, String attributeId, String documentId) {
       List<FunctionRow> functionRows = functionDao.searchByDependentCollection(collectionId, attributeId);
 
-      List<FunctionTask> tasks = createTasksForDependentCollection(functionRows, Collections.singleton(documentId));
+      String functionResourceId = functionResourceId(FunctionResourceType.COLLECTION, collectionId, attributeId);
+      List<FunctionTask> tasks = createTasksForDependentCollectionRecursive(functionRows, Collections.singleton(documentId), new HashSet<>(Collections.singletonList(functionResourceId)));
       tasks.forEach(FunctionTask::process);
    }
 
    public void onLinkValueChanged(String linkTypeId, String attributeId, String linkInstanceId) {
       List<FunctionRow> functionRows = functionDao.searchByDependentLinkType(linkTypeId, attributeId);
 
-      List<FunctionTask> tasks = createTasksForDependentLinkType(functionRows, Collections.singleton(linkInstanceId));
+      String functionResourceId = functionResourceId(FunctionResourceType.LINK, linkTypeId, attributeId);
+      List<FunctionTask> tasks = createTasksForDependentLinkTypeRecursive(functionRows, Collections.singleton(linkInstanceId), new HashSet<>(Collections.singletonList(functionResourceId)));
       tasks.forEach(FunctionTask::process);
    }
 
@@ -196,7 +211,7 @@ public class FunctionFacade extends AbstractFacade {
                             if (row.getType() == FunctionResourceType.COLLECTION) {
                                Collection collection = collectionDao.getCollectionById(row.getResourceId());
                                Attribute attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(row.getAttributeId())).findFirst().get();
-                               Set<Document> documents = findDocumentsForRow(row, documentIds);
+                               Set<Document> documents =  findDocumentsForRow(row, documentIds);
 
                                return createCollectionTaskRecursive(collection, attribute, documents, functionResourceIds);
                             } else if (row.getType() == FunctionResourceType.LINK) {

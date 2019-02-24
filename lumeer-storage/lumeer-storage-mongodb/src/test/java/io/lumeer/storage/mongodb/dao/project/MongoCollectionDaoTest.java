@@ -100,7 +100,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    static {
       Constraint constraint = new Constraint(ConstraintType.Boolean, new DataDocument());
-      Function function = new Function("js", "xml", "error", 12345L);
+      Function function = new Function("js", "xml", "error", 12345L, false);
       Attribute attribute = new Attribute("a1", ATTRIBUTE1_NAME, constraint, function, 0);
       ATTRIBUTES = Collections.singleton(attribute);
 

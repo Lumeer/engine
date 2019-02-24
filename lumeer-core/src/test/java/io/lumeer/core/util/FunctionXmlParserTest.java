@@ -58,7 +58,7 @@ public class FunctionXmlParserTest {
          + "      <block type=\"get_attribute\" id=\"M*`q@i|N]vM?0t@@}Y0M\">\n"
          + "        <field name=\"ATTR\">a4</field>\n"
          + "        <value name=\"DOCUMENT\">\n"
-         + "          <block type=\"6c5b6a73b9437f682e35d3ba-5c5b3f01b9437f682e35d3b5_5c5b3f08b9437f682e35d3b7_link\" id=\"N:5(]ib+gAzq**Zh9KBE\">\n"
+         + "          <block type=\"6c5b6a73b9437f682e35d3ba-6c5b3f01b9437f682e35d3b5_6c5b3f08b9437f682e35d3b7_link\" id=\"N:5(]ib+gAzq**Zh9KBE\">\n"
          + "            <value name=\"DOCUMENT\">\n"
          + "              <block type=\"variables_get_6c5b3f01b9437f682e35d3b5_document\" id=\"()?mhL#9R}TUWd))pO-z\" editable=\"false\">\n"
          + "                <field name=\"VAR\" id=\"htj,W_{y[i#NwzoQ!U$W\" variabletype=\"6c5b3f01b9437f682e35d3b5_document\">oldDocument</field>\n"
@@ -89,16 +89,107 @@ public class FunctionXmlParserTest {
          + "  </block>\n"
          + "</xml>\n";
 
+   private final static String xml2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+         + "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+         + "   <variables>\n"
+         + "      <variable type=\"5c6ea86e9e9ffa355dffe274_document\" id=\"`Y.|2l%)p4/S8:c)OX]W\">thisDocument</variable>\n"
+         + "   </variables>\n"
+         + "   <block type=\"value_container\" id=\"K%pQ5pJt]{RuElJxg-MZ\" deletable=\"false\" x=\"85\" y=\"172\">\n"
+         + "      <value name=\"VALUE\">\n"
+         + "         <block type=\"math_arithmetic\" id=\"OinGgg~N5T=Y4BHF-B(f\">\n"
+         + "            <field name=\"OP\">ADD</field>\n"
+         + "            <value name=\"A\">\n"
+         + "               <shadow type=\"math_number\" id=\"PfIu4{[AQFtuD9V[52_2\">\n"
+         + "                  <field name=\"NUM\">1</field>\n"
+         + "               </shadow>\n"
+         + "               <block type=\"get_attribute\" id=\",V:g_fM0Ws~,ym=`JDb]\">\n"
+         + "                  <field name=\"ATTR\">a2</field>\n"
+         + "                  <value name=\"DOCUMENT\">\n"
+         + "                     <block type=\"variables_get_5c6ea86e9e9ffa355dffe274_document\" id=\"X8wPwMXQ5}?J#60]`zfu\" editable=\"false\">\n"
+         + "                        <field name=\"VAR\" id=\"`Y.|2l%)p4/S8:c)OX]W\" variabletype=\"5c6ea86e9e9ffa355dffe274_document\">thisDocument</field>\n"
+         + "                     </block>\n"
+         + "                  </value>\n"
+         + "               </block>\n"
+         + "            </value>\n"
+         + "            <value name=\"B\">\n"
+         + "               <shadow type=\"math_number\" id=\"`x$#OLP)`rR3L18r/CPM\">\n"
+         + "                  <field name=\"NUM\">1</field>\n"
+         + "               </shadow>\n"
+         + "               <block type=\"math_on_list\" id=\"^yhK,t~Ig3#?lo-|%Zjg\">\n"
+         + "                  <mutation op=\"SUM\" />\n"
+         + "                  <field name=\"OP\">SUM</field>\n"
+         + "                  <value name=\"LIST\">\n"
+         + "                     <block type=\"get_attribute\" id=\"]cm`KH:#OBfV=k(2[5Nw\">\n"
+         + "                        <field name=\"ATTR\">a4</field>\n"
+         + "                        <value name=\"DOCUMENT\">\n"
+         + "                           <block type=\"5c6f3b389e9ffa43fe6a2dcc-5becabd79e9ffa0a690775ea_5c6ea86e9e9ffa355dffe274_link\" id=\"MN[2Ktf)HJaC#/^;EUMD\">\n"
+         + "                              <value name=\"DOCUMENT\">\n"
+         + "                                 <block type=\"variables_get_5c6ea86e9e9ffa355dffe274_document\" id=\"W7sJok~+kMt-AWNh1fGw\" editable=\"false\">\n"
+         + "                                    <field name=\"VAR\" id=\"`Y.|2l%)p4/S8:c)OX]W\" variabletype=\"5c6ea86e9e9ffa355dffe274_document\">thisDocument</field>\n"
+         + "                                 </block>\n"
+         + "                              </value>\n"
+         + "                           </block>\n"
+         + "                        </value>\n"
+         + "                     </block>\n"
+         + "                  </value>\n"
+         + "               </block>\n"
+         + "            </value>\n"
+         + "         </block>\n"
+         + "      </value>\n"
+         + "   </block>\n"
+         + "</xml>";
+
+   private static final String xml3 = "<xml xmlns=\"http://www.w3.org/1999/xhtml\">"
+         + "<variables>"
+         + "<variable type=\"5c5b3f01b9437f682e35d3b5_document\" id=\"[eC`/hJtnp7pu,n[tN}N\">thisDocument</variable>"
+         + "</variables>"
+         + "<block type=\"value_container\" id=\"kFVlLKE.|V^{mg:+ZLvu\" deletable=\"false\" x=\"36\" y=\"252\">"
+         + "<value name=\"VALUE\"><block type=\"math_on_list\" id=\"?$,qOwaz`c.l,o/{a,c)\"><mutation"
+         + " op=\"SUM\"></mutation><field name=\"OP\">SUM</field><value name=\"LIST\">"
+         + "<block type=\"get_attribute\" id=\"MCfOP6qK@sG=DxDtO.i%\">"
+         + "  <field name=\"ATTR\">a2</field>"
+         + "  <value name=\"DOCUMENT\">"
+         + "    <block type=\"5c5b6a73b9437f682e35d3ba-5c5b3f01b9437f682e35d3b5_5c5b3f08b9437f682e35d3b7_link\" id=\"|zHLK3j{ri%ih6mEyC?a\">"
+         + "      <value name=\"DOCUMENT\">"
+         + "        <block type=\"variables_get_5c5b3f01b9437f682e35d3b5_document\" id=\"),+i~8GeULoD+gIFgvoC\" editable=\"false\">"
+         + "           <field name=\"VAR\" id=\"[eC`/hJtnp7pu,n[tN}N\" variabletype=\"5c5b3f01b9437f682e35d3b5_document\">thisDocument</field>"
+         + "        </block>"
+         + "      </value>"
+         + "    </block>"
+         + "  </value>"
+         + "</block></value></block></value></block></xml>";
+
    @Test
    public void parseFunctionXml() {
       List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml);
 
       assertThat(attributeReferences).hasSize(4);
       assertThat(attributeReferences).contains(
-            new FunctionXmlParser.AttributeReference("a1", "5c5b3f01b9437f682e35d3b5", "5c5b6a73b9437f682e35d3ba"),
+            new FunctionXmlParser.AttributeReference("a1", "5c5b3f08b9437f682e35d3b7", "5c5b6a73b9437f682e35d3ba"),
             new FunctionXmlParser.AttributeReference("a3", "5c5b3f01b9437f682e35d3b5", null),
-            new FunctionXmlParser.AttributeReference("a4", "6c5b3f01b9437f682e35d3b5", "6c5b6a73b9437f682e35d3ba"),
-            new FunctionXmlParser.AttributeReference("a2", "5c5b3f01b9437f682e35d3b5", "5c5b6a73b9437f682e35d3ba")
+            new FunctionXmlParser.AttributeReference("a4", "6c5b3f08b9437f682e35d3b7", "6c5b6a73b9437f682e35d3ba"),
+            new FunctionXmlParser.AttributeReference("a2", "5c5b3f08b9437f682e35d3b7", "5c5b6a73b9437f682e35d3ba")
+      );
+   }
+
+   @Test
+   public void parseFunctionXml2() {
+      List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml2);
+
+      assertThat(attributeReferences).hasSize(2);
+      assertThat(attributeReferences).contains(
+            new FunctionXmlParser.AttributeReference("a2", "5c6ea86e9e9ffa355dffe274", null),
+            new FunctionXmlParser.AttributeReference("a4", "5becabd79e9ffa0a690775ea", "5c6f3b389e9ffa43fe6a2dcc")
+      );
+   }
+
+   @Test
+   public void parseFunctionXml3() {
+      List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml3);
+
+      assertThat(attributeReferences).hasSize(1);
+      assertThat(attributeReferences).contains(
+            new FunctionXmlParser.AttributeReference("a2", "5c5b3f08b9437f682e35d3b7", "5c5b6a73b9437f682e35d3ba")
       );
    }
 }

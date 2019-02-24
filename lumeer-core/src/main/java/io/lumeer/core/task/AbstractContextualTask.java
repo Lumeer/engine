@@ -30,6 +30,7 @@ import org.marvec.pusher.data.Event;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -68,32 +69,34 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final Collection collection) {
       if (getPusherClient() != null) {
          final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
-         final List<Event> events = new ArrayList<>();
-
-         users.stream()
-              .forEach(userId -> {
-                 final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-                 events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
-              });
+         final List<Event> events = users.stream().map(user -> createEventForCollection(collection, user)).collect(Collectors.toList());
 
          getPusherClient().trigger(events);
       }
    }
 
-   @Override
-   public void sendPushNotifications(final String collectionId, final List<String> documentIds) {
-      final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collectionId);
-      final List<Document> documents = getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(documentIds.toArray(new String[0]));
-      final List<Event> events = new ArrayList<>();
+   private Event createEventForCollection(Collection collection, String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
+   }
 
-      users.stream()
-           .forEach(userId ->
-                 documents.forEach(doc -> {
-                          final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(doc, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-                          events.add(new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, doc.getClass().getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message));
-                       }
-                 ));
+   @Override
+   public void sendPushNotifications(final Collection collection, final List<Document> documents) {
+      final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
+      final List<Event> events = new ArrayList<>();
+      final List<Event> collectionEvents = new ArrayList<>();
+
+      users.forEach(userId -> {
+         documents.forEach(doc -> events.add(createEventForDocument(doc, userId)));
+         collectionEvents.add(createEventForCollection(collection, userId));
+      });
 
       getPusherClient().trigger(events);
+      getPusherClient().trigger(collectionEvents);
+   }
+
+   private Event createEventForDocument(Document document, String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, document.getClass().getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
    }
 }

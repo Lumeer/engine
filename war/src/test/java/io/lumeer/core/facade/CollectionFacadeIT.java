@@ -91,7 +91,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private static final String ATTRIBUTE_ID = "a1";
    private static final String ATTRIBUTE_NAME = "fullname";
    private static final Constraint ATTRIBUTE_CONSTRAINT = new Constraint(ConstraintType.Boolean, null);
-   private static final Function ATTRIBUTE_FUNCTION = new Function("js", "xml", "error", 123456L);
+   private static final Function ATTRIBUTE_FUNCTION = new Function("js", "xml", "error", 123456L, false);
    private static final Integer ATTRIBUTE_COUNT = 0;
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";

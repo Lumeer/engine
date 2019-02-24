@@ -18,11 +18,18 @@
  */
 package io.lumeer.core.task.executor;
 
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toSet;
+
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
+import io.lumeer.engine.api.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
@@ -31,13 +38,15 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -52,9 +61,23 @@ public class JsExecutor {
 
    public static class LumeerBridge {
 
+      private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
+      private static ConstraintManager constraintManager;
       private ContextualTask ruleTask;
       private Collection collection;
       private Set<DocumentChange> changes = new HashSet<>();
+      private Exception cause = null;
+
+      static {
+         constraintManager = new ConstraintManager();
+         final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
+
+         if (locale != null && !"".equals(locale)) {
+            constraintManager.setLocale(Locale.forLanguageTag(locale));
+         } else {
+            constraintManager.setLocale(Locale.getDefault());
+         }
+      }
 
       private LumeerBridge(final ContextualTask task, final Collection collection) {
          this.ruleTask = task;
@@ -62,7 +85,12 @@ public class JsExecutor {
       }
 
       public void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
-         changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
+         try {
+            changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
       }
 
       Object convertValue(final Value value) {
@@ -84,77 +112,142 @@ public class JsExecutor {
       }
 
       public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
-         final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
-         final String otherCollectionId = linkType.getCollectionIds().get(0).equals(collection.getId()) ?
-               linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
+         try {
+            final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
+            final String otherCollectionId = linkType.getCollectionIds().get(0).equals(collection.getId()) ?
+                  linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
 
-         final SearchQuery query = SearchQuery
-               .createBuilder()
-               .stems(Arrays.asList(
-                     SearchQueryStem
-                           .createBuilder("")
-                           .linkTypeIds(Arrays.asList(linkTypeId))
-                           .documentIds(Set.of(d.document.getId()))
-                           .build()))
-               .build();
+            final SearchQuery query = SearchQuery
+                  .createBuilder()
+                  .stems(Collections.singletonList(
+                        SearchQueryStem
+                              .createBuilder("")
+                              .linkTypeIds(Collections.singletonList(linkTypeId))
+                              .documentIds(Set.of(d.document.getId()))
+                              .build()))
+                  .build();
 
-         // load linked document ids
-         final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                                                  .searchLinkInstances(query);
+            // load linked document ids
+            final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                     .searchLinkInstances(query);
 
-         if (links.size() > 0) {
-            final Set<String> documentIds = links.stream()
-                                                 .map(linkInstance -> linkInstance.getDocumentIds())
-                                                 .flatMap(java.util.Collection::stream)
-                                                 .collect(Collectors.toSet());
-            documentIds.remove(d.document.getId());
+            if (links.size() > 0) {
+               final Set<String> documentIds = links.stream()
+                                                    .map(LinkInstance::getDocumentIds)
+                                                    .flatMap(java.util.Collection::stream)
+                                                    .collect(Collectors.toSet());
+               documentIds.remove(d.document.getId());
 
-            // load document data
-            final Map<String, DataDocument> data = new HashMap<>();
-            ruleTask.getDaoContextSnapshot().getDataDao()
-                    .getData(otherCollectionId, documentIds)
-                    .forEach(dd -> data.put(dd.getId(), dd));
+               // load document data
+               final Map<String, DataDocument> data = new HashMap<>();
+               ruleTask.getDaoContextSnapshot().getDataDao()
+                       .getData(otherCollectionId, documentIds)
+                       .forEach(dd -> data.put(dd.getId(), dd));
 
-            // load document meta data and match them with user data
-            return ruleTask.getDaoContextSnapshot().getDocumentDao()
-                           .getDocumentsByIds(documentIds.toArray(new String[0]))
-                           .stream().map(document -> {
-                     document.setData(data.get(document.getId()));
-                     return new DocumentBridge(document);
-                  }).collect(Collectors.toList());
-         } else {
-            return Collections.emptyList();
+               // load document meta data and match them with user data
+               return ruleTask.getDaoContextSnapshot().getDocumentDao()
+                              .getDocumentsByIds(documentIds.toArray(new String[0]))
+                              .stream().map(document -> {
+                        document.setData(data.get(document.getId()));
+                        return new DocumentBridge(document);
+                     }).collect(Collectors.toList());
+            } else {
+               return Collections.emptyList();
+            }
+         } catch (Exception e) {
+            cause = e;
+            throw e;
          }
       }
 
       public Value getDocumentAttribute(DocumentBridge d, String attrId) {
-         return Value.asValue(d.document.getData().get(attrId));
+         try {
+            return Value.asValue(d.document.getData().get(attrId));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
       }
 
       public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
-         final List<Value> result = new ArrayList<>();
-         docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
+         try {
+            final List<Value> result = new ArrayList<>();
+            docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
 
-         return result;
+            return result;
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
       }
 
       void commitChanges() {
-         final Map<String, List<String>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
+         if (changes.isEmpty()) {
+            return;
+         }
 
+         final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
+         Map<String, Set<String>> documentIdsByCollection = changes.stream().map(change -> change.document)
+                                                                   .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
+         Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
+                                                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
+         Set<String> collectionsChanged = new HashSet<>();
          changes.forEach(change -> {
-            ruleTask.getDaoContextSnapshot().getDataDao()
-                    .patchData(change.document.getCollectionId(), change.document.getId(),
-                          new DataDocument(change.attrId, change.value));
-            updatedDocuments.computeIfAbsent(change.document.getCollectionId(), key -> new ArrayList<String>())
-                            .add(change.document.getId());
+            Document document = change.document;
+            Collection collection = collectionsMap.get(document.getCollectionId());
+            DataDocument newData = new DataDocument(change.attrId, change.value);
+            DataDocument oldData = new DataDocument(document.getData());
+
+            convertDataTypes(collection, newData);
+
+            Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
+            attributesIdsToAdd.removeAll(oldData.keySet());
+
+            if (attributesIdsToAdd.size() > 0) {
+               Optional<Attribute> attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(change.attrId)).findFirst();
+               attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
+               collection.setLastTimeUsed(ZonedDateTime.now());
+               collectionsChanged.add(collection.getId());
+            }
+
+            document.setUpdatedBy(ruleTask.getInitiator().getId());
+            document.setUpdateDate(ZonedDateTime.now());
+
+            DataDocument patchedData = ruleTask.getDaoContextSnapshot().getDataDao()
+                                               .patchData(change.document.getCollectionId(), change.document.getId(), newData);
+
+            Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
+                                               .updateDocument(document.getId(), document, null);
+
+            updatedDocument.setData(patchedData);
+
+            updatedDocuments.computeIfAbsent(change.document.getCollectionId(), key -> new ArrayList<>())
+                            .add(updatedDocument);
          });
+
+         collectionsChanged.forEach(collectionId -> ruleTask.getDaoContextSnapshot()
+                                                            .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));
 
          // send push notification
          if (ruleTask.getPusherClient() != null) {
-            updatedDocuments.keySet().forEach(collectionId -> {
-               ruleTask.sendPushNotifications(collectionId, updatedDocuments.get(collectionId));
-            });
+            updatedDocuments.keySet().forEach(collectionId ->
+                  ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId))
+            );
          }
+      }
+
+      private void convertDataTypes(final Collection collection, final DataDocument data) {
+         Map<String, Constraint> constraints =
+               collection.getAttributes()
+                         .stream()
+                         .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                         .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
+
+         data.keySet().forEach(key -> {
+            if (!DataDocument.ID.equals(key)) {
+               data.put(key, constraintManager.encode(data.get(key), constraints.get(key)));
+            }
+         });
       }
 
       String getChanges() {
@@ -165,7 +258,7 @@ public class JsExecutor {
             final Collection collection = collections.computeIfAbsent(change.document.getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
 
             sb.append(collection.getName() + "(" + last4(change.document.getId()) + "): ");
-            sb.append(collection.getAttributes().stream().filter(a -> a.getId().equals(change.attrId)).map(a -> a.getName()).findFirst().orElse(""));
+            sb.append(collection.getAttributes().stream().filter(a -> a.getId().equals(change.attrId)).map(Attribute::getName).findFirst().orElse(""));
             sb.append(" = ");
             sb.append(change.value);
             sb.append("\n");
@@ -258,4 +351,12 @@ public class JsExecutor {
       return lumeerBridge.getChanges();
    }
 
+   public void setErrorInAttribute(final Document document, final String attributeId) {
+      lumeerBridge.changes = Set.of(new DocumentChange(document, attributeId, "ERR!"));
+      lumeerBridge.commitChanges();
+   }
+
+   public Exception getCause() {
+      return lumeerBridge.cause;
+   }
 }

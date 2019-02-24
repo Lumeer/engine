@@ -18,6 +18,7 @@
  */
 package io.lumeer.storage.api.dao.context;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -89,4 +90,6 @@ public interface DaoContextSnapshot {
    Set<String> getCollectionManagers(final String collectionId);
 
    Set<String> getCollectionReaders(final String collectionId);
+
+   Set<String> getCollectionReaders(final Collection collection);
 }

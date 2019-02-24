@@ -39,7 +39,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -111,9 +110,9 @@ public class DocumentFacade extends AbstractFacade {
             collection.getAttributes()
                       .stream()
                       .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
-                      .collect(Collectors.toMap(attr -> attr.getId(), attr -> attr.getConstraint()));
+                      .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
 
-      data.keySet().stream().forEach(key -> {
+      data.keySet().forEach(key -> {
          if (!DataDocument.ID.equals(key)) {
             data.put(key, constraintManager.encode(data.get(key), constraints.get(key)));
          }
@@ -340,13 +339,6 @@ public class DocumentFacade extends AbstractFacade {
 
    private User getCurrentUser() {
       return authenticatedUser.getCurrentUser();
-   }
-
-   private List<Document> getDocuments(Map<String, DataDocument> dataDocuments) {
-      String[] documentIds = dataDocuments.keySet().toArray(new String[] {});
-      List<Document> documents = documentDao.getDocumentsByIds(documentIds);
-      documents.forEach(document -> document.setData(dataDocuments.get(document.getId())));
-      return documents;
    }
 
 }

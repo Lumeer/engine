@@ -33,18 +33,21 @@ public class Function {
    public static final String XML = "xml";
    public static final String ERROR_REPORT = "errorReport";
    public static final String TIMESTAMP = "timestamp";
+   public static final String EDITABLE = "editable";
 
    private String js;
    private String xml;
    private String errorReport;
    private long timestamp;
+   private boolean editable;
 
    @JsonCreator
-   public Function(@JsonProperty(JS) final String js, @JsonProperty(XML) final String xml, @JsonProperty(ERROR_REPORT) final String errorReport, @JsonProperty(TIMESTAMP) final long timestamp) {
+   public Function(@JsonProperty(JS) final String js, @JsonProperty(XML) final String xml, @JsonProperty(ERROR_REPORT) final String errorReport, @JsonProperty(TIMESTAMP) final long timestamp, @JsonProperty(EDITABLE) final boolean editable) {
       this.js = js;
       this.xml = xml;
       this.errorReport = errorReport;
       this.timestamp = timestamp;
+      this.editable = editable;
    }
 
    public String getJs() {
@@ -79,24 +82,33 @@ public class Function {
       this.timestamp = timestamp;
    }
 
+   public boolean isEditable() {
+      return editable;
+   }
+
+   public void setEditable(final boolean editable) {
+      this.editable = editable;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (!(o instanceof Function)) {
          return false;
       }
       final Function function = (Function) o;
-      return timestamp == function.timestamp &&
-            Objects.equals(js, function.js) &&
-            Objects.equals(xml, function.xml) &&
-            Objects.equals(errorReport, function.errorReport);
+      return getTimestamp() == function.getTimestamp() &&
+            isEditable() == function.isEditable() &&
+            Objects.equals(getJs(), function.getJs()) &&
+            Objects.equals(getXml(), function.getXml()) &&
+            Objects.equals(getErrorReport(), function.getErrorReport());
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(js, xml, errorReport, timestamp);
+      return Objects.hash(getJs(), getXml(), getErrorReport(), getTimestamp(), isEditable());
    }
 
    @Override
@@ -106,6 +118,7 @@ public class Function {
             ", xml='" + xml + '\'' +
             ", errorReport='" + errorReport + '\'' +
             ", timestamp=" + timestamp +
+            ", editable=" + editable +
             '}';
    }
 }

@@ -25,9 +25,14 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.core.task.executor.FunctionTaskExecutor;
+import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class FunctionTask extends AbstractContextualTask {
 
@@ -86,9 +91,8 @@ public class FunctionTask extends AbstractContextualTask {
 
    @Override
    public void process() {
-
       if (documents != null && collection != null) {
-         documents.forEach(document -> {
+         getDocumentsWithData(collection.getId(), documents).forEach(document -> {
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, collection, document);
             executor.execute();
          });
@@ -99,5 +103,14 @@ public class FunctionTask extends AbstractContextualTask {
       if (parents != null) {
          parents.forEach(FunctionTask::process);
       }
+   }
+
+   private Set<Document> getDocumentsWithData(String collectionId, Set<Document> documents) {
+      if (documents.isEmpty()) {
+         return Collections.emptySet();
+      }
+      Map<String, DataDocument> data = getDaoContextSnapshot().getDataDao().getData(collectionId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
+      return new HashSet<>(documents).stream().peek(document -> document.setData(data.get(document.getId())))
+                                     .collect(Collectors.toSet());
    }
 }

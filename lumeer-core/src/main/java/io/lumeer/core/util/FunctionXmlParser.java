@@ -79,42 +79,58 @@ public final class FunctionXmlParser {
                }
             });
 
-            NodeList values = element.getElementsByTagName(VALUE_TAG);
-            nodeListIterator(values, Node.ELEMENT_NODE, value -> {
-               final Element valueElement = (Element) value;
-               if (DOCUMENT_ATTRIBUTE_VALUE.equals(valueElement.getAttribute(NAME_ATTRIBUTE))) {
+            Node value = element.getFirstChild();
+            while (value != null) {
+               if (value.getNodeType() == Node.ELEMENT_NODE && value.getNodeName().equals(VALUE_TAG)) {
+                  final Element valueElement = (Element) value;
+                  if (DOCUMENT_ATTRIBUTE_VALUE.equals(valueElement.getAttribute(NAME_ATTRIBUTE))) {
 
-                  final NodeList childBlocks = element.getElementsByTagName(BLOCK_TAG);
-                  nodeListIterator(childBlocks, Node.ELEMENT_NODE, childBlock -> {
-                     final Element childBlockElement = (Element) childBlock;
-                     final String type = childBlockElement.getAttribute(TYPE_ATTRIBUTE);
+                     Node childBlock = value.getFirstChild();
+                     while (childBlock != null) {
+                        if (childBlock.getNodeType() == Node.ELEMENT_NODE && childBlock.getNodeName().equals(BLOCK_TAG)) {
 
-                     if (type != null) {
+                           final Element childBlockElement = (Element) childBlock;
+                           final String type = childBlockElement.getAttribute(TYPE_ATTRIBUTE);
 
-                        if (type.endsWith(LINK_SUFFIX)) {
-                           attributeReference.setLinkTypeId(type.split("-")[0]);
+                           if (type != null) {
 
-                           NodeList childValues = childBlockElement.getElementsByTagName(VALUE_TAG);
-                           nodeListIterator(childValues, Node.ELEMENT_NODE, childValue -> {
-                              final Element childValueElement = (Element) childValue;
-                              if (DOCUMENT_ATTRIBUTE_VALUE.equals(childValueElement.getAttribute(NAME_ATTRIBUTE))) {
-                                 final NodeList variableBlocks = childValueElement.getElementsByTagName(BLOCK_TAG);
-                                 nodeListIterator(variableBlocks, Node.ELEMENT_NODE, variable -> {
-                                    final String variableType = ((Element) variable).getAttribute(TYPE_ATTRIBUTE);
-                                    if (variableType != null && variableType.startsWith(VARIABLE_PREFIX)) {
-                                       attributeReference.setCollectionId(variableType.split("_")[2]);
+                              if (type.endsWith(LINK_SUFFIX)) {
+                                 final String[] typeSplit = type.split("-");
+                                 final String[] collectionTypes = typeSplit[1].split("_");
+                                 attributeReference.setLinkTypeId(typeSplit[0]);
+
+                                 NodeList childValues = childBlockElement.getElementsByTagName(VALUE_TAG);
+                                 nodeListIterator(childValues, Node.ELEMENT_NODE, childValue -> {
+                                    final Element childValueElement = (Element) childValue;
+                                    if (DOCUMENT_ATTRIBUTE_VALUE.equals(childValueElement.getAttribute(NAME_ATTRIBUTE))) {
+                                       final NodeList variableBlocks = childValueElement.getElementsByTagName(BLOCK_TAG);
+                                       nodeListIterator(variableBlocks, Node.ELEMENT_NODE, variable -> {
+                                          final String variableType = ((Element) variable).getAttribute(TYPE_ATTRIBUTE);
+                                          if (variableType != null && variableType.startsWith(VARIABLE_PREFIX)) {
+                                             final String thisCollectionId = variableType.split("_")[2];
+                                             attributeReference.setCollectionId(
+                                                   thisCollectionId.equals(collectionTypes[0]) ?
+                                                         collectionTypes[1] :
+                                                         collectionTypes[0]
+                                             );
+                                          }
+                                       });
                                     }
                                  });
-                              }
-                           });
 
-                        } else if (type.startsWith(VARIABLE_PREFIX)) {
-                           attributeReference.setCollectionId(type.split("_")[2]);
+                              } else if (type.startsWith(VARIABLE_PREFIX)) {
+                                 attributeReference.setCollectionId(type.split("_")[2]);
+                              }
+                           }
                         }
+
+                        childBlock = childBlock.getNextSibling();
                      }
-                  });
+                  }
                }
-            });
+
+               value = value.getNextSibling();
+            }
             attributeReferences.add(attributeReference);
          }
       });
