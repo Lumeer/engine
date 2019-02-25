@@ -25,11 +25,13 @@ import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
 
 import com.mongodb.client.model.Filters;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MongoFilters {
@@ -40,6 +42,14 @@ public class MongoFilters {
 
    public static Bson idFilter(String id) {
       return Filters.eq(ID, new ObjectId(id));
+   }
+
+   public static Bson idsFilter(Set<String> ids) {
+      List<ObjectId> objectIds = ids.stream().filter(key -> key != null && ObjectId.isValid(key)).map(ObjectId::new).collect(Collectors.toList());
+      if (!objectIds.isEmpty()) {
+         return Filters.in(ID, objectIds);
+      }
+      return new Document();
    }
 
    public static Bson codeFilter(String code) {

@@ -108,9 +108,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
          if (updatedDocument == null) {
             throw new StorageException("Document '" + id + "' has not been updated.");
          }
-         final Document updatedDocumentWithData = new Document(updatedDocument);
-         updatedDocumentWithData.setData(document.getData());
          if (updateDocumentEvent != null) {
+            final Document updatedDocumentWithData = new Document(updatedDocument);
+            updatedDocumentWithData.setData(document.getData());
             updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData, originalDocument));
          }
          return updatedDocument;

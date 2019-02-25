@@ -25,6 +25,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -107,7 +108,7 @@ public class SearchFacade extends AbstractFacade {
 
    public List<Document> searchDocuments(final Query query) {
       final List<Collection> collections = getReadCollections();
-      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(collection -> collection.getId(), collection -> collection));
+      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       final List<Document> result;
 
       if (query.isEmpty()) {

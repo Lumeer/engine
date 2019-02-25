@@ -33,16 +33,21 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
 
    public static final String ID = "_id";
    public static final String LINK_TYPE_ID = "linkTypeId";
    public static final String DOCUMENTS_IDS = "documentIds";
-   public static final String VERSION = "collectionIds";
-   public static final String DATA = "data";
+   public static final String CREATION_DATE = "creationDate";
+   public static final String UPDATE_DATE = "updateDate";
+   public static final String CREATED_BY = "createdBy";
+   public static final String UPDATED_BY = "updatedBy";
+   public static final String DATA_VERSION = "dataVersion";
 
    private final Codec<Document> documentCodec;
 
@@ -57,11 +62,21 @@ public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
       String id = bson.getObjectId(ID).toHexString();
       String linkTypeId = bson.getString(LINK_TYPE_ID);
       List<String> documentIds = bson.get(DOCUMENTS_IDS, List.class);
-      Map<String, Object> data = bson.get(DATA, Map.class);
-      Long version = bson.getLong(VERSION);
+      Date creationDate = bson.getDate(CREATION_DATE);
+      ZonedDateTime creationZonedDate = creationDate != null ? ZonedDateTime.ofInstant(creationDate.toInstant(), ZoneOffset.UTC) : null;
+      String createdBy = bson.getString(CREATED_BY);
+      Date updateDate = bson.getDate(UPDATE_DATE);
+      ZonedDateTime updatedZonedDate = updateDate != null ? ZonedDateTime.ofInstant(updateDate.toInstant(), ZoneOffset.UTC) : null;
+      String updatedBy = bson.getString(UPDATED_BY);
+      Integer version = bson.getInteger(DATA_VERSION);
 
-      LinkInstance linkInstance = new LinkInstance(id, linkTypeId, documentIds, data);
-      linkInstance.setVersion(version == null ? 1 : version);
+      LinkInstance linkInstance = new LinkInstance(linkTypeId, documentIds);
+      linkInstance.setId(id);
+      linkInstance.setUpdatedBy(updatedBy);
+      linkInstance.setUpdateDate(updatedZonedDate);
+      linkInstance.setCreatedBy(createdBy);
+      linkInstance.setCreationDate(creationZonedDate);
+      linkInstance.setDataVersion(version == null ? 1 : version);
       return linkInstance;
    }
 
@@ -70,7 +85,15 @@ public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
       Document bson = value.getId() != null ? new Document(ID, new ObjectId(value.getId())) : new Document();
       bson.append(LINK_TYPE_ID, value.getLinkTypeId())
           .append(DOCUMENTS_IDS, value.getDocumentIds())
-          .append(DATA, value.getData());
+          .append(CREATED_BY, value.getCreatedBy())
+          .append(UPDATED_BY, value.getUpdatedBy());
+
+      if (value.getCreationDate() != null) {
+         bson.append(CREATION_DATE, Date.from(value.getCreationDate().toInstant()));
+      }
+      if (value.getUpdateDate() != null) {
+         bson.append(UPDATE_DATE, Date.from(value.getUpdateDate().toInstant()));
+      }
 
       documentCodec.encode(writer, bson, encoderContext);
    }

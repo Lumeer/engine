@@ -119,15 +119,15 @@ public class MongoUtils {
    }
 
    public static boolean isDataDocument(Object obj) {
-      return obj != null && obj instanceof DataDocument;
+      return obj instanceof DataDocument;
    }
 
    public static boolean isDocument(Object obj) {
-      return obj != null && obj instanceof Document;
+      return obj instanceof Document;
    }
 
    public static boolean isList(Object obj) {
-      return obj != null && obj instanceof List;
+      return obj instanceof List;
    }
 
    public static String concatParams(String... args) {

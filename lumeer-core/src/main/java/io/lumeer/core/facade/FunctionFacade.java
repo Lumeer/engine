@@ -28,7 +28,6 @@ import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.util.FunctionXmlParser;
-import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -39,7 +38,6 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -81,13 +79,6 @@ public class FunctionFacade extends AbstractFacade {
       if (task != null) {
          task.process();
       }
-   }
-
-   private Set<Document> getDocumentsByCollection(String collectionId) {
-      final List<Document> documentsByCollection = documentDao.getDocumentsByCollection(collectionId);
-      Map<String, DataDocument> data = dataDao.getData(collectionId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
-      return documentsByCollection.stream().peek(document -> document.setData(data.get(document.getId())))
-                                  .collect(Collectors.toSet());
    }
 
    private List<FunctionRow> createCollectionRowsFromXml(Collection collection, Attribute attribute) {

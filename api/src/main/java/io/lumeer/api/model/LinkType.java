@@ -19,11 +19,18 @@
 
 package io.lumeer.api.model;
 
+import io.lumeer.api.util.AttributeUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 public class LinkType {
 
@@ -32,11 +39,14 @@ public class LinkType {
    public static final String COLLECTION_IDS = "collectionIds";
    public static final String ATTRIBUTES = "attributes";
 
+   public static String ATTRIBUTE_PREFIX = "a";
+
    private String id;
    private String name;
    private long version;
    private List<String> collectionIds;
    private List<Attribute> attributes;
+   private Integer lastAttributeNum;
 
    @JsonCreator
    public LinkType(@JsonProperty(ID) final String id,
@@ -47,6 +57,15 @@ public class LinkType {
       this.name = name;
       this.collectionIds = collectionIds;
       this.attributes = attributes;
+   }
+
+   public LinkType(LinkType linkType) {
+      this.id = linkType.getId();
+      this.name = linkType.getName();
+      this.collectionIds = linkType.getCollectionIds();
+      this.version = linkType.getVersion();
+      this.attributes = linkType.getAttributes();
+      this.lastAttributeNum = linkType.getLastAttributeNum();
    }
 
    public String getId() {
@@ -77,8 +96,33 @@ public class LinkType {
       return Collections.unmodifiableList(attributes);
    }
 
-   public void setAttributes(List<Attribute> attributes) {
-      this.attributes = attributes;
+   public void setAttributes(final List<Attribute> attributes) {
+      this.attributes = attributes != null ? new LinkedList<>(attributes) : new LinkedList<>();
+   }
+
+   public void createAttribute(final Attribute attribute) {
+      if (attributes != null) {
+         attributes.add(attribute);
+      } else {
+         attributes = new ArrayList<>(Collections.singletonList(attribute));
+      }
+   }
+
+   public void updateAttribute(final String attributeId, final Attribute attribute) {
+      Optional<Attribute> oldAttribute = attributes.stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
+      attributes.removeIf(a -> a.getId().equals(attributeId));
+
+      oldAttribute.ifPresent((a) -> attribute.setUsageCount(a.getUsageCount()));
+      attributes.add(attribute);
+
+      if (oldAttribute.isPresent() && !oldAttribute.get().getName().equals(attribute.getName())) {
+         AttributeUtil.renameChildAttributes(attributes, oldAttribute.get().getName(), attribute.getName());
+      }
+   }
+
+   public void deleteAttribute(final String attributeId) {
+      Optional<Attribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
+      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
    }
 
    public long getVersion() {
@@ -87,6 +131,14 @@ public class LinkType {
 
    public void setVersion(final long version) {
       this.version = version;
+   }
+
+   public Integer getLastAttributeNum() {
+      return lastAttributeNum;
+   }
+
+   public void setLastAttributeNum(final Integer lastAttributeNum) {
+      this.lastAttributeNum = lastAttributeNum;
    }
 
    @Override
@@ -100,7 +152,7 @@ public class LinkType {
 
       final LinkType linkType = (LinkType) o;
 
-      return id != null ? id.equals(linkType.id) : linkType.id == null;
+      return Objects.equals(id, linkType.id);
    }
 
    @Override
@@ -113,9 +165,10 @@ public class LinkType {
       return "LinkType{" +
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
+            ", version=" + version +
             ", collectionIds=" + collectionIds +
             ", attributes=" + attributes +
+            ", lastAttributeNum=" + lastAttributeNum +
             '}';
    }
-
 }

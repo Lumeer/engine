@@ -19,14 +19,17 @@
 
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.core.facade.ViewFacade;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -90,5 +93,29 @@ public class LinkTypeService extends AbstractService {
       }
 
       return linkTypes;
+   }
+
+   @POST
+   @Path("{linkTypeId}/attributes")
+   public List<Attribute> createLinkTypeAttributes(@PathParam("linkTypeId") String linkTypeId, List<Attribute> attributes) {
+      return new ArrayList<>(linkTypeFacade.createLinkTypeAttributes(linkTypeId, attributes));
+   }
+
+   @PUT
+   @Path("{linkTypeId}/attributes/{attributeId}")
+   public Attribute updateLinkTypeAttribute(@PathParam("linkTypeId") String linkTypeId, @PathParam("attributeId") String attributeId, Attribute attribute) {
+      return linkTypeFacade.updateLinkTypeAttribute(linkTypeId, attributeId, attribute);
+   }
+
+   @DELETE
+   @Path("{linkTypeId}/attributes/{attributeId}")
+   public Response deleteCollectionAttribute(@PathParam("linkTypeId") String linkTypeId, @PathParam("attributeId") String attributeId) {
+      if (attributeId == null) {
+         throw new BadRequestException("attributeId");
+      }
+
+      linkTypeFacade.deleteLinkTypeAttribute(linkTypeId, attributeId);
+
+      return Response.ok().link(getParentUri(attributeId), "parent").build();
    }
 }

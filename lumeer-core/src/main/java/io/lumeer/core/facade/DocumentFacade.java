@@ -25,6 +25,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataDocument;
@@ -39,11 +40,8 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -87,14 +85,13 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document createDocument(String collectionId, Document document) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+      Collection collection = checkCollectionWritePermissions(collectionId);
       permissionsChecker.checkDocumentLimits(document);
+
+      Document storedDocument = createDocument(collection, document, new DataDocument(document.getData()));
 
       DataDocument data = document.getData();
       constraintManager.encodeDataTypes(collection, data);
-
-      Document storedDocument = createDocument(collection, document);
 
       DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), data);
       constraintManager.decodeDataTypes(collection, storedData);
@@ -105,7 +102,9 @@ public class DocumentFacade extends AbstractFacade {
       return storedDocument;
    }
 
-   private Document createDocument(Collection collection, Document document) {
+   private Document createDocument(Collection collection, Document document, DataDocument data) {
+      constraintManager.decodeDataTypes(collection, data);
+      document.setData(data);
       document.setCollectionId(collection.getId());
       document.setCreatedBy(authenticatedUser.getCurrentUserId());
       document.setCreationDate(ZonedDateTime.now());
@@ -113,8 +112,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document updateDocumentData(String collectionId, String documentId, DataDocument data) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+      Collection collection = checkCollectionWritePermissions(collectionId);
 
       constraintManager.encodeDataTypes(collection, data);
 
@@ -130,16 +128,16 @@ public class DocumentFacade extends AbstractFacade {
 
       // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
-
-      Document updatedDocument = updateDocument(collection, documentId, data, originalData);
-
       checkAttributesValueChanges(collection, documentId, originalData, updatedData);
 
       constraintManager.decodeDataTypes(collection, updatedData);
-      updatedDocument.setData(updatedData);
+      return updateDocument(collection, documentId, updatedData, originalData);
+   }
 
-
-      return updatedDocument;
+   private Collection checkCollectionWritePermissions(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+      return collection;
    }
 
    private void checkAttributesValueChanges(Collection collection, String documentId, DataDocument oldData, DataDocument newData) {
@@ -154,8 +152,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
-      final Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+      checkCollectionWritePermissions(collectionId);
 
       final Document document = documentDao.getDocumentById(documentId);
       final Document originalDocument = copyDocument(document);
@@ -181,22 +178,14 @@ public class DocumentFacade extends AbstractFacade {
 
       // TODO archive the old document
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
-
-      DataDocument newData = new DataDocument(oldData);
-      newData.putAll(data);
-      Document updatedDocument = updateDocument(collection, documentId, newData, originalData);
-
       checkAttributesValueChanges(collection, documentId, originalData, patchedData);
 
       constraintManager.decodeDataTypes(collection, patchedData);
-      updatedDocument.setData(patchedData);
-
-      return updatedDocument;
+      return updateDocument(collection, documentId, patchedData, originalData);
    }
 
    public Document patchDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
-      final Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+      checkCollectionWritePermissions(collectionId);
 
       final Document document = documentDao.getDocumentById(documentId);
       final Document originalDocument = copyDocument(document);
@@ -220,13 +209,13 @@ public class DocumentFacade extends AbstractFacade {
       return originalDocument;
    }
 
-   private Document updateDocument(final Collection collection, final String documentId, final DataDocument data, final DataDocument originalData) {
+   private Document updateDocument(final Collection collection, final String documentId, final DataDocument newData, final DataDocument originalData) {
       final Document document = documentDao.getDocumentById(documentId);
       final Document originalDocument = copyDocument(document);
       originalDocument.setData(originalData);
 
       document.setCollectionId(collection.getId());
-      document.setData(data);
+      document.setData(newData);
 
       return updateDocument(document, originalDocument);
    }
@@ -239,8 +228,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public void deleteDocument(String collectionId, String documentId) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+      Collection collection = checkCollectionWritePermissions(collectionId);
 
       DataDocument data = dataDao.getData(collectionId, documentId);
       updateCollectionMetadata(collection, Collections.emptySet(), data.keySet(), -1);
@@ -249,7 +237,6 @@ public class DocumentFacade extends AbstractFacade {
       dataDao.deleteData(collection.getId(), documentId);
 
       deleteDocumentBasedData(collectionId, documentId);
-
    }
 
    private void deleteDocumentBasedData(String collectionId, String documentId) {
@@ -272,9 +259,7 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.READ);
 
-      String projectId = getCurrentProject().getId();
-      String userId = getCurrentUser().getId();
-      favoriteItemDao.addFavoriteDocument(userId, projectId, collectionId, documentId);
+      favoriteItemDao.addFavoriteDocument(getCurrentUser().getId(), getCurrentProject().getId(), collectionId, documentId);
    }
 
    public void removeFavoriteDocument(String collectionId, String documentId) {
@@ -287,25 +272,9 @@ public class DocumentFacade extends AbstractFacade {
 
    private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
       final Collection originalCollection = collection.copy();
-      Map<String, Attribute> oldAttributes = collection.getAttributes().stream()
-                                                       .collect(Collectors.toMap(Attribute::getId, Function.identity()));
-      Set<String> incrementedAttributeIds = new HashSet<>(attributesIdsToInc);
-
-      oldAttributes.keySet().forEach(attributeId -> {
-         if (incrementedAttributeIds.contains(attributeId)) {
-            Attribute attribute = oldAttributes.get(attributeId);
-            attribute.setUsageCount(attribute.getUsageCount() + 1);
-            incrementedAttributeIds.remove(attributeId);
-         } else if (attributesIdsToDec.contains(attributeId)) {
-            Attribute attribute = oldAttributes.get(attributeId);
-            attribute.setUsageCount(Math.max(attribute.getUsageCount() - 1, 0));
-         }
-
-      });
-
-      collection.setAttributes(new HashSet<>(oldAttributes.values()));
+      collection.setAttributes(new HashSet<>(ResourceUtils.incOrDecAttributes(collection.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
       collection.setLastTimeUsed(ZonedDateTime.now());
-      collection.setDocumentsCount(collection.getDocumentsCount() + documentCountDiff);
+      collection.setDocumentsCount(Math.max(collection.getDocumentsCount() + documentCountDiff, 0));
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 

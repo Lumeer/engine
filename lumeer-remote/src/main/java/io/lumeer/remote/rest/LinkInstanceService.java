@@ -21,6 +21,8 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.core.facade.LinkInstanceFacade;
+import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.remote.rest.annotation.PATCH;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -61,9 +63,15 @@ public class LinkInstanceService extends AbstractService {
    }
 
    @PUT
-   @Path("{linkInstanceId}")
-   public LinkInstance updateLinkInstance(@PathParam("linkInstanceId") String id, LinkInstance linkInstance) {
-      return linkInstanceFacade.updateLinkInstance(id, linkInstance);
+   @Path("{linkInstanceId}/data")
+   public LinkInstance updateLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
+      return linkInstanceFacade.updateLinkInstanceData(id, data);
+   }
+
+   @PATCH
+   @Path("{linkInstanceId}/data")
+   public LinkInstance patchLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
+      return linkInstanceFacade.patchLinkInstanceData(id, data);
    }
 
    @DELETE
