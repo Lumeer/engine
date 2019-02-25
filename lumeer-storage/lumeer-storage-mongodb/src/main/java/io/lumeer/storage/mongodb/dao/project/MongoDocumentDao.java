@@ -81,6 +81,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    @Override
    public Document createDocument(final Document document) {
       try {
+         document.setDataVersion(0);
          databaseCollection().insertOne(document);
          if (createDocumentEvent != null) {
             createDocumentEvent.fire(new CreateDocument(document));
@@ -93,7 +94,9 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public List<Document> createDocuments(final List<Document> documents) {
-      List<Document> returnDocuments = documents.stream().map(Document::new).collect(Collectors.toList());
+      List<Document> returnDocuments = documents.stream().map(Document::new)
+                                                .peek(document -> document.setDataVersion(0))
+                                                .collect(Collectors.toList());
       databaseCollection().insertMany(returnDocuments);
       return new ArrayList<>(returnDocuments);
    }
