@@ -228,22 +228,11 @@ public class User {
          return false;
       }
       final User user = (User) o;
-      return Objects.equals(id, user.id) &&
-            Objects.equals(name, user.name) &&
-            Objects.equals(email, user.email) &&
-            Objects.equals(authIds, user.authIds) &&
-            Objects.equals(groups, user.groups) &&
-            Objects.equals(defaultWorkspace, user.defaultWorkspace) &&
-            Objects.equals(agreement, user.agreement) &&
-            Objects.equals(agreementDate, user.agreementDate) &&
-            Objects.equals(newsletter, user.newsletter) &&
-            Objects.equals(wizardDismissed, user.wizardDismissed) &&
-            Objects.equals(wishes, user.wishes);
+      return Objects.equals(id, user.id);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, name, email, authIds, groups, defaultWorkspace, agreement, agreementDate, newsletter, wizardDismissed, wishes);
+      return Objects.hash(id);
    }
-
 }
