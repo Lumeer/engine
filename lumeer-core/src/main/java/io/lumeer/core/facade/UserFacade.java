@@ -186,6 +186,10 @@ public class UserFacade extends AbstractFacade {
          currentUser.setAgreementDate(ZonedDateTime.now());
       }
 
+      if (user.getWizardDismissed() != null) {
+         currentUser.setWizardDismissed(user.getWizardDismissed());
+      }
+
       User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
