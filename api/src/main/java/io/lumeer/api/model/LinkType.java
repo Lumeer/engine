@@ -49,11 +49,9 @@ public class LinkType {
    private Integer lastAttributeNum;
 
    @JsonCreator
-   public LinkType(@JsonProperty(ID) final String id,
-         @JsonProperty(NAME) final String name,
+   public LinkType(@JsonProperty(NAME) final String name,
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
          @JsonProperty(ATTRIBUTES) final List<Attribute> attributes) {
-      this.id = id;
       this.name = name;
       this.collectionIds = collectionIds;
       this.attributes = attributes;

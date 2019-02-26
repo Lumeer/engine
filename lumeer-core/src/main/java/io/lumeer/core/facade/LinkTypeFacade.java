@@ -63,6 +63,7 @@ public class LinkTypeFacade extends AbstractFacade {
    public LinkType createLinkType(LinkType linkType) {
       checkLinkTypePermission(linkType.getCollectionIds());
 
+      linkType.setLastAttributeNum(0);
       return linkTypeDao.createLinkType(linkType);
    }
 
@@ -80,6 +81,7 @@ public class LinkTypeFacade extends AbstractFacade {
    private void keepUnmodifiableFields(LinkType linkType, LinkType storedLinkType) {
       linkType.setAttributes(storedLinkType.getAttributes());
       linkType.setLastAttributeNum(storedLinkType.getLastAttributeNum());
+      linkType.setCollectionIds(storedLinkType.getCollectionIds());
    }
 
    public void deleteLinkType(String id) {

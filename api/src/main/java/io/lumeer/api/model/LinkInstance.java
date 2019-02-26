@@ -154,20 +154,12 @@ public class LinkInstance {
          return false;
       }
       final LinkInstance that = (LinkInstance) o;
-      return Objects.equals(getId(), that.getId()) &&
-            Objects.equals(getLinkTypeId(), that.getLinkTypeId()) &&
-            Objects.equals(getCreationDate(), that.getCreationDate()) &&
-            Objects.equals(getUpdateDate(), that.getUpdateDate()) &&
-            Objects.equals(getCreatedBy(), that.getCreatedBy()) &&
-            Objects.equals(getUpdatedBy(), that.getUpdatedBy()) &&
-            Objects.equals(getDocumentIds(), that.getDocumentIds()) &&
-            Objects.equals(getDataVersion(), that.getDataVersion()) &&
-            Objects.equals(getData(), that.getData());
+      return Objects.equals(getId(), that.getId());
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(getId(), getLinkTypeId(), getCreationDate(), getUpdateDate(), getCreatedBy(), getUpdatedBy(), getDocumentIds(), getDataVersion(), getData());
+      return Objects.hash(getId());
    }
 
    @Override

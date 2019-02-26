@@ -45,6 +45,7 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
    public static final String COLLECTION_IDS = "collectionIds";
    public static final String VERSION = "version";
    public static final String ATTRIBUTES = "attributes";
+   public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
 
    private final Codec<Document> documentCodec;
 
@@ -63,9 +64,12 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
                                                                                             .map(AttributeCodec::convertFromDocument)
                                                                                             .collect(Collectors.toList());
       Long version = bson.getLong(VERSION);
+      Integer lastAttributeNum = bson.getInteger(LAST_ATTRIBUTE_NUM);
 
-      LinkType linkType =  new LinkType(id, name, collectionCodes, attributes);
-      linkType.setVersion(version == null ? 1 : version);
+      LinkType linkType =  new LinkType(name, collectionCodes, attributes);
+      linkType.setId(id);
+      linkType.setVersion(version == null ? 0 : version);
+      linkType.setLastAttributeNum(lastAttributeNum);
       return linkType;
    }
 
@@ -74,7 +78,8 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       Document bson = value.getId() != null ? new Document(ID, new ObjectId(value.getId())) : new Document();
       bson.append(NAME, value.getName())
           .append(COLLECTION_IDS, value.getCollectionIds())
-          .append(ATTRIBUTES, value.getAttributes());
+          .append(ATTRIBUTES, value.getAttributes())
+          .append(LAST_ATTRIBUTE_NUM, value.getLastAttributeNum());
 
       documentCodec.encode(writer, bson, encoderContext);
    }

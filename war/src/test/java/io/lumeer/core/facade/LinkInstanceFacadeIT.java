@@ -168,9 +168,9 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       collection2.setDocumentsCount(0);
       collection2Id = collectionDao.createCollection(collection2).getId();
 
-      LinkType linkType = new LinkType(null, NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(null, NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();

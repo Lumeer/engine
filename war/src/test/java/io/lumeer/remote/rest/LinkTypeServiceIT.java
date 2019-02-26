@@ -74,15 +74,6 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
    private static final String NAME = "Connection";
    private static final String NAME2 = "Whuaaaa";
-   private static final String ATTRIBUTE1_NAME = "Maxi";
-   private static final String ATTRIBUTE2_NAME = "Light";
-   private static final List<Attribute> ATTRIBUTES;
-
-   static {
-      Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
-      Attribute attribute2 = new Attribute(ATTRIBUTE2_NAME);
-      ATTRIBUTES = Arrays.asList(attribute1, attribute2);
-   }
 
    private static final String SERVER_URL = "http://localhost:8080";
    private static final String LINK_TYPES_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/link-types";
@@ -184,7 +175,6 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       assertThat(returnedLinkType).isNotNull();
       assertThat(returnedLinkType.getName()).isEqualTo(NAME);
-      assertThat(returnedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
       assertThat(returnedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(collectionIds.get(0), collectionIds.get(1)));
    }
 
@@ -209,14 +199,10 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       assertThat(returnedLinkType).isNotNull();
       assertThat(returnedLinkType.getName()).isEqualTo(NAME2);
-      assertThat(returnedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(returnedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
 
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME2);
-      assertThat(storedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
    }
 
    @Test
@@ -279,6 +265,6 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(null, NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), ATTRIBUTES);
+      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
    }
 }
