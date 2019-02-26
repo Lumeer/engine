@@ -210,37 +210,6 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       assertThat(returnedLinkInstance).isNotNull();
       assertThat(returnedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
       assertThat(returnedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      assertThat(returnedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
-   }
-
-   @Test
-   public void testUpdateLinkInstance() {
-      LinkInstance linkInstance = prepareLinkInstance();
-      String id = linkInstanceDao.createLinkInstance(linkInstance).getId();
-
-      LinkInstance updateLinkedInstance = prepareLinkInstance();
-      updateLinkedInstance.setLinkTypeId(linkTypeId2);
-      updateLinkedInstance.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-
-      Entity entity = Entity.json(updateLinkedInstance);
-      Response response = client.target(LINK_INSTANCES_URL).path(id)
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPut(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      LinkInstance returnedLinkInstance = response.readEntity(LinkInstance.class);
-      assertThat(returnedLinkInstance).isNotNull();
-
-      assertThat(returnedLinkInstance).isNotNull();
-      assertThat(returnedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId2);
-      assertThat(returnedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      assertThat(returnedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
-
-      LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
-      assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId2);
-      assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
    }
 
    @Test
