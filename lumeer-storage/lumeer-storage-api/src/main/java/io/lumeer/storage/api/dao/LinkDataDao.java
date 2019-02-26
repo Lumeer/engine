@@ -29,9 +29,7 @@ public interface LinkDataDao {
 
    void deleteDataRepository(String linkTypeId);
 
-   DataDocument createData(String linkTypeId, String documentId, DataDocument data);
-
-   List<DataDocument> createData(String linkTypeId, List<DataDocument> data);
+   DataDocument createData(String linkTypeId, String linkInstanceId, DataDocument data);
 
    DataDocument updateData(String linkTypeId, String linkInstanceId, DataDocument data);
 

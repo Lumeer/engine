@@ -260,14 +260,14 @@ public class SearchFacadeIT extends IntegrationTestBase {
             Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList())).getId();
       String linkType12Id = linkTypeDao.createLinkType(new LinkType(null, "lmrr",
             Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList())).getId();
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id1, id6), new DataDocument()));
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id1, id7), new DataDocument()));
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id2, id8), new DataDocument()));
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id3, id8), new DataDocument()));
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType01Id, Arrays.asList(id4, id6), new DataDocument()));
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType12Id, Arrays.asList(id6, id10), new DataDocument()));
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType12Id, Arrays.asList(id6, id11), new DataDocument()));
-      linkInstanceDao.createLinkInstance(new LinkInstance(null, linkType12Id, Arrays.asList(id7, id12), new DataDocument()));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType01Id, Arrays.asList(id1, id6)));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType01Id, Arrays.asList(id1, id7)));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType01Id, Arrays.asList(id2, id8)));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType01Id, Arrays.asList(id3, id8)));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType01Id, Arrays.asList(id4, id6)));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType12Id, Arrays.asList(id6, id10)));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType12Id, Arrays.asList(id6, id11)));
+      linkInstanceDao.createLinkInstance(new LinkInstance(linkType12Id, Arrays.asList(id7, id12)));
 
       QueryStem stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), Collections.emptySet(), Collections.emptySet());
       Query query = new Query(Collections.singletonList(stem), Collections.emptySet(), null, null);
@@ -373,17 +373,17 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id21 = createDocument(collectionIds.get(1), "lumeer").getId();
       String id22 = createDocument(collectionIds.get(1), "lumeer").getId();
 
-      String id1 = linkInstanceDao.createLinkInstance(new LinkInstance(null, linkTypeId1, Arrays.asList(id10, id20), new DataDocument())).getId();
+      String id1 = linkInstanceDao.createLinkInstance(new LinkInstance(linkTypeId1, Arrays.asList(id10, id20))).getId();
 
-      LinkInstance linkInstance2 = new LinkInstance(null, linkTypeId1, Arrays.asList(id10, id22), new DataDocument());
+      LinkInstance linkInstance2 = new LinkInstance(linkTypeId1, Arrays.asList(id10, id22));
       String id2 = linkInstanceDao.createLinkInstance(linkInstance2).getId();
 
-      LinkInstance linkInstance3 = new LinkInstance(null, linkTypeId1, Arrays.asList(id11, id21), new DataDocument());
+      LinkInstance linkInstance3 = new LinkInstance(linkTypeId1, Arrays.asList(id11, id21));
       linkInstance3.setLinkTypeId(linkTypeId1);
       linkInstance3.setDocumentIds(Arrays.asList(id11, id21));
       String id3 = linkInstanceDao.createLinkInstance(linkInstance3).getId();
 
-      LinkInstance linkInstance4 = new LinkInstance(null, linkTypeId2, Arrays.asList(id10, id20), new DataDocument());
+      LinkInstance linkInstance4 = new LinkInstance(linkTypeId2, Arrays.asList(id10, id20));
       linkInstance4.setLinkTypeId(linkTypeId2);
       linkInstance4.setDocumentIds(Arrays.asList(id10, id20));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();

@@ -81,14 +81,11 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
    private static final String ATTRIBUTE1_NAME = "Maxi";
    private static final String ATTRIBUTE2_NAME = "Light";
    private static final List<Attribute> ATTRIBUTES;
-   private static final Map<String, Object> DATA;
 
    static {
       Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
       Attribute attribute2 = new Attribute(ATTRIBUTE2_NAME);
       ATTRIBUTES = Arrays.asList(attribute1, attribute2);
-
-      DATA = Collections.singletonMap("entry", "value");
    }
 
    private List<String> documentIdsColl1 = new ArrayList<>();
@@ -127,9 +124,6 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
-
-   @Inject
-   private PermissionsChecker permissionsChecker;
 
    @Before
    public void configureLinkInstances() {
@@ -202,25 +196,62 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
       assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
    }
 
    @Test
-   public void testUpdateLinkInstance() {
+   public void testUpdateLinkInstanceData() {
       LinkInstance linkInstance = prepareLinkInstance();
       String id = linkInstanceFacade.createLinkInstance(linkInstance).getId();
 
-      LinkInstance updateLinkedInstance = prepareLinkInstance();
-      updateLinkedInstance.setLinkTypeId(linkTypeId2);
-      updateLinkedInstance.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
+      LinkInstance created = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
+      assertThat(created).isNotNull();
+      assertThat(created.getData()).hasSize(1); // contains only id field
+      assertThat(created.getData()).doesNotContainEntry("k1", "v1");
+      assertThat(created.getData()).doesNotContainEntry("k2", "v2");
 
-      linkInstanceFacade.updateLinkInstance(id, updateLinkedInstance);
+      linkInstanceFacade.updateLinkInstanceData(id, new DataDocument("k1", "v1").append("k2", "v2"));
 
-      LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
+      LinkInstance storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
       assertThat(storedLinkInstance).isNotNull();
-      assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId2);
-      assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
+      assertThat(storedLinkInstance.getData()).containsEntry("k1", "v1");
+      assertThat(storedLinkInstance.getData()).containsEntry("k2", "v2");
+
+      linkInstanceFacade.updateLinkInstanceData(id, new DataDocument("k3", "v3").append("k4", "v4"));
+
+      storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
+      assertThat(storedLinkInstance).isNotNull();
+      assertThat(created.getData()).doesNotContainEntry("k1", "v1");
+      assertThat(created.getData()).doesNotContainEntry("k2", "v2");
+      assertThat(storedLinkInstance.getData()).containsEntry("k3", "v3");
+      assertThat(storedLinkInstance.getData()).containsEntry("k4", "v4");
+   }
+
+   @Test
+   public void testPatchLinkInstanceData() {
+      LinkInstance linkInstance = prepareLinkInstance();
+      String id = linkInstanceFacade.createLinkInstance(linkInstance).getId();
+
+      LinkInstance created = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
+      assertThat(created).isNotNull();
+      assertThat(created.getData()).hasSize(1); // contains only id field
+      assertThat(created.getData()).doesNotContainEntry("k1", "v1");
+      assertThat(created.getData()).doesNotContainEntry("k2", "v2");
+
+      linkInstanceFacade.patchLinkInstanceData(id, new DataDocument("k1", "v1").append("k2", "v2"));
+
+      LinkInstance storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
+      assertThat(storedLinkInstance).isNotNull();
+      assertThat(storedLinkInstance.getData()).containsEntry("k1", "v1");
+      assertThat(storedLinkInstance.getData()).containsEntry("k2", "v2");
+
+      linkInstanceFacade.patchLinkInstanceData(id, new DataDocument("k3", "v3").append("k4", "v4"));
+
+      storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
+      assertThat(storedLinkInstance).isNotNull();
+      assertThat(storedLinkInstance.getData()).containsEntry("k1", "v1");
+      assertThat(storedLinkInstance.getData()).containsEntry("k2", "v2");
+      assertThat(storedLinkInstance.getData()).containsEntry("k3", "v3");
+      assertThat(storedLinkInstance.getData()).containsEntry("k4", "v4");
    }
 
    @Test
@@ -235,7 +266,7 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
    }
 
    private LinkInstance prepareLinkInstance() {
-      return new LinkInstance(null, linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)), DATA);
+      return new LinkInstance(linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
    }
 
    private Document prepareDocument() {

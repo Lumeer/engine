@@ -357,7 +357,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
    }
 
    private LinkInstance prepareLinkInstance() {
-      return new LinkInstance(null, linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)), DATA);
+      return new LinkInstance(linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
    }
 
    private Document prepareDocument() {

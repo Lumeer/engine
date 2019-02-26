@@ -301,7 +301,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       List<LinkInstance> linkInstances = new ArrayList<>();
       for (Document doc1 : docs1) {
          for (Document doc2 : docs2) {
-            linkInstances.add(linkInstanceDao.createLinkInstance(new LinkInstance(null, lt.getId(), Arrays.asList(doc1.getId(), doc2.getId()), new DataDocument())));
+            linkInstances.add(linkInstanceDao.createLinkInstance(new LinkInstance(lt.getId(), Arrays.asList(doc1.getId(), doc2.getId()))));
          }
       }
       return linkInstances;

@@ -81,16 +81,21 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance createLinkInstance(LinkInstance linkInstance) {
-      checkLinkTypePermissions(linkInstance.getLinkTypeId());
+      checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
       linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
-      return linkInstanceDao.createLinkInstance(linkInstance);
+      LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
+
+      DataDocument data = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), new DataDocument());
+      createdLinkInstance.setData(data);
+
+      return createdLinkInstance;
    }
 
    public LinkInstance updateLinkInstanceData(String linkInstanceId, DataDocument data) {
       LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
-      LinkType linkType = checkLinkTypePermissions(stored.getLinkTypeId());
+      LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       constraintManager.encodeDataTypes(linkType, data);
 
@@ -137,7 +142,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public LinkInstance patchLinkInstanceData(String linkInstanceId, DataDocument data) {
       LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
-      LinkType linkType = checkLinkTypePermissions(stored.getLinkTypeId());
+      LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       constraintManager.encodeDataTypes(linkType, data);
 
@@ -156,17 +161,36 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public void deleteLinkInstance(String id) {
       LinkInstance stored = linkInstanceDao.getLinkInstance(id);
-      checkLinkTypePermissions(stored.getLinkTypeId());
+      checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       linkInstanceDao.deleteLinkInstance(id);
       linkDataDao.deleteData(stored.getLinkTypeId(), id);
    }
 
-   private LinkType checkLinkTypePermissions(String linkTypeId) {
+   public LinkInstance getLinkInstance(String linkTypeId, String linkInstanceId) {
+      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      LinkType linkType = checkLinkTypeReadPermissions(stored.getLinkTypeId());
+
+      DataDocument data = linkDataDao.getData(linkTypeId, linkInstanceId);
+      constraintManager.decodeDataTypes(linkType, data);
+      stored.setData(data);
+
+      return stored;
+   }
+
+   private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
+      return checkLinkTypePermissions(linkTypeId, Role.WRITE);
+   }
+
+   private LinkType checkLinkTypeReadPermissions(String linkTypeId) {
+      return checkLinkTypePermissions(linkTypeId, Role.READ);
+   }
+
+   private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
       for (Collection collection : collections) {
-         permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+         permissionsChecker.checkRoleWithView(collection, role, role);
       }
       return linkType;
    }

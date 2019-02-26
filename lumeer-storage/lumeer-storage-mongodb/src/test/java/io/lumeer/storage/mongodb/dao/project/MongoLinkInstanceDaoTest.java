@@ -98,7 +98,6 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(LINK_TYPE_ID1);
       assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(DOCUMENT_ID1, DOCUMENT_ID2));
-      assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
    }
 
    @Test
@@ -123,7 +122,6 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(LINK_TYPE_ID2);
       assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(DOCUMENT_ID3, DOCUMENT_ID4));
-      assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
    }
 
    @Test
@@ -261,6 +259,6 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
    }
 
    private LinkInstance prepareLinkInstance() {
-      return new LinkInstance(null, LINK_TYPE_ID1, Arrays.asList(DOCUMENT_ID1, DOCUMENT_ID2), DATA);
+      return new LinkInstance(LINK_TYPE_ID1, Arrays.asList(DOCUMENT_ID1, DOCUMENT_ID2));
    }
 }

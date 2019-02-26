@@ -21,10 +21,8 @@ package io.lumeer.storage.mongodb.dao.collection;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
 
-import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.LinkDataDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.util.MongoFilters;
@@ -43,7 +41,6 @@ import org.bson.types.ObjectId;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -71,19 +68,6 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    public DataDocument createData(final String linkTypeId, final String linkInstanceId, final DataDocument data) {
       Document document = new Document(data).append(ID, new ObjectId(linkInstanceId));
       linkDataCollection(linkTypeId).insertOne(document);
-      return data;
-   }
-
-   @Override
-   public List<DataDocument> createData(final String linkTypeId, final List<DataDocument> data) {
-      List<Document> documents = data.stream().map(dataDocument -> new Document(dataDocument).append(ID, new ObjectId(dataDocument.getId()))).collect(Collectors.toList());
-      linkDataCollection(linkTypeId).insertMany(documents);
-
-      for (int i = 0; i < documents.size(); i++) {
-         Object idObj = documents.get(i).get(ID);
-         String id = idObj instanceof String ? (String) idObj : ((ObjectId) idObj).toHexString();
-         data.get(i).setId(id);
-      }
       return data;
    }
 
@@ -132,7 +116,7 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    public DataDocument getData(final String linkTypeId, final String linkInstanceId) {
       MongoCursor<Document> mongoCursor = linkDataCollection(linkTypeId).find(idFilter(linkInstanceId)).iterator();
       if (!mongoCursor.hasNext()) {
-         throw new ResourceNotFoundException(ResourceType.DOCUMENT);
+         return new DataDocument();
       }
       return MongoUtils.convertDocument(mongoCursor.next());
    }

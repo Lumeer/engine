@@ -187,8 +187,8 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
       final Document c2d2 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline2").append("a1", "")));
       final Document c2d3 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "")));
 
-      linkInstanceFacade.createLinkInstance(new LinkInstance(null, l.getId(), List.of(c1d1.getId(), c2d1.getId()), Collections.emptyMap()));
-      linkInstanceFacade.createLinkInstance(new LinkInstance(null, l.getId(), List.of(c1d1.getId(), c2d2.getId()), Collections.emptyMap()));
+      linkInstanceFacade.createLinkInstance(new LinkInstance(l.getId(), List.of(c1d1.getId(), c2d1.getId())));
+      linkInstanceFacade.createLinkInstance(new LinkInstance(l.getId(), List.of(c1d1.getId(), c2d2.getId())));
 
       final BlocklyRule rule = new BlocklyRule(new Rule(Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
       rule.setDryRun(true);
