@@ -68,15 +68,6 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
    private static final String NAME = "Connection";
    private static final String NAME2 = "Whuaaaa";
-   private static final String ATTRIBUTE1_NAME = "Maxi";
-   private static final String ATTRIBUTE2_NAME = "Light";
-   private static final List<Attribute> ATTRIBUTES;
-
-   static {
-      Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
-      Attribute attribute2 = new Attribute(ATTRIBUTE2_NAME);
-      ATTRIBUTES = Arrays.asList(attribute1, attribute2);
-   }
 
    private List<String> collectionIds = new ArrayList<>();
    private String collectionIdNoPerm;
@@ -160,7 +151,6 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME);
-      assertThat(storedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
       assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(collectionIds.get(0), collectionIds.get(1)));
    }
 
@@ -171,15 +161,12 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
       LinkType updateLinkedType = prepareLinkType();
       updateLinkedType.setName(NAME2);
-      updateLinkedType.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
 
       linkTypeFacade.updateLinkType(id, updateLinkedType);
 
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME2);
-      assertThat(storedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
    }
 
    @Test
@@ -213,8 +200,53 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
    }
 
+   @Test
+   public void testAddAttribute(){
+      String id = linkTypeFacade.createLinkType(prepareLinkType()).getId();
+      LinkType linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).isEmpty();
+
+      linkTypeFacade.createLinkTypeAttributes(id, Collections.singletonList(new Attribute("LMR")));
+      linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).hasSize(1);
+      assertThat(linkType.getAttributes().get(0).getId()).isEqualTo(LinkType.ATTRIBUTE_PREFIX + "1");
+   }
+
+   @Test
+   public void testUpdateAttribute(){
+      String id = linkTypeFacade.createLinkType(prepareLinkType()).getId();
+      LinkType linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).isEmpty();
+
+      linkTypeFacade.createLinkTypeAttributes(id, Collections.singletonList(new Attribute("LMR")));
+      linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).hasSize(1);
+      assertThat(linkType.getAttributes().get(0).getName()).isEqualTo("LMR");
+
+      linkTypeFacade.updateLinkTypeAttribute(id, LinkType.ATTRIBUTE_PREFIX + "1", new Attribute("LMR UPDATED"));
+      linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).hasSize(1);
+      assertThat(linkType.getAttributes().get(0).getName()).isEqualTo("LMR UPDATED");
+   }
+
+   @Test
+   public void testDeleteAttribute(){
+      String id = linkTypeFacade.createLinkType(prepareLinkType()).getId();
+      LinkType linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).isEmpty();
+
+      linkTypeFacade.createLinkTypeAttributes(id, Collections.singletonList(new Attribute("LMR")));
+      linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).hasSize(1);
+      assertThat(linkType.getAttributes().get(0).getName()).isEqualTo("LMR");
+
+      linkTypeFacade.deleteLinkTypeAttribute(id, LinkType.ATTRIBUTE_PREFIX + "1");
+      linkType = linkTypeFacade.getLinkType(id);
+      assertThat(linkType.getAttributes()).isEmpty();
+   }
+
    private LinkType prepareLinkType() {
-      return new LinkType(null, NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), ATTRIBUTES);
+      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
    }
 
 }

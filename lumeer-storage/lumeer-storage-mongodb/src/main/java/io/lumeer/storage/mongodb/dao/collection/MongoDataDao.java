@@ -31,6 +31,7 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoUtils;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -148,15 +149,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    @Override
    public List<DataDocument> getData(final String collectionId, final Set<String> documentIds) {
-      return MongoUtils.convertIterableToList(dataCollection(collectionId).find(documentIdsFilter(documentIds)));
-   }
-
-   private Bson documentIdsFilter(Set<String> documentIds) {
-      List<ObjectId> ids = documentIds.stream().filter(key -> key != null && ObjectId.isValid(key)).map(ObjectId::new).collect(Collectors.toList());
-      if (!ids.isEmpty()) {
-         return Filters.in(ID, ids);
-      }
-      return new Document();
+      return MongoUtils.convertIterableToList(dataCollection(collectionId).find(MongoFilters.idsFilter(documentIds)));
    }
 
    @Override
@@ -171,7 +164,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
       List<Bson> filters = new ArrayList<>();
 
       if (stem.containsDocumentIdsQuery()) {
-         filters.add(documentIdsFilter(stem.getDocumentIds()));
+         filters.add(MongoFilters.idsFilter(stem.getDocumentIds()));
       }
 
       if (stem.containsFiltersQuery()) {

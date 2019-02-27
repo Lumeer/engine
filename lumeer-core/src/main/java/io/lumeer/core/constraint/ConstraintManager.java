@@ -22,6 +22,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.bson.types.Decimal128;
@@ -256,13 +257,10 @@ public class ConstraintManager {
    }
 
    private Map<String, Constraint> getConstraints(final Collection collection) {
-      final Map<String, Constraint> constraints =
-            collection.getAttributes()
-                      .stream()
-                      .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
-                      .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
-
-      return constraints;
+      return collection.getAttributes()
+                 .stream()
+                 .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                 .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
    }
 
    public void encodeDataTypes(final Collection collection, final DataDocument data) {
@@ -271,6 +269,21 @@ public class ConstraintManager {
 
    public void decodeDataTypes(final Collection collection, final DataDocument data) {
       processData(data, getConstraints(collection), this::decode);
+   }
+
+   private Map<String, Constraint> getConstraints(final LinkType linkType) {
+      return linkType.getAttributes()
+                       .stream()
+                       .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                       .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
+   }
+
+   public void encodeDataTypes(final LinkType linkType, final DataDocument data) {
+      processData(data, getConstraints(linkType), this::encode);
+   }
+
+   public void decodeDataTypes(final LinkType linkType, final DataDocument data) {
+      processData(data, getConstraints(linkType), this::decode);
    }
 
    private void processData(final DataDocument data, final Map<String, Constraint> constraints, final BiFunction<Object, Constraint, Object> processor) {

@@ -19,35 +19,58 @@
 
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.engine.api.data.DataDocument;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class LinkInstance {
 
    public static final String ID = "id";
    public static final String LINK_TYPE_ID = "linkTypeId";
    public static final String DOCUMENTS_IDS = "documentIds";
-   public static final String DATA = "data";
 
    private String id;
    private String linkTypeId;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime creationDate;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime updateDate;
+
+   private String createdBy;
+   private String updatedBy;
+
    private List<String> documentIds;
-   private long version;
-   private Map<String, Object> data;
+   private Integer dataVersion;
+   private DataDocument data;
 
    @JsonCreator
-   public LinkInstance(@JsonProperty(ID) final String id,
-         @JsonProperty(LINK_TYPE_ID) final String linkTypeId,
-         @JsonProperty(DOCUMENTS_IDS) final List<String> documentIds,
-         @JsonProperty(DATA) final Map<String, Object> data) {
-      this.id = id;
+   public LinkInstance(@JsonProperty(LINK_TYPE_ID) final String linkTypeId,
+         @JsonProperty(DOCUMENTS_IDS) final List<String> documentIds) {
       this.linkTypeId = linkTypeId;
       this.documentIds = documentIds;
-      this.data = data;
+      this.data = new DataDocument();
+   }
+
+   public LinkInstance(LinkInstance linkInstance) {
+      this.id = linkInstance.getId();
+      this.linkTypeId = linkInstance.getLinkTypeId();
+      this.creationDate = linkInstance.getCreationDate();
+      this.updateDate = linkInstance.getUpdateDate();
+      this.createdBy = linkInstance.getCreatedBy();
+      this.updatedBy = linkInstance.getUpdatedBy();
+      this.documentIds = linkInstance.getDocumentIds();
+      this.dataVersion = linkInstance.getDataVersion();
+      this.data = linkInstance.getData();
    }
 
    public String getId() {
@@ -66,6 +89,38 @@ public class LinkInstance {
       this.linkTypeId = linkTypeId;
    }
 
+   public ZonedDateTime getCreationDate() {
+      return creationDate;
+   }
+
+   public void setCreationDate(final ZonedDateTime creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   public ZonedDateTime getUpdateDate() {
+      return updateDate;
+   }
+
+   public void setUpdateDate(final ZonedDateTime updateDate) {
+      this.updateDate = updateDate;
+   }
+
+   public String getCreatedBy() {
+      return createdBy;
+   }
+
+   public void setCreatedBy(final String createdBy) {
+      this.createdBy = createdBy;
+   }
+
+   public String getUpdatedBy() {
+      return updatedBy;
+   }
+
+   public void setUpdatedBy(final String updatedBy) {
+      this.updatedBy = updatedBy;
+   }
+
    public List<String> getDocumentIds() {
       return Collections.unmodifiableList(documentIds);
    }
@@ -74,20 +129,20 @@ public class LinkInstance {
       this.documentIds = documentIds;
    }
 
-   public Map<String, Object> getData() {
-      return data != null ? Collections.unmodifiableMap(data) : Collections.emptyMap();
+   public DataDocument getData() {
+      return data;
    }
 
-   public void setData(final Map<String, Object> data) {
+   public void setData(final DataDocument data) {
       this.data = data;
    }
 
-   public long getVersion() {
-      return version;
+   public Integer getDataVersion() {
+      return dataVersion;
    }
 
-   public void setVersion(final long version) {
-      this.version = version;
+   public void setDataVersion(final Integer dataVersion) {
+      this.dataVersion = dataVersion;
    }
 
    @Override
@@ -98,15 +153,13 @@ public class LinkInstance {
       if (!(o instanceof LinkInstance)) {
          return false;
       }
-
       final LinkInstance that = (LinkInstance) o;
-
-      return id != null ? id.equals(that.id) : that.id == null;
+      return Objects.equals(getId(), that.getId());
    }
 
    @Override
    public int hashCode() {
-      return id != null ? id.hashCode() : 0;
+      return Objects.hash(getId());
    }
 
    @Override
@@ -114,9 +167,13 @@ public class LinkInstance {
       return "LinkInstance{" +
             "id='" + id + '\'' +
             ", linkTypeId='" + linkTypeId + '\'' +
+            ", creationDate=" + creationDate +
+            ", updateDate=" + updateDate +
+            ", createdBy='" + createdBy + '\'' +
+            ", updatedBy='" + updatedBy + '\'' +
             ", documentIds=" + documentIds +
+            ", dataVersion=" + dataVersion +
             ", data=" + data +
             '}';
    }
-
 }

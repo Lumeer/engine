@@ -18,12 +18,17 @@
  */
 package io.lumeer.api.util;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ResourceUtils {
@@ -69,5 +74,22 @@ public class ResourceUtils {
 
    public static boolean canReadByPermission(Permission permission) {
       return permission.getRoles().contains(Role.READ) || permission.getRoles().contains(Role.MANAGE);
+   }
+
+   public static java.util.Collection<Attribute> incOrDecAttributes(java.util.Collection<Attribute> attributes, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec){
+      Map<String, Attribute> oldAttributes = attributes.stream()
+                                                     .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+      oldAttributes.keySet().forEach(attributeId -> {
+         if (attributesIdsToInc.contains(attributeId)) {
+            Attribute attribute = oldAttributes.get(attributeId);
+            attribute.setUsageCount(attribute.getUsageCount() + 1);
+         } else if (attributesIdsToDec.contains(attributeId)) {
+            Attribute attribute = oldAttributes.get(attributeId);
+            attribute.setUsageCount(Math.max(attribute.getUsageCount() - 1, 0));
+         }
+
+      });
+
+      return oldAttributes.values();
    }
 }

@@ -34,6 +34,7 @@ import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -105,16 +106,17 @@ public class AutoLinkRuleTaskExecutor {
 
       final SearchQuery query = SearchQuery
             .createBuilder()
-            .stems(Arrays.asList(
+            .stems(Collections.singletonList(
                   SearchQueryStem
                         .createBuilder("")
-                        .linkTypeIds(Arrays.asList(linkType.getId()))
+                        .linkTypeIds(Collections.singletonList(linkType.getId()))
                         .documentIds(Set.of(oldDocument.getId()))
                         .build()))
             .build();
 
       final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao().searchLinkInstances(query);
       ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(query);
+      ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(linkType.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
 
       sendPushNotifications(thisCollection, thatCollection, links, true);
    }
@@ -137,7 +139,7 @@ public class AutoLinkRuleTaskExecutor {
             targetDocuments.stream()
                            .filter(documentId -> !thisCollection.equals(thatCollection) || !documentId.equals(newDocument.getId()))
                            .map(documentId ->
-                                 new LinkInstance(null, rule.getLinkType(), Arrays.asList(newDocument.getId(), documentId), new DataDocument()))
+                                 new LinkInstance(rule.getLinkType(), Arrays.asList(newDocument.getId(), documentId)))
                            .collect(Collectors.toList());
 
       ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
@@ -149,7 +151,7 @@ public class AutoLinkRuleTaskExecutor {
       if (ruleTask.getPusherClient() != null) {
          final Set<String> users1 = ruleTask.getDaoContextSnapshot().getCollectionReaders(thisCollection);
          final Set<String> users2 = ruleTask.getDaoContextSnapshot().getCollectionReaders(thatCollection);
-         final Set<String> users = users1.stream().filter(user -> users2.contains(user)).collect(Collectors.toSet());
+         final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
 
          final List<Event> events = new ArrayList<>();
          users.forEach(user -> {

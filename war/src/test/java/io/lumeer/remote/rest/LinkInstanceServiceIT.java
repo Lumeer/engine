@@ -176,9 +176,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       collection2.setDocumentsCount(0);
       collection2Id = collectionDao.createCollection(collection2).getId();
 
-      LinkType linkType = new LinkType(null, NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(null, NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();
@@ -210,37 +210,6 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       assertThat(returnedLinkInstance).isNotNull();
       assertThat(returnedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
       assertThat(returnedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      assertThat(returnedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
-   }
-
-   @Test
-   public void testUpdateLinkInstance() {
-      LinkInstance linkInstance = prepareLinkInstance();
-      String id = linkInstanceDao.createLinkInstance(linkInstance).getId();
-
-      LinkInstance updateLinkedInstance = prepareLinkInstance();
-      updateLinkedInstance.setLinkTypeId(linkTypeId2);
-      updateLinkedInstance.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-
-      Entity entity = Entity.json(updateLinkedInstance);
-      Response response = client.target(LINK_INSTANCES_URL).path(id)
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPut(entity).invoke();
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      LinkInstance returnedLinkInstance = response.readEntity(LinkInstance.class);
-      assertThat(returnedLinkInstance).isNotNull();
-
-      assertThat(returnedLinkInstance).isNotNull();
-      assertThat(returnedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId2);
-      assertThat(returnedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      assertThat(returnedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
-
-      LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
-      assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId2);
-      assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      assertThat(storedLinkInstance.getData().keySet()).containsOnlyElementsOf(DATA.keySet());
    }
 
    @Test
@@ -357,7 +326,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
    }
 
    private LinkInstance prepareLinkInstance() {
-      return new LinkInstance(null, linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)), DATA);
+      return new LinkInstance(linkTypeId1, Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
    }
 
    private Document prepareDocument() {

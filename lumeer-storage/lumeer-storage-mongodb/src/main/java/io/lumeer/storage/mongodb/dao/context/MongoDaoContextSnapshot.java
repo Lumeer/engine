@@ -31,6 +31,7 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -42,6 +43,7 @@ import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.mongodb.dao.collection.MongoDataDao;
+import io.lumeer.storage.mongodb.dao.collection.MongoLinkDataDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoCompanyContactDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoFavoriteItemDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoPaymentDao;
@@ -168,6 +170,11 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    @Override
    public LinkInstanceDao getLinkInstanceDao() {
       return initProjectScopedDao(new MongoLinkInstanceDao());
+   }
+
+   @Override
+   public LinkDataDao getLinkDataDao() {
+      return initProjectScopedDao(new MongoLinkDataDao());
    }
 
    @Override

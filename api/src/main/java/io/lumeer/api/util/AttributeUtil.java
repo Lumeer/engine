@@ -29,7 +29,7 @@ public class AttributeUtil {
       return attribute.getName().equals(attributeName) || attribute.getName().startsWith(attributeName + '.');
    }
 
-   public static void renameChildAttributes(Set<Attribute> attributes, String oldParentName, String newParentName) {
+   public static void renameChildAttributes(java.util.Collection<Attribute> attributes, String oldParentName, String newParentName) {
       String prefix = oldParentName + '.';
       attributes.forEach(attribute -> {
          if (attribute.getName().startsWith(prefix)) {

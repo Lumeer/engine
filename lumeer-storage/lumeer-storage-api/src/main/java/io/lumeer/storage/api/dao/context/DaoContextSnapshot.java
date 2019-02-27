@@ -26,6 +26,7 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -74,6 +75,8 @@ public interface DaoContextSnapshot {
    GroupDao getGroupDao();
 
    LinkInstanceDao getLinkInstanceDao();
+
+   LinkDataDao getLinkDataDao();
 
    LinkTypeDao getLinkTypeDao();
 

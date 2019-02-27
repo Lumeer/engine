@@ -104,6 +104,7 @@ public class CollectionFacade extends AbstractFacade {
       collection.setAttributes(storedCollection.getAttributes());
       collection.setDocumentsCount(storedCollection.getDocumentsCount());
       collection.setLastTimeUsed(storedCollection.getLastTimeUsed());
+      collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
    }
 
    public void deleteCollection(String collectionId) {

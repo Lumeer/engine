@@ -178,7 +178,7 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
       final String ruleName = "blocklyRule";
       final Collection c1 = createCollection("c1", "name1", Map.of("a0", "A", "a1", "B"));
       final Collection c2 = createCollection("c2", "name2", Map.of("a0", "C", "a1", "D"));
-      final LinkType l = linkTypeFacade.createLinkType(new LinkType(null, "link1", List.of(c1.getId(), c2.getId()), Collections.emptyList()));
+      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList()));
 
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));
@@ -187,8 +187,8 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
       final Document c2d2 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline2").append("a1", "")));
       final Document c2d3 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", "")));
 
-      linkInstanceFacade.createLinkInstance(new LinkInstance(null, l.getId(), List.of(c1d1.getId(), c2d1.getId()), Collections.emptyMap()));
-      linkInstanceFacade.createLinkInstance(new LinkInstance(null, l.getId(), List.of(c1d1.getId(), c2d2.getId()), Collections.emptyMap()));
+      linkInstanceFacade.createLinkInstance(new LinkInstance(l.getId(), List.of(c1d1.getId(), c2d1.getId())));
+      linkInstanceFacade.createLinkInstance(new LinkInstance(l.getId(), List.of(c1d1.getId(), c2d2.getId())));
 
       final BlocklyRule rule = new BlocklyRule(new Rule(Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
       rule.setDryRun(true);
@@ -322,7 +322,7 @@ public class RuleProcessingFacadeIT extends IntegrationTestBase {
       final String ruleName = "autoLinkRule";
       final Collection c1 = createCollection("ac1", "auto1", Map.of("a0", "A", "a1", "B"));
       final Collection c2 = createCollection("ac2", "auto2", Map.of("a0", "C", "a1", "D"));
-      final LinkType l = linkTypeFacade.createLinkType(new LinkType(null, "link1", List.of(c1.getId(), c2.getId()), Collections.emptyList()));
+      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList()));
 
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));

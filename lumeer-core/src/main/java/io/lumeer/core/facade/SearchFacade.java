@@ -25,6 +25,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -32,11 +33,14 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
+
+import com.google.common.base.Functions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +77,9 @@ public class SearchFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
+   private LinkDataDao linkDataDao;
+
+   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
    @Inject
@@ -93,7 +100,21 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<LinkInstance> getLinkInstances(Query query) {
-      return linkInstanceDao.searchLinkInstances(buildSearchQuery(query));
+      List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(buildSearchQuery(query));
+      Map<String, Set<String>> linkInstancesIdsMap = linkInstances.stream().
+            collect(Collectors.groupingBy(LinkInstance::getLinkTypeId, Collectors.mapping(LinkInstance::getId, Collectors.toSet())));
+
+      Map<String, DataDocument> allDataMap = new HashMap<>();
+      for (Map.Entry<String, Set<String>> entry : linkInstancesIdsMap.entrySet()) {
+         Map<String, DataDocument> dataMap = linkDataDao.getData(entry.getKey(), entry.getValue()).stream()
+                                                        .collect(Collectors.toMap(DataDocument::getId, dataDocument -> dataDocument));
+
+         allDataMap.putAll(dataMap);
+      }
+
+      linkInstances.forEach(li -> li.setData(allDataMap.get(li.getId())));
+
+      return linkInstances;
    }
 
    private SearchQuery buildSearchQuery(Query query) {
@@ -107,7 +128,7 @@ public class SearchFacade extends AbstractFacade {
 
    public List<Document> searchDocuments(final Query query) {
       final List<Collection> collections = getReadCollections();
-      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(collection -> collection.getId(), collection -> collection));
+      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       final List<Document> result;
 
       if (query.isEmpty()) {
@@ -193,7 +214,7 @@ public class SearchFacade extends AbstractFacade {
 
       for (int i = 0; i < stemsPipeline.size(); i++) {
          String linkTypeId = stem.getLinkTypeIds().get(i);
-         SearchQueryStem currentStageStem =  stemsPipeline.get(i);
+         SearchQueryStem currentStageStem = stemsPipeline.get(i);
 
          Set<String> lastStageDocumentIds = lastStageData.stream().map(DataDocument::getId).collect(Collectors.toSet());
          List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByDocumentIds(lastStageDocumentIds, linkTypeId);

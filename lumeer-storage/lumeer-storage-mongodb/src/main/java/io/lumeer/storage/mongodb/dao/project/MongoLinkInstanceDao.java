@@ -112,13 +112,15 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    public LinkInstance updateLinkInstance(final String id, final LinkInstance linkInstance) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
       try {
-         Bson update = new Document("$set", linkInstance).append("$inc", new Document(LinkInstanceCodec.VERSION, 1L));
+         Bson update = new Document("$set", linkInstance).append("$inc", new Document(LinkInstanceCodec.DATA_VERSION, 1));
          LinkInstance updatedLinkInstance = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
          if (updatedLinkInstance == null) {
             throw new StorageException("Link instance '" + id + "' has not been updated.");
          }
          if (updateLinkInstanceEvent != null) {
-            updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstance));
+            LinkInstance updatedLinkInstanceWithData = new LinkInstance(updatedLinkInstance);
+            updatedLinkInstanceWithData.setDataVersion(linkInstance.getDataVersion());
+            updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstanceWithData));
          }
          return updatedLinkInstance;
       } catch (MongoException ex) {
@@ -129,7 +131,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    @Override
    public void deleteLinkInstance(final String id) {
       LinkInstance linkInstance = databaseCollection().findOneAndDelete(idFilter(id));
-      if(linkInstance == null) {
+      if (linkInstance == null) {
          throw new StorageException("Link instance '" + id + "' has not been deleted.");
       }
       if (removeLinkInstanceEvent != null) {

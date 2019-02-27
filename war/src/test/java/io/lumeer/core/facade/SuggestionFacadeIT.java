@@ -252,7 +252,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    }
 
    private LinkType prepareLinkType(String name, String collectionId1, String collectionId2) {
-      return new LinkType(null, name, Arrays.asList(collectionId1, collectionId2), Collections.emptyList());
+      return new LinkType(name, Arrays.asList(collectionId1, collectionId2), Collections.emptyList());
    }
 
    private View prepareView(String name) {

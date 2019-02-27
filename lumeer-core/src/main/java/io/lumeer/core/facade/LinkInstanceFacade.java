@@ -19,17 +19,29 @@
 
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -45,35 +57,142 @@ public class LinkInstanceFacade extends AbstractFacade {
    @Inject
    private LinkInstanceDao linkInstanceDao;
 
-   public LinkInstance createLinkInstance(LinkInstance linkInstance) {
-      LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
-      checkLinkInstancePermission(linkType.getCollectionIds());
+   @Inject
+   private LinkDataDao linkDataDao;
 
-      return linkInstanceDao.createLinkInstance(linkInstance);
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   @Inject
+   private FunctionFacade functionFacade;
+
+   private ConstraintManager constraintManager;
+
+   @PostConstruct
+   public void init() {
+      constraintManager = new ConstraintManager();
+      final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
+
+      if (locale != null && !"".equals(locale)) {
+         constraintManager.setLocale(Locale.forLanguageTag(locale));
+      } else {
+         constraintManager.setLocale(Locale.getDefault());
+      }
    }
 
-   public LinkInstance updateLinkInstance(String id, LinkInstance linkInstance) {
-      LinkInstance stored = linkInstanceDao.getLinkInstance(id);
-      Set<String> collectionIds = new HashSet<>(linkTypeDao.getLinkType(stored.getLinkTypeId()).getCollectionIds());
-      collectionIds.addAll(linkTypeDao.getLinkType(linkInstance.getLinkTypeId()).getCollectionIds());
-      checkLinkInstancePermission(collectionIds);
+   public LinkInstance createLinkInstance(LinkInstance linkInstance) {
+      checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
-      return linkInstanceDao.updateLinkInstance(id, linkInstance);
+      linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
+      linkInstance.setCreationDate(ZonedDateTime.now());
+      LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
+
+      DataDocument data = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), new DataDocument());
+      createdLinkInstance.setData(data);
+
+      return createdLinkInstance;
+   }
+
+   public LinkInstance updateLinkInstanceData(String linkInstanceId, DataDocument data) {
+      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
+
+      constraintManager.encodeDataTypes(linkType, data);
+
+      DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
+      Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
+      attributesIdsToAdd.removeAll(oldData.keySet());
+
+      Set<String> attributesIdsToDec = new HashSet<>(oldData.keySet());
+      attributesIdsToDec.removeAll(data.keySet());
+      updateLinkTypeMetadata(linkType, attributesIdsToAdd, attributesIdsToDec);
+
+      DataDocument updatedData = linkDataDao.updateData(linkType.getId(), linkInstanceId, data);
+      checkAttributesValueChanges(linkType, linkInstanceId, oldData, updatedData);
+
+      constraintManager.decodeDataTypes(linkType, updatedData);
+      return updateLinkInstance(stored, updatedData);
+   }
+
+   private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData){
+      linkInstance.setData(newData);
+      linkInstance.setUpdateDate(ZonedDateTime.now());
+      linkInstance.setUpdatedBy(authenticatedUser.getCurrentUserId());
+
+      LinkInstance updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
+      updatedLinkInstance.setData(newData);
+      return updatedLinkInstance;
+   }
+
+   private void updateLinkTypeMetadata(LinkType linkType, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
+      linkType.setAttributes(new ArrayList<>(ResourceUtils.incOrDecAttributes(linkType.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
+      linkTypeDao.updateLinkType(linkType.getId(), linkType);
+   }
+
+   private void checkAttributesValueChanges(LinkType linkType, String linkInstanceId, DataDocument oldData, DataDocument newData) {
+      java.util.Collection<Attribute> attributes = linkType.getAttributes();
+      for (Attribute attribute : attributes) {
+         Object oldValue = oldData.get(attribute.getId());
+         Object newValue = newData.get(attribute.getId());
+         if (!Objects.deepEquals(oldValue, newValue)) {
+            functionFacade.onLinkValueChanged(linkType.getId(), attribute.getId(), linkInstanceId);
+         }
+      }
+   }
+
+   public LinkInstance patchLinkInstanceData(String linkInstanceId, DataDocument data) {
+      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
+
+      constraintManager.encodeDataTypes(linkType, data);
+
+      DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
+      Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
+      attributesIdsToAdd.removeAll(oldData.keySet());
+
+      updateLinkTypeMetadata(linkType, attributesIdsToAdd, Collections.emptySet());
+
+      DataDocument updatedData = linkDataDao.patchData(linkType.getId(), linkInstanceId, data);
+      checkAttributesValueChanges(linkType, linkInstanceId, oldData, updatedData);
+
+      constraintManager.decodeDataTypes(linkType, updatedData);
+      return updateLinkInstance(stored, updatedData);
    }
 
    public void deleteLinkInstance(String id) {
-      LinkInstance linkInstance = linkInstanceDao.getLinkInstance(id);
-      LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
-      checkLinkInstancePermission(linkType.getCollectionIds());
+      LinkInstance stored = linkInstanceDao.getLinkInstance(id);
+      checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       linkInstanceDao.deleteLinkInstance(id);
+      linkDataDao.deleteData(stored.getLinkTypeId(), id);
    }
 
-   private void checkLinkInstancePermission(java.util.Collection<String> collectionIds) {
-      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
+   public LinkInstance getLinkInstance(String linkTypeId, String linkInstanceId) {
+      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      LinkType linkType = checkLinkTypeReadPermissions(stored.getLinkTypeId());
+
+      DataDocument data = linkDataDao.getData(linkTypeId, linkInstanceId);
+      constraintManager.decodeDataTypes(linkType, data);
+      stored.setData(data);
+
+      return stored;
+   }
+
+   private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
+      return checkLinkTypePermissions(linkTypeId, Role.WRITE);
+   }
+
+   private LinkType checkLinkTypeReadPermissions(String linkTypeId) {
+      return checkLinkTypePermissions(linkTypeId, Role.READ);
+   }
+
+   private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
       for (Collection collection : collections) {
-         permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+         permissionsChecker.checkRoleWithView(collection, role, role);
       }
+      return linkType;
    }
 
 }

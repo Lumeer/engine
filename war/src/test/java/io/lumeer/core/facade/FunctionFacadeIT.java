@@ -301,7 +301,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       List<LinkInstance> linkInstances = new ArrayList<>();
       for (Document doc1 : docs1) {
          for (Document doc2 : docs2) {
-            linkInstances.add(linkInstanceDao.createLinkInstance(new LinkInstance(null, lt.getId(), Arrays.asList(doc1.getId(), doc2.getId()), new DataDocument())));
+            linkInstances.add(linkInstanceDao.createLinkInstance(new LinkInstance(lt.getId(), Arrays.asList(doc1.getId(), doc2.getId()))));
          }
       }
       return linkInstances;
@@ -365,7 +365,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       List<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
             new Attribute(attributeId, attributeId, null, new Function("", "", "", 0, false), 1))
                                          .collect(Collectors.toList());
-      LinkType linKType = new LinkType(null, name, collectionIds, attributes);
+      LinkType linKType = new LinkType(name, collectionIds, attributes);
       return linkTypeDao.createLinkType(linKType);
    }
 
