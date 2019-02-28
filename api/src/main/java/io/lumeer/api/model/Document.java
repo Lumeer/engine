@@ -19,6 +19,7 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.model.common.WithId;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +30,7 @@ import java.time.ZonedDateTime;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Document {
+public class Document implements WithId {
 
    public static String META_PARENT_ID = "parentId";
 

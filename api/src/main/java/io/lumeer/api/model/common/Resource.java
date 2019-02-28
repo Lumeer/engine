@@ -23,7 +23,7 @@ import io.lumeer.api.model.ResourceType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public abstract class Resource {
+public abstract class Resource implements WithId {
 
    public static final String CODE = "code";
    public static final String NAME = "name";

@@ -26,6 +26,8 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -64,7 +66,7 @@ public class JsExecutor {
       private static ConstraintManager constraintManager;
       private ContextualTask ruleTask;
       private Collection collection;
-      private Set<DocumentChange> changes = new HashSet<>();
+      private Set<Change> changes = new HashSet<>();
       private Exception cause = null;
 
       static {
@@ -83,7 +85,16 @@ public class JsExecutor {
          this.collection = collection;
       }
 
-      public void setDocumentAttribute(DocumentBridge d, String attrId, Value value) {
+      public void setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
+         try {
+            changes.add(new LinkChange(l.link, attrId, convertValue(value)));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
+      }
+
+      public void setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
          try {
             changes.add(new DocumentChange(d.document, attrId, convertValue(value)));
          } catch (Exception e) {
@@ -110,26 +121,53 @@ public class JsExecutor {
          }
       }
 
+      private List<LinkInstance> getLinkInstances(final String documentId, final String linkTypeId) {
+         final SearchQuery query = SearchQuery
+               .createBuilder()
+               .stems(Collections.singletonList(
+                     SearchQueryStem
+                           .createBuilder("")
+                           .linkTypeIds(Collections.singletonList(linkTypeId))
+                           .documentIds(Set.of(documentId))
+                           .build()))
+               .build();
+
+         return ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                        .searchLinkInstances(query);
+      }
+
+      public List<LinkBridge> getLinks(DocumentBridge d, String linkTypeId) {
+         try {
+            final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
+            final List<LinkInstance> links = getLinkInstances(d.document.getId(), linkTypeId);
+
+            // load link data
+            if (links.size() > 0) {
+               final Map<String, DataDocument> linkData = ruleTask.getDaoContextSnapshot().getLinkDataDao().getData(linkTypeId, links.stream().map(LinkInstance::getId).collect(toSet())).stream()
+                       .collect(Collectors.toMap(DataDocument::getId, data -> data));
+
+               // match link instances with their data and convert to bridge
+               return links.stream().map(linkInstance -> {
+                  linkInstance.setData(linkData.get(linkInstance.getId()));
+                  return new LinkBridge(linkInstance);
+               }).collect(Collectors.toList());
+            } else {
+               return Collections.emptyList();
+            }
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
+      }
+
       public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
          try {
             final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
+            final List<LinkInstance> links = getLinkInstances(d.document.getId(), linkTypeId);
             final String otherCollectionId = linkType.getCollectionIds().get(0).equals(collection.getId()) ?
                   linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
 
-            final SearchQuery query = SearchQuery
-                  .createBuilder()
-                  .stems(Collections.singletonList(
-                        SearchQueryStem
-                              .createBuilder("")
-                              .linkTypeIds(Collections.singletonList(linkTypeId))
-                              .documentIds(Set.of(d.document.getId()))
-                              .build()))
-                  .build();
-
             // load linked document ids
-            final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                                                     .searchLinkInstances(query);
-
             if (links.size() > 0) {
                final Set<String> documentIds = links.stream()
                                                     .map(LinkInstance::getDocumentIds)
@@ -159,9 +197,30 @@ public class JsExecutor {
          }
       }
 
-      public Value getDocumentAttribute(DocumentBridge d, String attrId) {
+      public Value getLinkAttribute(final LinkBridge l, final String attrId) {
+         try {
+            return Value.asValue(l.link.getData().get(attrId));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
+      }
+
+      public Value getDocumentAttribute(final DocumentBridge d, final String attrId) {
          try {
             return Value.asValue(d.document.getData().get(attrId));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
+      }
+
+      public List<Value> getLinkAttribute(final List<LinkBridge> links, final String attrId) {
+         try {
+            final List<Value> result = new ArrayList<>();
+            links.forEach(link -> result.add(Value.asValue(link.link.getData().get(attrId))));
+
+            return result;
          } catch (Exception e) {
             cause = e;
             throw e;
@@ -186,43 +245,50 @@ public class JsExecutor {
          }
 
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
-         Map<String, Set<String>> documentIdsByCollection = changes.stream().map(change -> change.document)
+         Map<String, Set<String>> documentIdsByCollection = changes.stream().filter(change -> change instanceof DocumentChange).map(change -> (Document) change.getEntity())
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
          Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
                                                           .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
          Set<String> collectionsChanged = new HashSet<>();
+
          changes.forEach(change -> {
-            Document document = change.document;
-            Collection collection = collectionsMap.get(document.getCollectionId());
-            DataDocument newData = new DataDocument(change.attrId, change.value);
-            DataDocument oldData = new DataDocument(document.getData());
+            if (change instanceof DocumentChange) {
+               final DocumentChange documentChange = (DocumentChange) change;
+               final Document document = documentChange.getEntity();
+               final Collection collection = collectionsMap.get(document.getCollectionId());
+               final DataDocument newData = new DataDocument(documentChange.getAttrId(), documentChange.getValue());
+               final DataDocument oldData = new DataDocument(document.getData());
 
-            constraintManager.encodeDataTypes(collection, newData);
+               constraintManager.encodeDataTypes(collection, newData);
 
-            Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
-            attributesIdsToAdd.removeAll(oldData.keySet());
+               Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
+               attributesIdsToAdd.removeAll(oldData.keySet());
 
-            if (attributesIdsToAdd.size() > 0) {
-               Optional<Attribute> attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(change.attrId)).findFirst();
-               attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
-               collection.setLastTimeUsed(ZonedDateTime.now());
-               collectionsChanged.add(collection.getId());
+               if (attributesIdsToAdd.size() > 0) {
+                  Optional<Attribute> attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(documentChange.getAttrId())).findFirst();
+                  attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
+                  collection.setLastTimeUsed(ZonedDateTime.now());
+                  collectionsChanged.add(collection.getId());
+               }
+
+               document.setUpdatedBy(ruleTask.getInitiator().getId());
+               document.setUpdateDate(ZonedDateTime.now());
+
+               DataDocument patchedData = ruleTask.getDaoContextSnapshot().getDataDao()
+                                                  .patchData(documentChange.getEntity().getCollectionId(), documentChange.getEntity().getId(), newData);
+
+               Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
+                                                  .updateDocument(document.getId(), document, null);
+
+               constraintManager.decodeDataTypes(collection, patchedData);
+               updatedDocument.setData(patchedData);
+
+               updatedDocuments.computeIfAbsent(documentChange.getEntity().getCollectionId(), key -> new ArrayList<>())
+                               .add(updatedDocument);
+            } else if (change instanceof LinkChange) {
+               final LinkChange linkChange = (LinkChange) change;
+               // TBD
             }
-
-            document.setUpdatedBy(ruleTask.getInitiator().getId());
-            document.setUpdateDate(ZonedDateTime.now());
-
-            DataDocument patchedData = ruleTask.getDaoContextSnapshot().getDataDao()
-                                               .patchData(change.document.getCollectionId(), change.document.getId(), newData);
-
-            Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
-                                               .updateDocument(document.getId(), document, null);
-
-            constraintManager.decodeDataTypes(collection, patchedData);
-            updatedDocument.setData(patchedData);
-
-            updatedDocuments.computeIfAbsent(change.document.getCollectionId(), key -> new ArrayList<>())
-                            .add(updatedDocument);
          });
 
          collectionsChanged.forEach(collectionId -> ruleTask.getDaoContextSnapshot()
@@ -245,13 +311,19 @@ public class JsExecutor {
          final StringBuilder sb = new StringBuilder("");
 
          changes.forEach(change -> {
-            final Collection collection = collections.computeIfAbsent(change.document.getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
+            if (change instanceof DocumentChange) {
+               final DocumentChange documentChange = (DocumentChange) change;
+               final Collection collection = collections.computeIfAbsent(documentChange.getEntity().getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
 
-            sb.append(collection.getName() + "(" + last4(change.document.getId()) + "): ");
-            sb.append(collection.getAttributes().stream().filter(a -> a.getId().equals(change.attrId)).map(Attribute::getName).findFirst().orElse(""));
-            sb.append(" = ");
-            sb.append(change.value);
-            sb.append("\n");
+               sb.append(collection.getName() + "(" + last4(documentChange.getEntity().getId()) + "): ");
+               sb.append(collection.getAttributes().stream().filter(a -> a.getId().equals(documentChange.getAttrId())).map(Attribute::getName).findFirst().orElse(""));
+               sb.append(" = ");
+               sb.append(documentChange.getValue());
+               sb.append("\n");
+            } else if (change instanceof LinkChange) {
+               final LinkChange linkChange = (LinkChange) change;
+               // TBD
+            }
          });
 
          return sb.toString();
@@ -265,19 +337,19 @@ public class JsExecutor {
       }
    }
 
-   public static class DocumentChange {
-      private final Document document;
+   public static abstract class Change<T extends WithId> {
+      private final T entity;
       private final String attrId;
       private final Object value;
 
-      public DocumentChange(final Document document, final String attrId, final Object value) {
-         this.document = document;
+      public Change(final T entity, final String attrId, final Object value) {
+         this.entity = entity;
          this.attrId = attrId;
          this.value = value;
       }
 
-      public Document getDocument() {
-         return document;
+      public T getEntity() {
+         return entity;
       }
 
       public String getAttrId() {
@@ -290,11 +362,25 @@ public class JsExecutor {
 
       @Override
       public String toString() {
-         return "DocumentChange{" +
-               "document=" + document.getId() +
-               ", attrId='" + attrId + '\'' +
-               ", value=" + value +
+         return getClass().getSimpleName() + "{" +
+               "entity=" + getEntity().getId() +
+               ", attrId='" + getAttrId() + '\'' +
+               ", value=" + getValue() +
                '}';
+      }
+   }
+
+   public static class DocumentChange extends Change<Document> {
+
+      public DocumentChange(final Document entity, final String attrId, final Object value) {
+         super(entity, attrId, value);
+      }
+   }
+
+   public static class LinkChange extends Change<LinkInstance> {
+
+      public LinkChange(final LinkInstance entity, final String attrId, final Object value) {
+         super(entity, attrId, value);
       }
    }
 
@@ -309,6 +395,21 @@ public class JsExecutor {
       public String toString() {
          return "DocumentBridge{" +
                "document=" + document +
+               '}';
+      }
+   }
+
+   public static class LinkBridge {
+      private LinkInstance link;
+
+      LinkBridge(final LinkInstance link) {
+         this.link = link;
+      }
+
+      @Override
+      public String toString() {
+         return "LinkBridge{" +
+               "link=" + link +
                '}';
       }
    }
