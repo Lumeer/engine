@@ -255,110 +255,124 @@ public class JsExecutor {
          }
       }
 
-      void commitChanges() {
+      private void commitDocumentChanges(final List<DocumentChange> changes) {
          if (changes.isEmpty()) {
             return;
          }
 
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
-         final Map<String, List<LinkInstance>> updatedLinks = new HashMap<>(); // LinkType -> [LinkInstance]
-         Map<String, Set<String>> documentIdsByCollection = changes.stream().filter(change -> change instanceof DocumentChange).map(change -> (Document) change.getEntity())
+         Map<String, Set<String>> documentIdsByCollection = changes.stream().map(change -> change.getEntity())
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
-         Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
-                                                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
-         Map<String, LinkType> linkTypesMap = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes()
-                                                          .stream().collect(Collectors.toMap(LinkType::getId, linkType -> linkType));
+         final Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
+                                                                .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
          Set<String> collectionsChanged = new HashSet<>();
-         Set<String> linkTypesChanged = new HashSet<>();
 
-         changes.forEach(change -> {
-            if (change instanceof DocumentChange) {
-               final DocumentChange documentChange = (DocumentChange) change;
-               final Document document = documentChange.getEntity();
-               final Collection collection = collectionsMap.get(document.getCollectionId());
-               final DataDocument newData = new DataDocument(documentChange.getAttrId(), documentChange.getValue());
-               final DataDocument oldData = new DataDocument(document.getData());
+         changes.forEach(documentChange -> {
+            final Document document = documentChange.getEntity();
+            final Collection collection = collectionsMap.get(document.getCollectionId());
+            final DataDocument newData = new DataDocument(documentChange.getAttrId(), documentChange.getValue());
+            final DataDocument oldData = new DataDocument(document.getData());
 
-               constraintManager.encodeDataTypes(collection, newData);
+            constraintManager.encodeDataTypes(collection, newData);
 
-               Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
-               attributesIdsToAdd.removeAll(oldData.keySet());
+            Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
+            attributesIdsToAdd.removeAll(oldData.keySet());
 
-               if (attributesIdsToAdd.size() > 0) {
-                  Optional<Attribute> attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(documentChange.getAttrId())).findFirst();
-                  attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
-                  collection.setLastTimeUsed(ZonedDateTime.now());
-                  collectionsChanged.add(collection.getId());
-               }
-
-               document.setUpdatedBy(ruleTask.getInitiator().getId());
-               document.setUpdateDate(ZonedDateTime.now());
-
-               DataDocument patchedData = ruleTask.getDaoContextSnapshot().getDataDao()
-                                                  .patchData(documentChange.getEntity().getCollectionId(), documentChange.getEntity().getId(), newData);
-
-               Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
-                                                  .updateDocument(document.getId(), document, null);
-
-               constraintManager.decodeDataTypes(collection, patchedData);
-               updatedDocument.setData(patchedData);
-
-               updatedDocuments.computeIfAbsent(documentChange.getEntity().getCollectionId(), key -> new ArrayList<>())
-                               .add(updatedDocument);
-            } else if (change instanceof LinkChange) {
-               final LinkChange linkChange = (LinkChange) change;
-               final LinkInstance linkInstance = linkChange.getEntity();
-               final LinkType linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
-               final DataDocument newData = new DataDocument(linkChange.getAttrId(), linkChange.getValue());
-               final DataDocument oldData = new DataDocument(linkInstance.getData());
-
-               constraintManager.encodeDataTypes(linkType, newData);
-
-               Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
-               attributesIdsToAdd.removeAll(oldData.keySet());
-
-               if (attributesIdsToAdd.size() > 0) {
-                  Optional<Attribute> attribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(linkChange.getAttrId())).findFirst();
-                  attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
-                  linkTypesChanged.add(linkType.getId());
-               }
-
-               linkInstance.setUpdatedBy(ruleTask.getInitiator().getId());
-               linkInstance.setUpdateDate(ZonedDateTime.now());
-
-               DataDocument patchedData = ruleTask.getDaoContextSnapshot().getLinkDataDao()
-                                                  .patchData(linkChange.getEntity().getLinkTypeId(), linkChange.getEntity().getId(), newData);
-
-               LinkInstance updatedLink = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                                                  .updateLinkInstance(linkInstance.getId(), linkInstance);
-
-               constraintManager.decodeDataTypes(linkType, patchedData);
-               updatedLink.setData(patchedData);
-
-               updatedLinks.computeIfAbsent(linkChange.getEntity().getLinkTypeId(), key -> new ArrayList<>())
-                               .add(updatedLink);
+            if (attributesIdsToAdd.size() > 0) {
+               Optional<Attribute> attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(documentChange.getAttrId())).findFirst();
+               attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
+               collection.setLastTimeUsed(ZonedDateTime.now());
+               collectionsChanged.add(collection.getId());
             }
+
+            document.setUpdatedBy(ruleTask.getInitiator().getId());
+            document.setUpdateDate(ZonedDateTime.now());
+
+            DataDocument patchedData = ruleTask.getDaoContextSnapshot().getDataDao()
+                                               .patchData(documentChange.getEntity().getCollectionId(), documentChange.getEntity().getId(), newData);
+
+            Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
+                                               .updateDocument(document.getId(), document, null);
+
+            constraintManager.decodeDataTypes(collection, patchedData);
+            updatedDocument.setData(patchedData);
+
+            updatedDocuments.computeIfAbsent(documentChange.getEntity().getCollectionId(), key -> new ArrayList<>())
+                            .add(updatedDocument);
          });
 
          collectionsChanged.forEach(collectionId -> ruleTask.getDaoContextSnapshot()
                                                             .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));
-
-         linkTypesChanged.forEach(linkTypeId -> ruleTask.getDaoContextSnapshot()
-                                                        .getLinkTypeDao().updateLinkType(linkTypeId, linkTypesMap.get(linkTypeId)));
 
          // send push notification
          if (ruleTask.getPusherClient() != null) {
             updatedDocuments.keySet().forEach(collectionId ->
                   ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId))
             );
+         }
+      }
+
+      private void commitLinkChanges(final List<LinkChange> changes) {
+         if (changes.isEmpty()) {
+            return;
+         }
+
+         final Map<String, List<LinkInstance>> updatedLinks = new HashMap<>(); // LinkType -> [LinkInstance]
+         final Map<String, LinkType> linkTypesMap = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes()
+                                                            .stream().collect(Collectors.toMap(LinkType::getId, linkType -> linkType));
+         Set<String> linkTypesChanged = new HashSet<>();
+
+         changes.forEach(linkChange -> {
+            final LinkInstance linkInstance = linkChange.getEntity();
+            final LinkType linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
+            final DataDocument newData = new DataDocument(linkChange.getAttrId(), linkChange.getValue());
+            final DataDocument oldData = new DataDocument(linkInstance.getData());
+
+            constraintManager.encodeDataTypes(linkType, newData);
+
+            Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
+            attributesIdsToAdd.removeAll(oldData.keySet());
+
+            if (attributesIdsToAdd.size() > 0) {
+               Optional<Attribute> attribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(linkChange.getAttrId())).findFirst();
+               attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
+               linkTypesChanged.add(linkType.getId());
+            }
+
+            linkInstance.setUpdatedBy(ruleTask.getInitiator().getId());
+            linkInstance.setUpdateDate(ZonedDateTime.now());
+
+            DataDocument patchedData = ruleTask.getDaoContextSnapshot().getLinkDataDao()
+                                               .patchData(linkChange.getEntity().getLinkTypeId(), linkChange.getEntity().getId(), newData);
+
+            LinkInstance updatedLink = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                               .updateLinkInstance(linkInstance.getId(), linkInstance);
+
+            constraintManager.decodeDataTypes(linkType, patchedData);
+            updatedLink.setData(patchedData);
+
+            updatedLinks.computeIfAbsent(linkChange.getEntity().getLinkTypeId(), key -> new ArrayList<>())
+                        .add(updatedLink);
+         });
+
+         linkTypesChanged.forEach(linkTypeId -> ruleTask.getDaoContextSnapshot()
+                                                        .getLinkTypeDao().updateLinkType(linkTypeId, linkTypesMap.get(linkTypeId)));
+
+         // send push notification
+         if (ruleTask.getPusherClient() != null) {
             updatedLinks.keySet().forEach(linkTypeId ->
                   ruleTask.sendPushNotifications(linkTypesMap.get(linkTypeId), updatedLinks.get(linkTypeId))
             );
          }
       }
 
-      private void convertDataTypes(final Collection collection, final DataDocument data) {
-         constraintManager.encodeDataTypes(collection, data);
+      void commitChanges() {
+         if (changes.isEmpty()) {
+            return;
+         }
+
+         commitDocumentChanges(changes.stream().filter(change -> change instanceof DocumentChange).map(change -> (DocumentChange) change).collect(Collectors.toList()));
+         commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange).map(change -> (LinkChange) change).collect(Collectors.toList()));
       }
 
       String getChanges() {
