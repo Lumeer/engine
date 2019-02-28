@@ -26,11 +26,10 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
-import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
@@ -144,7 +143,7 @@ public class JsExecutor {
             // load link data
             if (links.size() > 0) {
                final Map<String, DataDocument> linkData = ruleTask.getDaoContextSnapshot().getLinkDataDao().getData(linkTypeId, links.stream().map(LinkInstance::getId).collect(toSet())).stream()
-                       .collect(Collectors.toMap(DataDocument::getId, data -> data));
+                                                                  .collect(Collectors.toMap(DataDocument::getId, data -> data));
 
                // match link instances with their data and convert to bridge
                return links.stream().map(linkInstance -> {
@@ -154,6 +153,23 @@ public class JsExecutor {
             } else {
                return Collections.emptyList();
             }
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
+      }
+
+      public DocumentBridge getLinkDocument(final LinkBridge l, final String collectionId) {
+         try {
+            List<Document> documents = ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(l.link.getDocumentIds().toArray(new String[0]));
+            if (documents.size() == 2) {
+               final Document doc = documents.get(0).getCollectionId().equals(collectionId) ? documents.get(0) : documents.get(1);
+
+               doc.setData(ruleTask.getDaoContextSnapshot().getDataDao().getData(doc.getCollectionId(), doc.getId()));
+               return new DocumentBridge(doc);
+            }
+
+            return null;
          } catch (Exception e) {
             cause = e;
             throw e;
@@ -245,11 +261,15 @@ public class JsExecutor {
          }
 
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
+         final Map<String, List<LinkInstance>> updatedLinks = new HashMap<>(); // LinkType -> [LinkInstance]
          Map<String, Set<String>> documentIdsByCollection = changes.stream().filter(change -> change instanceof DocumentChange).map(change -> (Document) change.getEntity())
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
          Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
                                                           .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
+         Map<String, LinkType> linkTypesMap = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes()
+                                                          .stream().collect(Collectors.toMap(LinkType::getId, linkType -> linkType));
          Set<String> collectionsChanged = new HashSet<>();
+         Set<String> linkTypesChanged = new HashSet<>();
 
          changes.forEach(change -> {
             if (change instanceof DocumentChange) {
@@ -287,17 +307,52 @@ public class JsExecutor {
                                .add(updatedDocument);
             } else if (change instanceof LinkChange) {
                final LinkChange linkChange = (LinkChange) change;
-               // TBD
+               final LinkInstance linkInstance = linkChange.getEntity();
+               final LinkType linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
+               final DataDocument newData = new DataDocument(linkChange.getAttrId(), linkChange.getValue());
+               final DataDocument oldData = new DataDocument(linkInstance.getData());
+
+               constraintManager.encodeDataTypes(linkType, newData);
+
+               Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
+               attributesIdsToAdd.removeAll(oldData.keySet());
+
+               if (attributesIdsToAdd.size() > 0) {
+                  Optional<Attribute> attribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(linkChange.getAttrId())).findFirst();
+                  attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
+                  linkTypesChanged.add(linkType.getId());
+               }
+
+               linkInstance.setUpdatedBy(ruleTask.getInitiator().getId());
+               linkInstance.setUpdateDate(ZonedDateTime.now());
+
+               DataDocument patchedData = ruleTask.getDaoContextSnapshot().getLinkDataDao()
+                                                  .patchData(linkChange.getEntity().getLinkTypeId(), linkChange.getEntity().getId(), newData);
+
+               LinkInstance updatedLink = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                  .updateLinkInstance(linkInstance.getId(), linkInstance);
+
+               constraintManager.decodeDataTypes(linkType, patchedData);
+               updatedLink.setData(patchedData);
+
+               updatedLinks.computeIfAbsent(linkChange.getEntity().getLinkTypeId(), key -> new ArrayList<>())
+                               .add(updatedLink);
             }
          });
 
          collectionsChanged.forEach(collectionId -> ruleTask.getDaoContextSnapshot()
                                                             .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));
 
+         linkTypesChanged.forEach(linkTypeId -> ruleTask.getDaoContextSnapshot()
+                                                        .getLinkTypeDao().updateLinkType(linkTypeId, linkTypesMap.get(linkTypeId)));
+
          // send push notification
          if (ruleTask.getPusherClient() != null) {
             updatedDocuments.keySet().forEach(collectionId ->
                   ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId))
+            );
+            updatedLinks.keySet().forEach(linkTypeId ->
+                  ruleTask.sendPushNotifications(linkTypesMap.get(linkTypeId), updatedLinks.get(linkTypeId))
             );
          }
       }
@@ -308,25 +363,30 @@ public class JsExecutor {
 
       String getChanges() {
          final Map<String, Collection> collections = new HashMap<>();
+         final Map<String, LinkType> linkTypes = new HashMap<>();
          final StringBuilder sb = new StringBuilder("");
 
          changes.forEach(change -> {
             if (change instanceof DocumentChange) {
                final DocumentChange documentChange = (DocumentChange) change;
                final Collection collection = collections.computeIfAbsent(documentChange.getEntity().getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
-
-               sb.append(collection.getName() + "(" + last4(documentChange.getEntity().getId()) + "): ");
-               sb.append(collection.getAttributes().stream().filter(a -> a.getId().equals(documentChange.getAttrId())).map(Attribute::getName).findFirst().orElse(""));
-               sb.append(" = ");
-               sb.append(documentChange.getValue());
-               sb.append("\n");
+               appendChange(sb, collection.getName(), collection.getAttributes(), documentChange);
             } else if (change instanceof LinkChange) {
                final LinkChange linkChange = (LinkChange) change;
-               // TBD
+               final LinkType linkType = linkTypes.computeIfAbsent(linkChange.getEntity().getId(), id -> ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
+               appendChange(sb, linkType.getName(), linkType.getAttributes(), linkChange);
             }
          });
 
          return sb.toString();
+      }
+
+      private void appendChange(final StringBuilder sb, final String name, final java.util.Collection<Attribute> attributes, final Change change) {
+         sb.append(name + "(" + last4(change.getEntity().getId()) + "): ");
+         sb.append(attributes.stream().filter(a -> a.getId().equals(change.getAttrId())).map(Attribute::getName).findFirst().orElse(""));
+         sb.append(" = ");
+         sb.append(change.getValue());
+         sb.append("\n");
       }
 
       private String last4(final String str) {

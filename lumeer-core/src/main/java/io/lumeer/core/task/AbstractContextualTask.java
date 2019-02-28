@@ -20,6 +20,8 @@ package io.lumeer.core.task;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.util.PusherClient;
@@ -75,9 +77,24 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
-   private Event createEventForCollection(Collection collection, String userId) {
+   private Event createEventForCollection(final Collection collection, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
+   }
+
+   private Event createEventForDocument(final Document document, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
+   }
+
+   private Event createEventForLinkType(final LinkType linkType, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
+   }
+
+   private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
    }
 
    @Override
@@ -95,8 +112,23 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(collectionEvents);
    }
 
-   private Event createEventForDocument(Document document, String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, document.getClass().getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
+   @Override
+   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances) {
+      if (linkType.getCollectionIds().size() == 2) {
+         final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
+         final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
+         final Set<String> users = users1.stream().filter(userId -> users2.contains(userId)).collect(Collectors.toSet());
+
+         final List<Event> events = new ArrayList<>();
+         final List<Event> linkInstanceEvents = new ArrayList<>();
+
+         users.forEach(userId -> {
+            linkInstances.forEach(link -> events.add(createEventForLinkInstance(link, userId)));
+            linkInstanceEvents.add(createEventForLinkType(linkType, userId));
+         });
+
+         getPusherClient().trigger(events);
+         getPusherClient().trigger(linkInstanceEvents);
+      }
    }
 }
