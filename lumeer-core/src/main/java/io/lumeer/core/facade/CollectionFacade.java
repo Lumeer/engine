@@ -40,6 +40,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -94,6 +95,7 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(storedCollection, Role.MANAGE);
 
       keepUnmodifiableFields(collection, storedCollection);
+      collection.setLastTimeUsed(ZonedDateTime.now());
       final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection, originalCollection);
       return mapResource(updatedCollection);
    }
@@ -103,7 +105,6 @@ public class CollectionFacade extends AbstractFacade {
 
       collection.setAttributes(storedCollection.getAttributes());
       collection.setDocumentsCount(storedCollection.getDocumentsCount());
-      collection.setLastTimeUsed(storedCollection.getLastTimeUsed());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
    }
 
@@ -210,6 +211,7 @@ public class CollectionFacade extends AbstractFacade {
          collection.setLastAttributeNum(freeNum);
       }
 
+      collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
       return attributes;
@@ -230,6 +232,7 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
       collection.updateAttribute(attributeId, attribute);
+      collection.setLastTimeUsed(ZonedDateTime.now());
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
@@ -270,6 +273,7 @@ public class CollectionFacade extends AbstractFacade {
       if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(attributeId)) {
          collection.setDefaultAttributeId(null);
       }
+      collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
       functionFacade.onDeleteCollectionAttribute(collectionId, attributeId);
@@ -393,6 +397,7 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       collection.setLastAttributeNum(0);
+      collection.setLastTimeUsed(ZonedDateTime.now());
 
       Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
