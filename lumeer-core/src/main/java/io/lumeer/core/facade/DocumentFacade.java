@@ -217,7 +217,9 @@ public class DocumentFacade extends AbstractFacade {
       document.setCollectionId(collection.getId());
       document.setData(newData);
 
-      return updateDocument(document, originalDocument);
+      final var updatedDocument = updateDocument(document, originalDocument);
+      updatedDocument.setData(newData);
+      return updatedDocument;
    }
 
    private Document updateDocument(final Document document, final Document originalDocument) {
