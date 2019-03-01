@@ -20,6 +20,8 @@ package io.lumeer.core.task;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -49,4 +51,11 @@ public interface ContextualTask extends Task {
     * @param documents List of documents.
     */
    void sendPushNotifications(final Collection collection, final List<Document> documents);
+
+   /**
+    * Send push notifications to link instance readers.
+    * @param collection Parent link type.
+    * @param documents List of link instances.
+    */
+   void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances);
 }

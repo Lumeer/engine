@@ -20,6 +20,7 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.model.common.WithId;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class LinkInstance {
+public class LinkInstance implements WithId {
 
    public static final String ID = "id";
    public static final String LINK_TYPE_ID = "linkTypeId";
