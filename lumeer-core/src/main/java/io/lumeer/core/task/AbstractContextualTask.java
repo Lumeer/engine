@@ -77,6 +77,18 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
+   @Override
+   public void sendPushNotifications(final LinkType linkType) {
+      if (getPusherClient() != null) {
+         final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
+         final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
+         final Set<String> users = users1.stream().filter(userId -> users2.contains(userId)).collect(Collectors.toSet());
+         final List<Event> events = users.stream().map(user -> createEventForLinkType(linkType, user)).collect(Collectors.toList());
+
+         getPusherClient().trigger(events);
+      }
+   }
+
    private Event createEventForCollection(final Collection collection, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message);
