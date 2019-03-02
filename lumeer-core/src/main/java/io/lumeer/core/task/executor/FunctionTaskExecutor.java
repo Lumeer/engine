@@ -80,10 +80,10 @@ public class FunctionTaskExecutor {
          task.getFunction().setErrorReport("");
          task.getFunction().setTimestamp(0L);
 
-         if (linkType == null) {
+         if (collection != null) {
             task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
             // we won't send push notifications as this is not important, it gets updated eventually
-         } else {
+         } else if (linkType != null) {
             task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType);
          }
       }
@@ -101,10 +101,10 @@ public class FunctionTaskExecutor {
       task.getFunction().setErrorReport(sb.toString());
       task.getFunction().setTimestamp(System.currentTimeMillis());
 
-      if (linkType == null) {
+      if (collection != null) {
          task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
          task.sendPushNotifications(collection);
-      } else {
+      } else if (linkType != null) {
          task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType);
          task.sendPushNotifications(linkType);
       }
