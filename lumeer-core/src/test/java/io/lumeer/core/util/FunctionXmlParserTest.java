@@ -159,6 +159,49 @@ public class FunctionXmlParserTest {
          + "  </value>"
          + "</block></value></block></value></block></xml>";
 
+   private static final String xml4 = "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+         + "  <variables>\n"
+         + "    <variable type=\"5c5b6a73b9437f682e35d3ba_linkinst\" id=\"_pnvXwp)j1P#p6l@7BQ3\">i</variable>\n"
+         + "    <variable type=\"5c5b3f08b9437f682e35d3b7_document\" id=\"0~ocwVN9mrE0u89P4D-c\">newDocument</variable>\n"
+         + "  </variables>\n"
+         + "  <block type=\"statement_container\" id=\"nOG}9EJB$QvgR]E2ML@i\" deletable=\"false\" x=\"62\" y=\"95\">\n"
+         + "    <statement name=\"COMMANDS\">\n"
+         + "      <block type=\"foreach_link_array\" id=\"clPR,3gM@bv-AY!|/SEl\">\n"
+         + "        <field name=\"VAR\" id=\"_pnvXwp)j1P#p6l@7BQ3\" variabletype=\"5c5b6a73b9437f682e35d3ba_linkinst\">i</field>\n"
+         + "        <value name=\"LIST\">\n"
+         + "          <block type=\"5c5b6a73b9437f682e35d3ba-5c5b3f01b9437f682e35d3b5_5c5b3f08b9437f682e35d3b7_link_instance\" id=\"ZbhD}C*]%4UPQxR=Ea1D\">\n"
+         + "            <value name=\"DOCUMENT\">\n"
+         + "              <block type=\"variables_get_5c5b3f08b9437f682e35d3b7_document\" id=\"74/lJW5CNqc4S);[l.W*\" editable=\"false\">\n"
+         + "                <field name=\"VAR\" id=\"0~ocwVN9mrE0u89P4D-c\" variabletype=\"5c5b3f08b9437f682e35d3b7_document\">newDocument</field>\n"
+         + "              </block>\n"
+         + "            </value>\n"
+         + "          </block>\n"
+         + "        </value>\n"
+         + "        <statement name=\"DO\">\n"
+         + "          <block type=\"set_link_attribute\" id=\"+2nbE|(GY(:9:@OTm%@,\">\n"
+         + "            <field name=\"ATTR\">a3</field>\n"
+         + "            <value name=\"LINK\">\n"
+         + "              <block type=\"variables_get_5c5b6a73b9437f682e35d3ba_linkinst\" id=\"u]_[/d,nu43o0|We($Qu\">\n"
+         + "                <field name=\"VAR\" id=\"_pnvXwp)j1P#p6l@7BQ3\" variabletype=\"5c5b6a73b9437f682e35d3ba_linkinst\">i</field>\n"
+         + "              </block>\n"
+         + "            </value>\n"
+         + "            <value name=\"VALUE\">\n"
+         + "              <block type=\"get_link_attribute\" id=\"6F$k#|%-8srAB,%qzxG`\">\n"
+         + "                <field name=\"ATTR\">a2</field>\n"
+         + "                <value name=\"LINK\">\n"
+         + "                  <block type=\"variables_get_5c5b6a73b9437f682e35d3ba_linkinst\" id=\"5^iVIrYD?sf(QagM;8dh\">\n"
+         + "                    <field name=\"VAR\" id=\"_pnvXwp)j1P#p6l@7BQ3\" variabletype=\"5c5b6a73b9437f682e35d3ba_linkinst\">i</field>\n"
+         + "                  </block>\n"
+         + "                </value>\n"
+         + "              </block>\n"
+         + "            </value>\n"
+         + "          </block>\n"
+         + "        </statement>\n"
+         + "      </block>\n"
+         + "    </statement>\n"
+         + "  </block>\n"
+         + "</xml>";
+
    @Test
    public void parseFunctionXml() {
       List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml);
@@ -190,6 +233,17 @@ public class FunctionXmlParserTest {
       assertThat(attributeReferences).hasSize(1);
       assertThat(attributeReferences).contains(
             new FunctionXmlParser.AttributeReference("a2", "5c5b3f08b9437f682e35d3b7", "5c5b6a73b9437f682e35d3ba")
+      );
+   }
+
+   @Test
+   public void parseFunctionXml4() {
+      List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml4);
+      attributeReferences.forEach(System.out::println);
+
+      assertThat(attributeReferences).hasSize(1);
+      assertThat(attributeReferences).contains(
+            new FunctionXmlParser.AttributeReference("a2", null, "5c5b6a73b9437f682e35d3ba")
       );
    }
 }
