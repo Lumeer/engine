@@ -212,6 +212,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
       Document updatedDocument = documentFacade.updateDocumentData(collection.getId(), id, data);
       assertThat(updatedDocument).isNotNull();
+      assertThat(updatedDocument.getData()).isNotNull();
+      assertThat(updatedDocument.getData()).containsEntry(KEY1, VALUE2);
 
       Document storedDocument = documentDao.getDocumentById(id);
       SoftAssertions assertions = new SoftAssertions();
@@ -249,6 +251,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
       Document updatedDocument = documentFacade.patchDocumentData(collection.getId(), id, data);
       assertThat(updatedDocument).isNotNull();
+      assertThat(updatedDocument.getData()).isNotNull();
+      assertThat(updatedDocument.getData()).containsEntry(KEY1, VALUE2);
 
       Document storedDocument = documentDao.getDocumentById(id);
       SoftAssertions assertions = new SoftAssertions();

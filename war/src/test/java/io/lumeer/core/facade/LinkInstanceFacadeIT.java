@@ -32,9 +32,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -56,10 +55,7 @@ import org.junit.runner.RunWith;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -209,19 +205,27 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       assertThat(created.getData()).doesNotContainEntry("k1", "v1");
       assertThat(created.getData()).doesNotContainEntry("k2", "v2");
 
-      linkInstanceFacade.updateLinkInstanceData(id, new DataDocument("k1", "v1").append("k2", "v2"));
+      var updatedLinkInstance = linkInstanceFacade.updateLinkInstanceData(id, new DataDocument("k1", "v1").append("k2", "v2"));
+      assertThat(updatedLinkInstance).isNotNull();
+      assertThat(updatedLinkInstance.getData()).containsEntry("k1", "v1");
+      assertThat(updatedLinkInstance.getData()).containsEntry("k2", "v2");
 
       LinkInstance storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getData()).containsEntry("k1", "v1");
       assertThat(storedLinkInstance.getData()).containsEntry("k2", "v2");
 
-      linkInstanceFacade.updateLinkInstanceData(id, new DataDocument("k3", "v3").append("k4", "v4"));
+      updatedLinkInstance = linkInstanceFacade.updateLinkInstanceData(id, new DataDocument("k3", "v3").append("k4", "v4"));
+      assertThat(updatedLinkInstance).isNotNull();
+      assertThat(updatedLinkInstance.getData()).doesNotContainEntry("k1", "v1");
+      assertThat(updatedLinkInstance.getData()).doesNotContainEntry("k2", "v2");
+      assertThat(updatedLinkInstance.getData()).containsEntry("k3", "v3");
+      assertThat(updatedLinkInstance.getData()).containsEntry("k4", "v4");
 
       storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
       assertThat(storedLinkInstance).isNotNull();
-      assertThat(created.getData()).doesNotContainEntry("k1", "v1");
-      assertThat(created.getData()).doesNotContainEntry("k2", "v2");
+      assertThat(storedLinkInstance.getData()).doesNotContainEntry("k1", "v1");
+      assertThat(storedLinkInstance.getData()).doesNotContainEntry("k2", "v2");
       assertThat(storedLinkInstance.getData()).containsEntry("k3", "v3");
       assertThat(storedLinkInstance.getData()).containsEntry("k4", "v4");
    }
@@ -237,14 +241,22 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       assertThat(created.getData()).doesNotContainEntry("k1", "v1");
       assertThat(created.getData()).doesNotContainEntry("k2", "v2");
 
-      linkInstanceFacade.patchLinkInstanceData(id, new DataDocument("k1", "v1").append("k2", "v2"));
+      var patchedLinkInstance = linkInstanceFacade.patchLinkInstanceData(id, new DataDocument("k1", "v1").append("k2", "v2"));
+      assertThat(patchedLinkInstance).isNotNull();
+      assertThat(patchedLinkInstance.getData()).containsEntry("k1", "v1");
+      assertThat(patchedLinkInstance.getData()).containsEntry("k2", "v2");
 
       LinkInstance storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getData()).containsEntry("k1", "v1");
       assertThat(storedLinkInstance.getData()).containsEntry("k2", "v2");
 
-      linkInstanceFacade.patchLinkInstanceData(id, new DataDocument("k3", "v3").append("k4", "v4"));
+      patchedLinkInstance = linkInstanceFacade.patchLinkInstanceData(id, new DataDocument("k3", "v3").append("k4", "v4"));
+      assertThat(patchedLinkInstance).isNotNull();
+      assertThat(patchedLinkInstance.getData()).containsEntry("k1", "v1");
+      assertThat(patchedLinkInstance.getData()).containsEntry("k2", "v2");
+      assertThat(patchedLinkInstance.getData()).containsEntry("k3", "v3");
+      assertThat(patchedLinkInstance.getData()).containsEntry("k4", "v4");
 
       storedLinkInstance = linkInstanceFacade.getLinkInstance(linkTypeId1, id);
       assertThat(storedLinkInstance).isNotNull();
