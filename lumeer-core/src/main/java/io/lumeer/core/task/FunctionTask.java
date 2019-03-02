@@ -97,7 +97,9 @@ public class FunctionTask extends AbstractContextualTask {
             executor.execute();
          });
       } else if (linkType != null && linkInstances != null) {
-         // TODO
+         getLinkInstancesWithData(linkType.getId(), linkInstances).forEach(linkInstance -> {
+            final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, linkType, linkInstance);
+         });
       }
 
       if (parents != null) {
@@ -111,6 +113,15 @@ public class FunctionTask extends AbstractContextualTask {
       }
       Map<String, DataDocument> data = getDaoContextSnapshot().getDataDao().getData(collectionId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
       return new HashSet<>(documents).stream().peek(document -> document.setData(data.get(document.getId())))
+                                     .collect(Collectors.toSet());
+   }
+
+   private Set<LinkInstance> getLinkInstancesWithData(final String linkTypeId, final Set<LinkInstance> linkInstances) {
+      if (linkInstances.isEmpty()) {
+         return Collections.emptySet();
+      }
+      Map<String, DataDocument> data = getDaoContextSnapshot().getLinkDataDao().getData(linkTypeId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
+      return new HashSet<>(linkInstances).stream().peek(linkInstance -> linkInstance.setData(data.get(linkInstance.getId())))
                                      .collect(Collectors.toSet());
    }
 }
