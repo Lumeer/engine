@@ -111,7 +111,11 @@ public class FunctionTask extends AbstractContextualTask {
       if (documents.isEmpty()) {
          return Collections.emptySet();
       }
-      Map<String, DataDocument> data = getDaoContextSnapshot().getDataDao().getData(collectionId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
+      Map<String, DataDocument> data = getDaoContextSnapshot()
+            .getDataDao()
+            .getData(collectionId, documents.stream().map(Document::getId).collect(Collectors.toSet()))
+            .stream()
+            .collect(Collectors.toMap(DataDocument::getId, d -> d));
       return new HashSet<>(documents).stream().peek(document -> document.setData(data.get(document.getId())))
                                      .collect(Collectors.toSet());
    }
@@ -120,7 +124,11 @@ public class FunctionTask extends AbstractContextualTask {
       if (linkInstances.isEmpty()) {
          return Collections.emptySet();
       }
-      Map<String, DataDocument> data = getDaoContextSnapshot().getLinkDataDao().getData(linkTypeId).stream().collect(Collectors.toMap(DataDocument::getId, d -> d));
+      Map<String, DataDocument> data = getDaoContextSnapshot()
+            .getLinkDataDao()
+            .getData(linkTypeId, linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
+            .stream()
+            .collect(Collectors.toMap(DataDocument::getId, d -> d));
       return new HashSet<>(linkInstances).stream().peek(linkInstance -> linkInstance.setData(data.get(linkInstance.getId())))
                                      .collect(Collectors.toSet());
    }
