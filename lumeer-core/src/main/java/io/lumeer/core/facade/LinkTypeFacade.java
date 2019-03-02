@@ -33,6 +33,7 @@ import io.lumeer.storage.api.query.DatabaseQuery;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -133,7 +134,8 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private Integer getFreeAttributeNum(final LinkType linkType) {
-      final AtomicInteger last = new AtomicInteger(Math.max(1, linkType.getLastAttributeNum() + 1));
+      int lastAttributeNum = Objects.requireNonNullElse(linkType.getLastAttributeNum(), 0);
+      final AtomicInteger last = new AtomicInteger(Math.max(1, lastAttributeNum + 1));
       while (linkType.getAttributes().stream().anyMatch(attribute -> attribute.getId().equals(LinkType.ATTRIBUTE_PREFIX + last.get()))) {
          last.incrementAndGet();
       }
