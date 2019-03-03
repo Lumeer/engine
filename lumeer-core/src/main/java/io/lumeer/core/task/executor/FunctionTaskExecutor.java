@@ -20,6 +20,8 @@ package io.lumeer.core.task.executor;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.core.task.FunctionTask;
 
 import java.util.Map;
@@ -36,16 +38,29 @@ public class FunctionTaskExecutor {
    private final FunctionTask task;
    private final Document document;
    private final Collection collection;
+   private final LinkType linkType;
+   private final LinkInstance linkInstance;
 
    public FunctionTaskExecutor(final FunctionTask functionTask, final Collection collection, final Document document) {
       this.task = functionTask;
       this.document = document;
       this.collection = collection;
+      this.linkInstance = null;
+      this.linkType = null;
+   }
+
+   public FunctionTaskExecutor(final FunctionTask functionTask, final LinkType linkType, final LinkInstance linkInstance) {
+      this.task = functionTask;
+      this.document = null;
+      this.collection = null;
+      this.linkInstance = linkInstance;
+      this.linkType = linkType;
    }
 
    public void execute() {
       final JsExecutor.DocumentBridge thisDocument = new JsExecutor.DocumentBridge(document);
-      final Map<String, Object> bindings = Map.of("thisDocument", thisDocument);
+      final JsExecutor.LinkBridge thisLink = new JsExecutor.LinkBridge(linkInstance);
+      final Map<String, Object> bindings = linkInstance == null ? Map.of("thisDocument", thisDocument) : Map.of("thisLink", thisLink);
 
       final JsExecutor jsExecutor = new JsExecutor();
 
@@ -65,8 +80,12 @@ public class FunctionTaskExecutor {
          task.getFunction().setErrorReport("");
          task.getFunction().setTimestamp(0L);
 
-         task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
-         // we won't send push notifications as this is not important, it gets updated eventually
+         if (collection != null) {
+            task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
+            // we won't send push notifications as this is not important, it gets updated eventually
+         } else if (linkType != null) {
+            task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType);
+         }
       }
    }
 
@@ -82,9 +101,13 @@ public class FunctionTaskExecutor {
       task.getFunction().setErrorReport(sb.toString());
       task.getFunction().setTimestamp(System.currentTimeMillis());
 
-      task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
-
-      task.sendPushNotifications(collection);
+      if (collection != null) {
+         task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
+         task.sendPushNotifications(collection);
+      } else if (linkType != null) {
+         task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType);
+         task.sendPushNotifications(linkType);
+      }
    }
 
    private String getStackTrace(final Exception e, int lines) {

@@ -100,9 +100,8 @@ public class ConstraintManager {
    private void initNumberMatchPatten(final Locale locale) {
       final DecimalFormat df = (DecimalFormat) DecimalFormat.getNumberInstance(locale);
       final char separator = df.getDecimalFormatSymbols().getDecimalSeparator();
-      final String escapedSeparator = separator == '.' ? "\\." : ",";
 
-      this.numberMatch = Pattern.compile("^[-+]?\\d+(" + escapedSeparator + "\\d+)?([Ee][+-]?\\d+)?$");
+      this.numberMatch = Pattern.compile("^[-+]?\\d+([\\.,]\\d+)?([Ee][+-]?\\d+)?$");
    }
 
    private void initDateTimeFormatters(final Locale locale) {
@@ -188,7 +187,7 @@ public class ConstraintManager {
       }
 
       if (value instanceof String && numberMatch.matcher((String) value).matches()) {
-         final Number n = encodeNumber(locale, value);
+         final Number n = encodeNumber(locale, ((String) value).replaceFirst(",", "."));
          return n == null ? value : n;
       }
 

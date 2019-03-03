@@ -46,6 +46,12 @@ public interface ContextualTask extends Task {
    void sendPushNotifications(final Collection collection);
 
    /**
+    * Send notifications to link type's collection owners (i.e. managers).
+    * @param collection Collection that has been updated.
+    */
+   void sendPushNotifications(final LinkType linkType);
+
+   /**
     * Send push notifications to document readers.
     * @param collection Parent collection.
     * @param documents List of documents.

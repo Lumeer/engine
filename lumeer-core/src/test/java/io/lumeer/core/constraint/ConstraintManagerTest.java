@@ -28,7 +28,7 @@ public class ConstraintManagerTest {
       cm.setLocale(l);
 
       assertThat(cm.encode("2.34")).isInstanceOf(BigDecimal.class);
-      assertThat(cm.encode("2.34e3")).isInstanceOf(BigDecimal.class);
+      assertThat(cm.encode("2,34e3")).isInstanceOf(BigDecimal.class);
       assertThat(cm.encode("-2.34e-3")).isInstanceOf(BigDecimal.class);
       assertThat(cm.encode("2019-01-20")).isInstanceOf(String.class);
       assertThat(cm.encode("2")).isInstanceOf(Long.class);
