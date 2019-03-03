@@ -19,7 +19,7 @@
 
 package io.lumeer.core.util;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
@@ -314,7 +314,6 @@ public class FunctionXmlParserTest {
    @Test
    public void parseFunctionXml4() {
       List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml4);
-      attributeReferences.forEach(System.out::println);
 
       assertThat(attributeReferences).hasSize(1);
       assertThat(attributeReferences).contains(
@@ -325,7 +324,6 @@ public class FunctionXmlParserTest {
    @Test
    public void parseFunctionXml5() {
       List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml5);
-      attributeReferences.forEach(System.out::println);
 
       assertThat(attributeReferences).hasSize(1);
       assertThat(attributeReferences).contains(
