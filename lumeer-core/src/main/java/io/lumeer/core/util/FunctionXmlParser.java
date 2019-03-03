@@ -41,8 +41,10 @@ public final class FunctionXmlParser {
    private static final String DOCUMENT_ATTRIBUTE_VALUE = "DOCUMENT";
    private static final String LINK_ATTRIBUTE_VALUE = "LINK";
    private static final String ATTR_ATTRIBUTE_VALUE = "ATTR";
+   private static final String COLLECTION_ATTRIBUTE_VALUE = "COLLECTION";
    private static final String GET_ATTRIBUTE_VALUE = "get_attribute";
    private static final String GET_LINK_ATTRIBUTE_VALUE = "get_link_attribute";
+   private static final String GET_LINK_DOCUMENT_TYPE = "get_link_document";
    private static final String BLOCK_TAG = "block";
    private static final String FIELD_TAG = "field";
    private static final String VALUE_TAG = "value";
@@ -73,10 +75,12 @@ public final class FunctionXmlParser {
       nodeListIterator(blocks, Node.ELEMENT_NODE, node -> {
          final Element element = (Element) node;
 
+         // <block type="get_attribute" ...>
          if (GET_ATTRIBUTE_VALUE.equals(element.getAttribute(TYPE_ATTRIBUTE))) {
             attributeReferences.add(parseAttributeGetter(element));
          }
 
+         // <block type="get_link_attribute" ...>
          if (GET_LINK_ATTRIBUTE_VALUE.equals(element.getAttribute(TYPE_ATTRIBUTE))) {
             attributeReferences.add(parseLinkAttributeGetter(element));
          }
@@ -88,12 +92,15 @@ public final class FunctionXmlParser {
    private static AttributeReference parseLinkAttributeGetter(final Element element) {
       final AttributeReference attributeReference = new AttributeReference();
 
+      // <field name="ATTR">a4</field>
       attributeReference.setAttributeId(parseAttributeId(element));
 
       Node value = element.getFirstChild();
       while (value != null) {
          if (value.getNodeType() == Node.ELEMENT_NODE && value.getNodeName().equals(VALUE_TAG)) {
             final Element valueElement = (Element) value;
+
+            // <value name="LINK">
             if (LINK_ATTRIBUTE_VALUE.equals(valueElement.getAttribute(NAME_ATTRIBUTE))) {
 
                Node childBlock = value.getFirstChild();
@@ -104,6 +111,8 @@ public final class FunctionXmlParser {
                      final String type = childBlockElement.getAttribute(TYPE_ATTRIBUTE);
 
                      if (type != null) {
+
+                        // <block type="variables_get_5c5b6a73b9437f682e35d3ba_linkinst" ...>
                         if (type.endsWith(LINK_INSTANCE_SUFFIX)) {
                            final String linkTypeId = type.split("_")[2];
                            attributeReference.setLinkTypeId(linkTypeId);
@@ -125,12 +134,15 @@ public final class FunctionXmlParser {
    private static AttributeReference parseAttributeGetter(final Element element) {
       final AttributeReference attributeReference = new AttributeReference();
 
+      // <field name="ATTR">a4</field>
       attributeReference.setAttributeId(parseAttributeId(element));
 
       Node value = element.getFirstChild();
       while (value != null) {
          if (value.getNodeType() == Node.ELEMENT_NODE && value.getNodeName().equals(VALUE_TAG)) {
             final Element valueElement = (Element) value;
+
+            // <value name="DOCUMENT">
             if (DOCUMENT_ATTRIBUTE_VALUE.equals(valueElement.getAttribute(NAME_ATTRIBUTE))) {
 
                Node childBlock = value.getFirstChild();
@@ -142,6 +154,7 @@ public final class FunctionXmlParser {
 
                      if (type != null) {
 
+                        // <block type="5c6f3b389e9ffa43fe6a2dcc-5becabd79e9ffa0a690775ea_5c6ea86e9e9ffa355dffe274_link" ...>
                         if (type.endsWith(LINK_SUFFIX)) {
                            final String[] typeSplit = type.split("-");
                            final String[] collectionTypes = typeSplit[1].split("_");
@@ -166,8 +179,39 @@ public final class FunctionXmlParser {
                               }
                            });
 
-                        } else if (type.startsWith(VARIABLE_PREFIX)) {
+
+                        } else if (type.startsWith(VARIABLE_PREFIX)) { // <block type="variables_get_5c6ea86e9e9ffa355dffe274_document" ...>
                            attributeReference.setCollectionId(type.split("_")[2]);
+                        } else if (type.equals(GET_LINK_DOCUMENT_TYPE)) { // <block type="get_link_document" ...>
+
+
+                           NodeList childFields = childBlockElement.getElementsByTagName(FIELD_TAG);
+                           nodeListIterator(childFields, Node.ELEMENT_NODE, childField -> {
+                              final Element childFieldElement = (Element) childField;
+
+                              // <field name="COLLECTION">5c5b3f01b9437f682e35d3b5</field>
+                              if (COLLECTION_ATTRIBUTE_VALUE.equals(childFieldElement.getAttribute(NAME_ATTRIBUTE))) {
+                                 attributeReference.setCollectionId(childFieldElement.getTextContent());
+                              }
+                           });
+
+                           // <value name="LINK">
+                           NodeList childValues = childBlockElement.getElementsByTagName(VALUE_TAG);
+                           nodeListIterator(childValues, Node.ELEMENT_NODE, childValue -> {
+                              final Element childValueElement = (Element) childValue;
+                              if (LINK_ATTRIBUTE_VALUE.equals(childValueElement.getAttribute(NAME_ATTRIBUTE))) {
+
+                                 // <block type="variables_get_5c5b6a73b9437f682e35d3ba_linkinst" ...>
+                                 final NodeList variableBlocks = childValueElement.getElementsByTagName(BLOCK_TAG);
+                                 nodeListIterator(variableBlocks, Node.ELEMENT_NODE, variable -> {
+                                    final String variableType = ((Element) variable).getAttribute(TYPE_ATTRIBUTE);
+                                    if (variableType != null && variableType.endsWith(LINK_INSTANCE_SUFFIX)) {
+                                       final String thisLinkId = variableType.split("_")[2];
+                                       attributeReference.setLinkTypeId(thisLinkId);
+                                    }
+                                 });
+                              }
+                           });
                         }
                      }
                   }

@@ -201,6 +201,81 @@ public class FunctionXmlParserTest {
          + "    </statement>\n"
          + "  </block>\n"
          + "</xml>";
+   private static final String xml5 = "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+         + "  <variables>\n"
+         + "    <variable type=\"5c5b3f08b9437f682e35d3b7_document\" id=\"q(Q/hjabhq[0?v64!kBq\">j</variable>\n"
+         + "    <variable type=\"5c5b6a73b9437f682e35d3ba_linkinst\" id=\"vwtI@x)]$3ur2**~%Yt0\">i</variable>\n"
+         + "    <variable type=\"5c5b3f08b9437f682e35d3b7_document\" id=\"~6;eI~ONP33SfRQdPuOt\">newDocument</variable>\n"
+         + "  </variables>\n"
+         + "  <block type=\"statement_container\" id=\"-?AQ.,AxwlPnB15)a4^4\" deletable=\"false\" x=\"83\" y=\"105\">\n"
+         + "    <statement name=\"COMMANDS\">\n"
+         + "      <block type=\"foreach_link_array\" id=\"zb}U-9g/X_LVrW]3FmD~\">\n"
+         + "        <field name=\"VAR\" id=\"vwtI@x)]$3ur2**~%Yt0\" variabletype=\"5c5b6a73b9437f682e35d3ba_linkinst\">i</field>\n"
+         + "        <value name=\"LIST\">\n"
+         + "          <block type=\"5c5b6a73b9437f682e35d3ba-5c5b3f01b9437f682e35d3b5_5c5b3f08b9437f682e35d3b7_link_instance\" id=\"rQnJ|g%,#]Ee:t3vN:y=\">\n"
+         + "            <value name=\"DOCUMENT\">\n"
+         + "              <block type=\"variables_get_5c5b3f08b9437f682e35d3b7_document\" id=\"#ixZ_Sgz_u^N2aGlGe(N\" editable=\"false\">\n"
+         + "                <field name=\"VAR\" id=\"~6;eI~ONP33SfRQdPuOt\" variabletype=\"5c5b3f08b9437f682e35d3b7_document\">newDocument</field>\n"
+         + "              </block>\n"
+         + "            </value>\n"
+         + "          </block>\n"
+         + "        </value>\n"
+         + "        <statement name=\"DO\">\n"
+         + "          <block type=\"set_link_attribute\" id=\"O=Y!GFL4`g]?9ayg,3+D\">\n"
+         + "            <field name=\"ATTR\">a8</field>\n"
+         + "            <value name=\"LINK\">\n"
+         + "              <block type=\"variables_get_5c5b6a73b9437f682e35d3ba_linkinst\" id=\"oDp8D(hSypCNVd4wddX{\">\n"
+         + "                <field name=\"VAR\" id=\"vwtI@x)]$3ur2**~%Yt0\" variabletype=\"5c5b6a73b9437f682e35d3ba_linkinst\">i</field>\n"
+         + "              </block>\n"
+         + "            </value>\n"
+         + "            <value name=\"VALUE\">\n"
+         + "              <block type=\"text_join\" id=\"N(5|BcXLG]Jz-Ve3^CN/\">\n"
+         + "                <mutation items=\"2\"></mutation>\n"
+         + "                <value name=\"ADD0\">\n"
+         + "                  <block type=\"text\" id=\"`,b,?euBoED+n[I_C{Id\">\n"
+         + "                    <field name=\"TEXT\">dfadf</field>\n"
+         + "                  </block>\n"
+         + "                </value>\n"
+         + "                <value name=\"ADD1\">\n"
+         + "                  <block type=\"get_attribute\" id=\"#X=kCvK={(W[w{ZzE%3l\">\n"
+         + "                    <field name=\"ATTR\">a4</field>\n"
+         + "                    <value name=\"DOCUMENT\">\n"
+         + "                      <block type=\"get_link_document\" id=\"$=fS@zys2h|^G,|gN8:$\">\n"
+         + "                        <field name=\"COLLECTION\">5c5b3f01b9437f682e35d3b5</field>\n"
+         + "                        <value name=\"LINK\">\n"
+         + "                          <block type=\"variables_get_5c5b6a73b9437f682e35d3ba_linkinst\" id=\"HOmT{,^*Dhj+xW{{gc;c\">\n"
+         + "                            <field name=\"VAR\" id=\"vwtI@x)]$3ur2**~%Yt0\" variabletype=\"5c5b6a73b9437f682e35d3ba_linkinst\">i</field>\n"
+         + "                          </block>\n"
+         + "                        </value>\n"
+         + "                      </block>\n"
+         + "                    </value>\n"
+         + "                  </block>\n"
+         + "                </value>\n"
+         + "              </block>\n"
+         + "            </value>\n"
+         + "          </block>\n"
+         + "        </statement>\n"
+         + "      </block>\n"
+         + "    </statement>\n"
+         + "  </block>\n"
+         + "  <block type=\"foreach_document_array\" id=\"x32iHg7Is`}t-kV:E135\" x=\"17\" y=\"316\">\n"
+         + "    <field name=\"VAR\" id=\"q(Q/hjabhq[0?v64!kBq\" variabletype=\"5c5b3f08b9437f682e35d3b7_document\">j</field>\n"
+         + "    <value name=\"LIST\">\n"
+         + "      <block type=\"5c5b6a73b9437f682e35d3ba-5c5b3f01b9437f682e35d3b5_5c5b3f08b9437f682e35d3b7_link\" id=\"6;@rMaamIss-=N$(A7Y*\">\n"
+         + "        <value name=\"DOCUMENT\">\n"
+         + "          <block type=\"get_link_document\" id=\"L3X9J|_gZ7m|BkiJ8U;-\">\n"
+         + "            <field name=\"COLLECTION\">5c5b3f01b9437f682e35d3b5</field>\n"
+         + "            <value name=\"LINK\">\n"
+         + "              <block type=\"variables_get_5c5b6a73b9437f682e35d3ba_linkinst\" id=\"-bF+sIRy3ew13=Iv!C}M\">\n"
+         + "                <field name=\"VAR\" id=\"vwtI@x)]$3ur2**~%Yt0\" variabletype=\"5c5b6a73b9437f682e35d3ba_linkinst\">i</field>\n"
+         + "              </block>\n"
+         + "            </value>\n"
+         + "          </block>\n"
+         + "        </value>\n"
+         + "      </block>\n"
+         + "    </value>\n"
+         + "  </block>\n"
+         + "</xml>";
 
    @Test
    public void parseFunctionXml() {
@@ -244,6 +319,17 @@ public class FunctionXmlParserTest {
       assertThat(attributeReferences).hasSize(1);
       assertThat(attributeReferences).contains(
             new FunctionXmlParser.AttributeReference("a2", null, "5c5b6a73b9437f682e35d3ba")
+      );
+   }
+
+   @Test
+   public void parseFunctionXml5() {
+      List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml5);
+      attributeReferences.forEach(System.out::println);
+
+      assertThat(attributeReferences).hasSize(1);
+      assertThat(attributeReferences).contains(
+            new FunctionXmlParser.AttributeReference("a4", "5c5b3f01b9437f682e35d3b5", "5c5b6a73b9437f682e35d3ba")
       );
    }
 }
