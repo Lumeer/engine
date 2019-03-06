@@ -421,7 +421,13 @@ public class PusherFacade extends AbstractFacade {
          return createEventForRemove(object.getClass().getSimpleName(), new ResourceId(id, getOrganization().getId(), getProject().getId()), userId);
       }
       final ObjectWithParent normalMessage = new ObjectWithParent(object, getOrganization().getId(), getProject().getId());
-      final ResourceId alternateMessage = new ResourceId(id, getOrganization().getId(), getProject().getId());
+      String extraId = null;
+      if (object instanceof Document) {
+         extraId = ((Document) object).getCollectionId();
+      } else if (object instanceof LinkInstance) {
+         extraId = ((LinkInstance) object).getLinkTypeId();
+      }
+      final ResourceId alternateMessage = new ResourceId(id, getOrganization().getId(), getProject().getId(), extraId);
       return createEventForObjectWithParent(normalMessage, alternateMessage, event, userId);
    }
 
@@ -470,9 +476,9 @@ public class PusherFacade extends AbstractFacade {
 
    private ResourceId getResourceId(Resource resource) {
       if (resource instanceof Organization) {
-         return new ResourceId(resource.getId());
+         return new ResourceId(resource.getId(), null, null, resource.getCode());
       } else if (resource instanceof Project) {
-         return new ResourceId(resource.getId(), getOrganization().getId());
+         return new ResourceId(resource.getId(), getOrganization().getId(), null, resource.getCode());
       } else if (resource instanceof View) {
          return new ResourceId(resource.getCode(), getOrganization().getId(), getProject().getId());
       }
@@ -776,6 +782,7 @@ public class PusherFacade extends AbstractFacade {
       private final String id;
       private final String organizationId;
       private final String projectId;
+      private final String extraId; // used to carry collectionId or linkTypeId
 
       public ResourceId(final String id) {
          this(id, null, null);
@@ -786,9 +793,14 @@ public class PusherFacade extends AbstractFacade {
       }
 
       public ResourceId(final String id, final String organizationId, final String projectId) {
+         this(id, organizationId, projectId, null);
+      }
+
+      public ResourceId(final String id, final String organizationId, final String projectId, final String extraId) {
          this.id = id;
          this.organizationId = organizationId;
          this.projectId = projectId;
+         this.extraId = extraId;
       }
 
       public String getId() {
@@ -803,6 +815,9 @@ public class PusherFacade extends AbstractFacade {
          return projectId;
       }
 
+      public String getExtraId() {
+         return extraId;
+      }
    }
 
    public static final class ObjectWithParent {
