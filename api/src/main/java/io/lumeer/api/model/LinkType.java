@@ -19,6 +19,7 @@
 
 package io.lumeer.api.model;
 
+import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.AttributeUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,9 +31,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
-public class LinkType {
+public class LinkType implements WithId {
 
    public static final String ID = "id";
    public static final String NAME = "name";
