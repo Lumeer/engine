@@ -107,7 +107,7 @@
       <version.jaxb>2.3.0</version.jaxb>
       <version.annotation>1.3.1</version.annotation>
       <version.interceptor>1.2.2</version.interceptor>
-      <version.pusher>1.0.1</version.pusher>
+      <version.pusher>1.0.2</version.pusher>
       <version.sentry>1.7.14</version.sentry>
 
       <version.maven.plugin.api>3.5.4</version.maven.plugin.api>
