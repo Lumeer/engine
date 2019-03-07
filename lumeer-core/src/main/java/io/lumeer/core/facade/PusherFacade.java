@@ -750,12 +750,6 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
-   private void sendNotification(final String userId, final String event, final Object message) {
-      if (isEnabled() && authenticatedUser.getCurrentUserId() != null && !authenticatedUser.getCurrentUserId().equals(userId)) {
-         pusherClient.trigger(PRIVATE_CHANNEL_PREFIX + userId, message.getClass().getSimpleName() + event, message);
-      }
-   }
-
    private void sendNotificationsBatch(List<Event> notifications) {
       if (isEnabled() && notifications != null && notifications.size() > 0) {
          pusherClient.trigger(notifications);
