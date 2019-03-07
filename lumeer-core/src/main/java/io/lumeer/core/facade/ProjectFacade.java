@@ -26,6 +26,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.cache.WorkspaceCache;
+import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -72,6 +73,7 @@ public class ProjectFacade extends AbstractFacade {
    private WorkspaceCache workspaceCache;
 
    public Project createProject(Project project) {
+      Utils.checkCodeSafe(project.getCode());
       checkOrganizationWriteRole();
       checkProjectCreate(project);
 
@@ -86,6 +88,7 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public Project updateProject(final String projectCode, final Project project) {
+      Utils.checkCodeSafe(project.getCode());
       final Project storedProject = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(storedProject, Role.MANAGE);
 
