@@ -23,12 +23,12 @@ import io.lumeer.core.exception.BadFormatException;
 public abstract class Utils {
 
    public static boolean isCodeSafe(final String code) {
-      return code.matches("[-A-Za-z0-9_]*");
+      return code.matches("[A-Za-z0-9_]*");
    }
 
    public static void checkCodeSafe(final String code) {
       if (!isCodeSafe(code)) {
-         throw new BadFormatException("Invalid characters. Only A-Z, a-z, 0-9, _- are allowed in code.");
+         throw new BadFormatException("Invalid characters. Only A-Z, a-z, 0-9, _ are allowed in code.");
       }
    }
 }
