@@ -85,6 +85,12 @@ public class LinkTypeService extends AbstractService {
    }
 
    @GET
+   @Path("{linkTypeId}")
+   public LinkType getLinkType(@PathParam("linkTypeId") String id) {
+      return linkTypeFacade.getLinkType(id);
+   }
+
+   @GET
    public List<LinkType> getLinkTypes(@QueryParam("fromViews") Boolean includeViewLinkTypes) {
       final List<LinkType> linkTypes = linkTypeFacade.getLinkTypes();
 

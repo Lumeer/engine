@@ -29,6 +29,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -60,6 +61,12 @@ public class LinkInstanceService extends AbstractService {
    @POST
    public LinkInstance createLinkInstance(LinkInstance linkInstance) {
       return linkInstanceFacade.createLinkInstance(linkInstance);
+   }
+
+   @GET
+   @Path("{linkTypeId}/{linkInstanceId}")
+   public LinkInstance updateLinkInstanceData(@PathParam("linkTypeId") String linkTypeId, @PathParam("linkInstanceId") String linkInstanceId) {
+      return linkInstanceFacade.getLinkInstance(linkTypeId, linkInstanceId);
    }
 
    @PUT

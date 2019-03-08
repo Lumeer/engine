@@ -29,6 +29,7 @@ import org.marvec.pusher.data.Result;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -65,7 +66,7 @@ public class PusherClient {
       return pusher.trigger(channel, eventName, message);
    }
 
-   public Result trigger(List<Event> notifications) {
+   public Collection<Result> trigger(List<Event> notifications) {
       return pusher.trigger(notifications);
    }
 }
