@@ -26,9 +26,10 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -39,11 +40,11 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
@@ -70,40 +71,41 @@ public class DocumentFacade extends AbstractFacade {
    @Inject
    private FunctionFacade functionFacade;
 
+   @Inject
+   private Event<CreateDocument> createDocumentEvent;
+
    private ConstraintManager constraintManager;
 
    @PostConstruct
    public void init() {
-      constraintManager = new ConstraintManager();
-      final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
-
-      if (locale != null && !"".equals(locale)) {
-         constraintManager.setLocale(Locale.forLanguageTag(locale));
-      } else {
-         constraintManager.setLocale(Locale.getDefault());
-      }
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
    }
 
    public Document createDocument(String collectionId, Document document) {
       Collection collection = checkCollectionWritePermissions(collectionId);
       permissionsChecker.checkDocumentLimits(document);
 
-      Document storedDocument = createDocument(collection, document, new DataDocument(document.getData()));
-
       DataDocument data = document.getData();
       constraintManager.encodeDataTypes(collection, data);
 
+      Document storedDocument = createDocument(collection, document, new DataDocument(data));
+
+
       DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), data);
-      constraintManager.decodeDataTypes(collection, storedData);
       storedDocument.setData(storedData);
 
       updateCollectionMetadata(collection, data.keySet(), Collections.emptySet(), 1);
+
+      if (createDocumentEvent != null) {
+         createDocumentEvent.fire(new CreateDocument(storedDocument));
+      }
+
+      constraintManager.decodeDataTypes(collection, storedData);
 
       return storedDocument;
    }
 
    private Document createDocument(Collection collection, Document document, DataDocument data) {
-      constraintManager.decodeDataTypes(collection, data);
       document.setData(data);
       document.setCollectionId(collection.getId());
       document.setCreatedBy(authenticatedUser.getCurrentUserId());
@@ -130,8 +132,10 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
       checkAttributesValueChanges(collection, documentId, originalData, updatedData);
 
-      constraintManager.decodeDataTypes(collection, updatedData);
-      return updateDocument(collection, documentId, updatedData, originalData);
+      final Document updatedDocument = updateDocument(collection, documentId, updatedData, originalData);
+      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+
+      return updatedDocument;
    }
 
    private Collection checkCollectionWritePermissions(String collectionId) {
@@ -180,8 +184,10 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
       checkAttributesValueChanges(collection, documentId, originalData, patchedData);
 
-      constraintManager.decodeDataTypes(collection, patchedData);
-      return updateDocument(collection, documentId, patchedData, originalData);
+      final Document updatedDocument = updateDocument(collection, documentId, patchedData, originalData);
+      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+
+      return updatedDocument;
    }
 
    public Document patchDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {

@@ -23,7 +23,6 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -57,9 +56,6 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    private static final String PREFIX = "documents_p-";
 
    @Inject
-   private Event<CreateDocument> createDocumentEvent;
-
-   @Inject
    private Event<UpdateDocument> updateDocumentEvent;
 
    @Inject
@@ -83,9 +79,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
       try {
          document.setDataVersion(0);
          databaseCollection().insertOne(document);
-         if (createDocumentEvent != null) {
-            createDocumentEvent.fire(new CreateDocument(document));
-         }
+
          return document;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create document: " + document, ex);
