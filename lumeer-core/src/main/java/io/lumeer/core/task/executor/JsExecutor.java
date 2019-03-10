@@ -44,7 +44,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -62,22 +61,11 @@ public class JsExecutor {
    public static class LumeerBridge {
 
       private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
-      private static ConstraintManager constraintManager;
+      private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
       private ContextualTask ruleTask;
       private Collection collection;
       private Set<Change> changes = new HashSet<>();
       private Exception cause = null;
-
-      static {
-         constraintManager = new ConstraintManager();
-         final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
-
-         if (locale != null && !"".equals(locale)) {
-            constraintManager.setLocale(Locale.forLanguageTag(locale));
-         } else {
-            constraintManager.setLocale(Locale.getDefault());
-         }
-      }
 
       private LumeerBridge(final ContextualTask task, final Collection collection) {
          this.ruleTask = task;
@@ -326,7 +314,7 @@ public class JsExecutor {
             final LinkInstance linkInstance = linkChange.getEntity();
             final LinkType linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
             final DataDocument newData = new DataDocument(linkChange.getAttrId(), linkChange.getValue());
-            final DataDocument oldData = new DataDocument(linkInstance.getData());
+            final DataDocument oldData = new DataDocument(linkInstance.getData() == null ? new DataDocument() : linkInstance.getData());
 
             constraintManager.encodeDataTypes(linkType, newData);
 
@@ -371,8 +359,15 @@ public class JsExecutor {
             return;
          }
 
-         commitDocumentChanges(changes.stream().filter(change -> change instanceof DocumentChange).map(change -> (DocumentChange) change).collect(Collectors.toList()));
-         commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange).map(change -> (LinkChange) change).collect(Collectors.toList()));
+         final List<Change> invalidChanges = changes.stream().filter(change -> !change.isComplete()).collect(Collectors.toList());
+         if (invalidChanges.size() > 0) {
+            final StringBuilder sb = new StringBuilder();
+            invalidChanges.forEach(change -> sb.append("Invalid update request: " + change.toString() + "\n"));
+            throw new IllegalArgumentException(sb.toString());
+         }
+
+         commitDocumentChanges(changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(Collectors.toList()));
+         commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(Collectors.toList()));
       }
 
       String getChanges() {
@@ -420,6 +415,10 @@ public class JsExecutor {
          this.entity = entity;
          this.attrId = attrId;
          this.value = value;
+      }
+
+      public boolean isComplete() {
+         return entity != null && attrId != null && !"".equals(attrId) && value != null;
       }
 
       public T getEntity() {

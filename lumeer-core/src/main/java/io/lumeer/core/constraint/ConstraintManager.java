@@ -23,6 +23,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.bson.types.Decimal128;
@@ -64,6 +65,30 @@ public class ConstraintManager {
     */
    private Pattern numberMatch;
 
+   private Set<DateTimeFormatter> formatters;
+
+   private DateTimeFormatter dateDecoder;
+
+   private static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
+
+   /**
+    * Obtains a default instance of ConstraintManager configured according to system properties.
+    * @param configurationProducer A provider of configuration.
+    * @return The default ConstraintManager
+    */
+   public static ConstraintManager getInstance(final DefaultConfigurationProducer configurationProducer) {
+      final ConstraintManager constraintManager = new ConstraintManager();
+      final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
+
+      if (locale != null && !"".equals(locale)) {
+         constraintManager.setLocale(Locale.forLanguageTag(locale));
+      } else {
+         constraintManager.setLocale(Locale.getDefault());
+      }
+
+      return constraintManager;
+   }
+
    /**
     * Sets the user's locale.
     *
@@ -72,12 +97,6 @@ public class ConstraintManager {
    public Locale getLocale() {
       return locale;
    }
-
-   private Set<DateTimeFormatter> formatters;
-
-   private DateTimeFormatter dateDecoder;
-
-   private static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
    /**
     * Gets the currently used locale.

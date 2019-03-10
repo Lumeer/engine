@@ -26,14 +26,15 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
-import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
 import io.lumeer.engine.api.event.CreateDocument;
@@ -133,8 +134,15 @@ public class PusherFacade extends AbstractFacade {
    @Inject
    private RequestDataKeeper requestDataKeeper;
 
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   private ConstraintManager constraintManager;
+
    @PostConstruct
    public void init() {
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
+
       PUSHER_APP_ID = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_APP_ID)).orElse("");
       PUSHER_KEY = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_KEY)).orElse("");
       PUSHER_SECRET = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_SECRET)).orElse("");
@@ -752,6 +760,23 @@ public class PusherFacade extends AbstractFacade {
 
    private void sendNotificationsBatch(List<Event> notifications) {
       if (isEnabled() && notifications != null && notifications.size() > 0) {
+         notifications.forEach(event -> {
+            final Object data;
+            if (event.getData() instanceof ObjectWithParent) {
+               data = ((ObjectWithParent) event.getData()).getObject();
+            } else {
+               data = event.getData();
+            }
+
+            if (data instanceof Document) {
+               final Document doc = (Document) event.getData();
+               constraintManager.decodeDataTypes(collectionFacade.getCollection(doc.getCollectionId()), doc.getData());
+            } else if (data instanceof LinkInstance) {
+               final LinkInstance link = (LinkInstance) event.getData();
+               constraintManager.decodeDataTypes(linkTypeFacade.getLinkType(link.getLinkTypeId()), link.getData());
+            }
+         });
+
          pusherClient.trigger(notifications);
       }
    }
