@@ -769,10 +769,10 @@ public class PusherFacade extends AbstractFacade {
             }
 
             if (data instanceof Document) {
-               final Document doc = (Document) event.getData();
+               final Document doc = (Document) data;
                constraintManager.decodeDataTypes(collectionFacade.getCollection(doc.getCollectionId()), doc.getData());
             } else if (data instanceof LinkInstance) {
-               final LinkInstance link = (LinkInstance) event.getData();
+               final LinkInstance link = (LinkInstance) data;
                constraintManager.decodeDataTypes(linkTypeFacade.getLinkType(link.getLinkTypeId()), link.getData());
             }
          });
