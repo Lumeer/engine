@@ -28,3 +28,5 @@ build.out
 .factorypath
 .project
 .settings/
+
+lumeer-core/src/main/resources/defaults-dev-*.properties

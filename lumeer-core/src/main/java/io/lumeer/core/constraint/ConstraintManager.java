@@ -252,11 +252,28 @@ public class ConstraintManager {
          }
       }
 
+      if (constraint.getType() == ConstraintType.Percentage) {
+         if (value instanceof String) {
+            if (((String) value).trim().endsWith("%")) {
+               Object kod = encode(((String) value).substring(0, ((String) value).length() - 1));
+               System.out.println("dělám " + kod + " of " + kod.getClass().getSimpleName());
+               return kod;
+            }
+         }
+      }
+
       return value;
    }
 
    public Object decode(final Object value, final Constraint constraint) {
       if (value != null) {
+         if (constraint != null && constraint.getType() == ConstraintType.Percentage) {
+            if (value instanceof BigDecimal) {
+               System.out.println("dělám " + value.toString() + "%");
+               return value.toString() + "%";
+            }
+         }
+
          if (value instanceof Date) {
             final ZonedDateTime dt = ZonedDateTime.from(((Date) value).toInstant().atZone(utcZone));
             try {
