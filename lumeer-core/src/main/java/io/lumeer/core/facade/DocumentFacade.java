@@ -156,9 +156,9 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
-      checkCollectionWritePermissions(collectionId);
+      Collection collection = checkCollectionWritePermissions(collectionId);
 
-      final Document document = documentDao.getDocumentById(documentId);
+      final Document document = getDocument(collection, documentId);
       final Document originalDocument = copyDocument(document);
 
       document.setMetaData(metaData);
@@ -191,9 +191,9 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document patchDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
-      checkCollectionWritePermissions(collectionId);
+      Collection collection = checkCollectionWritePermissions(collectionId);
 
-      final Document document = documentDao.getDocumentById(documentId);
+      final Document document = getDocument(collection, documentId);
       final Document originalDocument = copyDocument(document);
 
       if (document.getMetaData() == null) {
@@ -290,6 +290,10 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
+      return getDocument(collection, documentId);
+   }
+
+   private Document getDocument(Collection collection, String documentId) {
       Document document = documentDao.getDocumentById(documentId);
 
       DataDocument data = dataDao.getData(collection.getId(), documentId);
