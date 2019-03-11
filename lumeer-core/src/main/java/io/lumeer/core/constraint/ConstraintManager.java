@@ -257,7 +257,6 @@ public class ConstraintManager {
 
    public Object decode(final Object value, final Constraint constraint) {
       if (value != null) {
-
          if (value instanceof Date) {
             final ZonedDateTime dt = ZonedDateTime.from(((Date) value).toInstant().atZone(utcZone));
             try {
