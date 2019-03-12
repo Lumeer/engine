@@ -24,7 +24,6 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.event.RemoveDocument;
-import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -54,9 +53,6 @@ import javax.inject.Inject;
 public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    private static final String PREFIX = "documents_p-";
-
-   @Inject
-   private Event<UpdateDocument> updateDocumentEvent;
 
    @Inject
    private Event<RemoveDocument> removeDocumentEvent;
@@ -102,14 +98,11 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
       try {
          Bson update = new org.bson.Document("$set", document).append("$inc", new org.bson.Document(DocumentCodec.DATA_VERSION, 1));
          Document updatedDocument = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
+
          if (updatedDocument == null) {
             throw new StorageException("Document '" + id + "' has not been updated.");
          }
-         if (updateDocumentEvent != null) {
-            final Document updatedDocumentWithData = new Document(updatedDocument);
-            updatedDocumentWithData.setData(document.getData());
-            updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData, originalDocument));
-         }
+
          return updatedDocument;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update document: " + document, ex);
