@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +75,11 @@ public class FunctionOrderTest {
                   fpB, List.of(fpE, fpA)
             ));
       Deque<FunctionParameter> result = FunctionOrder.orderFunctions(input);
-      assertThat(result).containsSequence(fpD, fpE, fpB, fpC);
+
+      List<FunctionParameter> twoResults = new LinkedList<>(result);
+      twoResults.addAll(result);
+
+      assertThat(twoResults).containsSequence(fpD, fpE, fpB, fpC);
       assertThat(result).hasSize(input.size());
    }
 }
