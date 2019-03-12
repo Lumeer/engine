@@ -206,7 +206,7 @@ public class ConstraintManager {
       }
 
       if (value instanceof String && numberMatch.matcher((String) value).matches()) {
-         final Number n = encodeNumber(locale, ((String) value).replaceFirst(",", "."));
+         final Number n = encodeNumber(locale, ((String) value).replaceFirst(",", ".").replace("e", "E"));
          return n == null ? value : n;
       }
 
@@ -222,7 +222,29 @@ public class ConstraintManager {
          return null;
       }
 
-      if (constraint == null || constraint.getType() == ConstraintType.Number || constraint.getType() == ConstraintType.Percentage) {
+      if (constraint == null || constraint.getType() == ConstraintType.Number) {
+         return encode(value);
+      }
+
+      if (constraint.getType() == ConstraintType.Percentage) {
+         if (value instanceof BigDecimal || value instanceof Long || value instanceof Double) {
+            return value;
+         }
+
+         if (value instanceof String) {
+            final String strValue = ((String) value).replace(" ", "").trim();
+
+            if (strValue.endsWith("%") && strValue.indexOf("%") == strValue.length() - 1) {
+               final Object result = encode(strValue.substring(0, strValue.length() - 1));
+
+               if (result instanceof BigDecimal) {
+                  return ((BigDecimal) result).movePointLeft(2);
+               } else if (result instanceof Long) {
+                  return BigDecimal.valueOf((Long) result).movePointLeft(2);
+               }
+            }
+         }
+
          return encode(value);
       }
 

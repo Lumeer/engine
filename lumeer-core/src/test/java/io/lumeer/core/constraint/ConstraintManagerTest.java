@@ -28,8 +28,8 @@ public class ConstraintManagerTest {
       cm.setLocale(l);
 
       assertThat(cm.encode("2.34")).isInstanceOf(BigDecimal.class);
-      assertThat(cm.encode("2,34e3")).isInstanceOf(BigDecimal.class);
-      assertThat(cm.encode("-2.34e-3")).isInstanceOf(BigDecimal.class);
+      assertThat(cm.encode("2,34e3")).isInstanceOf(BigDecimal.class).isEqualTo(new BigDecimal("2.34E+3"));
+      assertThat(cm.encode("-2.34e-3")).isInstanceOf(BigDecimal.class).isEqualTo(new BigDecimal("-0.00234"));;
       assertThat(cm.encode("2019-01-20")).isInstanceOf(String.class);
       assertThat(cm.encode("2")).isInstanceOf(Long.class);
       assertThat(cm.encode("a2")).isInstanceOf(String.class);
@@ -110,5 +110,24 @@ public class ConstraintManagerTest {
 
       encoded = cm.encode("   fAlse    ", booleanConstraint);
       assertThat(encoded).isEqualTo(Boolean.FALSE);
+   }
+
+   @Test
+   public void testPercentageConstraint() {
+      final Constraint percentageConstraint = new Constraint(ConstraintType.Percentage, null);
+      final ConstraintManager cm = new ConstraintManager();
+      cm.setLocale(l);
+
+      Object encoded = cm.encode("12%", percentageConstraint);
+      assertThat(encoded).isEqualTo(new BigDecimal("0.12"));
+
+      encoded = cm.encode("12 %", percentageConstraint);
+      assertThat(encoded).isEqualTo(new BigDecimal("0.12"));
+
+      encoded = cm.encode("1,2e1 %", percentageConstraint);
+      assertThat(encoded).isEqualTo(new BigDecimal("0.12"));
+
+      encoded = cm.encode("12e-2", percentageConstraint);
+      assertThat(encoded).isEqualTo(new BigDecimal("0.12"));
    }
 }

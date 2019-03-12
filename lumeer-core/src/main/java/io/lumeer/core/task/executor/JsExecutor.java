@@ -119,8 +119,11 @@ public class JsExecutor {
                            .build()))
                .build();
 
-         return ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                        .searchLinkInstances(query);
+         final List<LinkInstance> result = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                   .searchLinkInstances(query);
+         result.stream().forEach(linkInstance -> constraintManager.encodeDataTypes(ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId), linkInstance.getData()));
+
+         return result;
       }
 
       public List<LinkBridge> getLinks(DocumentBridge d, String linkTypeId) {
@@ -154,6 +157,8 @@ public class JsExecutor {
                final Document doc = documents.get(0).getCollectionId().equals(collectionId) ? documents.get(0) : documents.get(1);
 
                doc.setData(ruleTask.getDaoContextSnapshot().getDataDao().getData(doc.getCollectionId(), doc.getId()));
+               constraintManager.encodeDataTypes(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(collectionId), doc.getData());
+
                return new DocumentBridge(doc);
             }
 
@@ -190,6 +195,8 @@ public class JsExecutor {
                               .getDocumentsByIds(documentIds.toArray(new String[0]))
                               .stream().map(document -> {
                         document.setData(data.get(document.getId()));
+                        constraintManager.encodeDataTypes(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(otherCollectionId), document.getData());
+
                         return new DocumentBridge(document);
                      }).collect(Collectors.toList());
             } else {
