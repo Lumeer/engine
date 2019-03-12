@@ -32,11 +32,11 @@ import java.util.Set;
  */
 public class FunctionOrder {
 
-   public static Deque<FunctionParameter> orderFunctions(final Map<FunctionParameter, List<FunctionParameter>> dependencies) {
-      final Deque<FunctionParameter> result = new LinkedList<>();
+   public static <T extends FunctionParameter> Deque<T> orderFunctions(final Map<T, List<T>> dependencies) {
+      final Deque<T> result = new LinkedList<>();
 
       dependencies.keySet().forEach(param -> {
-         final Set<FunctionParameter> visited = new HashSet<>(Set.of(param)); //new HashSet<>();
+         final Set<T> visited = new HashSet<>(Set.of(param)); //new HashSet<>();
          findParent(result, param, visited, dependencies);
       });
 
@@ -51,8 +51,8 @@ public class FunctionOrder {
       return result;
    }
 
-   private static void findParent(final Deque<FunctionParameter> result, final FunctionParameter root, final Set<FunctionParameter> visited, final Map<FunctionParameter, List<FunctionParameter>> dependencies) {
-      List<FunctionParameter> depNodes = dependencies.get(root);
+   private static <T extends FunctionParameter> void findParent(final Deque<T> result, final T root, final Set<T> visited, final Map<T, List<T>> dependencies) {
+      List<T> depNodes = dependencies.get(root);
 
       if (depNodes != null) {
          depNodes.forEach(param -> {
