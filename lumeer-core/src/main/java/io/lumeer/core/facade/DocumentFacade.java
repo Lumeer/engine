@@ -134,10 +134,9 @@ public class DocumentFacade extends AbstractFacade {
 
       // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
-      checkAttributesValueChanges(collection, documentId, originalData, updatedData);
 
       final Document updatedDocument = updateDocument(collection, documentId, updatedData, originalData);
-
+      checkAttributesValueChanges(collection, documentId, originalData, updatedData);
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
@@ -190,9 +189,10 @@ public class DocumentFacade extends AbstractFacade {
 
       // TODO archive the old document
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
-      checkAttributesValueChanges(collection, documentId, originalData, patchedData);
 
       final Document updatedDocument = updateDocument(collection, documentId, patchedData, originalData);
+      checkAttributesValueChanges(collection, documentId, originalData, patchedData);
+
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
