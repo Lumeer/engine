@@ -24,6 +24,8 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.function.Function;
+import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.executor.FunctionTaskExecutor;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -42,6 +44,9 @@ public class FunctionTask extends AbstractContextualTask {
    private LinkType linkType;
    private Set<LinkInstance> linkInstances;
    private List<FunctionTask> parents;
+
+   private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
+   private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
 
    public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final List<FunctionTask> parents) {
       this.attribute = attribute;
@@ -92,12 +97,12 @@ public class FunctionTask extends AbstractContextualTask {
    @Override
    public void process() {
       if (documents != null && collection != null) {
-         getDocumentsWithData(collection.getId(), documents).forEach(document -> {
+         getDocumentsWithData(collection, documents).forEach(document -> {
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, collection, document);
             executor.execute();
          });
       } else if (linkType != null && linkInstances != null) {
-         getLinkInstancesWithData(linkType.getId(), linkInstances).forEach(linkInstance -> {
+         getLinkInstancesWithData(linkType, linkInstances).forEach(linkInstance -> {
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, linkType, linkInstance);
          });
       }
@@ -107,29 +112,35 @@ public class FunctionTask extends AbstractContextualTask {
       }
    }
 
-   private Set<Document> getDocumentsWithData(String collectionId, Set<Document> documents) {
+   private Set<Document> getDocumentsWithData(final Collection collection, final Set<Document> documents) {
       if (documents.isEmpty()) {
          return Collections.emptySet();
       }
       Map<String, DataDocument> data = getDaoContextSnapshot()
             .getDataDao()
-            .getData(collectionId, documents.stream().map(Document::getId).collect(Collectors.toSet()))
+            .getData(collection.getId(), documents.stream().map(Document::getId).collect(Collectors.toSet()))
             .stream()
             .collect(Collectors.toMap(DataDocument::getId, d -> d));
-      return new HashSet<>(documents).stream().peek(document -> document.setData(data.get(document.getId())))
-                                     .collect(Collectors.toSet());
+      return new HashSet<>(documents).stream().peek(document -> {
+         DataDocument dataDocument = data.get(document.getId());
+         constraintManager.encodeDataTypesForFce(collection, dataDocument);
+         document.setData(dataDocument);
+      }).collect(Collectors.toSet());
    }
 
-   private Set<LinkInstance> getLinkInstancesWithData(final String linkTypeId, final Set<LinkInstance> linkInstances) {
+   private Set<LinkInstance> getLinkInstancesWithData(final LinkType linkType, final Set<LinkInstance> linkInstances) {
       if (linkInstances.isEmpty()) {
          return Collections.emptySet();
       }
       Map<String, DataDocument> data = getDaoContextSnapshot()
             .getLinkDataDao()
-            .getData(linkTypeId, linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
+            .getData(linkType.getId(), linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
             .stream()
             .collect(Collectors.toMap(DataDocument::getId, d -> d));
-      return new HashSet<>(linkInstances).stream().peek(linkInstance -> linkInstance.setData(data.get(linkInstance.getId())))
-                                     .collect(Collectors.toSet());
+      return new HashSet<>(linkInstances).stream().peek(linkInstance -> {
+         final DataDocument dataDocument = data.get(linkInstance.getId());
+         constraintManager.encodeDataTypesForFce(linkType, dataDocument);
+         linkInstance.setData(dataDocument);
+      }).collect(Collectors.toSet());
    }
 }
