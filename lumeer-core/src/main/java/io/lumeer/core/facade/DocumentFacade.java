@@ -94,7 +94,6 @@ public class DocumentFacade extends AbstractFacade {
 
       Document storedDocument = createDocument(collection, document, new DataDocument(data));
 
-
       DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), data);
       storedDocument.setData(storedData);
 
@@ -103,6 +102,8 @@ public class DocumentFacade extends AbstractFacade {
       if (createDocumentEvent != null) {
          createDocumentEvent.fire(new CreateDocument(storedDocument));
       }
+
+      functionFacade.onDocumentCreated(collection, storedDocument);
 
       constraintManager.decodeDataTypes(collection, storedData);
 

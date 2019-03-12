@@ -233,6 +233,9 @@ public class CollectionFacade extends AbstractFacade {
 
       collection.updateAttribute(attributeId, attribute);
       collection.setLastTimeUsed(ZonedDateTime.now());
+      if (attribute.getFunction() != null && attribute.getFunction().getJs() != null && attribute.getFunction().getJs().isEmpty()) {
+         attribute.setFunction(null);
+      }
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 

@@ -82,7 +82,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
-      checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
+      LinkType linkType = checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
       linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
@@ -94,6 +94,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       if (createLinkInstanceEvent != null) {
          createLinkInstanceEvent.fire(new CreateLinkInstance(createdLinkInstance));
       }
+      functionFacade.onLinkCreated(linkType, createdLinkInstance);
 
       return createdLinkInstance;
    }

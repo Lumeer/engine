@@ -42,6 +42,8 @@ public interface FunctionDao {
 
    List<FunctionRow> searchByDependentLinkType(String linkTypeId, String attributeId);
 
+   List<FunctionRow> searchByResource(String resourceId, String attributeId, FunctionResourceType type);
+
    void deleteByResources(FunctionResourceType type, String... resourceIds);
 
    void deleteByCollection(String collectionsId, String attributeId);
