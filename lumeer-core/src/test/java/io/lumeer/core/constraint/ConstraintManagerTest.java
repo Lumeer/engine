@@ -130,4 +130,31 @@ public class ConstraintManagerTest {
       encoded = cm.encode("12e-2", percentageConstraint);
       assertThat(encoded).isEqualTo(new BigDecimal("0.12"));
    }
+
+   @Test
+   public void testTryHard() {
+      final ConstraintManager cm = new ConstraintManager();
+      cm.setLocale(l);
+
+      Object encoded = cm.encode("12%", null);
+      assertThat(encoded).isEqualTo("12%");
+
+      encoded = cm.encodeForFce("12%", null);
+      assertThat(encoded).isEqualTo(new BigDecimal("0.12"));
+
+      //yyyy-MM-dd'T'HH:mm:ss.SSSO
+      final String time = "2013-12-01T23:12:18.784Z";
+      encoded = cm.encode(time, null);
+      assertThat(encoded).isEqualTo(time);
+
+      encoded = cm.encodeForFce(time, null);
+      DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", l);
+      assertThat(encoded).isEqualTo(Date.from(ZonedDateTime.from(dtf.parse(time.trim())).toInstant()));
+
+      encoded = cm.encode("True", null);
+      assertThat(encoded).isEqualTo("True");
+
+      encoded = cm.encodeForFce("True", null);
+      assertThat(encoded).isEqualTo(Boolean.TRUE);
+   }
 }

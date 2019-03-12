@@ -214,6 +214,14 @@ public class ConstraintManager {
    }
 
    public Object encode(final Object value, final Constraint constraint) {
+      return encode(value, constraint, false);
+   }
+
+   public Object encodeForFce(final Object value, final Constraint constraint) {
+      return encode(value, constraint, true);
+   }
+
+   private Object encode(final Object value, final Constraint constraint, final boolean tryHard) {
       if (locale == null) {
          throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
       }
@@ -222,11 +230,11 @@ public class ConstraintManager {
          return null;
       }
 
-      if (constraint == null || constraint.getType() == ConstraintType.Number) {
+      if (!tryHard && (constraint == null || constraint.getType() == ConstraintType.Number)) {
          return encode(value);
       }
 
-      if (constraint.getType() == ConstraintType.Percentage) {
+      if (tryHard || constraint.getType() == ConstraintType.Percentage) {
          if (value instanceof BigDecimal || value instanceof Long || value instanceof Double) {
             return value;
          }
@@ -245,10 +253,12 @@ public class ConstraintManager {
             }
          }
 
-         return encode(value);
+         if (!tryHard) {
+            return encode(value);
+         }
       }
 
-      if (constraint.getType() == ConstraintType.Boolean) {
+      if (tryHard || (constraint != null && constraint.getType() == ConstraintType.Boolean)) {
          if (value instanceof Boolean) {
             return value;
          } else if (value.toString().trim().equalsIgnoreCase("true")) {
@@ -258,7 +268,7 @@ public class ConstraintManager {
          }
       }
 
-      if (constraint.getType() == ConstraintType.DateTime) {
+      if (tryHard || (constraint != null && constraint.getType() == ConstraintType.DateTime)) {
          if (value instanceof Date) {
             return value;
          }
@@ -274,7 +284,7 @@ public class ConstraintManager {
          }
       }
 
-      return value;
+      return tryHard ? encode(value) : value;
    }
 
    public Object decode(final Object value, final Constraint constraint) {
@@ -307,6 +317,10 @@ public class ConstraintManager {
       processData(data, getConstraints(collection), this::encode);
    }
 
+   public void encodeDataTypesForFce(final Collection collection, final DataDocument data) {
+      processData(data, getConstraints(collection), this::encodeForFce);
+   }
+
    public void decodeDataTypes(final Collection collection, final DataDocument data) {
       processData(data, getConstraints(collection), this::decode);
    }
@@ -320,6 +334,10 @@ public class ConstraintManager {
 
    public void encodeDataTypes(final LinkType linkType, final DataDocument data) {
       processData(data, getConstraints(linkType), this::encode);
+   }
+
+   public void encodeDataTypesForFce(final LinkType linkType, final DataDocument data) {
+      processData(data, getConstraints(linkType), this::encodeForFce);
    }
 
    public void decodeDataTypes(final LinkType linkType, final DataDocument data) {

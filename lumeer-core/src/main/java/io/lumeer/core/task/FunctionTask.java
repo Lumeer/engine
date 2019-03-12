@@ -123,7 +123,7 @@ public class FunctionTask extends AbstractContextualTask {
             .collect(Collectors.toMap(DataDocument::getId, d -> d));
       return new HashSet<>(documents).stream().peek(document -> {
          DataDocument dataDocument = data.get(document.getId());
-         constraintManager.encodeDataTypes(collection, dataDocument);
+         constraintManager.encodeDataTypesForFce(collection, dataDocument);
          document.setData(dataDocument);
       }).collect(Collectors.toSet());
    }
@@ -139,7 +139,7 @@ public class FunctionTask extends AbstractContextualTask {
             .collect(Collectors.toMap(DataDocument::getId, d -> d));
       return new HashSet<>(linkInstances).stream().peek(linkInstance -> {
          final DataDocument dataDocument = data.get(linkInstance.getId());
-         constraintManager.encodeDataTypes(linkType, dataDocument);
+         constraintManager.encodeDataTypesForFce(linkType, dataDocument);
          linkInstance.setData(dataDocument);
       }).collect(Collectors.toSet());
    }
