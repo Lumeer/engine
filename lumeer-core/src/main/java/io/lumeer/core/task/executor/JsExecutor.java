@@ -38,6 +38,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,8 +120,11 @@ public class JsExecutor {
                            .build()))
                .build();
 
-         return ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
-                        .searchLinkInstances(query);
+         final List<LinkInstance> result = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
+                                                   .searchLinkInstances(query);
+         result.stream().forEach(linkInstance -> constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId), linkInstance.getData()));
+
+         return result;
       }
 
       public List<LinkBridge> getLinks(DocumentBridge d, String linkTypeId) {
@@ -154,6 +158,8 @@ public class JsExecutor {
                final Document doc = documents.get(0).getCollectionId().equals(collectionId) ? documents.get(0) : documents.get(1);
 
                doc.setData(ruleTask.getDaoContextSnapshot().getDataDao().getData(doc.getCollectionId(), doc.getId()));
+               constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(collectionId), doc.getData());
+
                return new DocumentBridge(doc);
             }
 
@@ -190,6 +196,8 @@ public class JsExecutor {
                               .getDocumentsByIds(documentIds.toArray(new String[0]))
                               .stream().map(document -> {
                         document.setData(data.get(document.getId()));
+                        constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(otherCollectionId), document.getData());
+
                         return new DocumentBridge(document);
                      }).collect(Collectors.toList());
             } else {
@@ -201,9 +209,17 @@ public class JsExecutor {
          }
       }
 
+      private Value filterValue(final Object o) {
+         if (o instanceof BigDecimal) {
+            return Value.asValue(((BigDecimal) o).doubleValue());
+         }
+
+         return Value.asValue(o);
+      }
+
       public Value getLinkAttribute(final LinkBridge l, final String attrId) {
          try {
-            return Value.asValue(l.link.getData().get(attrId));
+            return filterValue(l.link.getData().get(attrId));
          } catch (Exception e) {
             cause = e;
             throw e;
@@ -212,7 +228,7 @@ public class JsExecutor {
 
       public Value getDocumentAttribute(final DocumentBridge d, final String attrId) {
          try {
-            return Value.asValue(d.document.getData().get(attrId));
+            return filterValue(d.document.getData().get(attrId));
          } catch (Exception e) {
             cause = e;
             throw e;
@@ -222,7 +238,7 @@ public class JsExecutor {
       public List<Value> getLinkAttribute(final List<LinkBridge> links, final String attrId) {
          try {
             final List<Value> result = new ArrayList<>();
-            links.forEach(link -> result.add(Value.asValue(link.link.getData().get(attrId))));
+            links.forEach(link -> result.add(filterValue(link.link.getData().get(attrId))));
 
             return result;
          } catch (Exception e) {
@@ -234,7 +250,7 @@ public class JsExecutor {
       public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
          try {
             final List<Value> result = new ArrayList<>();
-            docs.forEach(doc -> result.add(Value.asValue(doc.document.getData().get(attrId))));
+            docs.forEach(doc -> result.add(filterValue(doc.document.getData().get(attrId))));
 
             return result;
          } catch (Exception e) {

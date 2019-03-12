@@ -95,7 +95,6 @@ public class FunctionOrderTest {
                   fpB, List.of(fpE, fpF)
             ));
       Deque<FunctionParameter> result = FunctionOrder.orderFunctions(input);
-      System.out.println(result);
 
       // B precedes A, G precedes D
       boolean wasG = false, wasB = false;
