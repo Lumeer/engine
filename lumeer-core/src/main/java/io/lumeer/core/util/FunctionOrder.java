@@ -46,12 +46,9 @@ public class FunctionOrder {
          }
       });
 
-      final Deque<FunctionParameter> filteredResult = new LinkedList<>();
-      result.stream()
-            .filter(param -> dependencies.containsKey(param))
-            .forEachOrdered(param -> filteredResult.add(param));
+      result.removeIf(param -> !dependencies.containsKey(param));
 
-      return filteredResult;
+      return result;
    }
 
    private static void findParent(final Deque<FunctionParameter> result, final FunctionParameter root, final Set<FunctionParameter> visited, final Map<FunctionParameter, List<FunctionParameter>> dependencies) {
