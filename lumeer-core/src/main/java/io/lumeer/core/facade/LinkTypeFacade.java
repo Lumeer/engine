@@ -150,6 +150,9 @@ public class LinkTypeFacade extends AbstractFacade {
       LinkType originalLinkType = new LinkType(linkType);
 
       linkType.updateAttribute(attributeId, attribute);
+      if (attribute.getFunction() != null && attribute.getFunction().getJs() != null && attribute.getFunction().getJs().isEmpty()) {
+         attribute.setFunction(null);
+      }
 
       linkTypeDao.updateLinkType(linkTypeId, linkType);
 

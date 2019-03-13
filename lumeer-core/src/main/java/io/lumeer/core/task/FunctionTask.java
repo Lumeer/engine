@@ -104,6 +104,7 @@ public class FunctionTask extends AbstractContextualTask {
       } else if (linkType != null && linkInstances != null) {
          getLinkInstancesWithData(linkType, linkInstances).forEach(linkInstance -> {
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, linkType, linkInstance);
+            executor.execute();
          });
       }
 

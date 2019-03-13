@@ -82,7 +82,7 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
       return resourceFilter(collectionId, FunctionResourceType.COLLECTION, attributeId);
    }
 
-   private Bson resourceFilter(final String resourceId, final FunctionResourceType type, final String attributeId){
+   private Bson resourceFilter(final String resourceId, final FunctionResourceType type, final String attributeId) {
       List<Bson> filters = new ArrayList<>(Arrays.asList(eq(FunctionRowCodec.RESOURCE_ID, resourceId), eq(FunctionRowCodec.TYPE, type.toString())));
       if (attributeId != null) {
          filters.add(eq(FunctionRowCodec.ATTRIBUTE_ID, attributeId));
@@ -125,6 +125,11 @@ public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
    @Override
    public List<FunctionRow> searchByDependentLinkType(final String linkTypeId, final String attributeId) {
       return databaseCollection().find(dependentLinkFilter(linkTypeId, attributeId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<FunctionRow> searchByResource(final String resourceId, final String attributeId, final FunctionResourceType type) {
+      return databaseCollection().find(resourceFilter(resourceId, type, attributeId)).into(new ArrayList<>());
    }
 
    @Override
