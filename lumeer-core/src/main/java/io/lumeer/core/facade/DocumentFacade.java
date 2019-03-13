@@ -30,6 +30,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -73,6 +74,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private Event<CreateDocument> createDocumentEvent;
+
+   @Inject
+   private Event<UpdateDocument> updateDocumentEvent;
 
    private ConstraintManager constraintManager;
 
@@ -130,9 +134,9 @@ public class DocumentFacade extends AbstractFacade {
 
       // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
-      checkAttributesValueChanges(collection, documentId, originalData, updatedData);
 
       final Document updatedDocument = updateDocument(collection, documentId, updatedData, originalData);
+      checkAttributesValueChanges(collection, documentId, originalData, updatedData);
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
@@ -156,14 +160,18 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
-      Collection collection = checkCollectionWritePermissions(collectionId);
+      final Collection collection = checkCollectionWritePermissions(collectionId);
 
       final Document document = getDocument(collection, documentId);
       final Document originalDocument = copyDocument(document);
 
       document.setMetaData(metaData);
 
-      return updateDocument(document, originalDocument);
+      final Document updatedDocument = updateDocument(document, originalDocument);
+      updatedDocument.setData(document.getData());
+      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+
+      return updatedDocument;
    }
 
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
@@ -182,9 +190,10 @@ public class DocumentFacade extends AbstractFacade {
 
       // TODO archive the old document
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
-      checkAttributesValueChanges(collection, documentId, originalData, patchedData);
 
       final Document updatedDocument = updateDocument(collection, documentId, patchedData, originalData);
+      checkAttributesValueChanges(collection, documentId, originalData, patchedData);
+
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
@@ -201,7 +210,11 @@ public class DocumentFacade extends AbstractFacade {
       }
       metaData.forEach((key, value) -> document.getMetaData().put(key, value));
 
-      return updateDocument(document, originalDocument);
+      final Document updatedDocument = updateDocument(document, originalDocument);
+      updatedDocument.setData(document.getData());
+      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+
+      return updatedDocument;
    }
 
    private Document copyDocument(final Document document) {
@@ -232,7 +245,19 @@ public class DocumentFacade extends AbstractFacade {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
 
-      return documentDao.updateDocument(document.getId(), document, originalDocument);
+      final Document updatedDocument = documentDao.updateDocument(document.getId(), document, originalDocument);
+
+      fireDocumentUpdate(document, updatedDocument, originalDocument);
+
+      return updatedDocument;
+   }
+
+   private void fireDocumentUpdate(final Document toBeStored, final Document updatedDocument, final Document originalDocument) {
+      if (updateDocumentEvent != null) {
+         final Document updatedDocumentWithData = new Document(updatedDocument);
+         updatedDocumentWithData.setData(toBeStored.getData());
+         updateDocumentEvent.fire(new UpdateDocument(updatedDocumentWithData, originalDocument));
+      }
    }
 
    public void deleteDocument(String collectionId, String documentId) {
@@ -290,14 +315,16 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
-      return getDocument(collection, documentId);
+      final Document result = getDocument(collection, documentId);
+      constraintManager.decodeDataTypes(collection, result.getData());
+
+      return result;
    }
 
    private Document getDocument(Collection collection, String documentId) {
       Document document = documentDao.getDocumentById(documentId);
 
       DataDocument data = dataDao.getData(collection.getId(), documentId);
-      constraintManager.decodeDataTypes(collection, data);
       document.setData(data);
 
       return document;

@@ -86,9 +86,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
       try {
          databaseCollection().insertOne(linkInstance);
-         if (createLinkInstanceEvent != null) {
-            createLinkInstanceEvent.fire(new CreateLinkInstance(linkInstance));
-         }
+
          return linkInstance;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create link instance: " + linkInstance, ex);
@@ -114,14 +112,11 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
       try {
          Bson update = new Document("$set", linkInstance).append("$inc", new Document(LinkInstanceCodec.DATA_VERSION, 1));
          LinkInstance updatedLinkInstance = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
+
          if (updatedLinkInstance == null) {
             throw new StorageException("Link instance '" + id + "' has not been updated.");
          }
-         if (updateLinkInstanceEvent != null) {
-            LinkInstance updatedLinkInstanceWithData = new LinkInstance(updatedLinkInstance);
-            updatedLinkInstanceWithData.setDataVersion(linkInstance.getDataVersion());
-            updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstanceWithData));
-         }
+
          return updatedLinkInstance;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update link instance: " + linkInstance, ex);

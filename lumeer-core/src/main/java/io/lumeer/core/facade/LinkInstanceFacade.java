@@ -28,6 +28,8 @@ import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.CreateLinkInstance;
+import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -38,11 +40,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
@@ -66,62 +68,90 @@ public class LinkInstanceFacade extends AbstractFacade {
    @Inject
    private FunctionFacade functionFacade;
 
+   @Inject
+   private Event<CreateLinkInstance> createLinkInstanceEvent;
+
+   @Inject
+   private Event<UpdateLinkInstance> updateLinkInstanceEvent;
+
    private ConstraintManager constraintManager;
 
    @PostConstruct
    public void init() {
-      constraintManager = new ConstraintManager();
-      final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
-
-      if (locale != null && !"".equals(locale)) {
-         constraintManager.setLocale(Locale.forLanguageTag(locale));
-      } else {
-         constraintManager.setLocale(Locale.getDefault());
-      }
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
    }
 
-   public LinkInstance createLinkInstance(LinkInstance linkInstance) {
+   public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
       checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
       linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
       LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
 
-      DataDocument data = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), new DataDocument());
+      final DataDocument data = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), new DataDocument());
       createdLinkInstance.setData(data);
+
+      if (createLinkInstanceEvent != null) {
+         createLinkInstanceEvent.fire(new CreateLinkInstance(createdLinkInstance));
+      }
 
       return createdLinkInstance;
    }
 
-   public LinkInstance updateLinkInstanceData(String linkInstanceId, DataDocument data) {
-      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
-      LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
+   public LinkInstance updateLinkInstanceData(final String linkInstanceId, final DataDocument data) {
+      final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      final LinkInstance originalLinkInstance = copyLinkInstance(stored);
+      final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       constraintManager.encodeDataTypes(linkType, data);
 
-      DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
-      Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
+      final DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
+      final Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
 
-      Set<String> attributesIdsToDec = new HashSet<>(oldData.keySet());
+      final Set<String> attributesIdsToDec = new HashSet<>(oldData.keySet());
       attributesIdsToDec.removeAll(data.keySet());
       updateLinkTypeMetadata(linkType, attributesIdsToAdd, attributesIdsToDec);
 
-      DataDocument updatedData = linkDataDao.updateData(linkType.getId(), linkInstanceId, data);
+      final DataDocument updatedData = linkDataDao.updateData(linkType.getId(), linkInstanceId, data);
+
+      final LinkInstance updatedLinkInstance = updateLinkInstance(stored, updatedData, originalLinkInstance);
       checkAttributesValueChanges(linkType, linkInstanceId, oldData, updatedData);
 
       constraintManager.decodeDataTypes(linkType, updatedData);
-      return updateLinkInstance(stored, updatedData);
+
+      return updatedLinkInstance;
    }
 
-   private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData){
+   private LinkInstance copyLinkInstance(final LinkInstance linkInstance) {
+      final LinkInstance originalLinkInstance = new LinkInstance(linkInstance);
+
+      if (originalLinkInstance.getData() != null) {
+         originalLinkInstance.setData(new DataDocument(originalLinkInstance.getData())); // deep copy of data
+      }
+
+      return originalLinkInstance;
+   }
+
+   private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData, final LinkInstance originalLinkInstance){
       linkInstance.setData(newData);
       linkInstance.setUpdateDate(ZonedDateTime.now());
       linkInstance.setUpdatedBy(authenticatedUser.getCurrentUserId());
 
       LinkInstance updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
       updatedLinkInstance.setData(newData);
+
+      fireLinkInstanceUpdate(linkInstance, updatedLinkInstance, originalLinkInstance);
+
       return updatedLinkInstance;
+   }
+
+   private void fireLinkInstanceUpdate(final LinkInstance toBeStored, final LinkInstance updatedLinkInstance, final LinkInstance originalLinkInstance) {
+      if (updateLinkInstanceEvent != null) {
+         LinkInstance updatedLinkInstanceWithData = new LinkInstance(updatedLinkInstance);
+         updatedLinkInstanceWithData.setDataVersion(toBeStored.getDataVersion());
+         updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstanceWithData, originalLinkInstance));
+      }
    }
 
    private void updateLinkTypeMetadata(LinkType linkType, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
@@ -140,23 +170,27 @@ public class LinkInstanceFacade extends AbstractFacade {
       }
    }
 
-   public LinkInstance patchLinkInstanceData(String linkInstanceId, DataDocument data) {
-      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
-      LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
+   public LinkInstance patchLinkInstanceData(final String linkInstanceId, final DataDocument data) {
+      final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      final LinkInstance originalLinkInstance = copyLinkInstance(stored);
+      final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       constraintManager.encodeDataTypes(linkType, data);
 
-      DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
-      Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
+      final DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
+      final Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
 
       updateLinkTypeMetadata(linkType, attributesIdsToAdd, Collections.emptySet());
 
-      DataDocument updatedData = linkDataDao.patchData(linkType.getId(), linkInstanceId, data);
+      final DataDocument updatedData = linkDataDao.patchData(linkType.getId(), linkInstanceId, data);
+
+      final LinkInstance updatedLinkInstance = updateLinkInstance(stored, updatedData, originalLinkInstance);
       checkAttributesValueChanges(linkType, linkInstanceId, oldData, updatedData);
 
       constraintManager.decodeDataTypes(linkType, updatedData);
-      return updateLinkInstance(stored, updatedData);
+
+      return updatedLinkInstance;
    }
 
    public void deleteLinkInstance(String id) {
