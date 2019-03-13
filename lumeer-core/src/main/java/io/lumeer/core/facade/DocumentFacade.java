@@ -168,6 +168,7 @@ public class DocumentFacade extends AbstractFacade {
       document.setMetaData(metaData);
 
       final Document updatedDocument = updateDocument(document, originalDocument);
+      updatedDocument.setData(document.getData());
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
@@ -210,6 +211,7 @@ public class DocumentFacade extends AbstractFacade {
       metaData.forEach((key, value) -> document.getMetaData().put(key, value));
 
       final Document updatedDocument = updateDocument(document, originalDocument);
+      updatedDocument.setData(document.getData());
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
