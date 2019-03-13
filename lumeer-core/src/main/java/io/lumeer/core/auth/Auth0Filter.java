@@ -68,6 +68,7 @@ public class Auth0Filter implements Filter {
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
    private static final String VIEW_CODE = "view_code";
    private static final String CORRELATION_ID = "correlation_id";
+   private static final String TIMESTAMP_HEADER = "X-Lumeer-Start-Timestamp";
 
    @Inject
    private Logger log;
@@ -121,6 +122,7 @@ public class Auth0Filter implements Filter {
 
       parseViewId(req);
       parseRequestData(req);
+      processStartTimestamp(req, res);
 
       if (System.getenv("SKIP_SECURITY") != null) {
          fakeUserLogin(req); // try to consume test user from request header
@@ -238,6 +240,13 @@ public class Auth0Filter implements Filter {
       permissionsChecker.setViewCode(Objects.requireNonNullElse(viewCode, ""));
    }
 
+   private void processStartTimestamp(final HttpServletRequest req, final HttpServletResponse res) {
+      String tm = req.getHeader(TIMESTAMP_HEADER);
+      if (tm != null) {
+         res.addHeader(TIMESTAMP_HEADER, tm);
+      }
+   }
+
    private void parseRequestData(final HttpServletRequest req) {
       final String correlationId = req.getHeader(CORRELATION_ID);
 
@@ -322,6 +331,7 @@ public class Auth0Filter implements Filter {
          res.addHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
          res.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
          res.addHeader("Access-Control-Allow-Credentials", "true");
+         res.addHeader("Access-Control-Expose-Headers", TIMESTAMP_HEADER);
          String reqHeader = req.getHeader("Access-Control-Request-Headers");
          if (reqHeader != null && !reqHeader.isEmpty()) {
             res.addHeader("Access-Control-Allow-Headers", reqHeader);
