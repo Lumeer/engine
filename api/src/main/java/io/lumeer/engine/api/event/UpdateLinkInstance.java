@@ -25,7 +25,14 @@ import io.lumeer.api.model.LinkInstance;
  */
 public class UpdateLinkInstance extends LinkInstanceEvent {
 
-   public UpdateLinkInstance(final LinkInstance linkInstance) {
+   private final LinkInstance originalLinkInstance;
+
+   public UpdateLinkInstance(final LinkInstance linkInstance, final LinkInstance originalLinkInstance) {
       super(linkInstance);
+      this.originalLinkInstance = originalLinkInstance;
+   }
+
+   public LinkInstance getOriginalLinkInstance() {
+      return originalLinkInstance;
    }
 }
