@@ -130,7 +130,7 @@ public class CollectionFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteCollectionFromUsers(getCurrentProject().getId(), collectionId);
       favoriteItemDao.removeFavoriteDocumentsByCollectionFromUsers(getCurrentProject().getId(), collectionId);
 
-      functionFacade.onDeleteColection(collectionId);
+      functionFacade.onDeleteCollection(collectionId);
    }
 
    public Collection getCollection(String collectionId) {

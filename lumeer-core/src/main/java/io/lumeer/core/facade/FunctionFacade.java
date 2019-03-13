@@ -412,6 +412,30 @@ public class FunctionFacade extends AbstractFacade {
          }
       });
 
+      List<FunctionRow> dependentRows = functionDao.searchByDependentLinkType(linkType.getId(), null);
+      dependentRows.forEach(row -> {
+         FunctionParameterDocuments parameter = new FunctionParameterDocuments(row.getType(), row.getResourceId(), row.getAttributeId());
+         List<FunctionRow> rows = functionDao.searchByResource(row.getResourceId(), row.getAttributeId(), row.getType());
+
+         if (!parametersMap.containsKey(parameter)) {
+            if (row.getType() == FunctionResourceType.COLLECTION) {
+               Set<Document> documents = findDocumentsForRowByLinkInstances(row, Collections.singleton(linkInstance.getId()));
+               if (!documents.isEmpty()) {
+                  parameter.setDocuments(documents);
+                  parametersMap.put(parameter, rows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
+                  fillParametersMapForCollection(parametersMap, parameter);
+               }
+            } else if (row.getDependentLinkTypeId() == null || row.getDependentLinkTypeId().equals(row.getResourceId())) {
+               parameter.setLinkInstances(Collections.singleton(linkInstance));
+               parametersMap.put(parameter, rows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
+               fillParametersMapForLinkType(parametersMap, parameter);
+            }
+
+            fillParametersMapForLinkType(parametersMap, parameter);
+         }
+
+      });
+
       return orderFunctions(parametersMap);
    }
 
@@ -448,7 +472,7 @@ public class FunctionFacade extends AbstractFacade {
       return orderFunctions(parametersMap);
    }
 
-   public void onDeleteColection(String collectionId) {
+   public void onDeleteCollection(String collectionId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyCollection(collectionId, null);
 
       deleteByRows(FunctionResourceType.COLLECTION, functionRows);
