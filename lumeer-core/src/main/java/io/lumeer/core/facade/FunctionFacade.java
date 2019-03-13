@@ -133,7 +133,6 @@ public class FunctionFacade extends AbstractFacade {
                if (!documents.isEmpty()) {
                   parameter.setDocuments(documents);
                   parametersMap.put(parameter, rows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
-                  System.out.println(parametersMap);
                   fillParametersMapForCollection(parametersMap, parameter);
                }
             } else {
@@ -369,7 +368,6 @@ public class FunctionFacade extends AbstractFacade {
                if (!documents.isEmpty()) {
                   parameter.setDocuments(documents);
                   parametersMap.put(parameter, rows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
-                  System.out.println(parametersMap);
                   fillParametersMapForCollection(parametersMap, parameter);
                }
             } else {
