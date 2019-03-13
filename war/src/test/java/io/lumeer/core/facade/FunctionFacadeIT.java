@@ -148,7 +148,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testCreateCollectionTaskSameCollection() {
+   public void testCreateCollectionQueueSameCollection() {
       createTestData();
       // C1(a1) = C1(a2) + C1(a3)
 
@@ -170,11 +170,34 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue2.getFirst().getDocuments()).hasSize(1);
 
       final Deque<FunctionFacade.FunctionParameterDocuments> queue3 = functionFacade.createQueueForCreatedDocument(c1, document);
-      assertThat(queue3).hasSize(5);
+      assertThat(queue3).hasSize(1);
    }
 
    @Test
-   public void testCreateCollectionTaskLinkedCollection() {
+   public void testCreateCollectionQueueSameCollectionMultiple() {
+      createTestData();
+      // C1(a3) = C1(a1) + C1(a2); C1(a4) = C1(a3) + C1(a2); C1(a5) = C1(a1) + C1(a2);
+
+      FunctionRow row1 = FunctionRow.createForCollection(c1.getId(), "a3", c1.getId(), null, "a1");
+      FunctionRow row2 = FunctionRow.createForCollection(c1.getId(), "a3", c1.getId(), null, "a2");
+      FunctionRow row3 = FunctionRow.createForCollection(c1.getId(), "a4", c1.getId(), null, "a3");
+      FunctionRow row4 = FunctionRow.createForCollection(c1.getId(), "a4", c1.getId(), null, "a2");
+      FunctionRow row5 = FunctionRow.createForCollection(c1.getId(), "a5", c1.getId(), null, "a1");
+      FunctionRow row6 = FunctionRow.createForCollection(c1.getId(), "a5", c1.getId(), null, "a2");
+      functionDao.createRows(Arrays.asList(row1, row2, row3, row4, row5, row6));
+
+      Document document = getAnyDocument(c1);
+      final Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForDocumentChanged(c1.getId(), "a2", document.getId());
+      assertThat(queue).hasSize(3);
+      assertThat(queue).extracting(FunctionFacade.FunctionParameterDocuments::getAttributeId).containsSubsequence("a3", "a4");
+
+      final Deque<FunctionFacade.FunctionParameterDocuments> queue2 = functionFacade.createQueueForCreatedDocument(c1, document);
+      assertThat(queue2).hasSize(3);
+      assertThat(queue2).extracting(FunctionFacade.FunctionParameterDocuments::getAttributeId).containsSubsequence("a3", "a4");
+   }
+
+   @Test
+   public void testCreateCollectionQueueLinkedCollection() {
       createTestData();
       // C1(a1) = C2(a2) + C3(a3); C2(a2) = C4(a4) + C5(a5); C2(a3) = C2(a2) + C2(a4);
 
@@ -213,7 +236,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testCreateCollectionTaskWithCycle() {
+   public void testCreateCollectionQueueWithCycle() {
       createTestData();
       // C1(a1) = C2(a2) + C3(a3); C2(a2) = C4(a4) + C5(a5); C4(a4) = C1(a1) + C1(a2)
 
@@ -250,7 +273,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testCreateLinkTaskSameLink() {
+   public void testCreateQueueSameLink() {
       createTestData();
       // L12(a1) = L12(a2) + L12(a3)
 
@@ -277,7 +300,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue2.getFirst().getLinkInstances()).hasSize(1);
 
       final Deque<FunctionFacade.FunctionParameterDocuments> queue3 = functionFacade.createQueueForCreatedLink(l12, linkInstance);
-      assertThat(queue3).hasSize(5);
+      assertThat(queue3).hasSize(1);
    }
 
    @Test
