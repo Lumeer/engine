@@ -23,6 +23,7 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -30,6 +31,7 @@ import java.time.ZonedDateTime;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Document implements WithId {
 
    public static String META_PARENT_ID = "parentId";
