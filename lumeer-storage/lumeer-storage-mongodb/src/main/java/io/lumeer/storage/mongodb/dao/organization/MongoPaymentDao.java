@@ -148,7 +148,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
       database.createCollection(databaseCollectionName(organization));
 
       MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
-      groupCollection.createIndex(Indexes.ascending(PaymentCodec.PAYMENT_ID), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.ascending(PaymentCodec.PAYMENT_ID), new IndexOptions().unique(false));
       groupCollection.createIndex(Indexes.descending(PaymentCodec.DATE), new IndexOptions().unique(true));
       groupCollection.createIndex(Indexes.descending(PaymentCodec.START), new IndexOptions().unique(true));
       groupCollection.createIndex(Indexes.descending(PaymentCodec.VALID_UNTIL), new IndexOptions().unique(true));
