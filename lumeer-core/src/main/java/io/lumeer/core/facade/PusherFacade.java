@@ -516,9 +516,7 @@ public class PusherFacade extends AbstractFacade {
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
       Set<String> userIds = collectionFacade.getUsersIdsWithAccess(collection);
-      ObjectWithParent object = new ObjectWithParent(collection, getOrganization().getId(), getProject().getId());
-      object.setCorrelationId(requestDataKeeper.getCorrelationId());
-      sendNotificationsByUsers(object, userIds, event);
+      sendNotificationsByUsers(new ObjectWithParent(collection, getOrganization().getId(), getProject().getId()), userIds, event);
    }
 
    private Project getProject() {
@@ -763,6 +761,7 @@ public class PusherFacade extends AbstractFacade {
          notifications.forEach(event -> {
             final Object data;
             if (event.getData() instanceof ObjectWithParent) {
+               ((ObjectWithParent) event.getData()).setCorrelationId(requestDataKeeper.getCorrelationId());
                data = ((ObjectWithParent) event.getData()).getObject();
             } else {
                data = event.getData();
