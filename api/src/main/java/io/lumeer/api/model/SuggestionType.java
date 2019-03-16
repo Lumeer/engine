@@ -24,6 +24,7 @@ public enum SuggestionType {
    ATTRIBUTE,
    COLLECTION,
    LINK,
+   LINK_ATTRIBUTE,
    VIEW;
 
    public static SuggestionType fromString(String suggestionType) {

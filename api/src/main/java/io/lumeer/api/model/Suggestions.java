@@ -27,12 +27,14 @@ public class Suggestions {
    private final List<Collection> collections;
    private final List<View> views;
    private final List<LinkType> linkTypes;
+   private final List<LinkType> linkAttributes;
 
-   public Suggestions(final List<Collection> attributes, final List<Collection> collections, final List<View> views, final List<LinkType> linkTypes) {
+   public Suggestions(final List<Collection> attributes, final List<Collection> collections, final List<View> views, final List<LinkType> linkTypes, final List<LinkType> linkAttributes) {
       this.attributes = attributes;
       this.collections = collections;
       this.views = views;
       this.linkTypes = linkTypes;
+      this.linkAttributes = linkAttributes;
    }
 
    public List<Collection> getAttributes() {
@@ -48,26 +50,34 @@ public class Suggestions {
    }
 
    public List<LinkType> getLinkTypes() {
-      return linkTypes;
+      return Collections.unmodifiableList(linkTypes);
+   }
+
+   public List<LinkType> getLinkAttributes() {
+      return Collections.unmodifiableList(linkAttributes);
    }
 
    public static Suggestions emptySuggestions() {
-      return new Suggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      return new Suggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
    }
 
    public static Suggestions attributeSuggestions(List<Collection> attributes) {
-      return new Suggestions(attributes, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      return new Suggestions(attributes, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
    }
 
    public static Suggestions collectionSuggestions(List<Collection> collections) {
-      return new Suggestions(Collections.emptyList(), collections, Collections.emptyList(), Collections.emptyList());
+      return new Suggestions(Collections.emptyList(), collections, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
    }
 
    public static Suggestions viewSuggestions(List<View> views) {
-      return new Suggestions(Collections.emptyList(), Collections.emptyList(), views, Collections.emptyList());
+      return new Suggestions(Collections.emptyList(), Collections.emptyList(), views, Collections.emptyList(), Collections.emptyList());
    }
 
    public static Suggestions linkSuggestions(List<LinkType> linkTypes)  {
-      return new Suggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), linkTypes);
+      return new Suggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), linkTypes, Collections.emptyList());
+   }
+
+   public static Suggestions linkAttributesSuggestions(List<LinkType> linkAttributes)  {
+      return new Suggestions(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), linkAttributes);
    }
 }

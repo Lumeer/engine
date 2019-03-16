@@ -30,6 +30,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
+import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
 
 import com.mongodb.BasicDBList;
@@ -164,37 +165,66 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
       List<Bson> aggregates = new ArrayList<>();
 
       aggregates.add(Aggregates.match(linkTypesSuggestionFilter(query)));
-
-      if (query.hasCollectionIdsQuery()) {
-         BasicDBList subsetList = new BasicDBList();
-         subsetList.add("$" + LinkTypeCodec.COLLECTION_IDS);
-         subsetList.add(new ArrayList<>(query.getCollectionIds()));
-
-         Document isSubset = new Document("$setIsSubset", subsetList);
-
-         aggregates.add(Aggregates.addFields(new Field<>("_isSubset", isSubset)));
-         aggregates.add(Aggregates.match(Filters.eq("_isSubset", true)));
-      }
-
-      if (query.hasPriorityCollectionIdsQuery()) {
-         BasicDBList intersectionList = new BasicDBList();
-         intersectionList.add("$" + LinkTypeCodec.COLLECTION_IDS);
-         intersectionList.add(new ArrayList<>(query.getPriorityCollectionIds()));
-
-         Document intersection = new Document("$setIntersection", intersectionList);
-         Document size = new Document(QueryOperators.SIZE, intersection);
-
-         aggregates.add(Aggregates.addFields(new Field<>("_linkPriority", size)));
-         aggregates.add(Aggregates.sort(Sorts.descending("_linkPriority")));
-      }
-
+      addCollectionIdsAggregation(aggregates, query);
+      addPriorityCollectionIdsAggregation(aggregates, query);
       addPaginationToAggregates(aggregates, query);
 
       return aggregates;
    }
 
+   private void addCollectionIdsAggregation(List<Bson> aggregates, final SearchSuggestionQuery query) {
+      if (!query.hasCollectionIdsQuery()) {
+         return;
+      }
+      BasicDBList subsetList = new BasicDBList();
+      subsetList.add("$" + LinkTypeCodec.COLLECTION_IDS);
+      subsetList.add(new ArrayList<>(query.getCollectionIds()));
+
+      Document isSubset = new Document("$setIsSubset", subsetList);
+
+      aggregates.add(Aggregates.addFields(new Field<>("_isSubset", isSubset)));
+      aggregates.add(Aggregates.match(Filters.eq("_isSubset", true)));
+   }
+
+   private void addPriorityCollectionIdsAggregation(List<Bson> aggregates, final SearchSuggestionQuery query) {
+      if (!query.hasPriorityCollectionIdsQuery()) {
+         return;
+      }
+
+      BasicDBList intersectionList = new BasicDBList();
+      intersectionList.add("$" + LinkTypeCodec.COLLECTION_IDS);
+      intersectionList.add(new ArrayList<>(query.getPriorityCollectionIds()));
+
+      Document intersection = new Document("$setIntersection", intersectionList);
+      Document size = new Document(QueryOperators.SIZE, intersection);
+
+      aggregates.add(Aggregates.addFields(new Field<>("_linkPriority", size)));
+      aggregates.add(Aggregates.sort(Sorts.descending("_linkPriority")));
+   }
+
    private Bson linkTypesSuggestionFilter(SearchSuggestionQuery query) {
       return Filters.regex(LinkTypeCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
+   }
+
+   @Override
+   public List<LinkType> getLinkTypesByAttributes(final SearchSuggestionQuery query) {
+      List<Bson> aggregates = attributeSuggestionAggregation(query);
+      return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
+   }
+
+   private List<Bson> attributeSuggestionAggregation(final SearchSuggestionQuery query) {
+      List<Bson> aggregates = new ArrayList<>();
+
+      aggregates.add(Aggregates.match(attributeSuggestionQuery(query)));
+      addCollectionIdsAggregation(aggregates, query);
+      addPriorityCollectionIdsAggregation(aggregates, query);
+      addPaginationToAggregates(aggregates, query);
+
+      return aggregates;
+   }
+
+   private Bson attributeSuggestionQuery(final SearchSuggestionQuery query) {
+      return Filters.regex(MongoUtils.concatParams(LinkTypeCodec.ATTRIBUTES, LinkTypeCodec.NAME), Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
    }
 
    @Override
