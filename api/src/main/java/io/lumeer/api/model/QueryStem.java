@@ -32,20 +32,23 @@ public class QueryStem {
    private final List<String> linkTypeIds;
    private final Set<String> documentIds;
    private final Set<AttributeFilter> filters;
+   private final Set<LinkAttributeFilter> linkFilters;
 
    @JsonCreator
    public QueryStem(@JsonProperty("collectionId") final String collectionId,
          @JsonProperty("linkTypeIds") final List<String> linkTypeIds,
          @JsonProperty("documentIds") final Set<String> documentIds,
-         @JsonProperty("filters") final Set<AttributeFilter> filters) {
+         @JsonProperty("filters") final Set<AttributeFilter> filters,
+         @JsonProperty("linkFilters") final Set<LinkAttributeFilter> linkFilters) {
       this.collectionId = collectionId;
       this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptyList();
       this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
       this.filters = filters != null ? filters : Collections.emptySet();
+      this.linkFilters = linkFilters != null ? linkFilters : Collections.emptySet();
    }
 
    public QueryStem(final String collectionId) {
-      this(collectionId, null, null, null);
+      this(collectionId, null, null, null, null);
    }
 
    public String getCollectionId() {
@@ -64,6 +67,10 @@ public class QueryStem {
       return filters;
    }
 
+   public Set<LinkAttributeFilter> getLinkFilters() {
+      return linkFilters;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -73,15 +80,16 @@ public class QueryStem {
          return false;
       }
       final QueryStem queryStem = (QueryStem) o;
-      return Objects.equals(collectionId, queryStem.collectionId) &&
-            Objects.equals(linkTypeIds, queryStem.linkTypeIds) &&
-            Objects.equals(documentIds, queryStem.documentIds) &&
-            Objects.equals(filters, queryStem.filters);
+      return Objects.equals(getCollectionId(), queryStem.getCollectionId()) &&
+            Objects.equals(getLinkTypeIds(), queryStem.getLinkTypeIds()) &&
+            Objects.equals(getDocumentIds(), queryStem.getDocumentIds()) &&
+            Objects.equals(getFilters(), queryStem.getFilters()) &&
+            Objects.equals(getLinkFilters(), queryStem.getLinkFilters());
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(collectionId, linkTypeIds, documentIds, filters);
+      return Objects.hash(getCollectionId(), getLinkTypeIds(), getDocumentIds(), getFilters(), getLinkFilters());
    }
 
    @Override
@@ -91,6 +99,7 @@ public class QueryStem {
             ", linkTypeIds=" + linkTypeIds +
             ", documentIds=" + documentIds +
             ", filters=" + filters +
+            ", linkFilters=" + linkFilters +
             '}';
    }
 }
