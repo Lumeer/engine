@@ -16,18 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
 
-public enum SuggestionType {
+package io.lumeer.storage.mongodb.codecs.providers;
 
-   ALL,
-   ATTRIBUTE,
-   COLLECTION,
-   LINK,
-   LINK_ATTRIBUTE,
-   VIEW;
+import io.lumeer.api.model.LinkAttributeFilter;
+import io.lumeer.storage.mongodb.codecs.LinkAttributeFilterCodec;
 
-   public static SuggestionType fromString(String suggestionType) {
-      return SuggestionType.valueOf(suggestionType.toUpperCase());
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+
+public class LinkAttributeFilterCodecProvider implements CodecProvider {
+
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == LinkAttributeFilter.class) {
+         return (Codec<T>) new LinkAttributeFilterCodec(registry);
+      }
+
+      return null;
    }
+
 }

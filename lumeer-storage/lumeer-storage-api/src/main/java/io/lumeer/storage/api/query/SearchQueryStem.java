@@ -21,6 +21,7 @@ package io.lumeer.storage.api.query;
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.storage.api.filter.LinkAttributeFilter;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ public class SearchQueryStem {
    private final List<String> linkTypeIds;
    private final Set<String> documentIds;
    private final Set<AttributeFilter> filters;
+   private final Set<LinkAttributeFilter> linkFilters;
    private final Set<String> fulltexts;
 
    public SearchQueryStem(QueryStem stem, Set<String> fulltexts) {
@@ -43,6 +45,7 @@ public class SearchQueryStem {
       this.linkTypeIds = stem.getLinkTypeIds();
       this.documentIds = stem.getDocumentIds();
       this.filters = stem.getFilters() != null ? stem.getFilters().stream().map(this::convertFilter).collect(Collectors.toSet()) : Collections.emptySet();
+      this.linkFilters = stem.getLinkFilters() != null ? stem.getLinkFilters().stream().map(this::convertLinkFilter).collect(Collectors.toSet()) : Collections.emptySet();
       this.fulltexts = fulltexts;
    }
 
@@ -51,12 +54,18 @@ public class SearchQueryStem {
       this.linkTypeIds = builder.linkTypeIds;
       this.documentIds = builder.documentIds != null && !builder.documentIds.isEmpty() ? builder.documentIds : new HashSet<>();
       this.filters = builder.filters;
+      this.linkFilters = builder.linkFilters;
       this.fulltexts = builder.fulltexts;
    }
 
    private AttributeFilter convertFilter(final io.lumeer.api.model.AttributeFilter attr) {
       ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
       return new AttributeFilter(attr.getCollectionId(), conditionType, attr.getAttributeId(), attr.getValue());
+   }
+
+   private LinkAttributeFilter convertLinkFilter(final io.lumeer.api.model.LinkAttributeFilter attr) {
+      ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
+      return new LinkAttributeFilter(attr.getLinkTypeId(), conditionType, attr.getAttributeId(), attr.getValue());
    }
 
    public String getCollectionId() {
@@ -91,6 +100,10 @@ public class SearchQueryStem {
       return filters != null && !filters.isEmpty();
    }
 
+   public boolean containsLinkFiltersQuery() {
+      return linkFilters != null && !filters.isEmpty();
+   }
+
    public boolean containsFulltextsQuery() {
       return fulltexts != null && !fulltexts.isEmpty();
    }
@@ -105,6 +118,7 @@ public class SearchQueryStem {
       private List<String> linkTypeIds;
       private Set<String> documentIds;
       private Set<AttributeFilter> filters;
+      private Set<LinkAttributeFilter> linkFilters;
       private Set<String> fulltexts;
 
       private Builder(String collectionId) {
@@ -126,6 +140,11 @@ public class SearchQueryStem {
          return this;
       }
 
+      public Builder linkFilters(Set<LinkAttributeFilter> linkFilters) {
+         this.linkFilters = linkFilters;
+         return this;
+      }
+
       public Builder fulltexts(Set<String> fulltexts) {
          this.fulltexts = fulltexts;
          return this;
@@ -143,6 +162,7 @@ public class SearchQueryStem {
             ", linkTypeIds=" + linkTypeIds +
             ", documentIds=" + documentIds +
             ", filters=" + filters +
+            ", linkFilters=" + linkFilters +
             ", fulltexts=" + fulltexts +
             '}';
    }

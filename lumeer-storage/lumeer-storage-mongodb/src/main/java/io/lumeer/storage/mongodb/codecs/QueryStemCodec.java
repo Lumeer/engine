@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.AttributeFilter;
+import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.QueryStem;
 
 import org.bson.BsonReader;
@@ -43,6 +44,7 @@ public class QueryStemCodec implements Codec<QueryStem> {
    public static final String LINK_TYPE_IDS = "linkTypeIds";
    public static final String DOCUMENT_IDS = "documentIds";
    public static final String FILTERS = "filters";
+   public static final String LINK_FILTERS = "filters";
 
    private final Codec<Document> documentCodec;
 
@@ -58,7 +60,6 @@ public class QueryStemCodec implements Codec<QueryStem> {
    }
 
    public static QueryStem convertFromDocument(Document bson) {
-
       String collectionId = bson.getString(COLLECTION_ID);
       List<String> linkTypeIds = bson.get(LINK_TYPE_IDS, List.class);
       Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
@@ -67,7 +68,16 @@ public class QueryStemCodec implements Codec<QueryStem> {
                                                                                               .map(AttributeFilterCodec::convertFromDocument)
                                                                                               .collect(Collectors.toSet());
 
-      return new QueryStem(collectionId, linkTypeIds, documentIds, attributes);
+      Set<LinkAttributeFilter> linkAttributes;
+      if (bson.containsKey(LINK_FILTERS)) {
+         linkAttributes = new ArrayList<Document>(bson.get(LINK_FILTERS, List.class)).stream()
+                                                                                     .map(LinkAttributeFilterCodec::convertFromDocument)
+                                                                                     .collect(Collectors.toSet());
+      } else {
+         linkAttributes = new HashSet<>();
+      }
+
+      return new QueryStem(collectionId, linkTypeIds, documentIds, attributes, linkAttributes);
    }
 
    private static Set<String> convertToSet(List list) {
@@ -80,7 +90,8 @@ public class QueryStemCodec implements Codec<QueryStem> {
             .append(COLLECTION_ID, value.getCollectionId())
             .append(LINK_TYPE_IDS, value.getLinkTypeIds())
             .append(DOCUMENT_IDS, new ArrayList<>(value.getDocumentIds()))
-            .append(FILTERS, new ArrayList<>(value.getFilters()));
+            .append(FILTERS, new ArrayList<>(value.getFilters()))
+            .append(LINK_FILTERS, new ArrayList<>(value.getFilters()));
 
       documentCodec.encode(writer, document, encoderContext);
    }

@@ -248,7 +248,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      QueryStem stem = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null);
+      QueryStem stem = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null, null);
       Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
       Response response = client.target(SEARCH_URL).path("linkInstances")
@@ -262,7 +262,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
 
-      QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null);
+      QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null, null);
       Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
       response = client.target(SEARCH_URL).path("linkInstances")
@@ -296,7 +296,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
       String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
 
-      QueryStem stem = new QueryStem(collection1Id, Arrays.asList(linkTypeId1, linkTypeId2), null, null);
+      QueryStem stem = new QueryStem(collection1Id, Arrays.asList(linkTypeId1, linkTypeId2), null, null, null);
       Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
       Response response = client.target(SEARCH_URL).path("linkInstances")
@@ -310,7 +310,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
 
-      QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null);
+      QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null, null);
       Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
       response = client.target(SEARCH_URL).path("linkInstances")

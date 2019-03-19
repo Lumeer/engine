@@ -52,4 +52,6 @@ public interface LinkTypeDao {
 
    List<LinkType> getLinkTypes(SearchSuggestionQuery query);
 
+   List<LinkType> getLinkTypesByAttributes(SearchSuggestionQuery query);
+
 }

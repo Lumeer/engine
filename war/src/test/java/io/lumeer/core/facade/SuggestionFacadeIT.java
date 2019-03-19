@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -51,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -60,8 +62,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "LMR";
    private static final String PROJECT_CODE = "PROJ";
 
-   private static final int SUGGESTIONS_LIMIT = 12;
-   private static final int TYPES_COUNT = 4;
+   private static final int SUGGESTIONS_LIMIT = 15;
 
    private static final List<String> COLLECTION_NAMES = Arrays.asList("Collection1", "Collection2", "Collection3");
    private static final List<String> COLLECTION_NAMES_NO_RIGHTS = Arrays.asList("Collection4", "Collection5", "Collection6");
@@ -111,7 +112,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       final User createdUser = userDao.createUser(user);
       this.user = createdUser;
 
-      Organization organization = new Organization ();
+      Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
@@ -198,7 +199,83 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
       List<LinkType> linkTypes = suggestionFacade.suggest(new SuggestionQuery("link", SuggestionType.LINK)).getLinkTypes();
       assertThat(linkTypes).hasSize(SUGGESTIONS_LIMIT);
+   }
 
+   @Test
+   public void testSuggestCollections() {
+      String id1 = updateCollectionName(collectionIds.get(0), "Lumeer").getId();
+      String id2 = updateCollectionName(collectionIds.get(1), "Lmr").getId();
+      String id3 = updateCollectionName(collectionIds.get(2), "Lum").getId();
+      updateCollectionName(collectionIdsNoRights.get(0), "Lumeer");
+      updateCollectionName(collectionIdsNoRights.get(1), "Lume");
+      updateCollectionName(collectionIdsNoRights.get(2), "Lumeere");
+
+      List<Collection> collections = suggestionFacade.suggest(new SuggestionQuery("lum", SuggestionType.COLLECTION)).getCollections();
+      assertThat(collections).hasSize(2).extracting(Collection::getId).containsOnly(id1, id3);
+
+      collections = suggestionFacade.suggest(new SuggestionQuery("lm", SuggestionType.COLLECTION)).getCollections();
+      assertThat(collections).hasSize(1).extracting(Collection::getId).containsOnly(id2);
+   }
+
+   private Collection updateCollectionName(String id, String name) {
+      Collection collection = collectionDao.getCollectionById(id);
+      collection.setName(name);
+      return collectionDao.updateCollection(id, collection, null);
+   }
+
+   @Test
+   public void testSuggestAttributes() {
+      String id1 = createAttributes(collectionIds.get(0), "lmr", "lumr", "lumeer", "lm").getId();
+      String id2 = createAttributes(collectionIds.get(1), "lmr", "llr", "larm").getId();
+      String id3 = createAttributes(collectionIds.get(2), "la", "lm", "lumm").getId();
+      createAttributes(collectionIdsNoRights.get(0), "lmr", "lumeer");
+      createAttributes(collectionIdsNoRights.get(2), "lmr", "lumeer");
+
+      List<Collection> collections = suggestionFacade.suggest(new SuggestionQuery("lm", SuggestionType.ATTRIBUTE)).getAttributes();
+      assertThat(collections).hasSize(3).extracting(Collection::getId).containsOnly(id1, id2, id3);
+      assertThat(getCollectionById(collections, id1).getAttributes()).hasSize(2).extracting(Attribute::getName).containsOnly("lmr", "lm");
+      assertThat(getCollectionById(collections, id2).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("lmr");
+      assertThat(getCollectionById(collections, id3).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("lm");
+
+      collections = suggestionFacade.suggest(new SuggestionQuery("la", SuggestionType.ATTRIBUTE)).getAttributes();
+      assertThat(collections).hasSize(2).extracting(Collection::getId).containsOnly(id2, id3);
+      assertThat(getCollectionById(collections, id2).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("larm");
+      assertThat(getCollectionById(collections, id3).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("la");
+   }
+
+   private Collection createAttributes(String id, String... attributeNames) {
+      Collection collection = collectionDao.getCollectionById(id);
+      Set<Attribute> attributes = Arrays.stream(attributeNames).map(Attribute::new).collect(Collectors.toSet());
+      collection.setAttributes(attributes);
+      return collectionDao.updateCollection(id, collection, null);
+   }
+
+   @Test
+   public void testSuggestLinkAttributes() {
+      String lId1 = linkTypeDao.createLinkType(prepareLinkType("l1", collectionIds.get(0), collectionIds.get(1), "lmr", "lumr", "lumeer", "lm")).getId();
+      String lId2 = linkTypeDao.createLinkType(prepareLinkType("l2", collectionIds.get(1), collectionIds.get(2), "lmr", "llr", "larm")).getId();
+      linkTypeDao.createLinkType(prepareLinkType("l3", collectionIds.get(0), collectionIdsNoRights.get(0), "lmr", "lumeer"));
+      String lId4 = linkTypeDao.createLinkType(prepareLinkType("l4", collectionIds.get(2), collectionIds.get(0), "la", "lm", "lumm")).getId();
+      linkTypeDao.createLinkType(prepareLinkType("l5", collectionIdsNoRights.get(2), collectionIds.get(1), "lmr", "lumeer"));
+
+      List<LinkType> linkTypes = suggestionFacade.suggest(new SuggestionQuery("lm", SuggestionType.LINK_ATTRIBUTE)).getLinkAttributes();
+      assertThat(linkTypes).hasSize(3).extracting(LinkType::getId).containsOnly(lId1, lId2, lId4);
+      assertThat(getLinkTypeById(linkTypes, lId1).getAttributes()).hasSize(2).extracting(Attribute::getName).containsOnly("lmr", "lm");
+      assertThat(getLinkTypeById(linkTypes, lId2).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("lmr");
+      assertThat(getLinkTypeById(linkTypes, lId4).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("lm");
+
+      linkTypes = suggestionFacade.suggest(new SuggestionQuery("la", SuggestionType.LINK_ATTRIBUTE)).getLinkAttributes();
+      assertThat(linkTypes).hasSize(2).extracting(LinkType::getId).containsOnly(lId2, lId4);
+      assertThat(getLinkTypeById(linkTypes, lId2).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("larm");
+      assertThat(getLinkTypeById(linkTypes, lId4).getAttributes()).hasSize(1).extracting(Attribute::getName).containsOnly("la");
+   }
+
+   private LinkType getLinkTypeById(List<LinkType> linkTypes, String id) {
+      return linkTypes.stream().filter(lt -> lt.getId().equals(id)).findFirst().get();
+   }
+
+   private Collection getCollectionById(List<Collection> collections, String id) {
+      return collections.stream().filter(col -> col.getId().equals(id)).findFirst().get();
    }
 
    @Test
@@ -253,6 +330,11 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
    private LinkType prepareLinkType(String name, String collectionId1, String collectionId2) {
       return new LinkType(name, Arrays.asList(collectionId1, collectionId2), Collections.emptyList());
+   }
+
+   private LinkType prepareLinkType(String name, String collectionId1, String collectionId2, String... attributeNames) {
+      List<Attribute> attributes = Arrays.stream(attributeNames).map(Attribute::new).collect(Collectors.toList());
+      return new LinkType(name, Arrays.asList(collectionId1, collectionId2), attributes);
    }
 
    private View prepareView(String name) {
