@@ -43,12 +43,12 @@ public class FunctionTask extends AbstractContextualTask {
    private Set<Document> documents;
    private LinkType linkType;
    private Set<LinkInstance> linkInstances;
-   private List<FunctionTask> parents;
+   private List<? extends AbstractContextualTask> parents;
 
    private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
    private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
 
-   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final List<FunctionTask> parents) {
+   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final List<? extends AbstractContextualTask> parents) {
       this.attribute = attribute;
       this.collection = collection;
       this.documents = documents;
@@ -57,7 +57,7 @@ public class FunctionTask extends AbstractContextualTask {
       this.linkInstances = null;
    }
 
-   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, List<FunctionTask> parents) {
+   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, List<? extends AbstractContextualTask> parents) {
       this.attribute = attribute;
       this.linkType = linkType;
       this.linkInstances = linkInstances;
@@ -90,7 +90,7 @@ public class FunctionTask extends AbstractContextualTask {
       return linkInstances;
    }
 
-   public List<FunctionTask> getParents() {
+   public List<? extends AbstractContextualTask> getParents() {
       return parents;
    }
 
@@ -109,7 +109,7 @@ public class FunctionTask extends AbstractContextualTask {
       }
 
       if (parents != null) {
-         parents.forEach(FunctionTask::process);
+         parents.forEach(AbstractContextualTask::process);
       }
    }
 

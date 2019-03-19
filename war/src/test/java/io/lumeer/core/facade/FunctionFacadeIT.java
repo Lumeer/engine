@@ -231,8 +231,8 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(task.getAttribute().getId()).isEqualTo("a2");
       assertThat(task.getDocuments()).hasSize(2);
       assertThat(task.getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents().get(0).getParents()).isNull();
+      assertThat(((FunctionTask) task.getParents().get(0)).getParents()).hasSize(1);
+      assertThat(((FunctionTask) ((FunctionTask) task.getParents().get(0)).getParents().get(0)).getParents()).isNull();
    }
 
    @Test
@@ -268,8 +268,8 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       FunctionTask task = functionFacade.convertQueueToTask(queue);
       assertThat(task).isNotNull();
       assertThat(task.getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents().get(0).getParents()).isNull();
+      assertThat(((FunctionTask) task.getParents().get(0)).getParents()).hasSize(1);
+      assertThat(((FunctionTask) ((FunctionTask) task.getParents().get(0)).getParents().get(0)).getParents()).isNull();
    }
 
    @Test
@@ -334,7 +334,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(task.getDocuments()).hasSize(1);
       assertThat(task.getParents()).hasSize(1);
 
-      task = task.getParents().get(0);
+      task = ((FunctionTask) task.getParents().get(0));
       assertThat(task.getLinkType().getId()).isEqualTo(l12.getId());
       assertThat(task.getLinkInstances()).hasSize(2);
       assertThat(task.getParents()).isNullOrEmpty();
@@ -356,11 +356,11 @@ public class FunctionFacadeIT extends IntegrationTestBase {
                         .findFirst().get();
    }
 
-   private Attribute getAttribute(Collection collection, String attributeId){
+   private Attribute getAttribute(Collection collection, String attributeId) {
       return collection.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst().get();
    }
 
-   private Attribute getAttribute(LinkType linkType, String attributeId){
+   private Attribute getAttribute(LinkType linkType, String attributeId) {
       return linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst().get();
    }
 
@@ -372,7 +372,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       return getDocuments(collection).get(0);
    }
 
-   private LinkInstance getAnyLink(LinkType linkType){
+   private LinkInstance getAnyLink(LinkType linkType) {
       return linkInstanceDao.getLinkInstancesByLinkType(linkType.getId()).get(0);
    }
 
