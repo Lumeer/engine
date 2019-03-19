@@ -62,9 +62,9 @@ public class LinkType implements WithId {
    public LinkType(LinkType linkType) {
       this.id = linkType.getId();
       this.name = linkType.getName();
-      this.collectionIds = linkType.getCollectionIds();
+      this.collectionIds = linkType.getCollectionIds() != null ? new ArrayList<>(linkType.getCollectionIds()) : Collections.emptyList();
       this.version = linkType.getVersion();
-      this.attributes = linkType.getAttributes();
+      this.attributes = linkType.getAttributes() != null ? new ArrayList<>(linkType.getAttributes()) : Collections.emptyList();
       this.lastAttributeNum = linkType.getLastAttributeNum();
    }
 
