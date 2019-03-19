@@ -76,7 +76,7 @@ public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
       linkInstance.setUpdateDate(updatedZonedDate);
       linkInstance.setCreatedBy(createdBy);
       linkInstance.setCreationDate(creationZonedDate);
-      linkInstance.setDataVersion(version == null ? 1 : version);
+      linkInstance.setDataVersion(version == null ? 0 : version);
       return linkInstance;
    }
 

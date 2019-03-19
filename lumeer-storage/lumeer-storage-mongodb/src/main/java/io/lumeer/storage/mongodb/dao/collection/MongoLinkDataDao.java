@@ -74,7 +74,7 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    @Override
    public DataDocument updateData(final String linkTypeId, final String linkInstanceId, final DataDocument data) {
       Document document = new Document(data);
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
       Document updatedDocument = linkDataCollection(linkTypeId).findOneAndReplace(idFilter(linkInstanceId), document, options);
       if (updatedDocument == null) {
@@ -87,7 +87,7 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    public DataDocument patchData(final String linkTypeId, final String linkInstanceId, final DataDocument data) {
       data.remove(ID);
       Document updateDocument = new Document("$set", new Document(data));
-      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
       Document patchedDocument = linkDataCollection(linkTypeId).findOneAndUpdate(idFilter(linkInstanceId), updateDocument, options);
       if (patchedDocument == null) {

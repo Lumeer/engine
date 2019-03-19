@@ -213,7 +213,7 @@ public class ViewFacade extends AbstractFacade {
       return linkTypeDao.getLinkTypesByIds(linkTypesIds);
    }
 
-   private Map<String, Set<Role>> getViewAuthorRights(final View view) {
+   public Map<String, Set<Role>> getViewAuthorRights(final View view) {
       return getCollectionsByView(view).stream()
                                        .collect(Collectors.toMap(Resource::getId, c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
    }

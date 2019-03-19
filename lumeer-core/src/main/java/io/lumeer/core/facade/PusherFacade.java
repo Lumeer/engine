@@ -126,6 +126,9 @@ public class PusherFacade extends AbstractFacade {
    private ViewDao viewDao;
 
    @Inject
+   private ViewFacade viewFacade;
+
+   @Inject
    private OrganizationFacade organizationFacade;
 
    @Inject
@@ -510,6 +513,7 @@ public class PusherFacade extends AbstractFacade {
    private void sendViewNotifications(final View view, final String event) {
       Set<String> userIds = ResourceUtils.usersAllowedRead(view);
       userIds.addAll(getWorkspaceManagers());
+      view.setAuthorRights(viewFacade.getViewAuthorRights(view));
       ObjectWithParent object = new ObjectWithParent(view, getOrganization().getId(), getProject().getId());
       sendNotificationsByUsers(object, userIds, event);
    }

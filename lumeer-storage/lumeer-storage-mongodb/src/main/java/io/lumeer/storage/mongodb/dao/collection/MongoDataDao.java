@@ -100,7 +100,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    @Override
    public DataDocument updateData(final String collectionId, final String documentId, final DataDocument data) {
       Document document = new Document(data);
-      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
       Document updatedDocument = dataCollection(collectionId).findOneAndReplace(idFilter(documentId), document, options);
       if (updatedDocument == null) {
@@ -113,7 +113,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    public DataDocument patchData(final String collectionId, final String documentId, final DataDocument data) {
       data.remove(ID);
       Document updateDocument = new Document("$set", new Document(data));
-      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
       Document patchedDocument = dataCollection(collectionId).findOneAndUpdate(idFilter(documentId), updateDocument, options);
       if (patchedDocument == null) {

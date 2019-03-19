@@ -59,7 +59,7 @@ public abstract class ResourceCodec {
 
       SimpleResource view = new SimpleResource(code, name, icon, color, description, permissions);
       view.setId(id);
-      view.setVersion(version == null ? 1 : version);
+      view.setVersion(version == null ? 0 : version);
       return view;
    }
 
