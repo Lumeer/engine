@@ -43,25 +43,25 @@ public class FunctionTask extends AbstractContextualTask {
    private Set<Document> documents;
    private LinkType linkType;
    private Set<LinkInstance> linkInstances;
-   private List<? extends AbstractContextualTask> parents;
+   private AbstractContextualTask parent;
 
    private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
    private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
 
-   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final List<? extends AbstractContextualTask> parents) {
+   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final  AbstractContextualTask parent) {
       this.attribute = attribute;
       this.collection = collection;
       this.documents = documents;
-      this.parents = parents;
+      this.parent = parent;
       this.linkType = null;
       this.linkInstances = null;
    }
 
-   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, List<? extends AbstractContextualTask> parents) {
+   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, AbstractContextualTask parent) {
       this.attribute = attribute;
       this.linkType = linkType;
       this.linkInstances = linkInstances;
-      this.parents = parents;
+      this.parent = parent;
       this.collection = null;
       this.documents = null;
    }
@@ -90,8 +90,13 @@ public class FunctionTask extends AbstractContextualTask {
       return linkInstances;
    }
 
-   public List<? extends AbstractContextualTask> getParents() {
-      return parents;
+   @Override
+   public void setParent(final AbstractContextualTask task) {
+      this.parent = task;
+   }
+
+   public AbstractContextualTask getParent() {
+      return parent;
    }
 
    @Override
@@ -108,8 +113,8 @@ public class FunctionTask extends AbstractContextualTask {
          });
       }
 
-      if (parents != null) {
-         parents.forEach(AbstractContextualTask::process);
+      if (parent != null) {
+         parent.process();
       }
    }
 

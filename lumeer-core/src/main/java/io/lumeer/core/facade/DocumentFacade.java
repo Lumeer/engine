@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
@@ -41,7 +40,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -68,9 +66,6 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
-
-   @Inject
-   private FunctionFacade functionFacade;
 
    @Inject
    private Event<CreateDocument> createDocumentEvent;
@@ -102,8 +97,6 @@ public class DocumentFacade extends AbstractFacade {
       if (createDocumentEvent != null) {
          createDocumentEvent.fire(new CreateDocument(storedDocument));
       }
-
-      functionFacade.onDocumentCreated(collection, storedDocument);
 
       constraintManager.decodeDataTypes(collection, storedData);
 
@@ -137,7 +130,6 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
 
       final Document updatedDocument = updateDocument(collection, documentId, updatedData, originalData);
-      checkAttributesValueChanges(collection, documentId, originalData, updatedData);
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
@@ -147,17 +139,6 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
       return collection;
-   }
-
-   private void checkAttributesValueChanges(Collection collection, String documentId, DataDocument oldData, DataDocument newData) {
-      Set<Attribute> attributes = collection.getAttributes();
-      for (Attribute attribute : attributes) {
-         Object oldValue = oldData.get(attribute.getId());
-         Object newValue = newData.get(attribute.getId());
-         if (!Objects.deepEquals(oldValue, newValue)) {
-            functionFacade.onDocumentValueChanged(collection.getId(), attribute.getId(), documentId);
-         }
-      }
    }
 
    public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
@@ -193,7 +174,6 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
 
       final Document updatedDocument = updateDocument(collection, documentId, patchedData, originalData);
-      checkAttributesValueChanges(collection, documentId, originalData, patchedData);
 
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 

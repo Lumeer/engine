@@ -20,16 +20,23 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.task.AbstractContextualTask;
 import io.lumeer.core.task.ContextualTaskFactory;
+import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.DocumentEvent;
+import io.lumeer.engine.api.event.LinkInstanceEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.UpdateDocument;
+import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,13 +61,23 @@ public class TaskProcessingFacade {
    @Inject
    private CollectionDao collectionDao;
 
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private FunctionFacade functionFacade;
+
    public void onCreateDocument(@Observes final CreateDocument createDocument) {
       final Collection collection = getCollectionForEvent(createDocument);
       if (collection == null) {
          return;
       }
-      List<? extends AbstractContextualTask> tasks = createDocumentCreateRuleTasks(collection, createDocument);
-      // TODO
+
+      FunctionTask functionTask = functionFacade.createTaskForCreatedDocument(collection, createDocument.getDocument());
+      List<RuleTask> tasks = createDocumentCreateRuleTasks(collection, createDocument);
+      RuleTask ruleTask = createOrderedRuleTask(tasks);
+
+      processFunctionAndRuleTasks(functionTask, ruleTask);
    }
 
    private Collection getCollectionForEvent(final DocumentEvent event) {
@@ -70,14 +87,14 @@ public class TaskProcessingFacade {
       return null;
    }
 
-   private List<? extends AbstractContextualTask> createDocumentCreateRuleTasks(final Collection collection, final CreateDocument createDocument) {
+   private List<RuleTask> createDocumentCreateRuleTasks(final Collection collection, final CreateDocument createDocument) {
       if (createDocument.getDocument() != null) {
          return createRuleTasks(collection, null, createDocument.getDocument(), Arrays.asList(Rule.RuleTiming.CREATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
 
-   private List<? extends AbstractContextualTask> createRuleTasks(final Collection collection, final Document originalDocument, final Document document, final List<Rule.RuleTiming> timings) {
+   private List<RuleTask> createRuleTasks(final Collection collection, final Document originalDocument, final Document document, final List<Rule.RuleTiming> timings) {
       if (collection.getRules() == null) {
          return Collections.emptyList();
       }
@@ -90,17 +107,49 @@ public class TaskProcessingFacade {
                        }).collect(Collectors.toList());
    }
 
+   private RuleTask createOrderedRuleTask(List<RuleTask> tasks) {
+      if (tasks.isEmpty()) {
+         return null;
+      }
+
+      for (int i = 1; i < tasks.size(); i++) {
+         tasks.get(i - 1).setParent(tasks.get(i));
+      }
+
+      return tasks.get(0);
+   }
+
+   private void processFunctionAndRuleTasks(FunctionTask functionTask, RuleTask ruleTask) {
+      if (functionTask != null) {
+         setParentForLatestTask(functionTask, ruleTask);
+         functionTask.process();
+      } else if (ruleTask != null) {
+         ruleTask.process();
+      }
+   }
+
+   private void setParentForLatestTask(AbstractContextualTask task, AbstractContextualTask newParent) {
+      AbstractContextualTask currentTask = task;
+      while (currentTask.getParent() != null) {
+         currentTask = currentTask.getParent();
+      }
+      currentTask.setParent(newParent);
+   }
+
    public void onDocumentUpdate(@Observes final UpdateDocument updateDocument) {
       final Collection collection = getCollectionForEvent(updateDocument);
       if (collection == null) {
          return;
       }
 
-      List<? extends AbstractContextualTask> tasks = createDocumentUpdateRuleTasks(collection, updateDocument);
-      // TODO
+      FunctionTask functionTask = functionFacade.createTaskForUpdateDocument(collection, updateDocument.getOriginalDocument(), updateDocument.getDocument());
+      List<RuleTask> tasks = createDocumentUpdateRuleTasks(collection, updateDocument);
+      RuleTask ruleTask = createOrderedRuleTask(tasks);
+
+      processFunctionAndRuleTasks(functionTask, ruleTask);
    }
 
-   private List<? extends AbstractContextualTask> createDocumentUpdateRuleTasks(final Collection collection, final UpdateDocument updateDocument) {
+   private List<RuleTask> createDocumentUpdateRuleTasks(final Collection collection, final UpdateDocument updateDocument) {
       if (updateDocument.getOriginalDocument() != null && updateDocument.getDocument() != null) {
          return createRuleTasks(collection, updateDocument.getOriginalDocument(), updateDocument.getDocument(), Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
@@ -113,14 +162,61 @@ public class TaskProcessingFacade {
          return;
       }
 
-      List<? extends AbstractContextualTask> tasks = createDocumentRemoveRuleTasks(collection, removeDocument);
-      // TODO
+      FunctionTask functionTask = functionFacade.createTaskForRemovedDocument(collection, removeDocument.getDocument());
+      List<RuleTask> tasks = createDocumentRemoveRuleTasks(collection, removeDocument);
+      RuleTask ruleTask = createOrderedRuleTask(tasks);
+
+      processFunctionAndRuleTasks(functionTask, ruleTask);
    }
 
-   private List<? extends AbstractContextualTask> createDocumentRemoveRuleTasks(final Collection collection, final RemoveDocument removeDocument) {
+   private List<RuleTask> createDocumentRemoveRuleTasks(final Collection collection, final RemoveDocument removeDocument) {
       if (removeDocument.getDocument() != null) {
          return createRuleTasks(collection, removeDocument.getDocument(), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
+   }
+
+   public void onCreateLink(@Observes final CreateLinkInstance createLinkEvent) {
+      LinkType linkType = getLinkTypeForEvent(createLinkEvent);
+      if (linkType == null) {
+         return;
+      }
+
+      FunctionTask functionTask = functionFacade.createTaskForCreatedLink(linkType, createLinkEvent.getLinkInstance());
+      if (functionTask != null) {
+         functionTask.process();
+      }
+   }
+
+   private LinkType getLinkTypeForEvent(LinkInstanceEvent event) {
+      if (event.getLinkInstance() != null) {
+         return linkTypeDao.getLinkType(event.getLinkInstance().getLinkTypeId());
+      }
+
+      return null;
+   }
+
+   public void onUpdateLink(@Observes final UpdateLinkInstance updateLinkEvent) {
+      LinkType linkType = getLinkTypeForEvent(updateLinkEvent);
+      if (linkType == null) {
+         return;
+      }
+
+      FunctionTask functionTask = functionFacade.creatTaskForChangedLink(linkType, updateLinkEvent.getOriginalLinkInstance(), updateLinkEvent.getLinkInstance());
+      if (functionTask != null) {
+         functionTask.process();
+      }
+   }
+
+   public void onRemoveLink(@Observes final RemoveLinkInstance removeLinkInstanceEvent) {
+      LinkType linkType = getLinkTypeForEvent(removeLinkInstanceEvent);
+      if (linkType == null) {
+         return;
+      }
+
+      FunctionTask functionTask = functionFacade.createTaskForRemovedLink(linkType, removeLinkInstanceEvent.getLinkInstance());
+      if (functionTask != null) {
+         functionTask.process();
+      }
    }
 }

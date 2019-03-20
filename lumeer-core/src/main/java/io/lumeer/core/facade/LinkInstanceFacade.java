@@ -19,7 +19,6 @@
 
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -66,9 +64,6 @@ public class LinkInstanceFacade extends AbstractFacade {
    private DefaultConfigurationProducer configurationProducer;
 
    @Inject
-   private FunctionFacade functionFacade;
-
-   @Inject
    private Event<CreateLinkInstance> createLinkInstanceEvent;
 
    @Inject
@@ -82,7 +77,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
-      LinkType linkType = checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
+      checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
       linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
@@ -94,7 +89,6 @@ public class LinkInstanceFacade extends AbstractFacade {
       if (createLinkInstanceEvent != null) {
          createLinkInstanceEvent.fire(new CreateLinkInstance(createdLinkInstance));
       }
-      functionFacade.onLinkCreated(linkType, createdLinkInstance);
 
       return createdLinkInstance;
    }
@@ -117,7 +111,6 @@ public class LinkInstanceFacade extends AbstractFacade {
       final DataDocument updatedData = linkDataDao.updateData(linkType.getId(), linkInstanceId, data);
 
       final LinkInstance updatedLinkInstance = updateLinkInstance(stored, updatedData, originalLinkInstance);
-      checkAttributesValueChanges(linkType, linkInstanceId, oldData, updatedData);
 
       constraintManager.decodeDataTypes(linkType, updatedData);
 
@@ -160,17 +153,6 @@ public class LinkInstanceFacade extends AbstractFacade {
       linkTypeDao.updateLinkType(linkType.getId(), linkType);
    }
 
-   private void checkAttributesValueChanges(LinkType linkType, String linkInstanceId, DataDocument oldData, DataDocument newData) {
-      java.util.Collection<Attribute> attributes = linkType.getAttributes();
-      for (Attribute attribute : attributes) {
-         Object oldValue = oldData.get(attribute.getId());
-         Object newValue = newData.get(attribute.getId());
-         if (!Objects.deepEquals(oldValue, newValue)) {
-            functionFacade.onLinkValueChanged(linkType.getId(), attribute.getId(), linkInstanceId);
-         }
-      }
-   }
-
    public LinkInstance patchLinkInstanceData(final String linkInstanceId, final DataDocument data) {
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       final LinkInstance originalLinkInstance = copyLinkInstance(stored);
@@ -187,7 +169,6 @@ public class LinkInstanceFacade extends AbstractFacade {
       final DataDocument updatedData = linkDataDao.patchData(linkType.getId(), linkInstanceId, data);
 
       final LinkInstance updatedLinkInstance = updateLinkInstance(stored, updatedData, originalLinkInstance);
-      checkAttributesValueChanges(linkType, linkInstanceId, oldData, updatedData);
 
       constraintManager.decodeDataTypes(linkType, updatedData);
 

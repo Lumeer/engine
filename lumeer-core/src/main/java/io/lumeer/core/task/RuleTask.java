@@ -31,6 +31,7 @@ public class RuleTask extends AbstractContextualTask {
    private Collection collection;
    private Document oldDocument;
    private Document newDocument;
+   private AbstractContextualTask parent;
 
    public void setRule(final String ruleName, final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
       this.ruleName = ruleName;
@@ -41,6 +42,15 @@ public class RuleTask extends AbstractContextualTask {
    }
 
    @Override
+   public void setParent(final AbstractContextualTask task) {
+      this.parent = task;
+   }
+
+   public AbstractContextualTask getParent() {
+      return parent;
+   }
+
+   @Override
    public void process() {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
@@ -48,6 +58,10 @@ public class RuleTask extends AbstractContextualTask {
       } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
          executor.execute();
+      }
+
+      if (parent != null) {
+         parent.process();
       }
    }
 
