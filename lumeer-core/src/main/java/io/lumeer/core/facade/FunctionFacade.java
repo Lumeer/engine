@@ -29,6 +29,7 @@ import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
+import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.FunctionOrder;
 import io.lumeer.core.util.FunctionXmlParser;
 import io.lumeer.engine.api.data.DataDocument;
@@ -38,7 +39,6 @@ import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -74,6 +74,9 @@ public class FunctionFacade extends AbstractFacade {
 
    @Inject
    private ContextualTaskFactory contextualTaskFactory;
+
+   @Inject
+   private TaskExecutor taskExecutor;
 
    public void onCreateCollectionFunction(Collection collection, Attribute attribute) {
       List<FunctionRow> functionRows = createCollectionRowsFromXml(collection, attribute);
@@ -183,7 +186,7 @@ public class FunctionFacade extends AbstractFacade {
       FunctionTask task = convertQueueToTask(queue);
 
       if (task != null) {
-         task.process();
+         taskExecutor.submitTask(task);
       }
    }
 

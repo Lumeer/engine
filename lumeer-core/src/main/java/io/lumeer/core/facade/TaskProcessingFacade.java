@@ -122,9 +122,9 @@ public class TaskProcessingFacade {
    private void processFunctionAndRuleTasks(FunctionTask functionTask, RuleTask ruleTask) {
       if (functionTask != null) {
          setParentForLatestTask(functionTask, ruleTask);
-         functionTask.process();
+         taskExecutor.submitTask(functionTask);
       } else if (ruleTask != null) {
-         ruleTask.process();
+         taskExecutor.submitTask(ruleTask);
       }
    }
 
@@ -184,7 +184,7 @@ public class TaskProcessingFacade {
 
       FunctionTask functionTask = functionFacade.createTaskForCreatedLink(linkType, createLinkEvent.getLinkInstance());
       if (functionTask != null) {
-         functionTask.process();
+         taskExecutor.submitTask(functionTask);
       }
    }
 
@@ -204,7 +204,7 @@ public class TaskProcessingFacade {
 
       FunctionTask functionTask = functionFacade.creatTaskForChangedLink(linkType, updateLinkEvent.getOriginalLinkInstance(), updateLinkEvent.getLinkInstance());
       if (functionTask != null) {
-         functionTask.process();
+         taskExecutor.submitTask(functionTask);
       }
    }
 
@@ -216,7 +216,7 @@ public class TaskProcessingFacade {
 
       FunctionTask functionTask = functionFacade.createTaskForRemovedLink(linkType, removeLinkInstanceEvent.getLinkInstance());
       if (functionTask != null) {
-         functionTask.process();
+         taskExecutor.submitTask(functionTask);
       }
    }
 }
