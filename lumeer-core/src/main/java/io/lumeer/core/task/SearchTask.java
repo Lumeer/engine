@@ -30,6 +30,16 @@ public class SearchTask implements Task {
    }
 
    @Override
+   public void setParent(final Task task) {
+
+   }
+
+   @Override
+   public Task getParent() {
+      return null;
+   }
+
+   @Override
    public void process() {
       // TBD
    }

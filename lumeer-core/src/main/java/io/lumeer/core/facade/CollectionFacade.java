@@ -75,9 +75,6 @@ public class CollectionFacade extends AbstractFacade {
    @Inject
    private ViewDao viewDao;
 
-   @Inject
-   private FunctionFacade functionFacade;
-
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
       long collectionsCount = collectionDao.getCollectionsCount();
@@ -129,8 +126,6 @@ public class CollectionFacade extends AbstractFacade {
 
       favoriteItemDao.removeFavoriteCollectionFromUsers(getCurrentProject().getId(), collectionId);
       favoriteItemDao.removeFavoriteDocumentsByCollectionFromUsers(getCurrentProject().getId(), collectionId);
-
-      functionFacade.onDeleteCollection(collectionId);
    }
 
    public Collection getCollection(String collectionId) {
@@ -239,30 +234,7 @@ public class CollectionFacade extends AbstractFacade {
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
-      Attribute attributeCopy = new Attribute(attributeId, attribute.getName(), attribute.getConstraint(), attribute.getFunction(), attribute.getUsageCount());
-      checkAttributeFunctionChange(originalCollection, attributeCopy);
-
       return attribute;
-   }
-
-   private void checkAttributeFunctionChange(Collection originalCollection, Attribute newAttribute) {
-      Attribute originalAttribute = originalCollection.getAttributes().stream()
-                                                      .filter(attr -> attr.getId().equals(newAttribute.getId()))
-                                                      .findFirst().orElse(null);
-      if (originalAttribute == null) {
-         return;
-      }
-
-      if (originalAttribute.getFunction() == null && newAttribute.getFunction() != null) {
-         functionFacade.onCreateCollectionFunction(originalCollection, newAttribute);
-      } else if (originalAttribute.getFunction() != null && newAttribute.getFunction() == null) {
-         functionFacade.onDeleteCollectionFunction(originalCollection.getId(), newAttribute.getId());
-      } else if (originalAttribute.getFunction() != null && newAttribute.getFunction() != null) {
-         if (!originalAttribute.getFunction().getXml().equals(newAttribute.getFunction().getXml())) {
-            functionFacade.onUpdateCollectionFunction(originalCollection, newAttribute);
-         }
-      }
-
    }
 
    public void deleteCollectionAttribute(final String collectionId, final String attributeId) {
@@ -278,8 +250,6 @@ public class CollectionFacade extends AbstractFacade {
       }
       collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
-
-      functionFacade.onDeleteCollectionAttribute(collectionId, attributeId);
    }
 
    public void setDefaultAttribute(final String collectionId, final String attributeId) {

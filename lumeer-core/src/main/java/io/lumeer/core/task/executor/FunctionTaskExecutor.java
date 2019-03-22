@@ -84,7 +84,7 @@ public class FunctionTaskExecutor {
             task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
             // we won't send push notifications as this is not important, it gets updated eventually
          } else if (linkType != null) {
-            task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType);
+            task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType, null);
          }
       }
    }
@@ -105,7 +105,7 @@ public class FunctionTaskExecutor {
          task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
          task.sendPushNotifications(collection);
       } else if (linkType != null) {
-         task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType);
+         task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType, null);
          task.sendPushNotifications(linkType);
       }
    }

@@ -135,16 +135,17 @@ public class AutoLinkRuleTaskExecutor {
                                                    .map(DataDocument::getId)
                                                    .collect(Collectors.toList());
 
-      final List<LinkInstance> linkInstances =
-            targetDocuments.stream()
-                           .filter(documentId -> !thisCollection.equals(thatCollection) || !documentId.equals(newDocument.getId()))
-                           .map(documentId ->
-                                 new LinkInstance(rule.getLinkType(), Arrays.asList(newDocument.getId(), documentId)))
-                           .collect(Collectors.toList());
+      if (targetDocuments.size() > 0) {
+         final List<LinkInstance> linkInstances =
+               targetDocuments.stream()
+                              .filter(documentId -> !thisCollection.equals(thatCollection) || !documentId.equals(newDocument.getId()))
+                              .map(documentId ->
+                                    new LinkInstance(rule.getLinkType(), Arrays.asList(newDocument.getId(), documentId)))
+                              .collect(Collectors.toList());
 
-      ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
-
-      sendPushNotifications(thisCollection, thatCollection, linkInstances, false);
+         ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
+         sendPushNotifications(thisCollection, thatCollection, linkInstances, false);
+      }
    }
 
    private void sendPushNotifications(final String thisCollection, final String thatCollection, final List<LinkInstance> links, final boolean removeOperation) {

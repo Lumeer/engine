@@ -64,7 +64,7 @@ import javax.inject.Inject;
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RunWith(Arquillian.class)
-public class RuleProcessingFacadeIT extends IntegrationTestBase {
+public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
    @Inject
    private ProjectDao projectDao;

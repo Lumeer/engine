@@ -23,6 +23,8 @@ package io.lumeer.core.task;
  */
 public class ListCollectionsIn10SecondsTask extends AbstractContextualTask {
 
+   private AbstractContextualTask parent;
+
    @Override
    public void process() {
       try {
@@ -36,4 +38,5 @@ public class ListCollectionsIn10SecondsTask extends AbstractContextualTask {
       daoContextSnapshot.getCollectionDao().getAllCollections().forEach(System.out::println);
       System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
    }
+
 }

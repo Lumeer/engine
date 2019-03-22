@@ -31,7 +31,6 @@ import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,25 +42,24 @@ public class FunctionTask extends AbstractContextualTask {
    private Set<Document> documents;
    private LinkType linkType;
    private Set<LinkInstance> linkInstances;
-   private List<FunctionTask> parents;
 
    private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
    private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
 
-   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final List<FunctionTask> parents) {
+   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final  Task parent) {
       this.attribute = attribute;
       this.collection = collection;
       this.documents = documents;
-      this.parents = parents;
+      this.parent = parent;
       this.linkType = null;
       this.linkInstances = null;
    }
 
-   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, List<FunctionTask> parents) {
+   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, Task parent) {
       this.attribute = attribute;
       this.linkType = linkType;
       this.linkInstances = linkInstances;
-      this.parents = parents;
+      this.parent = parent;
       this.collection = null;
       this.documents = null;
    }
@@ -90,10 +88,6 @@ public class FunctionTask extends AbstractContextualTask {
       return linkInstances;
    }
 
-   public List<FunctionTask> getParents() {
-      return parents;
-   }
-
    @Override
    public void process() {
       if (documents != null && collection != null) {
@@ -108,8 +102,8 @@ public class FunctionTask extends AbstractContextualTask {
          });
       }
 
-      if (parents != null) {
-         parents.forEach(FunctionTask::process);
+      if (parent != null) {
+         parent.process();
       }
    }
 

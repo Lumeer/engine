@@ -163,7 +163,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue.getFirst().getDocuments()).hasSize(5);
 
       Document document = getAnyDocument(c1);
-      final Deque<FunctionFacade.FunctionParameterDocuments> queue2 = functionFacade.createQueueForDocumentChanged(c1.getId(), "a2", document.getId());
+      final Deque<FunctionFacade.FunctionParameterDocuments> queue2 = functionFacade.createQueueForDocumentChanged(c1.getId(), Collections.singletonList("a2"), document.getId());
       assertThat(queue2).hasSize(1);
       assertThat(queue2.getFirst().getAttributeId()).isEqualTo("a1");
       assertThat(queue2.getFirst().getResourceId()).isEqualTo(c1.getId());
@@ -187,7 +187,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       functionDao.createRows(Arrays.asList(row1, row2, row3, row4, row5, row6));
 
       Document document = getAnyDocument(c1);
-      final Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForDocumentChanged(c1.getId(), "a2", document.getId());
+      final Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForDocumentChanged(c1.getId(), Collections.singletonList("a2"), document.getId());
       assertThat(queue).hasSize(3);
       assertThat(queue).extracting(FunctionFacade.FunctionParameterDocuments::getAttributeId).containsSubsequence("a3", "a4");
 
@@ -220,7 +220,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       createLinks(l24, Collections.singletonList(c4Document), c2Documents);
       createLinks(l12, c2Documents, c1Documents);
 
-      Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForDocumentChanged(c4.getId(), "a4", c4Document.getId());
+      Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForDocumentChanged(c4.getId(), Collections.singletonList("a4"), c4Document.getId());
       assertThat(queue).hasSize(3);
       assertThat(queue.getFirst().getResourceId()).isEqualTo(c2.getId());
       assertThat(queue.getFirst().getAttributeId()).isEqualTo("a2");
@@ -230,9 +230,9 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(task.getCollection().getId()).isEqualTo(c2.getId());
       assertThat(task.getAttribute().getId()).isEqualTo("a2");
       assertThat(task.getDocuments()).hasSize(2);
-      assertThat(task.getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents().get(0).getParents()).isNull();
+      assertThat(task.getParent()).isNotNull();
+      assertThat(task.getParent().getParent()).isNotNull();
+      assertThat(task.getParent().getParent().getParent()).isNull();
    }
 
    @Test
@@ -261,15 +261,15 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       createLinks(l24, c4Documents, c2Documents);
       createLinks(l41, c4Documents, c1Documents);
 
-      Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForDocumentChanged(c1.getId(), "a2", c1Documents.get(0).getId());
+      Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForDocumentChanged(c1.getId(), Collections.singletonList("a2"), c1Documents.get(0).getId());
       assertThat(queue).hasSize(3);
       assertThat(queue).extracting(FunctionFacade.FunctionParameterDocuments::getResourceId).contains(c4.getId(), c2.getId(), c1.getId());
 
       FunctionTask task = functionFacade.convertQueueToTask(queue);
       assertThat(task).isNotNull();
-      assertThat(task.getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents()).hasSize(1);
-      assertThat(task.getParents().get(0).getParents().get(0).getParents()).isNull();
+      assertThat(task.getParent()).isNotNull();
+      assertThat(task.getParent().getParent()).isNotNull();
+      assertThat(task.getParent().getParent().getParent()).isNull();
    }
 
    @Test
@@ -293,7 +293,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue.getFirst().getLinkInstances()).hasSize(linkInstances.size());
 
       LinkInstance linkInstance = getAnyLink(l12);
-      final Deque<FunctionFacade.FunctionParameterDocuments> queue2 = functionFacade.createQueueForLinkChanged(l12.getId(), "a2", linkInstance.getId());
+      final Deque<FunctionFacade.FunctionParameterDocuments> queue2 = functionFacade.createQueueForLinkChanged(l12.getId(), Collections.singletonList("a2"), linkInstance.getId());
       assertThat(queue2).hasSize(1);
       assertThat(queue2.getFirst().getAttributeId()).isEqualTo("a1");
       assertThat(queue2.getFirst().getResourceId()).isEqualTo(l12.getId());
@@ -324,7 +324,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       createLinks(l12, c1Documents, c2Documents);
       List<LinkInstance> l23Links = createLinks(l23, c2Documents, c3Documents);
 
-      Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForLinkChanged(l23.getId(), "a1", l23Links.get(0).getId());
+      Deque<FunctionFacade.FunctionParameterDocuments> queue = functionFacade.createQueueForLinkChanged(l23.getId(), Collections.singletonList("a1"), l23Links.get(0).getId());
       assertThat(queue).hasSize(2);
       assertThat(queue.getFirst().getResourceId()).isEqualTo(c2.getId());
       assertThat(queue.getLast().getResourceId()).isEqualTo(l12.getId());
@@ -332,12 +332,12 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       FunctionTask task = functionFacade.convertQueueToTask(queue);
       assertThat(task.getCollection().getId()).isEqualTo(c2.getId());
       assertThat(task.getDocuments()).hasSize(1);
-      assertThat(task.getParents()).hasSize(1);
+      assertThat(task.getParent()).isNotNull();
 
-      task = task.getParents().get(0);
+      task = (FunctionTask) task.getParent();
       assertThat(task.getLinkType().getId()).isEqualTo(l12.getId());
       assertThat(task.getLinkInstances()).hasSize(2);
-      assertThat(task.getParents()).isNullOrEmpty();
+      assertThat(task.getParent()).isNull();
    }
 
    private List<LinkInstance> createLinks(LinkType lt, List<Document> docs1, List<Document> docs2) {
@@ -356,11 +356,11 @@ public class FunctionFacadeIT extends IntegrationTestBase {
                         .findFirst().get();
    }
 
-   private Attribute getAttribute(Collection collection, String attributeId){
+   private Attribute getAttribute(Collection collection, String attributeId) {
       return collection.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst().get();
    }
 
-   private Attribute getAttribute(LinkType linkType, String attributeId){
+   private Attribute getAttribute(LinkType linkType, String attributeId) {
       return linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst().get();
    }
 
@@ -372,7 +372,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       return getDocuments(collection).get(0);
    }
 
-   private LinkInstance getAnyLink(LinkType linkType){
+   private LinkInstance getAnyLink(LinkType linkType) {
       return linkInstanceDao.getLinkInstancesByLinkType(linkType.getId()).get(0);
    }
 

@@ -119,7 +119,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       updateLinkedType.setName(NAME2);
       updateLinkedType.setCollectionIds(Arrays.asList(COLLECTION_ID3, COLLECTION_ID4));
 
-      linkTypeDao.updateLinkType(id, updateLinkedType);
+      linkTypeDao.updateLinkType(id, updateLinkedType, null);
 
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
@@ -139,7 +139,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
 
       linkType2.setName(NAME);
 
-      assertThat(linkTypeDao.updateLinkType(id, linkType2)).isNotNull();
+      assertThat(linkTypeDao.updateLinkType(id, linkType2, null)).isNotNull();
    }
 
    @Test

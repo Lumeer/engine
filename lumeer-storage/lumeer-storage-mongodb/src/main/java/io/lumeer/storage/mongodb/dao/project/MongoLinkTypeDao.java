@@ -101,7 +101,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public LinkType updateLinkType(final String id, final LinkType linkType) {
+   public LinkType updateLinkType(final String id, final LinkType linkType, final LinkType originalLinkType) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false);
       try {
          Bson update = new Document("$set", linkType).append("$inc", new Document(LinkTypeCodec.VERSION, 1L));
@@ -110,7 +110,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
             throw new StorageException("Link type '" + id + "' has not been updated.");
          }
          if (updateLinkTypeEvent != null) {
-            updateLinkTypeEvent.fire(new UpdateLinkType(updatedLinkType));
+            updateLinkTypeEvent.fire(new UpdateLinkType(updatedLinkType, originalLinkType));
          }
          return updatedLinkType;
       } catch (MongoException ex) {
