@@ -42,12 +42,11 @@ public class FunctionTask extends AbstractContextualTask {
    private Set<Document> documents;
    private LinkType linkType;
    private Set<LinkInstance> linkInstances;
-   private AbstractContextualTask parent;
 
    private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
    private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
 
-   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final  AbstractContextualTask parent) {
+   public void setFunctionTask(final Attribute attribute, final Collection collection, final Set<Document> documents, final  Task parent) {
       this.attribute = attribute;
       this.collection = collection;
       this.documents = documents;
@@ -56,7 +55,7 @@ public class FunctionTask extends AbstractContextualTask {
       this.linkInstances = null;
    }
 
-   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, AbstractContextualTask parent) {
+   public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, Task parent) {
       this.attribute = attribute;
       this.linkType = linkType;
       this.linkInstances = linkInstances;
@@ -87,15 +86,6 @@ public class FunctionTask extends AbstractContextualTask {
 
    public Set<LinkInstance> getLinkInstances() {
       return linkInstances;
-   }
-
-   @Override
-   public void setParent(final AbstractContextualTask task) {
-      this.parent = task;
-   }
-
-   public AbstractContextualTask getParent() {
-      return parent;
    }
 
    @Override

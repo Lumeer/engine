@@ -23,10 +23,10 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
-import io.lumeer.core.task.AbstractContextualTask;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.RuleTask;
+import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
@@ -127,8 +127,8 @@ public class TaskProcessingFacade {
       return tasks.get(0);
    }
 
-   private void processTasks(AbstractContextualTask... tasks) {
-      List<AbstractContextualTask> filteredTasks = Arrays.stream(tasks).filter(Objects::nonNull).collect(Collectors.toList());
+   private void processTasks(Task... tasks) {
+      List<Task> filteredTasks = Arrays.stream(tasks).filter(Objects::nonNull).collect(Collectors.toList());
       if (filteredTasks.isEmpty()) {
          return;
       }
@@ -142,8 +142,8 @@ public class TaskProcessingFacade {
       taskExecutor.submitTask(filteredTasks.get(0));
    }
 
-   private void setParentForLatestTask(AbstractContextualTask task, AbstractContextualTask newParent) {
-      AbstractContextualTask currentTask = task;
+   private void setParentForLatestTask(Task task, Task newParent) {
+      Task currentTask = task;
       while (currentTask.getParent() != null) {
          currentTask = currentTask.getParent();
       }
@@ -233,7 +233,7 @@ public class TaskProcessingFacade {
          return;
       }
 
-      List<AbstractContextualTask> tasks = new ArrayList<>();
+      List<Task> tasks = new ArrayList<>();
       Collection original = (Collection) updateResource.getOriginalResource();
       Collection current = (Collection) updateResource.getResource();
       AttributesDiff attributesDiff = checkAttributesDiff(original.getAttributes(), current.getAttributes());
@@ -244,7 +244,7 @@ public class TaskProcessingFacade {
       attributesDiff.getCreatedFunction().forEach(attribute -> tasks.add(functionFacade.createTaskForCreatedFunction(current, attribute)));
       attributesDiff.getUpdatedFunction().forEach(attribute -> tasks.add(functionFacade.createTaskForUpdatedFunction(current, attribute)));
 
-      processTasks(tasks.toArray(new AbstractContextualTask[0]));
+      processTasks(tasks.toArray(new Task[0]));
    }
 
    public void onRemoveCollection(@Observes final RemoveResource removeResource) {
@@ -260,7 +260,7 @@ public class TaskProcessingFacade {
          return;
       }
 
-      List<AbstractContextualTask> tasks = new ArrayList<>();
+      List<Task> tasks = new ArrayList<>();
       AttributesDiff attributesDiff = checkAttributesDiff(updateLinkType.getOriginalLinkType().getAttributes(), updateLinkType.getLinkType().getAttributes());
       String linkTypeId = updateLinkType.getOriginalLinkType().getId();
 
@@ -270,7 +270,7 @@ public class TaskProcessingFacade {
       attributesDiff.getCreatedFunction().forEach(attribute -> tasks.add(functionFacade.createTaskForCreatedLinkFunction(updateLinkType.getLinkType(), attribute)));
       attributesDiff.getUpdatedFunction().forEach(attribute -> tasks.add(functionFacade.createTaskForUpdatedLinkFunction(updateLinkType.getLinkType(), attribute)));
 
-      processTasks(tasks.toArray(new AbstractContextualTask[0]));
+      processTasks(tasks.toArray(new Task[0]));
    }
 
    public void onRemoveLinkType(@Observes final RemoveLinkType removeLinkType) {

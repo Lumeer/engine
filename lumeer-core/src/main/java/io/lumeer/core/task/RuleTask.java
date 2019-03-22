@@ -42,15 +42,6 @@ public class RuleTask extends AbstractContextualTask {
    }
 
    @Override
-   public void setParent(final AbstractContextualTask task) {
-      this.parent = task;
-   }
-
-   public AbstractContextualTask getParent() {
-      return parent;
-   }
-
-   @Override
    public void process() {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);

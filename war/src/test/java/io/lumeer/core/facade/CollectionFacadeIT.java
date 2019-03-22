@@ -40,6 +40,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.task.ContextualTaskFactory;
+import io.lumeer.core.task.ListCollectionsIn10SecondsTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
@@ -519,6 +520,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       workspaceCache.clear();
 
       assertThat(collectionFacade.getCollections()).isEmpty();
+   }
+
+   public void testTaskExecutor() throws InterruptedException {
+      taskExecutor.submitTask(contextualTaskFactory.getInstance(ListCollectionsIn10SecondsTask.class));
+      Thread.sleep(15_000);
    }
 
 }

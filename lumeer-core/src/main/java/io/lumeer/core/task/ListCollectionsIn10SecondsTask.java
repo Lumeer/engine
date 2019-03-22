@@ -21,26 +21,22 @@ package io.lumeer.core.task;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class SearchTask implements Task {
+public class ListCollectionsIn10SecondsTask extends AbstractContextualTask {
 
-   private String query;
-
-   public SearchTask(final String query) {
-      this.query = query;
-   }
-
-   @Override
-   public void setParent(final Task task) {
-
-   }
-
-   @Override
-   public Task getParent() {
-      return null;
-   }
+   private AbstractContextualTask parent;
 
    @Override
    public void process() {
-      // TBD
+      try {
+         Thread.sleep(10_000);
+      } catch (InterruptedException e) {
+         // nps
+      }
+
+      System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+      System.out.println(initiator.toString());
+      daoContextSnapshot.getCollectionDao().getAllCollections().forEach(System.out::println);
+      System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
    }
+
 }

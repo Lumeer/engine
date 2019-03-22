@@ -27,5 +27,9 @@ import java.io.Serializable;
  */
 public interface Task extends Serializable {
 
+   void setParent(Task task);
+
+   Task getParent();
+
    void process();
 }

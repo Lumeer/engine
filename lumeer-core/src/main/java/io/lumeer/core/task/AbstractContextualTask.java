@@ -44,6 +44,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected User initiator;
    protected DaoContextSnapshot daoContextSnapshot;
    protected PusherClient pusherClient;
+   protected Task parent;
 
    @Override
    public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient) {
@@ -67,6 +68,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public User getInitiator() {
       return initiator;
+   }
+
+   @Override
+   public Task getParent() {
+      return parent;
+   }
+
+   @Override
+   public void setParent(final Task parent) {
+      this.parent = parent;
    }
 
    @Override

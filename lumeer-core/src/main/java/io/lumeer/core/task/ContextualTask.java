@@ -64,8 +64,4 @@ public interface ContextualTask extends Task {
     * @param linkInstances List of link instances.
     */
    void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances);
-
-   void setParent(AbstractContextualTask task);
-
-   AbstractContextualTask getParent();
 }
