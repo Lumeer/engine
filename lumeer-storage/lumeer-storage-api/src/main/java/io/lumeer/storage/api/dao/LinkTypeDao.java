@@ -36,7 +36,7 @@ public interface LinkTypeDao {
 
    LinkType createLinkType(LinkType linkType);
 
-   LinkType updateLinkType(String id, LinkType linkType);
+   LinkType updateLinkType(String id, LinkType linkType, LinkType originalLinkType);
 
    void deleteLinkType(String id);
 

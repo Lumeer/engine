@@ -75,17 +75,14 @@ public class FunctionFacade extends AbstractFacade {
    @Inject
    private ContextualTaskFactory contextualTaskFactory;
 
-   @Inject
-   private TaskExecutor taskExecutor;
-
-   public void onCreateCollectionFunction(Collection collection, Attribute attribute) {
+   public FunctionTask createTaskForCreatedFunction(Collection collection, Attribute attribute) {
       List<FunctionRow> functionRows = createCollectionRowsFromXml(collection, attribute);
       if (!functionRows.isEmpty()) {
          functionDao.createRows(functionRows);
       }
 
       Deque<FunctionParameterDocuments> queue = createQueueForCollection(collection, attribute, functionRows);
-      convertQueueToTaskAndExecute(queue);
+      return convertQueueToTask(queue);
    }
 
    private List<FunctionRow> createCollectionRowsFromXml(Collection collection, Attribute attribute) {
@@ -182,14 +179,6 @@ public class FunctionFacade extends AbstractFacade {
       });
    }
 
-   private void convertQueueToTaskAndExecute(final Deque<FunctionParameterDocuments> queue) {
-      FunctionTask task = convertQueueToTask(queue);
-
-      if (task != null) {
-         taskExecutor.submitTask(task);
-      }
-   }
-
    public FunctionTask convertQueueToTask(final Deque<FunctionParameterDocuments> queue) {
       Set<String> collectionIds = queue.stream().filter(q -> q.getType() == FunctionResourceType.COLLECTION && q.getCollection() == null).map(FunctionParameter::getResourceId).collect(Collectors.toSet());
       Set<String> linkTypeIds = queue.stream().filter(q -> q.getType() == FunctionResourceType.LINK && q.getLinkType() == null).map(FunctionParameter::getResourceId).collect(Collectors.toSet());
@@ -276,23 +265,23 @@ public class FunctionFacade extends AbstractFacade {
       return new FunctionParameterDocuments(type, resourceId, row.getDependentAttributeId());
    }
 
-   public void onUpdateCollectionFunction(Collection collection, Attribute attribute) {
+   public FunctionTask createTaskForUpdatedFunction(Collection collection, Attribute attribute) {
       onDeleteCollectionFunction(collection.getId(), attribute.getId());
-      onCreateCollectionFunction(collection, attribute);
+      return createTaskForCreatedFunction(collection, attribute);
    }
 
    public void onDeleteCollectionFunction(String collectionId, String attributeId) {
       functionDao.deleteByCollection(collectionId, attributeId);
    }
 
-   public void onCreateLinkTypeFunction(LinkType linkType, Attribute attribute) {
+   public FunctionTask createTaskForCreatedLinkFunction(LinkType linkType, Attribute attribute) {
       List<FunctionRow> functionRows = createLinkRowsFromXml(linkType, attribute);
       if (!functionRows.isEmpty()) {
          functionDao.createRows(functionRows);
       }
 
       Deque<FunctionParameterDocuments> queue = createQueueForLinkType(linkType, attribute, functionRows);
-      convertQueueToTaskAndExecute(queue);
+      return convertQueueToTask(queue);
    }
 
    private List<FunctionRow> createLinkRowsFromXml(LinkType linkType, Attribute attribute) {
@@ -320,9 +309,9 @@ public class FunctionFacade extends AbstractFacade {
       return orderFunctions(parametersMap);
    }
 
-   public void onUpdateLinkTypeFunction(LinkType linkType, Attribute attribute) {
+   public FunctionTask createTaskForUpdatedLinkFunction(LinkType linkType, Attribute attribute) {
       onDeleteLinkTypeFunction(linkType.getId(), attribute.getId());
-      onCreateLinkTypeFunction(linkType, attribute);
+      return createTaskForCreatedLinkFunction(linkType, attribute);
    }
 
    public void onDeleteLinkTypeFunction(String collectionId, String attributeId) {

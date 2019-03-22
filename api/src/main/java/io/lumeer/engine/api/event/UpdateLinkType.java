@@ -25,7 +25,14 @@ import io.lumeer.api.model.LinkType;
  */
 public class UpdateLinkType extends LinkTypeEvent {
 
-   public UpdateLinkType(final LinkType linkType) {
+   private final LinkType originalLinkType;
+
+   public UpdateLinkType(final LinkType linkType, final LinkType originalLinkType) {
       super(linkType);
+      this.originalLinkType = originalLinkType;
+   }
+
+   public LinkType getOriginalLinkType() {
+      return originalLinkType;
    }
 }

@@ -360,7 +360,7 @@ public class JsExecutor {
          });
 
          linkTypesChanged.forEach(linkTypeId -> ruleTask.getDaoContextSnapshot()
-                                                        .getLinkTypeDao().updateLinkType(linkTypeId, linkTypesMap.get(linkTypeId)));
+                                                        .getLinkTypeDao().updateLinkType(linkTypeId, linkTypesMap.get(linkTypeId), null));
 
          // send push notification
          if (ruleTask.getPusherClient() != null) {

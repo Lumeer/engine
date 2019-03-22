@@ -50,9 +50,6 @@ public class LinkTypeFacade extends AbstractFacade {
    private CollectionDao collectionDao;
 
    @Inject
-   private FunctionFacade functionFacade;
-
-   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
 
    @Inject
@@ -70,13 +67,14 @@ public class LinkTypeFacade extends AbstractFacade {
 
    public LinkType updateLinkType(String id, LinkType linkType) {
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
+      LinkType originalLinkType = new LinkType(storedLinkType);
       Set<String> collectionIds = new HashSet<>(linkType.getCollectionIds());
       collectionIds.addAll(storedLinkType.getCollectionIds());
 
       checkLinkTypePermission(collectionIds);
       keepUnmodifiableFields(linkType, storedLinkType);
 
-      return linkTypeDao.updateLinkType(id, linkType);
+      return linkTypeDao.updateLinkType(id, linkType, originalLinkType);
    }
 
    private void keepUnmodifiableFields(LinkType linkType, LinkType storedLinkType) {
@@ -94,7 +92,6 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private void deleteLinkTypeBasedData(final String linkTypeId) {
-      functionFacade.onDeleteLinkType(linkTypeId);
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(Collections.singleton(linkTypeId));
       linkDataDao.deleteDataRepository(linkTypeId);
    }
@@ -118,6 +115,7 @@ public class LinkTypeFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      LinkType originalLinkType = new LinkType(linkType);
       checkLinkTypePermission(linkType.getCollectionIds());
 
       for (Attribute attribute : attributes) {
@@ -128,7 +126,7 @@ public class LinkTypeFacade extends AbstractFacade {
          linkType.setLastAttributeNum(freeNum);
       }
 
-      linkTypeDao.updateLinkType(linkTypeId, linkType);
+      linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
 
       return attributes;
    }
@@ -154,44 +152,21 @@ public class LinkTypeFacade extends AbstractFacade {
          attribute.setFunction(null);
       }
 
-      linkTypeDao.updateLinkType(linkTypeId, linkType);
+      linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
 
-      Attribute attributeCopy = new Attribute(attributeId, attribute.getName(), attribute.getConstraint(), attribute.getFunction(), attribute.getUsageCount());
-      checkAttributeFunctionChange(originalLinkType, attributeCopy);
 
       return attribute;
-   }
-
-   private void checkAttributeFunctionChange(LinkType linkType, Attribute newAttribute) {
-      Attribute originalAttribute = linkType.getAttributes().stream()
-                                            .filter(attr -> attr.getId().equals(newAttribute.getId()))
-                                            .findFirst().orElse(null);
-      if (originalAttribute == null) {
-         return;
-      }
-
-      if (originalAttribute.getFunction() == null && newAttribute.getFunction() != null) {
-         functionFacade.onCreateLinkTypeFunction(linkType, newAttribute);
-      } else if (originalAttribute.getFunction() != null && newAttribute.getFunction() == null) {
-         functionFacade.onDeleteLinkTypeFunction(linkType.getId(), newAttribute.getId());
-      } else if (originalAttribute.getFunction() != null && newAttribute.getFunction() != null) {
-         if (!originalAttribute.getFunction().getXml().equals(newAttribute.getFunction().getXml())) {
-            functionFacade.onUpdateLinkTypeFunction(linkType, newAttribute);
-         }
-      }
-
    }
 
    public void deleteLinkTypeAttribute(final String linkTypeId, final String attributeId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       checkLinkTypePermission(linkType.getCollectionIds());
+      LinkType originalLinkType = new LinkType(linkType);
 
       linkDataDao.deleteAttribute(linkTypeId, attributeId);
 
       linkType.deleteAttribute(attributeId);
-      linkTypeDao.updateLinkType(linkTypeId, linkType);
-
-      functionFacade.onDeleteLinkAttribute(linkTypeId, attributeId);
+      linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
    }
 
    private void checkLinkTypePermission(java.util.Collection<String> collectionIds) {
