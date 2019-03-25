@@ -64,7 +64,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       groupDao.createGroupsRepository(organization);
       groupDao.setOrganization(organization);
 
-      this.urlPrefix = organizationPath(organization);
+      this.urlPrefix = organizationPath(organization) + "groups";
    }
 
    @Test
@@ -72,7 +72,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       Group group = new Group(GROUP1);
 
       Entity entity = Entity.json(group);
-      Response response = client.target(getPath(organization.getCode()))
+      Response response = client.target(urlPrefix)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
@@ -96,7 +96,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
 
       Group updateGroup = new Group(GROUP2);
       Entity entity = Entity.json(updateGroup);
-      Response response = client.target(getPath(organization.getCode())).path(storedGroup.getId())
+      Response response = client.target(urlPrefix).path(storedGroup.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -115,7 +115,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       Group storedGroup = getGroup(GROUP1);
       assertThat(storedGroup).isNotNull();
 
-      Response response = client.target(getPath(organization.getCode())).path(storedGroup.getId())
+      Response response = client.target(urlPrefix).path(storedGroup.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
@@ -130,7 +130,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       groupDao.createGroup(new Group(GROUP1));
       groupDao.createGroup(new Group(GROUP3));
 
-      Response response = client.target(getPath(organization.getCode()))
+      Response response = client.target(urlPrefix)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -140,10 +140,6 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       });
 
       assertThat(groups).extracting(Group::getName).containsOnly(GROUP1, GROUP3);
-   }
-
-   private String getPath(String organizationId) {
-      return urlPrefix + organizationId + "/groups";
    }
 
    private Group getGroup(String group) {

@@ -189,7 +189,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       }
 
       this.searchUrl = projectPath(storedOrganization, storedProject) + "search";
-      this.searchUrl = projectPath(storedOrganization, storedProject) + "link-instances";
+      this.linkInstancesUrl = projectPath(storedOrganization, storedProject) + "link-instances";
 
    }
 

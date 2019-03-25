@@ -129,7 +129,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       documentDao.setProject(storedProject);
 
-      this.collectionsUrl = projectPath(storedOrganization, storedProject) + "/collections";
+      this.collectionsUrl = projectPath(storedOrganization, storedProject) + "collections";
    }
 
    private Document prepareDocument() {
