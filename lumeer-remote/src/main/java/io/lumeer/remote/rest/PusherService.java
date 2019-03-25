@@ -25,6 +25,7 @@ import io.lumeer.core.facade.PusherFacade;
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
@@ -95,14 +96,12 @@ public class PusherService extends AbstractService {
       try {
          final Mac mac = Mac.getInstance("HmacSHA256");
          mac.init(new SecretKeySpec(secret.getBytes(), "SHA256"));
-         final byte[] digest = mac.doFinal(input.getBytes("UTF-8"));
+         final byte[] digest = mac.doFinal(input.getBytes(StandardCharsets.UTF_8));
          return Hex.encodeHexString(digest);
       } catch (final InvalidKeyException e) {
          log.log(Level.WARNING, "Invalid secret key", e);
       } catch (final NoSuchAlgorithmException e) {
          log.log(Level.WARNING, "The Pusher HTTP client requires HmacSHA256 support", e);
-      } catch (final UnsupportedEncodingException e) {
-         log.log(Level.WARNING, "The Pusher HTTP client needs UTF-8 support", e);
       }
 
       return null;

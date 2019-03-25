@@ -40,7 +40,7 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
 
    private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
-   private static final String URL_PREFIX = "http://localhost:8080/" + PATH_CONTEXT + "/rest/users/organizations/";
+   private String usersUrl;
 
    private String organizationId1;
    private String organizationId2;
@@ -70,6 +70,8 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
       organization2.setPermissions(new Permissions());
       organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
+
+      this.usersUrl = basePath() + "users/organizations/";
    }
 
    @Test
@@ -153,7 +155,7 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
    }
 
    private String getPath(String organizationId) {
-      return URL_PREFIX + organizationId + "/users";
+      return usersUrl + organizationId + "/users";
    }
 
    private User createUser(String organizationId, String user) {

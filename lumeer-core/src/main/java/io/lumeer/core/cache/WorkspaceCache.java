@@ -58,40 +58,40 @@ public class WorkspaceCache {
       systemCollections = cacheFactory.getCache();
    }
 
-   public Organization getOrganization(String organizationCode) {
-      return organizationCache.computeIfAbsent(organizationCode, code -> organizationDao.getOrganizationByCode(code));
+   public Organization getOrganization(String organizationId) {
+      return organizationCache.computeIfAbsent(organizationId, code -> organizationDao.getOrganizationById(organizationId));
    }
 
-   public Project getProject(String projectCode) {
-      return projectCache.computeIfAbsent(projectCode, code -> projectDao.getProjectByCode(code));
+   public Project getProject(String projectId) {
+      return projectCache.computeIfAbsent(projectId, code -> projectDao.getProjectById(projectId));
    }
 
-   public void updateOrganization(String organizationCode, Organization organization) {
-      organizationCache.set(organizationCode, organization);
+   public void updateOrganization(String organizationId, Organization organization) {
+      organizationCache.set(organizationId, organization);
    }
 
-   public void updateProject(String projectCode, Project project) {
-      projectCache.set(projectCode, project);
+   public void updateProject(String projectId, Project project) {
+      projectCache.set(projectId, project);
    }
 
-   public void removeOrganization(String organizationCode) {
-      organizationCache.remove(organizationCode);
+   public void removeOrganization(String organizationId) {
+      organizationCache.remove(organizationId);
    }
 
-   public void removeProject(String projectCode) {
-      projectCache.remove(projectCode);
+   public void removeProject(String projectId) {
+      projectCache.remove(projectId);
    }
 
-   public void setServiceLimits(final String organizationCode, final ServiceLimits serviceLimits) {
-      serviceLimitsCache.set(organizationCode, serviceLimits);
+   public void setServiceLimits(final String organizationId, final ServiceLimits serviceLimits) {
+      serviceLimitsCache.set(organizationId, serviceLimits);
    }
 
-   public ServiceLimits getServiceLimits(final String organizationCode) {
-      return serviceLimitsCache.get(organizationCode);
+   public ServiceLimits getServiceLimits(final String organizationId) {
+      return serviceLimitsCache.get(organizationId);
    }
 
-   public void removeServiceLimits(final String organizationCode) {
-      serviceLimitsCache.remove(organizationCode);
+   public void removeServiceLimits(final String organizationId) {
+      serviceLimitsCache.remove(organizationId);
    }
 
    public void clear() {

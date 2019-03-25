@@ -23,60 +23,58 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.cache.WorkspaceCache;
-import io.lumeer.engine.api.event.UpdateServiceLimits;
 
 import java.util.Optional;
 import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
 public class WorkspaceKeeper implements SelectedWorkspace {
 
-   private String organizationCode;
-   private String projectCode;
+   private String organizationId;
+   private String projectId;
 
    @Inject
    private WorkspaceCache workspaceCache;
 
    @Override
    public Optional<Organization> getOrganization() {
-      if (organizationCode == null) {
+      if (organizationId == null) {
          return Optional.empty();
       }
-      return Optional.of(workspaceCache.getOrganization(organizationCode));
+      return Optional.of(workspaceCache.getOrganization(organizationId));
    }
 
    @Override
    public Optional<Project> getProject() {
-      if (projectCode == null) {
+      if (projectId == null) {
          return Optional.empty();
       }
-      return Optional.of(workspaceCache.getProject(projectCode));
+      return Optional.of(workspaceCache.getProject(projectId));
    }
 
-   public void setOrganization(String organizationCode) {
-      this.organizationCode = organizationCode;
+   public void setOrganization(String organizationId) {
+      this.organizationId = organizationId;
    }
 
-   public void setProject(String projectCode) {
-      this.projectCode = projectCode;
+   public void setProject(String projectId) {
+      this.projectId = projectId;
    }
 
-   public void setWorkspace(String organizationCode, String projectCode) {
-      setOrganization(organizationCode);
-      setProject(projectCode);
+   public void setWorkspace(String organizationId, String projectId) {
+      setOrganization(organizationId);
+      setProject(projectId);
    }
 
    public void setServiceLimits(final Organization organization, final ServiceLimits serviceLimits) {
       if (organization != null) {
-         workspaceCache.setServiceLimits(organization.getCode(), serviceLimits);
+         workspaceCache.setServiceLimits(organization.getId(), serviceLimits);
       }
    }
 
    public ServiceLimits getServiceLimits(final Organization organization) {
       if (organization != null) {
-         return workspaceCache.getServiceLimits(organization.getCode());
+         return workspaceCache.getServiceLimits(organization.getId());
       }
 
       return null;
@@ -84,7 +82,7 @@ public class WorkspaceKeeper implements SelectedWorkspace {
 
    public void clearServiceLimits(final Organization organization) {
       if (organization != null) {
-         workspaceCache.removeServiceLimits(organization.getCode());
+         workspaceCache.removeServiceLimits(organization.getId());
       }
    }
 }

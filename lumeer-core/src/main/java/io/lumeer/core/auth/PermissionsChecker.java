@@ -90,7 +90,7 @@ public class PermissionsChecker {
    @Inject
    private FreshdeskFacade freshdeskFacade;
 
-   private String viewCode = null;
+   private String viewId = null;
    private List<LinkType> linkTypes;
 
    @Inject
@@ -238,16 +238,16 @@ public class PermissionsChecker {
     * @return true if and only if the user has the given role ont he resource.
     */
    public boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole) {
-      return isManager() || hasRoleWithView(collection, role, viewRole, viewCode);
+      return isManager() || hasRoleWithView(collection, role, viewRole, viewId);
    }
 
-   private boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole, final String viewCode) {
-      return hasRoleInResource(collection, role) || getResourceRoleViaView(collection, role, viewRole, viewCode);
+   private boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole, final String viewId) {
+      return hasRoleInResource(collection, role) || getResourceRoleViaView(collection, role, viewRole, viewId);
    }
 
-   private boolean getResourceRoleViaView(final Collection collection, final Role role, final Role viewRole, final String viewCode) {
-      if (viewCode != null && !"".equals(viewCode)) { // we might have the access through a view
-         final View view = viewDao.getViewByCode(viewCode);
+   private boolean getResourceRoleViaView(final Collection collection, final Role role, final Role viewRole, final String viewId) {
+      if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
+         final View view = viewDao.getViewById(viewId);
 
          if (view != null) {
             if (hasRoleInResource(view, viewRole)) { // do we have access to the view?
@@ -276,13 +276,13 @@ public class PermissionsChecker {
    }
 
    /**
-    * Gets the active view provided in view_code HTTP header through REST endpoint.
+    * Gets the active view provided in view_id HTTP header through REST endpoint.
     *
     * @return The active View when exists, null otherwise.
     */
    public View getActiveView() {
-      if (viewCode != null && !"".equals(viewCode)) {
-         return viewDao.getViewByCode(viewCode);
+      if (viewId != null && !"".equals(viewId)) {
+         return viewDao.getViewById(viewId);
       }
 
       return null;
@@ -389,7 +389,7 @@ public class PermissionsChecker {
       if (resource.getType().equals(ResourceType.PROJECT)) {
          if (limits.getProjects() > 0 && limits.getProjects() <= currentCount) {
             final Optional<Organization> organization = workspaceKeeper.getOrganization();
-            freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "PROJECT", organization.isPresent() ? organization.get().getCode() : "<empty>");
+            freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "PROJECT", organization.isPresent() ? organization.get().getId() : "<empty>");
             throw new ServiceLimitsExceededException(limits.getProjects(), resource);
          }
       }
@@ -397,7 +397,7 @@ public class PermissionsChecker {
       if (resource.getType().equals(ResourceType.COLLECTION)) {
          if (limits.getFiles() > 0 && limits.getFiles() <= currentCount) {
             final Optional<Organization> organization = workspaceKeeper.getOrganization();
-            freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "COLLECTION", organization.isPresent() ? organization.get().getCode() : "<empty>");
+            freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "COLLECTION", organization.isPresent() ? organization.get().getId() : "<empty>");
             throw new ServiceLimitsExceededException(limits.getFiles(), resource);
          }
       }
@@ -419,7 +419,7 @@ public class PermissionsChecker {
 
       if (limits.getDocuments() > 0 && documentsCount >= limits.getDocuments()) {
          final Optional<Organization> organization = workspaceKeeper.getOrganization();
-         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getCode() : "<empty>");
+         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getId() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, document);
       }
    }
@@ -440,7 +440,7 @@ public class PermissionsChecker {
 
       if (limits.getDocuments() > 0 && documentsCount + documents.size() > limits.getDocuments()) {
          final Optional<Organization> organization = workspaceKeeper.getOrganization();
-         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getCode() : "<empty>");
+         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getId() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
       }
    }
@@ -466,7 +466,7 @@ public class PermissionsChecker {
       final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(organization);
 
       if (limits.getUsers() > 0 && limits.getUsers() <= currentCount) {
-         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "USER", organization.getCode());
+         freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "USER", organization.getId());
          throw new ServiceLimitsExceededException(limits.getUsers());
       }
    }
@@ -476,30 +476,30 @@ public class PermissionsChecker {
    }
 
    /**
-    * Sets the view code that is being worked with. This allows us to execute queries under a different user supposing
-    * we have access to the view and the owner of the view can still execute it. For security reasons, the view code
+    * Sets the view id that is being worked with. This allows us to execute queries under a different user supposing
+    * we have access to the view and the owner of the view can still execute it. For security reasons, the view id
     * cannot be changed along the way.
     *
-    * @param viewCode
-    *       code of the view
+    * @param viewId
+    *       id of the view
     */
-   void setViewCode(final String viewCode) {
-      if (this.viewCode == null) {
-         this.viewCode = viewCode;
+   void setViewId(final String viewId) {
+      if (this.viewId == null) {
+         this.viewId = viewId;
       }
    }
 
-   public String getViewCode() {
-      return viewCode;
+   public String getViewId() {
+      return viewId;
    }
 
-   // For testing purposes to allow viewCode manipulation during test run.
-   void testSetViewCode(final String viewCode) {
-      this.viewCode = viewCode;
+   // For testing purposes to allow viewId manipulation during test run.
+   void testSetViewId(final String viewId) {
+      this.viewId = viewId;
    }
 
-   String testGetViewCode() {
-      return viewCode;
+   String testGetViewId() {
+      return viewId;
    }
 
    /**

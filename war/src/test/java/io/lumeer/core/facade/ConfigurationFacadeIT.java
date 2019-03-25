@@ -93,9 +93,9 @@ public class ConfigurationFacadeIT extends IntegrationTestBase {
       Permissions projectPermissions = new Permissions();
       projectPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
-      projectDao.createProject(project);
+      Project storedProject = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
+      workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
    }
 
    @Test

@@ -44,21 +44,21 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationCode}/projects/{projectCode}/views")
+@Path("organizations/{organizationId}/projects/{projectId}/views")
 public class ViewService extends AbstractService {
 
-   @PathParam("organizationCode")
-   private String organizationCode;
+   @PathParam("organizationId")
+   private String organizationId;
 
-   @PathParam("projectCode")
-   private String projectCode;
+   @PathParam("projectId")
+   private String projectId;
 
    @Inject
    private ViewFacade viewFacade;
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setWorkspace(organizationCode, projectCode);
+      workspaceKeeper.setWorkspace(organizationId, projectId);
    }
 
    @POST
@@ -67,23 +67,23 @@ public class ViewService extends AbstractService {
    }
 
    @PUT
-   @Path("{viewCode}")
-   public View updateView(@PathParam("viewCode") String code, View view) {
-      return viewFacade.updateView(code, view);
+   @Path("{viewId}")
+   public View updateView(@PathParam("viewId") String id, View view) {
+      return viewFacade.updateView(id, view);
    }
 
    @DELETE
-   @Path("{viewCode}")
-   public Response deleteView(@PathParam("viewCode") String code) {
-      viewFacade.deleteView(code);
+   @Path("{viewId}")
+   public Response deleteView(@PathParam("viewId") String id) {
+      viewFacade.deleteView(id);
 
-      return Response.ok().link(getParentUri(code), "parent").build();
+      return Response.ok().link(getParentUri(id), "parent").build();
    }
 
    @GET
-   @Path("{viewCode}")
-   public View getView(@PathParam("viewCode") String code) {
-      return viewFacade.getViewByCode(code);
+   @Path("{viewId}")
+   public View getView(@PathParam("viewId") String id) {
+      return viewFacade.getViewById(id);
    }
 
    @GET
@@ -92,35 +92,35 @@ public class ViewService extends AbstractService {
    }
 
    @GET
-   @Path("{viewCode}/permissions")
-   public Permissions getViewPermissions(@PathParam("viewCode") String code) {
-      return viewFacade.getViewPermissions(code);
+   @Path("{viewId}/permissions")
+   public Permissions getViewPermissions(@PathParam("viewId") String id) {
+      return viewFacade.getViewPermissions(id);
    }
 
    @PUT
-   @Path("{viewCode}/permissions/users")
-   public Set<Permission> updateUserPermission(@PathParam("viewCode") String code, Set<Permission> userPermission) {
-      return viewFacade.updateUserPermissions(code, userPermission);
+   @Path("{viewId}/permissions/users")
+   public Set<Permission> updateUserPermission(@PathParam("viewId") String id, Set<Permission> userPermission) {
+      return viewFacade.updateUserPermissions(id, userPermission);
    }
 
    @DELETE
-   @Path("{viewCode}/permissions/users/{userId}")
-   public Response removeUserPermission(@PathParam("viewCode") String code, @PathParam("userId") String userId) {
-      viewFacade.removeUserPermission(code, userId);
+   @Path("{viewId}/permissions/users/{userId}")
+   public Response removeUserPermission(@PathParam("viewId") String id, @PathParam("userId") String userId) {
+      viewFacade.removeUserPermission(id, userId);
 
       return Response.ok().link(getParentUri("users", userId), "parent").build();
    }
 
    @PUT
-   @Path("{viewCode}/permissions/groups")
-   public Set<Permission> updateGroupPermission(@PathParam("viewCode") String code, Set<Permission> groupPermission) {
-      return viewFacade.updateGroupPermissions(code, groupPermission);
+   @Path("{viewId}/permissions/groups")
+   public Set<Permission> updateGroupPermission(@PathParam("viewId") String id, Set<Permission> groupPermission) {
+      return viewFacade.updateGroupPermissions(id, groupPermission);
    }
 
    @DELETE
-   @Path("{viewCode}/permissions/groups/{groupId}")
-   public Response removeGroupPermission(@PathParam("viewCode") String code, @PathParam("groupId") String groupId) {
-      viewFacade.removeGroupPermission(code, groupId);
+   @Path("{viewId}/permissions/groups/{groupId}")
+   public Response removeGroupPermission(@PathParam("viewId") String id, @PathParam("groupId") String groupId) {
+      viewFacade.removeGroupPermission(id, groupId);
 
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }

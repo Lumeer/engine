@@ -43,11 +43,11 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationCode}/projects")
+@Path("organizations/{organizationId}/projects")
 public class ProjectService extends AbstractService {
 
-   @PathParam("organizationCode")
-   private String organizationCode;
+   @PathParam("organizationId")
+   private String organizationId;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -57,7 +57,7 @@ public class ProjectService extends AbstractService {
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setOrganization(organizationCode);
+      workspaceKeeper.setOrganization(organizationId);
    }
 
    @POST
@@ -68,25 +68,25 @@ public class ProjectService extends AbstractService {
    }
 
    @PUT
-   @Path("{projectCode}")
-   public Project updateProject(@PathParam("projectCode") String projectCode, Project project) {
-      Project storedProject = projectFacade.updateProject(projectCode, project);
+   @Path("{projectId}")
+   public Project updateProject(@PathParam("projectId") String projectId, Project project) {
+      Project storedProject = projectFacade.updateProject(projectId, project);
       storedProject.setCollectionsCount(projectFacade.getCollectionsCount(storedProject));
       return storedProject;
    }
 
    @DELETE
-   @Path("{projectCode}")
-   public Response deleteProject(@PathParam("projectCode") String projectCode) {
-      projectFacade.deleteProject(projectCode);
+   @Path("{projectId}")
+   public Response deleteProject(@PathParam("projectId") String projectId) {
+      projectFacade.deleteProject(projectId);
 
-      return Response.ok().link(getParentUri(projectCode), "parent").build();
+      return Response.ok().link(getParentUri(projectId), "parent").build();
    }
 
    @GET
-   @Path("{projectCode}")
-   public Project getProject(@PathParam("projectCode") String projectCode) {
-      Project project = projectFacade.getProject(projectCode);
+   @Path("{projectId}")
+   public Project getProject(@PathParam("projectId") String projectId) {
+      Project project = projectFacade.getProject(projectId);
       project.setCollectionsCount(projectFacade.getCollectionsCount(project));
       return project;
    }
@@ -105,35 +105,35 @@ public class ProjectService extends AbstractService {
    }
 
    @GET
-   @Path("{projectCode}/permissions")
-   public Permissions getProjectPermissions(@PathParam("projectCode") String projectCode) {
-      return projectFacade.getProjectPermissions(projectCode);
+   @Path("{projectId}/permissions")
+   public Permissions getProjectPermissions(@PathParam("projectId") String projectId) {
+      return projectFacade.getProjectPermissions(projectId);
    }
 
    @PUT
-   @Path("{projectCode}/permissions/users")
-   public Set<Permission> updateUserPermission(@PathParam("projectCode") String projectCode, Set<Permission> userPermission) {
-      return projectFacade.updateUserPermissions(projectCode, userPermission);
+   @Path("{projectId}/permissions/users")
+   public Set<Permission> updateUserPermission(@PathParam("projectId") String projectId, Set<Permission> userPermission) {
+      return projectFacade.updateUserPermissions(projectId, userPermission);
    }
 
    @DELETE
-   @Path("{projectCode}/permissions/users/{userId}")
-   public Response removeUserPermission(@PathParam("projectCode") String projectCode, @PathParam("userId") String userId) {
-      projectFacade.removeUserPermission(projectCode, userId);
+   @Path("{projectId}/permissions/users/{userId}")
+   public Response removeUserPermission(@PathParam("projectId") String projectId, @PathParam("userId") String userId) {
+      projectFacade.removeUserPermission(projectId, userId);
 
       return Response.ok().link(getParentUri("users", userId), "parent").build();
    }
 
    @PUT
-   @Path("{projectCode}/permissions/groups")
-   public Set<Permission> updateGroupPermission(@PathParam("projectCode") String projectCode, Set<Permission> groupPermission) {
-      return projectFacade.updateGroupPermissions(projectCode, groupPermission);
+   @Path("{projectId}/permissions/groups")
+   public Set<Permission> updateGroupPermission(@PathParam("projectId") String projectId, Set<Permission> groupPermission) {
+      return projectFacade.updateGroupPermissions(projectId, groupPermission);
    }
 
    @DELETE
-   @Path("{projectCode}/permissions/groups/{groupId}")
-   public Response removeGroupPermission(@PathParam("projectCode") String projectCode, @PathParam("groupId") String groupId) {
-      projectFacade.removeGroupPermission(projectCode, groupId);
+   @Path("{projectId}/permissions/groups/{groupId}")
+   public Response removeGroupPermission(@PathParam("projectId") String projectId, @PathParam("groupId") String groupId) {
+      projectFacade.removeGroupPermission(projectId, groupId);
 
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }

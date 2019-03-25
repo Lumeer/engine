@@ -35,21 +35,21 @@ import javax.ws.rs.core.MediaType;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationCode}/projects/{projectCode}/import")
+@Path("organizations/{organizationId}/projects/{projectId}/import")
 public class ImportService extends AbstractService {
 
-   @PathParam("organizationCode")
-   private String organizationCode;
+   @PathParam("organizationId")
+   private String organizationId;
 
-   @PathParam("projectCode")
-   private String projectCode;
+   @PathParam("projectId")
+   private String projectId;
 
    @Inject
    private ImportFacade importFacade;
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setWorkspace(organizationCode, projectCode);
+      workspaceKeeper.setWorkspace(organizationId, projectId);
    }
 
    @POST

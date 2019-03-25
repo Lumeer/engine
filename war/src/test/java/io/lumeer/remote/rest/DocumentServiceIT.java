@@ -29,7 +29,6 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -43,15 +42,12 @@ import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -73,9 +69,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    private static final String VALUE1 = "firstValue";
    private static final String VALUE2 = "secondValue";
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String DOCUMENTS_PATH_PREFIX = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/collections";
-   private static final String DOCUMENTS_URL_PREFIX = SERVER_URL + DOCUMENTS_PATH_PREFIX;
+   private String collectionsUrl;
 
    private User user;
 
@@ -134,6 +128,8 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       collection = collectionDao.createCollection(jsonCollection);
 
       documentDao.setProject(storedProject);
+
+      this.collectionsUrl = projectPath(storedOrganization, storedProject) + "/collections";
    }
 
    private Document prepareDocument() {
@@ -147,7 +143,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    private Document createDocument() {
       Document document = prepareDocument();
       document.setCollectionId(collection.getId());
-      document.setCreatedBy(this.user.getId());
+      document.setCreatedBy(user.getId());
       document.setCreationDate(ZonedDateTime.now());
       Document storedDocument = documentDao.createDocument(document);
 
@@ -164,7 +160,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       ZonedDateTime beforeTime = ZonedDateTime.now();
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents")
+      Response response = client.target(collectionsUrl).path(collection.getId()).path("documents")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
@@ -179,7 +175,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       SoftAssertions returnedAssertions = new SoftAssertions();
       returnedAssertions.assertThat(returnedDocument.getCollectionId()).isEqualTo(collection.getId());
-      returnedAssertions.assertThat(returnedDocument.getCreatedBy()).isEqualTo(this.user.getId());
+      returnedAssertions.assertThat(returnedDocument.getCreatedBy()).isEqualTo(user.getId());
       returnedAssertions.assertThat(returnedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
       returnedAssertions.assertThat(returnedDocument.getUpdatedBy()).isNull();
       returnedAssertions.assertThat(returnedDocument.getUpdateDate()).isNull();
@@ -192,7 +188,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
+      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isAfterOrEqualTo(beforeTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getUpdatedBy()).isNull();
       assertions.assertThat(storedDocument.getUpdateDate()).isNull();
@@ -213,7 +209,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(data);
 
       ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
+      Response response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(id).path("data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -223,9 +219,9 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
+      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
-      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
+      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
@@ -245,7 +241,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(data);
 
       ZonedDateTime beforeUpdateTime = ZonedDateTime.now();
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id).path("data")
+      Response response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(id).path("data")
                                 .request(MediaType.APPLICATION_JSON)
                                 .build("PATCH", entity).invoke();
       assertThat(response).isNotNull();
@@ -255,9 +251,9 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(storedDocument.getId()).isEqualTo(id);
       assertions.assertThat(storedDocument.getCollectionId()).isEqualTo(collection.getId());
-      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(this.user.getId());
+      assertions.assertThat(storedDocument.getCreatedBy()).isEqualTo(user.getId());
       assertions.assertThat(storedDocument.getCreationDate()).isBeforeOrEqualTo(beforeUpdateTime);
-      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(this.user.getId());
+      assertions.assertThat(storedDocument.getUpdatedBy()).isEqualTo(user.getId());
       assertions.assertThat(storedDocument.getUpdateDate()).isAfterOrEqualTo(beforeUpdateTime).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(storedDocument.getDataVersion()).isEqualTo(1);
       assertions.assertThat(storedDocument.getData()).isNull();
@@ -273,7 +269,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    public void testDeleteDocument() {
       String id = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id)
+      Response response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(id)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
@@ -289,7 +285,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    public void testGetDocument() {
       String id = createDocument().getId();
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(id)
+      Response response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(id)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -299,7 +295,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(document.getId()).isEqualTo(id);
-      assertions.assertThat(document.getCreatedBy()).isEqualTo(this.user.getId());
+      assertions.assertThat(document.getCreatedBy()).isEqualTo(user.getId());
       assertions.assertThat(document.getCreationDate()).isBeforeOrEqualTo(ZonedDateTime.now());
       assertions.assertThat(document.getUpdatedBy()).isNull();
       assertions.assertThat(document.getUpdateDate()).isNull();
@@ -320,7 +316,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       Entity entity = Entity.json(doc.getMetaData());
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+      Response response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
 
@@ -334,7 +330,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       entity = Entity.json(doc.getMetaData());
 
-      response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+      response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
                        .request(MediaType.APPLICATION_JSON)
                        .buildPut(entity).invoke();
 
@@ -354,7 +350,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       Entity entity = Entity.json(doc.getMetaData());
 
-      Response response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+      Response response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
                                 .request(MediaType.APPLICATION_JSON)
                                 .build("PATCH", entity).invoke();
 
@@ -368,7 +364,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       entity = Entity.json(doc.getMetaData());
 
-      response = client.target(DOCUMENTS_URL_PREFIX).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
+      response = client.target(collectionsUrl).path(collection.getId()).path("documents").path(doc.getId()).path("meta")
                        .request(MediaType.APPLICATION_JSON)
                        .build("PATCH", entity).invoke();
 

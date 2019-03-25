@@ -39,15 +39,15 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("/organizations/{organizationCode}/groups")
+@Path("/organizations/{organizationId}/groups")
 public class GroupService extends AbstractService {
 
-   @PathParam("organizationCode")
-   private String organizationCode;
+   @PathParam("organizationId")
+   private String organizationId;
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setOrganization(organizationCode);
+      workspaceKeeper.setOrganization(organizationId);
    }
 
    @Inject

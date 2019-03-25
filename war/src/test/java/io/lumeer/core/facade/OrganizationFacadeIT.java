@@ -108,29 +108,29 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       return organizationDao.createOrganization(organization).getId();
    }
 
-   private void createOrganizationWithReadOnlyPermissions(final String code) {
+   private Organization createOrganizationWithReadOnlyPermissions(final String code) {
       Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(Set.of(
             userReadonlyPermission,
             userStrangerPermission));
       organization.getPermissions().updateGroupPermissions(groupPermission);
-      organizationDao.createOrganization(organization);
+      return organizationDao.createOrganization(organization);
    }
 
-   private void createOrganizationWithStrangerPermissions(final String code) {
+   private Organization createOrganizationWithStrangerPermissions(final String code) {
       Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(Set.of(
             userPermission,
             userStrangerPermission));
       organization.getPermissions().updateGroupPermissions(groupPermission);
-      organizationDao.createOrganization(organization);
+      return organizationDao.createOrganization(organization);
    }
 
    @Test
    public void testGetOrganization() {
-      createOrganization(CODE1);
+      final String organizationId = createOrganization(CODE1);
 
-      Organization storedOrganization = organizationFacade.getOrganization(CODE1);
+      Organization storedOrganization = organizationFacade.getOrganizationById(organizationId);
       assertThat(storedOrganization).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -152,8 +152,8 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteOrganization() {
-      createOrganization(CODE1);
-      organizationFacade.deleteOrganization(CODE1);
+      final String organizationId = createOrganization(CODE1);
+      organizationFacade.deleteOrganization(organizationId);
 
       assertThatThrownBy(() -> organizationDao.getOrganizationByCode(CODE1))
             .isInstanceOf(ResourceNotFoundException.class);
@@ -186,7 +186,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
       Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null);
 
-      organizationFacade.updateOrganization(CODE1, updatedOrganization);
+      organizationFacade.updateOrganization(id, updatedOrganization);
 
       Organization storedOrganization = organizationDao.getOrganizationByCode(CODE2);
 
@@ -200,30 +200,30 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testGetOrganizationPermissions() {
-      createOrganization(CODE1);
-      createOrganizationWithReadOnlyPermissions(CODE2);
-      createOrganizationWithStrangerPermissions(CODE3);
+      final String organizationId = createOrganization(CODE1);
+      final Organization organization2 = createOrganizationWithReadOnlyPermissions(CODE2);
+      final Organization organization3 = createOrganizationWithStrangerPermissions(CODE3);
 
-      Permissions permissions = organizationFacade.getOrganizationPermissions(CODE1);
+      Permissions permissions = organizationFacade.getOrganizationPermissions(organizationId);
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
 
-      permissions = organizationFacade.getOrganizationPermissions(CODE2);
+      permissions = organizationFacade.getOrganizationPermissions(organization2.getId());
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userReadonlyPermission);
 
-      permissions = organizationFacade.getOrganizationPermissions(CODE3);
+      permissions = organizationFacade.getOrganizationPermissions(organization3.getId());
       assertThat(permissions).isNotNull();
       assertThat(permissions.getUserPermissions()).hasSize(2).contains(userPermission, userStrangerPermission);
    }
 
    @Test
    public void testUpdateUserPermissions() {
-      createOrganization(CODE1);
+      final String organizationId = createOrganization(CODE1);
 
       Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
-      organizationFacade.updateUserPermissions(CODE1, Set.of(userPermission));
+      organizationFacade.updateUserPermissions(organizationId, Set.of(userPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(permissions).isNotNull();
@@ -233,9 +233,9 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testRemoveUserPermission() {
-      createOrganization(CODE1);
+      final String organizationId = createOrganization(CODE1);
 
-      organizationFacade.removeUserPermission(CODE1, user.getId());
+      organizationFacade.removeUserPermission(organizationId, user.getId());
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(permissions).isNotNull();
@@ -245,10 +245,10 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissions() {
-      createOrganization(CODE1);
+      final String organizationId = createOrganization(CODE1);
 
       Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
-      organizationFacade.updateGroupPermissions(CODE1, Set.of(groupPermission));
+      organizationFacade.updateGroupPermissions(organizationId, Set.of(groupPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(permissions).isNotNull();
@@ -258,9 +258,9 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      createOrganization(CODE1);
+      final String organizationId = createOrganization(CODE1);
 
-      organizationFacade.removeGroupPermission(CODE1, GROUP);
+      organizationFacade.removeGroupPermission(organizationId, GROUP);
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(permissions).isNotNull();

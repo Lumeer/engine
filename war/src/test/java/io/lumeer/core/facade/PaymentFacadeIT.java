@@ -91,7 +91,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
             .as("With unpaid payment, we should still be on the FREE tier and also after the terms.")
             .isEqualTo(Payment.ServiceLevel.FREE);
 
-      paymentFacade.updatePayment(organization.getCode(), payment.getId()); // now set it to paid
+      paymentFacade.updatePayment(organization.getId(), payment.getId()); // now set it to paid
 
       limits = paymentFacade.getServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
@@ -194,7 +194,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
       final Payment storedPayment = paymentFacade.createPayment(organization, payment, "", "");
 
       if (paid) {
-         paymentFacade.updatePayment(organization.getCode(), storedPayment.getId()); //this switches it to PAID in dry run mode
+         paymentFacade.updatePayment(organization.getId(), storedPayment.getId()); //this switches it to PAID in dry run mode
       }
 
       return storedPayment;

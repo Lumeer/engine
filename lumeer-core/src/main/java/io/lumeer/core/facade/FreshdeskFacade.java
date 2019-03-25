@@ -88,13 +88,13 @@ public class FreshdeskFacade {
       }
    }
 
-   public void logLimitsExceeded(final User user, final String resourceName, final String organizationCode) {
+   public void logLimitsExceeded(final User user, final String resourceName, final String organizationId) {
       if (FRESHDESK_APIKEY != null && !"".equals(FRESHDESK_APIKEY)) {
-         final String id = user.getEmail() + ":" + resourceName + ":" + organizationCode;
+         final String id = user.getEmail() + ":" + resourceName + ":" + organizationId;
 
          if (!limitsExceeded.contains(id)) {
             limitsExceeded.add(id);
-            logTicket(user, "Limits exceeded by user " + user.getEmail() + " in organization " + organizationCode,
+            logTicket(user, "Limits exceeded by user " + user.getEmail() + " in organization " + organizationId,
                   "Limits exceeded on resource: " + resourceName);
          }
       }

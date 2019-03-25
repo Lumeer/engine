@@ -87,32 +87,32 @@ public class ProjectFacade extends AbstractFacade {
       return storedProject;
    }
 
-   public Project updateProject(final String projectCode, final Project project) {
+   public Project updateProject(final String projectId, final Project project) {
       Utils.checkCodeSafe(project.getCode());
-      final Project storedProject = projectDao.getProjectByCode(projectCode);
+      final Project storedProject = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(storedProject, Role.MANAGE);
 
       keepStoredPermissions(project, storedProject.getPermissions());
       keepUnmodifiableFields(project, storedProject);
       Project updatedProject = projectDao.updateProject(storedProject.getId(), project, storedProject);
-      workspaceCache.updateProject(projectCode, project);
+      workspaceCache.updateProject(projectId, project);
 
       return mapResource(updatedProject);
    }
 
-   public void deleteProject(final String projectCode) {
-      Project project = projectDao.getProjectByCode(projectCode);
+   public void deleteProject(final String projectId) {
+      Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, Role.MANAGE);
       permissionsChecker.checkCanDelete(project);
 
       deleteProjectScopedRepositories(project);
-      workspaceCache.removeProject(projectCode);
+      workspaceCache.removeProject(projectId);
 
       projectDao.deleteProject(project.getId());
    }
 
-   public Project getProject(final String projectCode) {
-      Project project = projectDao.getProjectByCode(projectCode);
+   public Project getProject(final String projectId) {
+      Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, Role.READ);
 
       return mapResource(project);
@@ -139,55 +139,55 @@ public class ProjectFacade extends AbstractFacade {
       return projectDao.getProjectsCodes();
    }
 
-   public Permissions getProjectPermissions(final String projectCode) {
-      Project project = projectDao.getProjectByCode(projectCode);
+   public Permissions getProjectPermissions(final String projectId) {
+      Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, Role.READ);
 
       return mapResource(project).getPermissions();
    }
 
-   public Set<Permission> updateUserPermissions(final String projectCode, final Set<Permission> userPermissions) {
-      Project project = projectDao.getProjectByCode(projectCode);
+   public Set<Permission> updateUserPermissions(final String projectId, final Set<Permission> userPermissions) {
+      Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
       final Project originalProject = project.copy();
       project.getPermissions().updateUserPermissions(userPermissions);
       projectDao.updateProject(project.getId(), project, originalProject);
-      workspaceCache.updateProject(projectCode, project);
+      workspaceCache.updateProject(projectId, project);
 
       return project.getPermissions().getUserPermissions();
    }
 
-   public void removeUserPermission(final String projectCode, final String userId) {
-      final Project storedProject = projectDao.getProjectByCode(projectCode);
+   public void removeUserPermission(final String projectId, final String userId) {
+      final Project storedProject = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(storedProject, Role.MANAGE);
 
       final Project project = storedProject.copy();
       project.getPermissions().removeUserPermission(userId);
       projectDao.updateProject(project.getId(), project, storedProject);
-      workspaceCache.updateProject(projectCode, project);
+      workspaceCache.updateProject(projectId, project);
    }
 
-   public Set<Permission> updateGroupPermissions(final String projectCode, final Set<Permission> groupPermissions) {
-      final Project storedProject = projectDao.getProjectByCode(projectCode);
+   public Set<Permission> updateGroupPermissions(final String projectId, final Set<Permission> groupPermissions) {
+      final Project storedProject = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(storedProject, Role.MANAGE);
 
       final Project project = storedProject.copy();
       project.getPermissions().updateGroupPermissions(groupPermissions);
       projectDao.updateProject(project.getId(), project, storedProject);
-      workspaceCache.updateProject(projectCode, project);
+      workspaceCache.updateProject(projectId, project);
 
       return project.getPermissions().getGroupPermissions();
    }
 
-   public void removeGroupPermission(final String projectCode, final String groupId) {
-      final Project storedProject = projectDao.getProjectByCode(projectCode);
+   public void removeGroupPermission(final String projectId, final String groupId) {
+      final Project storedProject = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(storedProject, Role.MANAGE);
 
       final Project project = storedProject.copy();
       project.getPermissions().removeGroupPermission(groupId);
       projectDao.updateProject(project.getId(), project, storedProject);
-      workspaceCache.updateProject(projectCode, project);
+      workspaceCache.updateProject(projectId, project);
    }
 
    private void createProjectScopedRepositories(Project project) {

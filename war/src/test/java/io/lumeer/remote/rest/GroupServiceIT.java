@@ -37,7 +37,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    private static final String GROUP2 = "group2";
    private static final String GROUP3 = "group3";
 
-   private static final String URL_PREFIX = "http://localhost:8080/" + PATH_CONTEXT + "/rest/organizations/";
+   private String urlPrefix;
 
    private Organization organization;
 
@@ -63,6 +63,8 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
 
       groupDao.createGroupsRepository(organization);
       groupDao.setOrganization(organization);
+
+      this.urlPrefix = organizationPath(organization);
    }
 
    @Test
@@ -141,7 +143,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    }
 
    private String getPath(String organizationId) {
-      return URL_PREFIX + organizationId + "/groups";
+      return urlPrefix + organizationId + "/groups";
    }
 
    private Group getGroup(String group) {
