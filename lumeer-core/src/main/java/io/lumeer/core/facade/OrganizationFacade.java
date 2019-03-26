@@ -107,6 +107,13 @@ public class OrganizationFacade extends AbstractFacade {
       workspaceCache.removeOrganization(organizationId);
    }
 
+   public Organization getOrganizationCode(final String code) {
+      final Organization organization = organizationDao.getOrganizationByCode(code);
+      permissionsChecker.checkRole(organization, Role.READ);
+
+      return mapResource(organization);
+   }
+
    public Organization getOrganizationById(final String id) {
       final Organization organization = organizationDao.getOrganizationById(id);
       permissionsChecker.checkRole(organization, Role.READ);

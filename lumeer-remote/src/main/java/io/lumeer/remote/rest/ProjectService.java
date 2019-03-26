@@ -86,7 +86,15 @@ public class ProjectService extends AbstractService {
    @GET
    @Path("{projectId}")
    public Project getProject(@PathParam("projectId") String projectId) {
-      Project project = projectFacade.getProject(projectId);
+      Project project = projectFacade.getProjectById(projectId);
+      project.setCollectionsCount(projectFacade.getCollectionsCount(project));
+      return project;
+   }
+
+   @GET
+   @Path("code/{projectCode}")
+   public Project getProjectByCode(@PathParam("projectCode") String projectCode) {
+      Project project = projectFacade.getProjectByCode(projectCode);
       project.setCollectionsCount(projectFacade.getCollectionsCount(project));
       return project;
    }

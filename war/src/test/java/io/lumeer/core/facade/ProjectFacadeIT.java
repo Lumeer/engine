@@ -146,7 +146,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testGetProjectById() {
       final Project project = createProject(CODE1);
 
-      Project storedProject = projectFacade.getProject(project.getId());
+      Project storedProject = projectFacade.getProjectById(project.getId());
       assertThat(storedProject).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();

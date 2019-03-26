@@ -87,6 +87,12 @@ public class OrganizationService extends AbstractService {
    }
 
    @GET
+   @Path("code/{organizationCode}")
+   public Organization getOrganizationByCode(@PathParam("organizationCode") String organizationCode) {
+      return organizationFacade.getOrganizationCode(organizationCode);
+   }
+
+   @GET
    public List<Organization> getOrganizations() {
       return organizationFacade.getOrganizations();
    }

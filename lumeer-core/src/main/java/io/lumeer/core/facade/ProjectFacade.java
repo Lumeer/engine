@@ -111,7 +111,14 @@ public class ProjectFacade extends AbstractFacade {
       projectDao.deleteProject(project.getId());
    }
 
-   public Project getProject(final String projectId) {
+   public Project getProjectByCode(final String projectCode) {
+      Project project = projectDao.getProjectByCode(projectCode);
+      permissionsChecker.checkRole(project, Role.READ);
+
+      return mapResource(project);
+   }
+
+   public Project getProjectById(final String projectId) {
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, Role.READ);
 
