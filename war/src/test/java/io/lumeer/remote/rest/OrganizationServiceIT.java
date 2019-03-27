@@ -79,13 +79,10 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    private Permission groupPermission;
    private User user;
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String ORGANIZATION_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations";
-   private static final String ORGANIZATION_URL = SERVER_URL + ORGANIZATION_PATH;
-   private static final String PERMISSIONS_URL = ORGANIZATION_URL + "/" + CODE1 + "/permissions";
+   private String organizationUrl;
 
    private static final CompanyContact CONTACT = new CompanyContact(null, CODE1, "Acme s.r.o.",
-         "Ferda", "Buřišek", "Hornodolní 34", "", "Požíňky", "052 61","",
+         "Ferda", "Buřišek", "Hornodolní 34", "", "Požíňky", "052 61", "",
          "Česká Republika", "ferda@acme.cz", "+420 601 789 432", "00123987", "CZ00123987");
 
    @Inject
@@ -101,12 +98,14 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    private UserDao userDao;
 
    @Before
-   public void prepare(){
+   public void prepare() {
       User user = new User(USER);
       this.user = userDao.createUser(user);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), USER_ROLES);
       groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
+
+      organizationUrl = basePath() + "organizations";
    }
 
    @Test
@@ -114,7 +113,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       createOrganization(CODE1);
       createOrganization(CODE2);
 
-      Response response = client.target(ORGANIZATION_URL)
+      Response response = client.target(organizationUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -141,18 +140,18 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       return organizationFacade.createOrganization(organization);
    }
 
-   private void createOrganizationWithSpecificPermissions(final String code) {
+   private Organization createOrganizationWithSpecificPermissions(final String code) {
       Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.getPermissions().updateGroupPermissions(groupPermission);
-      organizationDao.createOrganization(organization);
+      return organizationDao.createOrganization(organization);
    }
 
    @Test
    public void testGetOrganization() {
-      createOrganization(CODE1);
+      final Organization organization = createOrganization(CODE1);
 
-      Response response = client.target(ORGANIZATION_URL).path(CODE1)
+      Response response = client.target(organizationUrl).path(organization.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -171,16 +170,16 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testDeleteOrganization() {
-      createOrganization(CODE1);
+      final Organization organization = createOrganization(CODE1);
 
-      Response response = client.target(ORGANIZATION_URL).path(CODE1)
+      Response response = client.target(organizationUrl).path(organization.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(ORGANIZATION_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(organizationUrl).build());
 
-      assertThatThrownBy(() -> organizationFacade.getOrganization(CODE1))
+      assertThatThrownBy(() -> organizationFacade.getOrganizationById(organization.getId()))
             .isInstanceOf(ResourceNotFoundException.class);
    }
 
@@ -189,7 +188,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       Organization organization = new Organization(CODE1, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(organization);
 
-      Response response = client.target(ORGANIZATION_URL)
+      Response response = client.target(organizationUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
 
@@ -210,12 +209,12 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateOrganization() {
-      createOrganization(CODE1);
+      final Organization organization = createOrganization(CODE1);
 
       Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(updatedOrganization);
 
-      Response response = client.target(ORGANIZATION_URL).path(CODE1)
+      Response response = client.target(organizationUrl).path(organization.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -231,7 +230,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedOrganization.getPermissions().getGroupPermissions()).isEmpty();
       assertions.assertAll();
 
-      Organization storedOrganization = organizationFacade.getOrganization(CODE2);
+      Organization storedOrganization = organizationFacade.getOrganizationById(organization.getId());
       assertThat(storedOrganization).isNotNull();
 
       assertions = new SoftAssertions();
@@ -246,9 +245,9 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetOrganizationPermissions() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Response response = client.target(PERMISSIONS_URL)
+      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -261,12 +260,12 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissions() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] userPermission = {Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)))};
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
       Entity entity = Entity.json(userPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("users")
+      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("users")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -285,14 +284,14 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveUserPermission() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Response response = client.target(PERMISSIONS_URL).path("users").path(this.user.getId())
+      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("users").path(this.user.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(organizationUrl + "/" + organization.getId() + "/permissions").build());
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
@@ -301,12 +300,12 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissions() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] groupPermission = {Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)))};
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
       Entity entity = Entity.json(groupPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("groups")
+      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -317,7 +316,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);
 
-      Permissions storedPermissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
+      Permissions storedPermissions = organizationDao.getOrganizationById(organization.getId()).getPermissions();
       assertThat(storedPermissions).isNotNull();
       assertPermissions(storedPermissions.getUserPermissions(), userPermission);
       assertPermissions(storedPermissions.getGroupPermissions(), groupPermission[0]);
@@ -325,14 +324,14 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      createOrganizationWithSpecificPermissions(CODE1);
+      final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Response response = client.target(PERMISSIONS_URL).path("groups").path(GROUP)
+      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups").path(GROUP)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(organizationUrl + "/" + organization.getId() + "/permissions").build());
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
       assertPermissions(permissions.getUserPermissions(), userPermission);
@@ -342,27 +341,27 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    @Test
    public void testPaymentsAssessments() {
       paymentGatewayFacade.setDryRun(true);
-      createOrganization(CODE1);
+      final Organization organization = createOrganization(CODE1);
       createOrganization(CODE2);
 
       Payment payment = new Payment(null, new Date(), 1770, "1234",
             Date.from(ZonedDateTime.ofLocal(
                   LocalDateTime.of(2018, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
             Date.from(ZonedDateTime.ofLocal(
-               LocalDateTime.of(2019, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
+                  LocalDateTime.of(2019, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
             Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", "");
 
-      payment = createPayment(CODE1, payment);
-      ServiceLimits serviceLimits = getServiceLimits(CODE1);
+      payment = createPayment(organization.getId(), payment);
+      ServiceLimits serviceLimits = getServiceLimits(organization.getId());
       assertThat(serviceLimits.getServiceLevel()).isEqualTo(Payment.ServiceLevel.FREE);
 
       // todo call updateService once we know the message format
    }
 
-   private Payment createPayment(final String organization, final Payment payment) {
+   private Payment createPayment(final String organizationId, final Payment payment) {
       Entity entity = Entity.json(payment);
 
-      Response response = client.target(ORGANIZATION_URL).path(organization).path("payments")
+      Response response = client.target(organizationUrl).path(organizationId).path("payments")
                                 .request(MediaType.APPLICATION_JSON)
                                 .header("RETURN_URL", "https://app.lumeer.io/ui/ORG/payment")
                                 .buildPost(entity).invoke();
@@ -372,8 +371,8 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       return response.readEntity(Payment.class);
    }
 
-   private ServiceLimits getServiceLimits(final String organization) {
-      return getEntity(organization, "serviceLimit", ServiceLimits.class);
+   private ServiceLimits getServiceLimits(final String organizationId) {
+      return getEntity(organizationId, "serviceLimit", ServiceLimits.class);
    }
 
    @Test
@@ -381,7 +380,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       final Organization org = createOrganization(CODE1);
       CONTACT.setOrganizationId(org.getId());
 
-      CompanyContact contact = getCompanyContact(CODE1);
+      CompanyContact contact = getCompanyContact(org.getId());
       assertThat(contact.getOrganizationId()).isEqualTo(org.getId());
       assertThat(contact.getCompany()).isEmpty();
       assertThat(contact.getFirstName()).isEmpty();
@@ -397,7 +396,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(contact.getPhone()).isEmpty();
 
       // set a new contact
-      contact = setCompanyContact(CODE1, CONTACT);
+      contact = setCompanyContact(org.getId(), CONTACT);
 
       // we have an id from db, store it for later double check
       assertThat(contact.getId()).isNotEmpty();
@@ -406,20 +405,20 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(contact).isEqualTo(CONTACT);
 
       // verify that it has been set
-      contact = getCompanyContact(CODE1);
+      contact = getCompanyContact(org.getId());
       assertThat(contact.getId()).isEqualTo(originalId); // make sure the id matches
       contact.setId(CONTACT.getId()); // and then delete it so that it equals with our template contact
       assertThat(contact).isEqualTo(CONTACT);
    }
 
-   private CompanyContact getCompanyContact(final String organization) {
-      return getEntity(organization, "contact", CompanyContact.class);
+   private CompanyContact getCompanyContact(final String organizationId) {
+      return getEntity(organizationId, "contact", CompanyContact.class);
    }
 
-   private CompanyContact setCompanyContact(final String organization, final CompanyContact contact) {
+   private CompanyContact setCompanyContact(final String organizationId, final CompanyContact contact) {
       Entity entity = Entity.json(contact);
 
-      Response response = client.target(ORGANIZATION_URL).path(organization).path("contact")
+      Response response = client.target(organizationUrl).path(organizationId).path("contact")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
 
@@ -427,7 +426,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    }
 
    private <T> T getEntity(final String organization, final String path, final Class<T> clazz) {
-      Response response = client.target(ORGANIZATION_URL).path(organization).path(path)
+      Response response = client.target(organizationUrl).path(organization).path(path)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
 

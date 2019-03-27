@@ -152,6 +152,15 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    @Override
+   public View getViewById(final String id) {
+      MongoCursor<View> mongoCursor = databaseCollection().find(idFilter(id)).iterator();
+      if (!mongoCursor.hasNext()) {
+         throw new ResourceNotFoundException(ResourceType.VIEW);
+      }
+      return mongoCursor.next();
+   }
+
+   @Override
    public List<View> getAllViews() {
       return databaseCollection().find().into(new ArrayList<>());
    }

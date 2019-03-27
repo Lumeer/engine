@@ -175,7 +175,7 @@ public class AuthenticatedUser implements Serializable {
       Organization organization = createDemoOrganization(user);
       user.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>()));
 
-      ((WorkspaceKeeper) selectedWorkspace).setOrganization(organization.getCode());
+      ((WorkspaceKeeper) selectedWorkspace).setOrganization(organization.getId());
 
       Project project = createDemoProject(user);
 

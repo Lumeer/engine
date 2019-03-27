@@ -130,7 +130,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(this.organization);
 
-      workspaceKeeper.setOrganization(ORGANIZATION_CODE);
+      workspaceKeeper.setOrganization(organization.getId());
    }
 
    @Test
@@ -143,10 +143,10 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testGetProjectByCode() {
-      createProject(CODE1);
+   public void testGetProjectById() {
+      final Project project = createProject(CODE1);
 
-      Project storedProject = projectFacade.getProject(CODE1);
+      Project storedProject = projectFacade.getProjectById(project.getId());
       assertThat(storedProject).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -162,9 +162,9 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteProject() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      projectFacade.deleteProject(CODE1);
+      projectFacade.deleteProject(project.getId());
 
       assertThatThrownBy(() -> projectDao.getProjectByCode(CODE1))
             .isInstanceOf(ResourceNotFoundException.class);
@@ -208,7 +208,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null);
       updatedProject.getPermissions().removeUserPermission(this.user.getId());
 
-      projectFacade.updateProject(CODE1, updatedProject);
+      projectFacade.updateProject(id, updatedProject);
 
       Project storedProject = projectDao.getProjectByCode(CODE2);
       assertThat(storedProject).isNotNull();
@@ -221,30 +221,30 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testGetProjectPermissions() {
-      createProject(CODE1);
-      createProjectWithReadOnlyPermissions(CODE2);
-      createProjectWithStrangerPermissions(CODE3);
+      final Project project = createProject(CODE1);
+      final Project project2 = createProjectWithReadOnlyPermissions(CODE2);
+      final Project project3 = createProjectWithStrangerPermissions(CODE3);
 
-      Permissions permissions = projectFacade.getProjectPermissions(CODE1);
+      Permissions permissions = projectFacade.getProjectPermissions(project.getId());
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermissions);
       assertPermissions(permissions.getGroupPermissions(), groupPermissions);
 
-      permissions = projectFacade.getProjectPermissions(CODE2);
+      permissions = projectFacade.getProjectPermissions(project2.getId());
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userReadonlyPermissions);
 
-      permissions = projectFacade.getProjectPermissions(CODE3);
+      permissions = projectFacade.getProjectPermissions(project3.getId());
       assertThat(permissions).isNotNull();
       assertThat(permissions.getUserPermissions()).hasSize(2).contains(userPermissions, userStrangerPermissions);
    }
 
    @Test
    public void testUpdateUserPermissions() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(Role.MANAGE, Role.READ));
-      projectFacade.updateUserPermissions(CODE1, Set.of(userPermission));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
@@ -254,9 +254,9 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testRemoveUserPermission() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      projectFacade.removeUserPermission(CODE1, this.user.getId());
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
@@ -266,10 +266,10 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissions() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
       Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
-      projectFacade.updateGroupPermissions(CODE1, Set.of(groupPermission));
+      projectFacade.updateGroupPermissions(project.getId(), Set.of(groupPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();
@@ -279,9 +279,9 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      projectFacade.removeGroupPermission(CODE1, GROUP);
+      projectFacade.removeGroupPermission(project.getId(), GROUP);
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       Assertions.assertThat(permissions).isNotNull();

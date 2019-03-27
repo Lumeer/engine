@@ -117,7 +117,6 @@ public class ViewFacadeIT extends IntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
-      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
 
       Permissions organizationPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
@@ -132,6 +131,8 @@ public class ViewFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
       project.setPermissions(new Permissions());
       Project storedProject = projectDao.createProject(project);
+
+      workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
 
       Permissions projectPermissions = new Permissions();
       Permission userProjectPermission = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
@@ -184,12 +185,12 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateView() {
-      createView(CODE);
+      final View view = createView(CODE);
 
       View updatedView = prepareView(CODE2);
       updatedView.getPermissions().removeUserPermission(this.user.getId());
 
-      viewFacade.updateView(CODE, updatedView);
+      viewFacade.updateView(view.getId(), updatedView);
 
       View storedView = viewDao.getViewByCode(CODE2);
       assertThat(storedView).isNotNull();
@@ -199,9 +200,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteView() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      viewFacade.deleteView(CODE);
+      viewFacade.deleteView(view.getId());
 
       assertThatThrownBy(() -> viewDao.getViewByCode(CODE))
             .isInstanceOf(ResourceNotFoundException.class);
@@ -209,9 +210,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testGetViewByCode() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      View storedView = viewFacade.getViewByCode(CODE);
+      View storedView = viewFacade.getViewById(view.getId());
       assertThat(storedView).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -239,9 +240,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testGetViewPermissions() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      Permissions permissions = viewFacade.getViewPermissions(CODE);
+      Permissions permissions = viewFacade.getViewPermissions(view.getId());
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
@@ -249,12 +250,12 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissions() {
-      createView(CODE);
+      final View view = createView(CODE);
 
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(Role.MANAGE, Role.READ));
-      viewFacade.updateUserPermissions(CODE, Set.of(userPermission));
+      viewFacade.updateUserPermissions(view.getId(), Set.of(userPermission));
 
-      Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
+      Permissions permissions = viewDao.getViewById(view.getId()).getPermissions();
       assertThat(permissions).isNotNull();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), groupPermission);
@@ -262,9 +263,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testRemoveUserPermission() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      viewFacade.removeUserPermission(CODE, this.user.getId());
+      viewFacade.removeUserPermission(view.getId(), this.user.getId());
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -274,10 +275,10 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissions() {
-      createView(CODE);
+      final View view = createView(CODE);
 
       Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(Role.SHARE, Role.READ));
-      viewFacade.updateGroupPermissions(CODE, Set.of(groupPermission));
+      viewFacade.updateGroupPermissions(view.getId(), Set.of(groupPermission));
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -287,9 +288,9 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      viewFacade.removeGroupPermission(CODE, GROUP);
+      viewFacade.removeGroupPermission(view.getId(), GROUP);
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions).isNotNull();
@@ -335,14 +336,14 @@ public class ViewFacadeIT extends IntegrationTestBase {
       viewDao.updateView(view.getId(), view);
 
       try {
-         viewFacade.getViewByCode(CODE2);
+         viewFacade.getViewById(view.getId());
          fail("Still able to access view where I have no access rights");
       } catch (Exception e) {
          assertThat(e).isInstanceOf(NoPermissionException.class);
       }
 
       try {
-         viewFacade.updateUserPermissions(view.getCode(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
+         viewFacade.updateUserPermissions(view.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
          fail("Can manage view without manage rights");
       } catch (Exception e) {
          assertThat(e).isInstanceOf(NoPermissionException.class);
@@ -357,10 +358,10 @@ public class ViewFacadeIT extends IntegrationTestBase {
       permissionsChecker.invalidateCache(view);
 
       // now this should be all possible
-      viewFacade.getViewByCode(CODE2);
+      viewFacade.getViewById(view.getId());
 
       // access the collection via the view with the current user
-      PermissionCheckerUtil.setViewCode(permissionsChecker, view.getCode());
+      PermissionCheckerUtil.setViewId(permissionsChecker, view.getId());
       collectionFacade.getCollection(collection.getId());
    }
 

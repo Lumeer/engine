@@ -95,11 +95,8 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       DATA = Collections.singletonMap("entry", "value");
    }
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String LINK_INSTANCES_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/link-instances";
-   private static final String SEARCH_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/search";
-   private static final String LINK_INSTANCES_URL = SERVER_URL + LINK_INSTANCES_PATH;
-   private static final String SEARCH_URL = SERVER_URL + SEARCH_PATH;
+   private String searchUrl;
+   private String linkInstancesUrl;
 
    private List<String> documentIdsColl1 = new ArrayList<>();
    private List<String> documentIdsColl2 = new ArrayList<>();
@@ -191,6 +188,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
          documentIdsColl2.add(createDocument(collection2Id).getId());
       }
 
+      this.searchUrl = projectPath(storedOrganization, storedProject) + "search";
+      this.linkInstancesUrl = projectPath(storedOrganization, storedProject) + "link-instances";
+
    }
 
    @Test
@@ -199,7 +199,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       Entity entity = Entity.json(linkInstance);
 
-      Response response = client.target(LINK_INSTANCES_URL)
+      Response response = client.target(linkInstancesUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
@@ -217,13 +217,13 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       LinkInstance created = linkInstanceDao.createLinkInstance(prepareLinkInstance());
       assertThat(created.getId()).isNotNull();
 
-      Response response = client.target(LINK_INSTANCES_URL).path(created.getId())
+      Response response = client.target(linkInstancesUrl).path(created.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(LINK_INSTANCES_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(linkInstancesUrl).build());
 
       assertThatThrownBy(() -> linkInstanceDao.getLinkInstance(created.getId()))
             .isInstanceOf(StorageException.class);
@@ -251,7 +251,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       QueryStem stem = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null, null);
       Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
-      Response response = client.target(SEARCH_URL).path("linkInstances")
+      Response response = client.target(searchUrl).path("linkInstances")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity1).invoke();
 
@@ -265,7 +265,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null, null);
       Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
-      response = client.target(SEARCH_URL).path("linkInstances")
+      response = client.target(searchUrl).path("linkInstances")
                        .request(MediaType.APPLICATION_JSON)
                        .buildPost(entity2).invoke();
 
@@ -299,7 +299,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       QueryStem stem = new QueryStem(collection1Id, Arrays.asList(linkTypeId1, linkTypeId2), null, null, null);
       Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
-      Response response = client.target(SEARCH_URL).path("linkInstances")
+      Response response = client.target(searchUrl).path("linkInstances")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity1).invoke();
 
@@ -313,7 +313,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null, null);
       Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
-      response = client.target(SEARCH_URL).path("linkInstances")
+      response = client.target(searchUrl).path("linkInstances")
                        .request(MediaType.APPLICATION_JSON)
                        .buildPost(entity2).invoke();
 

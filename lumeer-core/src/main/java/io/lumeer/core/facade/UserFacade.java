@@ -206,9 +206,9 @@ public class UserFacade extends AbstractFacade {
 
       Project project;
       if (workspace.getProjectId() != null) {
-         project = checkProjectPermissions(organization.getCode(), workspace.getProjectId(), Role.READ);
+         project = checkProjectPermissions(organization.getId(), workspace.getProjectId(), Role.READ);
       } else {
-         project = checkProjectPermissionsByCode(organization.getCode(), workspace.getProjectCode(), Role.READ);
+         project = checkProjectPermissionsByCode(organization.getId(), workspace.getProjectCode(), Role.READ);
       }
 
       DefaultWorkspace defaultWorkspace = new DefaultWorkspace(organization.getId(), project.getId());
@@ -254,16 +254,16 @@ public class UserFacade extends AbstractFacade {
       return organization;
    }
 
-   private Project checkProjectPermissions(final String organizationCode, final String projectId, final Role role) {
-      workspaceKeeper.setOrganization(organizationCode);
+   private Project checkProjectPermissions(final String organizationId, final String projectId, final Role role) {
+      workspaceKeeper.setOrganization(organizationId);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, role);
 
       return project;
    }
 
-   private Project checkProjectPermissionsByCode(final String organizationCode, final String projectCode, final Role role) {
-      workspaceKeeper.setOrganization(organizationCode);
+   private Project checkProjectPermissionsByCode(final String organizationId, final String projectCode, final Role role) {
+      workspaceKeeper.setOrganization(organizationId);
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, role);
 

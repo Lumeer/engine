@@ -66,7 +66,7 @@ import javax.servlet.http.HttpServletResponse;
 public class Auth0Filter implements Filter {
 
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
-   private static final String VIEW_CODE = "view_code";
+   private static final String VIEW_ID = "view_id";
    private static final String CORRELATION_ID = "correlation_id";
    private static final String TIMESTAMP_HEADER = "X-Lumeer-Start-Timestamp";
 
@@ -234,10 +234,10 @@ public class Auth0Filter implements Filter {
    }
 
    private void parseViewId(final HttpServletRequest req) {
-      final String viewCode = req.getHeader(VIEW_CODE);
+      final String viewId = req.getHeader(VIEW_ID);
 
       // there is no view, by setting it to an empty string, we lock any further view id changes
-      permissionsChecker.setViewCode(Objects.requireNonNullElse(viewCode, ""));
+      permissionsChecker.setViewId(Objects.requireNonNullElse(viewId, ""));
    }
 
    private void processStartTimestamp(final HttpServletRequest req, final HttpServletResponse res) {

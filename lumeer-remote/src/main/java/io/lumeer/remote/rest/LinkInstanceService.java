@@ -41,21 +41,21 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationCode}/projects/{projectCode}/link-instances")
+@Path("organizations/{organizationId}/projects/{projectId}/link-instances")
 public class LinkInstanceService extends AbstractService {
 
-   @PathParam("organizationCode")
-   private String organizationCode;
+   @PathParam("organizationId")
+   private String organizationId;
 
-   @PathParam("projectCode")
-   private String projectCode;
+   @PathParam("projectId")
+   private String projectId;
 
    @Inject
    private LinkInstanceFacade linkInstanceFacade;
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setWorkspace(organizationCode, projectCode);
+      workspaceKeeper.setWorkspace(organizationId, projectId);
    }
 
    @POST

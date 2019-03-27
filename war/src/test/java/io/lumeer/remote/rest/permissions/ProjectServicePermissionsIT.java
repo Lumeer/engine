@@ -74,8 +74,8 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "OrganizationServicePermissionsIntegrationTest_id";
    private static final String ORGANIZATION_NAME = "OrganizationServicePermissionsIT";
-   private final String TARGET_URI = "http://localhost:8080";
-   private String PATH_PREFIX = PATH_CONTEXT + "/rest/organizations/" + ORGANIZATION_CODE + "/projects/";
+
+   private String projectsUrl;
 
    @Before
    public void configureProject() {
@@ -95,7 +95,9 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
       projectDao.setOrganization(storedOrganization);
-      workspaceKeeper.setOrganization(ORGANIZATION_CODE);
+      workspaceKeeper.setOrganization(storedOrganization.getId());
+
+      projectsUrl = organizationPath(storedOrganization) + "projects/";
    }
 
    private Project createProject(String code, String name) {
@@ -108,11 +110,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testGetProjectNoRole() {
       String projectCode = "testGetProjectNoRole_code";
       String projectName = "testGetProjectNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
-            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      Response response = client.target(projectsUrl).path(project.getId())
+                                .request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -120,11 +122,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testGetProjectReadRole() {
       String projectCode = "testGetProjectReadRole_code";
       String projectName = "testGetProjectReadRole";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
-            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      Response response = client.target(projectsUrl).path(project.getId())
+                                .request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       Project fetchedProject = response.readEntity(Project.class);
       assertThat(fetchedProject.getCode()).isEqualTo(projectCode);
@@ -135,13 +137,13 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testUpdateProjectNoRole() {
       String projectCode = "testUpdateProjectNoRole_id";
       String projectName = "testUpdateProjectNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String newProjectName = "NewName2";
       Project newProject = new Project(projectCode, newProjectName, "a", "b", null, null);
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
-            request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newProject)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId())
+                                .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newProject)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -149,13 +151,13 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testUpdateProjectManageRole() {
       String projectCode = "testUpdateProjectManageRole_code";
       String projectName = "testUpdateProjectManageRole";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
       String newProjectName = "NewName";
       Project newProject = new Project(projectCode, newProjectName, "a", "b", null, null);
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
-            request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newProject)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId())
+                                .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newProject)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       Project fetchedProject = response.readEntity(Project.class);
       assertThat(fetchedProject.getCode()).isEqualTo(projectCode);
@@ -176,16 +178,16 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       List<String> projectNames = Arrays.asList(projectName1, projectName2, projectName3, projectName4);
 
       for (int i = 0; i < projectCodes.size(); i++) {
-         createProject(projectCodes.get(i), projectNames.get(i));
+         final Project project = createProject(projectCodes.get(i), projectNames.get(i));
          if (i % 2 == 0) {
-            projectFacade.removeUserPermission(projectCodes.get(i), this.user.getId());
+            projectFacade.removeUserPermission(project.getId(), this.user.getId());
          } else {
-            projectFacade.updateUserPermissions(projectCodes.get(i), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
+            projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
          }
       }
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX).
-            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      Response response = client.target(projectsUrl)
+                                .request(MediaType.APPLICATION_JSON).buildGet().invoke();
 
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       List<Project> projects = response.readEntity(new GenericType<List<Project>>(List.class) {
@@ -198,11 +200,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testDeleteProjectInOrganizationNoRole() {
       String projectCode = "ProjectServiceTestProject_code1";
       String projectName = "ProjectServiceTestProject1";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
-            request(MediaType.APPLICATION_JSON).buildDelete().invoke();
+      Response response = client.target(projectsUrl).path(project.getId())
+                                .request(MediaType.APPLICATION_JSON).buildDelete().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -210,11 +212,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testDeleteProjectInOrganizationManageRole() {
       String projectCode = "ProjectServiceTestProject_code1";
       String projectName = "ProjectServiceTestProject1";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode).
-            request(MediaType.APPLICATION_JSON).buildDelete().invoke();
+      Response response = client.target(projectsUrl).path(project.getId())
+                                .request(MediaType.APPLICATION_JSON).buildDelete().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 
@@ -222,14 +224,14 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testCreateCollectionInProjectNoRole() {
       String projectCode = "testCreateCollectionInProjectNoRole_code1";
       String projectName = "estCreateCollectionInProjectNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String collectionName = "CollectionName";
       String collectionCode = "ColCode";
       Collection collection = new Collection(collectionCode, collectionName, "a", "b", null);
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/collections").
-            request(MediaType.APPLICATION_JSON).buildPost(Entity.json(collection)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("collections")
+                                .request(MediaType.APPLICATION_JSON).buildPost(Entity.json(collection)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -237,13 +239,13 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testCreateCollectionInProjectWriteRole() {
       String projectCode = "testCreateCollectionInProjectWriteRole_code1";
       String projectName = "testCreateCollectionInProjectWriteRole";
-      createProject(projectCode, projectName);
+      final Project project = createProject(projectCode, projectName);
       String collectionName = "CollectionName";
       String collectionCode = "ColCode2";
       Collection collection = new Collection(collectionCode, collectionName, "a", "b", null);
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/collections").
-            request(MediaType.APPLICATION_JSON).buildPost(Entity.json(collection)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("collections")
+                                .request(MediaType.APPLICATION_JSON).buildPost(Entity.json(collection)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 
@@ -251,11 +253,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testGetProjectPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions").
-            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions")
+                                .request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -263,11 +265,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testGetProjectPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsManageRole_code1";
       String projectName = "testGetProjectPermissionsManageRole";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions").
-            request(MediaType.APPLICATION_JSON).buildGet().invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions")
+                                .request(MediaType.APPLICATION_JSON).buildGet().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
    }
@@ -276,12 +278,12 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
       Permission[] newPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(Role.WRITE)) };
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users").
-            request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("users")
+                                .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -289,12 +291,12 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
       Permission[] newPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(Role.WRITE)) };
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users").
-            request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("users")
+                                .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 
@@ -302,11 +304,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void tesRemoveUserPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users/" + this.user.getId()).
-            request(MediaType.APPLICATION_JSON).buildDelete().invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("users").path(this.user.getId())
+                                .request(MediaType.APPLICATION_JSON).buildDelete().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -314,11 +316,11 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void tesRemoveUserPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/users/" + this.user.getId()).
-            request(MediaType.APPLICATION_JSON).buildDelete().invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("users").path(this.user.getId())
+                                .request(MediaType.APPLICATION_JSON).buildDelete().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 
@@ -326,13 +328,13 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String group = "testGroup4";
       Permission[] newPermission = { new Permission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE)))) };
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups").
-            request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("groups")
+                                .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -340,13 +342,13 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
       String group = "testGroup5";
       Permission[] newPermission = { new Permission(group, Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE)))) };
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups").
-            request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("groups")
+                                .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newPermission)).invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 
@@ -354,12 +356,12 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testRemoveGroupPermissionsNoRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.removeUserPermission(projectCode, this.user.getId());
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String group = "testGroup6";
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups/" + group).
-            request(MediaType.APPLICATION_JSON).buildDelete().invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("groups").path(group)
+                                .request(MediaType.APPLICATION_JSON).buildDelete().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
    }
 
@@ -367,12 +369,12 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    public void testRemoveGroupPermissionsManageRole() {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
-      createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(projectCode, Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
+      final Project project = createProject(projectCode, projectName);
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
       String group = "testGroup7";
 
-      Response response = client.target(TARGET_URI).path(PATH_PREFIX + projectCode + "/permissions/groups/" + group).
-            request(MediaType.APPLICATION_JSON).buildDelete().invoke();
+      Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("groups").path(group)
+                                .request(MediaType.APPLICATION_JSON).buildDelete().invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
    }
 }

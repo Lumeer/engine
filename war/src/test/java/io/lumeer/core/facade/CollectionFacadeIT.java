@@ -164,7 +164,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       this.project = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
+      workspaceKeeper.setWorkspace(this.organization.getId(),this.project.getId());
 
       collectionDao.setProject(project);
    }

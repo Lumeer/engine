@@ -140,9 +140,9 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       Permissions projectPermissions = new Permissions();
       projectPermissions.updateUserPermissions(Permission.buildWithRoles(user.getId(), Project.ROLES));
       project.setPermissions(projectPermissions);
-      projectDao.createProject(project);
+      Project storedProject = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
+      workspaceKeeper.setWorkspace(organization.getId(), storedProject.getId());
 
       functionDao.setProject(project);
    }

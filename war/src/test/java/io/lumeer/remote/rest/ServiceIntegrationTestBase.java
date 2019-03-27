@@ -18,6 +18,8 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 import io.lumeer.engine.IntegrationTestBase;
 
 import org.junit.After;
@@ -27,6 +29,8 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
 public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
+
+   private static final String SERVER_URL = "http://localhost:8080";
 
    protected Client client;
 
@@ -40,5 +44,17 @@ public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
       if (client != null) {
          client.close();
       }
+   }
+
+   protected String basePath(){
+      return SERVER_URL + "/" + PATH_CONTEXT + "/rest/";
+   }
+
+   protected String organizationPath(Organization organization) {
+      return basePath() + "organizations/" + organization.getId() + "/";
+   }
+
+   protected String projectPath(Organization organization, Project project) {
+      return organizationPath(organization) + "projects/" + project.getId() + "/";
    }
 }

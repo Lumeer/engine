@@ -88,11 +88,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    private static final String CODE2 = "TVIEW2";
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String VIEWS_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/views";
-   private static final String VIEWS_URL = SERVER_URL + VIEWS_PATH;
-   private static final String PERMISSIONS_URL = VIEWS_URL + "/" + CODE + "/permissions";
-   private static final String VIEWS_COLLECTIONS_URL = VIEWS_URL + "/all/collections";
+   private String viewsUrl;
+   private String viewsCollectionsUrl;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -147,7 +144,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
-      workspaceKeeper.setWorkspace(ORGANIZATION_CODE, PROJECT_CODE);
+      workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
 
       viewDao.setProject(storedProject);
 
@@ -155,6 +152,9 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
       collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
       query = new Query(new QueryStem(collection.getId()));
+
+      viewsUrl = projectPath(storedOrganization, storedProject) + "views";
+      viewsCollectionsUrl = viewsUrl + "/all/collections";
    }
 
    private View prepareView(String code) {
@@ -173,7 +173,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       View view = prepareView(CODE);
       Entity entity = Entity.json(view);
 
-      Response response = client.target(VIEWS_URL)
+      Response response = client.target(viewsUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
@@ -197,12 +197,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateView() {
-      createView(CODE);
+      final View view = createView(CODE);
 
       View updatedView = prepareView(CODE2);
       Entity entity = Entity.json(updatedView);
 
-      Response response = client.target(VIEWS_URL).path(CODE)
+      Response response = client.target(viewsUrl).path(view.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -239,14 +239,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testDeleteView() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      Response response = client.target(VIEWS_URL).path(CODE)
+      Response response = client.target(viewsUrl).path(view.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(VIEWS_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(viewsUrl).build());
 
       assertThatThrownBy(() -> viewDao.getViewByCode(CODE))
             .isInstanceOf(ResourceNotFoundException.class);
@@ -254,9 +254,9 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetViewByCode() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      Response response = client.target(VIEWS_URL).path(CODE)
+      Response response = client.target(viewsUrl).path(view.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -292,7 +292,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       view.getPermissions().updateUserPermissions(permission);
       viewDao.createView(view);
 
-      Response response = client.target(VIEWS_URL).path(CODE + "3")
+      Response response = client.target(viewsUrl).path(view.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -309,7 +309,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       createView(CODE);
       createView(CODE2);
 
-      Response response = client.target(VIEWS_URL)
+      Response response = client.target(viewsUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -332,9 +332,9 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetViewPermissions() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      Response response = client.target(PERMISSIONS_URL)
+      Response response = client.target(viewsUrl).path(view.getId()).path("permissions")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -347,12 +347,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissions() {
-      createView(CODE);
+      final View view = createView(CODE);
 
       Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
       Entity entity = Entity.json(userPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("users")
+      Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("users")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -371,14 +371,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveUserPermission() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      Response response = client.target(PERMISSIONS_URL).path("users").path(this.user.getId())
+      Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("users").path(this.user.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(viewsUrl + "/" + view.getId() + "/permissions").build());
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
@@ -387,12 +387,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissions() {
-      createView(CODE);
+      final View view = createView(CODE);
 
       Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
       Entity entity = Entity.json(groupPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("groups")
+      Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("groups")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -411,14 +411,14 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      createView(CODE);
+      final View view = createView(CODE);
 
-      Response response = client.target(PERMISSIONS_URL).path("groups").path(GROUP)
+      Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("groups").path(GROUP)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(viewsUrl + "/" + view.getId() + "/permissions").build());
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertPermissions(permissions.getUserPermissions(), userPermission);
@@ -457,7 +457,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       view.setPermissions(viewPermissions);
       viewDao.updateView(view.getId(), view);
 
-      Response response = client.target(VIEWS_COLLECTIONS_URL)
+      Response response = client.target(viewsCollectionsUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
 

@@ -47,14 +47,14 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationCode}/projects/{projectCode}/collections")
+@Path("organizations/{organizationId}/projects/{projectId}/collections")
 public class CollectionService extends AbstractService {
 
-   @PathParam("organizationCode")
-   private String organizationCode;
+   @PathParam("organizationId")
+   private String organizationId;
 
-   @PathParam("projectCode")
-   private String projectCode;
+   @PathParam("projectId")
+   private String projectId;
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -64,7 +64,7 @@ public class CollectionService extends AbstractService {
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setWorkspace(organizationCode, projectCode);
+      workspaceKeeper.setWorkspace(organizationId, projectId);
    }
 
    @POST

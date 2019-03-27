@@ -75,10 +75,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    private User user;
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String PROJECT_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects";
-   private static final String PROJECT_URL = SERVER_URL + PROJECT_PATH;
-   private static final String PERMISSIONS_URL = PROJECT_URL + "/" + CODE1 + "/permissions";
+   private String projectUrl;
 
    @Inject
    private ProjectDao projectDao;
@@ -105,6 +102,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
       projectDao.setOrganization(storedOrganization);
 
+      projectUrl = organizationPath(storedOrganization) + "projects";
    }
 
    private Project createProject(String code) {
@@ -119,7 +117,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       createProject(CODE1);
       createProject(CODE2);
 
-      Response response = client.target(PROJECT_URL)
+      Response response = client.target(projectUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -150,9 +148,9 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetProject() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      Response response = client.target(PROJECT_URL).path(CODE1)
+      Response response = client.target(projectUrl).path(project.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -171,26 +169,25 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testDeleteProject() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      Response response = client.target(PROJECT_URL).path(CODE1)
+      Response response = client.target(projectUrl).path(project.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PROJECT_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(projectUrl).build());
 
-      assertThatThrownBy(() -> projectDao.getProjectByCode(CODE1))
+      assertThatThrownBy(() -> projectDao.getProjectById(project.getId()))
             .isInstanceOf(ResourceNotFoundException.class);
    }
 
    @Test
    public void testCreateProject() {
-
       Project project = new Project(CODE1, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(project);
 
-      Response response = client.target(PROJECT_URL)
+      Response response = client.target(projectUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
 
@@ -211,12 +208,12 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateProject() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
       Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(updatedProject);
 
-      Response response = client.target(PROJECT_URL).path(CODE1)
+      Response response = client.target(projectUrl).path(project.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -232,7 +229,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedProject.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
 
-      Project storedProject = projectDao.getProjectByCode(CODE2);
+      Project storedProject = projectDao.getProjectById(project.getId());
       assertThat(storedProject).isNotNull();
 
       assertions = new SoftAssertions();
@@ -247,9 +244,9 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetProjectPermissions() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      Response response = client.target(PERMISSIONS_URL)
+      Response response = client.target(projectUrl).path(project.getId()).path("permissions")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -262,12 +259,12 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissions() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
       Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
       Entity entity = Entity.json(userPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("users")
+      Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("users")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -286,14 +283,14 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveUserPermission() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      Response response = client.target(PERMISSIONS_URL).path("users").path(this.user.getId())
+      Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("users").path(this.user.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(projectUrl + "/" + project.getId() + "/permissions").build());
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertThat(permissions.getUserPermissions()).isEmpty();
@@ -302,12 +299,12 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissions() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
       Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
       Entity entity = Entity.json(groupPermission);
 
-      Response response = client.target(PERMISSIONS_URL).path("groups")
+      Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("groups")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -326,14 +323,14 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      createProject(CODE1);
+      final Project project = createProject(CODE1);
 
-      Response response = client.target(PERMISSIONS_URL).path("groups").path(GROUP)
+      Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("groups").path(GROUP)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(PERMISSIONS_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(projectUrl + "/" + project.getId() + "/permissions").build());
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
       assertPermissions(permissions.getUserPermissions(), userPermission);
@@ -343,7 +340,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    private Response createProjectViaRest(final String code) {
       Project project = new Project(code, NAME, ICON, COLOR, null, null);
       Entity entity = Entity.json(project);
-      return client.target(PROJECT_URL).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
+      return client.target(projectUrl).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
    }
 
    @Test

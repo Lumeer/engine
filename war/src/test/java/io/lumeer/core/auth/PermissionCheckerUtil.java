@@ -19,9 +19,6 @@
  */
 package io.lumeer.core.auth;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-
 /**
  * A helper class that allows us to change view id through a single test run.
  *
@@ -29,11 +26,11 @@ import javax.inject.Inject;
  */
 public abstract class PermissionCheckerUtil {
 
-   public static void setViewCode(final PermissionsChecker permissionsChecker, final String viewCode) {
-      permissionsChecker.testSetViewCode(viewCode);
+   public static void setViewId(final PermissionsChecker permissionsChecker, final String viewId) {
+      permissionsChecker.testSetViewId(viewId);
    }
 
-   public static String getViewCode(final PermissionsChecker permissionsChecker) {
-      return permissionsChecker.testGetViewCode();
+   public static String getViewId(final PermissionsChecker permissionsChecker) {
+      return permissionsChecker.testGetViewId();
    }
 }

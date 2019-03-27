@@ -75,9 +75,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
    private static final String NAME = "Connection";
    private static final String NAME2 = "Whuaaaa";
 
-   private static final String SERVER_URL = "http://localhost:8080";
-   private static final String LINK_TYPES_PATH = "/" + PATH_CONTEXT + "/rest/" + "organizations/" + ORGANIZATION_CODE + "/projects/" + PROJECT_CODE + "/link-types";
-   private static final String LINK_TYPES_URL = SERVER_URL + LINK_TYPES_PATH;
+   private String linkTypesUrl;
 
    private List<String> collectionIds = new ArrayList<>();
    private String collectionIdNoPerm;
@@ -157,6 +155,8 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       View view = new View("code", "name", "", "", "", userPermissions, query, "perspective", "", createdUser.getId());
       viewDao.createView(view);
+
+      linkTypesUrl = projectPath(storedOrganization, storedProject) + "link-types";
    }
 
    @Test
@@ -165,7 +165,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       Entity entity = Entity.json(linkType);
 
-      Response response = client.target(LINK_TYPES_URL)
+      Response response = client.target(linkTypesUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
       assertThat(response).isNotNull();
@@ -188,7 +188,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       updateLinkedType.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
 
       Entity entity = Entity.json(updateLinkedType);
-      Response response = client.target(LINK_TYPES_URL).path(id)
+      Response response = client.target(linkTypesUrl).path(id)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
       assertThat(response).isNotNull();
@@ -210,13 +210,13 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       LinkType created = linkTypeDao.createLinkType(prepareLinkType());
       assertThat(created.getId()).isNotNull();
 
-      Response response = client.target(LINK_TYPES_URL).path(created.getId())
+      Response response = client.target(linkTypesUrl).path(created.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(LINK_TYPES_URL).build());
+      assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(linkTypesUrl).build());
 
       assertThatThrownBy(() -> linkTypeDao.getLinkType(created.getId()))
             .isInstanceOf(StorageException.class);
@@ -238,7 +238,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       linkType4.setCollectionIds(Arrays.asList(collectionIds.get(0), collectionIds.get(2)));
       String id4 = linkTypeDao.createLinkType(linkType4).getId();
 
-      Response response = client.target(LINK_TYPES_URL)
+      Response response = client.target(linkTypesUrl)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
 
@@ -250,7 +250,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3, id4));
 
       // test fromViews
-      response = client.target(LINK_TYPES_URL)
+      response = client.target(linkTypesUrl)
                        .queryParam("fromViews", true)
                        .request(MediaType.APPLICATION_JSON)
                        .buildGet().invoke();

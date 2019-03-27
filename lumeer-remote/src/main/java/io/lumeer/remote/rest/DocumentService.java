@@ -40,14 +40,14 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationCode}/projects/{projectCode}/collections/{collectionId}/documents")
+@Path("organizations/{organizationId}/projects/{projectId}/collections/{collectionId}/documents")
 public class DocumentService extends AbstractService {
 
-   @PathParam("organizationCode")
-   private String organizationCode;
+   @PathParam("organizationId")
+   private String organizationId;
 
-   @PathParam("projectCode")
-   private String projectCode;
+   @PathParam("projectId")
+   private String projectId;
 
    @PathParam("collectionId")
    private String collectionId;
@@ -57,7 +57,7 @@ public class DocumentService extends AbstractService {
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setWorkspace(organizationCode, projectCode);
+      workspaceKeeper.setWorkspace(organizationId, projectId);
    }
 
    @POST

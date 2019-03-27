@@ -104,8 +104,8 @@ public class PaymentFacade extends AbstractFacade {
       return result;
    }
 
-   private Organization getOrganizationUnsafe(final String organizationCode) {
-      return organizationDao.getOrganizationByCode(organizationCode);
+   private Organization getOrganizationUnsafe(final String organizationId) {
+      return organizationDao.getOrganizationById(organizationId);
    }
 
    public List<Payment> getPayments(final Organization organization) {
@@ -206,8 +206,8 @@ public class PaymentFacade extends AbstractFacade {
       return ServiceLimits.FREE_LIMITS;
    }
 
-   public Payment updatePayment(final String organizationCode, final String id) {
-      final Organization organization = getOrganizationUnsafe(organizationCode);
+   public Payment updatePayment(final String organizationId, final String id) {
+      final Organization organization = getOrganizationUnsafe(organizationId);
 
       currentPayment = null;
       workspaceKeeper.clearServiceLimits(organization);
@@ -217,7 +217,7 @@ public class PaymentFacade extends AbstractFacade {
 
       final Payment result = paymentDao.updatePayment(organization, payment);
 
-      freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "Payment status updated for organization " + organizationCode,
+      freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "Payment status updated for organization " + organizationId,
             "Payment in amount of " + payment.getCurrency() + " " + payment.getAmount() + " is in state " + payment.getState().name() +
                   ". Invoice might need to be prepared for " + companyContactFacade.getCompanyContact(organization));
 
