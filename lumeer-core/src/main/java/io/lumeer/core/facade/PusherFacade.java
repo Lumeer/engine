@@ -490,8 +490,6 @@ public class PusherFacade extends AbstractFacade {
          return new ResourceId(resource.getId(), null, null);
       } else if (resource instanceof Project) {
          return new ResourceId(resource.getId(), getOrganization().getId(), null);
-      } else if (resource instanceof View) {
-         return new ResourceId(resource.getId(), getOrganization().getId(), getProject().getId());
       }
       return new ResourceId(resource.getId(), getOrganization().getId(), getProject().getId());
    }
