@@ -67,9 +67,6 @@ public class ProjectFacade extends AbstractFacade {
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
-
-   @Inject
    private WorkspaceCache workspaceCache;
 
    public Project createProject(Project project) {
@@ -222,7 +219,7 @@ public class ProjectFacade extends AbstractFacade {
       }
 
       Organization organization = workspaceKeeper.getOrganization().get();
-//       permissionsChecker.checkRole(organization, Role.WRITE);
+      permissionsChecker.checkRole(organization, Role.WRITE);
    }
 
    public int getCollectionsCount(Project project) {
@@ -231,6 +228,6 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    private void checkProjectCreate(final Project project) {
-//      permissionsChecker.checkCreationLimits(project, projectDao.getProjectsCount());
+      permissionsChecker.checkCreationLimits(project, projectDao.getProjectsCount());
    }
 }
