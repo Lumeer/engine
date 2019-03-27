@@ -335,11 +335,8 @@ public class FunctionFacade extends AbstractFacade {
             parameter.setAttribute(attribute);
 
             List<FunctionRow> functionRows = functionDao.searchByResource(collection.getId(), attribute.getId(), FunctionResourceType.COLLECTION);
-            if (!functionRows.isEmpty()) {
-               parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
-
-               fillParametersMapForCollection(parametersMap, parameter);
-            }
+            parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
+            fillParametersMapForCollection(parametersMap, parameter);
          }
       });
 
@@ -435,11 +432,8 @@ public class FunctionFacade extends AbstractFacade {
             parameter.setAttribute(attribute);
 
             List<FunctionRow> functionRows = functionDao.searchByResource(linkType.getId(), attribute.getId(), FunctionResourceType.LINK);
-            if (!functionRows.isEmpty()) {
-               parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
-
-               fillParametersMapForLinkType(parametersMap, parameter);
-            }
+            parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
+            fillParametersMapForLinkType(parametersMap, parameter);
          }
       });
 
