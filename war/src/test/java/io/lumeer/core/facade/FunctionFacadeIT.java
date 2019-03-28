@@ -170,7 +170,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue2.getFirst().getDocuments()).hasSize(1);
 
       final Deque<FunctionFacade.FunctionParameterDocuments> queue3 = functionFacade.createQueueForCreatedDocument(c1, document);
-      assertThat(queue3).hasSize(1);
+      assertThat(queue3).hasSize(5);
    }
 
    @Test
@@ -192,7 +192,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue).extracting(FunctionFacade.FunctionParameterDocuments::getAttributeId).containsSubsequence("a3", "a4");
 
       final Deque<FunctionFacade.FunctionParameterDocuments> queue2 = functionFacade.createQueueForCreatedDocument(c1, document);
-      assertThat(queue2).hasSize(3);
+      assertThat(queue2).hasSize(5);
       assertThat(queue2).extracting(FunctionFacade.FunctionParameterDocuments::getAttributeId).containsSubsequence("a3", "a4");
    }
 
@@ -300,7 +300,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue2.getFirst().getLinkInstances()).hasSize(1);
 
       final Deque<FunctionFacade.FunctionParameterDocuments> queue3 = functionFacade.createQueueForCreatedLink(l12, linkInstance);
-      assertThat(queue3).hasSize(1);
+      assertThat(queue3).hasSize(5);
    }
 
    @Test
@@ -403,7 +403,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
 
    private Collection createCollectionWithAttributes(String code, String... attributeIds) {
       Set<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
-            new Attribute(attributeId, attributeId, null, new Function("", "", "", 0, false), 1))
+            new Attribute(attributeId, attributeId, null, new Function("const lumeerko", "", "", 0, false), 1))
                                         .collect(Collectors.toSet());
       return createCollection(code, attributes);
    }
@@ -418,7 +418,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
 
    private LinkType createLinkWithAttribute(String name, List<String> collectionIds, String... attributeIds) {
       List<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
-            new Attribute(attributeId, attributeId, null, new Function("", "", "", 0, false), 1))
+            new Attribute(attributeId, attributeId, null, new Function("const lumeerko", "", "", 0, false), 1))
                                          .collect(Collectors.toList());
       LinkType linKType = new LinkType(name, collectionIds, attributes);
       return linkTypeDao.createLinkType(linKType);

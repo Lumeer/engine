@@ -323,7 +323,7 @@ public class FunctionFacade extends AbstractFacade {
    }
 
    public Deque<FunctionParameterDocuments> createQueueForCreatedDocument(Collection collection, Document document) {
-      List<Attribute> attributes = collection.getAttributes().stream().filter(attribute -> attribute.getFunction() != null).collect(Collectors.toList());
+      List<Attribute> attributes = collection.getAttributes().stream().filter(this::functionIsDefined).collect(Collectors.toList());
 
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
 
@@ -335,15 +335,16 @@ public class FunctionFacade extends AbstractFacade {
             parameter.setAttribute(attribute);
 
             List<FunctionRow> functionRows = functionDao.searchByResource(collection.getId(), attribute.getId(), FunctionResourceType.COLLECTION);
-            if (!functionRows.isEmpty()) {
-               parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
-
-               fillParametersMapForCollection(parametersMap, parameter);
-            }
+            parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
+            fillParametersMapForCollection(parametersMap, parameter);
          }
       });
 
       return orderFunctions(parametersMap);
+   }
+
+   private boolean functionIsDefined(Attribute attribute) {
+      return attribute.getFunction() != null && attribute.getFunction().getJs() != null && !attribute.getFunction().getJs().isEmpty();
    }
 
    public FunctionTask createTaskForUpdateDocument(Collection collection, Document originalDocument, Document newDocument) {
@@ -423,7 +424,7 @@ public class FunctionFacade extends AbstractFacade {
    }
 
    public Deque<FunctionParameterDocuments> createQueueForCreatedLink(LinkType linkType, LinkInstance linkInstance) {
-      List<Attribute> attributes = linkType.getAttributes().stream().filter(attribute -> attribute.getFunction() != null).collect(Collectors.toList());
+      List<Attribute> attributes = linkType.getAttributes().stream().filter(this::functionIsDefined).collect(Collectors.toList());
 
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
 
@@ -435,11 +436,8 @@ public class FunctionFacade extends AbstractFacade {
             parameter.setAttribute(attribute);
 
             List<FunctionRow> functionRows = functionDao.searchByResource(linkType.getId(), attribute.getId(), FunctionResourceType.LINK);
-            if (!functionRows.isEmpty()) {
-               parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
-
-               fillParametersMapForLinkType(parametersMap, parameter);
-            }
+            parametersMap.put(parameter, functionRows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
+            fillParametersMapForLinkType(parametersMap, parameter);
          }
       });
 
