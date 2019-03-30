@@ -35,4 +35,5 @@ public enum ConstraintType {
    Tag,
    Text,
    User,
+   Color,
 }
