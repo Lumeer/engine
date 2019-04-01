@@ -77,18 +77,23 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
-      checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
+      var linkType = checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
       linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
       LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
 
-      final DataDocument data = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), new DataDocument());
-      createdLinkInstance.setData(data);
+      var data = linkInstance.getData();
+      constraintManager.encodeDataTypes(linkType, data);
+
+      var storedData = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), data);
+      createdLinkInstance.setData(storedData);
 
       if (createLinkInstanceEvent != null) {
          createLinkInstanceEvent.fire(new CreateLinkInstance(createdLinkInstance));
       }
+
+      constraintManager.decodeDataTypes(linkType, storedData);
 
       return createdLinkInstance;
    }

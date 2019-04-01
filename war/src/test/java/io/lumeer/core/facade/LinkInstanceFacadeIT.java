@@ -39,6 +39,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -96,6 +97,9 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkDataDao linkDataDao;
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -183,15 +187,24 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
    @Test
    public void testCreateLinkInstance() {
       LinkInstance linkInstance = prepareLinkInstance();
+      DataDocument data = new DataDocument()
+            .append(KEY1, VALUE1);
+      linkInstance.setData(data);
 
-      String id = linkInstanceFacade.createLinkInstance(linkInstance).getId();
+      var returnedLinkInstance = linkInstanceFacade.createLinkInstance(linkInstance);
+      var id = returnedLinkInstance.getId();
+      assertThat(returnedLinkInstance).isNotNull();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
+      assertThat(returnedLinkInstance.getData()).containsEntry(KEY1, VALUE1);
 
       LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
       assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
+
+      var storedData = linkDataDao.getData(linkInstance.getLinkTypeId(), id);
+      assertThat(storedData).containsEntry(KEY1, VALUE1);
    }
 
    @Test
