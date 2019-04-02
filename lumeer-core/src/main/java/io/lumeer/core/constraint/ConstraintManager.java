@@ -165,7 +165,7 @@ public class ConstraintManager {
       } else if (value instanceof String) {
          final String trimmed = ((String) value).trim();
 
-         if (trimmed.startsWith("0")) { // we need to keep leading and trailing zeros, so no conversion to number
+         if (trimmed.matches("^0[^\\.].*")) { // we need to keep leading and trailing zeros, so no conversion to number
             return null;
          }
 
