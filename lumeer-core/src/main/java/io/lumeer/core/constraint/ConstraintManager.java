@@ -163,6 +163,12 @@ public class ConstraintManager {
       if (value instanceof Number) {
          return (Number) value;
       } else if (value instanceof String) {
+         final String trimmed = ((String) value).trim();
+
+         if (trimmed.startsWith("0")) { // we need to keep leading and trailing zeros, so no conversion to number
+            return null;
+         }
+
          try {
             // figure out whether we need to use BigDecimal
             final Number n2 = numberFormat.parse(((String) value).trim());
