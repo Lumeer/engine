@@ -156,5 +156,11 @@ public class ConstraintManagerTest {
 
       encoded = cm.encodeForFce("True", null);
       assertThat(encoded).isEqualTo(Boolean.TRUE);
+
+      encoded = cm.encodeForFce("4410", null);
+      assertThat(encoded).isEqualTo(4410L);
+
+      encoded = cm.encodeForFce("04410", null);
+      assertThat(encoded).isEqualTo("04410");
    }
 }
