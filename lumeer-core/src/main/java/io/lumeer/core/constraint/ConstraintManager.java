@@ -23,6 +23,10 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -38,8 +42,10 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +79,9 @@ public class ConstraintManager {
 
    /**
     * Obtains a default instance of ConstraintManager configured according to system properties.
-    * @param configurationProducer A provider of configuration.
+    *
+    * @param configurationProducer
+    *       A provider of configuration.
     * @return The default ConstraintManager
     */
    public static ConstraintManager getInstance(final DefaultConfigurationProducer configurationProducer) {
@@ -314,9 +322,42 @@ public class ConstraintManager {
 
    private Map<String, Constraint> getConstraints(final Collection collection) {
       return collection.getAttributes()
-                 .stream()
-                 .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
-                 .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
+                       .stream()
+                       .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                       .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
+   }
+
+   public Query encodeQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes) {
+      var queryCopy = new Query(new ArrayList<>(query.getStems()), query.getFulltexts(), query.getPage(), query.getPageSize());
+      this.processQuery(queryCopy, collections, linkTypes, this::encode);
+      return queryCopy;
+   }
+
+   public Query decodeQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes) {
+      var queryCopy = new Query(new ArrayList<>(query.getStems()), query.getFulltexts(), query.getPage(), query.getPageSize());
+      this.processQuery(queryCopy, collections, linkTypes, this::decode);
+      return queryCopy;
+   }
+
+   private void processQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes, final BiFunction<Object, Constraint, Object> processor) {
+      Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Resource::getId, c -> c));
+      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, c -> c));
+
+      query.getAttributeFilters().forEach(filter -> {
+         var collection = collectionsMap.get(filter.getCollectionId());
+         if (collection != null) {
+            var constraint = ResourceUtils.findConstraint(collection.getAttributes(), filter.getAttributeId());
+            filter.setValue(processor.apply(filter.getValue(), constraint));
+         }
+      });
+
+      query.getLinkAttributeFilters().forEach(filter -> {
+         var linkType = linkTypesMap.get(filter.getLinkTypeId());
+         if (linkType != null) {
+            var constraint = ResourceUtils.findConstraint(linkType.getAttributes(), filter.getAttributeId());
+            filter.setValue(processor.apply(filter.getValue(), constraint));
+         }
+      });
    }
 
    public void encodeDataTypes(final Collection collection, final DataDocument data) {
@@ -333,9 +374,9 @@ public class ConstraintManager {
 
    private Map<String, Constraint> getConstraints(final LinkType linkType) {
       return linkType.getAttributes()
-                       .stream()
-                       .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
-                       .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
+                     .stream()
+                     .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
+                     .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
    }
 
    public void encodeDataTypes(final LinkType linkType, final DataDocument data) {

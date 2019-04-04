@@ -90,7 +90,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       createdLinkInstance.setData(storedData);
 
       if (createLinkInstanceEvent != null) {
-         createLinkInstanceEvent.fire(new CreateLinkInstance(createdLinkInstance));
+         createLinkInstanceEvent.fire(new CreateLinkInstance(new LinkInstance(createdLinkInstance)));
       }
 
       constraintManager.decodeDataTypes(linkType, storedData);
@@ -100,7 +100,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public LinkInstance updateLinkInstanceData(final String linkInstanceId, final DataDocument data) {
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
-      final LinkInstance originalLinkInstance = copyLinkInstance(stored);
+      final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       constraintManager.encodeDataTypes(linkType, data);
@@ -120,16 +120,6 @@ public class LinkInstanceFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(linkType, updatedData);
 
       return updatedLinkInstance;
-   }
-
-   private LinkInstance copyLinkInstance(final LinkInstance linkInstance) {
-      final LinkInstance originalLinkInstance = new LinkInstance(linkInstance);
-
-      if (originalLinkInstance.getData() != null) {
-         originalLinkInstance.setData(new DataDocument(originalLinkInstance.getData())); // deep copy of data
-      }
-
-      return originalLinkInstance;
    }
 
    private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData, final LinkInstance originalLinkInstance){
@@ -160,7 +150,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public LinkInstance patchLinkInstanceData(final String linkInstanceId, final DataDocument data) {
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
-      final LinkInstance originalLinkInstance = copyLinkInstance(stored);
+      final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       constraintManager.encodeDataTypes(linkType, data);

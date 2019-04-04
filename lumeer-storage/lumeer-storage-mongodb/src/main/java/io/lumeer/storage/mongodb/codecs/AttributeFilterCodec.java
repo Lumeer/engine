@@ -51,11 +51,11 @@ public class AttributeFilterCodec implements Codec<AttributeFilter> {
 
    public static AttributeFilter convertFromDocument(final Document document) {
       String collectionId = document.getString(COLLECTION_ID);
-      String attriuteId = document.getString(ATTRIBUTE_ID);
+      String attributeId = document.getString(ATTRIBUTE_ID);
       String operator = document.getString(OPERATOR);
-      String value = document.getString(VALUE);
+      Object value = document.get(VALUE);
 
-      return new AttributeFilter(collectionId, attriuteId, operator, value);
+      return new AttributeFilter(collectionId, attributeId, operator, value);
    }
 
    @Override

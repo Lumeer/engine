@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
@@ -40,15 +41,12 @@ import io.lumeer.storage.api.filter.AttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
-import com.google.common.base.Functions;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -89,18 +87,11 @@ public class SearchFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      constraintManager = new ConstraintManager();
-      final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
-
-      if (locale != null && !"".equals(locale)) {
-         constraintManager.setLocale(Locale.forLanguageTag(locale));
-      } else {
-         constraintManager.setLocale(Locale.getDefault());
-      }
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
    }
 
    public List<LinkInstance> getLinkInstances(Query query) {
-      List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(buildSearchQuery(query));
+      List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(buildSearchQuery(encodeQuery(query)));
       Map<String, Set<String>> linkInstancesIdsMap = linkInstances.stream().
             collect(Collectors.groupingBy(LinkInstance::getLinkTypeId, Collectors.mapping(LinkInstance::getId, Collectors.toSet())));
 
@@ -112,9 +103,30 @@ public class SearchFacade extends AbstractFacade {
          allDataMap.putAll(dataMap);
       }
 
-      linkInstances.forEach(li -> li.setData(allDataMap.get(li.getId())));
+      Set<String> linkTypeIds = linkInstances.stream().map(LinkInstance::getLinkTypeId).collect(Collectors.toSet());
+      Map<String, LinkType> linkTypesMap = linkTypeIds.isEmpty() ? new HashMap<>()
+            : linkTypeDao.getLinkTypesByIds(linkTypeIds).stream().collect(Collectors.toMap(LinkType::getId, l -> l));
+
+      linkInstances.forEach(li -> {
+         DataDocument data = allDataMap.get(li.getId());
+         if (data != null) {
+            constraintManager.decodeDataTypes(linkTypesMap.get(li.getLinkTypeId()), data);
+            li.setData(data);
+         } else {
+            li.setData(new DataDocument());
+         }
+      });
 
       return linkInstances;
+   }
+
+   private Query encodeQuery(Query query) {
+      Set<String> filterCollectionIds = query.getAttributeFilters().stream().map(io.lumeer.api.model.AttributeFilter::getCollectionId).collect(Collectors.toSet());
+      List<Collection> collections = collectionDao.getCollectionsByIds(filterCollectionIds);
+      Set<String> filterLinkTypeIds = query.getLinkAttributeFilters().stream().map(LinkAttributeFilter::getLinkTypeId).collect(Collectors.toSet());
+      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(filterLinkTypeIds);
+
+      return constraintManager.encodeQuery(query, collections, linkTypes);
    }
 
    private SearchQuery buildSearchQuery(Query query) {
@@ -127,16 +139,17 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<Document> searchDocuments(final Query query) {
+      final Query encodedQuery = encodeQuery(query);
       final List<Collection> collections = getReadCollections();
       final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       final List<Document> result;
 
-      if (query.isEmpty()) {
-         result = new ArrayList<>(getChildDocuments(searchDocumentsByEmptyQuery(query, collections)));
-      } else if (query.containsStems()) {
-         result = new ArrayList<>(searchDocumentsByStems(query, collections));
+      if (encodedQuery.isEmpty()) {
+         result = new ArrayList<>(getChildDocuments(searchDocumentsByEmptyQuery(encodedQuery, collections)));
+      } else if (encodedQuery.containsStems()) {
+         result = new ArrayList<>(searchDocumentsByStems(encodedQuery, collections));
       } else {
-         result = new ArrayList<>(getChildDocuments(searchDocumentsByFulltexts(query, collections)));
+         result = new ArrayList<>(getChildDocuments(searchDocumentsByFulltexts(encodedQuery, collections)));
       }
 
       result.forEach(document -> {

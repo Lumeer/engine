@@ -67,8 +67,8 @@ public class Document implements WithId {
       this.createdBy = document.getCreatedBy();
       this.updatedBy = document.getUpdatedBy();
       this.dataVersion = document.getDataVersion();
-      this.data = document.getData();
-      this.metaData = document.getMetaData();
+      this.data = document.getData() != null ? new DataDocument(document.getData()) : new DataDocument();
+      this.metaData = document.getMetaData() != null ? new DataDocument(document.getMetaData()) : new DataDocument();
    }
 
    public Document(final String collectionId, final ZonedDateTime creationDate, final ZonedDateTime updateDate, final String createdBy, final String updatedBy, final Integer dataVersion, final DataDocument metaData) {

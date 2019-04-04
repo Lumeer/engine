@@ -73,7 +73,7 @@ public class LinkInstance implements WithId {
       this.updatedBy = linkInstance.getUpdatedBy();
       this.documentIds = linkInstance.getDocumentIds();
       this.dataVersion = linkInstance.getDataVersion();
-      this.data = linkInstance.getData();
+      this.data = linkInstance.getData() != null ? new DataDocument(linkInstance.getData()) : new DataDocument();
    }
 
    public String getId() {

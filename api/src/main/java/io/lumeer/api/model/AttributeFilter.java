@@ -10,13 +10,13 @@ public class AttributeFilter {
    private final String collectionId;
    private final String attributeId;
    private final String operator;
-   private final String value;
+   private Object value;
 
    @JsonCreator
    public AttributeFilter(@JsonProperty("collectionId") final String collectionId,
          @JsonProperty("attributeId") final String attributeId,
          @JsonProperty("operator") final String operator,
-         @JsonProperty("value") final String value) {
+         @JsonProperty("value") final Object value) {
       this.collectionId = collectionId;
       this.attributeId = attributeId;
       this.operator = operator;
@@ -35,8 +35,12 @@ public class AttributeFilter {
       return operator;
    }
 
-   public String getValue() {
+   public Object getValue() {
       return value;
+   }
+
+   public void setValue(final Object value) {
+      this.value = value;
    }
 
    @Override

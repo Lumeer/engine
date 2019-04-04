@@ -51,11 +51,11 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
 
    public static LinkAttributeFilter convertFromDocument(final Document document) {
       String linkTypeId = document.getString(LINK_TYPE_ID);
-      String attriuteId = document.getString(ATTRIBUTE_ID);
+      String attributeId = document.getString(ATTRIBUTE_ID);
       String operator = document.getString(OPERATOR);
-      String value = document.getString(VALUE);
+      Object value = document.get(VALUE);
 
-      return new LinkAttributeFilter(linkTypeId, attriuteId, operator, value);
+      return new LinkAttributeFilter(linkTypeId, attributeId, operator, value);
    }
 
    @Override

@@ -44,7 +44,7 @@ public class QueryStemCodec implements Codec<QueryStem> {
    public static final String LINK_TYPE_IDS = "linkTypeIds";
    public static final String DOCUMENT_IDS = "documentIds";
    public static final String FILTERS = "filters";
-   public static final String LINK_FILTERS = "filters";
+   public static final String LINK_FILTERS = "linkFilters";
 
    private final Codec<Document> documentCodec;
 
