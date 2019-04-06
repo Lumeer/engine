@@ -114,7 +114,7 @@ public class Query {
    }
 
    @JsonIgnore
-   public Set<AttributeFilter> getAttributeFilters() {
+   public Set<CollectionAttributeFilter> getAttributeFilters() {
       return getStems().stream()
                        .map(QueryStem::getFilters)
                        .flatMap(Set::stream)

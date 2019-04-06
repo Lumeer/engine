@@ -31,14 +31,14 @@ public class QueryStem {
    private final String collectionId;
    private final List<String> linkTypeIds;
    private final Set<String> documentIds;
-   private final Set<AttributeFilter> filters;
+   private final Set<CollectionAttributeFilter> filters;
    private final Set<LinkAttributeFilter> linkFilters;
 
    @JsonCreator
    public QueryStem(@JsonProperty("collectionId") final String collectionId,
          @JsonProperty("linkTypeIds") final List<String> linkTypeIds,
          @JsonProperty("documentIds") final Set<String> documentIds,
-         @JsonProperty("filters") final Set<AttributeFilter> filters,
+         @JsonProperty("filters") final Set<CollectionAttributeFilter> filters,
          @JsonProperty("linkFilters") final Set<LinkAttributeFilter> linkFilters) {
       this.collectionId = collectionId;
       this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptyList();
@@ -63,7 +63,7 @@ public class QueryStem {
       return documentIds;
    }
 
-   public Set<AttributeFilter> getFilters() {
+   public Set<CollectionAttributeFilter> getFilters() {
       return filters;
    }
 

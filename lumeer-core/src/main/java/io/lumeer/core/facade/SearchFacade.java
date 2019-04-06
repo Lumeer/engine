@@ -20,7 +20,6 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
@@ -37,7 +36,8 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
-import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.storage.api.filter.CollectionAttributeFilter;
+import io.lumeer.storage.api.filter.LinkAttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -91,11 +92,36 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<LinkInstance> getLinkInstances(Query query) {
-      List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(buildSearchQuery(encodeQuery(query)));
+      final Query encodedQuery = encodeQuery(query);
+      final List<LinkType> linkTypes = getReadLinkTypes();
+      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
+
+      final List<LinkInstance> result;
+
+      if (encodedQuery.isEmpty()) {
+         result = new ArrayList<>(searchLinkInstancesByEmptyQuery(linkTypes));
+      } else if (encodedQuery.containsStems()) {
+         result = new ArrayList<>(searchLinkInstancesByStems(encodedQuery, linkTypes));
+      } else {
+         result = new ArrayList<>(searchLinkInstancesByFulltexts(encodedQuery, linkTypes));
+      }
+
+      result.forEach(linkInstance -> constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()));
+
+      return result;
+   }
+
+   private java.util.Collection<LinkInstance> searchLinkInstancesByEmptyQuery(List<LinkType> linkTypes) {
+      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByLinkTypes(linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet()));
+      return setDataForLinkInstances(linkInstances);
+   }
+
+   private java.util.Collection<LinkInstance> setDataForLinkInstances(java.util.Collection<LinkInstance> linkInstances) {
       Map<String, Set<String>> linkInstancesIdsMap = linkInstances.stream().
             collect(Collectors.groupingBy(LinkInstance::getLinkTypeId, Collectors.mapping(LinkInstance::getId, Collectors.toSet())));
 
       Map<String, DataDocument> allDataMap = new HashMap<>();
+
       for (Map.Entry<String, Set<String>> entry : linkInstancesIdsMap.entrySet()) {
          Map<String, DataDocument> dataMap = linkDataDao.getData(entry.getKey(), entry.getValue()).stream()
                                                         .collect(Collectors.toMap(DataDocument::getId, dataDocument -> dataDocument));
@@ -103,27 +129,45 @@ public class SearchFacade extends AbstractFacade {
          allDataMap.putAll(dataMap);
       }
 
-      Set<String> linkTypeIds = linkInstances.stream().map(LinkInstance::getLinkTypeId).collect(Collectors.toSet());
-      Map<String, LinkType> linkTypesMap = linkTypeIds.isEmpty() ? new HashMap<>()
-            : linkTypeDao.getLinkTypesByIds(linkTypeIds).stream().collect(Collectors.toMap(LinkType::getId, l -> l));
+      return new ArrayList<>(linkInstances).stream()
+                                           .peek(linkInstance -> linkInstance.setData(Objects.requireNonNullElse(allDataMap.get(linkInstance.getId()), new DataDocument())))
+                                           .collect(Collectors.toSet());
+   }
 
-      linkInstances.forEach(li -> {
-         DataDocument data = allDataMap.get(li.getId());
-         if (data != null) {
-            constraintManager.decodeDataTypes(linkTypesMap.get(li.getLinkTypeId()), data);
-            li.setData(data);
-         } else {
-            li.setData(new DataDocument());
-         }
-      });
+   private java.util.Collection<LinkInstance> searchLinkInstancesByStems(Query query, List<LinkType> readLinkTypes) {
+      SearchQuery searchQuery = buildSearchQuery(encodeQuery(query));
+      Set<String> linkTypeIds = readLinkTypes.stream().map(LinkType::getId).collect(Collectors.toSet());
+      List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(searchQuery).stream()
+                                                        .filter(linkInstance -> linkTypeIds.contains(linkInstance.getLinkTypeId()))
+                                                        .collect(Collectors.toList());
+      return setDataForLinkInstances(linkInstances);
+   }
 
-      return linkInstances;
+   private java.util.Collection<LinkInstance> searchLinkInstancesByFulltexts(Query query, List<LinkType> linkTypes) {
+      List<DataDocument> data = linkDataDao.searchDataByFulltexts(query.getFulltexts(), query.getPagination(), linkTypes);
+      return convertDataDocumentsToLinkInstances(data);
+   }
+
+   private java.util.Collection<LinkInstance> convertDataDocumentsToLinkInstances(java.util.Collection<DataDocument> data) {
+      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(data.stream().map(DataDocument::getId).collect(Collectors.toSet()));
+      Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
+      return linkInstances.stream()
+                          .peek(linkInstance -> linkInstance.setData(Objects.requireNonNullElse(dataMap.get(linkInstance.getId()), new DataDocument())))
+                          .collect(Collectors.toSet());
+   }
+
+   private List<LinkType> getReadLinkTypes() {
+      final Set<String> allowedCollectionIds = getReadCollections().stream().map(Resource::getId)
+                                                                   .collect(Collectors.toSet());
+      return linkTypeDao.getAllLinkTypes().stream()
+                        .filter(lt -> allowedCollectionIds.containsAll(lt.getCollectionIds()))
+                        .collect(Collectors.toList());
    }
 
    private Query encodeQuery(Query query) {
-      Set<String> filterCollectionIds = query.getAttributeFilters().stream().map(io.lumeer.api.model.AttributeFilter::getCollectionId).collect(Collectors.toSet());
+      Set<String> filterCollectionIds = query.getAttributeFilters().stream().map(io.lumeer.api.model.CollectionAttributeFilter::getCollectionId).collect(Collectors.toSet());
       List<Collection> collections = collectionDao.getCollectionsByIds(filterCollectionIds);
-      Set<String> filterLinkTypeIds = query.getLinkAttributeFilters().stream().map(LinkAttributeFilter::getLinkTypeId).collect(Collectors.toSet());
+      Set<String> filterLinkTypeIds = query.getLinkAttributeFilters().stream().map(io.lumeer.api.model.LinkAttributeFilter::getLinkTypeId).collect(Collectors.toSet());
       List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(filterLinkTypeIds);
 
       return constraintManager.encodeQuery(query, collections, linkTypes);
@@ -152,9 +196,7 @@ public class SearchFacade extends AbstractFacade {
          result = new ArrayList<>(getChildDocuments(searchDocumentsByFulltexts(encodedQuery, collections)));
       }
 
-      result.forEach(document -> {
-         constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData());
-      });
+      result.forEach(document -> constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()));
 
       return result;
    }
@@ -179,7 +221,7 @@ public class SearchFacade extends AbstractFacade {
       List<Document> documents = documentDao.getDocumentsByIds(data.stream().map(DataDocument::getId).distinct().toArray(String[]::new));
       Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
       return documents.stream()
-                      .peek(document -> document.setData(dataMap.get(document.getId())))
+                      .peek(document -> document.setData(Objects.requireNonNullElse(dataMap.get(document.getId()), new DataDocument())))
                       .collect(Collectors.toSet());
    }
 
@@ -223,6 +265,8 @@ public class SearchFacade extends AbstractFacade {
       Set<Document> documentsByData = convertDataDocumentsToDocuments(data);
       documentsByData.addAll(getChildDocuments(documentsByData));
 
+      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, lt -> lt));
+
       List<DataDocument> lastStageData = data;
 
       for (int i = 0; i < stemsPipeline.size(); i++) {
@@ -231,7 +275,25 @@ public class SearchFacade extends AbstractFacade {
 
          Set<String> lastStageDocumentIds = lastStageData.stream().map(DataDocument::getId).collect(Collectors.toSet());
          List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByDocumentIds(lastStageDocumentIds, linkTypeId);
-         Set<String> otherDocumentIds = linkInstances.stream().map(LinkInstance::getDocumentIds)
+
+         Set<String> searchedLinkInstanceIds;
+
+         if (currentStageStem.containsLinkFiltersQuery() || currentStageStem.containsFulltextsQuery()) {
+            SearchQueryStem linkSearchStem = SearchQueryStem.createBuilder(currentStageStem.getCollectionId())
+                                                            .linkInstanceIds(linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
+                                                            .linkFilters(currentStageStem.getLinkFilters())
+                                                            .fulltexts(currentStageStem.getFulltexts())
+                                                            .build();
+
+            searchedLinkInstanceIds = linkDataDao.searchData(linkSearchStem, pagination, linkTypesMap.get(linkTypeId))
+                                                 .stream().map(DataDocument::getId).collect(Collectors.toSet());
+         } else {
+            searchedLinkInstanceIds = linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet());
+         }
+
+         Set<String> otherDocumentIds = linkInstances.stream()
+                                                     .filter(linkInstance -> searchedLinkInstanceIds.contains(linkInstance.getId()))
+                                                     .map(LinkInstance::getDocumentIds)
                                                      .flatMap(List::stream)
                                                      .filter(id -> !lastStageDocumentIds.contains(id))
                                                      .collect(Collectors.toSet());
@@ -245,7 +307,7 @@ public class SearchFacade extends AbstractFacade {
          }
 
          if (currentDocumentsIds.isEmpty()) {
-            break; // empty ids after interesction or append represents empty search, so we should break
+            break; // empty ids after intersection or append represents empty search, so we should break
          }
 
          SearchQueryStem modifiedStem = SearchQueryStem.createBuilder(currentStageStem.getCollectionId())
@@ -267,13 +329,22 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private SearchQueryStem cleanStemForBaseCollection(SearchQueryStem stem, List<Document> documents) {
-      return cleanStemForCollection(stem, documents, stem.getCollectionId());
+      return cleanStemForCollectionAndLink(stem, documents, stem.getCollectionId(), null);
    }
 
-   private SearchQueryStem cleanStemForCollection(SearchQueryStem stem, List<Document> documents, String collectionId) {
-      Set<AttributeFilter> filters = stem.getFilters().stream()
-                                         .filter(filter -> filter.getCollectionId().equals(collectionId))
-                                         .collect(Collectors.toSet());
+   private SearchQueryStem cleanStemForCollectionAndLink(SearchQueryStem stem, List<Document> documents, String collectionId, String linkTypeId) {
+      Set<CollectionAttributeFilter> filters = stem.getFilters().stream()
+                                                   .filter(filter -> filter.getCollectionId().equals(collectionId))
+                                                   .collect(Collectors.toSet());
+
+      Set<LinkAttributeFilter> linkFilters;
+      if (linkTypeId != null) {
+         linkFilters = stem.getLinkFilters().stream()
+                           .filter(filter -> filter.getLinkTypeId().equals(linkTypeId))
+                           .collect(Collectors.toSet());
+      } else {
+         linkFilters = new HashSet<>();
+      }
 
       Set<String> documentIds = documents.stream().filter(d -> d.getCollectionId().equals(collectionId) && stem.getDocumentIds().contains(d.getId()))
                                          .map(Document::getId)
@@ -282,6 +353,7 @@ public class SearchFacade extends AbstractFacade {
       return SearchQueryStem.createBuilder(collectionId)
                             .fulltexts(stem.getFulltexts())
                             .filters(filters)
+                            .linkFilters(linkFilters)
                             .documentIds(documentIds)
                             .build();
    }
@@ -305,7 +377,7 @@ public class SearchFacade extends AbstractFacade {
             return stemsPipeline;
          }
 
-         stemsPipeline.add(cleanStemForCollection(stem, allDocuments, currentCollectionId));
+         stemsPipeline.add(cleanStemForCollectionAndLink(stem, allDocuments, currentCollectionId, linkType.getId()));
          lastCollectionId = currentCollectionId;
          stemLinkTypes.remove(linkType);
       }

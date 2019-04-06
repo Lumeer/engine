@@ -18,12 +18,12 @@
  */
 package io.lumeer.core.util;
 
-import io.lumeer.api.model.AttributeFilter;
+import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.ConditionType;
 
 public class FilterParser {
 
-   public static AttributeFilter parse(String filter) {
+   public static CollectionAttributeFilter parse(String filter) {
       String[] parts = filter.split(":", 3);
       if (parts.length < 3) {
          return null;
@@ -45,7 +45,7 @@ public class FilterParser {
 
       String value = conditionParts[1].trim();
 
-      return new AttributeFilter(collectionId, attributeId, conditionParts[0].trim().toLowerCase(), value);
+      return new CollectionAttributeFilter(collectionId, attributeId, conditionParts[0].trim().toLowerCase(), value);
    }
 
 }

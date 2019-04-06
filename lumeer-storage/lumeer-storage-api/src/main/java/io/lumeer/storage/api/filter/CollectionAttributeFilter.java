@@ -20,17 +20,17 @@ package io.lumeer.storage.api.filter;
 
 import io.lumeer.api.model.ConditionType;
 
-public class LinkAttributeFilter extends AttributeFilter {
+public class CollectionAttributeFilter extends AttributeFilter {
 
-   private final String linkTypeId;
+   private final String collectionId;
 
-   public LinkAttributeFilter(final String linkTypeId, final ConditionType conditionType, final String attributeId, final Object value) {
+   public CollectionAttributeFilter(final String collectionId, final ConditionType conditionType, final String attributeId, final Object value) {
       super(conditionType, attributeId, value);
-      this.linkTypeId = linkTypeId;
+      this.collectionId = collectionId;
    }
 
-   public String getLinkTypeId() {
-      return linkTypeId;
+   public String getCollectionId() {
+      return collectionId;
    }
 
 }

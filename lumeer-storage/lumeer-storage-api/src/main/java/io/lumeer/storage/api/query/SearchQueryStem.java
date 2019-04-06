@@ -20,12 +20,13 @@ package io.lumeer.storage.api.query;
 
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.storage.api.filter.CollectionAttributeFilter;
 import io.lumeer.storage.api.filter.LinkAttributeFilter;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
@@ -36,7 +37,8 @@ public class SearchQueryStem {
    private final String collectionId;
    private final List<String> linkTypeIds;
    private final Set<String> documentIds;
-   private final Set<AttributeFilter> filters;
+   private final Set<String> linkInstanceIds;
+   private final Set<CollectionAttributeFilter> filters;
    private final Set<LinkAttributeFilter> linkFilters;
    private final Set<String> fulltexts;
 
@@ -44,6 +46,7 @@ public class SearchQueryStem {
       this.collectionId = stem.getCollectionId();
       this.linkTypeIds = stem.getLinkTypeIds();
       this.documentIds = stem.getDocumentIds();
+      this.linkInstanceIds = Collections.emptySet();
       this.filters = stem.getFilters() != null ? stem.getFilters().stream().map(this::convertFilter).collect(Collectors.toSet()) : Collections.emptySet();
       this.linkFilters = stem.getLinkFilters() != null ? stem.getLinkFilters().stream().map(this::convertLinkFilter).collect(Collectors.toSet()) : Collections.emptySet();
       this.fulltexts = fulltexts;
@@ -52,15 +55,16 @@ public class SearchQueryStem {
    public SearchQueryStem(Builder builder) {
       this.collectionId = builder.collectionId;
       this.linkTypeIds = builder.linkTypeIds;
-      this.documentIds = builder.documentIds != null && !builder.documentIds.isEmpty() ? builder.documentIds : new HashSet<>();
+      this.documentIds = Objects.requireNonNullElse(builder.documentIds, new HashSet<>());
+      this.linkInstanceIds = Objects.requireNonNullElse(builder.linkInstanceIds, new HashSet<>());
       this.filters = builder.filters;
       this.linkFilters = builder.linkFilters;
       this.fulltexts = builder.fulltexts;
    }
 
-   private AttributeFilter convertFilter(final io.lumeer.api.model.AttributeFilter attr) {
+   private CollectionAttributeFilter convertFilter(final io.lumeer.api.model.CollectionAttributeFilter attr) {
       ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
-      return new AttributeFilter(attr.getCollectionId(), conditionType, attr.getAttributeId(), attr.getValue());
+      return new CollectionAttributeFilter(attr.getCollectionId(), conditionType, attr.getAttributeId(), attr.getValue());
    }
 
    private LinkAttributeFilter convertLinkFilter(final io.lumeer.api.model.LinkAttributeFilter attr) {
@@ -80,12 +84,20 @@ public class SearchQueryStem {
       return documentIds != null ? Collections.unmodifiableSet(documentIds) : Collections.emptySet();
    }
 
-   public Set<AttributeFilter> getFilters() {
+   public Set<CollectionAttributeFilter> getFilters() {
       return filters != null ? Collections.unmodifiableSet(filters) : Collections.emptySet();
    }
 
    public Set<String> getFulltexts() {
       return fulltexts != null ? Collections.unmodifiableSet(fulltexts) : Collections.emptySet();
+   }
+
+   public Set<String> getLinkInstanceIds() {
+      return linkInstanceIds != null ? Collections.unmodifiableSet(linkInstanceIds) : Collections.emptySet();
+   }
+
+   public Set<LinkAttributeFilter> getLinkFilters() {
+      return linkFilters != null ? Collections.unmodifiableSet(linkFilters) : Collections.emptySet();
    }
 
    public boolean containsLinkTypeIdsQuery() {
@@ -96,12 +108,16 @@ public class SearchQueryStem {
       return documentIds != null && !documentIds.isEmpty();
    }
 
+   public boolean containsLinkInstanceIdsQuery() {
+      return linkInstanceIds != null && !linkInstanceIds.isEmpty();
+   }
+
    public boolean containsFiltersQuery() {
       return filters != null && !filters.isEmpty();
    }
 
    public boolean containsLinkFiltersQuery() {
-      return linkFilters != null && !filters.isEmpty();
+      return linkFilters != null && !linkFilters.isEmpty();
    }
 
    public boolean containsFulltextsQuery() {
@@ -117,7 +133,8 @@ public class SearchQueryStem {
       private String collectionId;
       private List<String> linkTypeIds;
       private Set<String> documentIds;
-      private Set<AttributeFilter> filters;
+      private Set<String> linkInstanceIds;
+      private Set<CollectionAttributeFilter> filters;
       private Set<LinkAttributeFilter> linkFilters;
       private Set<String> fulltexts;
 
@@ -135,7 +152,12 @@ public class SearchQueryStem {
          return this;
       }
 
-      public Builder filters(Set<AttributeFilter> filters) {
+      public Builder linkInstanceIds(Set<String> linkInstanceIds) {
+         this.linkInstanceIds = linkInstanceIds;
+         return this;
+      }
+
+      public Builder filters(Set<CollectionAttributeFilter> filters) {
          this.filters = filters;
          return this;
       }
@@ -161,6 +183,7 @@ public class SearchQueryStem {
             "collectionId='" + collectionId + '\'' +
             ", linkTypeIds=" + linkTypeIds +
             ", documentIds=" + documentIds +
+            ", linkInstanceIds=" + linkInstanceIds +
             ", filters=" + filters +
             ", linkFilters=" + linkFilters +
             ", fulltexts=" + fulltexts +

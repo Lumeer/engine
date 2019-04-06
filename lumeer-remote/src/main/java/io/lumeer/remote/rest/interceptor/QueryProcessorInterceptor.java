@@ -19,6 +19,8 @@
 package io.lumeer.remote.rest.interceptor;
 
 import io.lumeer.api.model.AttributeFilter;
+import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -45,18 +47,39 @@ public class QueryProcessorInterceptor {
 
    private void processQuery(final Query query) {
       for (QueryStem stem : query.getStems()) {
-         final List<AttributeFilter> newFilters = stem.getFilters().stream().map(this::processFilter).collect(Collectors.toList());
-         stem.getFilters().clear();
-         stem.getFilters().addAll(newFilters);
+         if (!stem.getFilters().isEmpty()) {
+            final List<CollectionAttributeFilter> newFilters = stem.getFilters().stream().map(this::processFilter).collect(Collectors.toList());
+            stem.getFilters().clear();
+            stem.getFilters().addAll(newFilters);
+         }
+         if (!stem.getLinkFilters().isEmpty()) {
+            final List<LinkAttributeFilter> newFilters = stem.getLinkFilters().stream().map(this::processFilter).collect(Collectors.toList());
+            stem.getLinkFilters().clear();
+            stem.getLinkFilters().addAll(newFilters);
+         }
       }
    }
 
-   private AttributeFilter processFilter(final AttributeFilter filter) {
-      if (filter.getValue().equals(USER_EMAIL)) {
-         String userEmail = authenticatedUser.getUserEmail();
-         return new AttributeFilter(filter.getCollectionId(), filter.getAttributeId(), filter.getOperator(), userEmail);
+   private CollectionAttributeFilter processFilter(final CollectionAttributeFilter filter) {
+      Object transformed = transformValue(filter);
+      return new CollectionAttributeFilter(filter.getCollectionId(), filter.getAttributeId(), filter.getOperator(), transformed);
+   }
+
+   private LinkAttributeFilter processFilter(final LinkAttributeFilter filter) {
+      Object transformed = transformValue(filter);
+      return new LinkAttributeFilter(filter.getLinkTypeId(), filter.getAttributeId(), filter.getOperator(), transformed);
+   }
+
+   private Object transformValue(AttributeFilter filter) {
+      if (filter.getValue() == null) {
+         return null;
       }
-      return filter;
+      switch (filter.getValue().toString()) {
+         case USER_EMAIL:
+            return authenticatedUser.getUserEmail();
+         default:
+            return filter.getValue();
+      }
    }
 
    @AroundInvoke

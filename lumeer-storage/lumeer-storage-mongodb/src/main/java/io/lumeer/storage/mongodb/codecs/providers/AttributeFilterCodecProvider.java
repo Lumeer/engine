@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.AttributeFilter;
+import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.storage.mongodb.codecs.AttributeFilterCodec;
 
 import org.bson.codecs.Codec;
@@ -30,7 +30,7 @@ public class AttributeFilterCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == AttributeFilter.class) {
+      if (clazz == CollectionAttributeFilter.class) {
          return (Codec<T>) new AttributeFilterCodec(registry);
       }
 

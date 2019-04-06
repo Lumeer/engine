@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.AttributeFilter;
+import io.lumeer.api.model.CollectionAttributeFilter;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -29,7 +29,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-public class AttributeFilterCodec implements Codec<AttributeFilter> {
+public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
 
    public static final String COLLECTION_ID = "collectionId";
    public static final String OPERATOR = "condition";
@@ -43,23 +43,23 @@ public class AttributeFilterCodec implements Codec<AttributeFilter> {
    }
 
    @Override
-   public AttributeFilter decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public CollectionAttributeFilter decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
       return AttributeFilterCodec.convertFromDocument(bson);
    }
 
-   public static AttributeFilter convertFromDocument(final Document document) {
+   public static CollectionAttributeFilter convertFromDocument(final Document document) {
       String collectionId = document.getString(COLLECTION_ID);
       String attributeId = document.getString(ATTRIBUTE_ID);
       String operator = document.getString(OPERATOR);
       Object value = document.get(VALUE);
 
-      return new AttributeFilter(collectionId, attributeId, operator, value);
+      return new CollectionAttributeFilter(collectionId, attributeId, operator, value);
    }
 
    @Override
-   public void encode(final BsonWriter writer, final AttributeFilter value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final CollectionAttributeFilter value, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(COLLECTION_ID, value.getCollectionId())
             .append(OPERATOR, value.getOperator())
@@ -70,8 +70,8 @@ public class AttributeFilterCodec implements Codec<AttributeFilter> {
    }
 
    @Override
-   public Class<AttributeFilter> getEncoderClass() {
-      return AttributeFilter.class;
+   public Class<CollectionAttributeFilter> getEncoderClass() {
+      return CollectionAttributeFilter.class;
    }
 }
 

@@ -24,20 +24,14 @@ import java.util.Objects;
 
 public class AttributeFilter {
 
-   private final String collectionId;
    private final ConditionType conditionType;
    private final String attributeId;
    private final Object value;
 
-   public AttributeFilter(final String collectionId, final ConditionType conditionType, final String attributeId, final Object value) {
-      this.collectionId = collectionId;
+   public AttributeFilter(final ConditionType conditionType, final String attributeId, final Object value) {
       this.conditionType = conditionType;
       this.attributeId = attributeId;
       this.value = value;
-   }
-
-   public String getCollectionId() {
-      return collectionId;
    }
 
    public ConditionType getConditionType() {
@@ -61,8 +55,7 @@ public class AttributeFilter {
          return false;
       }
       final AttributeFilter that = (AttributeFilter) o;
-      return Objects.equals(getCollectionId(), that.getCollectionId()) &&
-            getConditionType() == that.getConditionType() &&
+      return getConditionType() == that.getConditionType() &&
             Objects.equals(getValue(), that.getValue()) &&
             Objects.equals(getAttributeId(), that.getAttributeId());
    }
@@ -70,13 +63,12 @@ public class AttributeFilter {
    @Override
    public int hashCode() {
 
-      return Objects.hash(getCollectionId(), getConditionType(), getValue(), getAttributeId());
+      return Objects.hash(getConditionType(), getValue(), getAttributeId());
    }
 
    @Override
    public String toString() {
-      return "AttributeFilter{" +
-            "collectionId='" + collectionId + '\'' +
+      return "CollectionAttributeFilter{" +
             ", conditionType=" + conditionType +
             ", value='" + value + '\'' +
             ", attributeId='" + attributeId + '\'' +

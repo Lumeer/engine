@@ -1,75 +1,41 @@
+/*
+ * Lumeer: Modern Data Definition and Processing Platform
+ *
+ * Copyright (C) since 2017 Answer Institute, s.r.o. and/or its affiliates.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
-public class LinkAttributeFilter {
+public class LinkAttributeFilter extends AttributeFilter {
 
    private final String linkTypeId;
-   private final String attributeId;
-   private final String operator;
-   private Object value;
 
    @JsonCreator
    public LinkAttributeFilter(@JsonProperty("linkTypeId") final String linkTypeId,
          @JsonProperty("attributeId") final String attributeId,
          @JsonProperty("operator") final String operator,
          @JsonProperty("value") final Object value) {
+      super(attributeId, operator, value);
       this.linkTypeId = linkTypeId;
-      this.attributeId = attributeId;
-      this.operator = operator;
-      this.value = value;
    }
 
    public String getLinkTypeId() {
       return linkTypeId;
    }
 
-   public String getAttributeId() {
-      return attributeId;
-   }
-
-   public String getOperator() {
-      return operator;
-   }
-
-   public Object getValue() {
-      return value;
-   }
-
-   public void setValue(final Object value) {
-      this.value = value;
-   }
-
-   @Override
-   public boolean equals(final Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof LinkAttributeFilter)) {
-         return false;
-      }
-      final LinkAttributeFilter that = (LinkAttributeFilter) o;
-      return Objects.equals(getLinkTypeId(), that.getLinkTypeId()) &&
-            Objects.equals(getAttributeId(), that.getAttributeId()) &&
-            Objects.equals(getOperator(), that.getOperator()) &&
-            Objects.equals(getValue(), that.getValue());
-   }
-
-   @Override
-   public int hashCode() {
-      return Objects.hash(getLinkTypeId(), getAttributeId(), getOperator(), getValue());
-   }
-
-   @Override
-   public String toString() {
-      return "AttributeFilter{" +
-            "linkTypeId='" + linkTypeId + '\'' +
-            ", attributeId='" + attributeId + '\'' +
-            ", operator='" + operator + '\'' +
-            ", value='" + value + '\'' +
-            '}';
-   }
 }

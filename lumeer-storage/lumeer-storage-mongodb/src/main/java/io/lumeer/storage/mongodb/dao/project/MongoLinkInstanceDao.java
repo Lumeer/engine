@@ -25,7 +25,6 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
-import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -62,9 +61,6 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
 
    @Inject
    private Event<CreateLinkInstance> createLinkInstanceEvent;
-
-   @Inject
-   private Event<UpdateLinkInstance> updateLinkInstanceEvent;
 
    @Inject
    private Event<RemoveLinkInstance> removeLinkInstanceEvent;
@@ -164,6 +160,11 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    @Override
    public List<LinkInstance> getLinkInstancesByLinkType(final String linkTypeId) {
       return databaseCollection().find(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkInstance> getLinkInstancesByLinkTypes(final Set<String> linkTypeIds) {
+      return databaseCollection().find(Filters.in(LinkInstanceCodec.LINK_TYPE_ID, linkTypeIds)).into(new ArrayList<>());
    }
 
    @Override
