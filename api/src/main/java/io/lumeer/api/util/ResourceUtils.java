@@ -19,6 +19,7 @@
 package io.lumeer.api.util;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
@@ -76,9 +77,9 @@ public class ResourceUtils {
       return permission.getRoles().contains(Role.READ) || permission.getRoles().contains(Role.MANAGE);
    }
 
-   public static java.util.Collection<Attribute> incOrDecAttributes(java.util.Collection<Attribute> attributes, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec){
+   public static java.util.Collection<Attribute> incOrDecAttributes(java.util.Collection<Attribute> attributes, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
       Map<String, Attribute> oldAttributes = attributes.stream()
-                                                     .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+                                                       .collect(Collectors.toMap(Attribute::getId, Function.identity()));
       oldAttributes.keySet().forEach(attributeId -> {
          if (attributesIdsToInc.contains(attributeId)) {
             Attribute attribute = oldAttributes.get(attributeId);
@@ -91,5 +92,25 @@ public class ResourceUtils {
       });
 
       return oldAttributes.values();
+   }
+
+   public static Constraint findConstraint(java.util.Collection<Attribute> attributes, String attributeId) {
+      Attribute attribute = findAttribute(attributes, attributeId);
+      if (attribute != null) {
+         return attribute.getConstraint();
+      }
+      return null;
+   }
+
+   public static Attribute findAttribute(java.util.Collection<Attribute> attributes, String attributeId) {
+      if (attributes == null) {
+         return null;
+      }
+      for (Attribute attribute : attributes) {
+         if (attribute.getId().equals(attributeId)) {
+            return attribute;
+         }
+      }
+      return null;
    }
 }

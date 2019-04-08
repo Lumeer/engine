@@ -95,7 +95,7 @@ public class DocumentFacade extends AbstractFacade {
       updateCollectionMetadata(collection, data.keySet(), Collections.emptySet(), 1);
 
       if (createDocumentEvent != null) {
-         createDocumentEvent.fire(new CreateDocument(storedDocument));
+         createDocumentEvent.fire(new CreateDocument(new Document(storedDocument)));
       }
 
       constraintManager.decodeDataTypes(collection, storedData);
@@ -145,7 +145,7 @@ public class DocumentFacade extends AbstractFacade {
       final Collection collection = checkCollectionWritePermissions(collectionId);
 
       final Document document = getDocument(collection, documentId);
-      final Document originalDocument = copyDocument(document);
+      final Document originalDocument = new Document(document);
 
       document.setMetaData(metaData);
 
@@ -184,7 +184,7 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = checkCollectionWritePermissions(collectionId);
 
       final Document document = getDocument(collection, documentId);
-      final Document originalDocument = copyDocument(document);
+      final Document originalDocument = new Document(document);
 
       if (document.getMetaData() == null) {
          document.setMetaData(new DataDocument());
@@ -198,20 +198,9 @@ public class DocumentFacade extends AbstractFacade {
       return updatedDocument;
    }
 
-   private Document copyDocument(final Document document) {
-      final Document originalDocument = new Document(document);
-      originalDocument.setMetaData(new DataDocument(originalDocument.getMetaData())); // deep copy of meta-data
-
-      if (originalDocument.getData() != null) {
-         originalDocument.setData(new DataDocument(originalDocument.getData())); // deep copy of data
-      }
-
-      return originalDocument;
-   }
-
    private Document updateDocument(final Collection collection, final String documentId, final DataDocument newData, final DataDocument originalData) {
       final Document document = documentDao.getDocumentById(documentId);
-      final Document originalDocument = copyDocument(document);
+      final Document originalDocument = new Document(document);
       originalDocument.setData(originalData);
 
       document.setCollectionId(collection.getId());

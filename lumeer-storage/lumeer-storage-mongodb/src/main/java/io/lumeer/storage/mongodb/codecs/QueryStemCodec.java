@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.AttributeFilter;
+import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.QueryStem;
 
@@ -44,7 +44,7 @@ public class QueryStemCodec implements Codec<QueryStem> {
    public static final String LINK_TYPE_IDS = "linkTypeIds";
    public static final String DOCUMENT_IDS = "documentIds";
    public static final String FILTERS = "filters";
-   public static final String LINK_FILTERS = "filters";
+   public static final String LINK_FILTERS = "linkFilters";
 
    private final Codec<Document> documentCodec;
 
@@ -64,9 +64,9 @@ public class QueryStemCodec implements Codec<QueryStem> {
       List<String> linkTypeIds = bson.get(LINK_TYPE_IDS, List.class);
       Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
 
-      Set<AttributeFilter> attributes = new ArrayList<Document>(bson.get(FILTERS, List.class)).stream()
-                                                                                              .map(AttributeFilterCodec::convertFromDocument)
-                                                                                              .collect(Collectors.toSet());
+      Set<CollectionAttributeFilter> attributes = new ArrayList<Document>(bson.get(FILTERS, List.class)).stream()
+                                                                                                        .map(AttributeFilterCodec::convertFromDocument)
+                                                                                                        .collect(Collectors.toSet());
 
       Set<LinkAttributeFilter> linkAttributes;
       if (bson.containsKey(LINK_FILTERS)) {

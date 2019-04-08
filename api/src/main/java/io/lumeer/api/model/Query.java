@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -69,7 +70,7 @@ public class Query {
    }
 
    public List<QueryStem> getStems() {
-      return stems;
+      return stems != null ? stems : new ArrayList<>();
    }
 
    public Set<String> getFulltexts() {
@@ -108,6 +109,22 @@ public class Query {
    public Set<String> getDocumentsIds() {
       return getStems().stream()
                        .map(QueryStem::getDocumentIds)
+                       .flatMap(Set::stream)
+                       .collect(Collectors.toSet());
+   }
+
+   @JsonIgnore
+   public Set<CollectionAttributeFilter> getAttributeFilters() {
+      return getStems().stream()
+                       .map(QueryStem::getFilters)
+                       .flatMap(Set::stream)
+                       .collect(Collectors.toSet());
+   }
+
+   @JsonIgnore
+   public Set<LinkAttributeFilter> getLinkAttributeFilters() {
+      return getStems().stream()
+                       .map(QueryStem::getLinkFilters)
                        .flatMap(Set::stream)
                        .collect(Collectors.toSet());
    }

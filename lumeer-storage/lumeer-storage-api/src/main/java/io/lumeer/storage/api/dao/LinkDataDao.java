@@ -18,7 +18,10 @@
  */
 package io.lumeer.storage.api.dao;
 
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.api.query.SearchQueryStem;
 
 import java.util.List;
 import java.util.Set;
@@ -46,5 +49,9 @@ public interface LinkDataDao {
    List<DataDocument> getData(String linkTypeId);
 
    List<DataDocument> getData(String linkTypeId, Set<String> linkInstanceIds);
+
+   List<DataDocument> searchData(SearchQueryStem stem, Pagination pagination, LinkType linkType);
+
+   List<DataDocument> searchDataByFulltexts(Set<String> fulltexts, Pagination pagination, List<LinkType> linkTypes);
 
 }

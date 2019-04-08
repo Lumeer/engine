@@ -27,7 +27,7 @@ import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
@@ -262,14 +262,14 @@ public class MongoDataDaoTest extends MongoDbTestBase {
       createDocument(KEY1, "13");
       String id4 = createDocument(KEY1, "mama");
 
-      AttributeFilter filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "4");
+      CollectionSearchAttributeFilter filter = new CollectionSearchAttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "4");
       SearchQueryStem stem = SearchQueryStem.createBuilder(COLLECTION_ID)
                                             .filters(Collections.singleton(filter))
                                             .build();
       List<DataDocument> data = dataDao.searchData(stem, null, collection);
       assertThat(data).extracting(DataDocument::getId).containsOnly(id1);
 
-      filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "mama");
+      filter = new CollectionSearchAttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "mama");
       stem = SearchQueryStem.createBuilder(COLLECTION_ID)
                             .filters(Collections.singleton(filter))
                             .build();
@@ -285,7 +285,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
       String id3 = createDocument(KEY3, "lol nieco");
       String id4 = createDocument(KEY2, "lumeerko");
 
-      AttributeFilter filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "lumeerko");
+      CollectionSearchAttributeFilter filter = new CollectionSearchAttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY1, "lumeerko");
       SearchQueryStem stem = SearchQueryStem.createBuilder(COLLECTION_ID)
                                             .filters(Collections.singleton(filter))
                                             .documentIds(new HashSet<>(Arrays.asList(id1, id2, id3, id4)))
@@ -294,7 +294,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
       List<DataDocument> data = dataDao.searchData(stem, null, collection);
       assertThat(data).extracting(DataDocument::getId).containsOnly(id1);
 
-      filter = new AttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY2, "lumeerko");
+      filter = new CollectionSearchAttributeFilter(COLLECTION_ID, ConditionType.EQUALS, KEY2, "lumeerko");
       stem = SearchQueryStem.createBuilder(COLLECTION_ID)
                             .filters(Collections.singleton(filter))
                             .documentIds(new HashSet<>(Arrays.asList(id1, id2, id3)))

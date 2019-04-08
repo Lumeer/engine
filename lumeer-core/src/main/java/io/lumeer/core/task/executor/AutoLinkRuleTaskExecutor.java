@@ -26,7 +26,7 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
@@ -126,7 +126,7 @@ public class AutoLinkRuleTaskExecutor {
       final Object value = newDocument.getData().get(thisAttribute);
       final SearchQueryStem queryStem = SearchQueryStem
             .createBuilder(thatCollection)
-            .filters(Set.of(new AttributeFilter(thatCollection, ConditionType.EQUALS, thatAttribute, value)))
+            .filters(Set.of(new CollectionSearchAttributeFilter(thatCollection, ConditionType.EQUALS, thatAttribute, value)))
             .build();
 
       final List<String> targetDocuments = ruleTask.getDaoContextSnapshot().getDataDao()

@@ -1,30 +1,36 @@
-package io.lumeer.api.model;
+/*
+ * Lumeer: Modern Data Definition and Processing Platform
+ *
+ * Copyright (C) since 2017 Answer Institute, s.r.o. and/or its affiliates.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+package io.lumeer.api.model;
 
 import java.util.Objects;
 
 public class AttributeFilter {
 
-   private final String collectionId;
    private final String attributeId;
    private final String operator;
-   private final String value;
+   private Object value;
 
-   @JsonCreator
-   public AttributeFilter(@JsonProperty("collectionId") final String collectionId,
-         @JsonProperty("attributeId") final String attributeId,
-         @JsonProperty("operator") final String operator,
-         @JsonProperty("value") final String value) {
-      this.collectionId = collectionId;
+   public AttributeFilter(final String attributeId, final String operator, final Object value) {
       this.attributeId = attributeId;
       this.operator = operator;
       this.value = value;
-   }
-
-   public String getCollectionId() {
-      return collectionId;
    }
 
    public String getAttributeId() {
@@ -35,8 +41,12 @@ public class AttributeFilter {
       return operator;
    }
 
-   public String getValue() {
+   public Object getValue() {
       return value;
+   }
+
+   public void setValue(final Object value) {
+      this.value = value;
    }
 
    @Override
@@ -48,24 +58,22 @@ public class AttributeFilter {
          return false;
       }
       final AttributeFilter that = (AttributeFilter) o;
-      return Objects.equals(getCollectionId(), that.getCollectionId()) &&
-            Objects.equals(getAttributeId(), that.getAttributeId()) &&
-            Objects.equals(getOperator(), that.getOperator()) &&
-            Objects.equals(getValue(), that.getValue());
+      return Objects.equals(attributeId, that.attributeId) &&
+            Objects.equals(operator, that.operator) &&
+            Objects.equals(value, that.value);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(getCollectionId(), getAttributeId(), getOperator(), getValue());
+      return Objects.hash(attributeId, operator, value);
    }
 
    @Override
    public String toString() {
       return "AttributeFilter{" +
-            "collectionId='" + collectionId + '\'' +
-            ", attributeId='" + attributeId + '\'' +
+            "attributeId='" + attributeId + '\'' +
             ", operator='" + operator + '\'' +
-            ", value='" + value + '\'' +
+            ", value=" + value +
             '}';
    }
 }

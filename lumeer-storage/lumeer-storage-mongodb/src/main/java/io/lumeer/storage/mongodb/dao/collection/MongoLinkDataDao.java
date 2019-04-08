@@ -18,17 +18,22 @@
  */
 package io.lumeer.storage.mongodb.dao.collection;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.api.filter.LinkSearchAttributeFilter;
+import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Indexes;
@@ -37,10 +42,14 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -129,6 +138,60 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    @Override
    public List<DataDocument> getData(final String linkTypeId, final Set<String> linkInstanceIds) {
       return MongoUtils.convertIterableToList(linkDataCollection(linkTypeId).find(MongoFilters.idsFilter(linkInstanceIds)));
+   }
+
+   @Override
+   public List<DataDocument> searchData(final SearchQueryStem stem, final Pagination pagination, final LinkType linkType) {
+      Bson filter = createFilterForStem(stem, linkType);
+      FindIterable<Document> iterable = linkDataCollection(linkType.getId()).find(filter);
+      addPaginationToQuery(iterable, pagination);
+      return MongoUtils.convertIterableToList(iterable);
+   }
+
+   @Override
+   public List<DataDocument> searchDataByFulltexts(final Set<String> fulltexts, final Pagination pagination, final List<LinkType> linkTypes) {
+      List<DataDocument> documents = new ArrayList<>();
+      for (LinkType linkType: linkTypes) {
+         Bson filter = createFilterForFulltexts(linkType.getAttributes(), fulltexts);
+         if (filter != null) {
+            FindIterable<Document> iterable = linkDataCollection(linkType.getId()).find(filter);
+            addPaginationToQuery(iterable, pagination);
+            documents.addAll(MongoUtils.convertIterableToList(iterable));
+         }
+      }
+
+      return documents;
+   }
+
+   private Bson createFilterForStem(final SearchQueryStem stem, final LinkType linkType) {
+      List<Bson> filters = new ArrayList<>();
+
+      if (stem.containsLinkInstanceIdsQuery()) {
+         filters.add(MongoFilters.idsFilter(stem.getLinkInstanceIds()));
+      }
+
+      if (stem.containsLinkFiltersQuery()) {
+         List<Bson> linkFilters = stem.getLinkFilters().stream()
+                                           .map(this::linkAttributeFilter)
+                                           .filter(Objects::nonNull)
+                                           .collect(Collectors.toList());
+         if (!linkFilters.isEmpty()) {
+            filters.addAll(linkFilters);
+         }
+      }
+
+      if (stem.containsFulltextsQuery()) {
+         Bson fulltextsFilter = createFilterForFulltexts(linkType.getAttributes(), stem.getFulltexts());
+         if (fulltextsFilter != null) {
+            filters.add(fulltextsFilter);
+         }
+      }
+
+      return filters.size() > 0 ? Filters.and(filters) : new Document();
+   }
+
+   private Bson linkAttributeFilter(LinkSearchAttributeFilter filter){
+      return MongoFilters.attributeFilter(filter);
    }
 
    MongoCollection<Document> linkDataCollection(String linkTypeId) {

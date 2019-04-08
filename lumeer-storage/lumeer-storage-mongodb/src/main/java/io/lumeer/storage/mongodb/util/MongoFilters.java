@@ -19,7 +19,9 @@
 
 package io.lumeer.storage.mongodb.util;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Role;
+import io.lumeer.storage.api.filter.SearchAttributeFilter;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
@@ -31,7 +33,9 @@ import org.bson.types.ObjectId;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class MongoFilters {
@@ -58,12 +62,12 @@ public class MongoFilters {
 
    public static Bson permissionsFilter(DatabaseQuery databaseQuery) {
       final List<Bson> filters = databaseQuery.getGroups().stream()
-                                        .map(MongoFilters::groupPermissionsFilter)
-                                        .collect(Collectors.toList());
+                                              .map(MongoFilters::groupPermissionsFilter)
+                                              .collect(Collectors.toList());
 
       filters.addAll(databaseQuery.getUsers().stream()
-            .map(MongoFilters::userPermissionsFilter)
-            .collect(Collectors.toList()));
+                                  .map(MongoFilters::userPermissionsFilter)
+                                  .collect(Collectors.toList()));
 
       return Filters.or(filters);
    }
@@ -87,9 +91,57 @@ public class MongoFilters {
       return Filters.eq(PermissionCodec.ID, name);
    }
 
-   private static Bson entityRolesFilter(Role ...roles) {
+   private static Bson entityRolesFilter(Role... roles) {
       List<String> rolesStrings = Arrays.stream(roles).map(Role::toString).collect(Collectors.toList());
       return Filters.in(PermissionCodec.ROLES, rolesStrings);
+   }
+
+   public static Bson createFilterForFulltexts(java.util.Collection<Attribute> attributes, Set<String> fulltexts) {
+      List<Bson> filters = fulltexts.stream().map(fulltext -> createFilterForFulltext(attributes, fulltext))
+                                    .filter(Objects::nonNull)
+                                    .collect(Collectors.toList());
+
+      return filters.size() > 0 ? Filters.and(filters) : null;
+   }
+
+   private static Bson createFilterForFulltext(java.util.Collection<Attribute> attributes, String fulltext) {
+      List<Attribute> fulltextAttrs = attributes.stream()
+                                                .filter(attr -> attr.getName().toLowerCase().contains(fulltext.toLowerCase()))
+                                                .collect(Collectors.toList());
+
+      List<Bson> attrFilters = attributes.stream()
+                                         .map(attr -> Filters.regex(attr.getId(), Pattern.compile(fulltext, Pattern.CASE_INSENSITIVE)))
+                                         .collect(Collectors.toList());
+
+      Bson contentFilter = !attrFilters.isEmpty() ? Filters.or(attrFilters) : null;
+
+      if (fulltextAttrs.size() > 0) { // we search by presence of the matching attributes
+         Bson attrNamesFilter = Filters.or(fulltextAttrs.stream().map(attr -> Filters.exists(attr.getId())).collect(Collectors.toList()));
+         if (contentFilter != null) {
+            return Filters.or(contentFilter, attrNamesFilter);
+         }
+         return attrNamesFilter;
+      }
+
+      return contentFilter;
+   }
+
+   public static Bson attributeFilter(SearchAttributeFilter filter) {
+      switch (filter.getConditionType()) {
+         case EQUALS:
+            return Filters.eq(filter.getAttributeId(), filter.getValue());
+         case NOT_EQUALS:
+            return Filters.ne(filter.getAttributeId(), filter.getValue());
+         case LOWER_THAN:
+            return Filters.lt(filter.getAttributeId(), filter.getValue());
+         case LOWER_THAN_EQUALS:
+            return Filters.lte(filter.getAttributeId(), filter.getValue());
+         case GREATER_THAN:
+            return Filters.gt(filter.getAttributeId(), filter.getValue());
+         case GREATER_THAN_EQUALS:
+            return Filters.gte(filter.getAttributeId(), filter.getValue());
+      }
+      return null;
    }
 
 }

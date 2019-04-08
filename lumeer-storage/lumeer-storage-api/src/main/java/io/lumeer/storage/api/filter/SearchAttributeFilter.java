@@ -22,22 +22,16 @@ import io.lumeer.api.model.ConditionType;
 
 import java.util.Objects;
 
-public class LinkAttributeFilter {
+public class SearchAttributeFilter {
 
-   private final String linkTypeId;
    private final ConditionType conditionType;
    private final String attributeId;
    private final Object value;
 
-   public LinkAttributeFilter(final String linkTypeId, final ConditionType conditionType, final String attributeId, final Object value) {
-      this.linkTypeId = linkTypeId;
+   public SearchAttributeFilter(final ConditionType conditionType, final String attributeId, final Object value) {
       this.conditionType = conditionType;
       this.attributeId = attributeId;
       this.value = value;
-   }
-
-   public String getLinkTypeId() {
-      return linkTypeId;
    }
 
    public ConditionType getConditionType() {
@@ -57,12 +51,11 @@ public class LinkAttributeFilter {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof LinkAttributeFilter)) {
+      if (!(o instanceof SearchAttributeFilter)) {
          return false;
       }
-      final LinkAttributeFilter that = (LinkAttributeFilter) o;
-      return Objects.equals(getLinkTypeId(), that.getLinkTypeId()) &&
-            getConditionType() == that.getConditionType() &&
+      final SearchAttributeFilter that = (SearchAttributeFilter) o;
+      return getConditionType() == that.getConditionType() &&
             Objects.equals(getValue(), that.getValue()) &&
             Objects.equals(getAttributeId(), that.getAttributeId());
    }
@@ -70,13 +63,12 @@ public class LinkAttributeFilter {
    @Override
    public int hashCode() {
 
-      return Objects.hash(getLinkTypeId(), getConditionType(), getValue(), getAttributeId());
+      return Objects.hash(getConditionType(), getValue(), getAttributeId());
    }
 
    @Override
    public String toString() {
-      return "AttributeFilter{" +
-            "linkTypeId='" + linkTypeId + '\'' +
+      return "CollectionSearchAttributeFilter{" +
             ", conditionType=" + conditionType +
             ", value='" + value + '\'' +
             ", attributeId='" + attributeId + '\'' +
