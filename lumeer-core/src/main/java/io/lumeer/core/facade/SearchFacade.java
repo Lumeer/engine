@@ -36,8 +36,8 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
-import io.lumeer.storage.api.filter.CollectionAttributeFilter;
-import io.lumeer.storage.api.filter.LinkAttributeFilter;
+import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
+import io.lumeer.storage.api.filter.LinkSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
@@ -333,11 +333,11 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private SearchQueryStem cleanStemForCollectionAndLink(SearchQueryStem stem, List<Document> documents, String collectionId, String linkTypeId) {
-      Set<CollectionAttributeFilter> filters = stem.getFilters().stream()
-                                                   .filter(filter -> filter.getCollectionId().equals(collectionId))
-                                                   .collect(Collectors.toSet());
+      Set<CollectionSearchAttributeFilter> filters = stem.getFilters().stream()
+                                                         .filter(filter -> filter.getCollectionId().equals(collectionId))
+                                                         .collect(Collectors.toSet());
 
-      Set<LinkAttributeFilter> linkFilters;
+      Set<LinkSearchAttributeFilter> linkFilters;
       if (linkTypeId != null) {
          linkFilters = stem.getLinkFilters().stream()
                            .filter(filter -> filter.getLinkTypeId().equals(linkTypeId))

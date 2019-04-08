@@ -28,7 +28,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.filter.CollectionAttributeFilter;
+import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.util.MongoFilters;
@@ -186,7 +186,7 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
       return filters.size() > 0 ? Filters.and(filters) : new Document();
    }
 
-   private Bson attributeFilter(CollectionAttributeFilter filter) {
+   private Bson attributeFilter(CollectionSearchAttributeFilter filter) {
       return MongoFilters.attributeFilter(filter);
    }
 

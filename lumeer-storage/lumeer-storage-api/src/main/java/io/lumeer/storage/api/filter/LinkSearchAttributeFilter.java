@@ -16,23 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.storage.api.filter;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.lumeer.api.model.ConditionType;
 
 import java.util.Objects;
 
-public class LinkAttributeFilter extends AttributeFilter {
+public class LinkSearchAttributeFilter extends SearchAttributeFilter {
 
    private final String linkTypeId;
 
-   @JsonCreator
-   public LinkAttributeFilter(@JsonProperty("linkTypeId") final String linkTypeId,
-         @JsonProperty("attributeId") final String attributeId,
-         @JsonProperty("operator") final String operator,
-         @JsonProperty("value") final Object value) {
-      super(attributeId, operator, value);
+   public LinkSearchAttributeFilter(final String linkTypeId, final ConditionType conditionType, final String attributeId, final Object value) {
+      super(conditionType, attributeId, value);
       this.linkTypeId = linkTypeId;
    }
 
@@ -40,35 +35,36 @@ public class LinkAttributeFilter extends AttributeFilter {
       return linkTypeId;
    }
 
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof LinkAttributeFilter)) {
+      if (!(o instanceof LinkSearchAttributeFilter)) {
          return false;
       }
       if (!super.equals(o)) {
          return false;
       }
-      final LinkAttributeFilter that = (LinkAttributeFilter) o;
+      final LinkSearchAttributeFilter that = (LinkSearchAttributeFilter) o;
       return Objects.equals(getAttributeId(), that.getAttributeId()) &&
-            Objects.equals(getOperator(), that.getOperator()) &&
+            Objects.equals(getConditionType(), that.getConditionType()) &&
             Objects.equals(getValue(), that.getValue()) &&
             Objects.equals(getLinkTypeId(), that.getLinkTypeId());
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(super.hashCode(), getAttributeId(), getOperator(), getValue(), getLinkTypeId());
+      return Objects.hash(super.hashCode(), getAttributeId(), getConditionType(), getValue(), getLinkTypeId());
    }
 
    @Override
    public String toString() {
-      return "LinkAttributeFilter{" +
+      return "LinkSearchAttributeFilter{" +
             "linkTypeId='" + getLinkTypeId() + '\'' +
             ", attributeId='" + getAttributeId() + '\'' +
-            ", operator='" + getOperator() + '\'' +
+            ", conditionType='" + getConditionType() + '\'' +
             ", value=" + getValue() +
             '}';
    }

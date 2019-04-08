@@ -22,28 +22,17 @@ import io.lumeer.api.model.ConditionType;
 
 import java.util.Objects;
 
-public class AttributeFilter {
+public class CollectionSearchAttributeFilter extends SearchAttributeFilter {
 
-   private final ConditionType conditionType;
-   private final String attributeId;
-   private final Object value;
+   private final String collectionId;
 
-   public AttributeFilter(final ConditionType conditionType, final String attributeId, final Object value) {
-      this.conditionType = conditionType;
-      this.attributeId = attributeId;
-      this.value = value;
+   public CollectionSearchAttributeFilter(final String collectionId, final ConditionType conditionType, final String attributeId, final Object value) {
+      super(conditionType, attributeId, value);
+      this.collectionId = collectionId;
    }
 
-   public ConditionType getConditionType() {
-      return conditionType;
-   }
-
-   public Object getValue() {
-      return value;
-   }
-
-   public String getAttributeId() {
-      return attributeId;
+   public String getCollectionId() {
+      return collectionId;
    }
 
    @Override
@@ -51,27 +40,32 @@ public class AttributeFilter {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof AttributeFilter)) {
+      if (!(o instanceof CollectionSearchAttributeFilter)) {
          return false;
       }
-      final AttributeFilter that = (AttributeFilter) o;
-      return getConditionType() == that.getConditionType() &&
+      if (!super.equals(o)) {
+         return false;
+      }
+      final CollectionSearchAttributeFilter that = (CollectionSearchAttributeFilter) o;
+      return Objects.equals(getAttributeId(), that.getAttributeId()) &&
+            Objects.equals(getConditionType(), that.getConditionType()) &&
             Objects.equals(getValue(), that.getValue()) &&
-            Objects.equals(getAttributeId(), that.getAttributeId());
+            Objects.equals(getCollectionId(), that.getCollectionId());
    }
 
    @Override
    public int hashCode() {
-
-      return Objects.hash(getConditionType(), getValue(), getAttributeId());
+      return Objects.hash(super.hashCode(), getAttributeId(), getConditionType(), getValue(), getCollectionId());
    }
 
    @Override
    public String toString() {
-      return "CollectionAttributeFilter{" +
-            ", conditionType=" + conditionType +
-            ", value='" + value + '\'' +
-            ", attributeId='" + attributeId + '\'' +
+      return "CollectionSearchAttributeFilter{" +
+            "collectionId='" + getCollectionId() + '\'' +
+            ", attributeId='" + getAttributeId() + '\'' +
+            ", conditionType='" + getConditionType() + '\'' +
+            ", value=" + getValue() +
             '}';
    }
+
 }

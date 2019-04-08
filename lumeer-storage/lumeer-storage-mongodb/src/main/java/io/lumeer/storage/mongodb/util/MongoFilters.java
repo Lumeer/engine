@@ -21,7 +21,7 @@ package io.lumeer.storage.mongodb.util;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Role;
-import io.lumeer.storage.api.filter.AttributeFilter;
+import io.lumeer.storage.api.filter.SearchAttributeFilter;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
@@ -126,7 +126,7 @@ public class MongoFilters {
       return contentFilter;
    }
 
-   public static Bson attributeFilter(AttributeFilter filter) {
+   public static Bson attributeFilter(SearchAttributeFilter filter) {
       switch (filter.getConditionType()) {
          case EQUALS:
             return Filters.eq(filter.getAttributeId(), filter.getValue());

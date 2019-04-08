@@ -18,10 +18,12 @@
  */
 package io.lumeer.storage.api.query;
 
+import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.ConditionType;
+import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.storage.api.filter.CollectionAttributeFilter;
-import io.lumeer.storage.api.filter.LinkAttributeFilter;
+import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
+import io.lumeer.storage.api.filter.LinkSearchAttributeFilter;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,8 +40,8 @@ public class SearchQueryStem {
    private final List<String> linkTypeIds;
    private final Set<String> documentIds;
    private final Set<String> linkInstanceIds;
-   private final Set<CollectionAttributeFilter> filters;
-   private final Set<LinkAttributeFilter> linkFilters;
+   private final Set<CollectionSearchAttributeFilter> filters;
+   private final Set<LinkSearchAttributeFilter> linkFilters;
    private final Set<String> fulltexts;
 
    public SearchQueryStem(QueryStem stem, Set<String> fulltexts) {
@@ -62,14 +64,14 @@ public class SearchQueryStem {
       this.fulltexts = builder.fulltexts;
    }
 
-   private CollectionAttributeFilter convertFilter(final io.lumeer.api.model.CollectionAttributeFilter attr) {
+   private CollectionSearchAttributeFilter convertFilter(final CollectionAttributeFilter attr) {
       ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
-      return new CollectionAttributeFilter(attr.getCollectionId(), conditionType, attr.getAttributeId(), attr.getValue());
+      return new CollectionSearchAttributeFilter(attr.getCollectionId(), conditionType, attr.getAttributeId(), attr.getValue());
    }
 
-   private LinkAttributeFilter convertLinkFilter(final io.lumeer.api.model.LinkAttributeFilter attr) {
+   private LinkSearchAttributeFilter convertLinkFilter(final LinkAttributeFilter attr) {
       ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
-      return new LinkAttributeFilter(attr.getLinkTypeId(), conditionType, attr.getAttributeId(), attr.getValue());
+      return new LinkSearchAttributeFilter(attr.getLinkTypeId(), conditionType, attr.getAttributeId(), attr.getValue());
    }
 
    public String getCollectionId() {
@@ -84,7 +86,7 @@ public class SearchQueryStem {
       return documentIds != null ? Collections.unmodifiableSet(documentIds) : Collections.emptySet();
    }
 
-   public Set<CollectionAttributeFilter> getFilters() {
+   public Set<CollectionSearchAttributeFilter> getFilters() {
       return filters != null ? Collections.unmodifiableSet(filters) : Collections.emptySet();
    }
 
@@ -96,7 +98,7 @@ public class SearchQueryStem {
       return linkInstanceIds != null ? Collections.unmodifiableSet(linkInstanceIds) : Collections.emptySet();
    }
 
-   public Set<LinkAttributeFilter> getLinkFilters() {
+   public Set<LinkSearchAttributeFilter> getLinkFilters() {
       return linkFilters != null ? Collections.unmodifiableSet(linkFilters) : Collections.emptySet();
    }
 
@@ -134,8 +136,8 @@ public class SearchQueryStem {
       private List<String> linkTypeIds;
       private Set<String> documentIds;
       private Set<String> linkInstanceIds;
-      private Set<CollectionAttributeFilter> filters;
-      private Set<LinkAttributeFilter> linkFilters;
+      private Set<CollectionSearchAttributeFilter> filters;
+      private Set<LinkSearchAttributeFilter> linkFilters;
       private Set<String> fulltexts;
 
       private Builder(String collectionId) {
@@ -157,12 +159,12 @@ public class SearchQueryStem {
          return this;
       }
 
-      public Builder filters(Set<CollectionAttributeFilter> filters) {
+      public Builder filters(Set<CollectionSearchAttributeFilter> filters) {
          this.filters = filters;
          return this;
       }
 
-      public Builder linkFilters(Set<LinkAttributeFilter> linkFilters) {
+      public Builder linkFilters(Set<LinkSearchAttributeFilter> linkFilters) {
          this.linkFilters = linkFilters;
          return this;
       }

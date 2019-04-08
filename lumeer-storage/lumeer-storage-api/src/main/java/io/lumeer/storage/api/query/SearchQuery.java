@@ -19,7 +19,7 @@
 package io.lumeer.storage.api.query;
 
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.storage.api.filter.LinkAttributeFilter;
+import io.lumeer.storage.api.filter.LinkSearchAttributeFilter;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +42,7 @@ public class SearchQuery extends DatabaseQuery {
       return stems != null ? Collections.unmodifiableList(stems) : Collections.emptyList();
    }
 
-   public Set<LinkAttributeFilter> getLinkAttributeFilters() {
+   public Set<LinkSearchAttributeFilter> getLinkAttributeFilters() {
       return getStems().stream()
                        .map(SearchQueryStem::getLinkFilters)
                        .flatMap(Set::stream)

@@ -25,7 +25,7 @@ import io.lumeer.api.model.Pagination;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.api.filter.LinkAttributeFilter;
+import io.lumeer.storage.api.filter.LinkSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.util.MongoFilters;
@@ -190,7 +190,7 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
       return filters.size() > 0 ? Filters.and(filters) : new Document();
    }
 
-   private Bson linkAttributeFilter(LinkAttributeFilter filter){
+   private Bson linkAttributeFilter(LinkSearchAttributeFilter filter){
       return MongoFilters.attributeFilter(filter);
    }
 
