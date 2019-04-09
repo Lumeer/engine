@@ -91,7 +91,7 @@ public class QueryStemCodec implements Codec<QueryStem> {
             .append(LINK_TYPE_IDS, value.getLinkTypeIds())
             .append(DOCUMENT_IDS, new ArrayList<>(value.getDocumentIds()))
             .append(FILTERS, new ArrayList<>(value.getFilters()))
-            .append(LINK_FILTERS, new ArrayList<>(value.getFilters()));
+            .append(LINK_FILTERS, new ArrayList<>(value.getLinkFilters()));
 
       documentCodec.encode(writer, document, encoderContext);
    }
