@@ -29,6 +29,7 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.DocumentCodec;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -38,7 +39,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -142,7 +142,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public List<Document> getDocumentsByIds(final String... ids) {
-      Bson filter = Filters.in(DocumentCodec.ID, Arrays.stream(ids).map(ObjectId::new).collect(Collectors.toSet()));
+      Bson filter = MongoFilters.idsFilter(Arrays.stream(ids).collect(Collectors.toSet()));
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 

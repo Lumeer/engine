@@ -20,16 +20,19 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -61,6 +64,9 @@ public class LinkInstanceFacade extends AbstractFacade {
    private LinkDataDao linkDataDao;
 
    @Inject
+   private DocumentDao documentDao;
+
+   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    @Inject
@@ -77,6 +83,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
+      checkDocumentsExists(linkInstance.getDocumentIds());
       var linkType = checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
       linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
@@ -122,7 +129,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       return updatedLinkInstance;
    }
 
-   private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData, final LinkInstance originalLinkInstance){
+   private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData, final LinkInstance originalLinkInstance) {
       linkInstance.setData(newData);
       linkInstance.setUpdateDate(ZonedDateTime.now());
       linkInstance.setUpdatedBy(authenticatedUser.getCurrentUserId());
@@ -204,6 +211,13 @@ public class LinkInstanceFacade extends AbstractFacade {
          permissionsChecker.checkRoleWithView(collection, role, role);
       }
       return linkType;
+   }
+
+   private void checkDocumentsExists(final List<String> documentIds) {
+      List<Document> documents = documentDao.getDocumentsByIds(documentIds.toArray(new String[0]));
+      if (documents.size() < 2) {
+         throw new BadFormatException("Invalid number of document ids in Link: " + documentIds);
+      }
    }
 
 }
