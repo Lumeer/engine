@@ -115,14 +115,20 @@ public class AutoLinkRuleTaskExecutor {
             .build();
 
       final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao().searchLinkInstances(query);
-      ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(query);
-      ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(linkType.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
+      if (!links.isEmpty()) {
+         ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(query);
+         ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(linkType.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
 
-      sendPushNotifications(thisCollection, thatCollection, links, true);
+         sendPushNotifications(thisCollection, thatCollection, links, true);
+      }
    }
 
    private void addLinks(final Document newDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
       final String thisCollection = newDocument.getCollectionId();
+      if (thisCollection.equals(thatCollection)) {
+         return;
+      }
+
       final Object value = newDocument.getData().get(thisAttribute);
       final SearchQueryStem queryStem = SearchQueryStem
             .createBuilder(thatCollection)
@@ -138,13 +144,15 @@ public class AutoLinkRuleTaskExecutor {
       if (targetDocuments.size() > 0) {
          final List<LinkInstance> linkInstances =
                targetDocuments.stream()
-                              .filter(documentId -> !thisCollection.equals(thatCollection) || !documentId.equals(newDocument.getId()))
+                              .filter(documentId -> !documentId.equals(newDocument.getId()))
                               .map(documentId ->
                                     new LinkInstance(rule.getLinkType(), Arrays.asList(newDocument.getId(), documentId)))
                               .collect(Collectors.toList());
 
-         ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
-         sendPushNotifications(thisCollection, thatCollection, linkInstances, false);
+         if (!linkInstances.isEmpty()) {
+            ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
+            sendPushNotifications(thisCollection, thatCollection, linkInstances, false);
+         }
       }
    }
 
