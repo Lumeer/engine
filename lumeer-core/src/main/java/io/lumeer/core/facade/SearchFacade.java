@@ -244,7 +244,9 @@ public class SearchFacade extends AbstractFacade {
             SearchQueryStem cleanedStem = cleanStemForBaseCollection(stem, documents);
 
             List<DataDocument> stemData = dataDao.searchData(cleanedStem, searchQuery.getPagination(), collectionsMap.get(stem.getCollectionId()));
-            Set<Document> documentsByData = convertDataDocumentsToDocuments(stemData);
+            Set<Document> documentsByData = convertDataDocumentsToDocuments(stemData).stream()
+                                                                                     .filter(document -> document.getCollectionId().equals(stem.getCollectionId()))
+                                                                                     .collect(Collectors.toSet());
             data.addAll(getChildDocuments(documentsByData));
          }
       }
