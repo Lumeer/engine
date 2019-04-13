@@ -38,7 +38,7 @@ public class ServiceLimits {
    public static final String DB_SIZE_MB = "dbSizeMb";
    public static final String VALID_UNTIL = "validUntil";
 
-   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 1, 10, 2000, -1, null);
+   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null);
    public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC,99, 99, -1, -1, -1, new Date(0));
 
    private Payment.ServiceLevel serviceLevel;
