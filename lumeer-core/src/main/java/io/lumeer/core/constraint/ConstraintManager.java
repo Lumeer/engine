@@ -43,6 +43,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -321,6 +322,9 @@ public class ConstraintManager {
    }
 
    private Map<String, Constraint> getConstraints(final Collection collection) {
+      if (collection == null) {
+         return Collections.emptyMap();
+      }
       return collection.getAttributes()
                        .stream()
                        .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
@@ -373,6 +377,9 @@ public class ConstraintManager {
    }
 
    private Map<String, Constraint> getConstraints(final LinkType linkType) {
+      if (linkType == null) {
+         return Collections.emptyMap();
+      }
       return linkType.getAttributes()
                      .stream()
                      .filter(attr -> attr.getId() != null && attr.getConstraint() != null)
