@@ -30,6 +30,7 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
@@ -37,7 +38,6 @@ import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
@@ -442,6 +442,46 @@ public class PermissionsChecker {
          final Optional<Organization> organization = workspaceKeeper.getOrganization();
          freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getId() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
+      }
+   }
+
+   public void checkRulesLimit(final Collection collection) {
+      if (skipLimits()) {
+         return;
+      }
+
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      if (limits.getRulesPerCollection() != 0 && collection.getRules().size() > limits.getRulesPerCollection()) {
+         throw new ServiceLimitsExceededException(collection.getRules(), limits.getRulesPerCollection());
+      }
+
+   }
+
+   public void checkFunctionsLimit(final Collection collection) {
+      if (skipLimits()) {
+         return;
+      }
+
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      if (limits.getFunctionsPerCollection() != 0) {
+         long functions = collection.getAttributes().stream().filter(attribute -> attribute.getFunction() != null).count();
+         if (functions > limits.getFunctionsPerCollection()) {
+            throw new ServiceLimitsExceededException(collection.getAttributes(), limits.getFunctionsPerCollection());
+         }
+      }
+   }
+
+   public void checkFunctionsLimit(final LinkType linkType) {
+      if (skipLimits()) {
+         return;
+      }
+
+      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      if (limits.getFunctionsPerCollection() != 0) {
+         long functions = linkType.getAttributes().stream().filter(attribute -> attribute.getFunction() != null).count();
+         if (functions > limits.getFunctionsPerCollection()) {
+            throw new ServiceLimitsExceededException(linkType.getAttributes(), limits.getFunctionsPerCollection());
+         }
       }
    }
 

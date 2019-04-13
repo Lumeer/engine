@@ -37,9 +37,11 @@ public class ServiceLimits {
    public static final String DOCUMENTS = "documents";
    public static final String DB_SIZE_MB = "dbSizeMb";
    public static final String VALID_UNTIL = "validUntil";
+   public static final String RULES_PER_COLLECTION = "rulesPerCollection";
+   public static final String FUNCTIONS_PER_COLLECTION = "functionsPerCollection";
 
-   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC,99, 99, -1, -1, -1, new Date(0));
+   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC,99, 99, -1, -1, -1, new Date(0), 0, 0);
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
@@ -48,6 +50,8 @@ public class ServiceLimits {
    private int documents;
    private int dbSizeMb;
    private Date validUntil;
+   private int rulesPerCollection;
+   private int functionsPerCollection;
 
    static {
        final Calendar c = Calendar.getInstance();
@@ -59,7 +63,9 @@ public class ServiceLimits {
    public ServiceLimits(@JsonProperty(SERVICE_LEVEL) final Payment.ServiceLevel serviceLevel, @JsonProperty(USERS) final int users,
          @JsonProperty(PROJECTS) final int projects, @JsonProperty(FILES) final int files,
          @JsonProperty(DOCUMENTS) final int documents, @JsonProperty(DB_SIZE_MB) final int dbSizeMb,
-         @JsonProperty(VALID_UNTIL) final Date validUntil) {
+         @JsonProperty(VALID_UNTIL) final Date validUntil,
+         @JsonProperty(RULES_PER_COLLECTION) final int rulesPerCollection,
+         @JsonProperty(FUNCTIONS_PER_COLLECTION) final int functionsPerCollection) {
       this.serviceLevel = serviceLevel;
       this.users = users;
       this.projects = projects;
@@ -67,6 +73,8 @@ public class ServiceLimits {
       this.documents = documents;
       this.dbSizeMb = dbSizeMb;
       this.validUntil = validUntil;
+      this.rulesPerCollection = rulesPerCollection;
+      this.functionsPerCollection = functionsPerCollection;
    }
 
    public Payment.ServiceLevel getServiceLevel() {
@@ -97,6 +105,14 @@ public class ServiceLimits {
       return validUntil;
    }
 
+   public int getRulesPerCollection() {
+      return rulesPerCollection;
+   }
+
+   public int getFunctionsPerCollection() {
+      return functionsPerCollection;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -111,13 +127,15 @@ public class ServiceLimits {
             files == that.files &&
             documents == that.documents &&
             dbSizeMb == that.dbSizeMb &&
+            rulesPerCollection == that.rulesPerCollection &&
+            functionsPerCollection == that.functionsPerCollection &&
             serviceLevel == that.serviceLevel &&
             Objects.equals(validUntil, that.validUntil);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(serviceLevel, users, projects, files, documents, dbSizeMb, validUntil);
+      return Objects.hash(serviceLevel, users, projects, files, documents, dbSizeMb, validUntil, rulesPerCollection, functionsPerCollection);
    }
 
    @Override
@@ -130,6 +148,8 @@ public class ServiceLimits {
             ", documents=" + documents +
             ", dbSizeMb=" + dbSizeMb +
             ", validUntil=" + validUntil +
+            ", rulesPerCollection=" + rulesPerCollection +
+            ", functionsPerCollection=" + functionsPerCollection +
             '}';
    }
 }
