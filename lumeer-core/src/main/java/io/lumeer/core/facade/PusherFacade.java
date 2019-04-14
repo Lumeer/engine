@@ -24,6 +24,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -279,7 +280,12 @@ public class PusherFacade extends AbstractFacade {
    private List<Event> createRemoveCollectionNotification(final Collection collection, final Set<String> userIds, final List<View> views, final List<LinkType> linkTypes) {
       List<Event> notifications = new ArrayList<>();
 
+      Set<String> usersWithRights = ResourceUtils.usersAllowedRead(collection);
       for (String user : userIds) { // checks if user has collection in some view
+         if (usersWithRights.contains(user)) {
+            continue;
+         }
+
          List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
          Set<String> collectionIdsInViews = viewsByUser.stream().map(view -> QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes))
                                                        .flatMap(java.util.Collection::stream)
@@ -346,7 +352,7 @@ public class PusherFacade extends AbstractFacade {
 
       List<View> views = viewDao.getAllViews();
       List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(updatedView.getQuery().getLinkTypeIds());
-      List<Collection> collections = new ArrayList<>(getCollectionsMapFromLinkTypes(linkTypes).values());
+      List<Collection> collections = getCollectionsByQuery(updatedView.getQuery(), linkTypes);
 
       List<Event> notifications = new ArrayList<>();
 
@@ -373,6 +379,11 @@ public class PusherFacade extends AbstractFacade {
       if (notifications.size() > 0) {
          sendNotificationsBatch(notifications);
       }
+   }
+
+   private List<Collection> getCollectionsByQuery(Query query, List<LinkType> linkTypes) {
+      Set<String> collectionIds = QueryUtils.getQueryCollectionIds(query, linkTypes);
+      return collectionDao.getCollectionsByIds(collectionIds);
    }
 
    private Set<String> getOrganizationManagers() {
@@ -544,6 +555,8 @@ public class PusherFacade extends AbstractFacade {
    private void documentNotification(final Document document, final String eventSuffix) {
       if (isEnabled()) {
          try {
+            Collection collection = collectionFacade.getCollection(document.getCollectionId());
+            constraintManager.decodeDataTypes(collection, document.getData());
             sendNotificationsByUsers(document, collectionFacade.getUsersIdsWithAccess(document.getCollectionId()), eventSuffix);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -699,7 +712,9 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void sendNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
-      Set<String> userIds = getUserIdsForLinkType(linkTypeFacade.getLinkType(linkTypeId));
+      LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
+      constraintManager.decodeDataTypes(linkType, linkInstance.getData());
+      Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);
    }
 
@@ -761,20 +776,8 @@ public class PusherFacade extends AbstractFacade {
    private void sendNotificationsBatch(List<Event> notifications) {
       if (isEnabled() && notifications != null && notifications.size() > 0) {
          notifications.forEach(event -> {
-            final Object data;
             if (event.getData() instanceof ObjectWithParent) {
                ((ObjectWithParent) event.getData()).setCorrelationId(requestDataKeeper.getCorrelationId());
-               data = ((ObjectWithParent) event.getData()).getObject();
-            } else {
-               data = event.getData();
-            }
-
-            if (data instanceof Document) {
-               final Document doc = (Document) data;
-               constraintManager.decodeDataTypes(collectionFacade.getCollection(doc.getCollectionId()), doc.getData());
-            } else if (data instanceof LinkInstance) {
-               final LinkInstance link = (LinkInstance) data;
-               constraintManager.decodeDataTypes(linkTypeFacade.getLinkType(link.getLinkTypeId()), link.getData());
             }
          });
 
@@ -787,7 +790,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private <T extends Resource> T filterUserRoles(final String userId, final T resource) {
-      return this.keepOnlyActualUserRoles(resource.copy(), userId);
+      return this.mapResource(resource.copy(), userId);
    }
 
    private static Set<String> intersection(Set<Set<String>> sets) {
