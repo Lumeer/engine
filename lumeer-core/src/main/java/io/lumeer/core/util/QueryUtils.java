@@ -18,7 +18,7 @@ public class QueryUtils {
       Set<String> collectionIds = new HashSet<>(query.getCollectionIds());
       Set<String> linkTypeIds = query.getLinkTypeIds();
       Set<String> collectionIdsInLinks = linkTypes.stream().filter(linkType -> linkTypeIds.contains(linkType.getId()))
-                                                  .map(linkType -> linkType.getCollectionIds())
+                                                  .map(LinkType::getCollectionIds)
                                                   .flatMap(Collection::stream)
                                                   .collect(Collectors.toSet());
       collectionIds.addAll(collectionIdsInLinks);
