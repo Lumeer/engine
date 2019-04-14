@@ -24,7 +24,6 @@ import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
-import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -399,6 +398,9 @@ public class ConstraintManager {
    }
 
    private void processData(final DataDocument data, final Map<String, Constraint> constraints, final BiFunction<Object, Constraint, Object> processor) {
+      if (data == null) {
+         return;
+      }
       data.keySet().forEach(key -> {
          if (!DataDocument.ID.equals(key)) {
             data.put(key, processor.apply(data.get(key), constraints.get(key)));

@@ -37,6 +37,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -290,10 +291,10 @@ public class UserNotificationFacade extends AbstractFacade {
    }
 
    private boolean isResourceUpdated(final Resource original, final Resource updated) {
-      boolean commonCheck = ((original.getCode() == null && updated.getCode() == null) || original.getCode().equals(updated.getCode()))
-            && original.getColor().equals(updated.getColor())
-            && original.getIcon().equals(updated.getIcon())
-            && ((original.getName() == null && updated.getName() == null) || original.getName().equals(updated.getName()))
+      boolean commonCheck = Objects.equals(original.getCode(), updated.getCode())
+            && Objects.equals(original.getColor(), updated.getColor())
+            && Objects.equals(original.getIcon(), updated.getIcon())
+            && Objects.equals(original.getName(), updated.getName())
             && (original.getType() != ResourceType.VIEW || (((View) original).getPerspective().equals(((View) updated).getPerspective())));
 
       return !commonCheck;
