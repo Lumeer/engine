@@ -31,4 +31,8 @@ public abstract class Utils {
          throw new BadFormatException("Invalid characters. Only A-Z, a-z, 0-9, _ are allowed in code.");
       }
    }
+
+   public static boolean isEmpty(final String str) {
+      return str == null || "".equals(str);
+   }
 }

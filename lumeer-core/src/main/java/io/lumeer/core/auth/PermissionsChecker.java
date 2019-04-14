@@ -39,6 +39,7 @@ import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.util.QueryUtils;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -384,7 +385,7 @@ public class PermissionsChecker {
          return;
       }
 
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      final ServiceLimits limits = getServiceLimits();
 
       if (resource.getType().equals(ResourceType.PROJECT)) {
          if (limits.getProjects() > 0 && limits.getProjects() <= currentCount) {
@@ -414,7 +415,7 @@ public class PermissionsChecker {
          return;
       }
 
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      final ServiceLimits limits = getServiceLimits();
       final long documentsCount = countDocuments();
 
       if (limits.getDocuments() > 0 && documentsCount >= limits.getDocuments()) {
@@ -435,7 +436,7 @@ public class PermissionsChecker {
          return;
       }
 
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      final ServiceLimits limits = getServiceLimits();
       final long documentsCount = countDocuments();
 
       if (limits.getDocuments() > 0 && documentsCount + documents.size() > limits.getDocuments()) {
@@ -450,7 +451,7 @@ public class PermissionsChecker {
          return;
       }
 
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      final ServiceLimits limits = getServiceLimits();
       if (limits.getRulesPerCollection() != 0 && collection.getRules().size() > limits.getRulesPerCollection()) {
          throw new ServiceLimitsExceededException(collection.getRules(), limits.getRulesPerCollection());
       }
@@ -462,9 +463,9 @@ public class PermissionsChecker {
          return;
       }
 
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      final ServiceLimits limits = getServiceLimits();
       if (limits.getFunctionsPerCollection() != 0) {
-         long functions = collection.getAttributes().stream().filter(attribute -> attribute.getFunction() != null).count();
+         long functions = collection.getAttributes().stream().filter(attribute -> attribute.getFunction() != null && !Utils.isEmpty(attribute.getFunction().getJs())).count();
          if (functions > limits.getFunctionsPerCollection()) {
             throw new ServiceLimitsExceededException(collection.getAttributes(), limits.getFunctionsPerCollection());
          }
@@ -476,13 +477,17 @@ public class PermissionsChecker {
          return;
       }
 
-      final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      final ServiceLimits limits = getServiceLimits();
       if (limits.getFunctionsPerCollection() != 0) {
-         long functions = linkType.getAttributes().stream().filter(attribute -> attribute.getFunction() != null).count();
+         long functions = linkType.getAttributes().stream().filter(attribute -> attribute.getFunction() != null && !Utils.isEmpty(attribute.getFunction().getJs())).count();
          if (functions > limits.getFunctionsPerCollection()) {
             throw new ServiceLimitsExceededException(linkType.getAttributes(), limits.getFunctionsPerCollection());
          }
       }
+   }
+
+   private ServiceLimits getServiceLimits() {
+      return paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
    }
 
    private long countDocuments() {
