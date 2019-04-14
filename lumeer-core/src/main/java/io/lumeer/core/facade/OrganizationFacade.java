@@ -220,7 +220,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    private void checkSystemPermission() {
       String currentUserEmail = authenticatedUser.getUserEmail();
-      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "martin@vecerovi.com", "kubedo8@gmail.com", "livoratom@gmail.com", "aturing@lumeer.io");
+      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "mvecera@lumeer.io", "kubedo8@gmail.com", "livoratom@gmail.com", "aturing@lumeer.io");
       if (!allowedEmails.contains(currentUserEmail)) {
          throw new NoSystemPermissionException();
       }
