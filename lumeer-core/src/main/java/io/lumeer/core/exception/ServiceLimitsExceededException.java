@@ -19,8 +19,14 @@
 package io.lumeer.core.exception;
 
 import io.lumeer.api.exception.LumeerException;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Used when user tries to create more resources than allowed.
@@ -47,6 +53,21 @@ public class ServiceLimitsExceededException extends LumeerException {
 
    public ServiceLimitsExceededException(final int usersLimit) {
       super("Cannot invite another user. You are only allowed to have " + usersLimit + " users. Update your service level in organization settings.");
+      this.resource = null;
+   }
+
+   public ServiceLimitsExceededException(final Map<String, Rule> rules, final int rulesLimit) {
+      super("Cannot create more rules. You are only allowed to have " + rulesLimit + " rule per collection. Update your service level in organization settings.");
+      this.resource = null;
+   }
+
+   public ServiceLimitsExceededException(final Set<Attribute> attributes, final int functionsLimit) {
+      super("Cannot create more functions. You are only allowed to have " + functionsLimit + " functions per collection. Update your service level in organization settings.");
+      this.resource = null;
+   }
+
+   public ServiceLimitsExceededException(final List<Attribute> attributes, final int functionsLimit) {
+      super("Cannot create more functions. You are only allowed to have " + functionsLimit + " functions per link type. Update your service level in organization settings.");
       this.resource = null;
    }
 

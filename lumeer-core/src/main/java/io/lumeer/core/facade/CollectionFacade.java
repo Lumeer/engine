@@ -79,6 +79,8 @@ public class CollectionFacade extends AbstractFacade {
       checkProjectWriteRole();
       long collectionsCount = collectionDao.getCollectionsCount();
       permissionsChecker.checkCreationLimits(collection, collectionsCount);
+      permissionsChecker.checkRulesLimit(collection);
+      permissionsChecker.checkFunctionsLimit(collection);
 
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
@@ -90,6 +92,8 @@ public class CollectionFacade extends AbstractFacade {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = storedCollection.copy();
       permissionsChecker.checkRole(storedCollection, Role.MANAGE);
+      permissionsChecker.checkRulesLimit(collection);
+      permissionsChecker.checkFunctionsLimit(collection);
 
       keepUnmodifiableFields(collection, storedCollection);
       collection.setLastTimeUsed(ZonedDateTime.now());
@@ -206,6 +210,7 @@ public class CollectionFacade extends AbstractFacade {
          collection.setLastAttributeNum(freeNum);
       }
 
+      permissionsChecker.checkFunctionsLimit(collection);
       collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 

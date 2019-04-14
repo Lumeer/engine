@@ -63,6 +63,8 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    private static final String CODE1 = "TPROJ1";
    private static final String CODE2 = "TPROJ2";
+   private static final String CODE3 = "TPROJ3";
+   private static final String CODE4 = "TPROJ4";
 
    private static final String NAME = "Testing project";
    private static final String COLOR = "#ff0000";
@@ -350,6 +352,14 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
       response = createProjectViaRest(CODE2);
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      response = createProjectViaRest(CODE3);
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      response = createProjectViaRest(CODE4);
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.PAYMENT_REQUIRED);
    }

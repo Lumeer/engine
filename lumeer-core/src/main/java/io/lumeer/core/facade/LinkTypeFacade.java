@@ -59,6 +59,7 @@ public class LinkTypeFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    public LinkType createLinkType(LinkType linkType) {
+      permissionsChecker.checkFunctionsLimit(linkType);
       checkLinkTypePermission(linkType.getCollectionIds());
 
       linkType.setLastAttributeNum(0);
@@ -71,6 +72,7 @@ public class LinkTypeFacade extends AbstractFacade {
       Set<String> collectionIds = new HashSet<>(linkType.getCollectionIds());
       collectionIds.addAll(storedLinkType.getCollectionIds());
 
+      permissionsChecker.checkFunctionsLimit(linkType);
       checkLinkTypePermission(collectionIds);
       keepUnmodifiableFields(linkType, storedLinkType);
 
@@ -126,6 +128,7 @@ public class LinkTypeFacade extends AbstractFacade {
          linkType.setLastAttributeNum(freeNum);
       }
 
+      permissionsChecker.checkFunctionsLimit(linkType);
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
 
       return attributes;
