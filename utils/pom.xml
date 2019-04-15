@@ -44,7 +44,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
       <version.velocity>1.7</version.velocity>
-      <version.puppycrawl>7.1</version.puppycrawl>
+      <version.puppycrawl>8.19</version.puppycrawl>
 
       <java.level>10</java.level>
    </properties>
