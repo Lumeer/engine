@@ -53,7 +53,7 @@ public class MongoFilters {
       if (!objectIds.isEmpty()) {
          return Filters.in(ID, objectIds);
       }
-      return new Document();
+      return null;
    }
 
    public static Bson codeFilter(String code) {

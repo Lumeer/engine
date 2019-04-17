@@ -77,15 +77,11 @@ abstract class AbstractFacade {
       if (permissionsChecker.hasRole(resource, Role.MANAGE, userId)) {
          return resource;
       }
-      return keepOnlyActualUserRoles(resource);
+      return keepOnlyActualUserRoles(resource, userId);
    }
 
    protected <T extends Resource> T mapResource(final T resource) {
       return mapResource(resource, authenticatedUser.getCurrentUserId());
-   }
-
-   private <T extends Resource> T keepOnlyActualUserRoles(final T resource) {
-      return keepOnlyActualUserRoles(resource, authenticatedUser.getCurrentUserId());
    }
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {

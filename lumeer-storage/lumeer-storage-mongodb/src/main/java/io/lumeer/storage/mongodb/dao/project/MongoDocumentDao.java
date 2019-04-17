@@ -43,6 +43,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -142,8 +143,11 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
    @Override
    public List<Document> getDocumentsByIds(final String... ids) {
-      Bson filter = MongoFilters.idsFilter(Arrays.stream(ids).collect(Collectors.toSet()));
-      return databaseCollection().find(filter).into(new ArrayList<>());
+      Bson idsFilter = MongoFilters.idsFilter(Arrays.stream(ids).collect(Collectors.toSet()));
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      return databaseCollection().find(idsFilter).into(new ArrayList<>());
    }
 
    @Override
