@@ -49,6 +49,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -148,7 +149,11 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
 
    @Override
    public List<DataDocument> getData(final String collectionId, final Set<String> documentIds) {
-      return MongoUtils.convertIterableToList(dataCollection(collectionId).find(MongoFilters.idsFilter(documentIds)));
+      Bson idsFilter = MongoFilters.idsFilter(documentIds);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      return MongoUtils.convertIterableToList(dataCollection(collectionId).find(idsFilter));
    }
 
    @Override
@@ -163,7 +168,10 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
       List<Bson> filters = new ArrayList<>();
 
       if (stem.containsDocumentIdsQuery()) {
-         filters.add(MongoFilters.idsFilter(stem.getDocumentIds()));
+         Bson idsFilter = MongoFilters.idsFilter(stem.getDocumentIds());
+         if (idsFilter != null) {
+            filters.add(idsFilter);
+         }
       }
 
       if (stem.containsFiltersQuery()) {

@@ -243,11 +243,14 @@ public class SearchFacade extends AbstractFacade {
          } else {
             SearchQueryStem cleanedStem = cleanStemForBaseCollection(stem, documents);
 
-            List<DataDocument> stemData = dataDao.searchData(cleanedStem, searchQuery.getPagination(), collectionsMap.get(stem.getCollectionId()));
-            Set<Document> documentsByData = convertDataDocumentsToDocuments(stemData).stream()
-                                                                                     .filter(document -> document.getCollectionId().equals(stem.getCollectionId()))
-                                                                                     .collect(Collectors.toSet());
-            data.addAll(getChildDocuments(documentsByData));
+            Collection collection = collectionsMap.get(stem.getCollectionId());
+            if (collection != null) {
+               List<DataDocument> stemData = dataDao.searchData(cleanedStem, searchQuery.getPagination(), collection);
+               Set<Document> documentsByData = convertDataDocumentsToDocuments(stemData).stream()
+                                                                                        .filter(document -> document.getCollectionId().equals(stem.getCollectionId()))
+                                                                                        .collect(Collectors.toSet());
+               data.addAll(getChildDocuments(documentsByData));
+            }
          }
       }
 

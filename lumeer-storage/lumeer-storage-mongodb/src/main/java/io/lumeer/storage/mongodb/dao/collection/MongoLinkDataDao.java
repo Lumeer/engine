@@ -46,6 +46,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -112,7 +113,11 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
 
    @Override
    public void deleteData(final String linkTypeId, final Set<String> linkInstanceIds) {
-      linkDataCollection(linkTypeId).deleteMany(idsFilter(linkInstanceIds));
+      Bson filter = MongoFilters.idsFilter(linkInstanceIds);
+      if (filter == null) {
+         return;
+      }
+      linkDataCollection(linkTypeId).deleteMany(filter);
    }
 
    @Override
@@ -137,7 +142,11 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
 
    @Override
    public List<DataDocument> getData(final String linkTypeId, final Set<String> linkInstanceIds) {
-      return MongoUtils.convertIterableToList(linkDataCollection(linkTypeId).find(MongoFilters.idsFilter(linkInstanceIds)));
+      Bson idsFilter = MongoFilters.idsFilter(linkInstanceIds);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      return MongoUtils.convertIterableToList(linkDataCollection(linkTypeId).find(idsFilter));
    }
 
    @Override
@@ -151,7 +160,7 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    @Override
    public List<DataDocument> searchDataByFulltexts(final Set<String> fulltexts, final Pagination pagination, final List<LinkType> linkTypes) {
       List<DataDocument> documents = new ArrayList<>();
-      for (LinkType linkType: linkTypes) {
+      for (LinkType linkType : linkTypes) {
          Bson filter = createFilterForFulltexts(linkType.getAttributes(), fulltexts);
          if (filter != null) {
             FindIterable<Document> iterable = linkDataCollection(linkType.getId()).find(filter);
@@ -167,14 +176,17 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
       List<Bson> filters = new ArrayList<>();
 
       if (stem.containsLinkInstanceIdsQuery()) {
-         filters.add(MongoFilters.idsFilter(stem.getLinkInstanceIds()));
+         Bson idsFilter = MongoFilters.idsFilter(stem.getLinkInstanceIds());
+         if (idsFilter != null) {
+            filters.add(idsFilter);
+         }
       }
 
       if (stem.containsLinkFiltersQuery()) {
          List<Bson> linkFilters = stem.getLinkFilters().stream()
-                                           .map(this::linkAttributeFilter)
-                                           .filter(Objects::nonNull)
-                                           .collect(Collectors.toList());
+                                      .map(this::linkAttributeFilter)
+                                      .filter(Objects::nonNull)
+                                      .collect(Collectors.toList());
          if (!linkFilters.isEmpty()) {
             filters.addAll(linkFilters);
          }
@@ -190,7 +202,7 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
       return filters.size() > 0 ? Filters.and(filters) : new Document();
    }
 
-   private Bson linkAttributeFilter(LinkSearchAttributeFilter filter){
+   private Bson linkAttributeFilter(LinkSearchAttributeFilter filter) {
       return MongoFilters.attributeFilter(filter);
    }
 
