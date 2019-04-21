@@ -23,6 +23,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ProjectFacade;
+import io.lumeer.core.facade.TemplateFacade;
+import io.lumeer.core.template.TemplateType;
 
 import java.util.List;
 import java.util.Set;
@@ -55,6 +57,9 @@ public class ProjectService extends AbstractService {
    @Inject
    private ProjectFacade projectFacade;
 
+   @Inject
+   private TemplateFacade templateFacade;
+
    @PostConstruct
    public void init() {
       workspaceKeeper.setOrganization(organizationId);
@@ -65,6 +70,18 @@ public class ProjectService extends AbstractService {
       Project storedProject = projectFacade.createProject(project);
       storedProject.setCollectionsCount(0);
       return storedProject;
+   }
+
+   @POST
+   @Path("templates/${projectId}/${template}")
+   public Response installTemplate(@PathParam("projectId") final String projectId, final String templateId) {
+      if (workspaceKeeper.getOrganization().isPresent()) {
+         final Project project = projectFacade.getProjectById(projectId);
+         templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), project, TemplateType.valueOf(templateId), getFirstUrlPathPart());
+         return Response.ok().build();
+      }
+
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
    }
 
    @PUT
