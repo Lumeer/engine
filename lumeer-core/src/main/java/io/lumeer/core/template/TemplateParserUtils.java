@@ -21,13 +21,15 @@ package io.lumeer.core.template;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.model.common.WithId;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -35,7 +37,7 @@ import java.util.List;
  */
 public class TemplateParserUtils {
 
-   static List<Attribute> getAttributes(final JSONArray a) {
+   public static List<Attribute> getAttributes(final JSONArray a) {
       final var attrs = new ArrayList<Attribute>();
 
       a.forEach(o -> {
@@ -60,7 +62,45 @@ public class TemplateParserUtils {
       return new Constraint(ConstraintType.valueOf((String) o.get("type")), o.get("config"));
    }
 
-   static String getId(final JSONObject o) {
+   public static String getId(final JSONObject o) {
       return (String) o.get("_id");
+   }
+
+   public static String getDate(final DayOfWeek preferredDay, final String relative) {
+      LocalDateTime now = LocalDateTime.now();
+
+      if (relative != null && !"".equals(relative)) {
+         int offset = Integer.parseInt(relative.substring(1, relative.length() - 1));
+         TemporalUnit temporal = getTemporalUnit(relative.substring(relative.length() - 1));
+
+         if (relative.startsWith("-")) {
+            now = now.minus(offset, temporal);
+         } else if (relative.startsWith("+")) {
+            now = now.plus(offset, temporal);
+         }
+      }
+
+      if (preferredDay != null) {
+         while (!now.getDayOfWeek().equals(preferredDay)) {
+            now = now.plusDays(1);
+         }
+      }
+
+      return now.toString();
+   }
+
+   private static TemporalUnit getTemporalUnit(final String unit) {
+      switch (unit) {
+         case "y":
+            return ChronoUnit.YEARS;
+         case "m":
+            return ChronoUnit.MONTHS;
+         case "w":
+            return ChronoUnit.WEEKS;
+         case "d":
+            return ChronoUnit.DAYS;
+         default:
+            return ChronoUnit.HOURS;
+      }
    }
 }
