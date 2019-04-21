@@ -30,13 +30,12 @@ import java.util.List;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class CollectionCreator {
+public class CollectionCreator extends WithIdCreator {
 
-   private final TemplateParser templateParser;
    private final CollectionFacade collectionFacade;
 
    private CollectionCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade) {
-      this.templateParser = templateParser;
+      super(templateParser);
       this.collectionFacade = collectionFacade;
    }
 
@@ -70,7 +69,7 @@ public class CollectionCreator {
    private void createAttributes(final Collection collection, final JSONObject o) {
       final java.util.Collection<Attribute> storedAttributes = collectionFacade.createCollectionAttributes(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
       final List<Attribute> templateAttributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"));
-      TemplateParserUtils.registerAttributes(templateParser, collection, storedAttributes, templateAttributes);
+      registerAttributes(collection, storedAttributes, templateAttributes);
    }
 
    private Collection getCollection(final JSONObject o) {

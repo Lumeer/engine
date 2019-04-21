@@ -35,16 +35,6 @@ import java.util.List;
  */
 public class TemplateParserUtils {
 
-   static void registerAttributes(final TemplateParser templateParser, final WithId resource, final java.util.Collection<Attribute> storedAttributes, final java.util.Collection<Attribute> templateAttributes) {
-      final Iterator<Attribute> i1 = storedAttributes.iterator();
-      final Iterator<Attribute> i2 = templateAttributes.iterator();
-      while (i1.hasNext() && i2.hasNext()) {
-         var a1 = i1.next();
-         var a2 = i2.next();
-         templateParser.getDict().addAttribute(resource, a2.getId(), a1);
-      }
-   }
-
    static List<Attribute> getAttributes(final JSONArray a) {
       final var attrs = new ArrayList<Attribute>();
 

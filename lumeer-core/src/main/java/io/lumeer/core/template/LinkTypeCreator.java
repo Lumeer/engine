@@ -30,13 +30,12 @@ import java.util.List;
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
-public class LinkTypeCreator {
+public class LinkTypeCreator extends WithIdCreator {
 
-   private final TemplateParser templateParser;
    private final LinkTypeFacade linkTypeFacade;
 
    private LinkTypeCreator(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade) {
-      this.templateParser = templateParser;
+      super(templateParser);
       this.linkTypeFacade = linkTypeFacade;
    }
 
@@ -61,7 +60,7 @@ public class LinkTypeCreator {
    private void createAttributes(final LinkType linkType, final JSONObject o) {
       final java.util.Collection<Attribute> storedAttributes = linkTypeFacade.createLinkTypeAttributes(linkType.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
       final List<Attribute> templateAttributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"));
-      TemplateParserUtils.registerAttributes(templateParser, linkType, storedAttributes, templateAttributes);
+      registerAttributes(linkType, storedAttributes, templateAttributes);
    }
 
    private LinkType getLinkType(final JSONObject o) {
