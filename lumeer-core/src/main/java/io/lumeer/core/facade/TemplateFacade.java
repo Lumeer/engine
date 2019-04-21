@@ -21,9 +21,13 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.core.template.CollectionCreator;
+import io.lumeer.core.template.DocumentCreator;
+import io.lumeer.core.template.FunctionAndRuleCreator;
+import io.lumeer.core.template.LinkInstanceCreator;
 import io.lumeer.core.template.LinkTypeCreator;
 import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.TemplateType;
+import io.lumeer.core.template.ViewCreator;
 
 import javax.inject.Inject;
 
@@ -43,5 +47,9 @@ public class TemplateFacade extends AbstractFacade {
 
       CollectionCreator.createCollections(templateParser, collectionFacade);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
+      DocumentCreator.createDocuments(templateParser);
+      LinkInstanceCreator.createLinkInstances(templateParser);
+      ViewCreator.createViews(templateParser);
+      FunctionAndRuleCreator.createFunctionAndRules(templateParser);
    }
 }

@@ -39,7 +39,7 @@ public class CollectionCreator extends WithIdCreator {
       this.collectionFacade = collectionFacade;
    }
 
-   public void createCollections(final TemplateParser templateParser, final CollectionFacade collectionFacade) {
+   public static void createCollections(final TemplateParser templateParser, final CollectionFacade collectionFacade) {
       final CollectionCreator creator = new CollectionCreator(templateParser, collectionFacade);
       creator.createCollections();
    }
