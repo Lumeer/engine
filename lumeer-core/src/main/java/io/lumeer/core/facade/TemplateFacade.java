@@ -20,14 +20,28 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.core.template.CollectionCreator;
+import io.lumeer.core.template.LinkTypeCreator;
+import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.TemplateType;
+
+import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class TemplateFacade extends AbstractFacade {
 
-   public void installTemplate(final Organization organization, final Project project, final TemplateType templateType, final String language) {
+   @Inject
+   private CollectionFacade collectionFacade;
 
+   @Inject
+   private LinkTypeFacade linkTypeFacade;
+
+   public void installTemplate(final Organization organization, final Project project, final TemplateType templateType, final String language) {
+      final TemplateParser templateParser = new TemplateParser(templateType, language);
+
+      CollectionCreator.createCollections(templateParser, collectionFacade);
+      LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
    }
 }

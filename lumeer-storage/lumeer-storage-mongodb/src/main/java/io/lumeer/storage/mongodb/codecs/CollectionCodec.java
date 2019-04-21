@@ -53,6 +53,7 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
    public static final String DEFAULT_ATTRIBUTE_ID = "defaultAttributeId";
    public static final String RULES = "rules";
+   public static final String DATA_DESCRIPTION = "dataDescription";
 
    public CollectionCodec(final CodecRegistry registry) {
       super(registry);
@@ -83,8 +84,9 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
       Integer lastAttributeNum = bson.getInteger(LAST_ATTRIBUTE_NUM);
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
       String defaultAttributeId = bson.getString(DEFAULT_ATTRIBUTE_ID);
+      String dataDescription = bson.getString(DATA_DESCRIPTION);
 
-      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), attributes, rules);
+      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), attributes, rules, dataDescription);
       collection.setId(resource.getId());
       collection.setDocumentsCount(documentsCount);
       if (lastTimeUsed != null) {
@@ -105,7 +107,8 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
             .append(DEFAULT_ATTRIBUTE_ID, collection.getDefaultAttributeId())
             .append(LAST_ATTRIBUTE_NUM, collection.getLastAttributeNum())
             .append(ATTRIBUTES, collection.getAttributes())
-            .append(RULES, collection.getRules());
+            .append(RULES, collection.getRules())
+            .append(DATA_DESCRIPTION, collection.getDataDescription());
 
       if (collection.getLastTimeUsed() != null) {
          bson.append(LAST_TIME_USED, Date.from(collection.getLastTimeUsed().toInstant()));

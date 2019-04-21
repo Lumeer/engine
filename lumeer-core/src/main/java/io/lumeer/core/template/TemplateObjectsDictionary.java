@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.template;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
@@ -39,6 +40,7 @@ public class TemplateObjectsDictionary {
    private final Map<String, View> views = new HashMap<>();
    private final Map<String, Document> documents = new HashMap<>();
    private final Map<String, LinkInstance> linkInstances = new HashMap<>();
+   private final Map<String, Map<String, Attribute>> attributes = new HashMap<>();
 
    public void addCollection(final String templateId, final Collection collection) {
       collections.put(templateId, collection);
@@ -98,6 +100,30 @@ public class TemplateObjectsDictionary {
 
    public Document getDocument(final String templateId) {
       return documents.get(templateId);
+   }
+
+   public void addAttribute(final WithId resource, final String templateId, final Attribute attribute) {
+      if (attributes.get(resource.getId()) == null) {
+         attributes.put(resource.getId(), new HashMap<>());
+      }
+      attributes.get(resource.getId()).put(templateId, attribute);
+   }
+
+   public String getAttributeId(final WithId resource, final String templateId) {
+      if (attributes.get(resource.getId()) != null) {
+         var attr = attributes.get(resource.getId()).get(templateId);
+         return attr != null ? attr.getId() : null;
+      }
+
+      return null;
+   }
+
+   public Attribute getAttribute(final WithId resource, final String templateId) {
+      if (attributes.get(resource.getId()) != null) {
+         return attributes.get(resource.getId()).get(templateId);
+      }
+
+      return null;
    }
 
    private String getSafeId(final WithId withId) {

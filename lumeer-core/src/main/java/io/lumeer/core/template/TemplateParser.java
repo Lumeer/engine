@@ -51,4 +51,12 @@ public class TemplateParser {
          throw new TemplateNotAvailableException(e);
       }
    }
+
+   public TemplateObjectsDictionary getDict() {
+      return dict;
+   }
+
+   public JSONObject getTemplate() {
+      return template;
+   }
 }

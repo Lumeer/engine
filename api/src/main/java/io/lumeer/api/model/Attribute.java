@@ -77,6 +77,10 @@ public class Attribute {
       return constraint;
    }
 
+   public void setConstraint(final Constraint constraint) {
+      this.constraint = constraint;
+   }
+
    public Function getFunction() {
       return function;
    }

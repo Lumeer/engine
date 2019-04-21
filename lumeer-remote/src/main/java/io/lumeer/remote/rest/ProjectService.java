@@ -75,6 +75,8 @@ public class ProjectService extends AbstractService {
    @POST
    @Path("templates/${projectId}/${template}")
    public Response installTemplate(@PathParam("projectId") final String projectId, final String templateId) {
+      workspaceKeeper.setWorkspace(organizationId, projectId);
+
       if (workspaceKeeper.getOrganization().isPresent()) {
          final Project project = projectFacade.getProjectById(projectId);
          templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), project, TemplateType.valueOf(templateId), getFirstUrlPathPart());
