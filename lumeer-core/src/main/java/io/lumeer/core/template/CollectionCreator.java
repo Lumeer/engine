@@ -24,6 +24,9 @@ import io.lumeer.core.facade.CollectionFacade;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
@@ -43,15 +46,48 @@ public class CollectionCreator extends WithIdCreator {
 
    private void createCollections() {
       final JSONArray collections = (JSONArray) templateParser.template.get("collections");
+      var collectionsPrefix = getCollectionsPrefix(collections);
+
       collections.forEach(o -> {
          final String templateId = TemplateParserUtils.getId((JSONObject) o);
          final Collection collection = getCollection((JSONObject) o);
+         if (!"".equals(collectionsPrefix)) {
+            collection.setName(collectionsPrefix + "_" + collection.getName());
+         }
          final Collection storedCollection = collectionFacade.createCollection(collection);
          templateParser.getDict().addCollection(templateId, storedCollection);
 
          createAttributes(storedCollection, (JSONObject) o);
          setDefaultAttributeId(storedCollection, (JSONObject) o);
       });
+   }
+
+   @SuppressWarnings("unchecked")
+   private String getCollectionsPrefix(JSONArray a) {
+      var metaPrefix = (String) ((JSONObject) templateParser.getTemplate().get("templateMeta")).get("prefix");
+      var names = (List<String>) a.stream().map(o -> (String) ((JSONObject) o).get(Collection.NAME)).collect(Collectors.toList());
+
+      if (!collectionNameExists(names)) {
+         return "";
+      }
+
+      var withPrefix = names.stream().map(name -> metaPrefix + "_" + name).collect(Collectors.toList());
+      if (!collectionNameExists(withPrefix)) {
+         return metaPrefix;
+      }
+
+      var counter = 0;
+      do {
+         counter++;
+         final var counterCopy = counter;
+         withPrefix = names.stream().map(name -> metaPrefix + counterCopy + "_" + name).collect(Collectors.toList());
+      } while (collectionNameExists(withPrefix));
+
+      return metaPrefix + counter;
+   }
+
+   private boolean collectionNameExists(final List<String> names) {
+      return collectionFacade.getCollections().stream().map(Collection::getName).filter(name -> names.contains(name)).count() > 0;
    }
 
    private void setDefaultAttributeId(final Collection storedCollection, final JSONObject o) {

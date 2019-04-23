@@ -63,7 +63,7 @@ public class LinkInstanceCreator extends WithIdCreator {
    @SuppressWarnings("unchecked")
    private List<String> getDocumentIds(JSONObject o) {
       var ids = new ArrayList<String>();
-      ((JSONArray) o.get("documentIds")).forEach(id -> ids.add((String) id));
+      ((JSONArray) o.get("documentIds")).forEach(id -> ids.add(templateParser.getDict().getDocumentId((String) id)));
 
       return ids;
    }

@@ -24,6 +24,8 @@ import io.lumeer.core.facade.LinkTypeFacade;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.ArrayList;
+
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
@@ -61,7 +63,7 @@ public class LinkTypeCreator extends WithIdCreator {
       return new LinkType(
             (String) o.get(LinkType.NAME),
             (JSONArray) o.get(LinkType.COLLECTION_IDS),
-            null
+            new ArrayList<>()
       );
    }
 }

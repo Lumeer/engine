@@ -69,6 +69,11 @@ public class DocumentCreator extends WithIdCreator {
                var parentId = templateParser.getDict().getDocumentId((String) templateParentId);
                var documentTemplateId = TemplateParserUtils.getId(docObj);
                var document = templateParser.getDict().getDocument(documentTemplateId);
+
+               if (document.getMetaData() == null) {
+                  document.setMetaData(new DataDocument());
+               }
+
                document.setMetaData(document.getMetaData().append("parentId", parentId));
                documentFacade.updateDocumentMetaData(document.getCollectionId(), document.getId(), document.getMetaData());
             }

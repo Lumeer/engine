@@ -50,7 +50,7 @@ public class TemplateParserUtils {
 
    private static Attribute getAttribute(final JSONObject o) {
       final var attr = new Attribute((String) o.get(Attribute.NAME));
-      attr.setId(getId((JSONObject) o));
+      attr.setId((String) o.get(Attribute.ID));
 
       if (o.get("constraint") != null) {
          attr.setConstraint(getAttributeConstraint((JSONObject) o.get("constraint")));

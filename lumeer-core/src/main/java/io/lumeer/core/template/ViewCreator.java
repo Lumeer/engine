@@ -60,8 +60,10 @@ public class ViewCreator extends WithIdCreator {
       ((JSONArray) templateParser.getTemplate().get("views")).forEach(viewObj -> {
          try {
             var viewJson = (JSONObject) viewObj;
-            var view = mapper.readValue(viewJson.toJSONString(), View.class);
             var templateId = TemplateParserUtils.getId(viewJson);
+            viewJson.remove("_id");
+            var view = mapper.readValue(viewJson.toJSONString(), View.class);
+            viewJson.put("_id", templateId);
 
             view = viewFacade.createView(view);
             templateParser.getDict().addView(templateId, view);

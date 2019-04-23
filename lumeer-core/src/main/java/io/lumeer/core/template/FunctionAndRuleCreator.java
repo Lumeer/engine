@@ -31,6 +31,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -64,16 +65,20 @@ public class FunctionAndRuleCreator extends WithIdCreator {
                var attr = getCollectionAttribute(collection, (String) attrJson.get("id"));
                var fce = getFunction(collection, (JSONObject) attrJson.get("function"));
                attr.setFunction(fce);
+               collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
             }
          });
 
          var rules = (JSONObject) ((JSONObject) o).get("rules");
-         var collectionRules = new HashMap<String, Rule>();
-         rules.forEach((k, v) -> {
-            collectionRules.put((String) k, getRule(collection, (JSONObject) v));
-         });
+         if (rules != null) {
+            var collectionRules = new HashMap<String, Rule>();
+            rules.forEach((k, v) -> {
+               collectionRules.put((String) k, getRule(collection, (JSONObject) v));
+            });
+            collection.setRules(collectionRules);
+            collectionFacade.updateCollection(collection.getId(), collection);
+         }
       });
-
    }
 
    public Attribute getCollectionAttribute(final Collection collection, final String attributeTemplateId) {
@@ -82,12 +87,12 @@ public class FunctionAndRuleCreator extends WithIdCreator {
    }
 
    public Function getFunction(final Collection collection, final JSONObject o) {
-      return  new Function(cureJs((String) o.get(Function.JS)), cureXml((String) o.get(Function.XML)), null, 0, (Boolean) o.get(Function.EDITABLE));
+      return new Function(cureJs((String) o.get(Function.JS)), cureXml((String) o.get(Function.XML)), null, 0, (Boolean) o.get(Function.EDITABLE));
    }
 
    private Rule getRule(final Collection collection, final JSONObject o) {
-      var type = Rule.RuleType.values()[(Integer) o.get(Rule.TYPE)];
-      var timing = Rule.RuleTiming.values()[(Integer) o.get(Rule.TIMING)];
+      var type = Rule.RuleType.values()[((Long) o.get(Rule.TYPE)).intValue()];
+      var timing = Rule.RuleTiming.values()[((Long) o.get(Rule.TIMING)).intValue()];
       var rule = new Rule(type, timing, new DataDocument((JSONObject) o.get("configuration")));
 
       if (type == Rule.RuleType.BLOCKLY) {
@@ -105,7 +110,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
    }
 
    private String cureJs(final String js) {
-      var res = TemplateParserUtils.replacer(js, ", '", "')", id -> {
+      var res = TemplateParserUtils.replacer(js, ", '", Pattern.quote("')"), id -> {
          if (id.length() == 24) {
             var collId = templateParser.getDict().getCollectionId(id);
             if (collId != null) {
@@ -123,7 +128,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          }
       });
 
-      return js;
+      return res;
    }
 
    private String cureXml(final String xml) {
