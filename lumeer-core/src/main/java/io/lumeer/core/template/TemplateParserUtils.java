@@ -31,6 +31,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -102,5 +103,23 @@ public class TemplateParserUtils {
          default:
             return ChronoUnit.HOURS;
       }
+   }
+
+   public static String replacer(final String text, final String matchPrefix, final String matchSuffix, final java.util.function.Function<String, String> replacer) {
+      var pattern = Pattern.compile("(" + matchPrefix + ")([0-9a-f]+)(" + matchSuffix + ")");
+      var matcher = pattern.matcher(text);
+      var sb = new StringBuilder();
+
+      int lastEnd = 0;
+      while (matcher.find()) {
+         sb.append(text.substring(lastEnd, matcher.start()));
+         sb.append(text.substring(matcher.start(1), matcher.end(1)));
+         sb.append(replacer.apply(text.substring(matcher.start(2), matcher.end(2))));
+         sb.append(text.substring(matcher.start(3), matcher.end(3)));
+         lastEnd = matcher.end();
+      }
+      sb.append(text.substring(lastEnd, text.length()));
+
+      return sb.toString();
    }
 }

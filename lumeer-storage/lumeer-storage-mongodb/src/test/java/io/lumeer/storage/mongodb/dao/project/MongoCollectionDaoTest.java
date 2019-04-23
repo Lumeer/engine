@@ -139,7 +139,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    }
 
    private Collection prepareCollection(String code, String name) {
-      Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES, new HashMap<>());
+      Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES, new HashMap<>(), "");
       collection.setDocumentsCount(DOCUMENTS_COUNT);
       collection.setLastTimeUsed(LAST_TIME_USED);
       return collection;

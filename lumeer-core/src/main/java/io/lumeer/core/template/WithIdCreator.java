@@ -18,10 +18,10 @@
  */
 package io.lumeer.core.template;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.Iterator;
+import org.json.simple.JSONObject;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -34,13 +34,17 @@ public class WithIdCreator {
       this.templateParser = templateParser;
    }
 
-   protected void registerAttributes(final WithId resource, final java.util.Collection<Attribute> storedAttributes, final java.util.Collection<Attribute> templateAttributes) {
-      final Iterator<Attribute> i1 = storedAttributes.iterator();
-      final Iterator<Attribute> i2 = templateAttributes.iterator();
-      while (i1.hasNext() && i2.hasNext()) {
-         var a1 = i1.next();
-         var a2 = i2.next();
-         templateParser.getDict().addAttribute(resource, a2.getId(), a1);
-      }
+   protected DataDocument translateDataDocument(final WithId resource, final JSONObject o) {
+      final DataDocument data = new DataDocument();
+
+      o.forEach((k, v) -> {
+         if (!"_id".equals(k)) {
+            data.append((String) k, v);
+
+            // add date function here
+         }
+      });
+
+      return data;
    }
 }

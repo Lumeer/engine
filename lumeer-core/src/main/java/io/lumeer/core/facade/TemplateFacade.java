@@ -42,14 +42,23 @@ public class TemplateFacade extends AbstractFacade {
    @Inject
    private LinkTypeFacade linkTypeFacade;
 
+   @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
+   private DocumentFacade documentFacade;
+
+   @Inject
+   private ViewFacade viewFacade;
+
    public void installTemplate(final Organization organization, final Project project, final TemplateType templateType, final String language) {
       final TemplateParser templateParser = new TemplateParser(templateType, language);
 
       CollectionCreator.createCollections(templateParser, collectionFacade);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
-      DocumentCreator.createDocuments(templateParser);
-      LinkInstanceCreator.createLinkInstances(templateParser);
-      ViewCreator.createViews(templateParser);
-      FunctionAndRuleCreator.createFunctionAndRules(templateParser);
+      DocumentCreator.createDocuments(templateParser, documentFacade);
+      LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade);
+      ViewCreator.createViews(templateParser, viewFacade);
+      FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade);
    }
 }

@@ -102,30 +102,6 @@ public class TemplateObjectsDictionary {
       return documents.get(templateId);
    }
 
-   public void addAttribute(final WithId resource, final String templateId, final Attribute attribute) {
-      if (attributes.get(resource.getId()) == null) {
-         attributes.put(resource.getId(), new HashMap<>());
-      }
-      attributes.get(resource.getId()).put(templateId, attribute);
-   }
-
-   public String getAttributeId(final WithId resource, final String templateId) {
-      if (attributes.get(resource.getId()) != null) {
-         var attr = attributes.get(resource.getId()).get(templateId);
-         return attr != null ? attr.getId() : null;
-      }
-
-      return null;
-   }
-
-   public Attribute getAttribute(final WithId resource, final String templateId) {
-      if (attributes.get(resource.getId()) != null) {
-         return attributes.get(resource.getId()).get(templateId);
-      }
-
-      return null;
-   }
-
    private String getSafeId(final WithId withId) {
       return withId != null ? withId.getId() : null;
    }

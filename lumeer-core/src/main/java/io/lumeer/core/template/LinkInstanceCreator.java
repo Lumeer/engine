@@ -18,20 +18,64 @@
  */
 package io.lumeer.core.template;
 
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.core.facade.LinkInstanceFacade;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class LinkInstanceCreator extends WithIdCreator {
-   private LinkInstanceCreator(final TemplateParser templateParser) {
+
+   private final LinkInstanceFacade linkInstanceFacade;
+
+   private LinkInstanceCreator(final TemplateParser templateParser, final LinkInstanceFacade linkInstanceFacade) {
       super(templateParser);
+      this.linkInstanceFacade = linkInstanceFacade;
    }
 
-   public static void createLinkInstances(final TemplateParser templateParser) {
-      final LinkInstanceCreator creator = new LinkInstanceCreator(templateParser);
+   public static void createLinkInstances(final TemplateParser templateParser, final LinkInstanceFacade linkInstanceFacade) {
+      final LinkInstanceCreator creator = new LinkInstanceCreator(templateParser, linkInstanceFacade);
       creator.createLinkInstances();
    }
 
    private void createLinkInstances() {
+      JSONArray a = (JSONArray) templateParser.getTemplate().get("linkInstances");
+      a.forEach(link -> {
+         var linkObj = (JSONObject) link;
+         var linkTemplateId = TemplateParserUtils.getId(linkObj);
+         var linkTypeTemplateId = (String) linkObj.get("linkTypeId");
+         var linkInstance = new LinkInstance((String) templateParser.getDict().getLinkTypeId(linkTypeTemplateId), getDocumentIds(linkObj));
+         linkInstance = linkInstanceFacade.createLinkInstance(linkInstance);
+         templateParser.getDict().addLinkInstance(linkTemplateId, linkInstance);
 
+         getLinkData(linkInstance, linkTemplateId, linkTypeTemplateId);
+         linkInstance = linkInstanceFacade.updateLinkInstanceData(linkInstance.getId(), linkInstance.getData());
+      });
+   }
+
+   @SuppressWarnings("unchecked")
+   private List<String> getDocumentIds(JSONObject o) {
+      var ids = new ArrayList<String>();
+      ((JSONArray) o.get("documentIds")).forEach(id -> ids.add((String) id));
+
+      return ids;
+   }
+
+   @SuppressWarnings("unchecked")
+   private LinkInstance getLinkData(final LinkInstance linkInstance, final String linkTemplateId, final String linkTypeTemplateId) {
+      final Optional<JSONObject> data = ((JSONArray) ((JSONObject) templateParser.getTemplate().get("linkData")).get(linkTypeTemplateId)).stream().filter(d -> linkTemplateId.equals(TemplateParserUtils.getId((JSONObject) d))).findFirst();
+
+      if (data.isPresent() && data.get().size() > 1) {
+         linkInstance.setData(translateDataDocument(templateParser.getDict().getLinkType(linkTypeTemplateId), data.get()));
+      }
+
+      return linkInstance;
    }
 }

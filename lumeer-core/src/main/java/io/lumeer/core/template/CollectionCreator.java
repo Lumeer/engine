@@ -18,14 +18,11 @@
  */
 package io.lumeer.core.template;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.core.facade.CollectionFacade;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.util.List;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -60,16 +57,14 @@ public class CollectionCreator extends WithIdCreator {
    private void setDefaultAttributeId(final Collection storedCollection, final JSONObject o) {
       final String defaultAttributeId = (String) o.get("defaultAttributeId");
       if (defaultAttributeId != null) {
-         storedCollection.setDefaultAttributeId(templateParser.getDict().getAttributeId(storedCollection, defaultAttributeId));
+         storedCollection.setDefaultAttributeId(defaultAttributeId);
       }
 
       collectionFacade.setDefaultAttribute(storedCollection.getId(), storedCollection.getDefaultAttributeId());
    }
 
    private void createAttributes(final Collection collection, final JSONObject o) {
-      final java.util.Collection<Attribute> storedAttributes = collectionFacade.createCollectionAttributes(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
-      final List<Attribute> templateAttributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"));
-      registerAttributes(collection, storedAttributes, templateAttributes);
+      collectionFacade.createCollectionAttributesSkipIndexFix(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
    }
 
    private Collection getCollection(final JSONObject o) {

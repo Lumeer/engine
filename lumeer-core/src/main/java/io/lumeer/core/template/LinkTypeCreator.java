@@ -18,14 +18,11 @@
  */
 package io.lumeer.core.template;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.facade.LinkTypeFacade;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.util.List;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -54,13 +51,10 @@ public class LinkTypeCreator extends WithIdCreator {
 
          createAttributes(storedLinkType, (JSONObject) o);
       });
-
    }
 
    private void createAttributes(final LinkType linkType, final JSONObject o) {
-      final java.util.Collection<Attribute> storedAttributes = linkTypeFacade.createLinkTypeAttributes(linkType.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
-      final List<Attribute> templateAttributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"));
-      registerAttributes(linkType, storedAttributes, templateAttributes);
+      linkTypeFacade.createLinkTypeAttributes(linkType.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
    }
 
    private LinkType getLinkType(final JSONObject o) {
@@ -70,5 +64,4 @@ public class LinkTypeCreator extends WithIdCreator {
             null
       );
    }
-
 }
