@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -159,6 +160,24 @@ public class Document implements WithId {
 
    public void setFavorite(final boolean favorite) {
       this.favorite = favorite;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+      final Document document = (Document) o;
+      return Objects.equals(id, document.id) &&
+            Objects.equals(collectionId, document.collectionId);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, collectionId);
    }
 
    @Override

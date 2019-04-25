@@ -22,11 +22,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
@@ -44,6 +47,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -81,6 +88,12 @@ public class TemplateFacadeIT extends IntegrationTestBase {
    @Inject
    private TemplateFacade templateFacade;
 
+   @Inject
+   private SearchFacade searchFacade;
+
+   @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
@@ -110,8 +123,6 @@ public class TemplateFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       project = projectDao.createProject(project);
 
-      System.out.println(project);
-
       workspaceKeeper.setWorkspace(organization.getId(), project.getId());
    }
 
@@ -137,11 +148,52 @@ public class TemplateFacadeIT extends IntegrationTestBase {
       assertThat(a3.getFunction()).isNotNull();
 
       var linkTypes = linkTypeFacade.getLinkTypes();
+      assertThat(linkTypes).hasSize(3);
       var objectiveKeyResultsLinkType = linkTypes.stream().filter(linkType -> linkType.getName().equals("Objectives Key Results")).findFirst().orElse(null);
       assertThat(objectiveKeyResultsLinkType).isNotNull();
 
-      System.out.println(a3.getFunction().getJs());
       assertThat(a3.getFunction().getJs().indexOf("getLinkedDocuments(thisDocument, '" + objectiveKeyResultsLinkType.getId() + "')")).isGreaterThanOrEqualTo(0);
+
+      var employeesCollection = collections.stream().filter(collection -> collection.getName().equals("Employees")).findFirst().orElse(null);
+      var allEmployees = searchFacade.searchDocuments(new Query(new QueryStem(employeesCollection.getId())));
+
+      // verify documents hierarchy
+      var natosha = allEmployees.stream().filter(doc -> doc.getData().getString("a1").equals("Natosha")).findFirst().orElse(null);
+      assertThat(natosha).isNotNull();
+      var parent1 = natosha.getMetaData().getString(Document.META_PARENT_ID);
+      assertThat(parent1).isNotNull();
+      var jasmin = allEmployees.stream().filter(doc -> doc.getData().getId().equals(parent1)).findFirst().orElse(null);
+      assertThat(jasmin.getData()).contains(Map.entry("a1", "Jasmin"));
+      var parent2 = jasmin.getMetaData().getString(Document.META_PARENT_ID);
+      assertThat(parent2).isNotNull();
+      var marta = allEmployees.stream().filter(doc -> doc.getData().getId().equals(parent2)).findFirst().orElse(null);
+      assertThat(marta.getData()).contains(Map.entry("a1", "Marta"));
+      var parent3 = marta.getMetaData().getString(Document.META_PARENT_ID);
+      assertThat(parent3).isNotNull();
+      var macie = allEmployees.stream().filter(doc -> doc.getData().getId().equals(parent3)).findFirst().orElse(null);
+      assertThat(macie.getData()).contains(Map.entry("a1", "Macie"));
+
+      var keyResultsCollection = collections.stream().filter(collection -> collection.getName().equals("Key Results")).findFirst().orElse(null);
+      var initiativesCollection = collections.stream().filter(collection -> collection.getName().equals("Initiatives")).findFirst().orElse(null);
+      assertThat(keyResultsCollection).isNotNull();
+      assertThat(initiativesCollection).isNotNull();
+
+      var allKeyResults = searchFacade.searchDocuments(new Query(new QueryStem(keyResultsCollection.getId())));
+      var allInitiatives = searchFacade.searchDocuments(new Query(new QueryStem(initiativesCollection.getId())));
+
+      var conversionDoc = allKeyResults.stream().filter(doc -> doc.getData().getString("a1").equals("15% conversion")).findFirst().orElse(null);
+      var abTestingDoc = allInitiatives.stream().filter(doc -> doc.getData().getString("a1").equals("A/B testing the CTA")).findFirst().orElse(null);
+      assertThat(conversionDoc).isNotNull();
+      assertThat(abTestingDoc).isNotNull();
+
+      var keyResultsInitiativesLinkType = linkTypes.stream().filter(linkType -> linkType.getName().equals("Key Results Initiatives")).findFirst().orElse(null);
+      assertThat(keyResultsInitiativesLinkType).isNotNull();
+
+      var links = searchFacade.getLinkInstances(new Query(new QueryStem(keyResultsCollection.getId(), List.of(keyResultsInitiativesLinkType.getId()), Set.of(conversionDoc.getId()), Collections.emptySet(), Collections.emptySet())));
+      assertThat(links).isNotNull();
+
+      var allDocuments = searchFacade.searchDocuments(new Query());
+      assertThat(allDocuments).hasSize(78);
    }
 
    private Attribute getAttribute(final Collection<Attribute> attributes, final String id) {
