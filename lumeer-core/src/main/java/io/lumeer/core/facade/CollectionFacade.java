@@ -217,6 +217,25 @@ public class CollectionFacade extends AbstractFacade {
       return attributes;
    }
 
+   public java.util.Collection<Attribute> createCollectionAttributesSkipIndexFix(final String collectionId, final java.util.Collection<Attribute> attributes) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = collection.copy();
+      permissionsChecker.checkRole(collection, Role.MANAGE);
+
+      for (Attribute attribute : attributes) {
+         attribute.setUsageCount(0);
+         collection.createAttribute(attribute);
+      }
+      collection.setLastAttributeNum(attributes.size() - 1);
+      collection.setLastAttributeNum(getFreeAttributeNum(collection) - 1);
+
+      permissionsChecker.checkFunctionsLimit(collection);
+      collection.setLastTimeUsed(ZonedDateTime.now());
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+
+      return attributes;
+   }
+
    private Integer getFreeAttributeNum(final Collection collection) {
       final AtomicInteger last = new AtomicInteger(Math.max(1, collection.getLastAttributeNum() + 1));
       while (collection.getAttributes().stream().anyMatch(attribute -> attribute.getId().equals(Collection.ATTRIBUTE_PREFIX + last.get()))) {

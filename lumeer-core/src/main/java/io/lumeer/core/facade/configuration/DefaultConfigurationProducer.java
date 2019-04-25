@@ -77,7 +77,6 @@ public class DefaultConfigurationProducer implements Serializable {
          final InputStream input = DefaultConfigurationProducer.class.getResourceAsStream("/" + envDefaults);
          if (input != null) {
             properties.load(new InputStreamReader(input));
-            properties.list(System.out);
             properties.forEach((key, value) -> {
                defaultConfiguration.put(key.toString(), value.toString());
             });

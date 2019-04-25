@@ -46,6 +46,7 @@ public class Collection extends Resource {
    public static String ATTRIBUTE_PREFIX = "a";
 
    private static final String ATTRIBUTES = "attributes";
+   private static final String DATA_DESCRIPTION = "dataDescription";
 
    public static final String RULES = "rules";
 
@@ -58,9 +59,10 @@ public class Collection extends Resource {
    private Integer lastAttributeNum;
    private boolean favorite;
    private Map<String, Rule> rules;
+   private String dataDescription;
 
    public Collection(final String code, final String name, final String icon, final String color, final Permissions permissions) {
-      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>());
+      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>(), "");
    }
 
    @JsonCreator
@@ -72,13 +74,15 @@ public class Collection extends Resource {
          @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes,
-         @JsonProperty(RULES) final Map<String, Rule> rules) {
+         @JsonProperty(RULES) final Map<String, Rule> rules,
+         @JsonProperty(DATA_DESCRIPTION) final String dataDescription) {
       super(code, name, icon, color, description, permissions);
 
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
       this.documentsCount = 0;
       this.lastAttributeNum = 0;
       this.rules = rules;
+      this.dataDescription = dataDescription;
    }
 
    @Override
@@ -96,6 +100,7 @@ public class Collection extends Resource {
       o.favorite = this.favorite;
       o.version = this.version;
       o.rules = this.rules != null ? new HashMap<>(this.rules) : Collections.emptyMap();
+      o.dataDescription = this.dataDescription;
 
       return o;
    }
@@ -183,6 +188,14 @@ public class Collection extends Resource {
       this.rules = rules;
    }
 
+   public String getDataDescription() {
+      return dataDescription;
+   }
+
+   public void setDataDescription(final String dataDescription) {
+      this.dataDescription = dataDescription;
+   }
+
    @Override
    public String toString() {
       return "Collection{" +
@@ -197,6 +210,7 @@ public class Collection extends Resource {
             ", defaultAttributeId=" + defaultAttributeId +
             ", lastTimeUsed=" + lastTimeUsed +
             ", rules=" + rules +
+            ", dataDescription=" + dataDescription +
             '}';
    }
 

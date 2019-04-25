@@ -112,6 +112,11 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    @Override
    public DataDocument patchData(final String collectionId, final String documentId, final DataDocument data) {
       data.remove(ID);
+
+      if (data.size() == 0) {
+         return getData(collectionId, documentId);
+      }
+
       Document updateDocument = new Document("$set", new Document(data));
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 

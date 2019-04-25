@@ -401,13 +401,13 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Set<Document> getChildDocuments(final Set<Document> rootDocuments) {
-      return getChildDocumentsBfs(new HashSet<>(), rootDocuments, false);
+      return getChildDocumentsBfs(new HashSet<>(rootDocuments), rootDocuments, false);
    }
 
    private Set<Document> getChildDocumentsBfs(final Set<Document> result, final Set<Document> rootDocuments, boolean setData) {
 
       // find all document where parentId == one of root documents
-      // add root documents to result when not exist there
+      // add root documents to result when they do not exist there
       // add results to rootDocuments
       // repeat while there were any results
 
