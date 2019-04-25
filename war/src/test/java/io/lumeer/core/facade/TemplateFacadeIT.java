@@ -92,7 +92,7 @@ public class TemplateFacadeIT extends IntegrationTestBase {
    private SearchFacade searchFacade;
 
    @Inject
-   private LinkInstanceFacade linkInstanceFacade;
+   private ViewFacade viewFacade;
 
    private Permission userPermission;
    private Permission groupPermission;
@@ -127,6 +127,7 @@ public class TemplateFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @SuppressWarnings("unchecked")
    public void testTemplateImport() {
       templateFacade.installTemplate(organization, project, TemplateType.OKR, "en");
 
@@ -194,6 +195,28 @@ public class TemplateFacadeIT extends IntegrationTestBase {
 
       var allDocuments = searchFacade.searchDocuments(new Query());
       assertThat(allDocuments).hasSize(78);
+
+      var views = viewFacade.getViews();
+      assertThat(views).hasSize(6);
+
+      var okrInitiatives = views.stream().filter(view -> view.getName().equals("OKR Initiatives")).findFirst().orElse(null);
+      assertThat(okrInitiatives).isNotNull();
+      org.bson.Document config = (org.bson.Document) okrInitiatives.getConfig();
+      assertThat(config.containsKey("table")).isTrue();
+      var table = (org.bson.Document) config.get("table");
+      assertThat(table.containsKey("parts"));
+      var parts = (List<org.bson.Document>) table.get("parts");
+      var collectionConfig = parts.stream().filter(doc -> doc.containsKey("collectionId") && doc.getString("collectionId").equals(keyResultsCollection.getId())).findFirst().orElse(null);
+      assertThat(collectionConfig).isNotNull();
+      var columns = (List<org.bson.Document>) collectionConfig.get("columns");
+      assertThat(columns).isNotNull();
+      var hiddenPart = columns.stream().filter(doc -> doc.containsKey("type") && doc.getString("type").equals("hidden")).findFirst().orElse(null);
+      assertThat(hiddenPart).isNotNull();
+      assertThat(hiddenPart.containsKey("attributeIds")).isTrue();
+      assertThat((List<String>) hiddenPart.get("attributeIds")).containsExactly("a3", "a4", "a5", "a2");
+
+      assertThat(okrInitiatives.getQuery().getStems()).hasSize(1);
+      assertThat(okrInitiatives.getQuery().getStems().get(0).getCollectionId()).isEqualTo(keyResultsCollection.getId());
    }
 
    private Attribute getAttribute(final Collection<Attribute> attributes, final String id) {

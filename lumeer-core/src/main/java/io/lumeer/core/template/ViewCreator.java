@@ -18,6 +18,10 @@
  */
 package io.lumeer.core.template;
 
+import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.LinkAttributeFilter;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.View;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.core.facade.ViewFacade;
@@ -31,6 +35,12 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -64,6 +74,8 @@ public class ViewCreator extends WithIdCreator {
             viewJson.remove("_id");
             var view = mapper.readValue(viewJson.toJSONString(), View.class);
             viewJson.put("_id", templateId);
+            view.setQuery(translateQuery(view.getQuery()));
+            view.setConfig(translateConfig(view.getConfig()));
 
             view = viewFacade.createView(view);
             templateParser.getDict().addView(templateId, view);
@@ -71,5 +83,113 @@ public class ViewCreator extends WithIdCreator {
             throw new TemplateNotAvailableException(e);
          }
       });
+   }
+
+   private Query translateQuery(final Query query) {
+      var newStems = new ArrayList<QueryStem>();
+
+      query.getStems().forEach(stem -> {
+         var collectionId = stem.getCollectionId() != null ? templateParser.getDict().getCollectionId(stem.getCollectionId()) : null;
+
+         List<String> linkTypeIds = new ArrayList<>();
+         var linkTypeIdsUsed = false;
+         if (stem.getLinkTypeIds() != null) {
+            linkTypeIdsUsed = true;
+            stem.getLinkTypeIds().forEach(linkTypeId -> linkTypeIds.add(templateParser.getDict().getLinkTypeId(linkTypeId)));
+         }
+
+         Set<String> documentIds = new HashSet<>();
+         var documentIdsUsed = false;
+         if (stem.getDocumentIds() != null) {
+            documentIdsUsed = true;
+            stem.getDocumentIds().forEach(documentId -> documentIds.add(templateParser.getDict().getDocumentId(documentId)));
+         }
+
+         Set<CollectionAttributeFilter> collectionAttributeFilters = new HashSet<>();
+         var filtersUsed = false;
+         if (stem.getFilters() != null) {
+            filtersUsed = true;
+            stem.getFilters().forEach(filter -> collectionAttributeFilters.add(new CollectionAttributeFilter(
+                  templateParser.getDict().getCollectionId(filter.getCollectionId()),
+                  filter.getAttributeId(),
+                  filter.getOperator(),
+                  filter.getValue()
+            )));
+         }
+
+         Set<LinkAttributeFilter> linkAttributeFilters = new HashSet<>();
+         var linkFiltersUsed = false;
+         if (stem.getCollectionId() != null) {
+            linkFiltersUsed = true;
+            stem.getLinkFilters().forEach(filter -> linkAttributeFilters.add(new LinkAttributeFilter(
+                  templateParser.getDict().getLinkTypeId(filter.getLinkTypeId()),
+                  filter.getAttributeId(),
+                  filter.getOperator(),
+                  filter.getValue()
+            )));
+         }
+
+         newStems.add(new QueryStem(
+               collectionId,
+               linkTypeIdsUsed ? linkTypeIds : null,
+               documentIdsUsed ? documentIds : null,
+               filtersUsed ? collectionAttributeFilters : null,
+               linkFiltersUsed ? linkAttributeFilters : null
+         ));
+      });
+
+      return new Query(newStems);
+   }
+
+   private Object translateConfig(final Object config) {
+      if (config instanceof String) {
+         return translateString((String) config);
+      } else if (config instanceof List) {
+         var newList = new ArrayList();
+         ((List) config).forEach(value -> {
+            newList.add(translateConfig(value));
+         });
+         return newList;
+      } else if (config instanceof Set) {
+         var newSet = new HashSet();
+         ((Set) config).forEach(value -> {
+            newSet.add(translateConfig(value));
+         });
+         return newSet;
+      } else if (config instanceof Map) {
+         var newMap = new HashMap();
+         ((Map) config).forEach((k, v) -> {
+            newMap.put(k, translateConfig(v));
+         });
+         return newMap;
+      } else {
+         return config;
+      }
+   }
+
+   private String translateString(final String resourceId) {
+      if (resourceId == null || resourceId.length() != 24) {
+         return resourceId;
+      }
+
+      String res = templateParser.getDict().getCollectionId(resourceId);
+
+      if (res == null) {
+         res = templateParser.getDict().getLinkTypeId(resourceId);
+
+         if (res == null) {
+            res = templateParser.getDict().getDocumentId(resourceId);
+
+            if (res == null) {
+               res = templateParser.getDict().getLinkInstanceId(resourceId);
+
+               if (res == null) {
+                  res = templateParser.getDict().getViewId(resourceId);
+               }
+            }
+         }
+      }
+
+      return res;
    }
 }
