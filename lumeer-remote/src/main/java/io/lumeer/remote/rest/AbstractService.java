@@ -63,6 +63,19 @@ abstract class AbstractService {
       return url;
    }
 
+   protected String parseLanguage() {
+      String parsedLanguage = getFirstUrlPathPart();
+      if(parsedLanguage == null || parsedLanguage.isEmpty()){
+         return "en";
+      }
+
+      if(!Arrays.asList("en", "cs").contains(parsedLanguage)){
+         return "en";
+      }
+
+      return parsedLanguage;
+   }
+
    protected boolean isManager() {
       return permissionsChecker.isManager();
    }
