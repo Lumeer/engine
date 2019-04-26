@@ -64,6 +64,8 @@ public class UserFacadeIT extends IntegrationTestBase {
    private static final String USER3 = "user3@gmail.com";
    private static final String USER4 = "user4@gmail.com";
 
+   private static final String USER1_NAME = "User 1";
+
    private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
    private Organization organization;
@@ -151,6 +153,32 @@ public class UserFacadeIT extends IntegrationTestBase {
       User user3 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
 
       assertThat(user1.getId()).isEqualTo(user2.getId()).isEqualTo(user3.getId());
+   }
+
+   @Test
+   public void testCreateExistingUserInNewOrganization() {
+      final var user = new User(null, USER1_NAME, USER1, Collections.singletonMap(organizationId1, GROUPS));
+      final var createdUser = userFacade.createUser(organizationId1, user);
+      assertThat(createdUser).isNotNull();
+      assertThat(createdUser.getId()).isNotNull();
+
+      final var updatedUser = new User(null, null, USER1, Collections.singletonMap(organizationId2, GROUPS));
+      final var returnedUser = userFacade.createUser(organizationId2, updatedUser);
+      assertThat(returnedUser).isNotNull();
+      assertThat(returnedUser.getId()).isEqualTo(createdUser.getId());
+      assertThat(returnedUser.getName()).isEqualTo(USER1_NAME);
+      assertThat(returnedUser.getEmail()).isEqualTo(USER1);
+      assertThat(returnedUser.getGroups()).containsEntry(organizationId2, GROUPS);
+      assertThat(returnedUser.getGroups()).doesNotContainKey(organizationId1);
+
+      final var storedUser = userDao.getUserById(createdUser.getId());
+      assertThat(storedUser).isNotNull();
+      assertThat(storedUser.getId()).isEqualTo(createdUser.getId());
+      assertThat(storedUser.getName()).isEqualTo(USER1_NAME);
+      assertThat(storedUser.getEmail()).isEqualTo(USER1);
+      assertThat(storedUser.getGroups()).containsEntry(organizationId1, GROUPS);
+      assertThat(storedUser.getGroups()).containsEntry(organizationId2, GROUPS);
+
    }
 
    @Test
