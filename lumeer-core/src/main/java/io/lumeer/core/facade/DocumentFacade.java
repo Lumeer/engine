@@ -29,6 +29,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.RefreshCollectionContent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -38,8 +39,12 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -73,6 +78,9 @@ public class DocumentFacade extends AbstractFacade {
    @Inject
    private Event<UpdateDocument> updateDocumentEvent;
 
+   @Inject
+   private Event<RefreshCollectionContent> refreshCollectionContentEvent;
+
    private ConstraintManager constraintManager;
 
    @PostConstruct
@@ -101,6 +109,37 @@ public class DocumentFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(collection, storedData);
 
       return storedDocument;
+   }
+
+   public List<Document> createDocuments(final String collectionId, final List<Document> documents) {
+      final List<Document> storedDocuments = new ArrayList<>();
+      final Collection collection = checkCollectionWritePermissions(collectionId);
+      final Map<String, Integer> usages = new HashMap<>();
+      permissionsChecker.checkDocumentLimits(documents);
+
+      documents.forEach(document -> {
+         DataDocument data = document.getData();
+         constraintManager.encodeDataTypes(collection, data);
+
+         Document storedDocument = createDocument(collection, document, new DataDocument(data));
+
+         DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), data);
+         storedDocument.setData(storedData);
+
+         storedData.keySet().forEach(key -> usages.put(key, usages.computeIfAbsent(key, k -> 0) + 1));
+
+         constraintManager.decodeDataTypes(collection, storedData);
+
+         storedDocuments.add(storedDocument);
+      });
+
+      updateCollectionMetadata(collection, usages, storedDocuments.size());
+
+      if (refreshCollectionContentEvent != null) {
+         refreshCollectionContentEvent.fire(new RefreshCollectionContent(collection));
+      }
+
+      return storedDocuments;
    }
 
    private Document createDocument(Collection collection, Document document, DataDocument data) {
@@ -154,6 +193,27 @@ public class DocumentFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
+   }
+
+   public List<Document> updateDocumentsMetaData(final String collectionId, final List<Document> documents) {
+      final Collection collection = checkCollectionWritePermissions(collectionId);
+      final List<Document> updatedDocuments = new ArrayList<>();
+
+      documents.forEach(document -> {
+         final Document originalDocument = new Document(document);
+         document.setUpdatedBy(authenticatedUser.getCurrentUserId());
+         document.setUpdateDate(ZonedDateTime.now());
+         final Document updatedDocument = documentDao.updateDocument(document.getId(), document, originalDocument);
+         updatedDocument.setData(document.getData());
+         constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+         updatedDocuments.add(updatedDocument);
+      });
+
+      if (refreshCollectionContentEvent != null) {
+         refreshCollectionContentEvent.fire(new RefreshCollectionContent(collection));
+      }
+
+      return updatedDocuments;
    }
 
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
@@ -276,6 +336,14 @@ public class DocumentFacade extends AbstractFacade {
    private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
       final Collection originalCollection = collection.copy();
       collection.setAttributes(new HashSet<>(ResourceUtils.incOrDecAttributes(collection.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
+      collection.setLastTimeUsed(ZonedDateTime.now());
+      collection.setDocumentsCount(Math.max(collection.getDocumentsCount() + documentCountDiff, 0));
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+   }
+
+   private void updateCollectionMetadata(final Collection collection, final Map<String, Integer> attributesToInc, final int documentCountDiff) {
+      final Collection originalCollection = collection.copy();
+      collection.setAttributes(new HashSet<>(ResourceUtils.incAttributes(collection.getAttributes(), attributesToInc)));
       collection.setLastTimeUsed(ZonedDateTime.now());
       collection.setDocumentsCount(Math.max(collection.getDocumentsCount() + documentCountDiff, 0));
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);

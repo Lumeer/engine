@@ -25,6 +25,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
@@ -60,9 +62,11 @@ public class LinkTypeCreator extends WithIdCreator {
    }
 
    private LinkType getLinkType(final JSONObject o) {
+      var collections = (List<String>) ((JSONArray) o.get(LinkType.COLLECTION_IDS)).stream().map(collectionId -> templateParser.getDict().getCollectionId((String) collectionId)).collect(Collectors.toList());
+
       return new LinkType(
             (String) o.get(LinkType.NAME),
-            (JSONArray) o.get(LinkType.COLLECTION_IDS),
+            collections,
             new ArrayList<>()
       );
    }

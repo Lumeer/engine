@@ -25,8 +25,6 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -93,6 +91,18 @@ public class ResourceUtils {
 
       return oldAttributes.values();
    }
+
+   public static java.util.Collection<Attribute> incAttributes(java.util.Collection<Attribute> attributes, Map<String, Integer> attributesToInc) {
+      Map<String, Attribute> oldAttributes = attributes.stream()
+                                                       .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+      oldAttributes.keySet().forEach(attributeId -> {
+            Attribute attribute = oldAttributes.get(attributeId);
+            attribute.setUsageCount(attribute.getUsageCount() + attributesToInc.computeIfAbsent(attributeId, aId -> 0));
+      });
+
+      return oldAttributes.values();
+   }
+
 
    public static Constraint findConstraint(java.util.Collection<Attribute> attributes, String attributeId) {
       Attribute attribute = findAttribute(attributes, attributeId);
