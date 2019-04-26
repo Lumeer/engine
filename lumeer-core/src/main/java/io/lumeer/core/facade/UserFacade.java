@@ -24,6 +24,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.RemoveUser;
@@ -37,7 +38,6 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -82,9 +82,7 @@ public class UserFacade extends AbstractFacade {
          return createUserAndSendNotification(organizationId, user);
       }
 
-      User updatedUser = updateStoredUserGroups(organizationId, storedUser, user);
-
-      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+      User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
@@ -102,24 +100,18 @@ public class UserFacade extends AbstractFacade {
       checkOrganizationPermissions(organizationId, Role.MANAGE);
 
       User storedUser = userDao.getUserById(userId);
-      User updatedUser = updateStoredUserGroups(organizationId, storedUser, user);
-
-      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+      User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
 
-   private User updateStoredUserGroups(String organizationId, User storedUser, User user) {
-      Map<String, Set<String>> groups = storedUser.getGroups();
-      if (groups == null) {
-         groups = user.getGroups();
-      } else if (user.getGroups() != null) {
-         groups.putAll(user.getGroups());
-      }
+   private User updateExistingUser(String organizationId, User storedUser, User user) {
+      final var mergedUser = UserUtil.mergeUsers(storedUser, user);
+      final var updatedUser = updateUserAndSendNotification(organizationId, storedUser.getId(), mergedUser);
 
-      user.setGroups(groups);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
-      return updateUserAndSendNotification(organizationId, storedUser.getId(), user);
+      return updatedUser;
    }
 
    private User updateUserAndSendNotification(String organizationId, String userId, User user) {
