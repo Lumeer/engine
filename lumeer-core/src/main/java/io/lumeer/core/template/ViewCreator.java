@@ -157,9 +157,9 @@ public class ViewCreator extends WithIdCreator {
          });
          return newSet;
       } else if (config instanceof Map) {
-         var newMap = new HashMap();
+         var newMap = new HashMap<>();
          ((Map) config).forEach((k, v) -> {
-            newMap.put(k, translateConfig(v));
+            newMap.put(translateConfig(k), translateConfig(v));
          });
          return newMap;
       } else {
