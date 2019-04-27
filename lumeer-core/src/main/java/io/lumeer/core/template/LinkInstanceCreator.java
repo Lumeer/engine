@@ -61,7 +61,7 @@ public class LinkInstanceCreator extends WithIdCreator {
       });
 
       linkInstances.forEach((linkTypeTemplateId, typeInstances) -> {
-         var storedLinkInstances = linkInstanceFacade.createLinkInstances(typeInstances);
+         var storedLinkInstances = linkInstanceFacade.createLinkInstances(typeInstances, false);
          storedLinkInstances.forEach(linkInstance -> {
             templateParser.getDict().addLinkInstance(linkInstance.getTemplateId(), linkInstance);
          });

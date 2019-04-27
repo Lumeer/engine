@@ -112,7 +112,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       return createdLinkInstance;
    }
 
-   public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances) {
+   public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances, final boolean sendIndividualNotifications) {
       if (linkInstances.size() > 0) {
          checkLinkDocumentsExists(linkInstances);
          final String linkTypeId = linkInstances.get(0).getLinkTypeId();
@@ -128,7 +128,7 @@ public class LinkInstanceFacade extends AbstractFacade {
             linkInstance.setCreationDate(ZonedDateTime.now());
          });
 
-         final List<LinkInstance> storedInstances = linkInstanceDao.createLinkInstances(linkInstances);
+         final List<LinkInstance> storedInstances = linkInstanceDao.createLinkInstances(linkInstances, sendIndividualNotifications);
          final Map<String, LinkInstance> storedInstancesMap = new HashMap<>();
 
          storedInstances.forEach(linkInstance -> {

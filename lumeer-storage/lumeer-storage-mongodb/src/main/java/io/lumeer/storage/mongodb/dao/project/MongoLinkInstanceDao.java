@@ -91,9 +91,14 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
 
    @Override
    public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances) {
+      return createLinkInstances(linkInstances, true);
+   }
+
+   @Override
+   public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances, final boolean sendNotifications) {
       try {
          databaseCollection().insertMany(linkInstances);
-         if (createLinkInstanceEvent != null) {
+         if (sendNotifications && createLinkInstanceEvent != null) {
             linkInstances.forEach(linkInstance -> createLinkInstanceEvent.fire(new CreateLinkInstance(linkInstance)));
          }
          return linkInstances;
