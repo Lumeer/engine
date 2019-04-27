@@ -63,10 +63,9 @@ public class DocumentCreator extends WithIdCreator {
       });
 
       documents.forEach((collectionTemplateId, collectionDocuments) -> {
-         var storedDocuments = documentFacade.createDocuments(templateParser.getDict().getCollectionId(collectionTemplateId), collectionDocuments);
+         var storedDocuments = documentFacade.createDocuments(templateParser.getDict().getCollectionId(collectionTemplateId), collectionDocuments, true);
          storedDocuments.forEach(doc -> templateParser.getDict().addDocument(doc.getMetaData().getString("templateId"), doc));
       });
-
 
       final Map<String, List<Document>> updates = new HashMap<>();
       a.forEach(doc -> {

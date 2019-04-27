@@ -36,7 +36,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -53,6 +52,9 @@ public class ImportFacade extends AbstractFacade {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private DocumentFacade documentFacade;
 
    @Inject
    private CollectionDao collectionDao;
@@ -166,17 +168,7 @@ public class ImportFacade extends AbstractFacade {
    }
 
    private void addDocumentsToDb(String collectionId, List<Document> documents) {
-      permissionsChecker.checkDocumentLimits(documents);
-
-      List<Document> storedDocuments = documentDao.createDocuments(documents);
-
-      List<DataDocument> dataDocuments = new LinkedList<>();
-      for (int i = 0; i < documents.size(); i++) {
-         DataDocument dataDocument = documents.get(i).getData();
-         dataDocument.setId(storedDocuments.get(i).getId());
-         dataDocuments.add(dataDocument);
-      }
-      dataDao.createData(collectionId, dataDocuments);
+      documentFacade.createDocuments(collectionId, documents, true);
    }
 
    private void addDocumentMetadata(String collectionId, Document document) {

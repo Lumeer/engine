@@ -35,7 +35,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Document implements WithId {
 
-   public static String META_PARENT_ID = "parentId";
+   public static final String META_PARENT_ID = "parentId";
+   public static final String META_TEMPLATE_ID = "templateId"; // for importing and template creation
 
    private String id;
 
@@ -147,6 +148,14 @@ public class Document implements WithId {
    }
 
    public DataDocument getMetaData() {
+      return metaData;
+   }
+
+   public DataDocument createIfAbsentMetaData() {
+      if (metaData == null) {
+         this.metaData = new DataDocument();
+      }
+
       return metaData;
    }
 

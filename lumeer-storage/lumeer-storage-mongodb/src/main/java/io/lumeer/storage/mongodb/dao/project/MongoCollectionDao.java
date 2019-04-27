@@ -111,6 +111,11 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
 
    @Override
    public Collection updateCollection(final String id, final Collection collection, final Collection originalCollection) {
+      return updateCollection(id, collection, originalCollection, true);
+   }
+
+   @Override
+   public Collection updateCollection(final String id, final Collection collection, final Collection originalCollection, final boolean pushNotification) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {
@@ -119,7 +124,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
          if (updatedCollection == null) {
             throw new StorageException("Collection '" + id + "' has not been updated.");
          }
-         if (updateResourceEvent != null) {
+         if (pushNotification && updateResourceEvent != null) {
             updateResourceEvent.fire(new UpdateResource(updatedCollection, originalCollection));
          }
          return updatedCollection;

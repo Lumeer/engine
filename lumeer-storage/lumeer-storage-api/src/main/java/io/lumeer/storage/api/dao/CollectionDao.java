@@ -38,6 +38,8 @@ public interface CollectionDao {
 
    Collection updateCollection(String id, Collection collection, Collection originalCollection);
 
+   Collection updateCollection(String id, Collection collection, Collection originalCollection, boolean pushNotification);
+
    void deleteCollection(String id);
 
    Collection getCollectionByCode(String code);

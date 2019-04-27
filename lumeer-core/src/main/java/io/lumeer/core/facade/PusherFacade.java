@@ -31,6 +31,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -213,7 +214,7 @@ public class PusherFacade extends AbstractFacade {
    public void refreshResource(@Observes final RefreshResource refreshResource) {
       if (isEnabled()) {
          try {
-            processResource(refreshResource.getResource(), REFRESH_EVENT_SUFFIX);
+            processWithId(refreshResource.getResource(), REFRESH_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -415,6 +416,14 @@ public class PusherFacade extends AbstractFacade {
          sendProjectNotifications((Project) resource, event);
       } else if (resource instanceof Collection) {
          sendCollectionNotifications((Collection) resource, event);
+      }
+   }
+
+   private void processWithId(final WithId resource, final String event) {
+      if (resource instanceof Collection) {
+         sendCollectionNotifications((Collection) resource, event);
+      } else if (resource instanceof LinkType) {
+         sendResourceNotificationByLinkType((LinkType) resource, event);
       }
    }
 

@@ -20,9 +20,15 @@ package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.common.WithId;
 
-public class RefreshResource extends WithIdEvent {
+public class WithIdEvent {
 
-   public RefreshResource(final WithId resource) {
-      super(resource);
+   private WithId resource;
+
+   public WithIdEvent(final WithId resource) {
+      this.resource = resource;
+   }
+
+   public WithId getResource() {
+      return resource;
    }
 }

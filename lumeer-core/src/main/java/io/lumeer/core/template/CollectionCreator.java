@@ -100,7 +100,7 @@ public class CollectionCreator extends WithIdCreator {
    }
 
    private void createAttributes(final Collection collection, final JSONObject o) {
-      collectionFacade.createCollectionAttributesSkipIndexFix(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
+      collectionFacade.createCollectionAttributesSkipIndexFix(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")), false);
    }
 
    private Collection getCollection(final JSONObject o) {
