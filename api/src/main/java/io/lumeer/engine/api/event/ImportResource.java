@@ -18,11 +18,11 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.common.WithId;
 
-public class RefreshLinkTypeContent extends RefreshResource {
+public class ImportResource extends WithIdEvent {
 
-   public RefreshLinkTypeContent(final LinkType resource) {
+   public ImportResource(final WithId resource) {
       super(resource);
    }
 }

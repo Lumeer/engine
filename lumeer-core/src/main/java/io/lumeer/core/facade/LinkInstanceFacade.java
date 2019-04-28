@@ -30,7 +30,7 @@ import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
-import io.lumeer.engine.api.event.RefreshLinkTypeContent;
+import io.lumeer.engine.api.event.ImportLinkTypeContent;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -80,7 +80,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    private Event<UpdateLinkInstance> updateLinkInstanceEvent;
 
    @Inject
-   private Event<RefreshLinkTypeContent> refreshLinkTypeContentEvent;
+   private Event<ImportLinkTypeContent> importLinkTypeContentEvent;
 
    private ConstraintManager constraintManager;
 
@@ -145,8 +145,8 @@ public class LinkInstanceFacade extends AbstractFacade {
             constraintManager.decodeDataTypes(linkType, data);
          });
 
-         if (refreshLinkTypeContentEvent != null) {
-            refreshLinkTypeContentEvent.fire(new RefreshLinkTypeContent(linkType));
+         if (importLinkTypeContentEvent != null) {
+            importLinkTypeContentEvent.fire(new ImportLinkTypeContent(linkType));
          }
 
          return storedInstances;

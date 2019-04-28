@@ -29,7 +29,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
-import io.lumeer.engine.api.event.RefreshCollectionContent;
+import io.lumeer.engine.api.event.ImportCollectionContent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -81,7 +81,7 @@ public class DocumentFacade extends AbstractFacade {
    private Event<UpdateDocument> updateDocumentEvent;
 
    @Inject
-   private Event<RefreshCollectionContent> refreshCollectionContentEvent;
+   private Event<ImportCollectionContent> importCollectionContentEvent;
 
    private ConstraintManager constraintManager;
 
@@ -152,8 +152,8 @@ public class DocumentFacade extends AbstractFacade {
 
       updateCollectionMetadata(collection, usages, storedDocuments.size());
 
-      if (sendNotification && refreshCollectionContentEvent != null) {
-         refreshCollectionContentEvent.fire(new RefreshCollectionContent(collection));
+      if (sendNotification && importCollectionContentEvent != null) {
+         importCollectionContentEvent.fire(new ImportCollectionContent(collection));
       }
 
       return storedDocuments;
@@ -235,8 +235,8 @@ public class DocumentFacade extends AbstractFacade {
          updatedDocuments.add(updatedDocument);
       });
 
-      if (refreshCollectionContentEvent != null) {
-         refreshCollectionContentEvent.fire(new RefreshCollectionContent(collection));
+      if (importCollectionContentEvent != null) {
+         importCollectionContentEvent.fire(new ImportCollectionContent(collection));
       }
 
       return updatedDocuments;

@@ -18,11 +18,11 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.common.WithId;
+import io.lumeer.api.model.Collection;
 
-public class RefreshResource extends WithIdEvent {
+public class ImportCollectionContent extends ImportResource {
 
-   public RefreshResource(final WithId resource) {
+   public ImportCollectionContent(final Collection resource) {
       super(resource);
    }
 }
