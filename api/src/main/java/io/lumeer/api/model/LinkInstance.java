@@ -24,6 +24,7 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -55,6 +56,9 @@ public class LinkInstance implements WithId {
    private List<String> documentIds;
    private Integer dataVersion;
    private DataDocument data;
+
+   @JsonIgnore
+   private String templateId; // used for template creation
 
    @JsonCreator
    public LinkInstance(@JsonProperty(LINK_TYPE_ID) final String linkTypeId,
@@ -146,6 +150,14 @@ public class LinkInstance implements WithId {
 
    public void setDataVersion(final Integer dataVersion) {
       this.dataVersion = dataVersion;
+   }
+
+   public String getTemplateId() {
+      return templateId;
+   }
+
+   public void setTemplateId(final String templateId) {
+      this.templateId = templateId;
    }
 
    @Override

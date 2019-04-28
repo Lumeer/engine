@@ -30,6 +30,7 @@ import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
+import io.lumeer.engine.api.event.ImportLinkTypeContent;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -40,9 +41,12 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
@@ -75,6 +79,9 @@ public class LinkInstanceFacade extends AbstractFacade {
    @Inject
    private Event<UpdateLinkInstance> updateLinkInstanceEvent;
 
+   @Inject
+   private Event<ImportLinkTypeContent> importLinkTypeContentEvent;
+
    private ConstraintManager constraintManager;
 
    @PostConstruct
@@ -103,6 +110,49 @@ public class LinkInstanceFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(linkType, storedData);
 
       return createdLinkInstance;
+   }
+
+   public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances, final boolean sendIndividualNotifications) {
+      if (linkInstances.size() > 0) {
+         checkLinkDocumentsExists(linkInstances);
+         final String linkTypeId = linkInstances.get(0).getLinkTypeId();
+
+         if (linkInstances.stream().filter(linkInstance -> !linkInstance.getLinkTypeId().equals(linkTypeId)).findFirst().isPresent()) {
+            throw new BadFormatException("Cannot create link instances of multiple link types at once.");
+         }
+
+         var linkType = checkLinkTypeWritePermissions(linkTypeId);
+
+         linkInstances.forEach(linkInstance -> {
+            linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
+            linkInstance.setCreationDate(ZonedDateTime.now());
+         });
+
+         final List<LinkInstance> storedInstances = linkInstanceDao.createLinkInstances(linkInstances, sendIndividualNotifications);
+         final Map<String, LinkInstance> storedInstancesMap = new HashMap<>();
+
+         storedInstances.forEach(linkInstance -> {
+            storedInstancesMap.put(linkInstance.getId(), linkInstance);
+
+            var data = linkInstance.getData();
+            data.setId(linkInstance.getId());
+            constraintManager.encodeDataTypes(linkType, data);
+         });
+
+         final List<DataDocument> storedData = linkDataDao.createData(linkType.getId(), storedInstances.stream().map(LinkInstance::getData).collect(Collectors.toList()));
+         storedData.forEach(data -> {
+            storedInstancesMap.get(data.getId()).setData(data);
+            constraintManager.decodeDataTypes(linkType, data);
+         });
+
+         if (importLinkTypeContentEvent != null) {
+            importLinkTypeContentEvent.fire(new ImportLinkTypeContent(linkType));
+         }
+
+         return storedInstances;
+      }
+
+      return linkInstances;
    }
 
    public LinkInstance updateLinkInstanceData(final String linkInstanceId, final DataDocument data) {
@@ -215,9 +265,21 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private void checkDocumentsExists(final List<String> documentIds) {
       List<Document> documents = documentDao.getDocumentsByIds(documentIds.toArray(new String[0]));
-      if (documents.size() < 2) {
+      if (documents.size() != documentIds.size()) {
          throw new BadFormatException("Invalid number of document ids in Link: " + documentIds);
       }
    }
 
+   private void checkLinkDocumentsExists(final List<LinkInstance> linkInstances) {
+      final List<String> documentIds = new ArrayList<>();
+      linkInstances.forEach(linkInstance -> documentIds.addAll(linkInstance.getDocumentIds()));
+      if (linkInstances.size() * 2 != documentIds.size()) {
+         throw new BadFormatException(String.format("Invalid number of document ids (%d) in links (%d).", documentIds.size(), linkInstances.size()));
+      }
+
+      List<Document> documents = documentDao.getDocumentsByIds(documentIds.toArray(new String[0]));
+      if (documents.size() != new HashSet<>(documentIds).size()) {
+         throw new BadFormatException("Invalid number of document ids in Link: " + documentIds);
+      }
+   }
 }

@@ -217,7 +217,7 @@ public class CollectionFacade extends AbstractFacade {
       return attributes;
    }
 
-   public java.util.Collection<Attribute> createCollectionAttributesSkipIndexFix(final String collectionId, final java.util.Collection<Attribute> attributes) {
+   public java.util.Collection<Attribute> createCollectionAttributesSkipIndexFix(final String collectionId, final java.util.Collection<Attribute> attributes, final boolean pushNotification) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
@@ -231,7 +231,7 @@ public class CollectionFacade extends AbstractFacade {
 
       permissionsChecker.checkFunctionsLimit(collection);
       collection.setLastTimeUsed(ZonedDateTime.now());
-      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+      collectionDao.updateCollection(collection.getId(), collection, originalCollection, pushNotification);
 
       return attributes;
    }

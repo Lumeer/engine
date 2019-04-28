@@ -34,6 +34,8 @@ public interface LinkDataDao {
 
    DataDocument createData(String linkTypeId, String linkInstanceId, DataDocument data);
 
+   List<DataDocument> createData(final String linkTypeId, final List<DataDocument> data);
+
    DataDocument updateData(String linkTypeId, String linkInstanceId, DataDocument data);
 
    DataDocument patchData(String linkTypeId, String linkInstanceId, DataDocument data);

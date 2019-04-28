@@ -38,6 +38,8 @@ public interface LinkInstanceDao {
 
    List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances);
 
+   List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances, final boolean sendNotifications);
+
    LinkInstance updateLinkInstance(String id, LinkInstance linkInstance);
 
    void deleteLinkInstance(String id);

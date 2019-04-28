@@ -25,6 +25,10 @@ import io.lumeer.engine.api.data.DataDocument;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -46,18 +50,24 @@ public class DocumentCreator extends WithIdCreator {
 
    private void createDocuments() {
       JSONArray a = (JSONArray) templateParser.getTemplate().get("documents");
+      final Map<String, List<Document>> documents = new HashMap<>();
       a.forEach(doc -> {
          var docObj = (JSONObject) doc;
          var documentTemplateId = TemplateParserUtils.getId(docObj);
          var collectionTemplateId = (String) docObj.get("collectionId");
-         var data = new DataDocument();
-         var document = documentFacade.createDocument(templateParser.getDict().getCollectionId(collectionTemplateId), new Document(data));
-         templateParser.getDict().addDocument(documentTemplateId, document);
 
-         getDocumentData(document, documentTemplateId, collectionTemplateId);
-         document = documentFacade.updateDocumentData(document.getCollectionId(), document.getId(), document.getData());
+         var docu = new Document(new DataDocument());
+         getDocumentData(docu, documentTemplateId, collectionTemplateId);
+         docu.setMetaData(new DataDocument("templateId", documentTemplateId));
+         documents.computeIfAbsent(collectionTemplateId, cId -> new ArrayList<>()).add(docu);
       });
 
+      documents.forEach((collectionTemplateId, collectionDocuments) -> {
+         var storedDocuments = documentFacade.createDocuments(templateParser.getDict().getCollectionId(collectionTemplateId), collectionDocuments, true);
+         storedDocuments.forEach(doc -> templateParser.getDict().addDocument(doc.getMetaData().getString("templateId"), doc));
+      });
+
+      final Map<String, List<Document>> updates = new HashMap<>();
       a.forEach(doc -> {
          var docObj = (JSONObject) doc;
          var metaData = docObj.get("metaData");
@@ -75,10 +85,13 @@ public class DocumentCreator extends WithIdCreator {
                }
 
                document.setMetaData(document.getMetaData().append("parentId", parentId));
-               documentFacade.updateDocumentMetaData(document.getCollectionId(), document.getId(), document.getMetaData());
+
+               updates.computeIfAbsent(document.getCollectionId(), cId -> new ArrayList<>()).add(document);
             }
          }
       });
+
+      updates.forEach((collectionId, documentUpdates) -> documentFacade.updateDocumentsMetaData(collectionId, documentUpdates));
    }
 
    @SuppressWarnings("unchecked")

@@ -25,7 +25,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -47,16 +49,22 @@ public class LinkInstanceCreator extends WithIdCreator {
 
    private void createLinkInstances() {
       JSONArray a = (JSONArray) templateParser.getTemplate().get("linkInstances");
+      final Map<String, List<LinkInstance>> linkInstances = new HashMap<>();
       a.forEach(link -> {
          var linkObj = (JSONObject) link;
          var linkTemplateId = TemplateParserUtils.getId(linkObj);
          var linkTypeTemplateId = (String) linkObj.get("linkTypeId");
-         var linkInstance = new LinkInstance((String) templateParser.getDict().getLinkTypeId(linkTypeTemplateId), getDocumentIds(linkObj));
-         linkInstance = linkInstanceFacade.createLinkInstance(linkInstance);
-         templateParser.getDict().addLinkInstance(linkTemplateId, linkInstance);
-
+         var linkInstance = new LinkInstance(templateParser.getDict().getLinkTypeId(linkTypeTemplateId), getDocumentIds(linkObj));
+         linkInstance.setTemplateId(linkTemplateId);
          getLinkData(linkInstance, linkTemplateId, linkTypeTemplateId);
-         linkInstance = linkInstanceFacade.updateLinkInstanceData(linkInstance.getId(), linkInstance.getData());
+         linkInstances.computeIfAbsent(linkTypeTemplateId, id -> new ArrayList<>()).add(linkInstance);
+      });
+
+      linkInstances.forEach((linkTypeTemplateId, typeInstances) -> {
+         var storedLinkInstances = linkInstanceFacade.createLinkInstances(typeInstances, false);
+         storedLinkInstances.forEach(linkInstance -> {
+            templateParser.getDict().addLinkInstance(linkInstance.getTemplateId(), linkInstance);
+         });
       });
    }
 

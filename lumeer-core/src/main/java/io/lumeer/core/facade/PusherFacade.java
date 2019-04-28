@@ -31,6 +31,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -46,6 +47,7 @@ import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.FavoriteItem;
+import io.lumeer.engine.api.event.ImportResource;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
@@ -97,6 +99,7 @@ public class PusherFacade extends AbstractFacade {
    public static final String UPDATE_EVENT_SUFFIX = ":update";
    public static final String CREATE_EVENT_SUFFIX = ":create";
    public static final String REMOVE_EVENT_SUFFIX = ":remove";
+   public static final String IMPORT_EVENT_SUFFIX = ":import";
 
    private String PUSHER_APP_ID;
    private String PUSHER_KEY;
@@ -202,6 +205,16 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             processResource(removeResource.getResource(), REMOVE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void importResource(@Observes final ImportResource importResource) {
+      if (isEnabled()) {
+         try {
+            processWithId(importResource.getResource(), IMPORT_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -403,6 +416,14 @@ public class PusherFacade extends AbstractFacade {
          sendProjectNotifications((Project) resource, event);
       } else if (resource instanceof Collection) {
          sendCollectionNotifications((Collection) resource, event);
+      }
+   }
+
+   private void processWithId(final WithId resource, final String event) {
+      if (resource instanceof Collection) {
+         sendCollectionNotifications((Collection) resource, event);
+      } else if (resource instanceof LinkType) {
+         sendResourceNotificationByLinkType((LinkType) resource, event);
       }
    }
 

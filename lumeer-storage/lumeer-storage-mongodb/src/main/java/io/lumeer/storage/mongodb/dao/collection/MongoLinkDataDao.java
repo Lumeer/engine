@@ -82,6 +82,21 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    }
 
    @Override
+   public List<DataDocument> createData(final String linkTypeId, final List<DataDocument> data) {
+      List<Document> documents = data.stream().map(dataDocument -> new Document(dataDocument).append(ID, new ObjectId(dataDocument.getId()))).collect(Collectors.toList());
+      linkDataCollection(linkTypeId).insertMany(documents);
+
+      for (int i = 0; i < documents.size(); i++) {
+         Object idObj = documents.get(i).get(ID);
+         String id = idObj instanceof String ? (String) idObj : ((ObjectId) idObj).toHexString();
+         data.get(i).setId(id);
+      }
+
+      return data;
+   }
+
+
+   @Override
    public DataDocument updateData(final String linkTypeId, final String linkInstanceId, final DataDocument data) {
       Document document = new Document(data);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);

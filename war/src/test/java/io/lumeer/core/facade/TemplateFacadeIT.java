@@ -178,6 +178,7 @@ public class TemplateFacadeIT extends IntegrationTestBase {
       var initiativesCollection = collections.stream().filter(collection -> collection.getName().equals("Initiatives")).findFirst().orElse(null);
       assertThat(keyResultsCollection).isNotNull();
       assertThat(initiativesCollection).isNotNull();
+      assertThat(objectiveKeyResultsLinkType.getCollectionIds()).containsExactly(objectivesCollection.getId(), keyResultsCollection.getId());
 
       var allKeyResults = searchFacade.searchDocuments(new Query(new QueryStem(keyResultsCollection.getId())));
       var allInitiatives = searchFacade.searchDocuments(new Query(new QueryStem(initiativesCollection.getId())));
