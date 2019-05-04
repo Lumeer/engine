@@ -34,12 +34,16 @@ public class WithIdCreator {
       this.templateParser = templateParser;
    }
 
-   protected DataDocument translateDataDocument(final WithId resource, final JSONObject o) {
+   protected DataDocument translateDataDocument(final WithId resource, final JSONObject o, final String defaultUser) {
       final DataDocument data = new DataDocument();
 
       o.forEach((k, v) -> {
          if (!"_id".equals(k)) {
-            data.append((String) k, v);
+            if ("$USER".equals(v)) {
+               data.append((String) k, defaultUser);
+            } else {
+               data.append((String) k, v);
+            }
 
             // add date function here
          }
