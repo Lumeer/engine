@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.template;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
@@ -40,7 +39,6 @@ public class TemplateObjectsDictionary {
    private final Map<String, View> views = new HashMap<>();
    private final Map<String, Document> documents = new HashMap<>();
    private final Map<String, LinkInstance> linkInstances = new HashMap<>();
-   private final Map<String, Map<String, Attribute>> attributes = new HashMap<>();
 
    public void addCollection(final String templateId, final Collection collection) {
       collections.put(templateId, collection);

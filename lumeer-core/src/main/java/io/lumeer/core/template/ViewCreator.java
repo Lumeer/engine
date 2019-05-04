@@ -76,7 +76,6 @@ public class ViewCreator extends WithIdCreator {
             viewJson.put("_id", templateId);
             view.setQuery(translateQuery(view.getQuery()));
             view.setConfig(translateConfig(view.getConfig()));
-
             view = viewFacade.createView(view);
             templateParser.getDict().addView(templateId, view);
          } catch (IOException e) {
@@ -138,7 +137,8 @@ public class ViewCreator extends WithIdCreator {
          ));
       });
 
-      return new Query(newStems);
+      final Query result = new Query(newStems, query.getFulltexts(), query.getPage(), query.getPageSize());
+      return result;
    }
 
    private Object translateConfig(final Object config) {
