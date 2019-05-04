@@ -42,6 +42,7 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -96,6 +97,8 @@ public class JsExecutor {
             return value.fitsInLong() ? value.asLong() : value.asDouble();
          } else if (value.isBoolean()) {
             return value.asBoolean();
+         } else if (value.isHostObject() && value.asHostObject() instanceof Date) {
+            return value.asHostObject();
          } else if (value.isNull()) {
             return null;
          } else if (value.hasArrayElements()) {
@@ -434,7 +437,7 @@ public class JsExecutor {
       }
 
       public boolean isComplete() {
-         return entity != null && attrId != null && !"".equals(attrId) && value != null;
+         return entity != null && attrId != null && !"".equals(attrId);
       }
 
       public T getEntity() {
