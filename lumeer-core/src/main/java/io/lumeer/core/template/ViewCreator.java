@@ -23,8 +23,10 @@ import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.View;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.core.facade.ViewFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +37,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.time.DateTimeException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,10 +54,14 @@ public class ViewCreator extends WithIdCreator {
 
    private final ViewFacade viewFacade;
    private final ObjectMapper mapper;
+   private final DefaultConfigurationProducer defaultConfigurationProducer;
+   private final ConstraintManager constraintManager;
 
-   private ViewCreator(final TemplateParser templateParser, final ViewFacade viewFacade) {
+   private ViewCreator(final TemplateParser templateParser, final ViewFacade viewFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
       super(templateParser);
       this.viewFacade = viewFacade;
+      this.defaultConfigurationProducer = defaultConfigurationProducer;
+      this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
 
       mapper = new ObjectMapper();
       AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
@@ -61,8 +70,8 @@ public class ViewCreator extends WithIdCreator {
       mapper.setAnnotationIntrospector(pair);
    }
 
-   public static void createViews(final TemplateParser templateParser, final ViewFacade viewFacade) {
-      final ViewCreator creator = new ViewCreator(templateParser, viewFacade);
+   public static void createViews(final TemplateParser templateParser, final ViewFacade viewFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
+      final ViewCreator creator = new ViewCreator(templateParser, viewFacade, defaultConfigurationProducer);
       creator.createViews();
    }
 
@@ -167,29 +176,43 @@ public class ViewCreator extends WithIdCreator {
       }
    }
 
-   private String translateString(final String resourceId) {
-      if (resourceId == null || resourceId.length() != 24) {
-         return resourceId;
+   private Object translateString(final String resourceId) {
+      if (resourceId == null) {
+         return null;
       }
 
-      String res = templateParser.getDict().getCollectionId(resourceId);
+      if (resourceId.length() == 24) {
 
-      if (res == null) {
-         res = templateParser.getDict().getLinkTypeId(resourceId);
+         String res = templateParser.getDict().getCollectionId(resourceId);
 
          if (res == null) {
-            res = templateParser.getDict().getDocumentId(resourceId);
+            res = templateParser.getDict().getLinkTypeId(resourceId);
 
             if (res == null) {
-               res = templateParser.getDict().getLinkInstanceId(resourceId);
+               res = templateParser.getDict().getDocumentId(resourceId);
 
                if (res == null) {
-                  res = templateParser.getDict().getViewId(resourceId);
+                  res = templateParser.getDict().getLinkInstanceId(resourceId);
+
+                  if (res == null) {
+                     res = templateParser.getDict().getViewId(resourceId);
+                  }
                }
             }
          }
+
+         if (res != null) {
+            return res;
+         }
       }
 
-      return res;
+      try {
+         final ZonedDateTime zdt = ZonedDateTime.parse(resourceId, constraintManager.getDateDecoder());
+         return Date.from(zdt.toInstant());
+      } catch (DateTimeException e) {
+         // nps
+      }
+
+      return constraintManager.encode(resourceId);
    }
 }
