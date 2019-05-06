@@ -19,6 +19,7 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -37,14 +38,16 @@ import java.util.Optional;
 public class DocumentCreator extends WithIdCreator {
 
    final private DocumentFacade documentFacade;
+   final private AuthenticatedUser authenticatedUser;
 
-   private DocumentCreator(final TemplateParser templateParser, final DocumentFacade documentFacade) {
+   private DocumentCreator(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser) {
       super(templateParser);
       this.documentFacade = documentFacade;
+      this.authenticatedUser = authenticatedUser;
    }
 
-   public static void createDocuments(final TemplateParser templateParser, final DocumentFacade documentFacade) {
-      final DocumentCreator creator = new DocumentCreator(templateParser, documentFacade);
+   public static void createDocuments(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser) {
+      final DocumentCreator creator = new DocumentCreator(templateParser, documentFacade, authenticatedUser);
       creator.createDocuments();
    }
 
@@ -99,7 +102,7 @@ public class DocumentCreator extends WithIdCreator {
       final Optional<JSONObject> data = ((JSONArray) ((JSONObject) templateParser.getTemplate().get("data")).get(collectionTemplateId)).stream().filter(d -> documentTemplateId.equals(TemplateParserUtils.getId((JSONObject) d))).findFirst();
 
       if (data.isPresent() && data.get().size() > 1) {
-         document.setData(translateDataDocument(templateParser.getDict().getCollection(collectionTemplateId), data.get()));
+         document.setData(translateDataDocument(templateParser.getDict().getCollection(collectionTemplateId), data.get(), authenticatedUser.getUserEmail()));
       }
 
       return document;

@@ -407,4 +407,8 @@ public class ConstraintManager {
          }
       });
    }
+
+   public DateTimeFormatter getDateDecoder() {
+      return dateDecoder;
+   }
 }
