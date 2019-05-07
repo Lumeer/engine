@@ -213,7 +213,14 @@ public class PaymentFacade extends AbstractFacade {
       workspaceKeeper.clearServiceLimits(organization);
 
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);
-      payment.setState(paymentGateway.getPaymentStatus(payment.getPaymentId()));
+      final Payment.PaymentState newState = paymentGateway.getPaymentStatus(payment.getPaymentId());
+
+      // when PAID is set manually, ignore GoPay updates to a timeouted payment
+      if (payment.getState() == Payment.PaymentState.PAID && newState == Payment.PaymentState.TIMEOUTED) {
+         return payment;
+      }
+
+      payment.setState(newState);
 
       final Payment result = paymentDao.updatePayment(organization, payment);
 
