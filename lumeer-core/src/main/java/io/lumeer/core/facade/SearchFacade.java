@@ -27,8 +27,8 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -411,9 +411,13 @@ public class SearchFacade extends AbstractFacade {
       // add results to rootDocuments
       // repeat while there were any results
 
-      List<Document> nextLevel = documentDao.getDocumentsByParentIds(rootDocuments.stream()
-                                                                                  .map(Document::getId)
-                                                                                  .collect(Collectors.toSet()));
+      List<Document> nextLevel = documentDao.getDocumentsByParentIds(
+            rootDocuments.stream()
+                         .map(Document::getId)
+                         .collect(Collectors.toSet()))
+            .stream()
+            .filter(d -> !result.contains(d))
+            .collect(Collectors.toList());
 
       Set<Document> filteredDocuments = rootDocuments.stream().filter(d -> !result.contains(d))
                                                      .collect(Collectors.toSet());
