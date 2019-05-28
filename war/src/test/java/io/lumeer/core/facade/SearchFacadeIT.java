@@ -426,6 +426,26 @@ public class SearchFacadeIT extends IntegrationTestBase {
       assertions.assertAll();
    }
 
+   @Test
+   public void testCyclicChildDocuments() {
+      final Document a0 = createDocument(collectionIds.get(0), "a0");
+      final Document a1 = createDocument(collectionIds.get(0), "a1", a0.getId());
+      final Document a2 = createDocument(collectionIds.get(0), "a2", a1.getId());
+      a0.setMetaData(new DataDocument(Document.META_PARENT_ID, a2.getId()));
+      documentDao.updateDocument(a0.getId(), a0, null);
+
+      Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptySet(), Collections.emptySet()));
+      List<Document> documents = searchFacade.searchDocuments(query);
+
+      assertThat(documents).hasSize(3);
+      var parents = documents.stream().map(d -> d.getMetaData().getString(Document.META_PARENT_ID)).collect(Collectors.toList());
+      var ids = documents.stream().map(Document::getId).collect(Collectors.toList());
+
+      assertThat(ids).hasSize(3);
+      assertThat(parents).hasSize(3);
+      assertThat(parents).containsAll(ids);
+   }
+
    private Document createDocument(String collectionId, Object value) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       final String id = DOCUMENT_KEY; // use the same document id for simplicity in tests
