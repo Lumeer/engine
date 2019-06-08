@@ -81,6 +81,10 @@ public class User {
 
    private List<String> wishes;
 
+   @JsonView(UserViews.DefaultView.class)
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime lastLoggedIn;
+
    public User(final String email) {
       this.email = email;
       this.groups = new HashMap<>();
@@ -216,6 +220,7 @@ public class User {
             ", newsletter=" + newsletter +
             ", wizardDismissed=" + wizardDismissed +
             ", wishes=" + wishes +
+            ", lastLoggedIn=" + lastLoggedIn +
             '}';
    }
 
@@ -234,5 +239,13 @@ public class User {
    @Override
    public int hashCode() {
       return Objects.hash(id);
+   }
+
+   public void setLastLoggedIn(final ZonedDateTime lastLoggedIn) {
+      this.lastLoggedIn = lastLoggedIn;
+   }
+
+   public ZonedDateTime getLastLoggedIn() {
+      return lastLoggedIn;
    }
 }

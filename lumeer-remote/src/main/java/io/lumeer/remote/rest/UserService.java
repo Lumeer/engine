@@ -89,6 +89,13 @@ public class UserService extends AbstractService {
       return userFacade.getCurrentUser();
    }
 
+   @GET
+   @Path("currentWithLastLogin")
+   @JsonView(UserViews.FullView.class)
+   public User getUserWithLastLogin() {
+      return userFacade.getCurrentUserWithLastLogin();
+   }
+
    @PATCH
    @Path("current")
    @JsonView(UserViews.FullView.class)

@@ -22,11 +22,15 @@ import io.lumeer.api.model.UserLoginEvent;
 import io.lumeer.storage.api.dao.UserLoginDao;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
@@ -44,6 +48,19 @@ public class MongoUserLoginDao extends SystemScopedDao implements UserLoginDao {
    @Override
    public void userLoggedIn(final String userId) {
       database.getCollection(COLLECTION_NAME, UserLoginEvent.class).insertOne(new UserLoginEvent(userId));
+   }
+
+   @Override
+   public ZonedDateTime getPreviousLoginDate(final String userId) {
+      List<UserLoginEvent> result = database.getCollection(COLLECTION_NAME, UserLoginEvent.class)
+                                            .find(Filters.eq(UserLoginEvent.USER_ID, userId))
+                                            .sort(Sorts.descending(UserLoginEvent.DATE))
+                                            .limit(2).into(new ArrayList<>());
+      if (result.size() > 1) {
+         return result.get(1).getDate();
+      }
+
+      return null;
    }
 
    @Override
