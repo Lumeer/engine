@@ -32,6 +32,7 @@ import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.UserLoginDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
@@ -49,6 +50,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private UserLoginDao userLoginDao;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -161,6 +165,13 @@ public class UserFacade extends AbstractFacade {
       } catch (ResourceNotFoundException e) {
          user.setDefaultWorkspace(null);
       }
+
+      return user;
+   }
+
+   public User getCurrentUserWithLastLogin() {
+      final User user = getCurrentUser();
+      user.setLastLoggedIn(userLoginDao.getPreviousLoginDate(user.getId()));
 
       return user;
    }
