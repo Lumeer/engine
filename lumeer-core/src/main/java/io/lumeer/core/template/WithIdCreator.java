@@ -23,10 +23,18 @@ import io.lumeer.engine.api.data.DataDocument;
 
 import org.json.simple.JSONObject;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
+import java.util.Locale;
+
 /**
  * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class WithIdCreator {
+
+   private DateTimeFormatter dateDecoder = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX", Locale.forLanguageTag("en_US"));
 
    protected final TemplateParser templateParser;
 
@@ -42,7 +50,22 @@ public class WithIdCreator {
             if ("$USER".equals(v)) {
                data.append((String) k, defaultUser);
             } else {
-               data.append((String) k, v);
+               var passed = false;
+               if (v != null) {
+                  try {
+                     var accessor = dateDecoder.parse(v.toString());
+                     data.append(
+                           (String) k,
+                           Date.from(ZonedDateTime.from(accessor).toInstant())
+                     );
+                     passed = true;
+                  } catch (DateTimeParseException dtpe) {
+                  }
+               }
+
+               if (!passed) {
+                  data.append((String) k, v);
+               }
             }
 
             // add date function here
