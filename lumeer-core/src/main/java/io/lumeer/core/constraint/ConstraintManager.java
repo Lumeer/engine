@@ -298,6 +298,11 @@ public class ConstraintManager {
          }
       }
 
+      if (constraint != null && constraint.getType() == ConstraintType.Select) {
+         var numericValue = encodeNumber(NumberFormat.getIntegerInstance(), NumberFormat.getIntegerInstance(), value);
+         return numericValue != null ? numericValue : value;
+      }
+
       return tryHard ? encode(value) : value;
    }
 
