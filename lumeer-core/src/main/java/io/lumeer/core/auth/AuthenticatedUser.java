@@ -19,7 +19,6 @@
 package io.lumeer.core.auth;
 
 import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -177,12 +176,12 @@ public class AuthenticatedUser implements Serializable {
 
       ((WorkspaceKeeper) selectedWorkspace).setOrganization(organization.getId());
 
-      Project project = createDemoProject(user);
+      //Project project = createDemoProject(user);
 
-      user.setDefaultWorkspace(new DefaultWorkspace(organization.getId(), project.getId()));
+      //user.setDefaultWorkspace(new DefaultWorkspace(organization.getId(), project.getId()));
 
       freshdeskFacade.logTicket(user, "A new user " + user.getEmail() + " logged for the first time in the system",
-            "Organization " + organization.getCode() + " and project " + project.getCode() + " were created for them.");
+            "Organization " + organization.getCode() + " was created for them.");
    }
 
    private Organization createDemoOrganization(User user) {
