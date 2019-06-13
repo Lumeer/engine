@@ -60,7 +60,8 @@
     { "_id" : "5cfc339c857aba0090e3861e", "collectionId" : "5ced9b8c857aba00904ac41e", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-08T22:15:56.641Z", "dataVersion" : 8, "updateDate" : "2019-06-08T22:18:14.109Z" },
     { "_id" : "5cfc33b9857aba0090e38620", "collectionId" : "5ced9b8c857aba00904ac41e", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-08T22:16:25.008Z", "dataVersion" : 13, "updateDate" : "2019-06-08T22:27:20.276Z" },
     { "_id" : "5cfc33f1857aba0090e38622", "collectionId" : "5ced9b8c857aba00904ac41e", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-08T22:17:21.949Z", "dataVersion" : 13, "updateDate" : "2019-06-08T22:27:21.209Z" },
-    { "_id" : "5cfc349b857aba0090e38626", "collectionId" : "5ced9b8c857aba00904ac41e", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-08T22:20:11.589Z", "dataVersion" : 14, "updateDate" : "2019-06-08T22:27:21.705Z" }  ]
+    { "_id" : "5cfc349b857aba0090e38626", "collectionId" : "5ced9b8c857aba00904ac41e", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-08T22:20:11.589Z", "dataVersion" : 14, "updateDate" : "2019-06-08T22:27:21.705Z" }
+  ],
   "data": {
     "5ced9b8c857aba00904ac41e": [
       { "_id" : "5ced9c59857aba00904ac420", "a1" : "Button for sharing views does not work", "a2" : "high", "a3" : "closed", "a4" : "$USER", "a5" : "$USER", "a6" : "2019-05-06T20:30:51Z", "a7" : "2019-06-18T22:00:00Z", "a8" : 44, "a10" : "2019-06-18T22:00:00.000+0000" },
