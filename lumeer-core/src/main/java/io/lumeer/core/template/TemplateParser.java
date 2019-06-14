@@ -41,7 +41,7 @@ public class TemplateParser {
       final Object o;
 
       try (final BufferedReader br = new BufferedReader(new InputStreamReader(
-            this.getClass().getResourceAsStream("/templates/" + templateType.toString().toLowerCase() + "." + language + ".json")))) {
+            this.getClass().getResourceAsStream("/templates/" + templateType.toString().toLowerCase() + "." + language + ".json"), "UTF-8"))) {
          o = parser.parse(br);
          if (!(o instanceof JSONObject)) {
             throw new IOException("Template file does not contain a valid JSON object.");
