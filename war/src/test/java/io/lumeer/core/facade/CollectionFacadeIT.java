@@ -322,9 +322,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       var updatedCollection = collectionDao.getCollectionByCode(CODE);
       assertThat(updatedCollection).isNotNull();
-
-      System.out.println(updatedCollection.getAttributes());
-      System.out.println(updatedCollection.getAttributes().size());
+      assertThat(updatedCollection.getAttributes()).hasSize(4*20);
    }
 
    @Test
