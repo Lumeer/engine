@@ -59,7 +59,6 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -71,7 +70,6 @@ import javax.inject.Inject;
 public class MongoCollectionDao extends ProjectScopedDao implements CollectionDao {
 
    private static final String PREFIX = "collections_p-";
-   private static final Random rnd = new Random();
 
    @Inject
    private Event<CreateResource> createResourceEvent;
