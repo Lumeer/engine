@@ -26,7 +26,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -36,6 +35,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.function.Function;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
@@ -55,7 +55,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -288,6 +287,44 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertions.assertThat(storedAttribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
+   }
+
+   @Test
+   public void testCreateCollectionAttribute() {
+      final Collection collection = createCollection(CODE);
+      assertThat(collection.getAttributes()).isEmpty();
+
+      final var attributeIds = new ArrayList<String>();
+
+      Runnable r = () -> {
+         for (int i = 0; i < 20; i++) {
+            Attribute attribute = new Attribute(null, ATTRIBUTE_NAME, null, null, 0);
+            final java.util.Collection<Attribute> createdAttributes = collectionFacade.createCollectionAttributes(collection.getId(), List.of(attribute));
+            createdAttributes.forEach(a -> attributeIds.add(a.getId()));
+         }
+      };
+
+      final List<Thread> threads = new ArrayList<>();
+      for (int i = 0; i < 4; i++) {
+         threads.add(new Thread(r));
+      }
+
+      threads.forEach(t -> t.run());
+
+      threads.forEach(t -> {
+         try {
+            t.join();
+         } catch (InterruptedException e) {
+            e.printStackTrace();
+         }
+      });
+
+
+      var updatedCollection = collectionDao.getCollectionByCode(CODE);
+      assertThat(updatedCollection).isNotNull();
+
+      System.out.println(updatedCollection.getAttributes());
+      System.out.println(updatedCollection.getAttributes().size());
    }
 
    @Test
