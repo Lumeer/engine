@@ -60,6 +60,7 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -294,7 +295,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       final Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
 
-      final var attributeIds = new ArrayList<String>();
+      final var attributeIds = new HashSet<String>();
 
       Runnable r = () -> {
          for (int i = 0; i < 20; i++) {
