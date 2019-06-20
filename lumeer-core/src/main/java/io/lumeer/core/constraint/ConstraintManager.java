@@ -27,8 +27,13 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.coordinates.CoordinatesParser;
+import io.lumeer.core.util.coordinates.LatLng;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 import org.bson.types.Decimal128;
 
 import java.math.BigDecimal;
@@ -48,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
@@ -248,7 +254,7 @@ public class ConstraintManager {
          return encode(value);
       }
 
-      if (tryHard || constraint.getType() == ConstraintType.Percentage) {
+      if (tryHard || (constraint != null && constraint.getType() == ConstraintType.Percentage)) {
          if (value instanceof BigDecimal || value instanceof Long || value instanceof Double) {
             return value;
          }
@@ -303,6 +309,20 @@ public class ConstraintManager {
          return numericValue != null ? numericValue : value;
       }
 
+      if (tryHard || (constraint != null && constraint.getType() == ConstraintType.Coordinates)) {
+         if (value instanceof Point) {
+            return value;
+         }
+
+         if (value instanceof String) {
+            final Optional<LatLng> latLng = CoordinatesParser.parseVerbatimCoordinates((String) value);
+
+            if (latLng.isPresent()) {
+               return new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(latLng.get().getLat(), latLng.get().getLng()));
+            }
+         }
+      }
+
       return tryHard ? encode(value) : value;
    }
 
@@ -319,6 +339,11 @@ public class ConstraintManager {
 
          if (value instanceof BigDecimal) {
             return value.toString();
+         }
+
+         if (value instanceof Point) {
+            List<Double> values = ((Point) value).getCoordinates().getValues();
+            return values.get(0) + ", " + values.get(1);
          }
       }
 
