@@ -254,7 +254,7 @@ public class ConstraintManager {
          return encode(value);
       }
 
-      if (tryHard || (constraint != null && constraint.getType() == ConstraintType.Percentage)) {
+      if (tryHard || (constraint != null && (constraint.getType() == ConstraintType.Percentage || constraint.getType() == ConstraintType.Duration))) {
          if (value instanceof BigDecimal || value instanceof Long || value instanceof Double) {
             return value;
          }
