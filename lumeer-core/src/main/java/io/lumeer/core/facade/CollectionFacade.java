@@ -199,20 +199,21 @@ public class CollectionFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
+      final Collection bookedAttributesCollection = collectionDao.bookAttributesNum(collectionId, collection, attributes.size());
+
+      int lastAttributeNum = bookedAttributesCollection.getLastAttributeNum() - attributes.size() + 1;
+
       for (Attribute attribute : attributes) {
-         final Integer freeNum = getFreeAttributeNum(collection);
-         attribute.setId(Collection.ATTRIBUTE_PREFIX + freeNum);
+         attribute.setId(Collection.ATTRIBUTE_PREFIX + lastAttributeNum++);
          attribute.setUsageCount(0);
-         collection.createAttribute(attribute);
-         collection.setLastAttributeNum(freeNum);
+         bookedAttributesCollection.createAttribute(attribute);
       }
 
       permissionsChecker.checkFunctionsLimit(collection);
-      collection.setLastTimeUsed(ZonedDateTime.now());
-      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+      bookedAttributesCollection.setLastTimeUsed(ZonedDateTime.now());
+      collectionDao.updateCollection(collection.getId(), bookedAttributesCollection, collection);
 
       return attributes;
    }

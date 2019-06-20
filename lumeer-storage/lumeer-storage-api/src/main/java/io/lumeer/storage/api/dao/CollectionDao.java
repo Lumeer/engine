@@ -63,4 +63,6 @@ public interface CollectionDao {
    Set<String> getAllCollectionNames();
 
    Set<String> getAllCollectionIds();
+
+   Collection bookAttributesNum(String id, Collection collection, int count);
 }
