@@ -21,8 +21,8 @@ package io.lumeer.core.facade;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
@@ -36,8 +36,10 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
-import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -116,8 +118,15 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   private ConstraintManager constraintManager;
+
    @Before
    public void configureCollections() {
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
+
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);
       userId = createdUser.getId();
@@ -336,6 +345,23 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   public void testSearchDocumentsCoordinatesConstraint(){
+      Constraint constraint = new Constraint(ConstraintType.Coordinates, new DataDocument());
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
+      String collectionId = createCollection("coordinatesCollection", attribute).getId();
+
+      String id1 = createDocument(collectionId, "40.123°N 74.123°W").getId();
+      String id2 = createDocument(collectionId, "45.123°N 74.123°W").getId();
+      String id3 = createDocument(collectionId, "60.123°N 74.123°W").getId();
+
+      System.out.println(dataDao.getData(collectionId, id1));
+
+      Query query = createSimpleQueryWithAttributeFilter(collectionId, new CollectionAttributeFilter(collectionId, DOCUMENT_KEY, "=", "40.123, -74.123"));
+      List<Document> documents = searchFacade.searchDocuments(query);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1);
+   }
+
+   @Test
    public void testSearchDocumentsWithLinks() {
       String id1 = createDocument(collectionIds.get(0), "lumeer lol").getId();
       String id2 = createDocument(collectionIds.get(0), "lol").getId();
@@ -464,6 +490,8 @@ public class SearchFacadeIT extends IntegrationTestBase {
       document.setCreatedBy(USER);
       document.setCreationDate(ZonedDateTime.now());
       Document storedDocument = documentDao.createDocument(document);
+
+      constraintManager.encodeDataTypes(collection, document.getData());
 
       DataDocument storedData = dataDao.createData(collectionId, storedDocument.getId(), document.getData());
 

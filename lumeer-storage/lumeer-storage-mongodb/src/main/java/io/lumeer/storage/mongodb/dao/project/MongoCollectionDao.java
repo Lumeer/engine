@@ -115,6 +115,22 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    @Override
+   public Collection bookAttributesNum(final String id, final Collection collection, final int count) {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+
+      try {
+         Bson update = new Document("$inc", new Document(CollectionCodec.LAST_ATTRIBUTE_NUM, count));
+         final Collection updatedCollection = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
+         if (updatedCollection == null) {
+            throw new StorageException("Collection '" + id + "' has not been updated.");
+         }
+         return updatedCollection;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update collection: " + collection, ex);
+      }
+   }
+
+   @Override
    public Collection updateCollection(final String id, final Collection collection, final Collection originalCollection, final boolean pushNotification) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 

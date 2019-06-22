@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 
+import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -132,6 +135,34 @@ public class ConstraintManagerTest {
    }
 
    @Test
+   public void testCoordinatesConstraint() {
+      final Constraint coordinatesConstraint = new Constraint(ConstraintType.Coordinates, null);
+      final ConstraintManager cm = new ConstraintManager();
+      cm.setLocale(l);
+
+      Object encoded = cm.encode("40.123, -74.123", coordinatesConstraint);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
+
+      encoded = cm.encode("40.123°N 74.123°W", coordinatesConstraint);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
+
+      encoded = cm.encode("40°7´22.8\"N 74°7´22.8\"W", coordinatesConstraint);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
+
+      encoded = cm.encode("40°7.38'N, 74°7.38'W", coordinatesConstraint);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
+
+      encoded = cm.encode("N40°7’22.8, W74°7’22.8\"", coordinatesConstraint);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
+
+      encoded = cm.encode("40 7 22.8, W74 7 22.8", coordinatesConstraint);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
+
+      encoded = cm.encode("40.123N 74.123W", coordinatesConstraint);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
+   }
+
+   @Test
    public void testTryHard() {
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
@@ -162,5 +193,8 @@ public class ConstraintManagerTest {
 
       encoded = cm.encodeForFce("04410", null);
       assertThat(encoded).isEqualTo("04410");
+
+      encoded = cm.encodeForFce("40°7.38'N, 74°7.38'W", null);
+      assertThat(encoded).isEqualTo(new Point(NamedCoordinateReferenceSystem.EPSG_4326, new Position(40.123, -74.123)));
    }
 }
