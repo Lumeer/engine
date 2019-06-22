@@ -341,9 +341,12 @@ public class ConstraintManager {
             return value.toString();
          }
 
-         if (value instanceof Point) {
-            List<Double> values = ((Point) value).getCoordinates().getValues();
-            return values.get(0) + ", " + values.get(1);
+         if (value instanceof DataDocument) { // Point
+            final String type = ((DataDocument) value).getString("type");
+            if (type != null && type.equals("Point") && ((DataDocument) value).containsKey("coordinates")) {
+               List<Double> values = ((DataDocument) value).getArrayList("coordinates", Double.class);
+               return values.get(0) + ", " + values.get(1);
+            }
          }
       }
 
