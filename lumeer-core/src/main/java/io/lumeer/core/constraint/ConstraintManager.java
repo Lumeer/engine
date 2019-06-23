@@ -306,7 +306,7 @@ public class ConstraintManager {
 
       if (constraint != null && constraint.getType() == ConstraintType.Select) {
          var numericValue = encodeNumber(NumberFormat.getIntegerInstance(), NumberFormat.getIntegerInstance(), value);
-         return numericValue != null ? numericValue : value;
+         return numericValue != null && numericValue.toString().equals(String.valueOf(value)) ? numericValue : value;
       }
 
       if (tryHard || (constraint != null && constraint.getType() == ConstraintType.Coordinates)) {
