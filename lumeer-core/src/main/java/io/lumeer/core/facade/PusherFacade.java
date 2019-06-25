@@ -112,9 +112,6 @@ public class PusherFacade extends AbstractFacade {
    private Logger log;
 
    @Inject
-   private DefaultConfigurationProducer defaultConfigurationProducer;
-
-   @Inject
    private CollectionFacade collectionFacade;
 
    @Inject
@@ -150,10 +147,10 @@ public class PusherFacade extends AbstractFacade {
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
 
-      PUSHER_APP_ID = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_APP_ID)).orElse("");
-      PUSHER_KEY = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_KEY)).orElse("");
-      PUSHER_SECRET = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_SECRET)).orElse("");
-      PUSHER_CLUSTER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
+      PUSHER_APP_ID = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_APP_ID)).orElse("");
+      PUSHER_KEY = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_KEY)).orElse("");
+      PUSHER_SECRET = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_SECRET)).orElse("");
+      PUSHER_CLUSTER = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
 
       if (PUSHER_SECRET != null && !"".equals(PUSHER_SECRET)) {
          pusherClient = new PusherClient(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER);
