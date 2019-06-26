@@ -63,17 +63,16 @@ abstract class AbstractService {
       return url;
    }
 
-   protected String parseLanguage() {
-      String parsedLanguage = getFirstUrlPathPart();
-      if(parsedLanguage == null || parsedLanguage.isEmpty()){
+   protected String parseLanguage(final String language) {
+      if (language == null || language.isEmpty()){
          return "en";
       }
 
-      if(!Arrays.asList("en", "cs").contains(parsedLanguage)){
+      if(!Arrays.asList("en", "cs").contains(language)){
          return "en";
       }
 
-      return parsedLanguage;
+      return language;
    }
 
    protected boolean isManager() {

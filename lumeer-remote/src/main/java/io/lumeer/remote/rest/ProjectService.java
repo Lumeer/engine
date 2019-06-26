@@ -26,7 +26,6 @@ import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
 import io.lumeer.core.template.TemplateType;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -40,6 +39,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -75,12 +75,12 @@ public class ProjectService extends AbstractService {
 
    @POST
    @Path("{projectId}/templates/{templateId}")
-   public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId) {
+   public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId, @QueryParam("l") final String language) {
       workspaceKeeper.setProject(projectId);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final Project project = projectFacade.getProjectById(projectId);
-         templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), project, TemplateType.valueOf(templateId), parseLanguage());
+         templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), project, TemplateType.valueOf(templateId), parseLanguage(language));
          return Response.ok().build();
       }
 
