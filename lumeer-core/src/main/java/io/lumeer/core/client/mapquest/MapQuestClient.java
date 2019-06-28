@@ -22,6 +22,8 @@ import io.lumeer.api.model.geocoding.GeoCodingProvider;
 import io.lumeer.api.model.geocoding.GeoCodingResult;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
+import org.assertj.core.util.Lists;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +58,10 @@ public class MapQuestClient {
    }
 
    public List<GeoCodingResult> batchGeoCode(Set<String> locations) {
+      if (mapQuestKey == null || "".equals(mapQuestKey)) {
+         return Lists.emptyList();
+      }
+
       final Client client = ClientBuilder.newBuilder().build();
       final Response response = client.target(MAPQUEST_URL + "batch")
                                       .queryParam("key", mapQuestKey)
