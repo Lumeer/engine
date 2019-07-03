@@ -63,6 +63,6 @@ public class TemplateFacade extends AbstractFacade {
       DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser);
       LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser);
       ViewCreator.createViews(templateParser, viewFacade, defaultConfigurationProducer);
-      FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade);
+      FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade);
    }
 }

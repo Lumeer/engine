@@ -22,13 +22,6 @@ import io.lumeer.api.model.geocoding.GeoCodingProvider;
 import io.lumeer.api.model.geocoding.GeoCodingResult;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -36,6 +29,13 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class MapQuestClient {
@@ -56,6 +56,10 @@ public class MapQuestClient {
    }
 
    public List<GeoCodingResult> batchGeoCode(Set<String> locations) {
+      if (mapQuestKey == null || "".equals(mapQuestKey)) {
+         return Collections.emptyList();
+      }
+
       final Client client = ClientBuilder.newBuilder().build();
       final Response response = client.target(MAPQUEST_URL + "batch")
                                       .queryParam("key", mapQuestKey)
