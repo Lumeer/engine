@@ -18,22 +18,26 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.geocoding.GeoCodingResult;
+import io.lumeer.api.model.geocoding.Coordinates;
+import io.lumeer.api.model.geocoding.Location;
 import io.lumeer.core.cache.GeoCodingCache;
 import io.lumeer.core.client.mapquest.MapQuestClient;
+import io.lumeer.core.client.opensearch.OpenSearchResult;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 @ApplicationScoped
 public class GeoCodingFacade {
+
+   private static final int LOCATIONS_LIMIT = 10;
 
    @Inject
    private GeoCodingCache geoCodingCache;
@@ -41,34 +45,90 @@ public class GeoCodingFacade {
    @Inject
    private MapQuestClient mapQuestClient;
 
-   public List<GeoCodingResult> getResults(Set<String> queries) {
-      var cachedResults = getCachedResults(queries);
-      var unresolvedQueries = filterUnresolvedQueries(queries, cachedResults);
+   public Map<String, Coordinates> findCoordinates(final Set<String> queries) {
+      var coordinatesMap = getCachedCoordinates(queries);
+      var unresolvedQueries = filterUnresolvedQueries(queries, coordinatesMap);
 
-      List<GeoCodingResult> freshResults = unresolvedQueries.size() > 0 ? loadFreshResults(unresolvedQueries) : Collections.emptyList();
+      if (unresolvedQueries.size() > 0) {
+         getFreshCoordinates(unresolvedQueries).forEach((query, coordinates) -> {
+            geoCodingCache.updateQueryCoordinates(query, coordinates);
+            coordinatesMap.put(query, coordinates);
+         });
+      }
 
-      return Stream.concat(cachedResults.values().stream(), freshResults.stream())
-                   .collect(Collectors.toList());
+      return coordinatesMap;
    }
 
-   private Map<String, GeoCodingResult> getCachedResults(Set<String> queries) {
-      return queries.stream()
-                    .filter(query -> query != null && !query.isEmpty())
-                    .map(query -> geoCodingCache.getResult(query))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toMap(GeoCodingResult::getQuery, result -> result));
+   public Location findLocationByCoordinates(final Coordinates coordinates, final String language) {
+      var cachedLocation = geoCodingCache.getCoordinatesLocation(coordinates, language);
+      if (cachedLocation != null) {
+         return cachedLocation;
+      }
+
+      var result = mapQuestClient.reverse(coordinates, language);
+      if (result == null) {
+         return null;
+      }
+
+      var location = result.toLocation();
+      geoCodingCache.updateCoordinatesLocation(coordinates, location, language);
+
+      return location;
    }
 
-   private Set<String> filterUnresolvedQueries(Set<String> queries, Map<String, GeoCodingResult> cachedResults) {
+   public List<Location> findLocationsByQuery(final String query, final Integer limit, final String language) {
+      var cachedLocations = geoCodingCache.getQueryLocations(query, language);
+      if (cachedLocations != null) {
+         return cachedLocations;
+      }
+
+      int locationsLimit = limit != null ? limit : LOCATIONS_LIMIT;
+      // osm_type filtering does not work so all 3 types are returned and then filtered
+      int searchLimit = locationsLimit * 3;
+
+      var results = mapQuestClient.search(query, searchLimit, language);
+      if (results == null) {
+         return new ArrayList<>();
+      }
+
+      var locations = results.stream()
+                             .filter(result -> result.getOsmType().equals("node"))
+                             .limit(locationsLimit)
+                             .map(OpenSearchResult::toLocation)
+                             .collect(Collectors.toList());
+      geoCodingCache.updateQueryLocations(query, locations, language);
+
+      return locations;
+   }
+
+   private Map<String, Coordinates> getCachedCoordinates(final Set<String> queries) {
+      Map<String, Coordinates> coordinatesMap = new HashMap<>();
+      queries.forEach(query -> {
+         if (query != null && !query.isEmpty()) {
+            coordinatesMap.put(query, geoCodingCache.getQueryCoordinates(query));
+         }
+      });
+      return coordinatesMap;
+   }
+
+   private Set<String> filterUnresolvedQueries(final Set<String> queries, final Map<String, Coordinates> coordinatesMap) {
       return queries.stream()
-                    .filter(query -> cachedResults.get(query) == null)
+                    .filter(query -> coordinatesMap.get(query) == null)
                     .collect(Collectors.toSet());
    }
 
-   private List<GeoCodingResult> loadFreshResults(Set<String> queries) {
-      var results = mapQuestClient.batchGeoCode(queries);
-      results.forEach(result -> geoCodingCache.updateResult(result.getQuery(), result));
-      return results;
+   private Map<String, Coordinates> getFreshCoordinates(final Set<String> queries) {
+      var response = mapQuestClient.batchGeoCode(queries);
+      if (response == null) {
+         return Collections.emptyMap();
+      }
+
+      return response.getResults().stream()
+                     .filter(result -> result.getLocations().size() > 0)
+                     .collect(Collectors.toMap(result -> result.getProvidedLocation().getLocation(), result -> {
+                        var latLng = result.getLocations().get(0).getLatLng();
+                        return new Coordinates(latLng.getLat(), latLng.getLng());
+                     }));
    }
 
 }

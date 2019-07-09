@@ -18,29 +18,30 @@
  */
 package io.lumeer.core.client.mapquest;
 
-import io.lumeer.api.model.geocoding.GeoCodingProvider;
-import io.lumeer.api.model.geocoding.GeoCodingResult;
+import io.lumeer.api.model.geocoding.Coordinates;
+import io.lumeer.core.client.opensearch.OpenSearchClient;
+import io.lumeer.core.client.opensearch.OpenSearchResult;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
-public class MapQuestClient {
+public class MapQuestClient implements OpenSearchClient {
 
-   private static final String MAPQUEST_URL = "https://www.mapquestapi.com/geocoding/v1/";
+   private static final String GEOCODING_URL = "https://www.mapquestapi.com/geocoding/v1/";
+   private static final String OPEN_SEARCH_URL = "http://open.mapquestapi.com/nominatim/v1/";
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -55,36 +56,69 @@ public class MapQuestClient {
       mapQuestKey = this.configurationProducer.get("mapquest_key");
    }
 
-   public List<GeoCodingResult> batchGeoCode(Set<String> locations) {
+   public MapQuestResponse batchGeoCode(final Set<String> locations) {
       if (mapQuestKey == null || "".equals(mapQuestKey)) {
-         return Collections.emptyList();
+         return null;
       }
 
       final Client client = ClientBuilder.newBuilder().build();
-      final Response response = client.target(MAPQUEST_URL + "batch")
+      final Response response = client.target(GEOCODING_URL + "batch")
                                       .queryParam("key", mapQuestKey)
                                       .queryParam("location", locations.toArray(new Object[0]))
                                       .request(MediaType.APPLICATION_JSON)
                                       .header("Content-Type", MediaType.APPLICATION_JSON)
                                       .buildGet()
                                       .invoke();
+      return decodeResponse(client, response, new GenericType<MapQuestResponse>() {});
+   }
 
+   @Override
+   public List<OpenSearchResult> search(final String query, final int limit, final String language) {
+      final Client client = ClientBuilder.newBuilder().build();
+      final Response response = client.target(OPEN_SEARCH_URL).path("search.php")
+                                      .queryParam("addressdetails", "1")
+                                      .queryParam("format", "json")
+                                      .queryParam("key", mapQuestKey)
+                                      .queryParam("limit", limit)
+                                      .queryParam("osm_type", "N")
+                                      .queryParam("q", query)
+                                      .request(MediaType.APPLICATION_JSON)
+                                      .header("Accept-Language", language)
+                                      .header("Content-Type", MediaType.APPLICATION_JSON)
+                                      .buildGet()
+                                      .invoke();
+      return decodeResponse(client, response, new GenericType<List<OpenSearchResult>>() {});
+   }
+
+   @Override
+   public OpenSearchResult reverse(final Coordinates coordinates, final String language) {
+      final Client client = ClientBuilder.newBuilder().build();
+      final Response response = client.target(OPEN_SEARCH_URL).path("reverse.php")
+                                      .queryParam("addressdetails", "1")
+                                      .queryParam("format", "json")
+                                      .queryParam("key", mapQuestKey)
+                                      .queryParam("lat", coordinates.getLatitude())
+                                      .queryParam("lon", coordinates.getLongitude())
+                                      .queryParam("osm_type", "N")
+                                      .request(MediaType.APPLICATION_JSON)
+                                      .header("Accept-Language", language)
+                                      .header("Content-Type", MediaType.APPLICATION_JSON)
+                                      .buildGet()
+                                      .invoke();
+      return decodeResponse(client, response, new GenericType<OpenSearchResult>() {});
+   }
+
+   private <T> T decodeResponse(final Client client, Response response, GenericType<T> type) {
       try {
          if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
             throw new IOException("MapQuest returned HTTP error code " + response.getStatus() + ": " + response.getStatusInfo().getReasonPhrase());
          }
-         return convertResults(response.readEntity(MapQuestResponse.class));
+         return response.readEntity(type);
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to communicate with MapQuest API:", e);
-         return Collections.emptyList();
+         return null;
       } finally {
          client.close();
       }
-   }
-
-   private List<GeoCodingResult> convertResults(MapQuestResponse response) {
-      return response.getResults().stream()
-                     .map(result -> new GeoCodingResult(GeoCodingProvider.MAPQUEST, result.getProvidedLocation().getLocation(), result.getLocations()))
-                     .collect(Collectors.toList());
    }
 }
