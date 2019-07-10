@@ -19,28 +19,20 @@
 package io.lumeer.core.client.mapquest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MapQuestLocation {
 
-public class MapQuestResult {
+   private final MapQuestLatLng latLng;
 
-   private final MapQuestProvidedLocation providedLocation;
-   private final List<MapQuestLocation> locations;
-
-   @JsonCreator
-   public MapQuestResult(
-         @JsonProperty("providedLocation") final MapQuestProvidedLocation providedLocation,
-         @JsonProperty("locations") final List<MapQuestLocation> locations) {
-      this.providedLocation = providedLocation;
-      this.locations = locations;
+   @JsonCreator()
+   public MapQuestLocation(@JsonProperty("latLng") final MapQuestLatLng latLng) {
+      this.latLng = latLng;
    }
 
-   public MapQuestProvidedLocation getProvidedLocation() {
-      return providedLocation;
-   }
-
-   public List<MapQuestLocation> getLocations() {
-      return locations;
+   public MapQuestLatLng getLatLng() {
+      return latLng;
    }
 }
