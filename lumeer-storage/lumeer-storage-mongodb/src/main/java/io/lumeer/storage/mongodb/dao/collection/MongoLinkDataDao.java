@@ -18,7 +18,8 @@
  */
 package io.lumeer.storage.mongodb.dao.collection;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.*;
+import static io.lumeer.storage.mongodb.util.MongoFilters.createFilterForFulltexts;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Pagination;
@@ -51,6 +52,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -94,7 +97,6 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
 
       return data;
    }
-
 
    @Override
    public DataDocument updateData(final String linkTypeId, final String linkInstanceId, final DataDocument data) {
@@ -153,6 +155,11 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
    @Override
    public List<DataDocument> getData(final String linkTypeId) {
       return MongoUtils.convertIterableToList(linkDataCollection(linkTypeId).find());
+   }
+
+   @Override
+   public Stream<DataDocument> getDataStream(final String linkTypeId) {
+      return StreamSupport.stream(linkDataCollection(linkTypeId).find().map(MongoUtils::convertDocument).spliterator(), false);
    }
 
    @Override

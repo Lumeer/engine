@@ -54,6 +54,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -150,6 +152,11 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
    @Override
    public List<DataDocument> getData(final String collectionId) {
       return MongoUtils.convertIterableToList(dataCollection(collectionId).find());
+   }
+
+   @Override
+   public Stream<DataDocument> getDataStream(String collectionId) {
+      return StreamSupport.stream(dataCollection(collectionId).find().map(MongoUtils::convertDocument).spliterator(), false);
    }
 
    @Override

@@ -25,6 +25,7 @@ import io.lumeer.storage.api.query.SearchQueryStem;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface LinkDataDao {
 
@@ -49,6 +50,8 @@ public interface LinkDataDao {
    DataDocument getData(String linkTypeId, String linkInstanceId);
 
    List<DataDocument> getData(String linkTypeId);
+
+   Stream<DataDocument> getDataStream(String linkTypeId);
 
    List<DataDocument> getData(String linkTypeId, Set<String> linkInstanceIds);
 
