@@ -24,10 +24,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MapQuestProvidedLocation {
 
    private final String location;
+   private final MapQuestLatLng latLng;
 
    @JsonCreator
-   public MapQuestProvidedLocation(@JsonProperty("location") final String location) {
+   public MapQuestProvidedLocation(
+         @JsonProperty("latLng") final MapQuestLatLng latLng,
+         @JsonProperty("location") final String location) {
+      this.latLng = latLng;
       this.location = location;
+   }
+
+   public MapQuestLatLng getLatLng() {
+      return latLng;
    }
 
    public String getLocation() {

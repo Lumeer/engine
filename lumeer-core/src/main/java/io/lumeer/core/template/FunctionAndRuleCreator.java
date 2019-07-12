@@ -1,7 +1,7 @@
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
- * Copyright (C) since 2017 Answer Institute, s.r.o. and/or its affiliates.
+ * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,13 @@ package io.lumeer.core.template;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.json.simple.JSONArray;
@@ -39,14 +41,16 @@ import java.util.regex.Pattern;
 public class FunctionAndRuleCreator extends WithIdCreator {
 
    private final CollectionFacade collectionFacade;
+   private final LinkTypeFacade linkTypeFacade;
 
-   private FunctionAndRuleCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade) {
+   private FunctionAndRuleCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade, final LinkTypeFacade linkTypeFacade) {
       super(templateParser);
       this.collectionFacade = collectionFacade;
+      this.linkTypeFacade = linkTypeFacade;
    }
 
-   public static void createFunctionAndRules(final TemplateParser templateParser, final CollectionFacade collectionFacade) {
-      final FunctionAndRuleCreator creator = new FunctionAndRuleCreator(templateParser, collectionFacade);
+   public static void createFunctionAndRules(final TemplateParser templateParser, final CollectionFacade collectionFacade, final LinkTypeFacade linkTypeFacade) {
+      final FunctionAndRuleCreator creator = new FunctionAndRuleCreator(templateParser, collectionFacade, linkTypeFacade);
       creator.createFunctionAndRules();
    }
 
@@ -63,7 +67,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
 
             if (attrJson.get("function") != null) {
                var attr = getCollectionAttribute(collection, (String) attrJson.get("id"));
-               var fce = getFunction(collection, (JSONObject) attrJson.get("function"));
+               var fce = getFunction((JSONObject) attrJson.get("function"));
                attr.setFunction(fce);
                collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
             }
@@ -79,6 +83,25 @@ public class FunctionAndRuleCreator extends WithIdCreator {
             collectionFacade.updateCollection(collection.getId(), collection);
          }
       });
+
+      final JSONArray linkTypes = (JSONArray) templateParser.template.get("linkTypes");
+      linkTypes.forEach(o -> {
+         final String templateId = TemplateParserUtils.getId((JSONObject) o);
+         final String linkTypeId = templateParser.getDict().getLinkTypeId(templateId);
+         final LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
+
+         var attrs = (JSONArray) ((JSONObject) o).get("attributes");
+         attrs.forEach(attrObj -> {
+            var attrJson = (JSONObject) attrObj;
+
+            if (attrJson.get("function") != null) {
+               var attr = getLinkTypeAttribute(linkType, (String) attrJson.get("id"));
+               var fce = getFunction((JSONObject) attrJson.get("function"));
+               attr.setFunction(fce);
+               linkTypeFacade.updateLinkTypeAttribute(linkType.getId(), attr.getId(), attr);
+            }
+         });
+      });
    }
 
    public Attribute getCollectionAttribute(final Collection collection, final String attributeTemplateId) {
@@ -86,7 +109,12 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       return attr.orElse(null);
    }
 
-   public Function getFunction(final Collection collection, final JSONObject o) {
+   public Attribute getLinkTypeAttribute(final LinkType linkType, final String attributeTemplateId) {
+      var attr = linkType.getAttributes().stream().filter(a -> a.getId().equals(attributeTemplateId)).findFirst();
+      return attr.orElse(null);
+   }
+
+   public Function getFunction(final JSONObject o) {
       return new Function(cureJs((String) o.get(Function.JS)), cureXml((String) o.get(Function.XML)), null, 0, (Boolean) o.get(Function.EDITABLE));
    }
 
@@ -135,6 +163,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       /*
         block type=
         variables_get_$collectionId_document
+        variables_get_$linkTypeId_linkinst
         $linktTypeId-$collectionId_$collectionId_link
         $linktTypeId-$collectionId_$collectionId_link_instance
 
@@ -145,9 +174,12 @@ public class FunctionAndRuleCreator extends WithIdCreator {
         $collectionId_document_array
         $linkTypeId_linkinst
         $linkTypeId_link_array
+
+        <field name="COLLECTION">5cf6eb98857aba008f0655d8</field>
        */
 
       var res = TemplateParserUtils.replacer(xml, "<block type=\"variables_get_", "_document", templateParser.getDict()::getCollectionId);
+      res = TemplateParserUtils.replacer(xml, "<block type=\"variables_get_", "_linkinst", templateParser.getDict()::getLinkTypeId);
       res = TemplateParserUtils.replacer(res, "<block type=\"", "-[0-9a-f]+_[0-9a-f]+_link", templateParser.getDict()::getLinkTypeId);
       res = TemplateParserUtils.replacer(res, "<block type=\"[0-9a-f]+-", "_[0-9a-f]+_link", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "<block type=\"[0-9a-f]+-[0-9a-f]+_", "_link", templateParser.getDict()::getCollectionId);
@@ -155,6 +187,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       res = TemplateParserUtils.replacer(res, "<variable type=\"", "_link", templateParser.getDict()::getLinkTypeId);
       res = TemplateParserUtils.replacer(res, "variabletype=\"", "_document", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "variabletype=\"", "_link", templateParser.getDict()::getLinkTypeId);
+      res = TemplateParserUtils.replacer(res, "<field name=\"COLLECTION\">", "</field>", templateParser.getDict()::getCollectionId);
 
       return res;
    }

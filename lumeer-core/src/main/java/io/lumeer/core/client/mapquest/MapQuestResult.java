@@ -26,12 +26,12 @@ import java.util.List;
 public class MapQuestResult {
 
    private final MapQuestProvidedLocation providedLocation;
-   private final List<Object> locations;
+   private final List<MapQuestLocation> locations;
 
    @JsonCreator
    public MapQuestResult(
          @JsonProperty("providedLocation") final MapQuestProvidedLocation providedLocation,
-         @JsonProperty("locations") final List<Object> locations) {
+         @JsonProperty("locations") final List<MapQuestLocation> locations) {
       this.providedLocation = providedLocation;
       this.locations = locations;
    }
@@ -40,7 +40,7 @@ public class MapQuestResult {
       return providedLocation;
    }
 
-   public List<Object> getLocations() {
+   public List<MapQuestLocation> getLocations() {
       return locations;
    }
 }

@@ -18,30 +18,27 @@
  */
 package io.lumeer.api.model.geocoding;
 
+import java.io.Serializable;
 import java.util.Objects;
+import javax.annotation.concurrent.Immutable;
 
-public class GeoCodingResult {
+@Immutable
+public class Location implements Serializable {
 
-   private final GeoCodingProvider provider;
-   private final String query;
-   private final Object results;
+   private final Address address;
+   private final Coordinates coordinates;
 
-   public GeoCodingResult(final GeoCodingProvider provider, final String query, final Object results) {
-      this.provider = provider;
-      this.query = query;
-      this.results = results;
+   public Location(final Address address, final Coordinates coordinates) {
+      this.address = address;
+      this.coordinates = coordinates;
    }
 
-   public GeoCodingProvider getProvider() {
-      return provider;
+   public Address getAddress() {
+      return address;
    }
 
-   public String getQuery() {
-      return query;
-   }
-
-   public Object getResults() {
-      return results;
+   public Coordinates getCoordinates() {
+      return coordinates;
    }
 
    @Override
@@ -52,22 +49,21 @@ public class GeoCodingResult {
       if (o == null || getClass() != o.getClass()) {
          return false;
       }
-      final GeoCodingResult that = (GeoCodingResult) o;
-      return provider == that.provider &&
-            Objects.equals(query, that.query);
+      final Location location = (Location) o;
+      return Objects.equals(address, location.address) &&
+            Objects.equals(coordinates, location.coordinates);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(provider, query);
+      return Objects.hash(address, coordinates);
    }
 
    @Override
    public String toString() {
-      return "GeoCodingResult{" +
-            "provider=" + provider +
-            ", query='" + query + '\'' +
-            ", results=" + results +
+      return "Location{" +
+            "address=" + address +
+            ", coordinates=" + coordinates +
             '}';
    }
 }

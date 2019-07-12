@@ -18,11 +18,13 @@
  */
 package io.lumeer.core.cache;
 
-import io.lumeer.api.model.geocoding.GeoCodingResult;
+import io.lumeer.api.model.geocoding.Coordinates;
+import io.lumeer.api.model.geocoding.Location;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 
 import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -31,39 +33,86 @@ import javax.inject.Inject;
 @ApplicationScoped
 public class GeoCodingCache {
 
-   private static final int CACHE_SIZE = 10000;
+   private static final int QUERY_LOCATIONS_CACHE_SIZE = 10000;
+   private static final int COORDINATES_LOCATION_CACHE_SIZE = 10000;
+   private static final int QUERY_COORDINATES_CACHE_SIZE = 10000;
 
    @Inject
    private CacheFactory cacheFactory;
 
-   private Cache<GeoCodingResult> cache;
-   private Deque<String> cachedQueries;
+   private Cache<List<Location>> queryLocationsCache;
+   private Deque<String> queryLocationsCacheKeys;
+
+   private Cache<Location> coordinatesLocationCache;
+   private Deque<String> coordinatesLocationCacheKeys;
+
+   private Cache<Coordinates> queryCoordinatesCache;
+   private Deque<String> queryCoordinatesCacheKeys;
 
    @PostConstruct
    public void initCache() {
-      cache = cacheFactory.getCache();
-      cachedQueries = new ConcurrentLinkedDeque<>();
+      queryLocationsCache = cacheFactory.getCache();
+      queryLocationsCacheKeys = new ConcurrentLinkedDeque<>();
+
+      coordinatesLocationCache = cacheFactory.getCache();
+      coordinatesLocationCacheKeys = new ConcurrentLinkedDeque<>();
+
+      queryCoordinatesCache = cacheFactory.getCache();
+      queryCoordinatesCacheKeys = new ConcurrentLinkedDeque<>();
    }
 
-   public GeoCodingResult getResult(final String query) {
-      return cache.get(query);
+   public List<Location> getQueryLocations(final String query, final String language) {
+      return queryLocationsCache.get(GeoCodingCache.createKey(query, language));
    }
 
-   public void updateResult(final String query, final GeoCodingResult result) {
-      this.cache.set(query, result);
-      this.cachedQueries.push(query);
+   public void updateQueryLocations(final String query, final List<Location> locations, final String language) {
+      var key = GeoCodingCache.createKey(query, language);
 
-      removeLastCacheEntryIfFull();
-   }
+      queryLocationsCache.set(key, locations);
+      queryLocationsCacheKeys.push(key);
 
-   private void removeLastCacheEntryIfFull() {
-      if (cachedQueries.size() < CACHE_SIZE) {
-         return;
+      if (queryLocationsCacheKeys.size() > QUERY_LOCATIONS_CACHE_SIZE) {
+         GeoCodingCache.removeLastCacheEntry(queryLocationsCache, queryLocationsCacheKeys);
       }
+   }
 
-      var query = cachedQueries.pollLast();
-      if (query != null) {
-         cache.remove(query);
+   public Location getCoordinatesLocation(final Coordinates coordinates, final String language) {
+      return coordinatesLocationCache.get(GeoCodingCache.createKey(coordinates.toString(), language));
+   }
+
+   public void updateCoordinatesLocation(final Coordinates coordinates, final Location location, final String language) {
+      var key = GeoCodingCache.createKey(coordinates.toString(), language);
+
+      coordinatesLocationCache.set(key, location);
+      coordinatesLocationCacheKeys.push(key);
+
+      if (queryLocationsCacheKeys.size() > QUERY_LOCATIONS_CACHE_SIZE) {
+         GeoCodingCache.removeLastCacheEntry(coordinatesLocationCache, coordinatesLocationCacheKeys);
       }
+   }
+
+   public Coordinates getQueryCoordinates(final String query) {
+      System.out.println(query);
+      return queryCoordinatesCache.get(query);
+   }
+
+   public void updateQueryCoordinates(final String query, final Coordinates coordinates) {
+      queryCoordinatesCache.set(query, coordinates);
+      queryCoordinatesCacheKeys.push(query);
+
+      if (queryCoordinatesCacheKeys.size() > QUERY_COORDINATES_CACHE_SIZE) {
+         GeoCodingCache.removeLastCacheEntry(queryCoordinatesCache, queryCoordinatesCacheKeys);
+      }
+   }
+
+   private static void removeLastCacheEntry(final Cache cache, final Deque<String> cachedKeys) {
+      var key = cachedKeys.pollLast();
+      if (key != null) {
+         cache.remove(key);
+      }
+   }
+
+   private static String createKey(final String query, final String language) {
+      return query + "_" + language;
    }
 }

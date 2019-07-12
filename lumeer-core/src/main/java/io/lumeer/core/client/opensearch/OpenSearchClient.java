@@ -16,8 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model.geocoding;
+package io.lumeer.core.client.opensearch;
 
-public enum GeoCodingProvider {
-   MAPBOX, MAPQUEST, MAPTILER
+import io.lumeer.api.model.geocoding.Coordinates;
+
+import java.util.List;
+
+public interface OpenSearchClient {
+
+   List<OpenSearchResult> search(final String query, final int limit, final String language);
+
+   OpenSearchResult reverse(final Coordinates coordinates, final String language);
+
 }
