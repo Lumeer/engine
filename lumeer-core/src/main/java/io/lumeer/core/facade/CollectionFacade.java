@@ -27,8 +27,11 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.rule.AutoLinkRule;
+import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -41,8 +44,11 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -274,7 +280,27 @@ public class CollectionFacade extends AbstractFacade {
          collection.setDefaultAttributeId(null);
       }
       collection.setLastTimeUsed(ZonedDateTime.now());
+      filterAutoLinkRulesByAttribute(collection, collectionId, attributeId);
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+
+      deleteAutoLinkRulesByAttribute(collectionId, attributeId);
+   }
+
+   private void filterAutoLinkRulesByAttribute(final Collection collection, final String collectionId, final String attributeId) {
+      collection.setRules(collection.getRules().entrySet()
+                                    .stream().filter(entry -> !CollectionUtil.containsAutoLinkRuleAttribute(entry.getValue(), collectionId, attributeId))
+                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+   }
+
+   private void deleteAutoLinkRulesByAttribute(final String collectionId, final String attributeId) {
+      collectionDao.getAllCollections().stream()
+                   .filter(collection -> !collection.getId().equals(collectionId) && CollectionUtil.containsAutoLinkRuleAttribute(collection, collectionId, attributeId))
+                   .collect(Collectors.toList())
+                   .forEach(collection -> {
+                      final Collection originalCollection = collection.copy();
+                      filterAutoLinkRulesByAttribute(collection, collectionId, attributeId);
+                      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+                   });
    }
 
    public void setDefaultAttribute(final String collectionId, final String attributeId) {

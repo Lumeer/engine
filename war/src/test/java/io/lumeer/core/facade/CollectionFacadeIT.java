@@ -32,10 +32,12 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.function.Function;
+import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
@@ -60,9 +62,11 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -164,7 +168,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       this.project = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(this.organization.getId(),this.project.getId());
+      workspaceKeeper.setWorkspace(this.organization.getId(), this.project.getId());
 
       collectionDao.setProject(project);
    }
@@ -189,10 +193,15 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    }
 
    private Collection createCollection(String code, Attribute attribute) {
+      return createCollection(code, attribute, Collections.emptyMap());
+   }
+
+   private Collection createCollection(String code, Attribute attribute, Map<String, Rule> rules) {
       Collection collection = prepareCollection(code);
       collection.getPermissions().updateUserPermissions(userPermission);
       collection.getPermissions().updateGroupPermissions(groupPermission);
       collection.updateAttribute(attribute.getId(), attribute);
+      collection.setRules(rules);
       return collectionDao.createCollection(collection);
    }
 
@@ -310,7 +319,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
          threads.add(new Thread(r));
       }
 
-      threads.forEach(t -> t.run());
+      threads.forEach(Thread::run);
 
       threads.forEach(t -> {
          try {
@@ -320,10 +329,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
          }
       });
 
-
       var updatedCollection = collectionDao.getCollectionByCode(CODE);
       assertThat(updatedCollection).isNotNull();
-      assertThat(updatedCollection.getAttributes()).hasSize(4*20);
+      assertThat(updatedCollection.getAttributes()).hasSize(4 * 20);
    }
 
    @Test
@@ -359,6 +367,49 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
       assertThat(collection.getAttributes()).isEmpty();
+   }
+
+   @Test
+   public void testDeleteAutoLinkRules() {
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Collection collection = createCollection(CODE, attribute);
+
+      var rules = createRules(collection, attribute);
+      collection.setRules(createRules(collection, attribute));
+      collection = collectionDao.updateCollection(collection.getId(), collection, null);
+      assertThat(collection.getRules().get("A")).isNotNull();
+
+      Collection collection2 = createCollection(CODE2, attribute, rules);
+      assertThat(collection2.getRules().get("A")).isNotNull();
+
+      collectionFacade.deleteCollectionAttribute(collection.getId(), attribute.getId());
+      collection = collectionFacade.getCollection(collection.getId());
+      assertThat(collection.getRules().get("A")).isNull();
+      assertThat(collection.getRules().keySet().size()).isEqualTo(2);
+
+      collection2 = collectionFacade.getCollection(collection2.getId());
+      assertThat(collection2.getRules().get("A")).isNull();
+      assertThat(collection2.getRules().keySet().size()).isEqualTo(2);
+   }
+
+   private Map<String, Rule> createRules(Collection collection, Attribute attribute) {
+      var map = new HashMap<String, Rule>();
+      map.put("A", createRule(collection.getId(), attribute.getId()));
+      map.put("B", createRule("something else", attribute.getId()));
+      map.put("C", createRule("sosoelse", attribute.getId()));
+
+      return map;
+   }
+
+   private Rule createRule(String collectionId, String attributeId) {
+      final AutoLinkRule rule = new AutoLinkRule(new Rule(Rule.RuleType.AUTO_LINK, Rule.RuleTiming.ALL, new DataDocument()));
+      rule.setCollection1(collectionId);
+      rule.setAttribute1(attributeId);
+      rule.setCollection2("some collection to test");
+      rule.setAttribute2("a1");
+      rule.setLinkType("some link type");
+
+      return rule.getRule();
    }
 
    @Test
