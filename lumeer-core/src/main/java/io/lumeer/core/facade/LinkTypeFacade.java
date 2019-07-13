@@ -23,6 +23,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
@@ -33,6 +34,7 @@ import io.lumeer.storage.api.query.DatabaseQuery;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -96,6 +98,24 @@ public class LinkTypeFacade extends AbstractFacade {
    private void deleteLinkTypeBasedData(final String linkTypeId) {
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(Collections.singleton(linkTypeId));
       linkDataDao.deleteDataRepository(linkTypeId);
+      deleteAutoLinkRulesByLinkType(linkTypeId);
+   }
+
+   private void deleteAutoLinkRulesByLinkType(final String linkTypeId) {
+      collectionDao.getAllCollections().stream()
+                   .filter(collection -> CollectionUtil.containsAutoLinkRuleLinkType(collection, linkTypeId))
+                   .collect(Collectors.toList())
+                   .forEach(collection -> {
+                      final Collection originalCollection = collection.copy();
+                      filterAutoLinkRulesByLinkType(collection, linkTypeId);
+                      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+                   });
+   }
+
+   private void filterAutoLinkRulesByLinkType(final Collection collection, final String linkTypeId) {
+      collection.setRules(collection.getRules().entrySet()
+                                    .stream().filter(entry -> !CollectionUtil.containsAutoLinkRuleLinkType(entry.getValue(), linkTypeId))
+                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
    }
 
    public LinkType getLinkType(final String linkTypeId) {
@@ -156,7 +176,6 @@ public class LinkTypeFacade extends AbstractFacade {
       }
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
-
 
       return attribute;
    }
