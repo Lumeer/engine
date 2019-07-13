@@ -25,6 +25,7 @@ import io.lumeer.storage.api.query.SearchQueryStem;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface DataDao {
 
@@ -47,6 +48,8 @@ public interface DataDao {
    DataDocument getData(String collectionId, String documentId);
 
    List<DataDocument> getData(String collectionId);
+
+   Stream<DataDocument> getDataStream(String collectionId);
 
    List<DataDocument> getData(String collectionId, Set<String> documentIds);
 

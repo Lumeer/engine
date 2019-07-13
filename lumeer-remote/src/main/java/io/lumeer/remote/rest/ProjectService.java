@@ -21,6 +21,7 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
@@ -166,4 +167,10 @@ public class ProjectService extends AbstractService {
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }
 
+   @GET
+   @Path("{projectId}/raw")
+   public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
+      workspaceKeeper.setWorkspace(organizationId, projectId);
+      return projectFacade.getRawProjectContent(projectId);
+   }
 }
