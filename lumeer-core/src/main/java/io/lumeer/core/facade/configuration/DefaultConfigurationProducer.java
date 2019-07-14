@@ -58,6 +58,12 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String PUSHER_SECRET = "pusher_secret";
    public static final String PUSHER_CLUSTER = "pusher_cluster";
 
+   public static final String S3_KEY = "s3_key";
+   public static final String S3_SECRET = "s3_secret";
+   public static final String S3_BUCKET = "s3_bucket";
+   public static final String S3_REGION = "s3_region";
+   public static final String S3_ENDPOINT = "s3_endpoint";
+
    public static final String SENTRY_DSN = "sentry_dsn";
 
    public static final String LOCALE = "locale";
