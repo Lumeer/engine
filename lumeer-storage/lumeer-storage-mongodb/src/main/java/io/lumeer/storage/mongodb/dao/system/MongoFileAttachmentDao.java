@@ -85,6 +85,11 @@ public class MongoFileAttachmentDao extends SystemScopedDao implements FileAttac
    }
 
    @Override
+   public FileAttachment findFileAttachment(final String fileAttachmentId) {
+      return databaseCollection().find(idFilter(fileAttachmentId)).first();
+   }
+
+   @Override
    public FileAttachment findFileAttachment(final FileAttachment fileAttachment) {
       return databaseCollection().find(idFilter(fileAttachment.getId())).first();
    }
@@ -129,11 +134,17 @@ public class MongoFileAttachmentDao extends SystemScopedDao implements FileAttac
    }
 
    @Override
-   public void removeFileAttachment(final FileAttachment fileAttachment) {
+   public boolean removeFileAttachment(final String attachmentId) {
+      DeleteResult result = databaseCollection().deleteOne(idFilter(attachmentId));
+
+      return result.getDeletedCount() == 1;
+   }
+
+   @Override
+   public boolean removeFileAttachment(final FileAttachment fileAttachment) {
       DeleteResult result = databaseCollection().deleteOne(idFilter(fileAttachment.getId()));
-      if (result.getDeletedCount() != 1) {
-         throw new StorageException("FileAttachment '" + fileAttachment.getId() + "' was not deleted.");
-      }
+
+      return result.getDeletedCount() == 1;
    }
 
    @Override

@@ -30,6 +30,8 @@ public interface FileAttachmentDao {
 
    FileAttachment updateFileAttachment(FileAttachment fileAttachment);
 
+   FileAttachment findFileAttachment(String fileAttachmentId);
+
    FileAttachment findFileAttachment(FileAttachment fileAttachment);
 
    List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId);
@@ -38,7 +40,9 @@ public interface FileAttachmentDao {
 
    List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, String attributeId);
 
-   void removeFileAttachment(FileAttachment fileAttachment);
+   boolean removeFileAttachment(String fileAttachmentId);
+
+   boolean removeFileAttachment(FileAttachment fileAttachment);
 
    void removeAllFileAttachments(Organization organization, Project project);
 

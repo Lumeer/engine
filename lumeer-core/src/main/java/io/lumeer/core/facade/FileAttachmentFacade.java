@@ -153,10 +153,15 @@ public class FileAttachmentFacade extends AbstractFacade {
       return fileAttachmentDao.updateFileAttachment(fileAttachment);
    }
 
+   public void removeFileAttachment(final String fileAttachmentId) {
+      final FileAttachment fileAttachment = fileAttachmentDao.findFileAttachment(fileAttachmentId);
+      removeFileAttachment(fileAttachment);
+   }
+
    public void removeFileAttachment(final FileAttachment fileAttachment) {
       checkCollectionWritePermissions(fileAttachment.getCollectionId());
 
-      var resp = s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
+      s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
 
       fileAttachmentDao.removeFileAttachment(fileAttachment);
    }
@@ -223,6 +228,7 @@ public class FileAttachmentFacade extends AbstractFacade {
       final ListObjectsV2Response response = s3.listObjectsV2(
               ListObjectsV2Request
                       .builder()
+                      .encodingType("UTF-8")
                       .bucket(S3_BUCKET)
                       .prefix(
                               getFileAttachmentLocation(
@@ -271,6 +277,7 @@ public class FileAttachmentFacade extends AbstractFacade {
       final ListObjectsV2Response response = s3.listObjectsV2(
               ListObjectsV2Request
                       .builder()
+                      .encodingType("UTF-8")
                       .bucket(S3_BUCKET)
                       .prefix(
                               getFileAttachmentLocation(
