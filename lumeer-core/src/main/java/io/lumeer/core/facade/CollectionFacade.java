@@ -81,6 +81,9 @@ public class CollectionFacade extends AbstractFacade {
    @Inject
    private ViewDao viewDao;
 
+   @Inject
+   private FileAttachmentFacade fileAttachmentFacade;
+
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
       long collectionsCount = collectionDao.getCollectionsCount();
@@ -122,6 +125,8 @@ public class CollectionFacade extends AbstractFacade {
       collectionDao.deleteCollection(collectionId);
 
       deleteCollectionBasedData(collectionId);
+
+      fileAttachmentFacade.removeAllFileAttachments(collectionId);
    }
 
    private void deleteCollectionBasedData(final String collectionId) {
@@ -284,6 +289,8 @@ public class CollectionFacade extends AbstractFacade {
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
       deleteAutoLinkRulesByAttribute(collectionId, attributeId);
+
+      fileAttachmentFacade.removeAllFileAttachments(collectionId, attributeId);
    }
 
    private void filterAutoLinkRulesByAttribute(final Collection collection, final String collectionId, final String attributeId) {

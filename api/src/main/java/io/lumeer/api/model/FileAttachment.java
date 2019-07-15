@@ -38,6 +38,7 @@ public class FileAttachment implements WithId {
    public static final String ATTRIBUTE_ID = "attributeId";
    public static final String FILE_NAME = "fileName";
    public static final String PRESIGNED_URL = "presignedUrl";
+   public static final String SIZE = "size";
 
    private String id;
    private final String organizationId;
@@ -49,6 +50,9 @@ public class FileAttachment implements WithId {
 
    @JsonProperty(PRESIGNED_URL)
    private String presignedUrl;
+
+   @JsonProperty(SIZE)
+   private long size;
 
    @JsonCreator
    public FileAttachment(@JsonProperty(ORGANIZATION_ID) final String organizationId,
@@ -108,6 +112,14 @@ public class FileAttachment implements WithId {
       this.presignedUrl = presignedUrl;
    }
 
+   public long getSize() {
+      return size;
+   }
+
+   public void setSize(long size) {
+      this.size = size;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -135,7 +147,8 @@ public class FileAttachment implements WithId {
             ", documentId='" + documentId + '\'' +
             ", attributeId='" + attributeId + '\'' +
             ", fileName='" + fileName + '\'' +
-            ", url='" + presignedUrl + '\'' +
+            ", presignedUrl='" + presignedUrl + '\'' +
+            ", size='" + size + '\'' +
             '}';
    }
 }

@@ -18,9 +18,7 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.FileAttachment;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.*;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.s3.PresignUrlRequest;
 import io.lumeer.core.util.s3.S3Utils;
@@ -29,6 +27,7 @@ import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.exception.StorageException;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -43,6 +42,8 @@ import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
 @RequestScoped
 public class FileAttachmentFacade extends AbstractFacade {
@@ -57,6 +58,7 @@ public class FileAttachmentFacade extends AbstractFacade {
    private Region region;
    private AwsCredentials awsCredentials;
    private StaticCredentialsProvider staticCredentialsProvider;
+   private S3Client s3;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -79,6 +81,16 @@ public class FileAttachmentFacade extends AbstractFacade {
          region = Region.of(S3_REGION);
          awsCredentials = AwsBasicCredentials.create(S3_KEY, S3_SECRET);
          staticCredentialsProvider = StaticCredentialsProvider.create(awsCredentials);
+         try {
+            s3 = S3Client
+                    .builder()
+                    .region(region)
+                    .endpointOverride(new URI("https://" + S3_REGION + "." + S3_ENDPOINT))
+                    .credentialsProvider(staticCredentialsProvider)
+                    .build();
+         } catch (URISyntaxException e) {
+            throw new IllegalStateException("Unable to initialize S3 client. Wrong endpoint. Unable to work with file attachments.");
+         }
       }
    }
 
@@ -92,13 +104,38 @@ public class FileAttachmentFacade extends AbstractFacade {
       checkCollectionReadPermissions(collectionId);
 
       return fileAttachmentDao.findAllFileAttachments(
-            workspaceKeeper.getOrganization().get(),
-            workspaceKeeper.getProject().get(),
-            collectionId, documentId, attributeId)
-                              .stream()
-                              .map(fa -> presignFileAttachment(fa, false))
-                              .collect(Collectors.toList());
+              workspaceKeeper.getOrganization().get(),
+              workspaceKeeper.getProject().get(),
+              collectionId, documentId, attributeId)
+              .stream()
+              .map(fa -> presignFileAttachment(fa, false))
+              .collect(Collectors.toList());
    }
+
+   public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId) {
+      checkCollectionReadPermissions(collectionId);
+
+      return fileAttachmentDao.findAllFileAttachments(
+              workspaceKeeper.getOrganization().get(),
+              workspaceKeeper.getProject().get(),
+              collectionId, documentId)
+              .stream()
+              .map(fa -> presignFileAttachment(fa, false))
+              .collect(Collectors.toList());
+   }
+
+   public List<FileAttachment> getAllFileAttachments(final String collectionId) {
+      checkCollectionReadPermissions(collectionId);
+
+      return fileAttachmentDao.findAllFileAttachments(
+              workspaceKeeper.getOrganization().get(),
+              workspaceKeeper.getProject().get(),
+              collectionId)
+              .stream()
+              .map(fa -> presignFileAttachment(fa, false))
+              .collect(Collectors.toList());
+   }
+
 
    public FileAttachment renameFileAttachment(final FileAttachment fileAttachment) {
       checkCollectionWritePermissions(fileAttachment.getCollectionId());
@@ -119,36 +156,134 @@ public class FileAttachmentFacade extends AbstractFacade {
    public void removeFileAttachment(final FileAttachment fileAttachment) {
       checkCollectionWritePermissions(fileAttachment.getCollectionId());
 
-      // S3 remove file
+      var resp = s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
 
       fileAttachmentDao.removeFileAttachment(fileAttachment);
    }
 
-   public FileAttachment presignFileAttachment(final FileAttachment fileAttachment, final boolean write) {
-      final String key =
-            fileAttachment.getOrganizationId() + "/"
-                  + fileAttachment.getProjectId() + "/"
-                  + fileAttachment.getCollectionId() + "/"
-                  + fileAttachment.getAttributeId() + "/"
-                  + fileAttachment.getDocumentId() + "/"
-                  + fileAttachment.getId();
-
+   private FileAttachment presignFileAttachment(final FileAttachment fileAttachment, final boolean write) {
+      final String key = getFileAttachmentKey(fileAttachment);
       final URI uri = S3Utils.presign(PresignUrlRequest.builder()
-                                                 .region(region)
-                                                 .bucket(S3_BUCKET)
-                                                 .key(key)
-                                                 .httpMethod(write ? SdkHttpMethod.PUT : SdkHttpMethod.GET)
-                                                 .signatureDuration(Duration.of(PRESIGN_TIMEOUT, ChronoUnit.SECONDS))
-                                                 .credentialsProvider(staticCredentialsProvider)
-                                                 .endpoint(S3_ENDPOINT)
-                                                 .build());
+              .region(region)
+              .bucket(S3_BUCKET)
+              .key(key)
+              .httpMethod(write ? SdkHttpMethod.PUT : SdkHttpMethod.GET)
+              .signatureDuration(Duration.of(PRESIGN_TIMEOUT, ChronoUnit.SECONDS))
+              .credentialsProvider(staticCredentialsProvider)
+              .endpoint(S3_ENDPOINT)
+              .build());
 
       fileAttachment.setPresignedUrl(uri.toString());
 
       return fileAttachment;
    }
 
+   private String getFileAttachmentLocation(final String organizationId, final String projectId, final String collectionId, final String documentId, final String attributeId) {
+      final StringBuilder sb = new StringBuilder(organizationId + "/" + projectId);
+
+      if (projectId != null) {
+         sb.append("/").append(projectId);
+
+         if (collectionId != null) {
+            sb.append("/").append(collectionId);
+
+            if (attributeId != null) {
+               sb.append("/").append(attributeId);
+
+               if (documentId != null) {
+                  sb.append("/").append(documentId);
+               }
+            }
+         }
+      }
+
+      return sb.toString();
+   }
+
+   private String getFileAttachmentKey(final FileAttachment fileAttachment) {
+      return getFileAttachmentLocation(fileAttachment.getOrganizationId(), fileAttachment.getProjectId(), fileAttachment.getCollectionId(), fileAttachment.getDocumentId(), fileAttachment.getAttributeId()) + "/"
+              + fileAttachment.getId();
+   }
+
    // TODO: use other remove attachment methods at corresponding places in other facades
+
+   /**
+    * Lists the file attachments really present in S3 bucket.
+    *
+    * @param collectionId ID of a collection.
+    * @param documentId   ID of a document.
+    * @param attributeId  ID of an attribute.
+    * @return Files present in S3 bucket for the specified collection, document and its attribute.
+    */
+   public List<FileAttachment> listFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+      checkCollectionReadPermissions(collectionId);
+
+      final String organizationId = workspaceKeeper.getOrganization().get().getId();
+      final String projectId = workspaceKeeper.getProject().get().getId();
+      final ListObjectsV2Response response = s3.listObjectsV2(
+              ListObjectsV2Request
+                      .builder()
+                      .bucket(S3_BUCKET)
+                      .prefix(
+                              getFileAttachmentLocation(
+                                      organizationId,
+                                      projectId,
+                                      collectionId,
+                                      documentId,
+                                      attributeId)
+                      ).build());
+
+      return response.contents().stream().map(s3Object -> {
+         final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, s3Object.key());
+         fileAttachment.setSize(s3Object.size());
+
+         return fileAttachment;
+      }).collect(Collectors.toList());
+   }
+
+   void removeAllFileAttachments(final String collectionId) {
+      // not checking access right - only have package access
+
+      removeAllFileAttachments(collectionId, null, null);
+
+      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId);
+   }
+
+   void removeAllFileAttachments(final String collectionId, final String attributeId) {
+      // not checking access right - only have package access
+
+      removeFileAttachments(collectionId, null, attributeId);
+
+      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, attributeId);
+   }
+
+   void removeAllFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+      // not checking access right - only have package access
+
+      removeFileAttachments(collectionId, documentId, attributeId);
+
+      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, documentId, attributeId);
+   }
+
+   private void removeFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+      final String organizationId = workspaceKeeper.getOrganization().get().getId();
+      final String projectId = workspaceKeeper.getProject().get().getId();
+      final ListObjectsV2Response response = s3.listObjectsV2(
+              ListObjectsV2Request
+                      .builder()
+                      .bucket(S3_BUCKET)
+                      .prefix(
+                              getFileAttachmentLocation(
+                                      organizationId,
+                                      projectId,
+                                      collectionId,
+                                      documentId,
+                                      attributeId)
+                      ).build());
+
+      final Delete delete = Delete.builder().objects(response.contents().stream().map(s3Object -> ObjectIdentifier.builder().key(s3Object.key()).build()).collect(Collectors.toList())).build();
+      s3.deleteObjects(DeleteObjectsRequest.builder().bucket(S3_BUCKET).delete(delete).build());
+   }
 
    private Collection checkCollectionWritePermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
