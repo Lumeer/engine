@@ -45,7 +45,7 @@ public class S3Utils {
                               .method(request.httpMethod())
                               .protocol("https")
                               .host(encodedBucket + "." + request.region().id() + "." + request.endpoint())
-                              .encodedPath(encodedKey)
+                              .encodedPath(request.key())
                               .build();
 
       Instant expirationTime = request.signatureDuration() == null ? null : Instant.now().plus(request.signatureDuration());

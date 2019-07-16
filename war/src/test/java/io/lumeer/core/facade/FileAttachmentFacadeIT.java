@@ -20,21 +20,38 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.*;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
-
+import io.lumeer.storage.api.dao.*;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import java.util.Collections;
 
 @RunWith(Arquillian.class)
 public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
+
+   private static final String ORGANIZATION_CODE = "TORG";
+   private static final String PROJECT_CODE = "TPROJ";
+
+   private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
+   private static final String GROUP = "testGroup";
+
+   private Permission userPermission;
+   private Permission groupPermission;
+   private User user;
+   private Group group;
+   private Project project;
+   private Organization organization;
+   private Collection collection;
 
    @Inject
    private WorkspaceCache workspaceCache;
@@ -45,25 +62,91 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
 
-   private static FileAttachment fileAttachment1 = new FileAttachment("abc123", "def456", "ghi789", "jkl0ab", "a3", "můk super/$~@#ę€%=název.pdf");
-   private static FileAttachment fileAttachment2 = new FileAttachment("abc123", "zxc456", "ghi789", "jkl0ab", "a3", "normal file name .doc");
+   @Inject
+   private OrganizationDao organizationDao;
+
+   @Inject
+   private ProjectDao projectDao;
+
+   @Inject
+   private UserDao userDao;
+
+   @Inject
+   private GroupDao groupDao;
+
+   @Inject
+   private CollectionDao collectionDao;
+
+   private FileAttachment fileAttachment1;
+   private FileAttachment fileAttachment2;
+
+   @Before
+   public void configureProject() {
+      User user = new User(USER);
+      this.user = userDao.createUser(user);
+
+      Organization organization = new Organization();
+      organization.setCode(ORGANIZATION_CODE);
+      Permissions organizationPermissions = new Permissions();
+      userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
+      organizationPermissions.updateUserPermissions(userPermission);
+      organization.setPermissions(organizationPermissions);
+      this.organization = organizationDao.createOrganization(organization);
+
+      projectDao.setOrganization(this.organization);
+      groupDao.setOrganization(this.organization);
+      Group group = new Group(GROUP);
+      this.group = groupDao.createGroup(group);
+
+      userPermission = Permission.buildWithRoles(this.user.getId(), Collection.ROLES);
+      groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(Role.READ));
+
+      Project project = new Project();
+      project.setCode(PROJECT_CODE);
+
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));
+      project.setPermissions(projectPermissions);
+      this.project = projectDao.createProject(project);
+
+      workspaceKeeper.setWorkspace(this.organization.getId(), this.project.getId());
+
+      collectionDao.setProject(project);
+
+      collection = new Collection("C1", "My collection", "fa-eye", "ffaabb", null);
+      collection.getPermissions().updateUserPermissions(userPermission);
+      collection.getPermissions().updateGroupPermissions(groupPermission);
+      collection = collectionDao.createCollection(collection);
+
+      fileAttachment1 = new FileAttachment(organization.getId(), project.getId(), collection.getId(), "5cf6f208857aba009210af9b", "a3", "můk super/$~@#ę€%=název.pdf");
+      fileAttachment2 = new FileAttachment(organization.getId(), "5cf6f208857aba009210af9c", collection.getId(), "5cf6f208857aba009210af9b", "a3", "normal file name .doc");
+   }
 
    @Test
    public void testFileUpload() {
-      // TODO setup workspace
-
       final FileAttachment createdFileAttachment = fileAttachmentFacade.createFileAttachment(fileAttachment1);
 
       assertThat(createdFileAttachment.getPresignedUrl()).isNotEmpty();
 
-      final Entity entity = Entity.text("Hello world text file");
-      client.target(createdFileAttachment.getPresignedUrl()).request(MediaType.APPLICATION_JSON).buildPut(entity).invoke();
+      final String content = "Hello world text file";
+      final Entity entity = Entity.text(content);
+      final String presigned = createdFileAttachment.getPresignedUrl();
+      System.out.println(presigned);
+      var response = client.target(presigned).request(MediaType.APPLICATION_JSON).buildPut(entity).invoke();
+      System.out.println(response.getStatusInfo().getReasonPhrase());
 
       var result = fileAttachmentFacade.getAllFileAttachments(createdFileAttachment.getCollectionId());
       assertThat(result).containsExactly(createdFileAttachment);
 
       var listing = fileAttachmentFacade.listFileAttachments(createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId());
-      assertThat(listing).containsExactly(createdFileAttachment);
+      var tempFileAttachment = new FileAttachment(createdFileAttachment.getOrganizationId(), createdFileAttachment.getProjectId(), createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), createdFileAttachment.getFileName());
+      tempFileAttachment.setSize(content.length());
+      assertThat(listing).containsExactly(tempFileAttachment);
       assertThat(listing.get(0).getSize()).isGreaterThan(0L);
+
+      fileAttachmentFacade.removeFileAttachment(createdFileAttachment);
+
+      listing = fileAttachmentFacade.listFileAttachments(createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId());
+      assertThat(listing).hasSize(0);
    }
 }
