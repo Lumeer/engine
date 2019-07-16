@@ -20,23 +20,38 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.model.*;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.Group;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
-import io.lumeer.storage.api.dao.*;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.UserDao;
+
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
-import java.util.Collections;
 
 @RunWith(Arquillian.class)
+@Ignore("Cannot run without API keys and dependencies. Uncomment the dependency in IntegrationTestBase.")
 public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";

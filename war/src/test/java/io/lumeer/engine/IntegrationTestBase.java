@@ -71,11 +71,11 @@ public abstract class IntegrationTestBase {
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
                                                   "org.mockito:mockito-core", "com.univocity:univocity-parsers",
                                                   "org.apache.logging.log4j:log4j-core",
+                                                  //"software.amazon.awssdk:s3", // Uncomment when running FileAttachmentFacadeIT
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",
                                                   "org.graalvm.truffle:truffle-api",
-                                                  "org.graalvm.js:js",
-                                                  "software.amazon.awssdk:s3")
+                                                  "org.graalvm.js:js")
                                             .withTransitivity()
                                             .asFile()
                        );
