@@ -1,6 +1,8 @@
 language: java
 install: true
+services:
+  - mongodb
 script: ./travis.sh
-dist: xenial
+dist: bionic
 jdk:
   - openjdk11
