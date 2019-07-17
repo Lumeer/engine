@@ -92,7 +92,6 @@ public class GeoCodingCache {
    }
 
    public Coordinates getQueryCoordinates(final String query) {
-      System.out.println(query);
       return queryCoordinatesCache.get(query);
    }
 
