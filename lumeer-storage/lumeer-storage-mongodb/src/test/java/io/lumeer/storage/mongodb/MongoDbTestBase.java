@@ -38,8 +38,10 @@ public abstract class MongoDbTestBase {
 
    @BeforeClass
    public static void startEmbeddedMongoDb() {
-      embeddedMongoDb = new EmbeddedMongoDb();
-      embeddedMongoDb.start();
+      if (!SKIP) {
+         embeddedMongoDb = new EmbeddedMongoDb();
+         embeddedMongoDb.start();
+      }
    }
 
    @AfterClass
