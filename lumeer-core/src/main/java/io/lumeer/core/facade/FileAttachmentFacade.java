@@ -22,6 +22,7 @@ import io.lumeer.api.model.*;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.s3.PresignUrlRequest;
 import io.lumeer.core.util.s3.S3Utils;
+import io.lumeer.engine.api.exception.*;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.exception.StorageException;
@@ -155,7 +156,12 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    public void removeFileAttachment(final String fileAttachmentId) {
       final FileAttachment fileAttachment = fileAttachmentDao.findFileAttachment(fileAttachmentId);
-      removeFileAttachment(fileAttachment);
+
+      if (fileAttachment != null) {
+         removeFileAttachment(fileAttachment);
+      } else {
+         throw new InvalidValueException("File attachmend with the given ID was not found.");
+      }
    }
 
    public void removeFileAttachment(final FileAttachment fileAttachment) {
@@ -186,18 +192,14 @@ public class FileAttachmentFacade extends AbstractFacade {
    private String getFileAttachmentLocation(final String organizationId, final String projectId, final String collectionId, final String documentId, final String attributeId) {
       final StringBuilder sb = new StringBuilder(organizationId + "/" + projectId);
 
-      if (projectId != null) {
-         sb.append("/").append(projectId);
+      if (collectionId != null) {
+         sb.append("/").append(collectionId);
 
-         if (collectionId != null) {
-            sb.append("/").append(collectionId);
+         if (attributeId != null) {
+            sb.append("/").append(attributeId);
 
-            if (attributeId != null) {
-               sb.append("/").append(attributeId);
-
-               if (documentId != null) {
-                  sb.append("/").append(documentId);
-               }
+            if (documentId != null) {
+               sb.append("/").append(documentId);
             }
          }
       }
