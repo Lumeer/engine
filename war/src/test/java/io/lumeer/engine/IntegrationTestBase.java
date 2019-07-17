@@ -71,7 +71,7 @@ public abstract class IntegrationTestBase {
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
                                                   "org.mockito:mockito-core", "com.univocity:univocity-parsers",
                                                   "org.apache.logging.log4j:log4j-core",
-                                                  //"software.amazon.awssdk:s3", // Uncomment when running FileAttachmentFacadeIT
+                                                  "software.amazon.awssdk:s3",
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",
                                                   "org.graalvm.truffle:truffle-api",
