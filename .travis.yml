@@ -1,7 +1,5 @@
 language: java
 install: true
-services:
-  - mongodb
 script: ./travis.sh
 dist: bionic
 jdk:
