@@ -260,7 +260,7 @@ public class ConstraintManager {
          }
 
          if (value instanceof String) {
-            if (constraint.getType() == ConstraintType.Duration) {
+            if (constraint != null && constraint.getType() == ConstraintType.Duration) {
                return encode(value);
             } else {
 
