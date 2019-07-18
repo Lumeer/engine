@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,7 +60,7 @@ public class FileAttachmentFacade extends AbstractFacade {
    private Region region;
    private AwsCredentials awsCredentials;
    private StaticCredentialsProvider staticCredentialsProvider;
-   private S3Client s3;
+   private S3Client s3 = null;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -167,7 +168,9 @@ public class FileAttachmentFacade extends AbstractFacade {
    public void removeFileAttachment(final FileAttachment fileAttachment) {
       checkCollectionWritePermissions(fileAttachment.getCollectionId());
 
-      s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
+      if (s3 != null) {
+         s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
+      }
 
       fileAttachmentDao.removeFileAttachment(fileAttachment);
    }
@@ -223,6 +226,10 @@ public class FileAttachmentFacade extends AbstractFacade {
     * @return Files present in S3 bucket for the specified collection, document and its attribute.
     */
    public List<FileAttachment> listFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+      if (s3 == null) {
+         return Collections.emptyList();
+      }
+
       checkCollectionReadPermissions(collectionId);
 
       final String organizationId = workspaceKeeper.getOrganization().get().getId();
@@ -274,6 +281,10 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    private void removeFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+      if (s3 == null) {
+         return;
+      }
+
       final String organizationId = workspaceKeeper.getOrganization().get().getId();
       final String projectId = workspaceKeeper.getProject().get().getId();
       final ListObjectsV2Response response = s3.listObjectsV2(
