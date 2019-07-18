@@ -179,6 +179,22 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.conscrypt</groupId>
+         <artifactId>conscrypt-openjdk-uber</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-tcnative</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.httpcomponents</groupId>
+         <artifactId>httpclient</artifactId>
+         <scope>test</scope>
+      </dependency>
+
 
       <dependency>
          <groupId>org.jboss.arquillian.junit</groupId>

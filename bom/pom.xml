@@ -96,6 +96,7 @@
       <version.byteman>4.0.4</version.byteman>
       <version.servo>0.12.25</version.servo>
       <version.netty>4.1.28.Final</version.netty>
+      <version.netty.tcnative>2.0.25.Final</version.netty.tcnative>
       <version.mongo.driver>3.9.1</version.mongo.driver>
       <version.jcommander>1.72</version.jcommander>
       <version.json.simple>1.1.1</version.json.simple>
@@ -109,6 +110,8 @@
       <version.interceptor>1.2.2</version.interceptor>
       <version.pusher>1.0.2</version.pusher>
       <version.sentry>1.7.14</version.sentry>
+      <version.conscrypt>2.1.0</version.conscrypt>
+      <version.apache.httpcomponents>4.5.9</version.apache.httpcomponents>
 
       <version.maven.plugin.api>3.5.4</version.maven.plugin.api>
       <version.maven.core>3.5.4</version.maven.core>
@@ -512,6 +515,24 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>${version.netty}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.conscrypt</groupId>
+            <artifactId>conscrypt-openjdk-uber</artifactId>
+            <version>${version.conscrypt}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative</artifactId>
+            <version>${version.netty.tcnative}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${version.apache.httpcomponents}</version>
             <scope>test</scope>
          </dependency>
 
