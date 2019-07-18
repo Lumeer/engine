@@ -1,6 +1,6 @@
 language: java
 install: true
 script: ./travis.sh
-dist: bionic
+dist: xenial
 jdk:
   - openjdk11

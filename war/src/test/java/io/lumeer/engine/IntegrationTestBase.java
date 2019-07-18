@@ -61,7 +61,7 @@ public abstract class IntegrationTestBase {
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb", "io.netty",
                              "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson",
                              "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple",
-                             "org.conscrypt", "org.apache.http", "org.jboss.marshalling", "com.typesafe")
+                             "org.conscrypt", "com.typesafe", "org.jboss.marshalling")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
