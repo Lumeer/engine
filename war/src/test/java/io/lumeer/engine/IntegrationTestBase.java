@@ -84,8 +84,10 @@ public abstract class IntegrationTestBase {
    @RunAsClient
    @BeforeDeploy
    public static void startEmbeddedMongoDb() {
-      embeddedMongoDb = new EmbeddedMongoDb();
-      embeddedMongoDb.start();
+      if (!EmbeddedMongoDb.SKIP) {
+         embeddedMongoDb = new EmbeddedMongoDb();
+         embeddedMongoDb.start();
+      }
    }
 
    @RunAsClient
