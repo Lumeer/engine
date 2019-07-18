@@ -60,8 +60,7 @@ public abstract class IntegrationTestBase {
       return ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME)
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb", "io.netty",
                              "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson",
-                             "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple",
-                             "org.conscrypt", "com.typesafe", "org.jboss.marshalling")
+                             "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
@@ -72,7 +71,6 @@ public abstract class IntegrationTestBase {
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
                                                   "org.mockito:mockito-core", "com.univocity:univocity-parsers",
                                                   "org.apache.logging.log4j:log4j-core",
-                                                  "software.amazon.awssdk:s3",
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",
                                                   "org.graalvm.truffle:truffle-api",
