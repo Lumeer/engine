@@ -44,7 +44,7 @@ export _JAVA_OPTIONS=-Djava.net.preferIPv4Stack=true
 export LUMEER_HOME=$(pwd)/war
 export LUMEER_DEFAULTS=defaults-ci.properties
 export SKIP_SECURITY=true
-mvn -Ptests install -B -Dlumeer.db.embed.skip=false
+mvn -Ptests install -B -Dlumeer.db.embed.skip=true
 #mvn -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci
 #mvn -l $BUILD_OUTPUT -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci
 
