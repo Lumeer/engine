@@ -260,15 +260,20 @@ public class ConstraintManager {
          }
 
          if (value instanceof String) {
-            final String strValue = ((String) value).replace(" ", "").trim();
+            if (constraint != null && constraint.getType() == ConstraintType.Duration) {
+               return encode(value);
+            } else {
 
-            if (strValue.endsWith("%") && strValue.indexOf("%") == strValue.length() - 1) {
-               final Object result = encode(strValue.substring(0, strValue.length() - 1));
+               final String strValue = ((String) value).replace(" ", "").trim();
 
-               if (result instanceof BigDecimal) {
-                  return ((BigDecimal) result).movePointLeft(2);
-               } else if (result instanceof Long) {
-                  return BigDecimal.valueOf((Long) result).movePointLeft(2);
+               if (strValue.endsWith("%") && strValue.indexOf("%") == strValue.length() - 1) {
+                  final Object result = encode(strValue.substring(0, strValue.length() - 1));
+
+                  if (result instanceof BigDecimal) {
+                     return ((BigDecimal) result).movePointLeft(2);
+                  } else if (result instanceof Long) {
+                     return BigDecimal.valueOf((Long) result).movePointLeft(2);
+                  }
                }
             }
          }

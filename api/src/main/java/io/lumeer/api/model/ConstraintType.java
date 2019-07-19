@@ -26,6 +26,7 @@ public enum ConstraintType {
    DateTime,
    Email,
    Function,
+   FileAttachment,
    Image,
    Link,
    Number,
