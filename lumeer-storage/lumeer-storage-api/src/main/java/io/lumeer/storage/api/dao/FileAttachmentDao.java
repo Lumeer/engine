@@ -34,11 +34,11 @@ public interface FileAttachmentDao {
 
    FileAttachment findFileAttachment(FileAttachment fileAttachment);
 
-   List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId);
+   List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, FileAttachment.AttachmentType type);
 
-   List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId);
+   List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, FileAttachment.AttachmentType type);
 
-   List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, String attributeId);
+   List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, String attributeId, FileAttachment.AttachmentType type);
 
    boolean removeFileAttachment(String fileAttachmentId);
 
@@ -46,11 +46,11 @@ public interface FileAttachmentDao {
 
    void removeAllFileAttachments(Organization organization, Project project);
 
-   void removeAllFileAttachments(Organization organization, Project project, String collectionId);
+   void removeAllFileAttachments(Organization organization, Project project, String collectionId, FileAttachment.AttachmentType type);
 
-   void removeAllFileAttachments(Organization organization, Project project, String collectionId, String attributeId);
+   void removeAllFileAttachments(Organization organization, Project project, String collectionId, String attributeId, FileAttachment.AttachmentType type);
 
-   void removeAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, String attributeId);
+   void removeAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, String attributeId, FileAttachment.AttachmentType type);
 
    void createFileAttachmentRepository();
 }
