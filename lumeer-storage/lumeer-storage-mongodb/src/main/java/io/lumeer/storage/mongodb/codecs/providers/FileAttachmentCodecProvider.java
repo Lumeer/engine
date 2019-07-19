@@ -16,24 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model.template;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.FileAttachment;
+import io.lumeer.storage.mongodb.codecs.FileAttachmentCodec;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class DocumentWithId extends Document {
+public class FileAttachmentCodecProvider implements CodecProvider {
 
-   public DocumentWithId(final Document document) {
-      super(document);
-   }
-
-   @JsonProperty("_id")
    @Override
-   public String getId() {
-      return super.getId();
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == FileAttachment.class) {
+         return (Codec<T>) new FileAttachmentCodec(registry);
+      }
+
+      return null;
    }
+
 }

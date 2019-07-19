@@ -18,12 +18,7 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
-import io.lumeer.api.model.User;
+import io.lumeer.api.model.*;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -82,6 +77,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private Event<ImportCollectionContent> importCollectionContentEvent;
+
+   @Inject
+   private FileAttachmentFacade fileAttachmentFacade;
 
    private ConstraintManager constraintManager;
 
@@ -326,6 +324,13 @@ public class DocumentFacade extends AbstractFacade {
       dataDao.deleteData(collection.getId(), documentId);
 
       deleteDocumentBasedData(collectionId, documentId);
+
+      // remove all file attachments
+      collection.getAttributes().forEach(attribute -> {
+         if (attribute.getConstraint() != null && attribute.getConstraint().getType().equals(ConstraintType.FileAttachment)) {
+            fileAttachmentFacade.removeAllFileAttachments(collectionId, documentId, attribute.getId());
+         }
+      });
    }
 
    private void deleteDocumentBasedData(String collectionId, String documentId) {
