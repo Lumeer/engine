@@ -18,11 +18,14 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.*;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Role;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.s3.PresignUrlRequest;
 import io.lumeer.core.util.s3.S3Utils;
-import io.lumeer.engine.api.exception.*;
+import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -46,7 +49,12 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 
 @RequestScoped
 public class FileAttachmentFacade extends AbstractFacade {
@@ -161,7 +169,6 @@ public class FileAttachmentFacade extends AbstractFacade {
               .map(fa -> presignFileAttachment(fa, false))
               .collect(Collectors.toList());
    }
-
 
    public FileAttachment renameFileAttachment(final FileAttachment fileAttachment) {
       if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
