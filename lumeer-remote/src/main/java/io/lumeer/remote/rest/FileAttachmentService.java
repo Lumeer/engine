@@ -33,6 +33,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -81,6 +82,12 @@ public class FileAttachmentService extends AbstractService {
       return fileAttachmentFacade.renameFileAttachment(fileAttachment);
    }
 
+   @GET
+   @Path("{attachmentId}")
+   public FileAttachment getFileAttachment(@PathParam("attachmentId") final String fileAttachmentId, @QueryParam("write") final Boolean write) {
+      return fileAttachmentFacade.getFileAttachment(fileAttachmentId, write != null ? write : false);
+   }
+
    // Gets the state of file attachments from DB.
    @GET
    @Path("collection/{collectionId}/{documentId}/{attributeId}")
@@ -125,15 +132,15 @@ public class FileAttachmentService extends AbstractService {
 
    // Gets the real file attachments according to S3 content. The results might not have all corresponding DB entries, or some DB entries might not have their corresponding S3 keys.
    @GET
-   @Path("collection/{collectionId}/{attributeId}/{documentId}/details")
-   public List<FileAttachment> listFileAttachmentsCollection(@PathParam("collectionId") final String collectionId, @PathParam("attributeId") final String attributeId, @PathParam("documentId") final String documentId) {
+   @Path("collection/{collectionId}/{documentId}/{attributeId}/details")
+   public List<FileAttachment> listFileAttachmentsCollection(@PathParam("collectionId") final String collectionId, @PathParam("documentId") final String documentId, @PathParam("attributeId") final String attributeId) {
       return fileAttachmentFacade.listFileAttachments(collectionId, documentId, attributeId, FileAttachment.AttachmentType.DOCUMENT);
    }
 
    // Gets the real file attachments according to S3 content. The results might not have all corresponding DB entries, or some DB entries might not have their corresponding S3 keys.
    @GET
-   @Path("link/{linkTypeId}/{attributeId}/{linkInstanceId}/details")
-   public List<FileAttachment> listFileAttachmentsLink(@PathParam("linkTypeId") final String linkTypeId, @PathParam("attributeId") final String attributeId, @PathParam("linkInstanceId") final String linkInstanceId) {
+   @Path("link/{linkTypeId}/{linkInstanceId}/{attributeId}/details")
+   public List<FileAttachment> listFileAttachmentsLink(@PathParam("linkTypeId") final String linkTypeId, @PathParam("linkInstanceId") final String linkInstanceId, @PathParam("attributeId") final String attributeId) {
       return fileAttachmentFacade.listFileAttachments(linkTypeId, linkInstanceId, attributeId, FileAttachment.AttachmentType.LINK);
    }
 

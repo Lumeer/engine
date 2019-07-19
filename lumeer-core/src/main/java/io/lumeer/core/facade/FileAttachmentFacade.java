@@ -121,6 +121,18 @@ public class FileAttachmentFacade extends AbstractFacade {
       return presignFileAttachment(fileAttachmentDao.createFileAttachment(fileAttachment), true);
    }
 
+   public FileAttachment getFileAttachment(final String fileAttachmentId, final boolean write) {
+      final FileAttachment fileAttachment = fileAttachmentDao.findFileAttachment(fileAttachmentId);
+
+      if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      } else {
+         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+      }
+
+      return presignFileAttachment(fileAttachment, write);
+   }
+
    public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
       if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
          checkCollectionReadPermissions(collectionId);
