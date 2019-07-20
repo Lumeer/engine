@@ -20,7 +20,9 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Role;
@@ -81,6 +83,9 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    @Inject
    private Event<ImportLinkTypeContent> importLinkTypeContentEvent;
+
+   @Inject
+   private FileAttachmentFacade fileAttachmentFacade;
 
    private ConstraintManager constraintManager;
 
@@ -229,10 +234,16 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public void deleteLinkInstance(String id) {
       LinkInstance stored = linkInstanceDao.getLinkInstance(id);
-      checkLinkTypeWritePermissions(stored.getLinkTypeId());
+      final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       linkInstanceDao.deleteLinkInstance(id);
       linkDataDao.deleteData(stored.getLinkTypeId(), id);
+
+      linkType.getAttributes().forEach(attribute -> {
+         if (attribute.getConstraint() != null && attribute.getConstraint().getType().equals(ConstraintType.FileAttachment)) {
+            fileAttachmentFacade.removeAllFileAttachments(linkType.getId(), stored.getId(), attribute.getId(), FileAttachment.AttachmentType.LINK);
+         }
+      });
    }
 
    public LinkInstance getLinkInstance(String linkTypeId, String linkInstanceId) {

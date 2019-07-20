@@ -18,13 +18,17 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.*;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Role;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.s3.PresignUrlRequest;
 import io.lumeer.core.util.s3.S3Utils;
-import io.lumeer.engine.api.exception.*;
+import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.FileAttachmentDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.StorageException;
 
 import java.net.URI;
@@ -45,7 +49,12 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 
 @RequestScoped
 public class FileAttachmentFacade extends AbstractFacade {
@@ -70,6 +79,12 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    @Inject
    private CollectionDao collectionDao;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private ConfigurationFacade configurationFacade;
 
    @PostConstruct
    public void init() {
@@ -97,50 +112,82 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    public FileAttachment createFileAttachment(final FileAttachment fileAttachment) {
-      checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      } else {
+         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+      }
 
       return presignFileAttachment(fileAttachmentDao.createFileAttachment(fileAttachment), true);
    }
 
-   public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final String attributeId) {
-      checkCollectionReadPermissions(collectionId);
+   public FileAttachment getFileAttachment(final String fileAttachmentId, final boolean write) {
+      final FileAttachment fileAttachment = fileAttachmentDao.findFileAttachment(fileAttachmentId);
+
+      if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      } else {
+         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+      }
+
+      return presignFileAttachment(fileAttachment, write);
+   }
+
+   public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
+      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionReadPermissions(collectionId);
+      } else {
+         checkLinkTypeReadPermissions(collectionId);
+      }
 
       return fileAttachmentDao.findAllFileAttachments(
               workspaceKeeper.getOrganization().get(),
               workspaceKeeper.getProject().get(),
-              collectionId, documentId, attributeId)
+              collectionId, documentId, attributeId, type)
               .stream()
               .map(fa -> presignFileAttachment(fa, false))
               .collect(Collectors.toList());
    }
 
-   public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId) {
-      checkCollectionReadPermissions(collectionId);
+   public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final FileAttachment.AttachmentType type) {
+      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionReadPermissions(collectionId);
+      } else {
+         checkLinkTypeReadPermissions(collectionId);
+      }
 
       return fileAttachmentDao.findAllFileAttachments(
               workspaceKeeper.getOrganization().get(),
               workspaceKeeper.getProject().get(),
-              collectionId, documentId)
+              collectionId, documentId, type)
               .stream()
               .map(fa -> presignFileAttachment(fa, false))
               .collect(Collectors.toList());
    }
 
-   public List<FileAttachment> getAllFileAttachments(final String collectionId) {
-      checkCollectionReadPermissions(collectionId);
+   public List<FileAttachment> getAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {
+      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionReadPermissions(collectionId);
+      } else {
+         checkLinkTypeReadPermissions(collectionId);
+      }
 
       return fileAttachmentDao.findAllFileAttachments(
               workspaceKeeper.getOrganization().get(),
               workspaceKeeper.getProject().get(),
-              collectionId)
+              collectionId,
+              type)
               .stream()
               .map(fa -> presignFileAttachment(fa, false))
               .collect(Collectors.toList());
    }
-
 
    public FileAttachment renameFileAttachment(final FileAttachment fileAttachment) {
-      checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      } else {
+         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+      }
 
       final FileAttachment storedFileAttachment = fileAttachmentDao.findFileAttachment(fileAttachment);
 
@@ -161,12 +208,16 @@ public class FileAttachmentFacade extends AbstractFacade {
       if (fileAttachment != null) {
          removeFileAttachment(fileAttachment);
       } else {
-         throw new InvalidValueException("File attachmend with the given ID was not found.");
+         throw new InvalidValueException("File attachment with the given ID was not found.");
       }
    }
 
    public void removeFileAttachment(final FileAttachment fileAttachment) {
-      checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+      } else {
+         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+      }
 
       if (s3 != null) {
          s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
@@ -192,8 +243,8 @@ public class FileAttachmentFacade extends AbstractFacade {
       return fileAttachment;
    }
 
-   private String getFileAttachmentLocation(final String organizationId, final String projectId, final String collectionId, final String documentId, final String attributeId) {
-      final StringBuilder sb = new StringBuilder(organizationId + "/" + projectId);
+   private String getFileAttachmentLocation(final String organizationId, final String projectId, final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
+      final StringBuilder sb = new StringBuilder(configurationFacade.getEnvironment().name() + "/" + organizationId + "/" + projectId + "/" + type.name());
 
       if (collectionId != null) {
          sb.append("/").append(collectionId);
@@ -211,11 +262,9 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    private String getFileAttachmentKey(final FileAttachment fileAttachment) {
-      return getFileAttachmentLocation(fileAttachment.getOrganizationId(), fileAttachment.getProjectId(), fileAttachment.getCollectionId(), fileAttachment.getDocumentId(), fileAttachment.getAttributeId()) + "/"
+      return getFileAttachmentLocation(fileAttachment.getOrganizationId(), fileAttachment.getProjectId(), fileAttachment.getCollectionId(), fileAttachment.getDocumentId(), fileAttachment.getAttributeId(), fileAttachment.getAttachmentType()) + "/"
               + fileAttachment.getId();
    }
-
-   // TODO: use other remove attachment methods at corresponding places in other facades
 
    /**
     * Lists the file attachments really present in S3 bucket.
@@ -225,12 +274,16 @@ public class FileAttachmentFacade extends AbstractFacade {
     * @param attributeId  ID of an attribute.
     * @return Files present in S3 bucket for the specified collection, document and its attribute.
     */
-   public List<FileAttachment> listFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+   public List<FileAttachment> listFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
       if (s3 == null) {
          return Collections.emptyList();
       }
 
-      checkCollectionReadPermissions(collectionId);
+      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionReadPermissions(collectionId);
+      } else {
+         checkLinkTypeReadPermissions(collectionId);
+      }
 
       final String organizationId = workspaceKeeper.getOrganization().get().getId();
       final String projectId = workspaceKeeper.getProject().get().getId();
@@ -245,42 +298,43 @@ public class FileAttachmentFacade extends AbstractFacade {
                                       projectId,
                                       collectionId,
                                       documentId,
-                                      attributeId)
+                                      attributeId,
+                                      type)
                       ).build());
 
       return response.contents().stream().map(s3Object -> {
-         final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, s3Object.key());
+         final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, s3Object.key(), type);
          fileAttachment.setSize(s3Object.size());
 
          return fileAttachment;
       }).collect(Collectors.toList());
    }
 
-   void removeAllFileAttachments(final String collectionId) {
+   void removeAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {
       // not checking access right - only have package access
 
-      removeAllFileAttachments(collectionId, null, null);
+      removeAllFileAttachments(collectionId, null, null, type);
 
-      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId);
+      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, type);
    }
 
-   void removeAllFileAttachments(final String collectionId, final String attributeId) {
+   void removeAllFileAttachments(final String collectionId, final String attributeId, final FileAttachment.AttachmentType type) {
       // not checking access right - only have package access
 
-      removeFileAttachments(collectionId, null, attributeId);
+      removeFileAttachments(collectionId, null, attributeId, type);
 
-      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, attributeId);
+      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, attributeId, type);
    }
 
-   void removeAllFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+   void removeAllFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
       // not checking access right - only have package access
 
-      removeFileAttachments(collectionId, documentId, attributeId);
+      removeFileAttachments(collectionId, documentId, attributeId, type);
 
-      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, documentId, attributeId);
+      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, documentId, attributeId, type);
    }
 
-   private void removeFileAttachments(final String collectionId, final String documentId, final String attributeId) {
+   private void removeFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
       if (s3 == null) {
          return;
       }
@@ -298,7 +352,8 @@ public class FileAttachmentFacade extends AbstractFacade {
                                       projectId,
                                       collectionId,
                                       documentId,
-                                      attributeId)
+                                      attributeId,
+                                      type)
                       ).build());
 
       final Delete delete = Delete.builder().objects(response.contents().stream().map(s3Object -> ObjectIdentifier.builder().key(s3Object.key()).build()).collect(Collectors.toList())).build();
@@ -308,6 +363,7 @@ public class FileAttachmentFacade extends AbstractFacade {
    private Collection checkCollectionWritePermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+
       return collection;
    }
 
@@ -316,6 +372,23 @@ public class FileAttachmentFacade extends AbstractFacade {
       permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
       return collection;
+   }
+
+   private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
+      return checkLinkTypePermissions(linkTypeId, Role.WRITE);
+   }
+
+   private LinkType checkLinkTypeReadPermissions(String linkTypeId) {
+      return checkLinkTypePermissions(linkTypeId, Role.READ);
+   }
+
+   private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
+      for (Collection collection : collections) {
+         permissionsChecker.checkRoleWithView(collection, role, role);
+      }
+      return linkType;
    }
 
    private void checkFileAttachmentName(final FileAttachment fileAttachment) {
