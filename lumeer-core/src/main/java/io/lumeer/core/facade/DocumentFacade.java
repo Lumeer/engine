@@ -328,7 +328,7 @@ public class DocumentFacade extends AbstractFacade {
       // remove all file attachments
       collection.getAttributes().forEach(attribute -> {
          if (attribute.getConstraint() != null && attribute.getConstraint().getType().equals(ConstraintType.FileAttachment)) {
-            fileAttachmentFacade.removeAllFileAttachments(collectionId, documentId, attribute.getId());
+            fileAttachmentFacade.removeAllFileAttachments(collectionId, documentId, attribute.getId(), FileAttachment.AttachmentType.DOCUMENT);
          }
       });
    }

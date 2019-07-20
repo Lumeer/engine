@@ -30,6 +30,10 @@ import java.util.Objects;
  */
 public class FileAttachment implements WithId {
 
+   public enum AttachmentType {
+      DOCUMENT, LINK;
+   }
+
    public static final String ID = "id";
    public static final String ORGANIZATION_ID = "organizationId";
    public static final String PROJECT_ID = "projectId";
@@ -37,6 +41,7 @@ public class FileAttachment implements WithId {
    public static final String DOCUMENT_ID = "documentId";
    public static final String ATTRIBUTE_ID = "attributeId";
    public static final String FILE_NAME = "fileName";
+   public static final String ATTACHMENT_TYPE = "attachmentType";
    public static final String PRESIGNED_URL = "presignedUrl";
    public static final String SIZE = "size";
 
@@ -46,6 +51,7 @@ public class FileAttachment implements WithId {
    private final String collectionId;
    private final String documentId;
    private final String attributeId;
+   private final AttachmentType attachmentType;
    private String fileName;
 
    @JsonProperty(PRESIGNED_URL)
@@ -58,13 +64,14 @@ public class FileAttachment implements WithId {
    public FileAttachment(@JsonProperty(ORGANIZATION_ID) final String organizationId,
          @JsonProperty(PROJECT_ID) final String projectId, @JsonProperty(COLLECTION_ID) final String collectionId,
          @JsonProperty(DOCUMENT_ID) final String documentId, @JsonProperty(ATTRIBUTE_ID) final String attributeId,
-         @JsonProperty(FILE_NAME) final String fileName) {
+         @JsonProperty(FILE_NAME) final String fileName, @JsonProperty(ATTACHMENT_TYPE) final AttachmentType attachmentType) {
       this.organizationId = organizationId;
       this.projectId = projectId;
       this.collectionId = collectionId;
       this.documentId = documentId;
       this.attributeId = attributeId;
       this.fileName = fileName;
+      this.attachmentType = attachmentType;
    }
 
    @Override
@@ -98,6 +105,10 @@ public class FileAttachment implements WithId {
 
    public String getFileName() {
       return fileName;
+   }
+
+   public AttachmentType getAttachmentType() {
+      return attachmentType;
    }
 
    public void setFileName(final String fileName) {
@@ -147,6 +158,7 @@ public class FileAttachment implements WithId {
             ", documentId='" + documentId + '\'' +
             ", attributeId='" + attributeId + '\'' +
             ", fileName='" + fileName + '\'' +
+            ", attachmentType='" + attachmentType.toString() + '\'' +
             ", presignedUrl='" + presignedUrl + '\'' +
             ", size='" + size + '\'' +
             '}';

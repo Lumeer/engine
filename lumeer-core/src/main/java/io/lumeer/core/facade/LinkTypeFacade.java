@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.CollectionUtil;
@@ -59,6 +60,9 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private FileAttachmentFacade fileAttachmentFacade;
 
    public LinkType createLinkType(LinkType linkType) {
       permissionsChecker.checkFunctionsLimit(linkType);
@@ -99,6 +103,7 @@ public class LinkTypeFacade extends AbstractFacade {
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(Collections.singleton(linkTypeId));
       linkDataDao.deleteDataRepository(linkTypeId);
       deleteAutoLinkRulesByLinkType(linkTypeId);
+      fileAttachmentFacade.removeAllFileAttachments(linkTypeId, FileAttachment.AttachmentType.LINK);
    }
 
    private void deleteAutoLinkRulesByLinkType(final String linkTypeId) {
@@ -189,6 +194,8 @@ public class LinkTypeFacade extends AbstractFacade {
 
       linkType.deleteAttribute(attributeId);
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
+
+      fileAttachmentFacade.removeAllFileAttachments(linkTypeId, attributeId, FileAttachment.AttachmentType.LINK);
    }
 
    private void checkLinkTypePermission(java.util.Collection<String> collectionIds) {

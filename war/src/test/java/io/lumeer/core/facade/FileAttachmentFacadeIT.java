@@ -133,8 +133,8 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
       collection.getPermissions().updateGroupPermissions(groupPermission);
       collection = collectionDao.createCollection(collection);
 
-      fileAttachment1 = new FileAttachment(organization.getId(), project.getId(), collection.getId(), "5cf6f208857aba009210af9b", "a3", "můk super/$~@#ę€%=název.pdf");
-      fileAttachment2 = new FileAttachment(organization.getId(), "5cf6f208857aba009210af9c", collection.getId(), "5cf6f208857aba009210af9b", "a3", "normal file name .doc");
+      fileAttachment1 = new FileAttachment(organization.getId(), project.getId(), collection.getId(), "5cf6f208857aba009210af9b", "a3", "můk super/$~@#ę€%=název.pdf", FileAttachment.AttachmentType.DOCUMENT);
+      fileAttachment2 = new FileAttachment(organization.getId(), "5cf6f208857aba009210af9c", collection.getId(), "5cf6f208857aba009210af9b", "a3", "normal file name .doc", FileAttachment.AttachmentType.DOCUMENT);
    }
 
    @Test
@@ -150,18 +150,18 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
       var response = client.target(presigned).request(MediaType.APPLICATION_JSON).buildPut(entity).invoke();
       System.out.println(response.getStatusInfo().getReasonPhrase());
 
-      var result = fileAttachmentFacade.getAllFileAttachments(createdFileAttachment.getCollectionId());
+      var result = fileAttachmentFacade.getAllFileAttachments(createdFileAttachment.getCollectionId(), FileAttachment.AttachmentType.DOCUMENT);
       assertThat(result).containsExactly(createdFileAttachment);
 
-      var listing = fileAttachmentFacade.listFileAttachments(createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId());
-      var tempFileAttachment = new FileAttachment(createdFileAttachment.getOrganizationId(), createdFileAttachment.getProjectId(), createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), createdFileAttachment.getFileName());
+      var listing = fileAttachmentFacade.listFileAttachments(createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), FileAttachment.AttachmentType.DOCUMENT);
+      var tempFileAttachment = new FileAttachment(createdFileAttachment.getOrganizationId(), createdFileAttachment.getProjectId(), createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), createdFileAttachment.getFileName(), FileAttachment.AttachmentType.DOCUMENT);
       tempFileAttachment.setSize(content.length());
       assertThat(listing).containsExactly(tempFileAttachment);
       assertThat(listing.get(0).getSize()).isGreaterThan(0L);
 
       fileAttachmentFacade.removeFileAttachment(createdFileAttachment);
 
-      listing = fileAttachmentFacade.listFileAttachments(createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId());
+      listing = fileAttachmentFacade.listFileAttachments(createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), FileAttachment.AttachmentType.DOCUMENT);
       assertThat(listing).hasSize(0);
    }
 }

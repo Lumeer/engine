@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -27,10 +28,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
-import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.util.CodeGenerator;
@@ -44,11 +43,9 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -126,7 +123,7 @@ public class CollectionFacade extends AbstractFacade {
 
       deleteCollectionBasedData(collectionId);
 
-      fileAttachmentFacade.removeAllFileAttachments(collectionId);
+      fileAttachmentFacade.removeAllFileAttachments(collectionId, FileAttachment.AttachmentType.DOCUMENT);
    }
 
    private void deleteCollectionBasedData(final String collectionId) {
@@ -290,7 +287,7 @@ public class CollectionFacade extends AbstractFacade {
 
       deleteAutoLinkRulesByAttribute(collectionId, attributeId);
 
-      fileAttachmentFacade.removeAllFileAttachments(collectionId, attributeId);
+      fileAttachmentFacade.removeAllFileAttachments(collectionId, attributeId, FileAttachment.AttachmentType.DOCUMENT);
    }
 
    private void filterAutoLinkRulesByAttribute(final Collection collection, final String collectionId, final String attributeId) {

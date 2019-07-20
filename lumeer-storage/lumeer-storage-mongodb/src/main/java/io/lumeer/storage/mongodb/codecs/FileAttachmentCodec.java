@@ -41,6 +41,7 @@ public class FileAttachmentCodec implements CollectibleCodec<FileAttachment> {
    public static final String DOCUMENT_ID = "documentId";
    public static final String ATTRIBUTE_ID = "attributeId";
    public static final String FILE_NAME = "fileName";
+   public static final String ATTACHMENT_TYPE = "attachmentType";
 
    private final Codec<Document> documentCodec;
 
@@ -58,8 +59,10 @@ public class FileAttachmentCodec implements CollectibleCodec<FileAttachment> {
       final String documentId = bson.getString(DOCUMENT_ID);
       final String attributeId = bson.getString(ATTRIBUTE_ID);
       final String fileName = bson.getString(FILE_NAME);
+      final Integer typeInt = bson.getInteger(ATTACHMENT_TYPE);
+      final FileAttachment.AttachmentType type = FileAttachment.AttachmentType.values()[typeInt != null ? typeInt : 0];
 
-      final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, fileName);
+      final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, fileName, type);
       fileAttachment.setId(id);
 
       return fileAttachment;
@@ -73,7 +76,8 @@ public class FileAttachmentCodec implements CollectibleCodec<FileAttachment> {
           .append(COLLECTION_ID, fileAttachment.getCollectionId())
           .append(DOCUMENT_ID, fileAttachment.getDocumentId())
           .append(ATTRIBUTE_ID, fileAttachment.getAttributeId())
-          .append(FILE_NAME, fileAttachment.getFileName());
+          .append(FILE_NAME, fileAttachment.getFileName())
+          .append(ATTACHMENT_TYPE, fileAttachment.getAttachmentType().ordinal());
 
       documentCodec.encode(writer, bson, encoderContext);
    }

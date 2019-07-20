@@ -56,7 +56,7 @@ public class MongoFileAttachmentDao extends SystemScopedDao implements FileAttac
          database.createCollection(COLLECTION_NAME);
 
          MongoCollection<org.bson.Document> groupCollection = database.getCollection(COLLECTION_NAME);
-         groupCollection.createIndex(Indexes.ascending(FileAttachment.ORGANIZATION_ID, FileAttachment.PROJECT_ID, FileAttachment.COLLECTION_ID, FileAttachment.DOCUMENT_ID, FileAttachment.ATTRIBUTE_ID), new IndexOptions().unique(false));
+         groupCollection.createIndex(Indexes.ascending(FileAttachment.ORGANIZATION_ID, FileAttachment.PROJECT_ID, FileAttachment.COLLECTION_ID, FileAttachment.DOCUMENT_ID, FileAttachment.ATTRIBUTE_ID, FileAttachment.ATTACHMENT_TYPE), new IndexOptions().unique(false));
       }
    }
 
@@ -95,39 +95,42 @@ public class MongoFileAttachmentDao extends SystemScopedDao implements FileAttac
    }
 
    @Override
-   public List<FileAttachment> findAllFileAttachments(final Organization organization, final Project project, final String collectionId) {
-      final Bson attachmentFilter =
-            Filters.and(
-                  Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
-                  Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
-                  Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId)
-            );
-
-      return databaseCollection().find(attachmentFilter).into(new ArrayList<>());
-   }
-
-   @Override
-   public List<FileAttachment> findAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String documentId) {
+   public List<FileAttachment> findAllFileAttachments(final Organization organization, final Project project, final String collectionId, final FileAttachment.AttachmentType type) {
       final Bson attachmentFilter =
             Filters.and(
                   Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
                   Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
                   Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId),
-                  Filters.eq(FileAttachmentCodec.DOCUMENT_ID, documentId)
+                  Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
             );
 
       return databaseCollection().find(attachmentFilter).into(new ArrayList<>());
    }
 
    @Override
-   public List<FileAttachment> findAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String documentId, final String attributeId) {
+   public List<FileAttachment> findAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String documentId, final FileAttachment.AttachmentType type) {
       final Bson attachmentFilter =
             Filters.and(
                   Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
                   Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
                   Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId),
                   Filters.eq(FileAttachmentCodec.DOCUMENT_ID, documentId),
-                  Filters.eq(FileAttachmentCodec.ATTRIBUTE_ID, attributeId)
+                  Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
+            );
+
+      return databaseCollection().find(attachmentFilter).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<FileAttachment> findAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
+      final Bson attachmentFilter =
+            Filters.and(
+                  Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
+                  Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
+                  Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId),
+                  Filters.eq(FileAttachmentCodec.DOCUMENT_ID, documentId),
+                  Filters.eq(FileAttachmentCodec.ATTRIBUTE_ID, attributeId),
+                  Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
             );
 
       return databaseCollection().find(attachmentFilter).into(new ArrayList<>());
@@ -159,39 +162,42 @@ public class MongoFileAttachmentDao extends SystemScopedDao implements FileAttac
    }
 
    @Override
-   public void removeAllFileAttachments(final Organization organization, final Project project, final String collectionId) {
-      final Bson attachmentFilter =
-            Filters.and(
-                  Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
-                  Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
-                  Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId)
-            );
-
-      databaseCollection().deleteMany(attachmentFilter);
-   }
-
-   @Override
-   public void removeAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String attributeId) {
+   public void removeAllFileAttachments(final Organization organization, final Project project, final String collectionId, final FileAttachment.AttachmentType type) {
       final Bson attachmentFilter =
             Filters.and(
                   Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
                   Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
                   Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId),
-                  Filters.eq(FileAttachmentCodec.ATTRIBUTE_ID, attributeId)
+                  Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
             );
 
       databaseCollection().deleteMany(attachmentFilter);
    }
 
    @Override
-   public void removeAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String documentId, final String attributeId) {
+   public void removeAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String attributeId, final FileAttachment.AttachmentType type) {
+      final Bson attachmentFilter =
+            Filters.and(
+                  Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
+                  Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
+                  Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId),
+                  Filters.eq(FileAttachmentCodec.ATTRIBUTE_ID, attributeId),
+                  Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
+            );
+
+      databaseCollection().deleteMany(attachmentFilter);
+   }
+
+   @Override
+   public void removeAllFileAttachments(final Organization organization, final Project project, final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
       final Bson attachmentFilter =
             Filters.and(
                   Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
                   Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
                   Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId),
                   Filters.eq(FileAttachmentCodec.DOCUMENT_ID, documentId),
-                  Filters.eq(FileAttachmentCodec.ATTRIBUTE_ID, attributeId)
+                  Filters.eq(FileAttachmentCodec.ATTRIBUTE_ID, attributeId),
+                  Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
             );
 
       databaseCollection().deleteMany(attachmentFilter);
