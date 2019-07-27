@@ -99,8 +99,9 @@
       <version.mongo.driver>3.9.1</version.mongo.driver>
       <version.jcommander>1.72</version.jcommander>
       <version.json.simple>1.1.1</version.json.simple>
-      <version.resteasy>3.6.1.Final</version.resteasy>
+      <version.resteasy>3.8.1.Final</version.resteasy>
       <version.jaxrs>3.0.12.Final</version.jaxrs>
+      <version.apache.httpclient>4.5.9</version.apache.httpclient>
       <version.univocity>2.7.5</version.univocity>
       <version.mvc-auth>1.0.0</version.mvc-auth>
       <version.jwt>3.4.0</version.jwt>
@@ -227,6 +228,13 @@
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>jaxrs-api</artifactId>
             <version>${version.jaxrs}</version>
+         </dependency>
+
+         <!-- awssdk needs a fix introduced in httpcore 4.4.9 (dependency of httpclient) -->
+         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${version.apache.httpclient}</version>
          </dependency>
 
          <dependency>
