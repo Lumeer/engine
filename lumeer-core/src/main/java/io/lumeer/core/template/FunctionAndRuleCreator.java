@@ -177,12 +177,11 @@ public class FunctionAndRuleCreator extends WithIdCreator {
 
         <field name="COLLECTION">5cf6eb98857aba008f0655d8</field>
        */
-
       var res = TemplateParserUtils.replacer(xml, "<block type=\"variables_get_", "_document", templateParser.getDict()::getCollectionId);
-      res = TemplateParserUtils.replacer(xml, "<block type=\"variables_get_", "_linkinst", templateParser.getDict()::getLinkTypeId);
-      res = TemplateParserUtils.replacer(res, "<block type=\"", "-[0-9a-f]+_[0-9a-f]+_link", templateParser.getDict()::getLinkTypeId);
-      res = TemplateParserUtils.replacer(res, "<block type=\"[0-9a-f]+-", "_[0-9a-f]+_link", templateParser.getDict()::getCollectionId);
-      res = TemplateParserUtils.replacer(res, "<block type=\"[0-9a-f]+-[0-9a-f]+_", "_link", templateParser.getDict()::getCollectionId);
+      res = TemplateParserUtils.replacer(res, "<block type=\"variables_get_", "_linkinst", templateParser.getDict()::getLinkTypeId);
+      res = TemplateParserUtils.replacer(res, "<block type=\"", "-[0-9a-f]{24}_[0-9a-f]{24}_link", templateParser.getDict()::getLinkTypeId);
+      res = TemplateParserUtils.replacer(res, "<block type=\"[0-9a-f]{24}-", "_[0-9a-f]{24}_link", templateParser.getDict()::getCollectionId);
+      res = TemplateParserUtils.replacer(res, "<block type=\"[0-9a-f]{24}-[0-9a-f]{24}_", "_link", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "<variable type=\"", "_document", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "<variable type=\"", "_link", templateParser.getDict()::getLinkTypeId);
       res = TemplateParserUtils.replacer(res, "variabletype=\"", "_document", templateParser.getDict()::getCollectionId);

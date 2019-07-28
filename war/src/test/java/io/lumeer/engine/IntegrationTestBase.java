@@ -66,6 +66,7 @@ public abstract class IntegrationTestBase {
                        .addAsResource("defaults-ci.properties")
                        .addAsResource("defaults-dev.properties")
                        .addAsResource("templates/okr.en.json")
+                       .addAsResource("templates/hr.en.json")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
