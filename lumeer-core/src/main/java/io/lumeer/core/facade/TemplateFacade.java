@@ -29,7 +29,9 @@ import io.lumeer.core.template.LinkTypeCreator;
 import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.TemplateType;
 import io.lumeer.core.template.ViewCreator;
+import io.lumeer.engine.api.event.TemplateCreated;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 /**
@@ -55,6 +57,9 @@ public class TemplateFacade extends AbstractFacade {
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
 
+   @Inject
+   private Event<TemplateCreated> templateCreatedEvent;
+
    public void installTemplate(final Organization organization, final Project project, final TemplateType templateType, final String language) {
       final TemplateParser templateParser = new TemplateParser(templateType, language);
 
@@ -64,5 +69,9 @@ public class TemplateFacade extends AbstractFacade {
       LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser);
       ViewCreator.createViews(templateParser, viewFacade, defaultConfigurationProducer);
       FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade);
+
+      if (templateCreatedEvent != null) {
+         templateCreatedEvent.fire(templateParser.getReport(project));
+      }
    }
 }

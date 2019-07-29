@@ -55,6 +55,7 @@ import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
+import io.lumeer.engine.api.event.TemplateCreated;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
@@ -215,6 +216,14 @@ public class PusherFacade extends AbstractFacade {
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
+      }
+   }
+
+   public void templateCreated(@Observes final TemplateCreated templateCreated) {
+      if (isEnabled()) {
+         Set<String> userIds = ResourceUtils.usersAllowedRead(templateCreated.getProject());
+         userIds.addAll(getOrganizationManagers());
+         sendNotificationsByUsers(new ObjectWithParent(templateCreated, getOrganization().getId(), templateCreated.getProject().getId()), userIds, CREATE_EVENT_SUFFIX);
       }
    }
 
