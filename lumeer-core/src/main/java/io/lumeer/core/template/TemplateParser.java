@@ -18,7 +18,9 @@
  */
 package io.lumeer.core.template;
 
+import io.lumeer.api.model.Project;
 import io.lumeer.core.exception.TemplateNotAvailableException;
+import io.lumeer.engine.api.event.TemplateCreated;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -58,5 +60,9 @@ public class TemplateParser {
 
    public JSONObject getTemplate() {
       return template;
+   }
+
+   public TemplateCreated getReport(final Project project) {
+      return new TemplateCreated(project, dict.getCollectionIds(), dict.getLinkTypeIds(), dict.getViewIds());
    }
 }

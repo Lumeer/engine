@@ -26,7 +26,9 @@ import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Tracks objects created based on a JSON template file. It maps the IDs stored in
@@ -102,5 +104,17 @@ public class TemplateObjectsDictionary {
 
    private String getSafeId(final WithId withId) {
       return withId != null ? withId.getId() : null;
+   }
+
+   public List<String> getCollectionIds() {
+      return collections.values().stream().map(Collection::getId).collect(Collectors.toList());
+   }
+
+   public List<String> getLinkTypeIds() {
+      return linkTypes.values().stream().map(LinkType::getId).collect(Collectors.toList());
+   }
+
+   public List<String> getViewIds() {
+      return views.values().stream().map(View::getId).collect(Collectors.toList());
    }
 }
