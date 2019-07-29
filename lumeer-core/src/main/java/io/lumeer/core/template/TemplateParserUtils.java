@@ -106,7 +106,7 @@ public class TemplateParserUtils {
    }
 
    public static String replacer(final String text, final String matchPrefix, final String matchSuffix, final java.util.function.Function<String, String> replacer) {
-      var pattern = Pattern.compile("(" + matchPrefix + ")([0-9a-f]+)(" + matchSuffix + ")");
+      var pattern = Pattern.compile("(" + matchPrefix + ")([0-9a-f]{24})(" + matchSuffix + ")");
       var matcher = pattern.matcher(text);
       var sb = new StringBuilder();
 
