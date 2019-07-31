@@ -364,7 +364,7 @@
             }
           },
           "function": {
-            "js": "var thisDocument;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setDocumentAttribute(thisDocument, 'a6', lumeer.getLinkAttribute(lumeer.getLinks(thisDocument, '5d095de3857aba0090ad1ab0'), 'a3').reduce(function(x, y) {return x + y;}, 0))\n",
+            "js": "var thisDocument;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setDocumentAttribute(thisDocument, 'a6', lumeer.getLinkAttribute(lumeer.getLinks(thisDocument, '5d095de3857aba0090ad1ab0'), 'a2').reduce(function(x, y) {return x + y;}, 0))\n",
             "xml": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <variables>\n    <variable type=\"5d095c99857aba0090ad1aaf_document\" id=\"X}R_E2}]u9acwl(g*=87\">thisDocument</variable>\n  </variables>\n  <block type=\"value_container\" id=\"5dCdpe_xpK%]/36#|dEU\" deletable=\"false\" x=\"54\" y=\"145\">\n    <value name=\"VALUE\">\n      <block type=\"math_on_list\" id=\"W~4_)DfwO^K%*L)!jGjB\">\n        <mutation op=\"SUM\"></mutation>\n        <field name=\"OP\">SUM</field>\n        <value name=\"LIST\">\n          <block type=\"get_link_attribute\" id=\";3]y8=At+:@PmUE*~3MY\">\n            <field name=\"ATTR\">a3</field>\n            <value name=\"LINK\">\n              <block type=\"5d095de3857aba0090ad1ab0-5d095573857aba008f3895aa_5d095c99857aba0090ad1aaf_link_instance\" id=\"jXHZfOje2rA!r]3cKG:j\">\n                <value name=\"DOCUMENT\">\n                  <block type=\"variables_get_5d095c99857aba0090ad1aaf_document\" id=\"lIT%l{i@:rIV+m(2sKPu\" editable=\"false\">\n                    <field name=\"VAR\" id=\"X}R_E2}]u9acwl(g*=87\" variabletype=\"5d095c99857aba0090ad1aaf_document\">thisDocument</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n          </block>\n        </value>\n      </block>\n    </value>\n  </block>\n</xml>",
             "errorReport": null,
             "timestamp": 0,
@@ -2423,11 +2423,11 @@
           "usageCount": 0
         },
         {
-          "id": "a3",
+          "id": "a2",
           "name": "Cost",
           "constraint": null,
           "function": {
-            "js": "var thisLink;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setLinkAttribute(thisLink, 'a3', (lumeer.getLinkAttribute(thisLink, 'a1') * lumeer.getDocumentAttribute(lumeer.getLinkDocument(thisLink, '5d095573857aba008f3895aa'), 'a10')))\n",
+            "js": "var thisLink;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setLinkAttribute(thisLink, 'a2', (lumeer.getLinkAttribute(thisLink, 'a1') * lumeer.getDocumentAttribute(lumeer.getLinkDocument(thisLink, '5d095573857aba008f3895aa'), 'a10')))\n",
             "xml": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <variables>\n    <variable type=\"5d095de3857aba0090ad1ab0_linkinst\" id=\"(Lw9tI{H[!;]r$rqg6_X\">thisLink</variable>\n  </variables>\n  <block type=\"link_container\" id=\"lHu~]GBF1MH?SkDzxK~7\" deletable=\"false\" x=\"65\" y=\"167\">\n    <value name=\"VALUE\">\n      <block type=\"math_arithmetic\" id=\"W_Zi~yA[-SSJ2XwtgQ^o\">\n        <field name=\"OP\">MULTIPLY</field>\n        <value name=\"A\">\n          <shadow type=\"math_number\" id=\"mgz~n*+8+/Y`P{(x8r=f\">\n            <field name=\"NUM\">1</field>\n          </shadow>\n          <block type=\"get_link_attribute\" id=\"t=gNIl7Ae[SAAbG%ZoXJ\">\n            <field name=\"ATTR\">a1</field>\n            <value name=\"LINK\">\n              <block type=\"variables_get_5d095de3857aba0090ad1ab0_linkinst\" id=\";kgIaQx+4H*]oE%p)kdv\" editable=\"false\">\n                <field name=\"VAR\" id=\"(Lw9tI{H[!;]r$rqg6_X\" variabletype=\"5d095de3857aba0090ad1ab0_linkinst\">thisLink</field>\n              </block>\n            </value>\n          </block>\n        </value>\n        <value name=\"B\">\n          <shadow type=\"math_number\" id=\"q8Wgh.2yhboLP~Ug}uPR\">\n            <field name=\"NUM\">1</field>\n          </shadow>\n          <block type=\"get_attribute\" id=\"Z=/|`Ar.{Ex.6VCij-kW\">\n            <field name=\"ATTR\">a10</field>\n            <value name=\"DOCUMENT\">\n              <block type=\"get_link_document\" id=\",@^x297bNcq:y]N;z6|~\">\n                <field name=\"COLLECTION\">5d095573857aba008f3895aa</field>\n                <value name=\"LINK\">\n                  <block type=\"variables_get_5d095de3857aba0090ad1ab0_linkinst\" id=\"+fzZ|T)Yr)Ut%Xk`P?ZX\" editable=\"false\">\n                    <field name=\"VAR\" id=\"(Lw9tI{H[!;]r$rqg6_X\" variabletype=\"5d095de3857aba0090ad1ab0_linkinst\">thisLink</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n          </block>\n        </value>\n      </block>\n    </value>\n  </block>\n</xml>",
             "errorReport": null,
             "timestamp": 0,
@@ -3273,27 +3273,27 @@
       {
         "_id": "5d126911857aba0090bea0e3",
         "a1": 10,
-        "a3": 500.0
+        "a2": 500.0
       },
       {
         "_id": "5d12691e857aba0090bea0e6",
         "a1": 78,
-        "a3": 2886.0
+        "a2": 2886.0
       },
       {
         "_id": "5d12693a857aba0090bea0ea",
         "a1": 24,
-        "a3": 240.0
+        "a2": 240.0
       },
       {
         "_id": "5d126948857aba0090bea0ed",
         "a1": 46,
-        "a3": 552.0
+        "a2": 552.0
       },
       {
         "_id": "5d12695f857aba0090bea0f0",
         "a1": 13,
-        "a3": 559.0
+        "a2": 559.0
       }
     ],
     "5d0deab2857aba0090ad1ad3": [
