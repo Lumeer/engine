@@ -43,7 +43,6 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-      <version.groovy>2.5.7</version.groovy>
       <version.jacoco>0.8.4</version.jacoco>
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>8.23</version.puppycrawl>

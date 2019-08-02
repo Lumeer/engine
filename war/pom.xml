@@ -126,12 +126,6 @@
          <groupId>org.marvec</groupId>
          <artifactId>pusher</artifactId>
       </dependency>
-      <!-- Groovy -->
-      <dependency>
-         <groupId>org.codehaus.groovy</groupId>
-         <artifactId>groovy-all</artifactId>
-         <type>pom</type>
-      </dependency>
 
       <dependency>
          <groupId>org.graalvm.sdk</groupId>
