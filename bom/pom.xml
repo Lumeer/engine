@@ -81,9 +81,7 @@
       <version.commons.lang>3.7</version.commons.lang>
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.cli>1.4</version.commons.cli>
-      <version.vertx>3.8.0</version.vertx>
       <version.jackson>2.9.9</version.jackson>
-      <version.netty>4.1.28.Final</version.netty>
       <version.mongo.driver>3.10.2</version.mongo.driver>
       <version.jcommander>1.72</version.jcommander>
       <version.json.simple>1.1.1</version.json.simple>
@@ -460,39 +458,12 @@
          </dependency>
 
          <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-buffer</artifactId>
-            <version>${version.netty}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport</artifactId>
-            <version>${version.netty}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
-            <version>${version.netty}</version>
-         </dependency>
-
-         <dependency>
             <groupId>com.univocity</groupId>
             <artifactId>univocity-parsers</artifactId>
             <version>${version.univocity}</version>
             <type>jar</type>
          </dependency>
 
-         <!-- Vert.x -->
-         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-core</artifactId>
-            <version>${version.vertx}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-            <version>${version.vertx}</version>
-         </dependency>
          <!-- Fix for a bug in jackson dependencies -->
          <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -503,12 +474,6 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jaxb-annotations</artifactId>
             <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>${version.netty}</version>
-            <scope>test</scope>
          </dependency>
 
          <dependency>
