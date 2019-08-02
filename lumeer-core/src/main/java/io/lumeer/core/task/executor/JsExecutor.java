@@ -509,7 +509,7 @@ public class JsExecutor {
    public void execute(final Map<String, Object> bindings, final ContextualTask task, final Collection collection, final String js) {
       lumeerBridge = new LumeerBridge(task, collection);
 
-      Context context = Context.newBuilder("js").engine(Engine.newBuilder().option("js.experimental-array-prototype", "true").build()).build();
+      Context context = Context.newBuilder("js").engine(Engine.newBuilder().option("js.experimental-foreign-object-prototype", "true").build()).build();
       context.initialize("js");
       context.getPolyglotBindings().putMember("lumeer", lumeerBridge);
 
