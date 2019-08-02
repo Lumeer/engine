@@ -227,6 +227,10 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    private FileAttachment presignFileAttachment(final FileAttachment fileAttachment, final boolean write) {
+      if (s3 == null) {
+         return fileAttachment;
+      }
+
       final String key = getFileAttachmentKey(fileAttachment);
       final URI uri = S3Utils.presign(PresignUrlRequest.builder()
               .region(region)
