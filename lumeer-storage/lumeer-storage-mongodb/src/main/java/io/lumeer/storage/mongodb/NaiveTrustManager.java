@@ -35,6 +35,7 @@ import javax.net.ssl.X509TrustManager;
 public class NaiveTrustManager implements X509TrustManager {
 
    private static SSLSocketFactory sslSocketFactory;
+   private static SSLContext sslContext;
 
    /**
     * Doesn't throw an exception, so this is how it approves a certificate.
@@ -61,16 +62,23 @@ public class NaiveTrustManager implements X509TrustManager {
 
    public static final SSLSocketFactory getSocketFactory() {
       if (sslSocketFactory == null) {
+         sslSocketFactory = getSslContext().getSocketFactory();
+      }
+
+      return sslSocketFactory;
+   }
+
+   public static final SSLContext getSslContext() {
+      if (sslContext == null) {
          try {
             TrustManager[] tm = new TrustManager[] { new NaiveTrustManager() };
-            SSLContext context = SSLContext.getInstance("SSL");
-            context.init(new KeyManager[0], tm, new SecureRandom());
-
-            sslSocketFactory = context.getSocketFactory();
+            sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(new KeyManager[0], tm, new SecureRandom());
          } catch (KeyManagementException | NoSuchAlgorithmException e) {
             e.printStackTrace();
          }
       }
-      return sslSocketFactory;
+
+      return sslContext;
    }
 }
