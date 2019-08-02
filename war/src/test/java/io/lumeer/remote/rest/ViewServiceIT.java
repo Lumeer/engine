@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -321,13 +322,13 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       Permissions permissions1 = views.get(0).getPermissions();
       assertThat(permissions1.getUserPermissions()).containsOnly(userPermission);
-      assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1.getGroupPermissions()).containsOnly(groupPermission);
+      assertThat(permissions1.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions1.getGroupPermissions().iterator()).toIterable().containsOnly(groupPermission);
 
       Permissions permissions2 = views.get(1).getPermissions();
       assertThat(permissions2.getUserPermissions()).containsOnly(userPermission);
-      assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2.getGroupPermissions()).containsOnly(groupPermission);
+      assertThat(permissions2.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions2.getGroupPermissions().iterator()).toIterable().containsOnly(groupPermission);
    }
 
    @Test

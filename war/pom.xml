@@ -52,9 +52,11 @@
       <version.commons.io>2.6</version.commons.io>
       <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
 
-      <java.level>10</java.level>
+      <java.level>12</java.level>
+      <maven.compiler.source>10</maven.compiler.source>
+      <maven.compiler.target>10</maven.compiler.target>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
-      <wildfly.version>14.0.1.Final</wildfly.version>
+      <wildfly.version>17.0.1.Final</wildfly.version>
    </properties>
 
    <dependencies>
@@ -342,8 +344,8 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <version>${maven.compiler.plugin.version}</version>
             <configuration>
-               <source>${java.level}</source>
-               <target>${java.level}</target>
+               <source>${maven.compiler.source}</source>
+               <target>${maven.compiler.target}</target>
             </configuration>
          </plugin>
          <plugin>

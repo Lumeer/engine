@@ -70,18 +70,10 @@
       <maven.assembly.plugin.version>3.1.0</maven.assembly.plugin.version>
       <maven.jar.plugin.version>3.1.0</maven.jar.plugin.version>
 
-      <version.assertj>3.10.0</version.assertj>
-      <version.californium>1.0.6</version.californium>
-      <version.camel>2.22.0</version.camel>
-      <version.drools>7.9.0.Final</version.drools>
-      <version.influxdb>2.12</version.influxdb>
-      <version.jest>6.3.0</version.jest>
-      <version.groovy>2.5.0</version.groovy>
-      <version.slf4j>1.7.25</version.slf4j>
-      <version.log4j>2.11.1</version.log4j>
-      <version.jms-api>2.0.1</version.jms-api>
-      <version.mqtt>1.14</version.mqtt>
-      <version.websocket-api>1.1</version.websocket-api>
+      <version.assertj>3.13.1</version.assertj>
+      <version.groovy>2.5.7</version.groovy>
+      <version.slf4j>1.7.26</version.slf4j>
+      <version.log4j>2.12.0</version.log4j>
       <version.commons.math3>3.6.1</version.commons.math3>
       <version.commons.io>2.6</version.commons.io>
       <version.commons.beanutils>1.9.3</version.commons.beanutils>
@@ -89,52 +81,48 @@
       <version.commons.lang>3.7</version.commons.lang>
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.cli>1.4</version.commons.cli>
-      <version.hdrhistogram>2.1.10</version.hdrhistogram>
-      <version.vertx>3.5.4</version.vertx>
-      <version.jackson>2.9.6</version.jackson>
-      <version.guava>26.0-jre</version.guava>
-      <version.byteman>4.0.4</version.byteman>
-      <version.servo>0.12.25</version.servo>
+      <version.vertx>3.8.0</version.vertx>
+      <version.jackson>2.9.9</version.jackson>
       <version.netty>4.1.28.Final</version.netty>
-      <version.mongo.driver>3.9.1</version.mongo.driver>
+      <version.mongo.driver>3.10.2</version.mongo.driver>
       <version.jcommander>1.72</version.jcommander>
       <version.json.simple>1.1.1</version.json.simple>
       <version.resteasy>3.8.1.Final</version.resteasy>
       <version.jaxrs>3.0.12.Final</version.jaxrs>
       <version.apache.httpclient>4.5.9</version.apache.httpclient>
-      <version.univocity>2.7.5</version.univocity>
-      <version.mvc-auth>1.0.0</version.mvc-auth>
-      <version.jwt>3.4.0</version.jwt>
-      <version.jaxb>2.3.0</version.jaxb>
-      <version.annotation>1.3.1</version.annotation>
+      <version.univocity>2.8.2</version.univocity>
+      <version.mvc-auth>1.0.9</version.mvc-auth>
+      <version.jwt>3.8.1</version.jwt>
+      <version.jaxb>2.3.1</version.jaxb>
+      <version.annotation>1.3.2</version.annotation>
       <version.interceptor>1.2.2</version.interceptor>
       <version.pusher>1.0.2</version.pusher>
-      <version.sentry>1.7.14</version.sentry>
+      <version.sentry>1.7.25</version.sentry>
 
       <version.maven.plugin.api>3.5.4</version.maven.plugin.api>
       <version.maven.core>3.5.4</version.maven.core>
       <version.maven.plugin.annotations>3.5.2</version.maven.plugin.annotations>
-      <version.graalvm>1.0.0-rc12</version.graalvm>
+      <version.graalvm>19.1.1</version.graalvm>
 
       <!-- Tools -->
       <version.findbugs>3.0.1u2</version.findbugs>
-      <version.jacoco>0.7.7.201606060606</version.jacoco>
+      <version.jacoco>0.8.4</version.jacoco>
 
       <!-- Test dependencies  -->
-      <version.arquillian>1.4.0.Final</version.arquillian>
-      <version.arquillian-container>2.1.1.Final</version.arquillian-container>
+      <version.arquillian>1.4.1.Final</version.arquillian>
+      <version.arquillian-container>2.2.0.Final</version.arquillian-container>
       <version.shrinkwrap>3.1.3</version.shrinkwrap>
-      <version.wildfly>14.0.1.Final</version.wildfly>
-      <version.javassist>3.20.0-GA</version.javassist>
+      <version.wildfly>17.0.1.Final</version.wildfly>
+      <version.javassist>3.25.0-GA</version.javassist>
       <version.amq>5.14.0</version.amq>
-      <version.arquillian-jacoco>1.0.0.Alpha8</version.arquillian-jacoco>
-      <version.mockito>2.21.0</version.mockito>
-      <version.bytebuddy>1.8.17</version.bytebuddy>
+      <version.arquillian-jacoco>1.0.0</version.arquillian-jacoco>
+      <version.mockito>3.0.0</version.mockito>
+      <version.bytebuddy>1.9.16</version.bytebuddy>
       <version.junit>4.12</version.junit>
       <version.embedded.mongodb>2.2.0</version.embedded.mongodb>
       <version.awssdk>2.7.5</version.awssdk>
 
-      <java.level>10</java.level>
+      <java.level>12</java.level>
    </properties>
    <dependencyManagement>
       <dependencies>

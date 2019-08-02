@@ -174,7 +174,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
       dataDao.deleteData(COLLECTION_ID, id);
 
       MongoCursor<Document> mongoCursor = dataCollection().find().iterator();
-      assertThat(mongoCursor).isEmpty();
+      assertThat(mongoCursor.hasNext()).isFalse();
    }
 
    @Test

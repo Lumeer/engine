@@ -23,11 +23,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Permission;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class LumeerAssertions {
 
    public static void assertPermissions(Set<Permission> actualPermissions, Permission expectedPermission) {
       assertThat(actualPermissions).containsOnly(expectedPermission);
-      assertThat(actualPermissions.iterator().next()).extracting(Permission::getRoles).containsOnly(expectedPermission.getRoles());
+      assertThat(actualPermissions.stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(expectedPermission.getRoles());
    }
 }
