@@ -502,7 +502,7 @@ public class PermissionsChecker {
     * @param currentCount
     *       Current no of users.
     */
-   public void checkUserCreationLimits(final String organizationId, final long currentCount) {
+   public void checkUserCreationLimits(final String organizationId, final long newCount) {
       if (skipLimits()) {
          return;
       }
@@ -510,7 +510,7 @@ public class PermissionsChecker {
       final Organization organization = organizationFacade.getOrganizationById(organizationId);
       final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(organization);
 
-      if (limits.getUsers() > 0 && limits.getUsers() <= currentCount) {
+      if (limits.getUsers() > 0 && limits.getUsers() < newCount) {
          freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "USER", organization.getId());
          throw new ServiceLimitsExceededException(limits.getUsers());
       }

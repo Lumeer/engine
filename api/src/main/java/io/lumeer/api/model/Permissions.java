@@ -64,6 +64,10 @@ public class Permissions {
       updatePermissions(userPermissions, newUserPermissions);
    }
 
+   public void addUserPermissions(final Set<Permission> newUserPermissions) {
+      addPermissions(userPermissions, newUserPermissions);
+   }
+
    public void removeUserPermission(final String userId) {
       userPermissions.removeIf(userRoles -> userRoles.getId().equals(userId));
    }
@@ -82,13 +86,20 @@ public class Permissions {
 
    private void updatePermissions(Set<Permission> permissions, final Set<Permission> newPermissions) {
       newPermissions.stream()
-            .map(Permission::new)
-            .forEach(permission -> {
-               permissions.remove(permission);
-               if (!permission.getRoles().isEmpty()) {
-                  permissions.add(permission);
-               }
-            });
+                    .map(Permission::new)
+                    .forEach(permission -> {
+                       permissions.remove(permission);
+                       if (!permission.getRoles().isEmpty()) {
+                          permissions.add(permission);
+                       }
+                    });
+   }
+
+   private void addPermissions(Set<Permission> permissions, final Set<Permission> newPermissions) {
+      newPermissions.stream()
+                    .map(Permission::new)
+                    .filter(permission -> !permissions.contains(permission))
+                    .forEach(permissions::add);
    }
 
    public void removeGroupPermission(final String groupId) {

@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -58,7 +59,13 @@ public class UserFacade extends AbstractFacade {
    private OrganizationDao organizationDao;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
    private ProjectDao projectDao;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Inject
    private FeedbackDao feedbackDao;
@@ -78,7 +85,7 @@ public class UserFacade extends AbstractFacade {
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, Role.MANAGE);
-      checkUserCreate(organizationId);
+      checkUsersCreate(organizationId, 1);
 
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
@@ -89,6 +96,48 @@ public class UserFacade extends AbstractFacade {
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
+   }
+
+   public List<User> createUsersInWorkspace(String organizationId, String projectId, List<User> users) {
+      users.forEach(user -> checkOrganizationInUser(organizationId, user));
+      checkOrganizationPermissions(organizationId, Role.MANAGE);
+      checkUsersCreate(organizationId, users.size());
+
+      List<User> newUsers = this.createUsersInOrganization(organizationId, users);
+      addUsersToOrganization(organizationId, users);
+      addUsersToProject(organizationId, projectId, users);
+
+      return newUsers;
+   }
+
+   private List<User> createUsersInOrganization(String organizationId, List<User> users) {
+      return users.stream().map(user -> {
+         User storedUser = userDao.getUserByEmail(user.getEmail());
+
+         if (storedUser == null) {
+            return createUserAndSendNotification(organizationId, user);
+         }
+
+         User updatedUser = updateExistingUser(organizationId, storedUser, user);
+
+         return keepOnlyOrganizationGroups(updatedUser, organizationId);
+      }).collect(Collectors.toList());
+   }
+
+   private void addUsersToOrganization(String organizationId, List<User> users) {
+      var newPermissions = users.stream()
+                                .map(user -> Permission.buildWithRoles(user.getId(), Collections.singleton(Role.READ)))
+                                .collect(Collectors.toSet());
+      organizationFacade.addUserPermissions(organizationId, newPermissions);
+
+   }
+
+   private void addUsersToProject(String organizationId, String projectId, List<User> users) {
+      workspaceKeeper.setOrganization(organizationId);
+      var newPermissions = users.stream()
+                                .map(user -> Permission.buildWithRoles(user.getId(), Collections.singleton(Role.READ)))
+                                .collect(Collectors.toSet());
+      projectFacade.addUserPermissions(projectId, newPermissions);
    }
 
    private User createUserAndSendNotification(String organizationId, User user) {
@@ -282,8 +331,8 @@ public class UserFacade extends AbstractFacade {
       }
    }
 
-   private void checkUserCreate(final String organizationId) {
-      permissionsChecker.checkUserCreationLimits(organizationId, userDao.getAllUsersCount(organizationId));
+   private void checkUsersCreate(final String organizationId, final int number) {
+      permissionsChecker.checkUserCreationLimits(organizationId, userDao.getAllUsersCount(organizationId) + number);
    }
 
 }

@@ -65,6 +65,13 @@ public class UserService extends AbstractService {
       return userFacade.createUser(organizationId, user);
    }
 
+   @POST
+   @Path("organizations/{organizationId}/projects/{projectId}/users")
+   @JsonView(UserViews.DefaultView.class)
+   public List<User> createUsersInOrganization(@PathParam("organizationId") String organizationId, @PathParam("projectId") String projectId, List<User> users) {
+      return userFacade.createUsersInWorkspace(organizationId, projectId, users);
+   }
+
    @PUT
    @Path("organizations/{organizationId}/users/{userId}")
    @JsonView(UserViews.DefaultView.class)
