@@ -182,7 +182,7 @@
                <version>${maven.cargo.plugin.version}</version>
                <configuration>
                   <container>
-                     <containerId>wildfly17x</containerId>
+                     <containerId>wildfly16x</containerId>
                      <type>installed</type>
                      <home>${wildfly.dir}</home>
                   </container>
