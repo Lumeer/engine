@@ -342,16 +342,6 @@
             <artifactId>mockito-core</artifactId>
             <version>${version.mockito}</version>
          </dependency>
-         <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy</artifactId>
-            <version>${version.bytebuddy}</version>
-         </dependency>
-         <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy-agent</artifactId>
-            <version>${version.bytebuddy}</version>
-         </dependency>
 
          <!-- Findbugs -->
          <dependency>
