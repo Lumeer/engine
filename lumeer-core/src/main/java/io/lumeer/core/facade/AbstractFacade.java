@@ -28,7 +28,6 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
-import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;
@@ -51,9 +50,6 @@ abstract class AbstractFacade {
 
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
-
-   @Inject
-   protected WorkspaceCache workspaceCache;
 
    protected boolean isManager() {
       return permissionsChecker.isManager();

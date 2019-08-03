@@ -23,6 +23,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -63,6 +64,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private PaymentDao paymentDao;
+
+   @Inject
+   private WorkspaceCache workspaceCache;
 
    public Organization createOrganization(final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
