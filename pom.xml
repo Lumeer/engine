@@ -156,7 +156,7 @@
                <artifactId>maven-surefire-plugin</artifactId>
                <version>${maven.surefire.plugin.version}</version>
                <configuration>
-                  <argLine>-Xmx256m -Xms256m</argLine>
+                  <argLine>-Xmx1g -Xms1g</argLine>
                </configuration>
             </plugin>
             <plugin>
