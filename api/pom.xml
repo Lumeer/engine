@@ -43,7 +43,6 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-      <version.jacoco>0.8.4</version.jacoco>
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>8.23</version.puppycrawl>
 
@@ -85,12 +84,6 @@
          <groupId>com.google.code.findbugs</groupId>
          <artifactId>annotations</artifactId>
          <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jacoco</groupId>
-         <artifactId>org.jacoco.core</artifactId>
-         <scope>test</scope>
       </dependency>
 
       <!-- Testing -->
@@ -296,7 +289,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-project-info-reports-plugin</artifactId>
-            <version>${maven.project.info.plugin.version}</version>
+            <version>${maven.project.info.reports.plugin.version}</version>
             <configuration>
                <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
             </configuration>
