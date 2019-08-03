@@ -103,7 +103,7 @@ public class UserFacade extends AbstractFacade {
       checkOrganizationPermissions(organizationId, Role.MANAGE);
       checkUsersCreate(organizationId, users.size());
 
-      List<User> newUsers = this.createUsersInOrganization(organizationId, users);
+      List<User> newUsers = createUsersInOrganization(organizationId, users);
       addUsersToOrganization(organizationId, users);
       addUsersToProject(organizationId, projectId, users);
 
