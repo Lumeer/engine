@@ -67,15 +67,15 @@ public class ConfigurationManipulatorIT extends IntegrationTestBase {
       configurationManipulator.setConfiguration(col, id2, config22);
 
       assertThat(configurationManipulator.getConfiguration(col, id1, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value1");
+            .isNotNull().extracting("value").isEqualTo("value1");
       assertThat(configurationManipulator.getConfiguration(col, id2, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value2");
+            .isNotNull().extracting("value").isEqualTo("value2");
       assertThat(configurationManipulator.getConfiguration(col, id3, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value3");
+            .isNotNull().extracting("value").isEqualTo("value3");
       assertThat(configurationManipulator.getConfiguration(col, id1, "conf2"))
-            .isNotNull().extracting("value").containsOnly("value1");
+            .isNotNull().extracting("value").isEqualTo("value1");
       assertThat(configurationManipulator.getConfiguration(col, id2, "conf2"))
-            .isNotNull().extracting("value").containsOnly("value2");
+            .isNotNull().extracting("value").isEqualTo("value2");
       assertThat(configurationManipulator.getConfiguration(col, id3, "conf2"))
             .isNull();
    }
@@ -128,22 +128,22 @@ public class ConfigurationManipulatorIT extends IntegrationTestBase {
       configurationManipulator.setConfiguration(col, id3, config13);
 
       assertThat(configurationManipulator.getConfiguration(col, id1, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value1");
+            .isNotNull().extracting("value").isEqualTo("value1");
       assertThat(configurationManipulator.getConfiguration(col, id2, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value2");
+            .isNotNull().extracting("value").isEqualTo("value2");
       assertThat(configurationManipulator.getConfiguration(col, id3, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value3");
+            .isNotNull().extracting("value").isEqualTo("value3");
 
       configurationManipulator.setConfiguration(col, id1, config14);
       configurationManipulator.setConfiguration(col, id2, config13);
       configurationManipulator.setConfiguration(col, id3, config12);
 
       assertThat(configurationManipulator.getConfiguration(col, id1, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value4");
+            .isNotNull().extracting("value").isEqualTo("value4");
       assertThat(configurationManipulator.getConfiguration(col, id2, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value3");
+            .isNotNull().extracting("value").isEqualTo("value3");
       assertThat(configurationManipulator.getConfiguration(col, id3, "conf1"))
-            .isNotNull().extracting("value").containsOnly("value2");
+            .isNotNull().extracting("value").isEqualTo("value2");
    }
 
    @Test

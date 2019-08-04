@@ -74,18 +74,18 @@
    </distributionManagement>
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <java.level>10</java.level>
+      <java.level>12</java.level>
 
       <maven.assembly.plugin.version>3.1.0</maven.assembly.plugin.version>
       <maven.clean.plugin.version>3.1.0</maven.clean.plugin.version>
       <maven.jar.plugin.version>3.1.0</maven.jar.plugin.version>
       <maven.site.plugin.version>3.7.1</maven.site.plugin.version>
       <maven.checkstyle.plugin.version>3.0.0</maven.checkstyle.plugin.version>
-      <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
+      <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
       <maven.license.plugin.version>1.16</maven.license.plugin.version>
       <maven.release.plugin.version>2.5.3</maven.release.plugin.version>
       <maven.findbugs.plugin.version>3.0.4</maven.findbugs.plugin.version>
-      <maven.project.info.reports.plugin.version>3.0.0</maven.project.info.reports.plugin.version>
+      <maven.project.info.reports.plugin.version>2.9</maven.project.info.reports.plugin.version>
       <maven.exec.plugin.version>1.6.0</maven.exec.plugin.version>
       <maven.source.plugin.version>3.0.1</maven.source.plugin.version>
       <maven.javadoc.plugin.version>3.0.1</maven.javadoc.plugin.version>
@@ -98,9 +98,9 @@
       <maven.war.plugin.version>3.0.0</maven.war.plugin.version>
       <maven.wildfly.plugin.version>2.0.0.Final</maven.wildfly.plugin.version>
       <maven.failsafe.plugin.version>2.22.0</maven.failsafe.plugin.version>
-      <maven.cargo.plugin.version>1.6.11</maven.cargo.plugin.version>
+      <maven.cargo.plugin.version>1.7.6</maven.cargo.plugin.version>
 
-      <version.wildfly>14.0.1.Final</version.wildfly>
+      <version.wildfly>17.0.1.Final</version.wildfly>
       <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
    </properties>
    <modules>
@@ -156,7 +156,7 @@
                <artifactId>maven-surefire-plugin</artifactId>
                <version>${maven.surefire.plugin.version}</version>
                <configuration>
-                  <argLine>-Xmx256m -Xms256m</argLine>
+                  <argLine>-Xmx1g -Xms1g</argLine>
                </configuration>
             </plugin>
             <plugin>
@@ -164,7 +164,7 @@
                <artifactId>maven-failsafe-plugin</artifactId>
                <version>${maven.failsafe.plugin.version}</version>
                <configuration>
-                  <argLine>-Xmx256m -Xms256m</argLine>
+                  <argLine>-Xmx1g -Xms1g</argLine>
                   <trimStackTrace>false</trimStackTrace>
                </configuration>
                <executions>
@@ -182,7 +182,7 @@
                <version>${maven.cargo.plugin.version}</version>
                <configuration>
                   <container>
-                     <containerId>wildfly14x</containerId>
+                     <containerId>wildfly16x</containerId>
                      <type>installed</type>
                      <home>${wildfly.dir}</home>
                   </container>
