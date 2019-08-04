@@ -46,7 +46,9 @@
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>8.19</version.puppycrawl>
 
-      <java.level>10</java.level>
+      <java.level>12</java.level>
+      <maven.compiler.source>10</maven.compiler.source>
+      <maven.compiler.target>10</maven.compiler.target>
    </properties>
    <dependencies>
       <dependency>
@@ -118,7 +120,6 @@
          <artifactId>mockito-core</artifactId>
          <scope>test</scope>
       </dependency>
-      <!-- Byte buddy is needed to override default version imported by mockito to support Java 10, might be removed in the future -->
       <dependency>
          <groupId>net.bytebuddy</groupId>
          <artifactId>byte-buddy</artifactId>
@@ -145,15 +146,6 @@
       <dependency>
          <groupId>org.mongodb</groupId>
          <artifactId>mongo-java-driver</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-buffer</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-transport</artifactId>
       </dependency>
 
    </dependencies>
@@ -292,8 +284,8 @@
                <artifactId>maven-compiler-plugin</artifactId>
                <version>${maven.compiler.plugin.version}</version>
                <configuration>
-                  <source>${java.level}</source>
-                  <target>${java.level}</target>
+                  <source>${maven.compiler.source}</source>
+                  <target>${maven.compiler.target}</target>
                </configuration>
             </plugin>
             <plugin>
@@ -347,7 +339,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-project-info-reports-plugin</artifactId>
-            <version>${maven.project.info.plugin.version}</version>
+            <version>${maven.project.info.reports.plugin.version}</version>
             <configuration>
                <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
             </configuration>

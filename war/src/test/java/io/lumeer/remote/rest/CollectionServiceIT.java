@@ -281,14 +281,14 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertThat(collections).extracting(Resource::getCode).containsOnly(CODE, CODE2);
 
       Permissions permissions1 = collections.get(0).getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
-      assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
+      assertThat(permissions1.getUserPermissions()).containsOnly(userPermission);
+      assertThat(permissions1.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions1.getGroupPermissions().iterator()).toIterable().containsOnly(groupPermission);
 
       Permissions permissions2 = collections.get(1).getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
-      assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
+      assertThat(permissions2.getUserPermissions()).containsOnly(userPermission);
+      assertThat(permissions2.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions2.getGroupPermissions().iterator()).toIterable().containsOnly(groupPermission);
    }
 
    @Test

@@ -312,7 +312,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       updatedCollection = collectionFacade.getCollection(c1.getId());
       updatedRule = new BlocklyRule(updatedCollection.getRules().get(ruleName));
 
-      assertThat(updatedRule.getError()).contains("Thread was interrupted");
+      assertThat(updatedRule.getError()).contains("Execution got cancelled");
       // it should have been interrupted after 3000ms
       assertThat(System.currentTimeMillis() - updatedRule.getResultTimestamp()).isLessThan(5000);
    }

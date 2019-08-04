@@ -52,6 +52,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -124,14 +125,14 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       assertThat(organizations).extracting(Organization::getCode).containsOnly(CODE1, CODE2);
 
       Permissions permissions1 = organizations.get(0).getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
-      assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions1.getUserPermissions()).containsOnly(userPermission);
+      assertThat(permissions1.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions1.getGroupPermissions()).isEmpty();
 
       Permissions permissions2 = organizations.get(1).getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
-      assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.emptySet());
+      assertThat(permissions2.getUserPermissions()).containsOnly(userPermission);
+      assertThat(permissions2.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions2.getGroupPermissions()).isEmpty();
    }
 
    private Organization createOrganization(final String code) {

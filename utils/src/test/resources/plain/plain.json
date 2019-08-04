@@ -1,7 +1,0 @@
-{
-  "path": "/this/is/appended_to_the_base_url",
-  "method": "DELETE",
-  "headers": {
-    "additional": "header 4"
-  },
-}

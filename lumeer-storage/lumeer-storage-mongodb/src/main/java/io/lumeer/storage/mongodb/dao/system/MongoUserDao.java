@@ -166,7 +166,7 @@ public class MongoUserDao extends SystemScopedDao implements UserDao {
 
    @Override
    public long getAllUsersCount(final String organizationId) {
-      return databaseCollection().count(organizationIdFilter(organizationId));
+      return databaseCollection().countDocuments(organizationIdFilter(organizationId));
    }
 
    private Bson organizationIdFilter(final String organizationId) {

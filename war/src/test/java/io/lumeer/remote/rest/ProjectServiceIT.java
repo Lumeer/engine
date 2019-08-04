@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -134,18 +135,18 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(project1.getIcon()).isEqualTo(ICON);
       assertThat(project1.getColor()).isEqualTo(COLOR);
       Permissions permissions1 = project1.getPermissions();
-      assertThat(permissions1).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
-      assertThat(permissions1).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions1).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
+      assertThat(permissions1.getUserPermissions()).containsOnly(userPermission);
+      assertThat(permissions1.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions1.getGroupPermissions().iterator()).toIterable().containsOnly(groupPermission);
 
       Project project2 = projects.get(1);
       assertThat(project2.getName()).isEqualTo(NAME);
       assertThat(project2.getIcon()).isEqualTo(ICON);
       assertThat(project2.getColor()).isEqualTo(COLOR);
       Permissions permissions2 = project2.getPermissions();
-      assertThat(permissions2).extracting(Permissions::getUserPermissions).containsOnly(Collections.singleton(userPermission));
-      assertThat(permissions2).extracting(p -> p.getUserPermissions().iterator().next().getRoles()).containsOnly(USER_ROLES);
-      assertThat(permissions2).extracting(Permissions::getGroupPermissions).containsOnly(Collections.singleton(groupPermission));
+      assertThat(permissions2.getUserPermissions()).containsOnly(userPermission);
+      assertThat(permissions2.getUserPermissions().stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(USER_ROLES);
+      assertThat(permissions2.getGroupPermissions().iterator()).toIterable().containsOnly(groupPermission);
    }
 
    @Test
