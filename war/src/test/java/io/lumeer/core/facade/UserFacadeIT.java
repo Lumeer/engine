@@ -135,6 +135,27 @@ public class UserFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   public void testCreateUsersToWorkspace() {
+      List<User> users = Arrays.asList(prepareUser(organizationId1, USER1), prepareUser(organizationId1, USER2));
+      userFacade.createUsersInWorkspace(organizationId1, project.getId(), users);
+
+      Arrays.asList(USER1, USER2).forEach(user -> {
+         User stored = getUser(organizationId1, user);
+
+         assertThat(stored).isNotNull();
+         assertThat(stored.getName()).isEqualTo(user);
+         assertThat(stored.getEmail()).isEqualTo(user);
+         assertThat(stored.getGroups().get(organizationId1)).isEqualTo(GROUPS);
+      });
+
+      var organization = organizationDao.getOrganizationById(organizationId1);
+      assertThat(organization.getPermissions().getUserPermissions().size()).isEqualTo(3);
+
+      var project = projectDao.getProjectById(this.project.getId());
+      assertThat(project.getPermissions().getUserPermissions().size()).isEqualTo(3);
+   }
+
+   @Test
    public void testCreateUserMultipleOrganizations() {
       User user11 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
       User user21 = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER2));

@@ -178,11 +178,23 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public Set<Permission> updateUserPermissions(final String projectId, final Set<Permission> userPermissions) {
+      return updateUserPermissions(projectId, userPermissions, true);
+   }
+
+   public Set<Permission> addUserPermissions(final String projectId, final Set<Permission> userPermissions) {
+      return updateUserPermissions(projectId, userPermissions, false);
+   }
+
+   public Set<Permission> updateUserPermissions(final String projectId, final Set<Permission> userPermissions, boolean update) {
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, Role.MANAGE);
 
       final Project originalProject = project.copy();
-      project.getPermissions().updateUserPermissions(userPermissions);
+      if(update) {
+         project.getPermissions().updateUserPermissions(userPermissions);
+      }else {
+         project.getPermissions().addUserPermissions(userPermissions);
+      }
       projectDao.updateProject(project.getId(), project, originalProject);
       workspaceCache.updateProject(projectId, project);
 

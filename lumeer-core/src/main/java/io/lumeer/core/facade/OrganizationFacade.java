@@ -150,10 +150,22 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public Set<Permission> updateUserPermissions(final String organizationId, final Set<Permission> userPermissions) {
+      return updateUserPermissions(organizationId, userPermissions, true);
+   }
+
+   public Set<Permission> addUserPermissions(final String organizationId, final Set<Permission> userPermissions) {
+      return updateUserPermissions(organizationId, userPermissions, false);
+   }
+
+   public Set<Permission> updateUserPermissions(final String organizationId, final Set<Permission> userPermissions, boolean update) {
       Organization organization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
 
       final Organization originalOrganization = organization.copy();
-      organization.getPermissions().updateUserPermissions(userPermissions);
+      if (update) {
+         organization.getPermissions().updateUserPermissions(userPermissions);
+      } else {
+         organization.getPermissions().addUserPermissions(userPermissions);
+      }
       organizationDao.updateOrganization(organization.getId(), organization, originalOrganization);
       workspaceCache.updateOrganization(organizationId, organization);
 
