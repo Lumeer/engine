@@ -87,6 +87,7 @@
       <version.resteasy>3.8.1.Final</version.resteasy>
       <version.jaxrs>3.0.12.Final</version.jaxrs>
       <version.apache.httpclient>4.5.9</version.apache.httpclient>
+      <version.apache.httpcore>4.4.11</version.apache.httpcore>
       <version.univocity>2.8.2</version.univocity>
       <version.mvc-auth>1.0.9</version.mvc-auth>
       <version.jwt>3.8.1</version.jwt>
@@ -214,11 +215,16 @@
             <version>${version.jaxrs}</version>
          </dependency>
 
-         <!-- awssdk needs a fix introduced in httpcore 4.4.9 (dependency of httpclient) -->
+         <!-- awssdk needs a fix introduced in httpcore 4.5.9 (dependency of httpclient) -->
          <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>${version.apache.httpclient}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>${version.apache.httpcore}</version>
          </dependency>
 
          <dependency>
