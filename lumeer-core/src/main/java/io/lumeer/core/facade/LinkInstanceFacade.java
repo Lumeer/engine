@@ -261,14 +261,15 @@ public class LinkInstanceFacade extends AbstractFacade {
       final Set<LinkInstance> result = new HashSet<>();
       final Map<String, LinkType> allowedLinkTypeIds = new HashMap<>();
 
-      linkInstanceIds.forEach(id -> {
-         final LinkInstance link = linkInstanceDao.getLinkInstance(id);
+      final List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkInstanceIds);
+
+      linkInstances.forEach(link -> {
          final LinkType linkType = allowedLinkTypeIds.computeIfAbsent(link.getLinkTypeId(), this::checkLinkTypeWritePermissions);
 
          final LinkInstance newLink = linkInstanceDao.duplicateLinkInstance(link, originalDocumentId, newDocumentId);
 
          if (newLink != null) {
-            final DataDocument originalData = linkDataDao.getData(link.getLinkTypeId(), id);
+            final DataDocument originalData = linkDataDao.getData(link.getLinkTypeId(), link.getId());
             final DataDocument newData = linkDataDao.createData(link.getLinkTypeId(), newLink.getId(), originalData);
             constraintManager.decodeDataTypes(linkType, newData);
             newLink.setData(newData);
