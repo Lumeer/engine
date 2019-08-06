@@ -186,6 +186,20 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
+   public LinkInstance duplicateLinkInstance(final LinkInstance linkInstance, final String replaceDocumentId, final String newDocumentId) {
+      var link = new LinkInstance(linkInstance);
+
+      if (link.getDocumentIds().indexOf(replaceDocumentId) >= 0) {
+         link.setId(null);
+         link.getDocumentIds().replaceAll(id -> id.equals(replaceDocumentId) ? newDocumentId : id);
+
+         return createLinkInstance(link);
+      }
+
+      return null;
+   }
+
+   @Override
    public long deleteLinkInstances(final SearchQuery query) {
       final DeleteResult deleteResult = databaseCollection().deleteMany(linkInstancesFilter(query));
       return deleteResult.getDeletedCount();

@@ -24,6 +24,7 @@ import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.PATCH;
 
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -61,6 +62,12 @@ public class LinkInstanceService extends AbstractService {
    @POST
    public LinkInstance createLinkInstance(LinkInstance linkInstance) {
       return linkInstanceFacade.createLinkInstance(linkInstance);
+   }
+
+   @POST
+   @Path("duplicate/{originalDocumentId}/{newDocumentId}")
+   public Set<LinkInstance> duplicateLinkInstances(@PathParam("originalDocumentId")final String originalDocumentId, @PathParam("newDocumentId") final String newDocumentId, final Set<String> linkInstanceIds) {
+      return linkInstanceFacade.duplicateLinkInstances(originalDocumentId, newDocumentId, linkInstanceIds);
    }
 
    @GET

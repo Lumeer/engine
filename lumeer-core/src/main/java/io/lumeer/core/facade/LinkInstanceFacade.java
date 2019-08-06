@@ -257,6 +257,29 @@ public class LinkInstanceFacade extends AbstractFacade {
       return stored;
    }
 
+   public Set<LinkInstance> duplicateLinkInstances(final String originalDocumentId, final String newDocumentId, final Set<String> linkInstanceIds) {
+      final Set<LinkInstance> result = new HashSet<>();
+      final Map<String, LinkType> allowedLinkTypeIds = new HashMap<>();
+
+      linkInstanceIds.forEach(id -> {
+         final LinkInstance link = linkInstanceDao.getLinkInstance(id);
+         final LinkType linkType = allowedLinkTypeIds.computeIfAbsent(link.getLinkTypeId(), this::checkLinkTypeWritePermissions);
+
+         final LinkInstance newLink = linkInstanceDao.duplicateLinkInstance(link, originalDocumentId, newDocumentId);
+
+         if (newLink != null) {
+            final DataDocument originalData = linkDataDao.getData(link.getLinkTypeId(), id);
+            final DataDocument newData = linkDataDao.createData(link.getLinkTypeId(), newLink.getId(), originalData);
+            constraintManager.decodeDataTypes(linkType, newData);
+            newLink.setData(newData);
+
+            result.add(newLink);
+         }
+      });
+
+      return result;
+   }
+
    private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
       return checkLinkTypePermissions(linkTypeId, Role.WRITE);
    }

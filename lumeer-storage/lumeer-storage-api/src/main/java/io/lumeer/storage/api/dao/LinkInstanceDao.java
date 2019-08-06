@@ -62,4 +62,6 @@ public interface LinkInstanceDao {
 
    List<LinkInstance> searchLinkInstances(SearchQuery query);
 
+   LinkInstance duplicateLinkInstance(LinkInstance linkInstance, String replaceDocumentId, String newDocumentId);
+
 }
