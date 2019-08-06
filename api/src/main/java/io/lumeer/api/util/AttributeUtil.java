@@ -21,7 +21,10 @@ package io.lumeer.api.util;
 
 import io.lumeer.api.model.Attribute;
 
-import java.util.Set;
+import org.apache.commons.text.similarity.LevenshteinDistance;
+
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 public class AttributeUtil {
 
@@ -42,6 +45,15 @@ public class AttributeUtil {
       String[] parts = attribute.getName().split(oldParentName, 2);
       String newName = newParentName.concat(parts[1]);
       attribute.setName(newName);
+   }
+
+   public static java.util.Collection<Attribute> filterMostRelevantAttributes(java.util.Collection<Attribute> attributes, String text, int limit) {
+      var distance = LevenshteinDistance.getDefaultInstance();
+      return attributes.stream()
+                       .filter(a -> a.getName().toLowerCase().contains(text))
+                       .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), text.toLowerCase())))
+                       .limit(limit)
+                       .collect(Collectors.toList());
    }
 
 }

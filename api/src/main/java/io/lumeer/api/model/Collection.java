@@ -114,7 +114,7 @@ public class Collection extends Resource {
       return Collections.unmodifiableSet(attributes);
    }
 
-   public void setAttributes(final Set<Attribute> attributes) {
+   public void setAttributes(final java.util.Collection<Attribute> attributes) {
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
    }
 
