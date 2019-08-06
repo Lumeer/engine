@@ -66,7 +66,7 @@ public class LinkInstanceService extends AbstractService {
 
    @POST
    @Path("duplicate/{originalDocumentId}/{newDocumentId}")
-   public Set<LinkInstance> duplicateLinkInstances(@PathParam("originalDocumentId")final String originalDocumentId, @PathParam("newDocumentId") final String newDocumentId, final Set<String> linkInstanceIds) {
+   public Set<LinkInstance> duplicateLinkInstances(@PathParam("originalDocumentId") final String originalDocumentId, @PathParam("newDocumentId") final String newDocumentId, final Set<String> linkInstanceIds) {
       return linkInstanceFacade.duplicateLinkInstances(originalDocumentId, newDocumentId, linkInstanceIds);
    }
 
