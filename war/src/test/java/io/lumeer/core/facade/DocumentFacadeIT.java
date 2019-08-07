@@ -53,6 +53,7 @@ import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -196,6 +197,27 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionDao.getCollectionById(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+   }
+
+   @Test
+   public void testDuplicateDocuments() {
+      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+
+      final List<Document> documents = IntStream.range(0, 10).mapToObj(i -> {
+         var doc = prepareDocument();
+         doc.getData().append("sample", i);
+         return doc;
+      }).collect(Collectors.toList());
+
+      var createdDocuments = documentFacade.createDocuments(storedCollection.getId(), documents, false);
+      var duplicatedDocuments = documentFacade.duplicateDocuments(storedCollection.getId(), createdDocuments.stream().map(Document::getId).collect(Collectors.toList()));
+
+      var originalIds = createdDocuments.stream().map(Document::getId).collect(Collectors.toList());
+      assertThat(duplicatedDocuments.stream().map(Document::getId).collect(Collectors.toSet())).hasSize(10);
+
+      var newIds = duplicatedDocuments.stream().map(d -> d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID)).collect(Collectors.toList());
+      assertThat(newIds).containsExactly(originalIds.toArray(new String[0])); // expecting matching order
+      assertThat(duplicatedDocuments.stream().map(Document::getId).collect(Collectors.toList())).doesNotContain(originalIds.toArray(new String[0]));
    }
 
    @Test

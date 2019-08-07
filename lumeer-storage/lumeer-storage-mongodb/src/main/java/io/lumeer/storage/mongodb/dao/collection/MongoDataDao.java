@@ -51,8 +51,10 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -223,6 +225,29 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
       }
 
       return documents;
+   }
+
+   @Override
+   public List<DataDocument> duplicateData(final String collectionId, final Map<String, String> documentIds) {
+      final List<DataDocument> newData = new ArrayList<>();
+
+      final Bson idsFilter = MongoFilters.idsFilter(documentIds.keySet());
+      if (idsFilter != null) {
+         dataCollection(collectionId).find(idsFilter).forEach((Consumer<? super Document>) d -> {
+            final DataDocument doc = MongoUtils.convertDocument(d);
+
+            if (documentIds.containsKey(doc.getId())) {
+               doc.setId(documentIds.get(doc.getId()));
+               newData.add(doc);
+            }
+         });
+
+         if (newData.size() > 0) {
+            dataCollection(collectionId).insertMany(newData.stream().map(Document::new).collect(Collectors.toList()));
+         }
+      }
+
+      return newData;
    }
 
    MongoCollection<Document> dataCollection(String collectionId) {

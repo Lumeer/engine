@@ -39,6 +39,8 @@ import org.mockito.Mockito;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class MongoDocumentDaoTest extends MongoDbTestBase {
 
@@ -242,5 +244,19 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
    public void testGetDocumentsByIdsNotExisting() {
       List<Document> documents = documentDao.getDocumentsByIds(DOCUMENT_ID);
       assertThat(documents).isEmpty();
+   }
+
+   @Test
+   public void testDuplicateDocuments() {
+      final List<Document> documents = IntStream.range(0, 10).mapToObj(i -> createDocument()).collect(Collectors.toList());
+      assertThat(documents).hasSize(10);
+      assertThat(documents.stream().map(Document::getId).collect(Collectors.toSet())).hasSize(10);
+
+      var originalIds = documents.stream().map(Document::getId).collect(Collectors.toList());
+      final List<Document> newDocuments = documentDao.duplicateDocuments(originalIds);
+      assertThat(newDocuments.stream().map(Document::getId).collect(Collectors.toSet())).hasSize(10);
+
+      var newIds = newDocuments.stream().map(d -> d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID)).collect(Collectors.toList());
+      assertThat(newIds).containsExactly(originalIds.toArray(new String[0]));
    }
 }

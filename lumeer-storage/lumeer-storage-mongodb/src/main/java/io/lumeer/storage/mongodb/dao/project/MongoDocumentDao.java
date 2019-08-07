@@ -39,6 +39,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -159,6 +160,19 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    public List<Document> getDocumentsByParentIds(final Collection<String> parentIds) {
       Bson filter = parentIdsFilter(parentIds);
       return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<Document> duplicateDocuments(final List<String> documentIds) {
+      final List<Document> documents = getDocumentsByIds(documentIds.toArray(new String[0]));
+
+      documents.forEach(d -> {
+         d.createIfAbsentMetaData().put(Document.META_ORIGINAL_DOCUMENT_ID, d.getId());
+         d.setId(ObjectId.get().toString());
+      });
+      databaseCollection().insertMany(documents);
+
+      return documents;
    }
 
    private Bson parentIdsFilter(Collection<String> parentIds) {

@@ -41,13 +41,13 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.result.DeleteResult;
-
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -186,17 +186,33 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public LinkInstance duplicateLinkInstance(final LinkInstance linkInstance, final String replaceDocumentId, final String newDocumentId) {
+   public LinkInstance duplicateLinkInstance(final LinkInstance linkInstance, final String replaceDocumentId, final String newDocumentId, final Map<String, String> documentMap) {
       var link = new LinkInstance(linkInstance);
 
       if (link.getDocumentIds().indexOf(replaceDocumentId) >= 0) {
          link.setId(null);
-         link.getDocumentIds().replaceAll(id -> id.equals(replaceDocumentId) ? newDocumentId : id);
+         link.getDocumentIds().replaceAll(id -> id.equals(replaceDocumentId) ? newDocumentId : documentMap.getOrDefault(id, id));
 
          return createLinkInstance(link);
       }
 
       return null;
+   }
+
+   @Override
+   public List<LinkInstance> duplicateLinkInstances(final List<LinkInstance> links, final String replaceDocumentId, final String newDocumentId, final Map<String, String> documentMap) {
+      links.forEach(link -> {
+         link.setDocumentIds(
+               link.getDocumentIds().stream().map(id ->
+                     id.equals(replaceDocumentId) ? newDocumentId : documentMap.getOrDefault(id, id)
+               ).collect(Collectors.toList())
+         );
+         link.setOriginalLinkInstanceId(link.getId());
+         link.setId(ObjectId.get().toString());
+      });
+      databaseCollection().insertMany(links);
+
+      return links;
    }
 
    @Override

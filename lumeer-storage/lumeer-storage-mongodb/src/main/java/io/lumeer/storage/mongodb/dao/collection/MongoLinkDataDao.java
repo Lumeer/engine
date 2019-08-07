@@ -49,8 +49,10 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -192,6 +194,29 @@ public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao
       }
 
       return documents;
+   }
+
+   @Override
+   public List<DataDocument> duplicateData(final String linkTypeId, final Map<String, String> linkIds) {
+      final List<DataDocument> newData = new ArrayList<>();
+
+      final Bson idsFilter = MongoFilters.idsFilter(linkIds.keySet());
+      if (idsFilter != null) {
+         linkDataCollection(linkTypeId).find(idsFilter).forEach((Consumer<? super Document>) d -> {
+            final DataDocument doc = MongoUtils.convertDocument(d);
+
+            if (linkIds.containsKey(doc.getId())) {
+               doc.setId(linkIds.get(doc.getId()));
+               newData.add(doc);
+            }
+         });
+
+         if (newData.size() > 0) {
+            linkDataCollection(linkTypeId).insertMany(newData.stream().map(Document::new).collect(Collectors.toList()));
+         }
+      }
+
+      return newData;
    }
 
    private Bson createFilterForStem(final SearchQueryStem stem, final LinkType linkType) {

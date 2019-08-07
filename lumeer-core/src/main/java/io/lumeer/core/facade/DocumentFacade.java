@@ -364,6 +364,28 @@ public class DocumentFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteDocument(userId, documentId);
    }
 
+   public List<Document> duplicateDocuments(final String collectionId, final List<String> documentIds) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, Role.WRITE);
+
+      final List<Document> documents = documentDao.duplicateDocuments(documentIds);
+      final Map<String, Document> documentsDirectory = new HashMap<>();
+      final Map<String, String> keyMap = new HashMap<>();
+      documents.forEach(d -> {
+         documentsDirectory.put(d.getId(), d);
+         keyMap.put(d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID), d.getId());
+      });
+
+      final List<DataDocument> data = dataDao.duplicateData(collectionId, keyMap);
+      data.forEach(d -> {
+         if (documentsDirectory.containsKey(d.getId())) {
+            documentsDirectory.get(d.getId()).setData(d);
+         }
+      });
+
+      return documents;
+   }
+
    private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
       final Collection originalCollection = collection.copy();
       collection.setAttributes(new HashSet<>(ResourceUtils.incOrDecAttributes(collection.getAttributes(), attributesIdsToInc, attributesIdsToDec)));

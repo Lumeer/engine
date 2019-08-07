@@ -257,28 +257,32 @@ public class LinkInstanceFacade extends AbstractFacade {
       return stored;
    }
 
-   public Set<LinkInstance> duplicateLinkInstances(final String originalDocumentId, final String newDocumentId, final Set<String> linkInstanceIds) {
-      final Set<LinkInstance> result = new HashSet<>();
-      final Map<String, LinkType> allowedLinkTypeIds = new HashMap<>();
-
+   public List<LinkInstance> duplicateLinkInstances(final String originalDocumentId, final String newDocumentId, final Set<String> linkInstanceIds, final Map<String, String> documentMap) {
       final List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkInstanceIds);
+      if (linkInstances.size() <= 0 || linkInstances.stream().map(LinkInstance::getLinkTypeId).distinct().count() != 1) {
+         return null;
+      }
 
-      linkInstances.forEach(link -> {
-         final LinkType linkType = allowedLinkTypeIds.computeIfAbsent(link.getLinkTypeId(), this::checkLinkTypeWritePermissions);
+      final String linkTypeId = linkInstances.get(0).getLinkTypeId();
+      checkLinkTypeWritePermissions(linkTypeId);
 
-         final LinkInstance newLink = linkInstanceDao.duplicateLinkInstance(link, originalDocumentId, newDocumentId);
+      final List<LinkInstance> newLinks = linkInstanceDao.duplicateLinkInstances(linkInstances, originalDocumentId, newDocumentId, documentMap);
+      final Map<String, LinkInstance> linkInstancesDirectory = new HashMap<>();
+      final Map<String, String> linkMap = new HashMap<>();
+      newLinks.forEach(link -> {
+         linkInstancesDirectory.put(link.getId(), link);
+         linkMap.put(link.getOriginalLinkInstanceId(), link.getId());
+      });
+      System.out.println(linkMap);
 
-         if (newLink != null) {
-            final DataDocument originalData = linkDataDao.getData(link.getLinkTypeId(), link.getId());
-            final DataDocument newData = linkDataDao.createData(link.getLinkTypeId(), newLink.getId(), originalData);
-            constraintManager.decodeDataTypes(linkType, newData);
-            newLink.setData(newData);
-
-            result.add(newLink);
+      final List<DataDocument> data = linkDataDao.duplicateData(linkTypeId, linkMap);
+      data.forEach(l -> {
+         if (linkInstancesDirectory.containsKey(l.getId())) {
+            linkInstancesDirectory.get(l.getId()).setData(l);
          }
       });
 
-      return result;
+      return newLinks;
    }
 
    private LinkType checkLinkTypeWritePermissions(String linkTypeId) {

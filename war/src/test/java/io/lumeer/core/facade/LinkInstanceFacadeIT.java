@@ -56,8 +56,11 @@ import org.junit.runner.RunWith;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -121,6 +124,9 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private DocumentFacade documentFacade;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -288,6 +294,31 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
       assertThatThrownBy(() -> linkInstanceDao.getLinkInstance(created.getId()))
             .isInstanceOf(StorageException.class);
+   }
+
+   @Test
+   public void testDuplicateLinkInstances() {
+      var masterDocument = createDocument(collection1Id);
+      var slaveDocuments = IntStream.range(0, 10).mapToObj(i -> createDocument(collection2Id)).collect(Collectors.toList());
+
+      final AtomicInteger c = new AtomicInteger(0);
+      var links = slaveDocuments.stream().map(d -> {
+         var link = prepareLinkInstance();
+         link.setDocumentIds(new ArrayList<String>(List.of(masterDocument.getId(), d.getId()))); // we need the list to be modifiable
+         link.setData(new DataDocument().append("sample", c.addAndGet(1)));
+         var newLink = linkInstanceDao.createLinkInstance(link);
+         linkDataDao.createData(newLink.getLinkTypeId(), newLink.getId(), link.getData());
+
+         return newLink;
+      }).collect(Collectors.toList());
+
+      var copiedSlaveDocuments = documentFacade.duplicateDocuments(collection2Id, slaveDocuments.stream().map(Document::getId).collect(Collectors.toList()));
+      var documentMap = new HashMap<String, String>();
+      copiedSlaveDocuments.forEach(d -> documentMap.put(d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID), d.getId()));
+
+      var newLinks = linkInstanceFacade.duplicateLinkInstances(masterDocument.getId(), masterDocument.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()), documentMap);
+
+      System.out.println(newLinks);
    }
 
    private LinkInstance prepareLinkInstance() {

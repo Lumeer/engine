@@ -24,6 +24,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -58,5 +59,7 @@ public interface LinkDataDao {
    List<DataDocument> searchData(SearchQueryStem stem, Pagination pagination, LinkType linkType);
 
    List<DataDocument> searchDataByFulltexts(Set<String> fulltexts, Pagination pagination, List<LinkType> linkTypes);
+
+   List<DataDocument> duplicateData(String linkTypeId, Map<String, String> linkIds);
 
 }
