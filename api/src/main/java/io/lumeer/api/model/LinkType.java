@@ -96,7 +96,7 @@ public class LinkType implements WithId {
       return Collections.unmodifiableList(attributes);
    }
 
-   public void setAttributes(final List<Attribute> attributes) {
+   public void setAttributes(final java.util.Collection<Attribute> attributes) {
       this.attributes = attributes != null ? new LinkedList<>(attributes) : new LinkedList<>();
    }
 

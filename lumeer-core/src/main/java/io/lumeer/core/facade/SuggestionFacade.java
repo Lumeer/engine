@@ -18,21 +18,22 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.SuggestionQuery;
 import io.lumeer.api.model.Suggestions;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.View;
+import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
 
-import java.util.ArrayList;
+import org.apache.commons.text.similarity.LevenshteinDistance;
+
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,8 +113,11 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private List<View> suggestViews(SuggestionQuery suggestionQuery, int limit) {
-      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
-      return viewDao.getViews(searchSuggestionQuery, isManager());
+      var distance = LevenshteinDistance.getDefaultInstance();
+      return viewDao.getViews(createSuggestionQuery(suggestionQuery, null), isManager()).stream()
+                    .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), suggestionQuery.getText().toLowerCase())))
+                    .limit(limit)
+                    .collect(Collectors.toList());
    }
 
    private List<LinkType> suggestLinkTypes(SuggestionQuery suggestionQuery, int limit) {
@@ -126,9 +130,14 @@ public class SuggestionFacade extends AbstractFacade {
          return Collections.emptyList();
       }
 
-      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQueryWithIds(suggestionQuery, limit, allowedCollectionIds);
+      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQueryWithIds(suggestionQuery, null, allowedCollectionIds);
+
+      var distance = LevenshteinDistance.getDefaultInstance();
       return linkTypeDao.getLinkTypes(searchSuggestionQuery).stream()
-                        .peek(linkTypes -> linkTypes.setAttributes(Collections.emptyList())).collect(Collectors.toList());
+                        .peek(linkTypes -> linkTypes.setAttributes(Collections.emptyList()))
+                        .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), searchSuggestionQuery.getText().toLowerCase())))
+                        .limit(limit)
+                        .collect(Collectors.toList());
    }
 
    private List<LinkType> suggestLinkAttributes(SuggestionQuery suggestionQuery, int limit) {
@@ -147,7 +156,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private static List<LinkType> keepOnlyMatchingLinkAttributes(List<LinkType> linkTypes, String text, int attributesLimit) {
       return linkTypes.stream()
-                      .peek(linkType -> linkType.setAttributes(new ArrayList<>(filterAttributes(linkType.getAttributes(), text, attributesLimit))))
+                      .peek(linkType -> linkType.setAttributes(AttributeUtil.filterMostRelevantAttributes(linkType.getAttributes(), text, attributesLimit)))
                       .collect(Collectors.toList());
    }
 
@@ -159,9 +168,12 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private List<Collection> suggestCollections(SuggestionQuery suggestionQuery, int limit) {
-      SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
-      return collectionDao.getCollections(searchSuggestionQuery, isManager()).stream()
-                          .peek(collection -> collection.setAttributes(Collections.emptySet())).collect(Collectors.toList());
+      var distance = LevenshteinDistance.getDefaultInstance();
+      return collectionDao.getCollections(createSuggestionQuery(suggestionQuery, null), isManager()).stream()
+                          .peek(collection -> collection.setAttributes(Collections.emptySet()))
+                          .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), suggestionQuery.getText().toLowerCase())))
+                          .limit(limit)
+                          .collect(Collectors.toList());
    }
 
    private List<Collection> suggestAttributes(SuggestionQuery suggestionQuery, int limit) {
@@ -177,34 +189,27 @@ public class SuggestionFacade extends AbstractFacade {
 
    private static List<Collection> keepOnlyMatchingAttributes(List<Collection> collections, String text, int attributesLimit) {
       return collections.stream()
-                        .peek(collection -> collection.setAttributes(new HashSet<>(filterAttributes(collection.getAttributes(), text, attributesLimit))))
+                        .peek(collection -> collection.setAttributes(AttributeUtil.filterMostRelevantAttributes(collection.getAttributes(), text, attributesLimit)))
                         .collect(Collectors.toList());
    }
 
-   private static java.util.Collection<Attribute> filterAttributes(java.util.Collection<Attribute> attributes, String text, int limit) {
-      List<Attribute> filteredAttributes = attributes.stream()
-                                                     .filter(a -> a.getName().toLowerCase().contains(text))
-                                                     .collect(Collectors.toList());
-      return filteredAttributes.subList(0, Math.min(filteredAttributes.size(), limit));
-   }
-
-   private SearchSuggestionQuery createSuggestionQuery(SuggestionQuery suggestionQuery, int limit) {
+   private SearchSuggestionQuery createSuggestionQuery(SuggestionQuery suggestionQuery, Integer limit) {
       return createBuilderForSuggestionQuery(suggestionQuery, limit)
             .build();
    }
 
-   private SearchSuggestionQuery createSuggestionQueryWithIds(SuggestionQuery suggestionQuery, int limit, Set<String> collectionIds) {
+   private SearchSuggestionQuery createSuggestionQueryWithIds(SuggestionQuery suggestionQuery, Integer limit, Set<String> collectionIds) {
       return createBuilderForSuggestionQuery(suggestionQuery, limit)
             .collectionIds(collectionIds)
             .build();
    }
 
-   private SearchSuggestionQuery.Builder createBuilderForSuggestionQuery(SuggestionQuery suggestionQuery, int limit) {
+   private SearchSuggestionQuery.Builder createBuilderForSuggestionQuery(SuggestionQuery suggestionQuery, Integer limit) {
       return SearchSuggestionQuery.createBuilder(authenticatedUser.getCurrentUserId())
                                   .groups(authenticatedUserGroups.getCurrentUserGroups())
                                   .text(suggestionQuery.getText())
                                   .priorityCollectionIds(suggestionQuery.getPriorityCollectionIds())
-                                  .page(0).pageSize(limit);
+                                  .page(limit == null ? null : 0).pageSize(limit);
    }
 
 }
