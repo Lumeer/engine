@@ -50,4 +50,6 @@ public interface DocumentDao {
 
    void setProject(Project project);
 
+   List<Document> duplicateDocuments(List<String> documentIds);
+
 }

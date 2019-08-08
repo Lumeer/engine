@@ -182,7 +182,7 @@
       ],
       "documentsCount": 0,
       "lastTimeUsed": null,
-      "defaultAttributeId": "a1",
+      "defaultAttributeId": "a2",
       "favorite": false,
       "rules": {},
       "dataDescription": "supply-vendor",
@@ -461,7 +461,7 @@
       ],
       "documentsCount": 0,
       "lastTimeUsed": null,
-      "defaultAttributeId": "a1",
+      "defaultAttributeId": "a2",
       "favorite": false,
       "rules": {},
       "dataDescription": "supply-store",
@@ -1932,7 +1932,7 @@
                 {
                   "type": "compound",
                   "attributeIds": [
-                    "a3"
+                    "a2"
                   ],
                   "children": []
                 }

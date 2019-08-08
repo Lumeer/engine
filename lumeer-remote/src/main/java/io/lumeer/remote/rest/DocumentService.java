@@ -23,6 +23,7 @@ import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.PATCH;
 
+import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -63,6 +64,12 @@ public class DocumentService extends AbstractService {
    @POST
    public Document createDocument(Document document) {
       return documentFacade.createDocument(collectionId, document);
+   }
+
+   @POST
+   @Path("duplicate")
+   public List<Document> duplicateDocuments(List<String> documentIds) {
+      return documentFacade.duplicateDocuments(collectionId, documentIds);
    }
 
    @PUT

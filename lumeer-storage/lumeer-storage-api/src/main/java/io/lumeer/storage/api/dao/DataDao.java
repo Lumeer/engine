@@ -24,6 +24,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -56,5 +57,7 @@ public interface DataDao {
    List<DataDocument> searchData(SearchQueryStem stem, Pagination pagination, Collection collection);
 
    List<DataDocument> searchDataByFulltexts(Set<String> fulltexts, Pagination pagination, List<Collection> projectCollections);
+
+   List<DataDocument> duplicateData(String collectionId, Map<String, String> documentIds);
 
 }

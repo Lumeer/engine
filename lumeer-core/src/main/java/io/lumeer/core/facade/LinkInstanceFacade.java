@@ -257,6 +257,34 @@ public class LinkInstanceFacade extends AbstractFacade {
       return stored;
    }
 
+   public List<LinkInstance> duplicateLinkInstances(final String originalDocumentId, final String newDocumentId, final Set<String> linkInstanceIds, final Map<String, String> documentMap) {
+      final List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkInstanceIds);
+      if (linkInstances.size() <= 0 || linkInstances.stream().map(LinkInstance::getLinkTypeId).distinct().count() != 1) {
+         return null;
+      }
+
+      final String linkTypeId = linkInstances.get(0).getLinkTypeId();
+      checkLinkTypeWritePermissions(linkTypeId);
+
+      final List<LinkInstance> newLinks = linkInstanceDao.duplicateLinkInstances(linkInstances, originalDocumentId, newDocumentId, documentMap);
+      final Map<String, LinkInstance> linkInstancesDirectory = new HashMap<>();
+      final Map<String, String> linkMap = new HashMap<>();
+      newLinks.forEach(link -> {
+         linkInstancesDirectory.put(link.getId(), link);
+         linkMap.put(link.getOriginalLinkInstanceId(), link.getId());
+      });
+      System.out.println(linkMap);
+
+      final List<DataDocument> data = linkDataDao.duplicateData(linkTypeId, linkMap);
+      data.forEach(l -> {
+         if (linkInstancesDirectory.containsKey(l.getId())) {
+            linkInstancesDirectory.get(l.getId()).setData(l);
+         }
+      });
+
+      return newLinks;
+   }
+
    private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
       return checkLinkTypePermissions(linkTypeId, Role.WRITE);
    }

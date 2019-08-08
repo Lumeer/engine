@@ -60,6 +60,9 @@ public class LinkInstance implements WithId {
    @JsonIgnore
    private String templateId; // used for template creation
 
+   @JsonIgnore
+   private String originalLinkInstanceId; // used for link duplication
+
    @JsonCreator
    public LinkInstance(@JsonProperty(LINK_TYPE_ID) final String linkTypeId,
          @JsonProperty(DOCUMENTS_IDS) final List<String> documentIds) {
@@ -158,6 +161,14 @@ public class LinkInstance implements WithId {
 
    public void setTemplateId(final String templateId) {
       this.templateId = templateId;
+   }
+
+   public String getOriginalLinkInstanceId() {
+      return originalLinkInstanceId;
+   }
+
+   public void setOriginalLinkInstanceId(final String originalLinkInstanceId) {
+      this.originalLinkInstanceId = originalLinkInstanceId;
    }
 
    @Override

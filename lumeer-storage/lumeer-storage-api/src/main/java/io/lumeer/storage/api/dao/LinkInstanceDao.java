@@ -24,6 +24,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface LinkInstanceDao {
@@ -61,5 +62,9 @@ public interface LinkInstanceDao {
    List<LinkInstance> getLinkInstancesByDocumentIds(Set<String> documentIds, String linkTypeId);
 
    List<LinkInstance> searchLinkInstances(SearchQuery query);
+
+   LinkInstance duplicateLinkInstance(LinkInstance linkInstance, String replaceDocumentId, String newDocumentId, Map<String, String> documentMap);
+
+   List<LinkInstance> duplicateLinkInstances(List<LinkInstance> linkInstances, String replaceDocumentId, String newDocumentId, Map<String, String> documentMap);
 
 }

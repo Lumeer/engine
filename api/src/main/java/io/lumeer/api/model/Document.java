@@ -37,6 +37,7 @@ public class Document implements WithId {
 
    public static final String META_PARENT_ID = "parentId";
    public static final String META_TEMPLATE_ID = "templateId"; // for importing and template creation
+   public static final String META_ORIGINAL_DOCUMENT_ID = "originalDocumentId"; // for duplicating documents
 
    private String id;
 
