@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
@@ -26,6 +27,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
@@ -40,6 +42,7 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,6 +70,12 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private ProjectFacade projectFacade;
+
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private ViewFacade viewFacade;
 
    @Inject
    private FeedbackDao feedbackDao;
@@ -101,14 +110,45 @@ public class UserFacade extends AbstractFacade {
 
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
       users.forEach(user -> checkOrganizationInUser(organizationId, user));
-      checkOrganizationPermissions(organizationId, Role.MANAGE);
+      final Organization organization = checkOrganizationPermissions(organizationId, Role.MANAGE);
       checkUsersCreate(organizationId, users.size());
 
       final List<User> newUsers = createUsersInOrganization(organizationId, users);
       addUsersToOrganization(organizationId, users);
       addUsersToProject(organizationId, projectId, users);
 
+      if (invitationType != null && invitationType != InvitationType.JOIN_ONLY) {
+         shareResources(organization, projectDao.getProjectById(projectId), newUsers, invitationType);
+      }
+
       return newUsers;
+   }
+
+   private void shareResources(final Organization organization, final Project project, final List<User> users, final InvitationType invitationType) {
+      workspaceKeeper.setWorkspace(organization.getId(), project.getId());
+
+      final Set<Role> roles = new HashSet<>();
+      if (invitationType.equals(InvitationType.MANAGE)) {
+         roles.add(Role.READ);
+         roles.add(Role.WRITE);
+         roles.add(Role.MANAGE);
+      } else if (invitationType.equals(InvitationType.READ_WRITE)) {
+         roles.add(Role.READ);
+         roles.add(Role.WRITE);
+      } else if (invitationType.equals(InvitationType.READ_ONLY)) {
+         roles.add(Role.READ);
+      }
+
+      final Set<Permission> permissionSet = new HashSet<>();
+      users.forEach(user -> {
+         permissionSet.add(Permission.buildWithRoles(user.getId(), roles));
+      });
+
+      final List<Collection> collections = collectionFacade.getCollections();
+      collections.forEach(c -> collectionFacade.updateUserPermissions(c.getId(), permissionSet));
+
+      final List<View> views = viewFacade.getViews();
+      views.forEach(v -> viewFacade.updateUserPermissions(v.getId(), permissionSet));
    }
 
    private List<User> createUsersInOrganization(String organizationId, List<User> users) {

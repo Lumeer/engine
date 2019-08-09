@@ -137,7 +137,7 @@ public class UserFacadeIT extends IntegrationTestBase {
    @Test
    public void testCreateUsersToWorkspace() {
       List<User> users = Arrays.asList(prepareUser(organizationId1, USER1), prepareUser(organizationId1, USER2));
-      userFacade.createUsersInWorkspace(organizationId1, project.getId(), users);
+      userFacade.createUsersInWorkspace(organizationId1, project.getId(), users, null);
 
       Arrays.asList(USER1, USER2).forEach(user -> {
          User stored = getUser(organizationId1, user);
