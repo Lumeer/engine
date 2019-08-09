@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
+import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -98,12 +99,12 @@ public class UserFacade extends AbstractFacade {
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
 
-   public List<User> createUsersInWorkspace(String organizationId, String projectId, List<User> users) {
+   public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
       users.forEach(user -> checkOrganizationInUser(organizationId, user));
       checkOrganizationPermissions(organizationId, Role.MANAGE);
       checkUsersCreate(organizationId, users.size());
 
-      List<User> newUsers = createUsersInOrganization(organizationId, users);
+      final List<User> newUsers = createUsersInOrganization(organizationId, users);
       addUsersToOrganization(organizationId, users);
       addUsersToProject(organizationId, projectId, users);
 
