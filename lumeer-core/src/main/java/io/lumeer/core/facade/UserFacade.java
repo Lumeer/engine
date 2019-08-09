@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -109,13 +110,17 @@ public class UserFacade extends AbstractFacade {
    }
 
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
-      users.forEach(user -> checkOrganizationInUser(organizationId, user));
+      users.forEach(user -> {
+         if (!checkOrganizationInUser(organizationId, user)) {
+            installOrganizationInUser(organizationId, user);
+         }
+      });
       final Organization organization = checkOrganizationPermissions(organizationId, Role.MANAGE);
       checkUsersCreate(organizationId, users.size());
 
       final List<User> newUsers = createUsersInOrganization(organizationId, users);
-      addUsersToOrganization(organizationId, users);
-      addUsersToProject(organizationId, projectId, users);
+      addUsersToOrganization(organizationId, newUsers);
+      addUsersToProject(organizationId, projectId, newUsers);
 
       if (invitationType != null && invitationType != InvitationType.JOIN_ONLY) {
          shareResources(organization, projectDao.getProjectById(projectId), newUsers, invitationType);
@@ -363,13 +368,22 @@ public class UserFacade extends AbstractFacade {
       return project;
    }
 
-   private void checkOrganizationInUser(String organizationId, User user) {
+   private void installOrganizationInUser(final String organizationId, final User user) {
       if (user.getGroups() == null || user.getGroups().isEmpty()) {
-         return;
+         user.setGroups(Map.of(organizationId, Collections.emptySet()));
       }
-      if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
-         throw new BadFormatException("User " + user + " is in incorrect format");
+   }
+
+   private boolean checkOrganizationInUser(String organizationId, User user) {
+      if (user.getGroups() == null || user.getGroups().isEmpty()) {
+         return false;
+      } else {
+         if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
+            throw new BadFormatException("User " + user + " is in incorrect format");
+         }
       }
+
+      return true;
    }
 
    private void checkUsersCreate(final String organizationId, final int number) {
