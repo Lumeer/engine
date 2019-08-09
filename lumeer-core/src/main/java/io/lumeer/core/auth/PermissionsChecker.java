@@ -360,7 +360,7 @@ public class PermissionsChecker {
 
    private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
       return userRoles.stream()
-                      .filter(entity -> entity.getId().equals(userId))
+                      .filter(entity -> entity.getId() != null && entity.getId().equals(userId))
                       .flatMap(entity -> entity.getRoles().stream())
                       .collect(Collectors.toSet());
    }
