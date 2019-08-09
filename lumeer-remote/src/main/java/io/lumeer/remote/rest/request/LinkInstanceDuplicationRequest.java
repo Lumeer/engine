@@ -18,11 +18,19 @@
  */
 package io.lumeer.remote.rest.request;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 public class LinkInstanceDuplicationRequest {
+
+   public static final String ORIGINAL_DOCUMENT_ID = "originalDocumentId";
+   public static final String NEW_DOCUMENT_ID = "newDocumentId";
+   public static final String LINK_INSTANCE_IDS = "linkInstanceIds";
+   public static final String DOCUMENT_IDS_MAP = "documentIdsMap";
 
    private final String originalMasterDocument;
    private final String newMasterDocument;
@@ -30,7 +38,12 @@ public class LinkInstanceDuplicationRequest {
    private final Set<String> linkInstanceIds;
    private final Map<String, String> documentMap;
 
-   public LinkInstanceDuplicationRequest(final String originalMasterDocument, final String newMasterDocument, final Set<String> linkInstanceIds, final Map<String, String> documentMap) {
+   @JsonCreator
+   public LinkInstanceDuplicationRequest(
+         @JsonProperty(ORIGINAL_DOCUMENT_ID) final String originalMasterDocument,
+         @JsonProperty(NEW_DOCUMENT_ID) final String newMasterDocument,
+         @JsonProperty(LINK_INSTANCE_IDS) final Set<String> linkInstanceIds,
+         @JsonProperty(DOCUMENT_IDS_MAP) final Map<String, String> documentMap) {
       this.originalMasterDocument = originalMasterDocument;
       this.newMasterDocument = newMasterDocument;
       this.linkInstanceIds = linkInstanceIds;

@@ -243,7 +243,10 @@ public class MongoDataDao extends CollectionScopedDao implements DataDao {
          });
 
          if (newData.size() > 0) {
-            dataCollection(collectionId).insertMany(newData.stream().map(Document::new).collect(Collectors.toList()));
+            var documents = newData.stream()
+                                   .map(data -> new Document(data).append(ID, new ObjectId(data.getId())))
+                                   .collect(Collectors.toList());
+            dataCollection(collectionId).insertMany(documents);
          }
       }
 
