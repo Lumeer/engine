@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -150,14 +151,25 @@ public class FileAttachmentFacade extends AbstractFacade {
               .collect(Collectors.toList());
    }
 
-   public void duplicateFileAttachments(final String collectionId, final String documentId, final String targetDocumentId, final FileAttachment.AttachmentType type) {
-      final List<FileAttachment> fileAttachments = getAllFileAttachments(collectionId, documentId, type); // access rights checked here
+   public void duplicateFileAttachments(final String collectionId, final Map<String, String> sourceTargetIdMap, final FileAttachment.AttachmentType type) {
+      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionReadPermissions(collectionId);
+      } else {
+         checkLinkTypeReadPermissions(collectionId);
+      }
 
-      fileAttachments.forEach(fa -> {
-         final FileAttachment targetFileAttachment = new FileAttachment(fa);
-         targetFileAttachment.setDocumentId(targetDocumentId);
+      sourceTargetIdMap.forEach((sourceId, targetId) -> {
+         List<FileAttachment> fileAttachments = fileAttachmentDao.findAllFileAttachments(
+               workspaceKeeper.getOrganization().get(),
+               workspaceKeeper.getProject().get(),
+               collectionId, sourceId, type);
 
-         copyFileAttachment(fa, targetFileAttachment);
+         fileAttachments.forEach(fa -> {
+            final FileAttachment targetFileAttachment = new FileAttachment(fa);
+            targetFileAttachment.setDocumentId(targetId);
+
+            copyFileAttachment(fa, targetFileAttachment);
+         });
       });
    }
 

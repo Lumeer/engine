@@ -281,9 +281,7 @@ public class LinkInstanceFacade extends AbstractFacade {
          }
       });
 
-      linkMap.forEach((sourceId, targetId) -> {
-         fileAttachmentFacade.duplicateFileAttachments(linkTypeId, sourceId, targetId, FileAttachment.AttachmentType.LINK);
-      });
+      fileAttachmentFacade.duplicateFileAttachments(linkTypeId, linkMap, FileAttachment.AttachmentType.LINK);
 
       return newLinks;
    }
