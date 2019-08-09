@@ -49,6 +49,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -147,6 +148,17 @@ public class FileAttachmentFacade extends AbstractFacade {
               .stream()
               .map(fa -> presignFileAttachment(fa, false))
               .collect(Collectors.toList());
+   }
+
+   public void duplicateFileAttachments(final String collectionId, final String documentId, final String targetDocumentId, final FileAttachment.AttachmentType type) {
+      final List<FileAttachment> fileAttachments = getAllFileAttachments(collectionId, documentId, type); // access rights checked here
+
+      fileAttachments.forEach(fa -> {
+         final FileAttachment targetFileAttachment = new FileAttachment(fa);
+         targetFileAttachment.setDocumentId(targetDocumentId);
+
+         copyFileAttachment(fa, targetFileAttachment);
+      });
    }
 
    public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final FileAttachment.AttachmentType type) {
@@ -312,6 +324,42 @@ public class FileAttachmentFacade extends AbstractFacade {
 
          return fileAttachment;
       }).collect(Collectors.toList());
+   }
+
+   public FileAttachment copyFileAttachment(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
+      if (sourceFileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionReadPermissions(sourceFileAttachment.getCollectionId());
+      } else {
+         checkLinkTypeReadPermissions(sourceFileAttachment.getCollectionId());
+      }
+
+      if (targetFileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionWritePermissions(targetFileAttachment.getCollectionId());
+      } else {
+         checkLinkTypeWritePermissions(targetFileAttachment.getCollectionId());
+      }
+
+      targetFileAttachment.setFileName(sourceFileAttachment.getFileName());
+
+      final FileAttachment result = fileAttachmentDao.createFileAttachment(targetFileAttachment);
+      copyFileAttachmentData(sourceFileAttachment, result);
+
+      return result;
+   }
+
+   private void copyFileAttachmentData(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
+      if (s3 == null) {
+         return;
+      }
+
+      s3.copyObject(
+            CopyObjectRequest
+                  .builder()
+                  .copySource(S3_BUCKET + "/" + getFileAttachmentKey(sourceFileAttachment))
+                  .bucket(S3_BUCKET)
+                  .key(getFileAttachmentKey(targetFileAttachment))
+                  .build()
+      );
    }
 
    void removeAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {

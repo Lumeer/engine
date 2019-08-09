@@ -49,11 +49,12 @@ public class FileAttachment implements WithId {
    private final String organizationId;
    private final String projectId;
    private final String collectionId;
-   private final String documentId;
+
+   private String documentId;
+
    private final String attributeId;
    private final AttachmentType attachmentType;
    private String fileName;
-
    @JsonProperty(PRESIGNED_URL)
    private String presignedUrl;
 
@@ -72,6 +73,10 @@ public class FileAttachment implements WithId {
       this.attributeId = attributeId;
       this.fileName = fileName;
       this.attachmentType = attachmentType;
+   }
+
+   public FileAttachment(final FileAttachment source) {
+      this(source.organizationId, source.projectId, source.collectionId, source.documentId, source.attributeId, source.fileName, source.attachmentType);
    }
 
    @Override
@@ -97,6 +102,10 @@ public class FileAttachment implements WithId {
 
    public String getDocumentId() {
       return documentId;
+   }
+
+   public void setDocumentId(final String documentId) {
+      this.documentId = documentId;
    }
 
    public String getAttributeId() {

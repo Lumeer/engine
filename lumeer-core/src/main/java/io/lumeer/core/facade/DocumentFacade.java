@@ -383,6 +383,10 @@ public class DocumentFacade extends AbstractFacade {
          }
       });
 
+      keyMap.forEach((sourceId, targetId) -> {
+         fileAttachmentFacade.duplicateFileAttachments(collection.getId(), sourceId, targetId, FileAttachment.AttachmentType.DOCUMENT);
+      });
+
       return documents;
    }
 
