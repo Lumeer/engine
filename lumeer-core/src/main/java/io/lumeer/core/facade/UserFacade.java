@@ -110,16 +110,36 @@ public class UserFacade extends AbstractFacade {
    }
 
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
-      users.forEach(user -> {
-         if (!checkOrganizationInUser(organizationId, user)) {
-            installOrganizationInUser(organizationId, user);
-         }
-      });
-      final Organization organization = checkOrganizationPermissions(organizationId, Role.MANAGE);
-      checkUsersCreate(organizationId, users.size());
+      // we need at least project management rights
+      checkProjectPermissions(organizationId, projectId, Role.MANAGE);
 
-      final List<User> newUsers = createUsersInOrganization(organizationId, users);
-      addUsersToOrganization(organizationId, newUsers);
+      // check if the users are already in the organization
+      final List<User> usersInOrganization = getUsers(organizationId);
+      final List<String> orgUserEmails = usersInOrganization.stream().map(User::getEmail).collect(Collectors.toList());
+      final List<String> usersInRequest = users.stream().map(User::getEmail).collect(Collectors.toList());
+
+      final List<User> newUsers;
+      final Organization organization;
+
+      // we need to add new users in the organization
+      if (!orgUserEmails.containsAll(usersInRequest)) {
+         organization = checkOrganizationPermissions(organizationId, Role.MANAGE);
+
+         users.forEach(user -> {
+            if (!checkOrganizationInUser(organizationId, user)) {
+               installOrganizationInUser(organizationId, user);
+            }
+         });
+
+         checkUsersCreate(organizationId, users.size());
+
+         newUsers = createUsersInOrganization(organizationId, users);
+         addUsersToOrganization(organizationId, newUsers);
+      } else { // we will just amend the rights at the project level
+         organization = organizationFacade.getOrganizationById(organizationId);
+         newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
+      }
+
       addUsersToProject(organizationId, projectId, newUsers);
 
       if (invitationType != null && invitationType != InvitationType.JOIN_ONLY) {
@@ -129,20 +149,26 @@ public class UserFacade extends AbstractFacade {
       return newUsers;
    }
 
+   private Set<Role> getInvitationRoles(final InvitationType invitationType) {
+      final Set<Role> roles = new HashSet<>();
+
+      // do not wonder - there isn't the return statement on purpose so that we collect the roles on the way
+      switch (invitationType) {
+         case MANAGE:
+            roles.add(Role.MANAGE);
+         case READ_WRITE:
+            roles.add(Role.WRITE);
+         case READ_ONLY:
+            roles.add(Role.READ);
+      }
+
+      return roles;
+   }
+
    private void shareResources(final Organization organization, final Project project, final List<User> users, final InvitationType invitationType) {
       workspaceKeeper.setWorkspace(organization.getId(), project.getId());
 
-      final Set<Role> roles = new HashSet<>();
-      if (invitationType.equals(InvitationType.MANAGE)) {
-         roles.add(Role.READ);
-         roles.add(Role.WRITE);
-         roles.add(Role.MANAGE);
-      } else if (invitationType.equals(InvitationType.READ_WRITE)) {
-         roles.add(Role.READ);
-         roles.add(Role.WRITE);
-      } else if (invitationType.equals(InvitationType.READ_ONLY)) {
-         roles.add(Role.READ);
-      }
+      final Set<Role> roles = getInvitationRoles(invitationType);
 
       final Set<Permission> permissionSet = new HashSet<>();
       users.forEach(user -> {
