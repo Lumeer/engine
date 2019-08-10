@@ -273,7 +273,6 @@ public class LinkInstanceFacade extends AbstractFacade {
          linkInstancesDirectory.put(link.getId(), link);
          linkMap.put(link.getOriginalLinkInstanceId(), link.getId());
       });
-      System.out.println(linkMap);
 
       final List<DataDocument> data = linkDataDao.duplicateData(linkTypeId, linkMap);
       data.forEach(l -> {
@@ -281,6 +280,8 @@ public class LinkInstanceFacade extends AbstractFacade {
             linkInstancesDirectory.get(l.getId()).setData(l);
          }
       });
+
+      fileAttachmentFacade.duplicateFileAttachments(linkTypeId, linkMap, FileAttachment.AttachmentType.LINK);
 
       return newLinks;
    }

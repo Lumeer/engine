@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -49,6 +50,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -147,6 +149,28 @@ public class FileAttachmentFacade extends AbstractFacade {
               .stream()
               .map(fa -> presignFileAttachment(fa, false))
               .collect(Collectors.toList());
+   }
+
+   public void duplicateFileAttachments(final String collectionId, final Map<String, String> sourceTargetIdMap, final FileAttachment.AttachmentType type) {
+      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCollectionReadPermissions(collectionId);
+      } else {
+         checkLinkTypeReadPermissions(collectionId);
+      }
+
+      sourceTargetIdMap.forEach((sourceId, targetId) -> {
+         List<FileAttachment> fileAttachments = fileAttachmentDao.findAllFileAttachments(
+               workspaceKeeper.getOrganization().get(),
+               workspaceKeeper.getProject().get(),
+               collectionId, sourceId, type);
+
+         fileAttachments.forEach(fa -> {
+            final FileAttachment targetFileAttachment = new FileAttachment(fa);
+            targetFileAttachment.setDocumentId(targetId);
+
+            copyFileAttachment(fa, targetFileAttachment);
+         });
+      });
    }
 
    public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final FileAttachment.AttachmentType type) {
@@ -312,6 +336,30 @@ public class FileAttachmentFacade extends AbstractFacade {
 
          return fileAttachment;
       }).collect(Collectors.toList());
+   }
+
+   private FileAttachment copyFileAttachment(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
+      targetFileAttachment.setFileName(sourceFileAttachment.getFileName());
+
+      final FileAttachment result = fileAttachmentDao.createFileAttachment(targetFileAttachment);
+      copyFileAttachmentData(sourceFileAttachment, result);
+
+      return result;
+   }
+
+   private void copyFileAttachmentData(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
+      if (s3 == null) {
+         return;
+      }
+
+      s3.copyObject(
+            CopyObjectRequest
+                  .builder()
+                  .copySource(S3_BUCKET + "/" + getFileAttachmentKey(sourceFileAttachment))
+                  .bucket(S3_BUCKET)
+                  .key(getFileAttachmentKey(targetFileAttachment))
+                  .build()
+      );
    }
 
    void removeAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {
