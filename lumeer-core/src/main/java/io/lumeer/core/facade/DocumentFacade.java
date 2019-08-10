@@ -82,9 +82,6 @@ public class DocumentFacade extends AbstractFacade {
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
 
-   @Inject
-   private RequestDataKeeper requestDataKeeper;
-
    private ConstraintManager constraintManager;
 
    @PostConstruct
@@ -369,7 +366,6 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public List<Document> duplicateDocuments(final String collectionId, final List<String> documentIds) {
-      final String correlationId = requestDataKeeper.getCorrelationId();
       final Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, Role.WRITE);
 
@@ -379,10 +375,6 @@ public class DocumentFacade extends AbstractFacade {
       documents.forEach(d -> {
          documentsDirectory.put(d.getId(), d);
          keyMap.put(d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID), d.getId());
-
-         if (correlationId != null) {
-            d.getMetaData().put(Document.META_CORRELATION_ID, correlationId);
-         }
       });
 
       final List<DataDocument> data = dataDao.duplicateData(collectionId, keyMap);
