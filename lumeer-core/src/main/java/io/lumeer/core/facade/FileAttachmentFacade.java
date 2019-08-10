@@ -338,19 +338,7 @@ public class FileAttachmentFacade extends AbstractFacade {
       }).collect(Collectors.toList());
    }
 
-   public FileAttachment copyFileAttachment(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
-      if (sourceFileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionReadPermissions(sourceFileAttachment.getCollectionId());
-      } else {
-         checkLinkTypeReadPermissions(sourceFileAttachment.getCollectionId());
-      }
-
-      if (targetFileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionWritePermissions(targetFileAttachment.getCollectionId());
-      } else {
-         checkLinkTypeWritePermissions(targetFileAttachment.getCollectionId());
-      }
-
+   private FileAttachment copyFileAttachment(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
       targetFileAttachment.setFileName(sourceFileAttachment.getFileName());
 
       final FileAttachment result = fileAttachmentDao.createFileAttachment(targetFileAttachment);
