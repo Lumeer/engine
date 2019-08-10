@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
+import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.core.facade.UserFacade;
@@ -66,10 +67,10 @@ public class UserService extends AbstractService {
    }
 
    @POST
-   @Path("organizations/{organizationId}/projects/{projectId}/users")
+   @Path("organizations/{organizationId}/projects/{projectId}/users/{invitationType}")
    @JsonView(UserViews.DefaultView.class)
-   public List<User> createUsersInOrganization(@PathParam("organizationId") String organizationId, @PathParam("projectId") String projectId, List<User> users) {
-      return userFacade.createUsersInWorkspace(organizationId, projectId, users);
+   public List<User> createUsersInOrganization(@PathParam("organizationId") final String organizationId, @PathParam("projectId") final String projectId, @PathParam("invitationType") final InvitationType invitationType, final List<User> users) {
+      return userFacade.createUsersInWorkspace(organizationId, projectId, users, invitationType != null ? invitationType : InvitationType.JOIN_ONLY);
    }
 
    @PUT

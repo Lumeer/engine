@@ -18,13 +18,16 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
+import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
@@ -39,7 +42,9 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -66,6 +71,12 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private ProjectFacade projectFacade;
+
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private ViewFacade viewFacade;
 
    @Inject
    private FeedbackDao feedbackDao;
@@ -98,16 +109,77 @@ public class UserFacade extends AbstractFacade {
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
 
-   public List<User> createUsersInWorkspace(String organizationId, String projectId, List<User> users) {
-      users.forEach(user -> checkOrganizationInUser(organizationId, user));
-      checkOrganizationPermissions(organizationId, Role.MANAGE);
-      checkUsersCreate(organizationId, users.size());
+   public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
+      // we need at least project management rights
+      checkProjectPermissions(organizationId, projectId, Role.MANAGE);
 
-      List<User> newUsers = createUsersInOrganization(organizationId, users);
-      addUsersToOrganization(organizationId, users);
-      addUsersToProject(organizationId, projectId, users);
+      // check if the users are already in the organization
+      final List<User> usersInOrganization = getUsers(organizationId);
+      final List<String> orgUserEmails = usersInOrganization.stream().map(User::getEmail).collect(Collectors.toList());
+      final List<String> usersInRequest = users.stream().map(User::getEmail).collect(Collectors.toList());
+
+      final List<User> newUsers;
+      final Organization organization;
+
+      // we need to add new users in the organization
+      if (!orgUserEmails.containsAll(usersInRequest)) {
+         organization = checkOrganizationPermissions(organizationId, Role.MANAGE);
+
+         users.forEach(user -> {
+            if (!checkOrganizationInUser(organizationId, user)) {
+               installOrganizationInUser(organizationId, user);
+            }
+         });
+
+         checkUsersCreate(organizationId, users.size());
+
+         newUsers = createUsersInOrganization(organizationId, users);
+         addUsersToOrganization(organizationId, newUsers);
+      } else { // we will just amend the rights at the project level
+         organization = organizationFacade.getOrganizationById(organizationId);
+         newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
+      }
+
+      addUsersToProject(organizationId, projectId, newUsers);
+
+      if (invitationType != null && invitationType != InvitationType.JOIN_ONLY) {
+         shareResources(organization, projectDao.getProjectById(projectId), newUsers, invitationType);
+      }
 
       return newUsers;
+   }
+
+   private Set<Role> getInvitationRoles(final InvitationType invitationType) {
+      final Set<Role> roles = new HashSet<>();
+
+      // do not wonder - there isn't the return statement on purpose so that we collect the roles on the way
+      switch (invitationType) {
+         case MANAGE:
+            roles.add(Role.MANAGE);
+         case READ_WRITE:
+            roles.add(Role.WRITE);
+         case READ_ONLY:
+            roles.add(Role.READ);
+      }
+
+      return roles;
+   }
+
+   private void shareResources(final Organization organization, final Project project, final List<User> users, final InvitationType invitationType) {
+      workspaceKeeper.setWorkspace(organization.getId(), project.getId());
+
+      final Set<Role> roles = getInvitationRoles(invitationType);
+
+      final Set<Permission> permissionSet = new HashSet<>();
+      users.forEach(user -> {
+         permissionSet.add(Permission.buildWithRoles(user.getId(), roles));
+      });
+
+      final List<Collection> collections = collectionFacade.getCollections();
+      collections.forEach(c -> collectionFacade.updateUserPermissions(c.getId(), permissionSet));
+
+      final List<View> views = viewFacade.getViews();
+      views.forEach(v -> viewFacade.updateUserPermissions(v.getId(), permissionSet));
    }
 
    private List<User> createUsersInOrganization(String organizationId, List<User> users) {
@@ -322,13 +394,22 @@ public class UserFacade extends AbstractFacade {
       return project;
    }
 
-   private void checkOrganizationInUser(String organizationId, User user) {
+   private void installOrganizationInUser(final String organizationId, final User user) {
       if (user.getGroups() == null || user.getGroups().isEmpty()) {
-         return;
+         user.setGroups(Map.of(organizationId, Collections.emptySet()));
       }
-      if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
-         throw new BadFormatException("User " + user + " is in incorrect format");
+   }
+
+   private boolean checkOrganizationInUser(String organizationId, User user) {
+      if (user.getGroups() == null || user.getGroups().isEmpty()) {
+         return false;
+      } else {
+         if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
+            throw new BadFormatException("User " + user + " is in incorrect format");
+         }
       }
+
+      return true;
    }
 
    private void checkUsersCreate(final String organizationId, final int number) {
