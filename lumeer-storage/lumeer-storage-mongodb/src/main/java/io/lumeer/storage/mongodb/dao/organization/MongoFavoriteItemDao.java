@@ -47,10 +47,12 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
 
    private static final String PREFIX_COLLECTIONS = "fav_collection-";
    private static final String PREFIX_DOCUMENTS = "fav_document-";
+   private static final String PREFIX_VIEWS = "fav_view-";
 
    private static final String PROJECT_ID = "projectId";
    private static final String USER_ID = "userId";
    private static final String COLLECTION_ID = "collectionId";
+   private static final String VIEW_ID = "viewId";
    private static final String DOCUMENT_ID = "documentId";
 
    @Inject
@@ -62,6 +64,7 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    @Override
    public void createRepositories(final Organization organization) {
       createCollectionsRepository(organization);
+      createViewsRepository(organization);
       createDocumentsRepository(organization);
    }
 
@@ -70,6 +73,13 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
 
       MongoCollection<Document> collection = database.getCollection(favoriteCollectionsDBName(organization));
       collection.createIndex(Indexes.ascending(USER_ID, PROJECT_ID, COLLECTION_ID), new IndexOptions().unique(true));
+   }
+
+   private void createViewsRepository(final Organization organization) {
+      database.createCollection(favoriteViewsDBName(organization));
+
+      MongoCollection<Document> collection = database.getCollection(favoriteViewsDBName(organization));
+      collection.createIndex(Indexes.ascending(USER_ID, PROJECT_ID, VIEW_ID), new IndexOptions().unique(true));
    }
 
    private void createDocumentsRepository(final Organization organization) {
@@ -82,6 +92,7 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    @Override
    public void deleteRepositories(final Organization organization) {
       database.getCollection(favoriteCollectionsDBName(organization)).drop();
+      database.getCollection(favoriteViewsDBName(organization)).drop();
       database.getCollection(favoriteDocumentsDBName(organization)).drop();
    }
 
@@ -128,6 +139,52 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
       final ArrayList<Document> favoriteCollections = favoriteCollectionsDBCollection().find(filter).into(new ArrayList<>());
       return favoriteCollections.stream()
                                 .map(document -> document.getString(COLLECTION_ID))
+                                .collect(Collectors.toSet());
+   }
+
+   @Override
+   public void addFavoriteView(final String userId, final String projectId, final String viewId) {
+      Document document = new Document()
+            .append(USER_ID, userId)
+            .append(PROJECT_ID, projectId)
+            .append(VIEW_ID, viewId);
+      try {
+         favoriteViewsDBCollection().insertOne(document);
+         if (addFavoriteItemEvent != null) {
+            addFavoriteItemEvent.fire(new AddFavoriteItem(userId, viewId, ResourceType.VIEW));
+         }
+      } catch (MongoException ex) {
+         throw new StorageException("User : " + userId + " has already " + viewId + " as favorite view");
+      }
+   }
+
+   @Override
+   public void removeFavoriteView(final String userId, final String viewId) {
+      Bson filter = and(eq(USER_ID, userId), eq(VIEW_ID, viewId));
+      Document deleted = favoriteViewsDBCollection().findOneAndDelete(filter);
+      if (deleted != null && removeFavoriteItemEvent != null) {
+         removeFavoriteItemEvent.fire(new RemoveFavoriteItem(userId, viewId, ResourceType.VIEW));
+      }
+   }
+
+   @Override
+   public void removeFavoriteViewFromUsers(final String projectId, final String viewId) {
+      Bson filter = and(eq(PROJECT_ID, projectId), eq(VIEW_ID, viewId));
+      favoriteViewsDBCollection().deleteMany(filter);
+   }
+
+   @Override
+   public void removeFavoriteViewByProjectFromUsers(final String projectId) {
+      Bson filter = eq(PROJECT_ID, projectId);
+      favoriteViewsDBCollection().deleteMany(filter);
+   }
+
+   @Override
+   public Set<String> getFavoriteViewIds(final String userId, final String projectId) {
+      Bson filter = and(eq(USER_ID, userId), eq(PROJECT_ID, projectId));
+      final ArrayList<Document> favoriteViews = favoriteViewsDBCollection().find(filter).into(new ArrayList<>());
+      return favoriteViews.stream()
+                                .map(document -> document.getString(VIEW_ID))
                                 .collect(Collectors.toSet());
    }
 
@@ -184,7 +241,7 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
                               .collect(Collectors.toSet());
    }
 
-   String favoriteCollectionsDBName() {
+   private String favoriteCollectionsDBName() {
       if (!getOrganization().isPresent()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
@@ -195,11 +252,11 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
       return PREFIX_COLLECTIONS + organization.getId();
    }
 
-   MongoCollection<Document> favoriteCollectionsDBCollection() {
+   private MongoCollection<Document> favoriteCollectionsDBCollection() {
       return database.getCollection(favoriteCollectionsDBName());
    }
 
-   String favoriteDocumentsDBName() {
+   private String favoriteDocumentsDBName() {
       if (!getOrganization().isPresent()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
@@ -210,7 +267,22 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
       return PREFIX_DOCUMENTS + organization.getId();
    }
 
-   MongoCollection<Document> favoriteDocumentsDBCollection() {
+   private MongoCollection<Document> favoriteDocumentsDBCollection() {
       return database.getCollection(favoriteDocumentsDBName());
+   }
+
+   private String favoriteViewsDBName() {
+      if (!getOrganization().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      return favoriteViewsDBName(getOrganization().get());
+   }
+
+   private String favoriteViewsDBName(Organization organization) {
+      return PREFIX_VIEWS + organization.getId();
+   }
+
+   private MongoCollection<Document> favoriteViewsDBCollection() {
+      return database.getCollection(favoriteViewsDBName());
    }
 }

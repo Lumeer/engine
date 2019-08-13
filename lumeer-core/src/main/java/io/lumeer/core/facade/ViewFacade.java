@@ -22,16 +22,22 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -55,12 +61,16 @@ public class ViewFacade extends AbstractFacade {
    @Inject
    private LinkTypeDao linkTypeDao;
 
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
+
    public View createView(View view) {
       if (view.getQuery().getCollectionIds() != null) {
          collectionDao.getCollectionsByIds(view.getQuery().getCollectionIds()).forEach(collection ->
                permissionsChecker.checkRole(collection, Role.READ));
       }
       view.setAuthorId(authenticatedUser.getCurrentUserId());
+      view.setLastTimeUsed(ZonedDateTime.now());
 
       if (view.getCode() == null || view.getCode().isEmpty()) {
          view.setCode(this.generateViewCode(view.getName()));
@@ -79,6 +89,8 @@ public class ViewFacade extends AbstractFacade {
 
       keepStoredPermissions(view, storedView.getPermissions());
       view.setAuthorId(storedView.getAuthorId());
+      view.setLastTimeUsed(ZonedDateTime.now());
+
       View updatedView = viewDao.updateView(storedView.getId(), view);
       updatedView.setAuthorRights(getViewAuthorRights(updatedView));
 
@@ -90,6 +102,8 @@ public class ViewFacade extends AbstractFacade {
       permissionsChecker.checkRole(view, Role.MANAGE);
 
       viewDao.deleteView(view.getId());
+
+      favoriteItemDao.removeFavoriteViewFromUsers( getCurrentProject().getId(), id);
    }
 
    public View getViewById(final String id) {
@@ -134,6 +148,34 @@ public class ViewFacade extends AbstractFacade {
       permissionsChecker.checkRole(view, Role.MANAGE);
 
       return view.getPermissions();
+   }
+
+   public void addFavoriteView(String id) {
+      View view = viewDao.getViewById(id);
+      permissionsChecker.checkRole(view, Role.READ);
+
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.addFavoriteView(userId, projectId, id);
+   }
+
+   public void removeFavoriteView(String id) {
+      View view = viewDao.getViewById(id);
+      permissionsChecker.checkRole(view, Role.READ);
+
+      String userId = getCurrentUser().getId();
+      favoriteItemDao.removeFavoriteView(userId, id);
+   }
+
+   public boolean isFavorite(String id) {
+      return getFavoriteViewsIds().contains(id);
+   }
+
+   public Set<String> getFavoriteViewsIds() {
+      String projectId = getCurrentProject().getId();
+      String userId = getCurrentUser().getId();
+
+      return favoriteItemDao.getFavoriteViewIds(userId, projectId);
    }
 
    public Set<Permission> updateUserPermissions(final String id, final Set<Permission> userPermissions) {
@@ -220,5 +262,16 @@ public class ViewFacade extends AbstractFacade {
 
    private List<Collection> getCollectionsByView(final View view) {
       return getViewsCollections(Collections.singletonList(view), false);
+   }
+
+   private Project getCurrentProject() {
+      if (!workspaceKeeper.getProject().isPresent()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return workspaceKeeper.getProject().get();
+   }
+
+   private User getCurrentUser() {
+      return authenticatedUser.getCurrentUser();
    }
 }
