@@ -21,6 +21,9 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
    private static final String COLLECTION_ID1 = "coll1";
    private static final String COLLECTION_ID2 = "coll2";
 
+   private static final String VIEW_ID1 = "view1";
+   private static final String VIEW_ID2 = "view2";
+
    private static final String DOCUMENT_ID1 = "doc1";
    private static final String DOCUMENT_ID2 = "doc2";
 
@@ -55,6 +58,19 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
    }
 
    @Test
+   public void testAddFavoriteView() {
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID1);
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID2);
+
+      dao.addFavoriteView(USER2, PROJECT_ID2, VIEW_ID2);
+
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).containsOnly(VIEW_ID1, VIEW_ID2);
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID2)).isEmpty();
+      assertThat(dao.getFavoriteViewIds(USER2, PROJECT_ID2)).containsOnly(VIEW_ID2);
+      assertThat(dao.getFavoriteViewIds(USER2, PROJECT_ID1)).isEmpty();
+   }
+
+   @Test
    public void testAddFavoriteDocument() {
       dao.addFavoriteDocument(USER, PROJECT_ID1, COLLECTION_ID1, DOCUMENT_ID1);
       dao.addFavoriteDocument(USER, PROJECT_ID1, COLLECTION_ID1, DOCUMENT_ID2);
@@ -75,6 +91,13 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
    }
 
    @Test
+   public void testAddFavoriteViewDuplicate() {
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID1);
+      assertThatThrownBy(() -> dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID1))
+            .isInstanceOf(StorageException.class);
+   }
+
+   @Test
    public void testAddFavoriteDocumentDuplicate() {
       dao.addFavoriteDocument(USER, PROJECT_ID1, COLLECTION_ID1, DOCUMENT_ID1);
       assertThatThrownBy(() -> dao.addFavoriteDocument(USER, PROJECT_ID1, COLLECTION_ID1, DOCUMENT_ID1))
@@ -90,6 +113,17 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
 
       dao.removeFavoriteCollection(USER, COLLECTION_ID1);
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID1)).containsOnly(COLLECTION_ID2);
+   }
+
+   @Test
+   public void testRemoveFavoriteView() {
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID1);
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID2);
+
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).containsOnly(VIEW_ID1, VIEW_ID2);
+
+      dao.removeFavoriteView(USER, VIEW_ID1);
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).containsOnly(VIEW_ID2);
    }
 
    @Test
@@ -143,6 +177,48 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID1)).containsOnly(COLLECTION_ID1);
       assertThat(dao.getFavoriteCollectionIds(USER, PROJECT_ID2)).containsOnly(COLLECTION_ID1);
       assertThat(dao.getFavoriteCollectionIds(USER2, PROJECT_ID1)).containsOnly(COLLECTION_ID2);
+   }
+
+   @Test
+   public void testRemoveFavoriteViewAll() {
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID1);
+      dao.addFavoriteView(USER2, PROJECT_ID1, VIEW_ID1);
+
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).containsOnly(VIEW_ID1);
+      assertThat(dao.getFavoriteViewIds(USER2, PROJECT_ID1)).containsOnly(VIEW_ID1);
+
+      dao.removeFavoriteViewFromUsers(PROJECT_ID1, VIEW_ID1);
+
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).isEmpty();
+      assertThat(dao.getFavoriteViewIds(USER2, PROJECT_ID1)).isEmpty();
+
+   }
+
+   @Test
+   public void testRemoveFavoriteViewByProject() {
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID1);
+      dao.addFavoriteView(USER, PROJECT_ID2, VIEW_ID1);
+      dao.addFavoriteView(USER2, PROJECT_ID1, VIEW_ID2);
+
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).containsOnly(VIEW_ID1);
+      assertThat(dao.getFavoriteViewIds(USER2, PROJECT_ID1)).containsOnly(VIEW_ID2);
+
+      dao.removeFavoriteViewByProjectFromUsers(PROJECT_ID1);
+
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).isEmpty();
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID2)).containsOnly(VIEW_ID1);
+      assertThat(dao.getFavoriteViewIds(USER2, PROJECT_ID1)).isEmpty();
+   }
+
+   @Test
+   public void testGetFavoriteViewsIds() {
+      dao.addFavoriteView(USER, PROJECT_ID1, VIEW_ID1);
+      dao.addFavoriteView(USER, PROJECT_ID2, VIEW_ID1);
+      dao.addFavoriteView(USER2, PROJECT_ID1, VIEW_ID2);
+
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID1)).containsOnly(VIEW_ID1);
+      assertThat(dao.getFavoriteViewIds(USER, PROJECT_ID2)).containsOnly(VIEW_ID1);
+      assertThat(dao.getFavoriteViewIds(USER2, PROJECT_ID1)).containsOnly(VIEW_ID2);
    }
 
    @Test

@@ -147,7 +147,7 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
       Document document = new Document()
             .append(USER_ID, userId)
             .append(PROJECT_ID, projectId)
-            .append(COLLECTION_ID, viewId);
+            .append(VIEW_ID, viewId);
       try {
          favoriteViewsDBCollection().insertOne(document);
          if (addFavoriteItemEvent != null) {
@@ -180,10 +180,10 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    }
 
    @Override
-   public Set<String> getFavoriteViewIds(final String userId, final String viewId) {
-      Bson filter = and(eq(USER_ID, userId), eq(VIEW_ID, viewId));
-      final ArrayList<Document> favoriteCollections = favoriteViewsDBCollection().find(filter).into(new ArrayList<>());
-      return favoriteCollections.stream()
+   public Set<String> getFavoriteViewIds(final String userId, final String projectId) {
+      Bson filter = and(eq(USER_ID, userId), eq(PROJECT_ID, projectId));
+      final ArrayList<Document> favoriteViews = favoriteViewsDBCollection().find(filter).into(new ArrayList<>());
+      return favoriteViews.stream()
                                 .map(document -> document.getString(VIEW_ID))
                                 .collect(Collectors.toSet());
    }
