@@ -33,12 +33,17 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
+
 public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
 
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
    public static final String AUTHOR_ID = "authorId";
+   public static final String LAST_TIME_USED = "lastTimeUsed";
 
    public ViewCodec(final CodecRegistry registry) {
       super(registry);
@@ -53,10 +58,16 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
       String perspective = bson.getString(PERSPECTIVE);
       Object config = bson.get(CONFIG);
       String authorId = bson.getString(AUTHOR_ID);
+      Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
 
       View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), query, perspective, config, authorId);
       view.setId(resource.getId());
       view.setVersion(resource.getVersion());
+
+      if (lastTimeUsed != null) {
+         view.setLastTimeUsed(ZonedDateTime.ofInstant(lastTimeUsed.toInstant(), ZoneOffset.UTC));
+      }
+
       return view;
    }
 
@@ -67,6 +78,10 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
             .append(PERSPECTIVE, value.getPerspective())
             .append(CONFIG, value.getConfig())
             .append(AUTHOR_ID, value.getAuthorId());
+
+      if (value.getLastTimeUsed() != null) {
+         bson.append(LAST_TIME_USED, Date.from(value.getLastTimeUsed().toInstant()));
+      }
 
       documentCodec.encode(writer, bson, encoderContext);
    }

@@ -18,15 +18,18 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.model.common.Resource;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class View extends Resource {
 
@@ -42,6 +45,11 @@ public class View extends Resource {
    private Object config;
    private String authorId;
    private Map<String, Set<Role>> authorRights;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime lastTimeUsed;
+
+   private boolean favorite;
 
    public View() {
    }
@@ -83,6 +91,7 @@ public class View extends Resource {
       o.authorId = this.authorId;
       o.authorRights = this.authorRights;
       o.version = this.version;
+      o.lastTimeUsed = this.lastTimeUsed;
 
       return o;
    }
@@ -131,6 +140,22 @@ public class View extends Resource {
       this.authorRights = authorRights;
    }
 
+   public ZonedDateTime getLastTimeUsed() {
+      return lastTimeUsed;
+   }
+
+   public void setLastTimeUsed(final ZonedDateTime lastTimeUsed) {
+      this.lastTimeUsed = lastTimeUsed;
+   }
+
+   public boolean isFavorite() {
+      return favorite;
+   }
+
+   public void setFavorite(final boolean favorite) {
+      this.favorite = favorite;
+   }
+
    @Override
    public String toString() {
       return "View{" +
@@ -140,10 +165,12 @@ public class View extends Resource {
             ", icon='" + icon + '\'' +
             ", color='" + color + '\'' +
             ", permissions=" + permissions +
-            ", query=" + query +
             ", perspective='" + perspective + '\'' +
+            ", config=" + config + '\'' +
             ", authorId='" + authorId + '\'' +
-            ", authorRights='" + authorRights + '\'' +
+            ", authorRights=" + authorRights +
+            ", lastTimeUsed=" + lastTimeUsed +
+            ", query=" + query + '\'' +
             '}';
    }
 

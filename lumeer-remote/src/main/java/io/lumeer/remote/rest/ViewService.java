@@ -69,7 +69,10 @@ public class ViewService extends AbstractService {
    @PUT
    @Path("{viewId}")
    public View updateView(@PathParam("viewId") String id, View view) {
-      return viewFacade.updateView(id, view);
+      final View updatedView = viewFacade.updateView(id, view);
+      updatedView.setFavorite(viewFacade.isFavorite(id));
+
+      return updatedView;
    }
 
    @DELETE
@@ -83,12 +86,26 @@ public class ViewService extends AbstractService {
    @GET
    @Path("{viewId}")
    public View getView(@PathParam("viewId") String id) {
-      return viewFacade.getViewById(id);
+      final View view = viewFacade.getViewById(id);
+      view.setFavorite(viewFacade.isFavorite(id));
+
+      return view;
    }
 
    @GET
    public List<View> getViews() {
-      return viewFacade.getViews();
+      final Set<String> favoriteViewIds = viewFacade.getFavoriteViewsIds();
+      final List<View> views = viewFacade.getViews();
+
+      if (favoriteViewIds != null && favoriteViewIds.size() > 0) {
+         views.forEach(v -> {
+            if (favoriteViewIds.contains(v.getId())) {
+               v.setFavorite(true);
+            }
+         });
+      }
+
+      return views;
    }
 
    @GET
@@ -123,6 +140,22 @@ public class ViewService extends AbstractService {
       viewFacade.removeGroupPermission(id, groupId);
 
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
+   }
+
+   @POST
+   @Path("{viewId}/favorite")
+   public Response addFavoriteView(@PathParam("viewId") final String viewId) {
+      viewFacade.addFavoriteView(viewId);
+
+      return Response.ok().build();
+   }
+
+   @DELETE
+   @Path("{viewId}/favorite")
+   public Response removeFavoriteView(@PathParam("viewId") final String viewId) {
+      viewFacade.removeFavoriteView(viewId);
+
+      return Response.ok().build();
    }
 
    @GET

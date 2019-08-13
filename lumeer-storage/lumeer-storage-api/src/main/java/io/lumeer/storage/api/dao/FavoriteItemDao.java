@@ -20,6 +20,16 @@ public interface FavoriteItemDao {
 
    Set<String> getFavoriteCollectionIds(String userId, String projectId);
 
+   void addFavoriteView(String userId, String projectId, String viewId);
+
+   void removeFavoriteView(String userId, String viewId);
+
+   void removeFavoriteViewFromUsers(String projectId, String viewId);
+
+   void removeFavoriteViewByProjectFromUsers(String projectId);
+
+   Set<String> getFavoriteViewIds(String userId, String projectId);
+
    void addFavoriteDocument(String userId, String projectId, String collectionId, String documentId);
 
    void removeFavoriteDocument(String userId, String documentId);
