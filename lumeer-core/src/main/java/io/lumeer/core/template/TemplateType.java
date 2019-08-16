@@ -22,5 +22,5 @@ package io.lumeer.core.template;
  * Types of all templates that can be created automatically.
  */
 public enum TemplateType {
-   OKR, HR, PROJ, BUG, TIME, WORK, SUPPLY, EDCAL
+   OKR, HR, PROJ, BUG, TIME, WORK, SUPPLY, EDCAL, TASK
 }
