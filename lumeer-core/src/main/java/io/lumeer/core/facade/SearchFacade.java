@@ -272,14 +272,13 @@ public class SearchFacade extends AbstractFacade {
 
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, lt -> lt));
 
-      List<DataDocument> lastStageData = data;
+      Set<String> lastStageIds = documentsByData.stream().map(Document::getId).collect(Collectors.toSet());
 
       for (int i = 0; i < stemsPipeline.size(); i++) {
          String linkTypeId = stem.getLinkTypeIds().get(i);
          SearchQueryStem currentStageStem = stemsPipeline.get(i);
 
-         Set<String> lastStageDocumentIds = lastStageData.stream().map(DataDocument::getId).collect(Collectors.toSet());
-         List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByDocumentIds(lastStageDocumentIds, linkTypeId);
+         List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByDocumentIds(lastStageIds, linkTypeId);
 
          Set<String> searchedLinkInstanceIds;
 
@@ -296,11 +295,12 @@ public class SearchFacade extends AbstractFacade {
             searchedLinkInstanceIds = linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet());
          }
 
+         final Set<String> lastStageIdsCopy = Collections.unmodifiableSet(lastStageIds);
          Set<String> otherDocumentIds = linkInstances.stream()
                                                      .filter(linkInstance -> searchedLinkInstanceIds.contains(linkInstance.getId()))
                                                      .map(LinkInstance::getDocumentIds)
                                                      .flatMap(List::stream)
-                                                     .filter(id -> !lastStageDocumentIds.contains(id))
+                                                     .filter(id -> !lastStageIdsCopy.contains(id))
                                                      .collect(Collectors.toSet());
 
          Set<String> currentDocumentsIds = new HashSet<>(currentStageStem.getDocumentIds());
@@ -327,7 +327,7 @@ public class SearchFacade extends AbstractFacade {
             break;
          }
          documentsByData.addAll(convertDataDocumentsToDocuments(currentStageData));
-         lastStageData = currentStageData;
+         lastStageIds = currentStageData.stream().map(DataDocument::getId).collect(Collectors.toSet());
       }
 
       return documentsByData;
