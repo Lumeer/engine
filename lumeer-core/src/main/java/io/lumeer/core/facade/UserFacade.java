@@ -140,9 +140,10 @@ public class UserFacade extends AbstractFacade {
          newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
       }
 
-      addUsersToProject(organizationId, projectId, newUsers);
+      addUsersToProject(organizationId, projectId, newUsers, invitationType);
 
-      if (invitationType != null && invitationType != InvitationType.JOIN_ONLY) {
+      // in case of manage rights, we add them at the project level only
+      if (invitationType != null && invitationType != InvitationType.JOIN_ONLY && invitationType != InvitationType.MANAGE) {
          shareResources(organization, projectDao.getProjectById(projectId), newUsers, invitationType);
       }
 
@@ -204,10 +205,10 @@ public class UserFacade extends AbstractFacade {
 
    }
 
-   private void addUsersToProject(String organizationId, String projectId, List<User> users) {
+   private void addUsersToProject(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
       workspaceKeeper.setOrganization(organizationId);
       var newPermissions = users.stream()
-                                .map(user -> Permission.buildWithRoles(user.getId(), Collections.singleton(Role.READ)))
+                                .map(user -> Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType)))
                                 .collect(Collectors.toSet());
       projectFacade.addUserPermissions(projectId, newPermissions);
    }
