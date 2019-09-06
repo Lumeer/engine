@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
+import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -137,7 +138,7 @@ public class UserFacadeIT extends IntegrationTestBase {
    @Test
    public void testCreateUsersToWorkspace() {
       List<User> users = Arrays.asList(prepareUser(organizationId1, USER1), prepareUser(organizationId1, USER2));
-      userFacade.createUsersInWorkspace(organizationId1, project.getId(), users, null);
+      userFacade.createUsersInWorkspace(organizationId1, project.getId(), users, InvitationType.JOIN_ONLY);
 
       Arrays.asList(USER1, USER2).forEach(user -> {
          User stored = getUser(organizationId1, user);
