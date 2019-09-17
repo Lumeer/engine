@@ -74,6 +74,15 @@ public class JsExecutor {
          this.collection = collection;
       }
 
+      public String getSequenceNumber(final String sequenceName, final int digits) {
+         return String.format("%" + (digits <= 1 ? "" : "0" + digits) + "d", ruleTask.getDaoContextSnapshot().getSequenceDao().getNextSequenceNo(sequenceName));
+      }
+
+      public String getCurrentUser() {
+         final String email = ruleTask.getInitiator().getEmail();
+         return email == null ? "" : email;
+      }
+
       public void setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
          try {
             changes.add(new LinkChange(l.link, attrId, convertValue(value)));

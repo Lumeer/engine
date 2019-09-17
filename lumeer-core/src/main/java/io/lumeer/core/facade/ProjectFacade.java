@@ -42,6 +42,7 @@ import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
@@ -95,6 +96,9 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private WorkspaceCache workspaceCache;
+
+   @Inject
+   private SequenceDao sequenceDao;
 
    public Project createProject(Project project) {
       Utils.checkCodeSafe(project.getCode());
@@ -239,6 +243,7 @@ public class ProjectFacade extends AbstractFacade {
       viewDao.createViewsRepository(project);
       linkInstanceDao.createLinkInstanceRepository(project);
       linkTypeDao.createLinkTypeRepository(project);
+      sequenceDao.createSequencesRepository(project);
    }
 
    private void deleteProjectScopedRepositories(Project project) {
@@ -247,6 +252,7 @@ public class ProjectFacade extends AbstractFacade {
       viewDao.deleteViewsRepository(project);
       linkTypeDao.deleteLinkTypeRepository(project);
       linkInstanceDao.deleteLinkInstanceRepository(project);
+      sequenceDao.deleteSequencesRepository(project);
 
       favoriteItemDao.removeFavoriteCollectionsByProjectFromUsers(project.getId());
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());

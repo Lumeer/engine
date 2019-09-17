@@ -32,6 +32,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
@@ -89,6 +90,8 @@ public interface DaoContextSnapshot {
    UserNotificationDao getUserNotificationDao();
 
    ViewDao getViewDao();
+
+   SequenceDao getSequenceDao();
 
    Set<String> getCollectionManagers(final String collectionId);
 
