@@ -21,11 +21,15 @@ package io.lumeer.storage.mongodb.dao.project;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.inc;
 import static com.mongodb.client.model.Updates.set;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.engine.api.event.CreateOrUpdateSequence;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -55,6 +59,9 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
    @Inject
    private Event<CreateOrUpdateSequence> createOrUpdateSequenceEvent;
 
+   @Inject
+   private Event<RemoveSequence> removeSequenceEvent;
+
    @Override
    public void createSequencesRepository(final Project project) {
       database.createCollection(getSequenceCollectionName(project));
@@ -75,6 +82,17 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
    @Override
    public Sequence updateSequence(final String id, final Sequence sequence) {
       return updateSequence(sequence, MongoFilters.idFilter(id));
+   }
+
+   @Override
+   public void deleteSequence(final String id) {
+      final Sequence sequence = databaseCollection().findOneAndDelete(idFilter(id));
+      if (sequence == null) {
+         throw new StorageException("Sequence '" + id + "' has not been deleted.");
+      }
+      if (removeSequenceEvent != null) {
+         removeSequenceEvent.fire(new RemoveSequence(getOrganization().orElse(null), getProject().orElse(null), sequence));
+      }
    }
 
    private Sequence updateSequence(final Sequence sequence, final Bson filter) {

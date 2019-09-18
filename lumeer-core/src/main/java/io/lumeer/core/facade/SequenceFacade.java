@@ -51,6 +51,11 @@ public class SequenceFacade extends AbstractFacade {
       return sequenceDao.updateSequence(id, sequence);
    }
 
+   public void deleteSequence(final String id) {
+      checkProjectManageRole();
+      sequenceDao.deleteSequence(id);
+   }
+
    private void checkProjectManageRole() {
       Project project = getCurrentProject();
       permissionsChecker.checkRole(project, Role.MANAGE);

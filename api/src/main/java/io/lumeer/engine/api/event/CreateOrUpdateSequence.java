@@ -22,29 +22,9 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Sequence;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public class CreateOrUpdateSequence {
-   private final Organization organization;
-   private final Project project;
-   private final Sequence sequence;
+public class CreateOrUpdateSequence extends SequenceEvent {
 
    public CreateOrUpdateSequence(final Organization organization, final Project project, final Sequence sequence) {
-      this.organization = organization;
-      this.project = project;
-      this.sequence = sequence;
-   }
-
-   public Sequence getSequence() {
-      return sequence;
-   }
-
-   public Organization getOrganization() {
-      return organization;
-   }
-
-   public Project getProject() {
-      return project;
+      super(organization, project, sequence);
    }
 }

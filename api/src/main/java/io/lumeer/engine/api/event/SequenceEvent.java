@@ -16,25 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.engine.api.event;
 
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Sequence;
 
-import java.util.List;
+public class SequenceEvent {
+   private final Organization organization;
+   private final Project project;
+   private final Sequence sequence;
 
-public interface SequenceDao {
+   public SequenceEvent(final Organization organization, final Project project, final Sequence sequence) {
+      this.organization = organization;
+      this.project = project;
+      this.sequence = sequence;
+   }
 
-   String INDEX_NAME = "name";
+   public Sequence getSequence() {
+      return sequence;
+   }
 
-   void createSequencesRepository(final Project project);
-   void deleteSequencesRepository(final Project project);
+   public Organization getOrganization() {
+      return organization;
+   }
 
-   List<Sequence> getAllSequences();
-   Sequence updateSequence(final String id, final Sequence sequence);
-   void deleteSequence(final String id);
-
-   int getNextSequenceNo(final String indexName);
-   void resetSequence(final String indexName);
-
+   public Project getProject() {
+      return project;
+   }
 }

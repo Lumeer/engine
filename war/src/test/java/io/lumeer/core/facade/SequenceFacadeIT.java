@@ -121,6 +121,11 @@ public class SequenceFacadeIT extends IntegrationTestBase {
       assertThat(sequences).hasSize(2);
       assertThat(sequences.stream().map(Sequence::getName).collect(Collectors.toSet())).contains("s1", "s2");
       assertThat(sequences.stream().map(Sequence::getSeq).collect(Collectors.toSet())).contains(0, 2);
+
+      sequenceFacade.deleteSequence("s2");
+      sequences = sequenceFacade.getAllSequences();
+      assertThat(sequences).hasSize(1);
+      assertThat(sequences.stream().map(Sequence::getName).collect(Collectors.toSet())).contains("s1");
    }
 
 }
