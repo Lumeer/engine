@@ -27,6 +27,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -42,6 +43,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -113,6 +115,12 @@ public class SequenceFacadeIT extends IntegrationTestBase {
       assertThat(sequenceFacade.getNextSequenceNumber("s2")).isEqualTo(0);
       assertThat(sequenceFacade.getNextSequenceNumber("s1")).isEqualTo(1);
       assertThat(sequenceFacade.getNextSequenceNumber("s1")).isEqualTo(2);
+
+      var sequences = sequenceFacade.getAllSequences();
+
+      assertThat(sequences).hasSize(2);
+      assertThat(sequences.stream().map(Sequence::getName).collect(Collectors.toSet())).contains("s1", "s2");
+      assertThat(sequences.stream().map(Sequence::getSeq).collect(Collectors.toSet())).contains(0, 2);
    }
 
 }

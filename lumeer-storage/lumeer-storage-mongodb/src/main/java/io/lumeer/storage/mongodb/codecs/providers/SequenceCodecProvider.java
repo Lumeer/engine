@@ -16,24 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Sequence;
+import io.lumeer.storage.mongodb.codecs.SequenceCodec;
 
-import java.util.List;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-public interface SequenceDao {
+public class SequenceCodecProvider implements CodecProvider {
+   @Override
+   public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
+      if (aClass == Sequence.class) {
+         return (Codec<T>) new SequenceCodec(codecRegistry);
+      }
 
-   String INDEX_NAME = "name";
-
-   void createSequencesRepository(final Project project);
-   void deleteSequencesRepository(final Project project);
-
-   List<Sequence> getAllSequences();
-   Sequence updateSequence(final String id, final Sequence sequence);
-
-   int getNextSequenceNo(final String indexName);
-   void resetSequence(final String indexName);
-
+      return null;
+   }
 }

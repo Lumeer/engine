@@ -56,6 +56,7 @@ import io.lumeer.storage.mongodb.codecs.providers.ProjectCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.QueryCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.QueryStemCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.RuleCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.SequenceCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.UserCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.UserLoginEventCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.UserNotificationCodecProvider;
@@ -137,7 +138,7 @@ public class MongoDbStorage implements DataStorage {
             new FeedbackCodecProvider(), new OrganizationCodecProvider(), new ProjectCodecProvider(), new CollectionCodecProvider(),
             new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new UserNotificationCodecProvider(),
             new ConstraintCodecProvider(), new RuleCodecProvider(), new FunctionCodecProvider(), new FunctionRowCodecProvider(),
-            new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider()
+            new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider()
       );
       final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 

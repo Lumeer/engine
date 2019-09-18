@@ -43,6 +43,7 @@ import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
+import io.lumeer.engine.api.event.CreateOrUpdateSequence;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
@@ -679,6 +680,20 @@ public class PusherFacade extends AbstractFacade {
          try {
             ObjectWithParent object = new ObjectWithParent(createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
             Set<String> userIds = ResourceUtils.getManagers(createOrUpdatePayment.getOrganization());
+            sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void createOrUpdateSequence(@Observes final CreateOrUpdateSequence createOrUpdateSequence) {
+      if (isEnabled()) {
+         try {
+            ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(), createOrUpdateSequence.getOrganization().getId(), createOrUpdateSequence.getProject().getId());
+            Set<String> userIds = ResourceUtils.getManagers(createOrUpdateSequence.getOrganization());
+            userIds.addAll(ResourceUtils.getManagers(createOrUpdateSequence.getProject()));
+
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);

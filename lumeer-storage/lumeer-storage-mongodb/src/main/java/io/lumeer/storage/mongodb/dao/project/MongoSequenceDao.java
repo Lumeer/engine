@@ -22,26 +22,38 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.inc;
 import static com.mongodb.client.model.Updates.set;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Sequence;
+import io.lumeer.engine.api.event.CreateOrUpdateSequence;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
 
    private static final String PREFIX = "sequences_p-";
 
+   @Inject
+   private Event<CreateOrUpdateSequence> createOrUpdateSequenceEvent;
 
    @Override
    public void createSequencesRepository(final Project project) {
@@ -56,6 +68,31 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
       database.getCollection(getSequenceCollectionName(project)).drop();
    }
 
+   @Override
+   public List<Sequence> getAllSequences() {
+      return databaseCollection().find().sort(Sorts.ascending(Sequence.NAME)).into(new ArrayList<>());
+   }
+   @Override
+   public Sequence updateSequence(final String id, final Sequence sequence) {
+      return updateSequence(sequence, MongoFilters.idFilter(id));
+   }
+
+   private Sequence updateSequence(final Sequence sequence, final Bson filter) {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+      try {
+         Bson update = new Document("$set", sequence);
+         final Sequence returnedSequence = databaseCollection().findOneAndUpdate(filter, update, options);
+         if (returnedSequence == null) {
+            throw new StorageException("Sequence '" + sequence.getId() + "' has not been updated.");
+         }
+         if (createOrUpdateSequenceEvent != null) {
+            createOrUpdateSequenceEvent.fire(new CreateOrUpdateSequence(getOrganization().orElse(null), getProject().orElse(null), returnedSequence));
+         }
+         return returnedSequence;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update sequence " + sequence, ex);
+      }
+   }
 
    @Override
    public synchronized int getNextSequenceNo(final String indexName) {
@@ -100,8 +137,8 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
       return getSequenceCollectionName(getProject().get());
    }
 
-   MongoCollection<Collection> databaseCollection() {
-      return database.getCollection(getDatabaseCollectionName(), Collection.class);
+   MongoCollection<Sequence> databaseCollection() {
+      return database.getCollection(getDatabaseCollectionName(), Sequence.class);
    }
 
 }
