@@ -73,6 +73,6 @@ public class SequenceService extends AbstractService {
    @Path("{sequenceId}")
    public Response deleteSequence(@PathParam("sequenceId") final String sequenceId) {
       sequenceFacade.deleteSequence(sequenceId);
-      return Response.ok().build();
+      return Response.ok().link(getParentUri(sequenceId), "parent").build();
    }
 }
