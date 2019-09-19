@@ -27,6 +27,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
@@ -54,6 +55,7 @@ import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.engine.api.event.TemplateCreated;
@@ -695,6 +697,22 @@ public class PusherFacade extends AbstractFacade {
             userIds.addAll(ResourceUtils.getManagers(createOrUpdateSequence.getProject()));
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void removeSequenceNotification(@Observes final RemoveSequence removeSequence) {
+      if (isEnabled()) {
+         try {
+            Sequence sequence = removeSequence.getSequence();
+            Set<String> userIds = ResourceUtils.getManagers(removeSequence.getOrganization());
+            userIds.addAll(ResourceUtils.getManagers(removeSequence.getProject()));
+
+            ResourceId message = new ResourceId(sequence.getId());
+
+            sendNotificationsByUsers(message, userIds, REMOVE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
