@@ -59,6 +59,7 @@ public class JsExecutor {
    private static Logger log = Logger.getLogger(JsExecutor.class.getName());
 
    private LumeerBridge lumeerBridge;
+   private boolean dryRun = false;
 
    public static class LumeerBridge {
 
@@ -68,6 +69,7 @@ public class JsExecutor {
       private Collection collection;
       private Set<Change> changes = new HashSet<>();
       private Exception cause = null;
+      private boolean dryRun = false;
 
       private LumeerBridge(final ContextualTask task, final Collection collection) {
          this.ruleTask = task;
@@ -75,7 +77,16 @@ public class JsExecutor {
       }
 
       public String getSequenceNumber(final String sequenceName, final int digits) {
-         return String.format("%" + (digits <= 1 ? "" : "0" + digits) + "d", ruleTask.getDaoContextSnapshot().getSequenceDao().getNextSequenceNo(sequenceName));
+         final String format = "%" + (digits <= 1 ? "" : "0" + digits) + "d";
+
+         if (dryRun) {
+            return String.format(format, 1);
+         } else {
+            final int sequenceValue = ruleTask.getDaoContextSnapshot().getSequenceDao().getNextSequenceNo(sequenceName);
+            ruleTask.sendPushNotifications(sequenceName);
+
+            return String.format(format, sequenceValue);
+         }
       }
 
       public String getCurrentUser() {
@@ -517,6 +528,7 @@ public class JsExecutor {
 
    public void execute(final Map<String, Object> bindings, final ContextualTask task, final Collection collection, final String js) {
       lumeerBridge = new LumeerBridge(task, collection);
+      lumeerBridge.dryRun = dryRun;
 
       Context context = Context
             .newBuilder("js")
@@ -558,5 +570,13 @@ public class JsExecutor {
 
    public Exception getCause() {
       return lumeerBridge.cause;
+   }
+
+   public boolean isDryRun() {
+      return dryRun;
+   }
+
+   public void setDryRun(final boolean dryRun) {
+      this.dryRun = dryRun;
    }
 }

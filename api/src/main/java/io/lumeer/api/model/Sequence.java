@@ -18,12 +18,14 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.model.common.WithId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class Sequence {
+public class Sequence implements WithId {
 
    public static final String ID = "id";
    public static final String NAME = "name";

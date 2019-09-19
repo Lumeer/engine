@@ -256,4 +256,12 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
 
       return result;
    }
+
+   @Override
+   public Set<String> getProjectManagers() {
+      Set<String> userIds = ResourceUtils.getManagers(organization);
+      userIds.addAll(ResourceUtils.getManagers(project));
+
+      return userIds;
+   }
 }

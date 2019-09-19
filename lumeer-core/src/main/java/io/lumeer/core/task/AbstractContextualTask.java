@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.facade.PusherFacade;
@@ -122,6 +123,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkInstance), null);
    }
 
+   private Event createEventForSequence(final Sequence sequence, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(sequence, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Sequence.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(sequence), null);
+   }
+
    private PusherFacade.ResourceId getResourceId(final WithId idObject) {
       return new PusherFacade.ResourceId(idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
    }
@@ -160,4 +166,19 @@ public abstract class AbstractContextualTask implements ContextualTask {
          getPusherClient().trigger(linkInstanceEvents);
       }
    }
+
+   @Override
+   public void sendPushNotifications(final String sequenceName) {
+      final Sequence sequence = getDaoContextSnapshot().getSequenceDao().getSequence(sequenceName);
+
+      final Set<String> managers = getDaoContextSnapshot().getProjectManagers();
+
+      final List<Event> events = new ArrayList<>();
+      managers.forEach(manager -> {
+         events.add(createEventForSequence(sequence, manager));
+      });
+
+      getPusherClient().trigger(events);
+   }
+
 }

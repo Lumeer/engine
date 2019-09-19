@@ -31,6 +31,7 @@ public interface SequenceDao {
    void deleteSequencesRepository(final Project project);
 
    List<Sequence> getAllSequences();
+   Sequence getSequence(final String name);
    Sequence updateSequence(final String id, final Sequence sequence);
    void deleteSequence(final String id);
 

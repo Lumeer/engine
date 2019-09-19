@@ -98,4 +98,6 @@ public interface DaoContextSnapshot {
    Set<String> getCollectionReaders(final String collectionId);
 
    Set<String> getCollectionReaders(final Collection collection);
+
+   Set<String> getProjectManagers();
 }

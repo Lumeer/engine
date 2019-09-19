@@ -693,8 +693,8 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(), createOrUpdateSequence.getOrganization().getId(), createOrUpdateSequence.getProject().getId());
-            Set<String> userIds = ResourceUtils.getManagers(createOrUpdateSequence.getOrganization());
-            userIds.addAll(ResourceUtils.getManagers(createOrUpdateSequence.getProject()));
+            Set<String> userIds = permissionsChecker.getWorkspaceManagers();
+            userIds.remove(authenticatedUser.getCurrentUserId());
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
@@ -707,8 +707,8 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Sequence sequence = removeSequence.getSequence();
-            Set<String> userIds = ResourceUtils.getManagers(removeSequence.getOrganization());
-            userIds.addAll(ResourceUtils.getManagers(removeSequence.getProject()));
+            Set<String> userIds = permissionsChecker.getWorkspaceManagers();
+            userIds.remove(authenticatedUser.getCurrentUserId());
 
             ResourceId message = new ResourceId(sequence.getId());
 

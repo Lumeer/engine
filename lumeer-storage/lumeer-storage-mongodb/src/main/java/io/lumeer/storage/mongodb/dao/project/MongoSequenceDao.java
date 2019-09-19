@@ -22,13 +22,12 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.inc;
 import static com.mongodb.client.model.Updates.set;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.nameFilter;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.engine.api.event.CreateOrUpdateSequence;
-import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -79,6 +78,14 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
    public List<Sequence> getAllSequences() {
       return databaseCollection().find().sort(Sorts.ascending(Sequence.NAME)).into(new ArrayList<>());
    }
+
+   @Override
+   public Sequence getSequence(final String name) {
+      final Sequence sequence = databaseCollection().find(nameFilter(name)).first();
+
+      return sequence;
+   }
+
    @Override
    public Sequence updateSequence(final String id, final Sequence sequence) {
       return updateSequence(sequence, MongoFilters.idFilter(id));
