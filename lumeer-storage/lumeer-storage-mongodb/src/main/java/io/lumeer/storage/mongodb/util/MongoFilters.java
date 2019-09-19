@@ -27,7 +27,6 @@ import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
 
 import com.mongodb.client.model.Filters;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
@@ -42,6 +41,7 @@ public class MongoFilters {
 
    private static final String ID = "_id";
    private static final String CODE = "code";
+   private static final String NAME = "name";
    private static final String PERMISSIONS = "permissions";
 
    public static Bson idFilter(String id) {
@@ -58,6 +58,10 @@ public class MongoFilters {
 
    public static Bson codeFilter(String code) {
       return Filters.eq(CODE, code);
+   }
+
+   public static Bson nameFilter(String name) {
+      return Filters.eq(NAME, name);
    }
 
    public static Bson permissionsFilter(DatabaseQuery databaseQuery) {

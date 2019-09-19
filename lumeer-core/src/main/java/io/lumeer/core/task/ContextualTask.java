@@ -64,4 +64,10 @@ public interface ContextualTask extends Task {
     * @param linkInstances List of link instances.
     */
    void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances);
+
+   /**
+    * Send push notifications to project managers.
+    * @param sequenceName Name of updated sequence.
+    */
+   void sendPushNotifications(final String sequenceName);
 }

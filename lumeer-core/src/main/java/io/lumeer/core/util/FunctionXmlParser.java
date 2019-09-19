@@ -50,6 +50,7 @@ public final class FunctionXmlParser {
    private static final String VALUE_TAG = "value";
    private static final String LINK_SUFFIX = "_link";
    private static final String LINK_INSTANCE_SUFFIX = "_linkinst";
+   private static final String LINK_INSTANCE_SUFFIX2 = "_link_instance";
    private static final String VARIABLE_PREFIX = "variables_get_";
 
    private FunctionXmlParser() {
@@ -115,6 +116,9 @@ public final class FunctionXmlParser {
                         // <block type="variables_get_5c5b6a73b9437f682e35d3ba_linkinst" ...>
                         if (type.endsWith(LINK_INSTANCE_SUFFIX)) {
                            final String linkTypeId = type.split("_")[2];
+                           attributeReference.setLinkTypeId(linkTypeId);
+                        } else if (type.endsWith(LINK_INSTANCE_SUFFIX2)) { // <block type="5d81646d652b2314cb092faa-5d571fcfa9013c4e0ac956a5_5d66eb96b08a0d090c2efee6_link_instance"
+                           final String linkTypeId = type.split("-")[0];
                            attributeReference.setLinkTypeId(linkTypeId);
                         }
                      }

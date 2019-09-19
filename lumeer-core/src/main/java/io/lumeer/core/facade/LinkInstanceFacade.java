@@ -168,6 +168,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       constraintManager.encodeDataTypes(linkType, data);
 
       final DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
+      originalLinkInstance.setData(oldData);
       final Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
 
@@ -218,6 +219,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       constraintManager.encodeDataTypes(linkType, data);
 
       final DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
+      originalLinkInstance.setData(oldData);
       final Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
 

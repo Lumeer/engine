@@ -52,6 +52,7 @@ public class BlocklyRuleTaskExecutor {
       final Map<String, Object> bindings = Map.of("oldDocument", oldDocument, "newDocument", newDocument);
 
       final JsExecutor jsExecutor = new JsExecutor();
+      jsExecutor.setDryRun(rule.isDryRun());
 
       try {
          jsExecutor.execute(bindings, ruleTask, ruleTask.getCollection(), rule.getJs());
